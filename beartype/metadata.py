@@ -37,6 +37,12 @@ Human-readable package name.
 '''
 
 
+PACKAGE_NAME = NAME.lower()
+'''
+Fully-qualified name of the top-level Python package containing this submodule.
+'''
+
+
 LICENSE = 'MIT'
 '''
 Human-readable name of the license this package is licensed under.
@@ -220,8 +226,44 @@ have yet to be stabilized and hence tagged. Hence, this URL is typically valid
 *only* for previously released (rather than live) versions of this package.
 '''
 
-# ....................{ METADATA ~ python                 }....................
-PACKAGE_NAME = NAME.lower()
+# ....................{ METADATA ~ libs                   }....................
+LIBS_RUNTIME_OPTIONAL = ()
 '''
-Fully-qualified name of the top-level Python package containing this submodule.
+Optional runtime dependencies for this package defined as a tuple of
+:mod:`setuptools`-specific requirements strings of the format
+``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``, where:
+
+* ``{project_name}`` is a :mod:`setuptools`-specific project name (e.g.,
+  ``numpy``, ``scipy``).
+* ``{comparison1}`` and ``{comparisonN}`` are :mod:`setuptools`-specific
+  version comparison operators. As well as standard mathematical comparison
+  operators (e.g., ``==``, ``>=``, ``<``), :mod:`setuptools` also supports the
+  PEP 440-compliant "compatible release" operator ``~=`` more commonly denoted
+  by ``^`` in modern package managers (e.g., :mod:`poetry`, ``npm``); this
+  operator enables forward compatibility with all future versions of this
+  dependency known *not* to break backward compatibility, but should only be
+  applied to dependencies strictly following the semantic versioning contract.
+* ``{version1}`` and ``{version1}`` are arbitrary version strings (e.g.,
+  ``2020.2.16``, ``0.75a2``).
+'''
+
+
+LIBS_TESTING_MANDATORY = (
+    # pytest should ideally remain the only hard dependency for testing on
+    # local machines. While our testing regime optionally leverages third-party
+    # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
+    # dependencies are *NOT* required for simple testing.
+    #
+    # A relatively modern version of py.test is required.
+    'pytest >=4.0.0',
+)
+'''
+Optional test-time dependencies for this package defined as a tuple of
+:mod:`setuptools`-specific requirements strings of the format
+``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
 '''
