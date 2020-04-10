@@ -44,7 +44,7 @@
 # Ignore all top-level pip-specific temporary directories.
 /pip-wheel-metadata/
 
-# Ignore all top-level py.test-specific temporary directories.
+# Ignore all top-level pytest-specific temporary directories.
 /.cache/
 /.pytest_cache/
 
@@ -137,9 +137,6 @@ __pycache__/
 /.venv
 
 # ....................{ FILES ~ general                   }....................
-# Ignare all generic caching paths.
-.cache
-
 # Ignore all Django-specific private files.
 local_settings.py
 

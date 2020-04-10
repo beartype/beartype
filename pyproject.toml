@@ -1,0 +1,50 @@
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2020 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Project-wide packager-agnostic configuration. Unlike all other top-level
+# configuration files (e.g., "setup.py", "MANIFEST.in") specific to some
+# utility in Python's package management ecosystem (e.g., "pip", "setuptools"),
+# this file strictly conforms to a standards-compliant PEP and hence
+# generically applies to *ALL* such utilities.
+#
+# Welcome to project distribution hell, where only twenty distinct files in
+# twenty distinct formats suffice to distribute a single project.
+#
+# --------------------( SEE ALSO                          )--------------------
+# * https://snarky.ca/clarifying-pep-518
+#   "Clarifying PEP 518 (a.k.a. pyproject.toml)", a human-readable article from
+#   one of the principal authors of the "pyproject.toml" standard.
+
+# ....................{ BUILDING                          }....................
+[build-system]
+
+# List of all Python packages required to build (i.e., install) this project
+# from both codebase tarballs and binary wheels.
+requires = [
+    'setuptools',
+    'wheel',
+]
+
+# Explicitly notify "pip" that we leverage the top-level "setuptools"-backed
+# "setup.py" script as our installation infrastructure.
+#
+# Note that this is explicitly required for temporary backward compatibility
+# with "pip" 19.1.0, which erroneously violated PEP 51{7,8} by failing to
+# fallback to a sane default value in the absence of this setting. If this
+# setting is left unspecified here, "pip" 19.1.0 fails on attempting to perform
+# an editable (i.e., developer-specific) install with the following error:
+#
+#     $ pip3 install --user --editable .
+#     Obtaining file:///home/leycec/py/betse
+#     ERROR: Error installing 'file:///home/leycec/py/betse': editable mode is
+#     not supported for pyproject.toml-style projects. pip is processing this
+#     project as pyproject.toml-style because it has a pyproject.toml file.
+#     Since the project has a setup.py and the pyproject.toml has no
+#     "build-backend" key for the "build_system" value, you may pass
+#     --no-use-pep517 to opt out of pyproject.toml-style processing. See PEP
+#     517 for details on pyproject.toml-style projects.
+#
+# See also: https://github.com/pypa/pip/issues/6434
+build-backend = 'setuptools.build_meta'

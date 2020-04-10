@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2020 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Bash shell script wrapping this project's pytest-based test suite such that
+# all passed arguments are passed as is to the "pytest" command.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+
+# ....................{ PATHS                             }....................
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
+# option would be preferable but is unsupported by macOS's NetBSD-specific
+# version of "readlink". Instead, just defer to Python for portability.
+function canonicalize_path() {
+    python -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+}
+
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                              }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}" >/dev/null
+
+# Run this project's test suite with all passed arguments. Dismantled, this is:
+#
+# * ".", notifying pytest of the relative dirname of the root directory for
+#   this project. On startup, pytest internally:
+#   * Sets its "rootdir" property to this dirname in absolute form.
+#   * Sets its "inifile" property to the concatenation of this dirname
+#     with the basename "pytest.ini" if that top-level configuration file
+#     exists.
+#   * Prints the initial values of these properties to stdout.
+#   *THIS IS ESSENTIAL.* If *NOT* explicitly passed this dirname as an
+#   argument, pytest may fail to set these properties to the expected
+#   pathnames. For unknown reasons (presumably unresolved pytest issues),
+#   pytest instead sets "rootdir" to the absolute dirname of the current user's
+#   home directory and "inifile" to "None". Since no user's home directory
+#   contains a "pytest.ini" file, pytest then prints errors resembling:
+#      $ ./test -k test_sim_export --export-sim-conf-dir ~/tmp/yolo
+#      running test
+#      Running py.test with arguments: ['--capture=no', '--maxfail=1', '-k', 'test_sim_export', '--export-sim-conf-dir', '/home/leycec/tmp/yolo']
+#      usage: setup.py [options] [file_or_dir] [file_or_dir] [...]
+#      setup.py: error: unrecognized arguments: --export-sim-conf-dir
+#        inifile: None
+#        rootdir: /home/leycec
+#   See the following official documentation for further details, entitled
+#   "Initialization: determining rootdir and inifile":
+#       https://docs.pytest.org/en/latest/customize.html
+command pytest "${@}" .
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}
