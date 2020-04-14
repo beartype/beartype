@@ -58,7 +58,7 @@ _register_dir()
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import setuptools
-from beartype import metadata
+from beartype import meta
 
 # ....................{ METADATA ~ seo                    }....................
 _KEYWORDS = [
@@ -173,34 +173,34 @@ _SETUP_OPTIONS = {
     #   so here would require safely opening this file with a context manager,
     #   reading the contents of this file into a local variable, and passing
     #   that variable's value as this metadata outside of that context. (Ugh.)
-    'name':             metadata.PACKAGE_NAME,
-    'version':          metadata.VERSION,
-    'author':           metadata.AUTHORS,
-    'author_email':     metadata.AUTHOR_EMAIL,
-    'maintainer':       metadata.AUTHORS,
-    'maintainer_email': metadata.AUTHOR_EMAIL,
-    'description':      metadata.SYNOPSIS,
-    'url':              metadata.URL_HOMEPAGE,
-    'download_url':     metadata.URL_DOWNLOAD,
+    'name':             meta.PACKAGE_NAME,
+    'version':          meta.VERSION,
+    'author':           meta.AUTHORS,
+    'author_email':     meta.AUTHOR_EMAIL,
+    'maintainer':       meta.AUTHORS,
+    'maintainer_email': meta.AUTHOR_EMAIL,
+    'description':      meta.SYNOPSIS,
+    'url':              meta.URL_HOMEPAGE,
+    'download_url':     meta.URL_DOWNLOAD,
 
     # ..................{ PYPI                              }..................
-    # PyPi-specific metadata.
+    # PyPi-specific meta.
     'classifiers': _sanitize_classifiers(
-        python_version_min_parts=metadata.PYTHON_VERSION_MIN_PARTS,
-        python_version_minor_max=metadata.PYTHON_VERSION_MINOR_MAX,
+        python_version_min_parts=meta.PYTHON_VERSION_MIN_PARTS,
+        python_version_minor_max=meta.PYTHON_VERSION_MINOR_MAX,
     ),
     'keywords': _KEYWORDS,
-    'license': metadata.LICENSE,
+    'license': meta.LICENSE,
 
     # ..................{ DEPENDENCIES                      }..................
     # Python dependency.
-    'python_requires': '>=' + metadata.PYTHON_VERSION_MIN,
+    'python_requires': '>=' + meta.PYTHON_VERSION_MIN,
 
-    # Mandatory runtime dependencies (i.e., none). This package intentionally
-    # requires *NO* third-party dependencies at runtime... and *NEVER* will.
+    # Mandatory runtime dependencies. This package intentionally requires no
+    # such dependencies and hopefully never will.
     'install_requires': (),
 
-    # Optional nuntime dependencies. Whereas mandatory dependencies are defined
+    # Optional runtime dependencies. Whereas mandatory dependencies are defined
     # as sequences, optional dependencies are defined as a dictionary mapping
     # from an arbitrary alphanumeric word to a sequence containing one or more
     # such dependencies. Such dependencies are then installable via "pip" by
@@ -210,17 +210,17 @@ _SETUP_OPTIONS = {
     # mandatory and optional dependencies required by the package).
     'extras_require': {
         # All optional runtime dependencies.
-        'all': metadata.LIBS_RUNTIME_OPTIONAL,
+        'all': meta.LIBS_RUNTIME_OPTIONAL,
 
         # All mandatory testing dependencies, copied from the "tests_require"
         # key below into an arbitrarily named extra. This is required *ONLY*
         # for integration with the top-level "tox.ini" file. See the "extras"
         # key in that file for further details.
-        'test': metadata.LIBS_TESTING_MANDATORY,
+        'test': meta.LIBS_TESTING_MANDATORY,
     },
 
     # Mandatory testing dependencies.
-    'tests_require': metadata.LIBS_TESTING_MANDATORY,
+    'tests_require': meta.LIBS_TESTING_MANDATORY,
 
     # ..................{ PACKAGES                          }..................
     # List of the fully-qualified names of all Python packages (i.e.,
@@ -239,8 +239,8 @@ _SETUP_OPTIONS = {
     # commonly accepting such subdirectories as subpackages.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     'packages': setuptools.find_packages(exclude=(
-        metadata.PACKAGE_NAME + '_test',
-        metadata.PACKAGE_NAME + '_test.*',
+        meta.PACKAGE_NAME + '_test',
+        meta.PACKAGE_NAME + '_test.*',
         'build',
     )),
 }

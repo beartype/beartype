@@ -43,7 +43,7 @@ types of items contained in containers.
 In summary:
 
 =====================  ====================  ====================================
-featureset             :mod`beartype.cave`   :mod:`typing`
+feature set            :mod:`beartype.cave`  :mod:`typing`
 =====================  ====================  ====================================
 type checking          **shallow**           **deep**
 type check items?      **no**                **yes**
@@ -59,7 +59,7 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 '''
 
 #FIXME: Define a new "TypingType" or "Pep484Type" type rooted at either the
-#"typing.TypingMeta" meteclass or "typing._TypingBase" superclass. Obviously,
+#"typing.TypingMeta" metaclass or "typing._TypingBase" superclass. Obviously,
 #we currently have no means of type-checking metaclasses... but the latter is
 #explicitly private. Ergo, all roads lead to Hell.
 #FIXME: Use this new type in the @beartype decorator to raise exceptions when
@@ -67,13 +67,24 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 #users *MUST* be explicitly informed of this deficiency.
 
 # ....................{ IMPORTS                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To avoid polluting the public module namespace, external attributes
+# should be locally imported at module scope *ONLY* under alternate private
+# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
+# than merely ""from argparse import ArgumentParser").
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #FIXME: To avoid polluting the module namespace, we want to either isolate
 #these importations to a private callable *OR* delete them at the very end of
 #this module. As the latter approach is both more fragile and inefficient, the
 #former approach seems substantially more intelligent.
-import functools, inspect, logging, pkg_resources, re
-from argparse import ArgumentParser, _SubParsersAction
-from collections import deque
+#FIXME: Actually, just import everything needed under "_"-prefixed names (e.g.,
+#"from argparse import ArgumentParser as _ArgumentParser"). Problem solved! :p
+
+import functools, pkg_resources, re
+from argparse import _SubParsersAction
+from argparse import ArgumentParser as _ArgumentParser
+from collections import deque as _deque
 from collections.abc import (
     Container,
     Hashable,
@@ -87,14 +98,13 @@ from collections.abc import (
 )
 from enum import Enum, EnumMeta
 from io import IOBase
-from inspect import Parameter, Signature
 from pkg_resources import Distribution
 from weakref import ref, CallableProxyType, ProxyType, WeakMethod
 
 # Import the following types as is into the namespace of this submodule,
 # permitting callers to reference these types conveniently. Since the
 # nomenclature of these types is already consistent with that used by types
-# declared below (namely, both camelcase and suffixed by "Type"), these types
+# declared below (namely, both CamelCase and suffixed by "Type"), these types
 # are used as is rather than aliased to synonymous types below.
 #
 # Note that the "LambdaType" is intentionally *NOT* imported. Why? Because that
@@ -149,7 +159,7 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 # ....................{ TYPES ~ arg                       }....................
-ArgParserType = ArgumentParser
+ArgParserType = _ArgumentParser
 '''
 Type of argument parsers parsing all command-line arguments for either
 top-level commands *or* subcommands of those commands.
@@ -262,7 +272,7 @@ merely as a convenience to callers preferring to avoid importing that class.
 '''
 
 
-QueueType = deque
+QueueType = _deque
 '''
 Concrete type of the only available queue implementation in Python's stdlib.
 

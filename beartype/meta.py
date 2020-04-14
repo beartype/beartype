@@ -4,7 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Metadata constants synopsizing high-level package behaviour.
+**Beartype metadata.**
+
+This submodule exports global constants synopsizing this package -- including
+versioning and dependencies.
 
 Python Version
 ----------
@@ -16,7 +19,7 @@ As a tradeoff between backward compatibility, security, and maintainability,
 this package strongly attempts to preserve compatibility with the first stable
 release of the oldest version of CPython still under active development. Hence,
 obsolete and insecure versions of CPython that have reached their official End
-of Life (EoL) are explicitly unsupported.
+of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
 # ....................{ IMPORTS                           }....................

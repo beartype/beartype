@@ -7,8 +7,8 @@
 Top-level package namespace.
 
 For PEP 8 compliance, this namespace exposes a subset of the metadata constants
-provided by the top-level :mod:`metadata` submodule commonly inspected by
-external automation.
+provided by the top-level :mod:`meta` submodule commonly inspected by external
+automation.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,8 +25,8 @@ external automation.
 # ....................{ IMPORTS                           }....................
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.
-from beartype.metadata import VERSION as __version__
-from beartype.metadata import VERSION_PARTS as __version_info__
+from beartype.meta import VERSION as __version__
+from beartype.meta import VERSION_PARTS as __version_info__
 
 # ....................{ GLOBALS                           }....................
 # Document all global variables imported into this namespace above.
