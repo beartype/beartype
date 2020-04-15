@@ -71,34 +71,32 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
-# than merely ""from argparse import ArgumentParser").
+# than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#FIXME: To avoid polluting the module namespace, we want to either isolate
-#these importations to a private callable *OR* delete them at the very end of
-#this module. As the latter approach is both more fragile and inefficient, the
-#former approach seems substantially more intelligent.
-#FIXME: Actually, just import everything needed under "_"-prefixed names (e.g.,
-#"from argparse import ArgumentParser as _ArgumentParser"). Problem solved! :p
-
-import functools, pkg_resources, re
-from argparse import _SubParsersAction
-from argparse import ArgumentParser as _ArgumentParser
+import functools as _functools
+import re as _re
+from argparse import (
+    _SubParsersAction,
+    ArgumentParser as _ArgumentParser,
+)
 from collections import deque as _deque
 from collections.abc import (
-    Container,
-    Hashable,
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    Set,
-    Sized,
+    Container as _Container,
+    Hashable as _Hashable,
+    Iterable as _Iterable,
+    Iterator as _Iterator,
+    Mapping as _Mapping,
+    MutableMapping as _MutableMapping,
+    Sequence as _Sequence,
+    Set as _Set,
+    Sized as _Sized,
 )
-from enum import Enum, EnumMeta
-from io import IOBase
-from pkg_resources import Distribution
+from enum import (
+    Enum as _Enum,
+    EnumMeta as _EnumMeta,
+)
+from io import IOBase as _IOBase
 from weakref import ref, CallableProxyType, ProxyType, WeakMethod
 
 # Import the following types as is into the namespace of this submodule,
@@ -129,12 +127,12 @@ Type of all types.
 '''
 
 
-FileType = IOBase
+FileType = _IOBase
 '''
 Abstract base class implemented by *all* **file-like objects** (i.e., objects
 implementing the standard ``read()`` and ``write()`` methods).
 
-This class is a synonym of the `io.IOBase` class, provided merely as a
+This class is a synonym of the :class:`io.IOBase` class, provided merely as a
 convenience to callers preferring to avoid importing that class.
 '''
 
@@ -179,7 +177,7 @@ permitting callers to avoid importing that private class.
 '''
 
 # ....................{ TYPES ~ callable                  }....................
-CallablePartialType = functools.partial
+CallablePartialType = _functools.partial
 '''
 Type of all **partial callables** (i.e., callables dynamically produced by the
 function-like :class:`functools.partial` class).
@@ -261,14 +259,15 @@ called).
 '''
 
 # ....................{ TYPES ~ container                 }....................
-IteratorType = Iterator
+IteratorType = _Iterator
 '''
 Abstract interface implemented by all **iterators** (i.e., objects implementing
 the standard ``__iter__()`` and ``__next__()`` methods, typically iterating
 over an associated container).
 
-This class is a synonym of the `collections.abc.Iterator` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+This class is a synonym of the :class:`collections.abc.Iterator` class,
+provided merely as a convenience to callers preferring to avoid importing that
+class.
 '''
 
 
@@ -281,13 +280,13 @@ merely as a convenience to callers preferring to avoid importing that class.
 
 Caveats
 ----------
-Since the :class:`collections.abc` subpackage currently provides no
-corresponding abstract interface to formalize queue types, this type applies
-*only* to the standard double-ended queue implementation.
+Since the :mod:`collections.abc` subpackage currently provides no corresponding
+abstract interface to formalize queue types, this type applies *only* to the
+standard double-ended queue implementation.
 '''
 
 
-SetType = Set
+SetType = _Set
 '''
 Abstract interface implemented by all **set-like containers** (i.e., containers
 guaranteeing uniqueness across all items in these containers), including both
@@ -300,48 +299,50 @@ merely as a convenience to callers preferring to avoid importing that class.
 '''
 
 
-SizedType = Sized
+SizedType = _Sized
 '''
 Abstract interface implemented by all containers defining the special
 ``__len__()`` method internally called by the :func:`len` builtin.
 
-This class is a synonym of the `collections.abc.Sized` class, provided merely
-as a convenience to callers preferring to avoid importing that class.
+This class is a synonym of the :class:`collections.abc.Sized` class, provided
+merely as a convenience to callers preferring to avoid importing that class.
 '''
 
 # ....................{ TYPES ~ container : mapping       }....................
-HashableType = Hashable
+HashableType = _Hashable
 '''
 Abstract interface implemented by all **hashables** (i.e., objects implementing
 the standard ``__hash__()`` method required by all dictionary keys).
 
-This class is a synonym of the `collections.abc.Hashable` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+This class is a synonym of the :class:`collections.abc.Hashable` class,
+provided merely as a convenience to callers preferring to avoid importing that
+class.
 '''
 
 
-MappingType = Mapping
+MappingType = _Mapping
 '''
 Abstract interface implemented by all dictionary-like objects, both mutable and
 immutable.
 
-This class is a synonym of the `collections.abc.Mapping` class, provided merely
-as a convenience to callers preferring to avoid importing that class.
-'''
-
-
-MappingMutableType = MutableMapping
-'''
-Abstract interface implemented by all mutable dictionary-like objects.
-
-This class is a synonym of the `collections.abc.MutableMapping` class, provided
+This class is a synonym of the :class:`collections.abc.Mapping` class, provided
 merely as a convenience to callers preferring to avoid importing that class.
 '''
 
-# ....................{ TYPES ~ enum                      }....................
-# Enumeration types sufficiently obscure to warrant formalization here.
 
-EnumType = EnumMeta
+MappingMutableType = _MutableMapping
+'''
+Abstract interface implemented by all mutable dictionary-like objects.
+
+This class is a synonym of the :class:`collections.abc.MutableMapping` class,
+provided merely as a convenience to callers preferring to avoid importing that
+class.
+'''
+
+# ....................{ TYPES ~ enum                      }....................
+# Enumeration types are sufficiently obscure to warrant formalization here.
+
+EnumType = _EnumMeta
 '''
 Metaclass of all **enumeration types** (i.e., classes containing all
 enumeration members comprising those enumerations).
@@ -351,11 +352,11 @@ to avoid importing that class.
 
 Motivation
 ----------
-This type is widely used throughout the codebase to validate callable
-parameters to be enumerations. In recognition of its popularity, this type is
-intentionally named ``EnumType`` rather than ``EnumMetaType``. While the latter
-*would* technically be less ambiguous, the former has the advantage of inviting
-correctness throughout the codebase -- a less abundant resource.
+This type is commonly used to type check callable parameters as enumerations.
+In recognition of its popularity, this type is intentionally named ``EnumType``
+rather than ``EnumMetaType``. While the latter *would* technically be less
+ambiguous, the former has the advantage of inviting correctness throughout
+downstream codebases -- a less abundant resource.
 
 Why? Because *all* enumeration types are instances of this type rather than the
 :class:`Enum` class despite being superficially defined as instances of the
@@ -363,26 +364,26 @@ Why? Because *all* enumeration types are instances of this type rather than the
 adhere to standard Pythonic semantics. Notably, the following non-standard
 invariants hold across *all* enumerations:
 
-    >>> from betse.util.type.types import (
-    ...     EnumType, EnumClassType, EnumMemberType, ClassType)
-    >>> enum_type = EnumClassType(
+    >>> from beartype.cave import (
+    ...     ClassType, EnumType, EnumClassType, EnumMemberType)
+    >>> GyreType = EnumClassType(
     ...     'Gyre', ('The', 'falcon', 'cannot', 'hear', 'the', 'falconer'))
-    >>> isinstance(enum_type, EnumType)
+    >>> isinstance(GyreType, EnumType)
     True
-    >>> isinstance(enum_type, EnumClassType)
+    >>> isinstance(GyreType, EnumClassType)
     False
-    >>> isinstance(enum_type, ClassType)
+    >>> isinstance(GyreType, ClassType)
     True
-    >>> isinstance(enum_type.falcon, EnumType)
+    >>> isinstance(GyreType.falcon, EnumType)
     False
-    >>> isinstance(enum_type.falcon, EnumMemberType)
+    >>> isinstance(GyreType.falcon, EnumMemberType)
     True
-    >>> isinstance(enum_type.falcon, ClassType)
+    >>> isinstance(GyreType.falcon, ClassType)
     False
 '''
 
 
-EnumClassType = Enum
+EnumClassType = _Enum
 '''
 Abstract base class of all **enumeration types** (i.e., classes containing all
 enumeration members comprising those enumerations).
@@ -397,7 +398,7 @@ See Also
 '''
 
 
-EnumMemberType = Enum
+EnumMemberType = _Enum
 '''
 Abstract base class implemented by all **enumeration members** (i.e.,
 alternative choices comprising their parent enumerations).
@@ -412,13 +413,38 @@ where the callable permissively accepts any enumeration member type rather than
 a specific enumeration member type. In the latter case, that type is simply
 that enumeration's type and should be directly referenced as such: e.g.,
 
-    >>> from betse.util.type.enums import make_enum
-    >>> from betse.util.type.types import type_check
-    >>> EndymionType = make_enum(
-    ...     class_name='EndymionType', member_names=('BEAUTY', 'JOY',))
-    >>> @type_check
+    >>> from beartype import beartype
+    >>> from beartype.cave import EnumClassType
+    >>> EndymionType = EnumClassType('EndymionType', ('BEAUTY', 'JOY',))
+    >>> @beartype
     ... def our_feet_were_soft_in_flowers(superlative: EndymionType) -> str:
     ...     return str(superlative).lower()
+'''
+
+# ....................{ TYPES ~ regex                     }....................
+# Regular expression types are also sufficiently obscure to warrant
+# formalization here.
+
+# Yes, this is the only reliable means of obtaining the type of compiled
+# regular expressions. For unknown reasons presumably concerning the archaic
+# nature of Python's regular expression support, this type is *NOT* publicly
+# exposed. While the private "re._pattern_type" attribute does technically
+# provide this type, it does so in a private and hence non-portable manner.
+RegexCompiledType = type(_re.compile(r''))
+'''
+Type of all compiled regular expressions.
+'''
+
+
+# Yes, this type is required for type validation at module scope elsewhere.
+# Yes, this is the most time-efficient means of obtaining this type. No, this
+# type is *NOT* directly importable. Although this type's classname is
+# published to be "_sre.SRE_Match", the "_sre" C extension provides no such
+# type for pure-Python importation.
+RegexMatchType = type(_re.match(r'', ''))
+'''
+Type of all **regular expression match objects** (i.e., objects returned by the
+:func:`re.match` function).
 '''
 
 # ....................{ TUPLES                            }....................
@@ -431,8 +457,15 @@ Tuple of both the module *and* string type.
 CheckableMemberTypes = (ClassType, str)
 '''
 Tuple of all **checkable member types** (i.e., types suitable for use as the
-members of function annotations type-checked via the :func:`type_check`
+members of function annotations type-checked via the :func:`beartype.beartype`
 decorator).
+'''
+
+
+RegexTypes = (str, RegexCompiledType)
+'''
+Tuple of all **regular expression-like types** (i.e., types either defining
+regular expressions or losslessly convertible to such types).
 '''
 
 
@@ -509,9 +542,59 @@ built-in or user-defined methods).
 '''
 
 # ....................{ TUPLES ~ container                }....................
-# Note that most tuples of container base classes are defined in the "lib"
-# subsection below, due to conditionally containing classes from third-party
-# dependencies. Tuples defined here only contain classes from Python's stdlib.
+# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+ContainerTypes = (_Container,)
+'''
+Tuple of all container base classes conforming to (but *not* necessarily
+subclassing) the canonical :class:`collections.abc.Container` API and hence
+defining the special ``__contains__()`` method internally called by the ``in``
+operator.
+
+See Also
+----------
+:class:`SequenceTypes`
+    Further details.
+'''
+
+
+# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+IterableTypes = (_Iterable,)
+'''
+Tuple of all container base classes conforming to (but *not* necessarily
+subclassing) the canonical :class:`collections.abc.Iterable` API.
+
+See Also
+----------
+:class:`SequenceTypes`
+    Further details.
+'''
+
+
+# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+SequenceTypes = (_Sequence,)
+'''
+Tuple of all container base classes conforming to (but *not* necessarily
+subclassing) the canonical :class:`collections.abc.Sequence` API.
+
+Sequences are iterables supporting efficient element access via integer
+indices. Most sequences implement the :class:`collections.abc.Sequence`
+abstract base class, including the concrete :class:`str` string class. All
+sequences define the special ``__getitem__()`` and ``__len__()`` methods
+(amongst various others).
+
+While all sequences are iterables, not all iterables are sequences. Generally
+speaking, sequences correspond to the proper subset of iterables whose elements
+are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
+:class:`dict` implements :class:`collections.abc.Iterable` but *not*
+:class:`collections.abc._Sequence`, due to failing to support integer
+index-based lookup; :class:`OrderedDict` implements both, due to supporting
+such lookup.
+
+For generality, this tuple contains classes matching both pure-Python sequences
+*and* non-Pythonic Fortran-based NumPy arrays and matrices -- which fail to
+subclass :class:`collections.abc.Sequence` despite implementing the entirety of
+that that API.
+'''
 
 SequenceStandardTypes = (list, tuple)
 '''
@@ -525,57 +608,65 @@ See Also
     Further details.
 '''
 
-# ....................{ TUPLES ~ version                  }....................
-VersionSetuptoolsTypes = (
-    # PEP 440-compliant version type.
-    pkg_resources.packaging.version.Version,
-    # PEP 440-uncompliant version type.
-    pkg_resources.packaging.version.LegacyVersion,
-)
+# ....................{ TUPLES ~ scalar                   }....................
+# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+BoolTypes = (bool,)
 '''
-Tuple of all :mod:`setuptools`-specific version types (i.e., types instantiated
-and returned by the stable :func:`pkg_resources.parse_version` function bundled
-with :mod:`setuptools`).
-'''
-
-
-VersionComparableTypes = (tuple,) + VersionSetuptoolsTypes
-'''
-Tuple of all **comparable version types** (i.e., types suitable for use both as
-parameters to callables accepting arbitrary version specifiers *and* as
-operands to numeric operators comparing such specifiers).
-
-This is the proper subset of types listed by the :data:`VersionTypes` tuple
-that are directly comparable, thus excluding the :class:`str` type.
-``.``-delimited version specifier strings are only indirectly comparable after
-conversion to a comparable version type (e.g., by calling the
-:func:`betse.util.type.numeric.version.to_comparable` function).
+Tuple of all strictly boolean types, including both the standard :class:`bool`
+builtin *and* the non-standard NumPy-specific boolean type (when NumPy is
+importable in the active Python interpreter).
 
 Caveats
 ----------
-Note that all types listed by this tuple are *only* safely comparable with
-versions of the same type. In particular, the :class:`VersionSetuptoolsTypes`
-type does *not* necessarily support direct comparison with either the
-:class:`tuple` *or* `class:`str` version types; tragically, this type supported
-both under older but *not* newer versions of :mod:`setuptools`. *shakes fist*
+Non-standard boolean types are typically *not* interoperable with the standard
+standard :class:`bool` type. In particular, it is typically *not* the case, for
+any variable ``my_bool`` of non-standard boolean type and truthy value,
+that either ``my_bool is True`` or ``my_bool == True`` yield the desired
+results. Rather, such variables should *always* be coerced into the standard
+:class:`bool` type before being compared -- either:
+
+* Implicitly (e.g., ``if my_bool: pass``).
+* Explicitly (e.g., ``if bool(my_bool): pass``).
 '''
 
 
-VersionTypes = (str,) + VersionComparableTypes
+NumericSimpleTypes = (float, int,)
 '''
-Tuple of all **version types** (i.e., types suitable for use as parameters to
-callables accepting arbitrary version specifiers, notably those implemented
-by the :mod:`betse.util.type.numeric.version` submodule).
+Tuple of all **builtin simple numeric types** (i.e., classes whose instances
+are trivial scalar numbers), comprising both integer and real number types.
 
-This includes:
+This tuple intentionally excludes complex number types - whose non-trivial
+encapsulation of a pair of real numbers *usually* necessitates non-trivial
+special handling.
+'''
 
-* :class:`str`, specifying versions in ``.``-delimited positive integer format
-  (e.g., ``2.4.14.2.1.356.23``).
-* :class:`tuple`, specifying versions as one or more positive integers (e.g.,
-  ``(2, 4, 14, 2, 1, 356, 23)``),
-* :class:`VersionSetuptoolsTypes`, specifying versions as instance variables
-  convertible into both of the prior formats (e.g.,
-  ``VersionSetuptoolsTypes('2.4.14.2.1.356.23')``).
+
+NumericTypes = (complex,) + NumericSimpleTypes
+'''
+Tuple of all **builtin numeric types** (i.e., classes whose instances are
+scalar numbers), comprising integer, real number, and complex number types.
+'''
+
+
+NumericlikeTypes = (bool,) + NumericTypes
+'''
+Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
+either scalar numbers or types trivially convertible into scalar numbers),
+comprising boolean, integer, real number, and complex number types.
+
+Booleans are trivially convertible into integers. While details differ by
+implementation, common implementations in lower-level languages (e.g., C, C++,
+Perl) typically implicitly convert:
+
+* ``False`` to ``0``.
+* ``True`` to ``1``.
+'''
+
+
+ScalarTypes = (str,) + NumericlikeTypes
+'''
+Tuple of all **builtin scalar types** (i.e., classes whose instances are
+single scalar primitives), comprising all boolean, numeric, and textual types.
 '''
 
 # ....................{ TUPLES ~ weakref                  }....................
@@ -599,162 +690,27 @@ This tuple contains classes matching unproxied weak references of both standard
 objects *and* bound methods, which require specific handling.
 '''
 
-# ....................{ TUPLES ~ scalar                   }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Order is significant here. See commentary in the docstring below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-NumericSimpleTypes = (float, int,)
-'''
-Tuple of all **builtin simple numeric types** (i.e., classes whose instances
-are trivial scalar numbers), comprising both integer and real number types.
-
-This tuple intentionally excludes complex number types - whose non-trivial
-encapsulation of a pair of real numbers *usually* necessitates non-trivial
-special handling.
-
-Caveats
-----------
-Note that this tuple intentionally lists the :class:`float` type *before* the
-:class:`int` type. Why/ Downstream consumers (e.g., BETSEE) coerce GUI-based
-numeric string values into numbers by casting these strings into instances of
-the first item of this tuple. Reversing the order of these items in this tuple
-would adversely strip the decimal portion from real number strings. In simpler
-words: "Just 'cause."
-'''
-
-
-NumericTypes = (complex,) + NumericSimpleTypes
-'''
-Tuple of all **builtin numeric types** (i.e., classes whose instances are
-scalar numbers), comprising integer, real number, and complex number types.
-'''
-
-
-NumericlikeTypes = (bool,) + NumericTypes
-'''
-Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
-either scalar numbers or types trivially convertable into scalar numbers),
-comprising boolean, integer, real number, and complex number types.
-
-Booleans are trivially convertible into integers. While details differ by
-implementation, the "standard" implementation trivially converts:
-
-* ``False`` to ``0``.
-* ``True`` to ``1``.
-'''
-
-
-ScalarTypes = (str,) + NumericlikeTypes
-'''
-Tuple of all **builtin scalar types** (i.e., classes whose instances are
-single scalar primitives), comprising all boolean, numeric, and textual types.
-'''
-
-# ....................{ TUPLES : lib                      }....................
+# ....................{ TUPLES ~ lib                      }....................
 # Types conditionally dependent upon the importability of third-party
-# dependencies. For safety, all such types default to ``None`` here and are
-# subsequently redefined by the try-except block below.
+# dependencies. For safety, all such types default to "None" for simple types
+# and the empty tuple for tuples of simple types and are subsequently redefined
+# by the try-except block below.
 
-BoolTypes = None
-'''
-Tuple of all strictly boolean types, including both the standard :class:`bool`
-builtin *and* the non-standard NumPy-specific boolean type (when NumPy is
-importable in the active Python interpreter).
-
-Caveats
-----------
-Non-standard boolean types are typically *not* interoperable with the standard
-standard :class:`bool` type. In particular, it is typically *not* the case, for
-any variable ``my_bool`` of non-standard boolean type and truthy value,
-that either ``my_bool is True`` or ``my_bool == True`` yield the desired
-results. Rather, such variables should *always* be coerced into the standard
-:class:`bool` type before being compared -- either:
-
-* Implicitly (e.g., ``if my_bool: pass``).
-* Explicitly (e.g., ``if bool(my_bool): pass``).
-
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
-
-
-ContainerTypes = None
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Container` API and hence
-defining the special ``__contains__()`` method internally called by the ``in``
-operator.
-
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
-
-
-IterableTypes = None
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Iterable` API.
-
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
-
-
-SequenceTypes = None
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Sequence` API.
-
-Sequences are iterables supporting efficient element access via integer
-indices.  Most sequences implement the :class:`collections.abc.Sequence`
-abstract base class, including the concrete :class:`str` string class. All
-sequences define the special ``__getitem__()`` and ``__len__()`` methods,
-amongst numerous others.
-
-While all sequences are iterables, not all iterables are sequences. Generally
-speaking, sequences correspond to the proper subset of iterables whose elements
-are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
-:class:`dict` implements :class:`collections.abc.Iterable` but *not*
-:class:`collections.abc.Sequence`, due to failing to support integer
-index-based lookup; :class:`OrderedDict` implements both, due to supporting
-such lookup.
-
-For generality, this tuple contains classes matching both pure-Python sequences
-*and* non-Pythonic Fortran-based Numpy arrays and matrices -- which fail to
-subclass :class:`collections.abc.Sequence` despite implementing the entirety of
-that that API.
-'''
-
-# ....................{ TUPLES : lib ~ matplotlib         }....................
-MatplotlibFigureType = None
-'''
-Type of :mod:`matplotlib` figures if :mod:`matplotlib` is importable *or*
-``None`` otherwise.
-
-This class is a synonym of the :class:`matplotlib.figure.Figure` class,
-permitting callers to avoid importing that class.
-'''
-
-# ....................{ TUPLES : lib ~ numpy              }....................
+# ....................{ TUPLES ~ lib : numpy              }....................
+# Defined by the "TUPLES ~ init" subsection below.
 NumpyArrayType = None
 '''
-Type of all Numpy arrays if :mod:`numpy` is importable *or* ``None`` otherwise.
+Type of all NumPy arrays if :mod:`numpy` is importable *or* ``None`` otherwise.
 
 This class is a synonym of the :class:`numpy.ndarray` class, permitting callers
 to avoid importing that class.
 '''
 
 
+# Defined by the "TUPLES ~ init" subsection below.
 NumpyScalarType = None
 '''
-Superclass of all Numpy scalar subclasses (e.g., :class:`numpy.bool_`) if
+Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
 :mod:`numpy` is importable *or* ``None`` otherwise.
 
 This class is a synonym of the :class:`numpy.generic` class, permitting callers
@@ -762,19 +718,50 @@ to avoid importing that class.
 '''
 
 
+# Defined by the "TUPLES ~ init" subsection below.
 NumpyDataTypes = ()
 '''
-Tuple of the **Numpy data type** (i.e., Numpy-specific numeric scalar type
-homogenously constraining all elements of all Numpy arrays) and all scalar
-Python types transparently supported by Numpy as implicit data types (i.e.,
+Tuple of the **NumPy data type** (i.e., NumPy-specific numeric scalar type
+homogenously constraining all elements of all NumPy arrays) and all scalar
+Python types transparently supported by NumPy as implicit data types (i.e.,
 :class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
-:mod:`numpy` is importable *or* ``None`` otherwise.
+:mod:`numpy` is importable *or* the empty tuple otherwise.
 
 This class is a synonym of the :class:`numpy.dtype` class, permitting callers
 to avoid importing that class.
 '''
 
-# ....................{ TUPLES : init                     }....................
+# ....................{ TUPLES ~ lib : setuptools         }....................
+# Defined by the "TUPLES ~ init" subsection below.
+DistributionSetuptoolsOrNoneTypes = ()
+'''
+Tuple of the type of all :mod:`setuptools`-specific package metadata objects
+and of the ``None`` singleton if :mod:`pkg_resources` is importable *or* the
+empty tuple otherwise.
+'''
+
+
+# Defined by the "TUPLES ~ init" subsection below.
+VersionSetuptoolsTypes = ()
+'''
+Tuple of all :mod:`setuptools`-specific version types (i.e., types instantiated
+and returned by the stable :func:`pkg_resources.parse_version` function bundled
+with :mod:`setuptools`) if :mod:`pkg_resources` is importable *or* the empty
+tuple otherwise.
+
+Specifically, this tuple contains the following types if :mod:`pkg_resources`
+is importable:
+
+* :class:`pkg_resources.packaging.version.Version`, a `PEP 440`_-compliant
+  version type.
+* :class:`pkg_resources.packaging.version.LegacyVersion`, a `PEP
+  440`_-noncompliant version type.
+
+.. _PEP 440:
+    https://www.python.org/dev/peps/pep-0440
+'''
+
+# ....................{ TUPLES ~ init                     }....................
 # Conditionally define dependency-specific types.
 #
 # Since this submodule is often imported early in application startup, the
@@ -783,66 +770,123 @@ to avoid importing that class.
 # guaranteed to raise human-readable exceptions on missing mandatory
 # dependencies, their absence here is ignorable.
 
-# If matplotlib is importable, conditionally define matplotlib-specific types.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To avoid polluting the public module namespace, external attributes
+# should be locally imported at module scope *ONLY* under alternate private
+# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
+# than merely "from argparse import ArgumentParser").
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# If NumPy is importable...
 try:
-    from matplotlib.figure import Figure
-    MatplotlibFigureType = Figure
+    import numpy as _numpy
+
+    # Define NumPy-specific types.
+    NumpyArrayType  =  _numpy.ndarray
+    NumpyScalarType =  _numpy.generic
+    NumpyDataTypes  = (_numpy.dtype,) + NumericlikeTypes
+
+    # Extend NumPy-agnostic types with NumPy-specific types.
+    BoolTypes += (_numpy.bool_,)
+    ContainerTypes += (NumpyArrayType,)
+    IterableTypes  += (NumpyArrayType,)
+    SequenceTypes  += (NumpyArrayType,)
+# Else, NumPy is unimportable. We're done here, folks.
 except:
     pass
 
-# If NumPy is importable, conditionally define NumPy-specific types.
+
+# If setuptools is importable, conditionally define setuptools-specific types.
 try:
-    import numpy
+    import pkg_resources as _pkg_resources
 
-    BoolTypes = (bool, numpy.bool_)
-    NumpyArrayType = numpy.ndarray
-    NumpyScalarType = numpy.generic
-    NumpyDataTypes = (numpy.dtype,) + NumericlikeTypes
-    ContainerTypes = (Container, NumpyArrayType)
-    IterableTypes = (Iterable, NumpyArrayType)
-    SequenceTypes = (Sequence, NumpyArrayType)
-
-    # Delete all of the Numpy-specific imports imported above to avoid
-    # polluting the namespace of this module with these irrelevant names.
-    del numpy
-# Else, Numpy is unimportable. Define these tuples to contain only stock types.
+    # Define setuptools-specific types.
+    DistributionSetuptoolsOrNoneTypes = (_pkg_resources.Distribution, NoneType)
+    VersionSetuptoolsTypes = (
+        _pkg_resources.packaging.version.Version,
+        _pkg_resources.packaging.version.LegacyVersion,
+    )
+# Else, setuptools is unimportable. While this should typically *NEVER* be the
+# case, edge cases gonna edge case.
 except:
-    BoolTypes = (bool,)
-    ContainerTypes = (Container,)
-    IterableTypes = (Iterable,)
-    SequenceTypes = (Sequence,)
+    pass
 
-# ....................{ TUPLES : post-init                }....................
+# ....................{ TUPLES ~ post-init : container    }....................
 # Tuples of types assuming the above initialization to have been performed.
 
 MappingOrSequenceTypes = (MappingType,) + SequenceTypes
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`Mapping` *or* :class:`Sequence` APIs.
+subclassing) the canonical :class:`collections.abc.Mapping` *or*
+:class:`collections.abc.Sequence` APIs.
 '''
 
 
 ModuleOrSequenceTypes = (ModuleType,) + SequenceTypes
 '''
 Tuple of the module type *and* all container base classes conforming to (but
-*not* necessarily subclassing) the canonical :class:`Sequence` API.
+*not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
+API.
 '''
 
 
 NumericOrIterableTypes = NumericSimpleTypes + IterableTypes
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
-*not* necessarily subclassing) the canonical :class:`Iterable` API.
+*not* necessarily subclassing) the canonical :class:`collections.abc.Iterable`
+API.
 '''
 
 
 NumericOrSequenceTypes = NumericSimpleTypes + SequenceTypes
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
-*not* necessarily subclassing) the canonical :class:`Sequence` API.
+*not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
+API.
 '''
 
-# ....................{ TUPLES : none                     }....................
+# ....................{ TUPLES ~ post-init : version      }....................
+VersionComparableTypes = (tuple,) + VersionSetuptoolsTypes
+'''
+Tuple of all **comparable version types** (i.e., types suitable for use both as
+parameters to callables accepting arbitrary version specifiers *and* as
+operands to numeric operators comparing such specifiers) if
+:mod:`pkg_resources` is importable *or* ``(tuple,)`` otherwise.
+
+This is the proper subset of types listed by the :data:`VersionTypes` tuple
+that are directly comparable, thus excluding the :class:`str` type.
+``.``-delimited version specifier strings are only indirectly comparable after
+conversion to a comparable version type.
+
+Caveats
+----------
+Note that all types listed by this tuple are *only* safely comparable with
+versions of the same type. In particular, the types listed by the
+:class:`VersionSetuptoolsTypes` tuple do *not* necessarily support direct
+comparison with either the :class:`tuple` *or* `class:`str` version types;
+ironically, those types supported both under older but *not* newer versions of
+:mod:`setuptools`. This is why we can't have good things.
+'''
+
+
+VersionTypes = (str,) + VersionComparableTypes
+'''
+Tuple of all **version types** (i.e., types suitable for use as parameters to
+callables accepting arbitrary version specifiers) if :mod:`pkg_resources` is
+importable *or* ``(str, tuple,)`` otherwise.
+
+This includes:
+
+* :class:`str`, specifying versions in ``.``-delimited positive integer format
+  (e.g., ``2.4.14.2.1.356.23``).
+* :class:`tuple`, specifying versions as one or more positive integers (e.g.,
+  ``(2, 4, 14, 2, 1, 356, 23)``),
+* :class:`VersionSetuptoolsTypes`, whose :mod:`setuptools`-specific types
+  specify versions as instance variables convertible into both of the prior
+  formats (e.g., ``VersionSetuptoolsTypes[0]('2.4.14.2.1.356.23')``).
+'''
+
+# ....................{ TUPLES ~ none                     }....................
 # Tuples of types containing at least the type of the singleton "None" object.
 
 NoneTypes = (NoneType,)
@@ -851,12 +895,6 @@ Tuple of only the type of the ``None`` singleton.
 
 This tuple is principally intended for use in efficiently constructing other
 tuples of types containing this type.
-'''
-
-
-BoolOrNoneTypes = (bool, NoneType)
-'''
-Tuple of both the boolean type *and* that of the ``None`` singleton.
 '''
 
 
@@ -872,23 +910,23 @@ Tuple of the type of all types *and* that of the ``None`` singleton.
 '''
 
 
-DistributionOrNoneTypes = (Distribution, NoneType)
+RegexMatchOrNoneTypes = (RegexMatchType, NoneType)
 '''
-Tuple of the type of all :mod:`setuptools`-specific package metadata objects
-*and* that of the ``None`` singleton.
-'''
-
-
-IntOrNoneTypes = (int, NoneType)
-'''
-Tuple of both the integer type *and* that of the ``None`` singleton.
+Tuple of both the regular expression match object type *and* the type of the
+``None`` singleton.
 '''
 
 
+TestableOrNoneTypes = TestableTypes + NoneTypes
+'''
+Tuple of all testable types *and* the type of the ``None`` singleton.
+'''
+
+# ....................{ TUPLES ~ none : container         }....................
 IterableOrNoneTypes = IterableTypes + NoneTypes
 '''
 Tuple of all container base classes conforming to (but _not_ necessarily
-subclassing) the canonical :class:`Iterable` API as well as the type of the
+subclassing) the canonical :class:`_Iterable` API as well as the type of the
 ``None`` singleton.
 '''
 
@@ -896,7 +934,7 @@ subclassing) the canonical :class:`Iterable` API as well as the type of the
 MappingOrNoneTypes = (MappingType,) + NoneTypes
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`Mapping` API as well as the type of the
+subclassing) the canonical :class:`_Mapping` API as well as the type of the
 ``None`` singleton.
 '''
 
@@ -904,14 +942,8 @@ subclassing) the canonical :class:`Mapping` API as well as the type of the
 MappingOrSequenceOrNoneTypes = MappingOrSequenceTypes + NoneTypes
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`Mapping` *or* :class:`Sequence` APIs as well
-as the type of the ``None`` singleton.
-'''
-
-
-NumericOrNoneTypes = NumericSimpleTypes + NoneTypes
-'''
-Tuple of all numeric types *and* the type of the singleton `None` object.
+subclassing) the canonical :class:`_Mapping` *or* :class:`_Sequence` APIs as
+well as the type of the ``None`` singleton.
 '''
 
 
@@ -919,20 +951,20 @@ NumericOrSequenceOrNoneTypes = NumericOrSequenceTypes + NoneTypes
 '''
 Tuple of all numeric types, all container base classes conforming to (but *not*
 necessarily subclassing) the canonical :class:`int`, :class:`float`, *or*
-:class:`Sequence` APIs as well as the type of the singletone ``None`` object.
+:class:`_Sequence` APIs as well as the type of the singleton ``None`` object.
 '''
 
 
 NumpyDataOrNoneTypes = NumpyDataTypes + NoneTypes
 '''
-Tuple of all Numpy data types *and* the type of the ``None`` singleton.
+Tuple of all NumPy data types *and* the type of the ``None`` singleton.
 '''
 
 
 SequenceOrNoneTypes = SequenceTypes + NoneTypes
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`Sequence` API as well as the type of the
+subclassing) the canonical :class:`_Sequence` API as well as the type of the
 ``None`` singleton.
 '''
 
@@ -943,51 +975,26 @@ Tuple of both the set type *and* the type of the ``None`` singleton.
 '''
 
 
+# ....................{ TUPLES ~ none : scalar            }....................
+BoolOrNoneTypes = (bool, NoneType)
+'''
+Tuple of both the boolean type *and* that of the ``None`` singleton.
+'''
+
+
+IntOrNoneTypes = (int, NoneType)
+'''
+Tuple of both the integer type *and* that of the ``None`` singleton.
+'''
+
+
+NumericOrNoneTypes = NumericSimpleTypes + NoneTypes
+'''
+Tuple of all numeric types *and* the type of the singleton ``None`` object.
+'''
+
+
 StrOrNoneTypes = (str, NoneType)
 '''
 Tuple of both the string type *and* the type of the ``None`` singleton.
-'''
-
-
-TestableOrNoneTypes = TestableTypes + NoneTypes
-'''
-Tuple of all testable types *and* the type of the ``None`` singleton.
-'''
-
-# ....................{ TUPLES ~ regex                    }....................
-# Yes, this is the only reliable means of obtaining the type of compiled
-# regular expressions. For unknown reasons presumably concerning the archaic
-# nature of Python's regular expression support, this type is *NOT* publicly
-# exposed. While the private "re._pattern_type" attribute does technically
-# provide this type, it does so in a private and hence non-portable manner.
-RegexCompiledType = type(re.compile(''))
-'''
-Type of all compiled regular expressions.
-'''
-
-
-# Yes, this type is required for type validation et the module scope elsewhere.
-# Yes, this is the most time-efficient means of obtaining this type. No, this
-# type is *NOT* directly importable. Although this type's classname is
-# published to be "_sre.SRE_Match", the "_sre" C extension provides no such
-# type for pure-Python importation.
-RegexMatchType = type(re.match(r'', ''))
-'''
-Type of all **regular expression match objects** (i.e., objects returned by the
-:func:`re.match` function).
-'''
-
-
-RegexTypes = (str, RegexCompiledType)
-'''
-Tuple of all **regular expression-like types** (i.e., types either defining
-regular expressions or losslessly convertible to such types, typically accepted
-by functions in the :mod:`betse.util.type.regexes` submodule).
-'''
-
-
-RegexMatchOrNoneTypes = (RegexMatchType, NoneType)
-'''
-Tuple of both the regular expression match object type *and* the type of the
-``None`` singleton.
 '''
