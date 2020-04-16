@@ -33,6 +33,9 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 
 import sys
 
+# See the "beartype.__init__" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ METADATA                          }....................
 NAME = 'beartype'
 '''

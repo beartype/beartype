@@ -97,6 +97,8 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
+
+#FIXME: Privatize us up, please.
 from weakref import ref, CallableProxyType, ProxyType, WeakMethod
 
 # Import the following types as is into the namespace of this submodule,
@@ -119,6 +121,9 @@ from types import (
     MethodType,
     ModuleType,
 )
+
+# See the "beartype.__init__" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TYPES                             }....................
 ClassType = type
