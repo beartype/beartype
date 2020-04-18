@@ -83,6 +83,7 @@ from argparse import (
 from collections import deque as _deque
 from collections.abc import (
     Container as _Container,
+    Generator as _Generator,
     Hashable as _Hashable,
     Iterable as _Iterable,
     Iterator as _Iterator,
@@ -97,29 +98,33 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
+from weakref import (
+    ref as _ref,
+    CallableProxyType as _CallableProxyType,
+    ProxyType as _ProxyType,
+    WeakMethod as _WeakMethod,
+)
 
-#FIXME: Privatize us up, please.
-from weakref import ref, CallableProxyType, ProxyType, WeakMethod
-
-# Import the following types as is into the namespace of this submodule,
-# permitting callers to reference these types conveniently. Since the
-# nomenclature of these types is already consistent with that used by types
-# declared below (namely, both CamelCase and suffixed by "Type"), these types
-# are used as is rather than aliased to synonymous types below.
+# Note that:
 #
-# Note that the "LambdaType" is intentionally *NOT* imported. Why? Because that
-# type is exactly synonymous with "FunctionType", implying lambdas are
-# indistinguishable from functions. To curtail confusion elsewhere and, in
-# particular, to prevent functions from being misidentified as lambdas, all
-# lambdas are currently misidentified as functions. This is the lesser of
-# multiple evils, we're afraid.
+# * The "BuiltinMethodType" is intentionally *NOT* imported. Why? Because that
+#   type is exactly synonymous with "BuiltinFunctionType", implying C-based
+#   methods are indistinguishable from C-based functions. To prevent C-based
+#   functions from being misidentified as C-based methods, all C-based
+#   functions and methods are ambiguously identified as C-based callables.
+# * The "LambdaType" is intentionally *NOT* imported. Why? Because that type is
+#   exactly synonymous with "FunctionType", implying lambdas are
+#   indistinguishable from pure-Python functions. To prevent pure-Python
+#   functions from being misidentified as lambdas, all lambdas are currently
+#   misidentified as pure-Python functions.
+#
+# These are the lesser of multiple evils.
 from types import (
-    BuiltinFunctionType,
-    BuiltinMethodType,
-    FunctionType,
-    GeneratorType,  # "GeneratorType" is imported from this submodule as is.
-    MethodType,
-    ModuleType,
+    BuiltinFunctionType as _BuiltinFunctionType,
+    FunctionType as _FunctionType,
+    GeneratorType as _GeneratorType,
+    MethodType as _MethodType,
+    ModuleType as _ModuleType,
 )
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -139,6 +144,13 @@ implementing the standard ``read()`` and ``write()`` methods).
 
 This class is a synonym of the :class:`io.IOBase` class, provided merely as a
 convenience to callers preferring to avoid importing that class.
+'''
+
+
+ModuleType = _ModuleType
+'''
+Type of all **C- and Python-based modules** (i.e., importable files implemented
+either as C extensions or in pure Python).
 '''
 
 
@@ -182,17 +194,111 @@ permitting callers to avoid importing that private class.
 '''
 
 # ....................{ TYPES ~ callable                  }....................
+CallableCType = _BuiltinFunctionType
+'''
+Type of all **C-based callables** (i.e., functions and methods implemented with
+low-level C rather than high-level Python, typically either in third-party C
+extensions, official stdlib C extensions, or the active Python interpreter
+itself).
+'''
+
+
 CallablePartialType = _functools.partial
 '''
-Type of all **partial callables** (i.e., callables dynamically produced by the
-function-like :class:`functools.partial` class).
+Type of all **pure-Python partial callables** (i.e., callables dynamically
+wrapped by the function-like :class:`functools.partial` class, implemented in
+pure Python).
+
+Caveats
+----------
+This type does *not* distinguish between whether the original callable wrapped
+by :class:`functools.partial` is C-based or pure Python -- only that some
+callable of indeterminate origin is in fact wrapped.
 '''
 
 
-ClassMethodType = classmethod
+FunctionType = _FunctionType
 '''
-Type of all **class methods** (i.e., methods bound to a class rather than an
-instance of a class and implicitly passed that class as their first parameter).
+Type of all **pure-Python functions** (i.e., functions implemented in pure
+Python *not* associated with an owning class or instance of a class).
+'''
+
+# ....................{ TYPES ~ callable ~ generator      }....................
+GeneratorType = _Generator
+'''
+Type of all **C- and Python-based generators** (i.e., iterators implementing
+the :class:`collections.abc.Generator` protocol), including:
+
+* Pure-Python subclasses of the :class:`collections.abc.Generator` superclass.
+* C-based generators returned by pure-Python callables containing one or more
+  ``yield`` statements.
+* C-based generator comprehensions created by pure-Python syntax delimited by
+  ``(`` and ``)``.
+
+This class is a synonym of the :class:`collections.abc.Generator` class,
+provided merely as a convenience to callers preferring to avoid importing that
+class.
+
+See Also
+----------
+:class:`GeneratorCType`
+    Subtype of all C-based generators.
+'''
+
+
+GeneratorCType = _GeneratorType
+'''
+Type returned by all **C-based generators** (i.e., callables containing one or
+more ``yield`` statements, implicitly converted at runtime to return a C-based
+iterator of this type) as well as the type of all **C-based generator
+comprehensions** (i.e., ``(``- and ``)``-delimited syntactic sugar, also
+implicitly converted at runtime to return a C-based iterator of this type).
+
+Caveats
+----------
+This special-purpose type is a subtype of the more general-purpose
+:class:`GeneratorType`. Whereas the latter applies to *all* generators
+implementing the :class:`collections.abc.Iterator` protocol, the former only
+applies to generators implicitly created by Python itself.
+'''
+
+# ....................{ TYPES ~ callable ~ method         }....................
+MethodType = _MethodType
+'''
+Type of all **pure-Python instance methods** (i.e., methods implemented in pure
+Python, bound to instances of classes and implicitly passed those instances as
+their first parameters).
+'''
+
+
+# Although Python >= 3.7 now exposes an explicit method wrapper type via the
+# standard "types.MethodWrapperType" object, this is of no benefit to older
+# versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
+# to *ALWAYS* exist is obtained instead.
+MethodCWrapperType = type(''.__add__)
+'''
+Type of all **C-based method wrappers** (i.e., bound special methods of a small
+subset of builtin types implemented in C).
+'''
+
+
+MethodClassType = classmethod
+'''
+Type of all **pure-Python class methods** (i.e., methods implemented in pure
+Python, bound to classes and implicitly passed those classes as their first
+parameters).
+'''
+
+
+MethodPropertyType = property
+'''
+Type of all **pure-Python property methods** (i.e., unbound methods implemented
+in pure Python, accessed as class rather than instance attributes and decorated
+by the builtin :class:`property` class decorator).
+
+Note that, unlike comparable method descriptors and slot wrappers, property
+objects are *not* callable (i.e., their implementation fails to define the
+special ``__call__`` method).
 '''
 
 
@@ -202,61 +308,43 @@ instance of a class and implicitly passed that class as their first parameter).
 # guaranteed to *ALWAYS* exist is obtained instead.
 MethodDescriptorType = type(str.upper)
 '''
-Type of all **method descriptors** (i.e., unbound functions accessed as class
-rather than instance attributes).
+Type of all **pure-Python method descriptors** (i.e., unbound functions
+implemented in pure Python, accessed as class rather than instance attributes).
 
 Note that, despite being unbound, method descriptors remain callable (e.g., by
-explicitly passing the intended ``self`` object as the first parameter).
-'''
-
-
-# Although Python >= 3.7 now exposes an explicit method wrapper type via the
-# standard "types.MethodWrapperType" object, this is of no benefit to older
-# versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
-# to *ALWAYS* exist is obtained instead.
-MethodWrapperType = type(''.__add__)
-'''
-Type of all **method wrappers** (i.e., bound special methods of a small subset
-of builtin types).
-'''
-
-
-PropertyType = property
-'''
-Type of all **property methods** (i.e., methods decorated by the builtin
-:class:`property` class decorator).
+explicitly passing the intended ``self`` object as their first parameter).
 '''
 
 
 # Since Python appears to expose no explicit slot wrapper type via any standard
 # module (e.g., "types", "collections.abc"), the type of an arbitrary slot
 # wrapper guaranteed to *ALWAYS* exist is obtained instead.
-SlotWrapperType = type(str.__len__)
+MethodSlotCWrapperType = type(str.__len__)
 '''
-Type of all **slot wrappers** (i.e., C-based unbound methods accessed as class
-rather than instance attributes).
+Type of all **C-based slot wrappers** (i.e., unbound methods implemented in C,
+accessed as class rather than instance attributes).
 
 Note that, despite being unbound, slot wrappers remain callable (e.g., by
 explicitly passing the intended ``self`` object as the first parameter).
 '''
 
 
-StaticMethodType = staticmethod
+MethodStaticType = staticmethod
 '''
-Type of all **static methods** (i.e., methods bound to a class rather than an
-instance of a class but *not* implicitly passed that class as their first
-parameter, unlike class methods).
+Type of all **pure-Python static methods** (i.e., methods implemented in pure
+Python, bound to a class rather than an instance of a class but *not*
+implicitly passed that class as their first parameter, unlike class methods).
 '''
 
 # ....................{ TYPES ~ callable : weakref        }....................
-WeakRefStandardType = ref
+WeakRefStandardType = _ref
 '''
 Type of all **unproxied general-purpose weak references** (i.e., callable
 objects yielding a strong reference to their referred object when called).
 '''
 
 
-WeakRefBoundMethodType = WeakMethod
+WeakRefBoundMethodType = _WeakMethod
 '''
 Type of all **unproxied bound method weak references** (i.e., callable
 objects yielding a strong reference to their referred bound method when
@@ -481,22 +569,65 @@ parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
 '''
 
 # ....................{ TUPLES ~ callable                 }....................
-BoundMethodTypes = (MethodType, ClassMethodType, StaticMethodType)
+FunctionTypes = (FunctionType, CallableCType,)
+'''
+Tuple of all **function classes** (i.e., classes whose instances are either
+built-in or user-defined functions).
+
+Caveats
+----------
+**This tuple may yield false positives when used to validate types.** Since
+Python fails to distinguish between C-based functions and methods, this tuple
+is the set of all function types as well as the ambiguous type of all C-based
+functions and methods.
+'''
+
+
+MethodClassBoundTypes = (MethodClassType, MethodStaticType)
+'''
+Tuple of all **class-bound method classes** (i.e., classes whose instances are
+callable objects bound to a class rather than instance of a class).
+'''
+
+
+MethodBoundTypes = (MethodType, MethodCWrapperType) + MethodClassBoundTypes
 '''
 Tuple of all **bound method classes** (i.e., classes whose instances are
-callable objects bound to either a class or instance of a class).
+callable objects bound to either classes or instances of classes).
 '''
 
 
-CallableTypes = (
-    BuiltinFunctionType,
-    BuiltinMethodType,
-    FunctionType,
-    MethodType,
-    MethodDescriptorType,
-    MethodWrapperType,
-    SlotWrapperType,
-)
+MethodUnboundTypes = (MethodDescriptorType, MethodSlotCWrapperType)
+'''
+Tuple of all **unbound method classes** (i.e., classes whose instances are
+callable objects bound to neither classes nor instances of classes).
+
+Note that property objects are *not* callable and thus intentionally excluded.
+'''
+
+
+MethodTypes = (CallableCType,) + MethodBoundTypes + MethodUnboundTypes
+'''
+Tuple of all **method classes** (i.e., classes whose instances are either
+built-in or user-defined methods).
+
+Caveats
+----------
+**This tuple may yield false positives when used to validate types.** Since
+Python fails to distinguish between C-based functions and methods, this tuple
+is the set of all bound and unbound method types as well as the ambiguous type
+of all C-based functions and methods.
+'''
+
+
+# For DRY, this tuple is defined as the set union of all function and method
+# types defined above converted back to a tuple.
+#
+# While this tuple could also be defined as the simple concatenation of the
+# "FunctionTypes" and "MethodTypes" tuples, doing so would duplicate all types
+# ambiguously residing in both tuples (i.e., "CallableCType"). Doing so would
+# induce inefficiencies during type checking, which would be awfully bad.
+CallableTypes = tuple(set(FunctionTypes) | set(MethodTypes))
 '''
 Tuple of all **callable classes** (i.e., classes whose instances are callable
 objects, including both built-in and user-defined functions, lambdas, methods,
@@ -510,40 +641,19 @@ Tuple of all callable classes *and* the string type.
 '''
 
 
-ClassBoundMethodTypes = (ClassMethodType, StaticMethodType)
-'''
-Tuple of all **class-bound method classes** (i.e., classes whose instances are
-callable objects bound to a class rather than instance of a class).
-'''
-
-
 DecoratorTypes = CallableTypes + (ClassType,)
 '''
 Tuple of all **decorator types** (i.e., both callable classes *and* the type of
 those classes).
 
-Motivation
+Caveats
 ----------
-Since classes themselves may be callable (e.g., by defining the special
-``__call__`` method), this tuple is the set of all possible callable types. In
-particular, this tuple describes all types permissible for use as decorators.
-
-Since most classes are *not* callable, however, this tuple may yield false
-positives when used to validate types. Caveat emptor.
-'''
-
-
-FunctionTypes = (BuiltinFunctionType, FunctionType,)
-'''
-Tuple of all **function classes** (i.e., classes whose instances are either
-built-in or user-defined functions).
-'''
-
-
-MethodTypes = (BuiltinMethodType, MethodType,)
-'''
-Tuple of all **method classes** (i.e., classes whose instances are either
-built-in or user-defined methods).
+**This tuple may yield false positives when used to validate types.** Since
+classes themselves may be callable (i.e., by defining the special ``__call__``
+method), this tuple is the set of all standard callable types as well as that
+of classes. In particular, this tuple describes all types permissible for use
+as decorators. Since most classes are *not* callable, however, this tuple may
+yield false positives when passed classes.
 '''
 
 # ....................{ TUPLES ~ container                }....................
@@ -675,7 +785,7 @@ single scalar primitives), comprising all boolean, numeric, and textual types.
 '''
 
 # ....................{ TUPLES ~ weakref                  }....................
-WeakRefProxyTypes = (CallableProxyType, ProxyType)
+WeakRefProxyTypes = (_CallableProxyType, _ProxyType)
 '''
 Tuple of all **weak reference proxy classes** (i.e., classes whose instances
 are weak references to other instances masquerading as those instances).
