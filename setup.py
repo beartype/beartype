@@ -4,9 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-:mod:`setuptools`-based makefile instrumenting all high-level administration
-tasks (e.g., installation, freezing, test running) for this package.
+**Beartype installer.**
+
+This submodule conforms to the standard :mod:`setuptools`-based "makefile"
+format, instrumenting most high-level installation tasks for this package.
 '''
+
+# ....................{ TODO                              }....................
+#FIXME: Generate documentation from the NumPy-style docstrings embedded
+#throughout this codebase, presumably with Sphinx + napoleon.
+#FIXME: Publish generated documentation to readthedocs.org.
+#FIXME: Automate generation and publication of documentation in a manner
+#synchronized with our stable release (and possibly CI) process.
 
 # ....................{ KLUDGES                           }....................
 # Explicitly register all files and subdirectories of the root directory

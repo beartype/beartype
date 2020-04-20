@@ -3,7 +3,6 @@
 # Copyright (c) 2014-2020 Cecil Curry.
 # See "LICENSE" for further details.
 
-# ....................{ METADATA                          }....................
 '''
 **Beartype cave.**
 
@@ -58,6 +57,7 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
    https://www.python.org/dev/peps/pep-0484
 '''
 
+# ....................{ TODO                              }....................
 #FIXME: Define a new "TypingType" or "Pep484Type" type rooted at either the
 #"typing.TypingMeta" metaclass or "typing._TypingBase" superclass. Obviously,
 #we currently have no means of type-checking metaclasses... but the latter is
@@ -221,6 +221,13 @@ FunctionType = _FunctionType
 '''
 Type of all **pure-Python functions** (i.e., functions implemented in pure
 Python *not* associated with an owning class or instance of a class).
+
+Caveats
+----------
+This type does *not* distinguish between conventional named functions and
+unnamed lambda functions. Since doing so would usually be seen as overly
+specific and insufficiently general, this ambiguity is *not* necessarily a bad
+thing.
 '''
 
 # ....................{ TYPES ~ callable ~ generator      }....................
@@ -248,10 +255,11 @@ See Also
 
 GeneratorCType = _GeneratorType
 '''
-Type returned by all **C-based generators** (i.e., callables containing one or
-more ``yield`` statements, implicitly converted at runtime to return a C-based
-iterator of this type) as well as the type of all **C-based generator
-comprehensions** (i.e., ``(``- and ``)``-delimited syntactic sugar, also
+C-based type returned by all **pure-Python generators** (i.e., callables
+implemented in pure Python containing one or more ``yield`` statements,
+implicitly converted at runtime to return a C-based iterator of this type) as
+well as the C-based type of all **pure-Python generator comprehensions** (i.e.,
+``(``- and ``)``-delimited syntactic sugar implemented in pure Python, also
 implicitly converted at runtime to return a C-based iterator of this type).
 
 Caveats
@@ -290,18 +298,6 @@ parameters).
 '''
 
 
-MethodPropertyType = property
-'''
-Type of all **pure-Python property methods** (i.e., unbound methods implemented
-in pure Python, accessed as class rather than instance attributes and decorated
-by the builtin :class:`property` class decorator).
-
-Note that, unlike comparable method descriptors and slot wrappers, property
-objects are *not* callable (i.e., their implementation fails to define the
-special ``__call__`` method).
-'''
-
-
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.MethodDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
@@ -313,6 +309,18 @@ implemented in pure Python, accessed as class rather than instance attributes).
 
 Note that, despite being unbound, method descriptors remain callable (e.g., by
 explicitly passing the intended ``self`` object as their first parameter).
+'''
+
+
+MethodDescriptorPropertyType = property
+'''
+Type of all **pure-Python property method descriptors** (i.e., unbound
+functions implemented in pure Python, accessed as class rather than instance
+attributes and decorated by the builtin :class:`property` class decorator).
+
+Note that, unlike comparable method descriptors and slot wrappers, property
+objects are *not* callable (i.e., their implementation fails to define the
+special ``__call__`` method).
 '''
 
 
@@ -544,14 +552,6 @@ Type of all **regular expression match objects** (i.e., objects returned by the
 ModuleOrStrTypes = (str, ModuleType)
 '''
 Tuple of both the module *and* string type.
-'''
-
-
-CheckableMemberTypes = (ClassType, str)
-'''
-Tuple of all **checkable member types** (i.e., types suitable for use as the
-members of function annotations type-checked via the :func:`beartype.beartype`
-decorator).
 '''
 
 

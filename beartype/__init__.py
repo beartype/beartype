@@ -4,12 +4,16 @@
 # See "LICENSE" for further details.
 
 '''
-Top-level package namespace.
+**Beartype.**
 
 For PEP 8 compliance, this namespace exposes a subset of the metadata constants
 provided by the top-level :mod:`meta` submodule commonly inspected by external
 automation.
 '''
+
+# ....................{ TODO                              }....................
+#FIXME: Consider significantly expanding the above module docstring, assuming
+#Sphinx presents this module in its generated frontmatter.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -23,6 +27,10 @@ automation.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ IMPORTS                           }....................
+# Publicize the private @beartype._decor.beartype decorator as
+# @beartype.beartype, preserving all implementation details as private.
+from beartype._decor import beartype
+
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.
 from beartype.meta import VERSION as __version__
