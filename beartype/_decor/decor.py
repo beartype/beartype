@@ -25,7 +25,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #* Type-check variadic keyword arguments. Currently, only variadic positional
 #  arguments are type-checked. When doing so, remove the
-#  "Parameter.VAR_KEYWORD" type from the "_PARAMETER_KIND_IGNORABLE" set.
+#  "Parameter.VAR_KEYWORD" type from the "_PARAM_KIND_IGNORABLE" set.
 #* Type-check positional-only arguments under Python >= 3.8. Note that, since
 #  C-based callables have *ALWAYS* supported positional-only arguments, the
 #  "Parameter.POSITIONAL_ONLY" type is defined for *ALL* Python versions
@@ -33,11 +33,28 @@ This private submodule is *not* intended for importation by downstream callers.
 #  words, support for type-checking positional-only arguments should be added
 #  unconditionally without reference to Python version -- we suspect, anyway.
 #  When doing so, remove the "Parameter.POSITIONAL_ONLY" type from the
-#  "_PARAMETER_KIND_IGNORABLE" set.
-#* Remove the "_PARAMETER_KIND_IGNORABLE" set entirely.
+#  "_PARAM_KIND_IGNORABLE" set.
+#* Remove the "_PARAM_KIND_IGNORABLE" set entirely.
 
 # ....................{ IMPORTS                           }....................
 import functools, inspect
+from beartype._decor.code import (
+    _CODE_SIGNATURE,
+    _CODE_PARAM_VARIADIC_POSITIONAL,
+    _CODE_PARAM_KEYWORD_ONLY,
+    _CODE_PARAM_POSITIONAL_OR_KEYWORD,
+    _CODE_CALL_CHECKED,
+    _CODE_CALL_UNCHECKED,
+    _CODE_STR_IMPORT,
+    _CODE_STR_REPLACE,
+    _CODE_TUPLE_STR_TEST,
+    _CODE_TUPLE_STR_IMPORT,
+    _CODE_TUPLE_STR_APPEND,
+    _CODE_TUPLE_CLASS_APPEND,
+    _CODE_TUPLE_REPLACE,
+    _CODE_ANNOTATIONS_PARAM,
+    _CODE_ANNOTATIONS_RETURN,
+)
 from beartype.cave import (
     CallableTypes,
     ClassType,
@@ -96,7 +113,7 @@ Specifically, this tuple contains:
 '''
 
 
-_PARAMETER_KIND_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
+_PARAM_KIND_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
 '''
 Set of all :attr:`inspect.Parameter.kind` constants to be ignored during
 annotation-based type checking in the :func:`beartype` decorator.
@@ -197,7 +214,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is thankfully the most ideal.
-    func_body = _FUNC_SIGNATURE.format(
+    func_body = _CODE_SIGNATURE.format(
         func_type_checked_name=func_type_checked_name)
 
     # For the name of each parameter passed to this callable and the
@@ -220,7 +237,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
         # If this parameter is annotated and non-ignorable for purposes of type
         # checking, type check this parameter with this annotation.
         if (func_arg_annotation is not Parameter.empty and
-            func_arg.kind not in _PARAMETER_KIND_IGNORABLE):
+            func_arg.kind not in _PARAM_KIND_IGNORABLE):
             # Human-readable label describing this annotation.
             func_arg_annotation_label = (
                 '{} parameter "{}" type annotation'.format(
@@ -233,15 +250,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
             )
 
             # String evaluating to this parameter's annotated type.
-            #
-            # Note this line is intentionally double- rather than
-            # single-quoted and split over multiple lines in an insane manner.
-            # See also this Vim "python-mode" issue:
-            #     https://github.com/python-mode/python-mode/issues/1083
-            func_arg_type_expr = (
-                "__beartype_func._"
-                "_annotations_"
-                "_[{!r}]".format(func_arg.name))
+            func_arg_type_expr = _CODE_ANNOTATIONS_PARAM.format(func_arg.name)
 
             # String evaluating to this parameter's current value when
             # passed as a keyword.
@@ -258,7 +267,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
             # If this parameter is a tuple of positional variadic parameters
             # (e.g., "*args"), iteratively check these parameters.
             if func_arg.kind is Parameter.VAR_POSITIONAL:
-                func_body += _FUNC_PARAM_VARIADIC_POSITIONAL.format(
+                func_body += _CODE_PARAM_VARIADIC_POSITIONAL.format(
                     func_name=func_name,
                     arg_name=func_arg.name,
                     arg_index=func_arg_index,
@@ -267,7 +276,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
             # Else if this parameter is keyword-only, check this parameter only
             # by lookup in the variadic "**kwargs" dictionary.
             elif func_arg.kind is Parameter.KEYWORD_ONLY:
-                func_body += _FUNC_PARAM_KEYWORD_ONLY.format(
+                func_body += _CODE_PARAM_KEYWORD_ONLY.format(
                     func_name=func_name,
                     arg_name=func_arg.name,
                     arg_type_expr=func_arg_type_expr,
@@ -281,7 +290,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
                 # String evaluating to this parameter's current value when
                 # passed positionally.
                 func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
-                func_body += _FUNC_PARAM_POSITIONAL_OR_KEYWORD.format(
+                func_body += _CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
                     func_name=func_name,
                     arg_name=func_arg.name,
                     arg_index=func_arg_index,
@@ -306,17 +315,8 @@ def beartype(func: CallableTypes) -> CallableTypes:
             annotation_label=func_return_annotation_label,
         )
 
-        # Strings evaluating to this parameter's annotated type and currently
-        # passed value, as above.
-        #
-        # Note this line is intentionally double- rather than single-quoted and
-        # split over multiple lines in an insane manner. See also this
-        # ridiculous Vim "python-mode" issue:
-        #     https://github.com/python-mode/python-mode/issues/1083
-        func_return_type_expr = (
-            "__beartype_func._"
-            '_annotations_'
-            "_['return']")
+        # String evaluating to this return value's annotated type.
+        func_return_type_expr = _CODE_ANNOTATIONS_RETURN
 #     print('Return annotation: {{}}'.format({func_return_type_expr}))
 # '''.format(func_return_type_expr=func_return_type_expr)
 
@@ -330,11 +330,11 @@ def beartype(func: CallableTypes) -> CallableTypes:
 
         # Call this callable, type check the returned value, and return this
         # value from this wrapper.
-        func_body += _FUNC_CALL_CHECKED.format(
+        func_body += _CODE_CALL_CHECKED.format(
             func_name=func_name, return_type=func_return_type_expr)
     # Else, call this callable and return this value from this wrapper.
     else:
-        func_body += _FUNC_CALL_UNCHECKED
+        func_body += _CODE_CALL_UNCHECKED
 
     # Dictionary mapping from local attribute name to value. For efficiency,
     # only attributes required by the body of this wrapper are copied from the
@@ -483,7 +483,7 @@ def _get_code_replacing_annotation_by_types(
 
             # print('Importing "{annotation_type_module_name}.{annotation_type_basename}"...')
             # Import statement importing this module.
-            annotation_type_import_code = _FUNC_STR_IMPORT.format(
+            annotation_type_import_code = _CODE_STR_IMPORT.format(
                 annotation_type_module_name=annotation_type_module_name,
                 annotation_type_basename=annotation_type_basename,
             )
@@ -494,7 +494,7 @@ def _get_code_replacing_annotation_by_types(
             annotation_type_basename = annotation
 
         # Block of Python code to be returned.
-        return _FUNC_STR_REPLACE.format(
+        return _CODE_STR_REPLACE.format(
             annotation_expr=annotation_expr,
             annotation_label=annotation_label,
             annotation_type_basename=annotation_type_basename,
@@ -528,7 +528,7 @@ def _get_code_replacing_annotation_by_types(
         # Why? Because this approach trivially circumvents class basename
         # collisions (e.g., between the hypothetical classnames "rising.Sun"
         # and "sinking.Sun", which share the same basename "Sun").
-        annotation_replacement_code = _FUNC_TUPLE_STR_TEST.format(
+        annotation_replacement_code = _CODE_TUPLE_STR_TEST.format(
             subannotation_type_name_expr=subannotation_type_name_expr)
 
         # For the 0-based index of each item and that item of this
@@ -554,7 +554,7 @@ def _get_code_replacing_annotation_by_types(
 
                     # Import statement importing this module.
                     annotation_replacement_code += (
-                        _FUNC_TUPLE_STR_IMPORT.format(
+                        _CODE_TUPLE_STR_IMPORT.format(
                             subannotation_type_module_name=subannotation_type_module_name,
                             subannotation_type_basename=subannotation_type_basename,
                         ))
@@ -565,18 +565,18 @@ def _get_code_replacing_annotation_by_types(
                     subannotation_type_basename = subannotation
 
                 # Block of Python code to be returned.
-                annotation_replacement_code += _FUNC_TUPLE_STR_APPEND.format(
+                annotation_replacement_code += _CODE_TUPLE_STR_APPEND.format(
                     annotation_label=annotation_label,
                     subannotation_type_basename=subannotation_type_basename,
                 )
             # Else, this member is assumed to be a class. In this case...
             else:
                 # Block of Python code to be returned.
-                annotation_replacement_code += _FUNC_TUPLE_CLASS_APPEND.format(
+                annotation_replacement_code += _CODE_TUPLE_CLASS_APPEND.format(
                     subannotation_expr=subannotation_expr)
 
         # Block of Python code to be returned.
-        annotation_replacement_code += _FUNC_TUPLE_REPLACE.format(
+        annotation_replacement_code += _CODE_TUPLE_REPLACE.format(
             annotation_expr=annotation_expr)
 
         # Return this block.
@@ -703,147 +703,3 @@ if not __debug__:
         '''
 
         return func
-
-# ....................{ CONSTANTS ~ code                  }....................
-# Private global triple-quoted code string constants required by the @beartype
-# decorator, deferred to circumvent syntax highlighting issues under Vim. *UGH*
-
-
-_FUNC_SIGNATURE = '''
-def {func_type_checked_name}(*args, __beartype_func=__beartype_func, **kwargs):
-'''
-
-# ....................{ CONSTANTS ~ code : param          }....................
-_FUNC_PARAM_VARIADIC_POSITIONAL = '''
-for __beartype_arg in args[{arg_index!r}:]:
-    if not isinstance(__beartype_arg, {arg_type_expr}):
-        raise BeartypeCallTypeParamException(
-            '{func_name} positional variadic parameter '
-            '{arg_index} {{}} not a {{!r}}'.format(
-                trim(__beartype_arg), {arg_type_expr}))
-'''
-
-
-_FUNC_PARAM_KEYWORD_ONLY = '''
-if {arg_name!r} in kwargs and not isinstance(
-    {arg_value_key_expr}, {arg_type_expr}):
-    raise BeartypeCallTypeParamException(
-        '{func_name} keyword-only parameter '
-        '{arg_name}={{}} not a {{!r}}'.format(
-            trim({arg_value_key_expr}), {arg_type_expr}))
-'''
-
-
-_FUNC_PARAM_POSITIONAL_OR_KEYWORD = '''
-if not (
-    isinstance({arg_value_pos_expr}, {arg_type_expr})
-    if {arg_index} < len(args) else
-    isinstance({arg_value_key_expr}, {arg_type_expr})
-    if {arg_name!r} in kwargs else True):
-        raise BeartypeCallTypeParamException(
-            '{func_name} parameter {arg_name}={{}} not a {{!r}}'.format(
-            trim({arg_value_pos_expr} if {arg_index} < len(args) else {arg_value_key_expr}),
-            {arg_type_expr}))
-'''
-
-# ....................{ CONSTANTS ~ code : call           }....................
-_FUNC_CALL_CHECKED = '''
-__beartype_return_value = __beartype_func(*args, **kwargs)
-if not isinstance(__beartype_return_value, {return_type}):
-    raise BeartypeCallTypeReturnException(
-        '{func_name} return value {{}} not of {{!r}}'.format(
-            trim(__beartype_return_value), {return_type}))
-return __beartype_return_value
-'''
-
-
-_FUNC_CALL_UNCHECKED = '''
-return __beartype_func(*args, **kwargs)
-'''
-
-# ....................{ CONSTANTS ~ code : str            }....................
-_FUNC_STR_IMPORT = '''
-        # Attempt to import this attribute from this module, implicitly
-        # raising a human-readable "ImportError" or "ModuleNotFoundError"
-        # exception on failure.
-        from {annotation_type_module_name} import {annotation_type_basename}
-'''
-
-
-_FUNC_STR_REPLACE = '''
-    # If this annotation is still a classname, this annotation has yet to be
-    # replaced by the corresponding class, implying this to be the first call
-    # to this callable. Perform this replacement in this call, preventing
-    # subsequent calls to this callable from repeatedly doing so.
-    if isinstance({annotation_expr}, str):
-        {annotation_type_import_code}
-
-        # Validate this class to be either a class or tuple of classes,
-        # preventing this attribute from being yet another classname. (The
-        # recursion definitively ends here, folks.)
-        _check_type_annotation(
-            annotation={annotation_type_basename},
-            annotation_label={annotation_label!r},
-            is_str_valid=False,
-        )
-
-        # Replace the external copy of this annotation stored in this
-        # function's signature by this class -- guaranteeing that subsequent
-        # access of this annotation via "__beartype_func.__annotations__"
-        # accesses this class rather than this classname.
-        {annotation_expr} = {annotation_type_basename}
-'''
-
-# ....................{ CONSTANTS ~ code : tuple          }....................
-_FUNC_TUPLE_STR_TEST = '''
-    # If the first classname in this annotation is still a classname, this
-    # annotation has yet to be replaced by a tuple containing classes rather
-    # than classnames, implying this to be the first call to this callable.
-    # Perform this replacement in this call, preventing subsequent calls to
-    # this callable from repeatedly doing so.
-    if isinstance({subannotation_type_name_expr}, str):
-        # List replacing all classnames in this tuple with the classes with
-        # these classnames with which this tuple will be subsequently replaced.
-        __beartype_func_annotation_list = []
-'''
-
-
-_FUNC_TUPLE_STR_IMPORT = '''
-        # Attempt to import this attribute from this module, implicitly
-        # raising a human-readable "ImportError" exception on failure.
-        from {subannotation_type_module_name} import {subannotation_type_basename}
-'''
-
-
-_FUNC_TUPLE_STR_APPEND = '''
-        # Validate this member to be a class, preventing this member from being
-        # yet another classname or tuple of classes and/or classnames. (The
-        # recursion definitively ends here, folks.)
-        if not isinstance({subannotation_type_basename}, type):
-            raise BeartypeException(
-                '{annotation_label} tuple member {{}} not a class.'.format(
-                    {subannotation_type_basename}))
-
-        # Append this class to this list.
-        __beartype_func_annotation_list.append({subannotation_type_basename})
-'''
-
-
-_FUNC_TUPLE_CLASS_APPEND = '''
-        # Append this class copied from the original tuple to this list.
-        __beartype_func_annotation_list.append({subannotation_expr})
-'''
-
-
-_FUNC_TUPLE_REPLACE = '''
-        # Replace the external copy of this annotation stored in this
-        # function's signature by this list coerced back into a tuple for
-        # conformance with isinstance() constraints -- guaranteeing that
-        # subsequent access of this annotation via
-        # "__beartype_func.__annotations__" accesses this class rather than
-        # this classname.
-        {annotation_expr} = tuple(__beartype_func_annotation_list)
-
-        # Nullify this list for safety.
-        __beartype_func_annotation_list = None
-'''
