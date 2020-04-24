@@ -58,6 +58,9 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Add unit tests exercising at least *SOME* of this submodule. This is a
+#hard prerequisite for the first stable release.
+
 #FIXME: Define a new "TypingType" or "Pep484Type" type rooted at either the
 #"typing.TypingMeta" metaclass or "typing._TypingBase" superclass. Obviously,
 #we currently have no means of type-checking metaclasses... but the latter is

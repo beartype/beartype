@@ -24,18 +24,46 @@ automation.
 # installed at some later time in the installation. Likewise, to avoid circular
 # import dependencies, the top-level of this module should avoid importing
 # package submodules where feasible.
+# WARNING: To avoid polluting the public module namespace, external attributes
+# should be locally imported at module scope *ONLY* under alternate private
+# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
+# than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ IMPORTS                           }....................
 # Publicize the private @beartype._decor.beartype decorator as
 # @beartype.beartype, preserving all implementation details as private.
-from beartype._decor import beartype
+from beartype._decor.decor import beartype
 
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.
 from beartype.meta import VERSION as __version__
 from beartype.meta import VERSION_PARTS as __version_info__
 
+# ....................{ GLOBALS                           }....................
+# Document all global variables imported into this namespace above.
+
+__version__
+'''
+Human-readable package version as a ``.``-delimited string.
+
+For PEP 8 compliance, this specifier has the canonical name ``__version__``
+rather than that of a typical global (e.g., ``VERSION_STR``).
+'''
+
+
+__version_info__
+'''
+Machine-readable package version as a tuple of integers.
+
+For PEP 8 compliance, this specifier has the canonical name
+``__version_info__`` rather than that of a typical global (e.g.,
+``VERSION_PARTS``).
+'''
+
+
+# Intentionally defined last, as nobody wants to stumble into a full-bore rant
+# first thing in the morning.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 '''
 Special list global referencing a single attribute guaranteed *not* to exist.
@@ -188,25 +216,4 @@ of an ``__all__``-driven "virtual public API:" to wit,
 
 .. _semver:
     https://semver.org
-'''
-
-# ....................{ GLOBALS                           }....................
-# Document all global variables imported into this namespace above.
-
-__version__
-'''
-Human-readable package version as a ``.``-delimited string.
-
-For PEP 8 compliance, this specifier has the canonical name ``__version__``
-rather than that of a typical global (e.g., ``VERSION_STR``).
-'''
-
-
-__version_info__
-'''
-Machine-readable package version as a tuple of integers.
-
-For PEP 8 compliance, this specifier has the canonical name
-``__version_info__`` rather than that of a typical global (e.g.,
-``VERSION_PARTS``).
 '''

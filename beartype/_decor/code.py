@@ -17,66 +17,58 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ CODE                              }....................
 _CODE_SIGNATURE = '''
-def {func_type_checked_name}(*args, __beartype_func=__beartype_func, **kwargs):
+def {func_beartyped_name}(*args, __beartype_func=__beartype_func, **kwargs):
 '''
 
 # ....................{ CODE ~ param                      }....................
 _CODE_PARAM_VARIADIC_POSITIONAL = '''
-for __beartype_arg in args[{arg_index!r}:]:
-    if not isinstance(__beartype_arg, {arg_type_expr}):
-        raise BeartypeCallTypeParamException(
-            '{func_name} positional variadic parameter '
-            '{arg_index} {{}} not a {{!r}}'.format(
-                trim(__beartype_arg), {arg_type_expr}))
+    for __beartype_arg in args[{arg_index!r}:]:
+        if not isinstance(__beartype_arg, {arg_type_expr}):
+            raise __beartype_param_exception(
+                '{func_name} positional variadic parameter '
+                '{arg_index} {{}} not a {{!r}}.'.format(
+                    __beartype_trim(__beartype_arg), {arg_type_expr}))
 '''
 
 
 _CODE_PARAM_KEYWORD_ONLY = '''
-if {arg_name!r} in kwargs and not isinstance(
-    {arg_value_key_expr}, {arg_type_expr}):
-    raise BeartypeCallTypeParamException(
-        '{func_name} keyword-only parameter '
-        '{arg_name}={{}} not a {{!r}}'.format(
-            trim({arg_value_key_expr}), {arg_type_expr}))
+    if {arg_name!r} in kwargs and not isinstance(
+        {arg_value_key_expr}, {arg_type_expr}):
+        raise __beartype_param_exception(
+            '{func_name} keyword-only parameter '
+            '{arg_name}={{}} not a {{!r}}.'.format(
+                __beartype_trim({arg_value_key_expr}), {arg_type_expr}))
 '''
 
 
 _CODE_PARAM_POSITIONAL_OR_KEYWORD = '''
-if not (
-    isinstance({arg_value_pos_expr}, {arg_type_expr})
-    if {arg_index} < len(args) else
-    isinstance({arg_value_key_expr}, {arg_type_expr})
-    if {arg_name!r} in kwargs else True):
-        raise BeartypeCallTypeParamException(
-            '{func_name} parameter {arg_name}={{}} not a {{!r}}'.format(
-            trim({arg_value_pos_expr} if {arg_index} < len(args) else {arg_value_key_expr}),
-            {arg_type_expr}))
+    if not (
+        isinstance({arg_value_pos_expr}, {arg_type_expr})
+        if {arg_index} < len(args) else
+        isinstance({arg_value_key_expr}, {arg_type_expr})
+        if {arg_name!r} in kwargs else True):
+            raise __beartype_param_exception(
+                '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
+                __beartype_trim({arg_value_pos_expr} if {arg_index} < len(args) else {arg_value_key_expr}),
+                {arg_type_expr}))
 '''
 
 # ....................{ CODE ~ call                       }....................
 _CODE_CALL_CHECKED = '''
-__beartype_return_value = __beartype_func(*args, **kwargs)
-if not isinstance(__beartype_return_value, {return_type}):
-    raise BeartypeCallTypeReturnException(
-        '{func_name} return value {{}} not of {{!r}}'.format(
-            trim(__beartype_return_value), {return_type}))
-return __beartype_return_value
+    __beartype_return_value = __beartype_func(*args, **kwargs)
+    if not isinstance(__beartype_return_value, {return_type}):
+        raise __beartype_return_exception(
+            '{func_name} return value {{}} not a {{!r}}.'.format(
+                __beartype_trim(__beartype_return_value), {return_type}))
+    return __beartype_return_value
 '''
 
 
 _CODE_CALL_UNCHECKED = '''
-return __beartype_func(*args, **kwargs)
+    return __beartype_func(*args, **kwargs)
 '''
 
 # ....................{ CODE ~ str                        }....................
-_CODE_STR_IMPORT = '''
-        # Attempt to import this attribute from this module, implicitly
-        # raising a human-readable "ImportError" or "ModuleNotFoundError"
-        # exception on failure.
-        from {annotation_type_module_name} import {annotation_type_basename}
-'''
-
-
 _CODE_STR_REPLACE = '''
     # If this annotation is still a classname, this annotation has yet to be
     # replaced by the corresponding class, implying this to be the first call
@@ -99,6 +91,14 @@ _CODE_STR_REPLACE = '''
         # access of this annotation via "__beartype_func.__annotations__"
         # accesses this class rather than this classname.
         {annotation_expr} = {annotation_type_basename}
+'''
+
+
+_CODE_STR_IMPORT = '''
+        # Attempt to import this attribute from this module, implicitly
+        # raising a human-readable "ImportError" or "ModuleNotFoundError"
+        # exception on failure.
+        from {annotation_type_module_name} import {annotation_type_basename}
 '''
 
 # ....................{ CODE ~ tuple                      }....................

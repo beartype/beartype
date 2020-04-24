@@ -36,6 +36,12 @@ pushd "${script_dirname}" >/dev/null
 
 # Run this project's test suite with all passed arguments. Dismantled, this is:
 #
+# * "--maxfail=1", halt testing on the first failure for interactive tests.
+#   Permitting multiple failures complicates failure output, especially when
+#   every failure after the first is a result of the same underlying issue.
+#   When testing non-interactively, testing is typically *NOT* halted on the
+#   first failure. Hence, this option is confined to this script rather than
+#   added to our general-purpose "pytest.ini" configuration.
 # * ".", notifying pytest of the relative dirname of the root directory for
 #   this project. On startup, pytest internally:
 #   * Sets its "rootdir" property to this dirname in absolute form.
@@ -59,7 +65,7 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-command pytest "${@}" .
+command pytest --maxfail=1 "${@}" .
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

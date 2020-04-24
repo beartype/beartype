@@ -22,6 +22,9 @@ obsolete and insecure versions of CPython that have reached their official End
 of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
+#FIXME: Add unit tests exercising at least *SOME* of this submodule. This is a
+#hard prerequisite for the first stable release.
+
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid race conditions during setuptools-based installation, this
@@ -29,9 +32,13 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 # installation. This includes all standard Python and package modules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation.
+# WARNING: To avoid polluting the public module namespace, external attributes
+# should be locally imported at module scope *ONLY* under alternate private
+# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
+# than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import sys
+import sys as _sys
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -135,7 +142,7 @@ tuple of integers.
 # call to setup() in "setup.py" (e.g., "requires_python = ['>=2.2.1'],"), that
 # field has yet to be integrated into either disutils or setuputils. Hence,
 # that field is validated manually in the typical way.
-if sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
+if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
     # Human-readable current version of Python. Ideally, "sys.version" would be
     # leveraged here instead; sadly, that string embeds significantly more than
     # merely a version and hence is inapplicable for real-world usage: e.g.,
@@ -144,12 +151,13 @@ if sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
     #     >>> sys.version
     #     '3.6.5 (default, Oct 28 2018, 19:51:39) \n[GCC 7.3.0]'
     PYTHON_VERSION = '.'.join(
-        str(version_part) for version_part in sys.version_info[:3])
+        str(version_part) for version_part in _sys.version_info[:3])
 
     # Die ignominiously.
     raise RuntimeError(
-        '{} requires at least Python {}, but the active interpreter '
-        'is only Python {}. We feel deep sadness for you.'.format(
+        '{} requires at least Python {}, but '
+        'the active interpreter only targets Python {}. '
+        'We feel unbearable sadness for you.'.format(
             NAME, PYTHON_VERSION_MIN, PYTHON_VERSION))
 
 # ....................{ METADATA ~ version                }....................
