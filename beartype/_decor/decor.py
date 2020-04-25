@@ -18,6 +18,50 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                              }....................
 #FIXME: Document all exceptions raised.
 
+#FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
+#function *MUST* be called preceded by the "await" keyword rather than merely
+#called as is. Detecting coroutines is trivial, thankfully: e.g.,
+#
+#    if inspect.iscoroutinefunction(func):
+#
+#Given that:
+#
+#* Modify the "_CODE_CALL_CHECKED" and "_CODE_CALL_UNCHECKED" snippets to
+#  conditionally precede the function call with the substring "await ": e.g.,
+#      _CODE_CALL_UNCHECKED = '''
+#          return {func_await}__beartype_func(*args, **kwargs)
+#      '''
+#  Note the absence of delimiting space. This is, of course, intentional.
+#* Unconditionally format the "func_await" substring into both of those
+#  snippets, define ala:
+#      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
+#FIXME: Unit test this extensively, please.
+
+#FIXME: *CRITICAL OPTIMIZATION:* If the passed "func" effectively has no
+#annotations, then @beartype should reduce to a noop (i.e., the identity
+#decorator) by returning "func" unmodified. I can't believe we never did that.
+#In theory, this is trivially detectable as follows:
+#
+#    # If this callable is *NOT* type-hinted, efficiently reduce to a noop
+#    # (i.e., the identity decorator) by returning this callable as is.
+#    if not hasattr(func, '__annotations__'):
+#        return func
+#FIXME: Unit test this extensively, please.
+
+#FIXME: *CRITICAL OPTIMIZATION:* If the passed "func" has already been
+#decorated by @beartype, then subsequent applications of @beartype should
+#reduce to a noop (i.e., the identity decorator) by also returning "func"
+#unmodified: e.g.,
+#
+#    # This...
+#    @beartype
+#    @beartype
+#    def muhfunc() -> str: return 'yumyum'
+#
+#    # ...should be exactly equivalent to this.
+#    @beartype
+#    def muhfunc() -> str: return 'yumyum'
+
 #FIXME: Validate all tuple annotations to be non-empty. Empty tuple annotations
 #imply *NOTHING* to be valid, which would render the resulting callable
 #uncallable, which would be entirely senseless. To do so, consider raising an
@@ -133,11 +177,6 @@ This includes:
 '''
 
 # ....................{ DECORATORS                        }....................
-#FIXME: *CRITICAL OPTIMIZATION:* If the passed "func" effectively has no
-#annotations, then @beartype should reduce to a noop (i.e., the identity
-#decorator) by returning "func" unmodified. I can't believe we never did that.
-#FIXME: Unit test this extensively, please.
-
 #FIXME: Replace the "CallableTypes" annotation with a subset of that tuple
 #specific to pure-Python callables. The "CallableTypes" tuple matches C-based
 #callables as well, which are (probably) *NOT* permissible as decoratees.

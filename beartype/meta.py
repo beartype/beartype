@@ -22,9 +22,6 @@ obsolete and insecure versions of CPython that have reached their official End
 of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
-#FIXME: Add unit tests exercising at least *SOME* of this submodule. This is a
-#hard prerequisite for the first stable release.
-
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid race conditions during setuptools-based installation, this
