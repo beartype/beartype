@@ -35,6 +35,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Unconditionally format the "func_await" substring into both of those
 #  snippets, define ala:
 #      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
+#* Oh, and note that our defined wrapper function must also be preceded by the
+#  "async " keyword. So, we'll also need to augment "_CODE_SIGNATURE".
 #FIXME: Unit test this extensively, please.
 
 #FIXME: *CRITICAL OPTIMIZATION:* If the passed "func" effectively has no

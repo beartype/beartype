@@ -169,7 +169,7 @@ This class is principally useful for annotating both:
 * Callables returning ``None`` as a valid value.
 
 Note that, for obscure and uninteresting reasons, the standard :mod:`types`
-module defined the same type with the same name under Python 2.x but _not_ 3.x.
+module defined the same type with the same name under Python 2.x but *not* 3.x.
 Depressingly, this type must now be manually redefined everywhere.
 '''
 
