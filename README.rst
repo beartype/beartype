@@ -33,6 +33,7 @@ default" is a first-class concern, *all* wrappers are guaranteed to:
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
+
 Beartype is `portably implemented <codebase_>`__ in pure `Python 3`_,
 continuously stress-tested with `Travis CI`_ **+** pytest_ **+** tox_, and
 `permissively distributed <license_>`__ under the `MIT license`_.
@@ -72,6 +73,107 @@ continuously stress-tested with `Travis CI`_ **+** pytest_ **+** tox_, and
 ..
 .. #      conda config --add channels conda-forge
 .. #      conda install beartype
+
+Cheatsheet
+==========
+
+#FIXME: Validate that this actually parses correctly. :)
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.cave import (
+       AnyType,
+       FunctionTypes,
+       CallableTypes,
+       GeneratorType,
+       IntOrNoneTypes,
+       IterableTypes,
+       IteratorType,
+       NoneType,
+       NumericTypes,
+       RegexTypes,
+       ScalarTypes,
+       SequenceTypes,
+       VersionTypes,
+   )
+   from my_package.my_module import MyClass
+
+   # Decorate callables to be type-checked with "@beartype".
+   @beartype
+   def bare_necessities(
+       # Annotate builtin types as is, delimited by a colon (":" character).
+       param1_must_be_of_single_type: str,
+
+       # Annotate user-defined classes as is, too.
+       param2_must_be_of_single_type_too: MyClass,
+
+       # Annotate fully-qualified classnames dynamically resolved at call time
+       # (referred to as "forward references") with "."-delimited strings.
+       param3_must_be_of_single_type_named: 'my_package.my_module.MyClass',
+
+       # Annotate multiple types as tuples. In PEP 484, this is equivalent to:
+       # param4_must_be_any_of_multiple_types: typing.Union[dict, MyClass, None,]
+       param4_must_be_any_of_multiple_types: (dict, MyClass, NoneType,),
+
+       # Annotate multiple types as tuples predefined within the beartype cave.
+       param5_must_be_any_of_multiple_types_too: SequenceTypes,
+
+       # Annotate multiple types as tuples containing a mixture of both types
+       # and fully-qualified classnames.
+       param6_must_be_any_of_multiple_types_named: (
+           list, 'my_package.my_module.MyOtherClass', int,),
+
+       # Annotate multiple types as the concatenation of arbitrarily many
+       # tuples containing arbitrarily many types.
+       param7_must_be_any_of_multiple_types_added: (str, int,) + IterableTypes,
+
+       # Annotate variadic positional arguments as above, too.
+       *args: VersionTypes + (NoneType, 'my_package.my_module.MyVersionType',)
+   # Annotate return types as above, delimited by an arrow ("->" substring).
+   ) ->
+       NumericTypes + (str,) + (MyClass, 'my_package.my_module.MyOtherClass',): 
+       return 0xDEADBEEF
+   
+
+   # Decorate generators as above but returning a generator type.
+   @beartype
+   def bare_generator() -> GeneratorType:
+       yield from range(0xBEEFBABE, 0xCAFEBABE)
+
+
+   class MyCrassClass:
+       # Decorate instance methods as above without annotating "self".
+       @beartype
+       def __init__(self, scalar: ScalarTypes) -> NoneType:
+           self._scalar = scalar
+
+       # Decorate class methods as above without annotating "cls". When
+       # chaining decorators, "@beartype" should typically be specified last.
+       @classmethod
+       @beartype
+       def bare_classmethod(cls, regex: RegexTypes, wut: str) -> FunctionTypes:
+           import re
+           return lambda: re.sub(regex, 'unbearable', str(cls._scalar) + wut)
+
+       # Decorate static methods as above.
+       @staticmethod
+       @beartype
+       def bare_staticmethod(callable: CallableTypes, *args: str) -> AnyType:
+           return callable(*args)
+
+       # Decorate property getter methods as above.
+       @property
+       @beartype
+       def bare_gettermethod(self) -> IteratorType:
+           return range(0x0B00B135 + int(self._scalar), 0xB16B00B5)
+
+       # Decorate property setter methods as above.
+       @bare_getter.setter
+       @beartype
+       def bare_settermethod(
+           self, bad: IntOrNoneTypes = 0xBAAAAAAD) -> NoneType:
+           self._scalar = bad if bad else 0xBADDCAFE
 
 Usage
 =====
@@ -137,7 +239,8 @@ this function's implementation and/or return type annotation:
    beartype.roar.BeartypeCallTypeReturnException: @beartyped law_of_the_jungle() return value None not a <class 'tuple'>.
 
 *Bad function.* Let's conveniently resolve this by permitting this function to
-return either a tuple or ``None``, as :ref:`detailed below<usage-tuples>`:
+return either a tuple or ``None``, as `detailed below <Tuples of Arbitrary
+Types_>`__:
 
 .. code-block:: python
 
@@ -178,14 +281,15 @@ Arbitrary Types
 
 Everything above also extends to:
 
-* **Arbitrary types** like user-defined classes and classes maintained in the
-  Python stdlib (e.g., ``argparse.ArgumentParser``), which are also trivially
+* **Arbitrary types** like user-defined classes and stock classes in the Python
+  stdlib (e.g., ``argparse.ArgumentParser``) – all of which are also trivially
   type-checked by annotating parameters and return values with those types.
 * **Arbitrary callables** like instance methods, class methods, static methods,
-  and generator functions and methods.
+  and generator functions and methods – all of which are also trivially
+  type-checked with the ``@beartype`` decorator.
 
-Let's declare a motley crew of beartyped methods and generators doing various
-silly things in a strictly typed manner, just 'cause:
+Let's declare a motley crew of beartyped callables doing various silly things
+in a strictly typed manner, *just 'cause*:
 
 .. code-block:: python
 
@@ -203,28 +307,28 @@ silly things in a strictly typed manner, just 'cause:
            yield saying
 
 For genericity, the ``MaximsOfBaloo`` class initializer accepts *any* generic
-iterable (via the ``beartype.cave.IterableTypes`` tuple of all valid iterable
-types) rather than an overly specific ``list`` or ``tuple`` type. Your users
-will thank you later.
+iterable (via the ``beartype.cave.IterableTypes`` tuple listing all valid
+iterable types) rather than an overly specific ``list`` or ``tuple`` type. Your
+users may thank you later.
 
 For specificity, the ``inform_baloo`` generator function has been explicitly
 annotated to return a ``beartype.cave.GeneratorType`` (i.e., the type returned
 by functions and methods containing at least one ``yield`` statement). Type
-safety brings good fortune for the new year.
+safety brings good fortune for the New Year.
 
 Let's iterate over that generator with good types:
 
 .. code-block:: python
 
    >>> maxims = MaximsOfBaloo(sayings={
-   ...     'If ye find that the Bullock can toss you,
+   ...     '''If ye find that the Bullock can toss you,
    ...           or the heavy-browed Sambhur can gore;
    ...      Ye need not stop work to inform us:
-   ...           we knew it ten seasons before.',
-   ...     '“There is none like to me!” says the Cub
+   ...           we knew it ten seasons before.''',
+   ...     '''“There is none like to me!” says the Cub
    ...           in the pride of his earliest kill;
    ...      But the jungle is large and the Cub he is small.
-   ...           Let him think and be still.',
+   ...           Let him think and be still.''',
    ... })
    >>> for maxim in inform_baloo(maxims): print(maxim.splitlines()[-1])
           Let him think and be still.
@@ -243,16 +347,15 @@ Good generator. Let's call it again with bad types:
    File "<string>", line 12, in __inform_baloo_beartyped__
    beartype.roar.BeartypeCallTypeParamException: @beartyped inform_baloo() parameter maxims=['Oppress not the cubs of the stranger,', '     but hail them as Sister and ...'] not a <class '__main__.MaximsOfBaloo'>.
 
-Good generator! The type hints applied to both this class and generator now
-accurately document their respective APIs. All ends typed well... yet again.
+Good generator! The type hints applied to these callables now accurately
+document their respective APIs. Thanks to the pernicious magic of beartype,
+all ends typed well... *yet again.*
 
-.. _usage-tuples:
+Tuples of Arbitrary Types
+-------------------------
 
-Tuples of Types
----------------
-
-Tuples of types are also usable and this usage shall be documented and this
-shall be good.
+Tuples of arbitrary types are also usable and this usage shall be documented
+and this shall be good.
 
 License
 =======

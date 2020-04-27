@@ -120,7 +120,9 @@ from weakref import (
 #
 # These are the lesser of multiple evils.
 from types import (
+    AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
+    CoroutineType as _CoroutineType,
     FunctionType as _FunctionType,
     GeneratorType as _GeneratorType,
     MethodType as _MethodType,
@@ -131,6 +133,12 @@ from types import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TYPES                             }....................
+AnyType = object
+'''
+Type of all objects regardless of type.
+'''
+
+
 ClassType = type
 '''
 Type of all types.
@@ -230,46 +238,6 @@ specific and insufficiently general, this ambiguity is *not* necessarily a bad
 thing.
 '''
 
-# ....................{ TYPES ~ callable ~ generator      }....................
-GeneratorType = _Generator
-'''
-Type of all **C- and Python-based generators** (i.e., iterators implementing
-the :class:`collections.abc.Generator` protocol), including:
-
-* Pure-Python subclasses of the :class:`collections.abc.Generator` superclass.
-* C-based generators returned by pure-Python callables containing one or more
-  ``yield`` statements.
-* C-based generator comprehensions created by pure-Python syntax delimited by
-  ``(`` and ``)``.
-
-This class is a synonym of the :class:`collections.abc.Generator` class,
-provided merely as a convenience to callers preferring to avoid importing that
-class.
-
-See Also
-----------
-:class:`GeneratorCType`
-    Subtype of all C-based generators.
-'''
-
-
-GeneratorCType = _GeneratorType
-'''
-C-based type returned by all **pure-Python generators** (i.e., callables
-implemented in pure Python containing one or more ``yield`` statements,
-implicitly converted at runtime to return a C-based iterator of this type) as
-well as the C-based type of all **pure-Python generator comprehensions** (i.e.,
-``(``- and ``)``-delimited syntactic sugar implemented in pure Python, also
-implicitly converted at runtime to return a C-based iterator of this type).
-
-Caveats
-----------
-This special-purpose type is a subtype of the more general-purpose
-:class:`GeneratorType`. Whereas the latter applies to *all* generators
-implementing the :class:`collections.abc.Iterator` protocol, the former only
-applies to generators implicitly created by Python itself.
-'''
-
 # ....................{ TYPES ~ callable ~ method         }....................
 MethodType = _MethodType
 '''
@@ -342,6 +310,88 @@ MethodStaticType = staticmethod
 Type of all **pure-Python static methods** (i.e., methods implemented in pure
 Python, bound to a class rather than an instance of a class but *not*
 implicitly passed that class as their first parameter, unlike class methods).
+'''
+
+# ....................{ TYPES ~ callable ~ return : async }....................
+AsyncGeneratorCType = _AsyncGeneratorType
+'''
+C-based type returned by all **asynchronous pure-Python generators** (i.e.,
+callables implemented in pure Python containing one or more ``yield``
+statements whose declaration is preceded by the ``async`` keyword).
+
+Caveats
+----------
+**This is not the type of asynchronous generator callables** but rather the
+type implicitly created and *returned* by these callables. Since these
+callables are simply callables subject to syntactic sugar, the type of these
+callables is simply :data:`CallableTypes`.
+'''
+
+
+AsyncCoroutineCType = _CoroutineType
+'''
+C-based type returned by all **asynchronous coroutines** (i.e., callables
+implemented in pure Python *not* containing one or more ``yield`` statements
+whose declaration is preceded by the ``async`` keyword).
+
+Caveats
+----------
+**This is not the type of asynchronous coroutine callables** but rather the
+type implicitly created and *returned* by these callables. Since these
+callables are simply callables subject to syntactic sugar, the type of these
+callables is simply :data:`CallableTypes`.
+'''
+
+# ....................{ TYPES ~ callable ~ return : gener }....................
+GeneratorType = _Generator
+'''
+Type of all **C- and Python-based generator objects** (i.e., iterators
+implementing the :class:`collections.abc.Generator` protocol), including:
+
+* Pure-Python subclasses of the :class:`collections.abc.Generator` superclass.
+* C-based generators returned by pure-Python callables containing one or more
+  ``yield`` statements.
+* C-based generator comprehensions created by pure-Python syntax delimited by
+  ``(`` and ``)``.
+
+This class is a synonym of the :class:`collections.abc.Generator` class,
+provided merely as a convenience to callers preferring to avoid importing that
+class.
+
+Caveats
+----------
+**This is not the type of generator callables** but rather the type implicitly
+created and *returned* by these callables. Since these callables are simply
+callables subject to syntactic sugar, the type of these callables is simply
+:data:`CallableTypes`.
+
+See Also
+----------
+:class:`GeneratorCType`
+    Subtype of all C-based generators.
+'''
+
+
+GeneratorCType = _GeneratorType
+'''
+C-based type returned by all **pure-Python generators** (i.e., callables
+implemented in pure Python containing one or more ``yield`` statements,
+implicitly converted at runtime to return a C-based iterator of this type) as
+well as the C-based type of all **pure-Python generator comprehensions** (i.e.,
+``(``- and ``)``-delimited syntactic sugar implemented in pure Python, also
+implicitly converted at runtime to return a C-based iterator of this type).
+
+Caveats
+----------
+**This is not the type of generator callables** but rather the type implicitly
+created and *returned* by these callables. Since these callables are simply
+callables subject to syntactic sugar, the type of these callables is simply
+:data:`CallableTypes`.
+
+This special-purpose type is a subtype of the more general-purpose
+:class:`GeneratorType`. Whereas the latter applies to *all* generators
+implementing the :class:`collections.abc.Iterator` protocol, the former only
+applies to generators implicitly created by Python itself.
 '''
 
 # ....................{ TYPES ~ callable : weakref        }....................
@@ -656,6 +706,14 @@ as decorators. Since most classes are *not* callable, however, this tuple may
 yield false positives when passed classes.
 '''
 
+# ....................{ TUPLES ~ callable ~ return        }....................
+AsyncCTypes = (AsyncGeneratorCType, AsyncCoroutineCType)
+'''
+Tuple of all C-based types returned by all **asynchronous callables** (i.e.,
+callables implemented in pure Python whose declaration is preceded by the
+``async`` keyword).
+'''
+
 # ....................{ TUPLES ~ container                }....................
 # Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
 ContainerTypes = (_Container,)
@@ -837,7 +895,7 @@ to avoid importing that class.
 NumpyDataTypes = ()
 '''
 Tuple of the **NumPy data type** (i.e., NumPy-specific numeric scalar type
-homogenously constraining all elements of all NumPy arrays) and all scalar
+homogeneously constraining all elements of all NumPy arrays) and all scalar
 Python types transparently supported by NumPy as implicit data types (i.e.,
 :class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
 :mod:`numpy` is importable *or* the empty tuple otherwise.

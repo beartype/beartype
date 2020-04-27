@@ -19,12 +19,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Document all exceptions raised.
 
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
-#function *MUST* be called preceded by the "await" keyword rather than merely
+#coroutine *MUST* be called preceded by the "await" keyword rather than merely
 #called as is. Detecting coroutines is trivial, thankfully: e.g.,
 #
 #    if inspect.iscoroutinefunction(func):
 #
-#Given that:
+#Actually, shouldn't that be the more general-purpose test:
+#
+#    if inspect.isawaitable(func):
+#
+#The latter seems more correct. In any case, given that:
 #
 #* Modify the "_CODE_CALL_CHECKED" and "_CODE_CALL_UNCHECKED" snippets to
 #  conditionally precede the function call with the substring "await ": e.g.,
@@ -50,7 +54,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #        return func
 #FIXME: Unit test this extensively, please.
 
-#FIXME: *CRITICAL OPTIMIZATION:* If the passed "func" has already been
+#FIXME: Non-critical optimization: if the active Python interpreter is already
+#performing static type checking (e.g., with Pyre or mypy), @beartype should
+#unconditionally reduce to a noop for the current process.
+
+#FIXME: Non-critical optimization: if the passed "func" has already been
 #decorated by @beartype, then subsequent applications of @beartype should
 #reduce to a noop (i.e., the identity decorator) by also returning "func"
 #unmodified: e.g.,
@@ -64,6 +72,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #    @beartype
 #    def muhfunc() -> str: return 'yumyum'
 
+#FIXME: PEP 484 considers "None" and "type(None)" to be synonymous when used as
+#type hints, so so should we:
+#    https://www.python.org/dev/peps/pep-0484/#using-none
+#    https://stackoverflow.com/a/39429578/2809027
+
 #FIXME: Validate all tuple annotations to be non-empty. Empty tuple annotations
 #imply *NOTHING* to be valid, which would render the resulting callable
 #uncallable, which would be entirely senseless. To do so, consider raising an
@@ -74,6 +87,20 @@ This private submodule is *not* intended for importation by downstream callers.
 #    def badfuncisbad(nonsense_is_nonsense: ()) -> ():
 #        pass
 #FIXME: Unit test the above edge case.
+
+#FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
+#
+#    # This...
+#    @beartype
+#    def slowerfunc(dumbedgecase: (int, int, int, int, int, int, int, int))
+#
+#    # ...should be exactly as efficient as this.
+#    def fasterfunc(idealworld: int)
+#
+#Note that most types are *NOT* hashable and thus *NOT* addable to a set -- so,
+#the naive heuristic of "tuple(set(annotation_tuple))" generally fails.
+#Instead, we'll need to implement some sort of manual pruning algorithm
+#optimized for the general case of a tuple containing *NO* duplicates.
 
 #FIXME: Add support for all possible kinds of parameters. @beartype currently
 #supports most but *NOT* all types. Specifically:
@@ -90,6 +117,70 @@ This private submodule is *not* intended for importation by downstream callers.
 #  When doing so, remove the "Parameter.POSITIONAL_ONLY" type from the
 #  "_PARAM_KIND_IGNORABLE" set.
 #* Remove the "_PARAM_KIND_IGNORABLE" set entirely.
+
+#FIXME: Cray-cray optimization: don't crucify us here, folks, but eliminating
+#the innermost call to the original callable in the generated wrapper may be
+#technically feasible. It's probably a BadIdea™, but the idea goes like this:
+#
+#    # Source code for this callable as a possibly multiline string,
+#    # dynamically parsed at runtime with hacky regular expressions from
+#    # the physical file declaring this callable if any *OR* "None" otherwise
+#    # (e.g., if this callable is defined dynamically or cannot be parsed from
+#    # that file).
+#    func_source = None
+#
+#    # Attempt to find the source code for this callable.
+#    try:
+#        func_source = inspect.getsource(func)
+#    # If the inspect.getsource() function fails to do so, shrug.
+#    except OSError:
+#        pass
+#
+#    # If the source code for this callable cannot be found, fallback to
+#    # simply calling this callable in the conventional way.
+#    if func_source is None:
+#       #FIXME: Do what we currently do here.
+#    # Else, the source code for this callable was found. In this case,
+#    # carefully embed this code into the code generated for this wrapper.
+#    else:
+#       #FIXME: Do something wild, crazy, and dangerous here.
+#
+#Extreme care will need to be taken, including:
+#
+#* Ensuring code is indented correctly.
+#* Preserving the signature (especially with respect to passed parameters) of
+#  the original callable in the wrapper. See the third-party "makefun" package,
+#  which purports to already do so. So, this is mostly a solved problem --
+#  albeit still non-trivial, as "beartype" will never have dependencies.
+#* Preventing local attributes defined by this wrapper as well as global
+#  attributes imported into this wrapper's namespace from polluting the
+#  namespace expected by the original callable. The former is trivial; simply
+#  explicitly "del {attr_name1},...,{attr_nameN}" immediately before embedding
+#  the source code for that callable. The latter is tricky; we'd probably want
+#  to stop passing "globals()" to exec() below and instead pass a much smaller
+#  list of attributes explicitly required by this wrapper. Even then, though,
+#  there's probably no means of perfectly insulating the original code from all
+#  wrapper-specific global attributes.
+#* Rewriting return values and yielded values. Oh, boy. That's the killer,
+#  honestly. Regular expression-based parsing only gets us so far. We could try
+#  analyzing the AST for that code, but... yikes. Each "return" and "yield"
+#  statement would need to be replaced by a beartype-specific "return" or
+#  "yield" statement checking the types of the values to be returned or
+#  yielded. We can guarantee that that rapidly gets cray-cray, especially when
+#  implementing non-trivial PEP 484-style type checking requiring multiple
+#  Python statements and local variables and... yeah. I suppose we could
+#  gradually roll out support by:
+#  * Initially only optimizing callables returning and yielding nothing by
+#    falling back to the unoptimized approach for callables that do so.
+#  * Then optimizing callables terminating in a single "return" or "yield"
+#    statement.
+#  * Then optimizing callables containing multiple such statements.
+#
+#Note lastly that the third-party "dill" package provides a
+#dill.source.getsource() function with the same API as the stdlib
+#inspect.getsource() function but augmented in various favourable ways. *shrug*
+#
+#Although this will probably never happen, it's still mildly fun to ponder.
 
 # ....................{ IMPORTS                           }....................
 import functools, inspect
@@ -170,8 +261,8 @@ annotation-based type checking in the :func:`beartype` decorator.
 
 This includes:
 
-* Constants specific to variadic parameters (e.g., ``*args``, ``**kwargs``).
-  Variadic parameters cannot be annotated and hence cannot be type checked.
+* Constants specific to variadic keyword parameters (e.g., ``**kwargs``), which
+  are currently unsupported by :func:`beartype`.
 * Constants specific to positional-only parameters, which apply only to
   non-pure-Python callables (e.g., defined by C extensions). The
   :func:`beartype` decorator applies *only* to pure-Python callables, which
@@ -436,6 +527,11 @@ def beartype(func: CallableTypes) -> CallableTypes:
     #      File "<string>", line 13, in func_beartyped
     #
     #Note the final traceback line, which is effectively useless.
+    #FIXME: Note that the existing third-party "makefun" package replacing the
+    #stdlib @functools.wraps() decorator is probably the optimal solution for
+    #preserving metadata on the original callable into our wrapper callable.
+    #While we absolutely should *NOT* depend on that or any other third-party
+    #package, that package's implementation should lend useful insight.
 
     # Attempt to define this wrapper as a closure of this decorator. For
     # obscure and presumably uninteresting reasons, Python fails to locally

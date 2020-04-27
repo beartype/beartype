@@ -19,6 +19,61 @@ This submodule provides unit tests exercising various portions of the
 import pytest
 from random import Random
 
+# ....................{ TODO                              }....................
+#FIXME: Validate that generator-based coroutines behave as expected, given the
+#following snippet in the documentation for this third-party utility:
+#    https://smarie.github.io/python-makefun
+#
+#    @beartype
+#    def my_gencoroutine_impl(first_msg):
+#        second_msg = (yield first_msg)
+#        yield second_msg
+#
+#    # Verify that the new func is a correct generator-based coroutine.
+#    cor = my_gencoroutine_impl('hi')
+#    assert next(cor) == 'hi'
+#    assert cor.send('chaps') == 'chaps'
+#    cor.send('ola')  # raises StopIteration
+#FIXME: Likewise, for async-based coroutines:
+#    import asyncio
+#
+#    @beartype
+#    async def my_native_coroutine_impl(what, sleep_time):
+#        await asyncio.sleep(sleep_time)
+#        return what
+#
+#    # verify that the new function is a native coroutine and behaves correctly
+#    event_loop = asyncio.get_event_loop()
+#    event_loop.run_until_complete(my_native_coroutine_impl('yum', 5))
+#    assert out == 'yum'
+#
+#In the latter case, note that the usage of an asynchronous event loop
+#justifiably complicates matters. Simple unit testing methodology fails here.
+#Instead, we need to leverage an asyncio-aware approach. The most popular are:
+#
+#* "pytest-asyncio", a third-party pytest plugin providing a
+#  @pytest.mark.asyncio decorator facilitating trivial asynchronous testing.
+#  We'd rather not add yet another testing dependency merely to test one or two
+#  asynchronous edge cases, however. Instead...
+#* See this extremely well-written blog post:
+#  https://medium.com/ideas-at-igenius/testing-asyncio-python-code-with-pytest-a2f3628f82bc
+#  The core idea here is that we define a custom pytest fixture instantiating
+#  an "asyncio" event loop enabling downstream unit tests to run asynchronous
+#  callables under that loop: e.g.,
+#      import asyncio
+#
+#      @pytest.fixture
+#      def event_loop():
+#          loop = asyncio.get_event_loop()
+#          yield loop
+#          loop.close()
+#
+#      def test_muh_async_func(event_loop):
+#          assert 'nope' == event_loop.run_until_complete(muh_async_func('wut', 0))
+#
+#Self-obviously, the latter is the way to go for us. A trivial five-line
+#fixture dominates a non-trivial third-party dependency any asynchronous day.
+
 # ....................{ TESTS ~ pass                      }....................
 def test_decor_noop() -> None:
     '''
