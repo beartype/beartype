@@ -4,7 +4,7 @@
 beartype
 ========
 
-.. epigraph::
+.. parsed-literal::
 
    Look for the bare necessities,
      the simple bare necessities.
@@ -29,7 +29,7 @@ default" is a first-class concern, *all* wrappers are guaranteed to:
 
 * Exhibit ``O(1)`` time complexity with negligible constant factors.
 * Be either more efficient (in the common case) or exactly as efficient (in
-  the worst case) as equivalent type-checking implementated by hand.
+  the worst case) as equivalent type-checking implemented by hand.
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
@@ -55,21 +55,26 @@ continuously stress-tested with `Travis CI`_ **+** pytest_ **+** tox_, and
 
 .. # ------------------( DESCRIPTION                        )------------------
 
+Installation
+============
+
+.. code-block:: shell-session
+
+   pip3 install beartype
+
 .. #FIXME: Uncomment the following *AFTER* releasing to PyPI and conda-forge.
-.. # Installation
-.. # ============
 ..
 .. # Beartype is universally installable with either:
 ..
 .. # - [\ *Recommended*\ ] pip_, the standard Python package manager:
 ..
-.. #   .. code-block:: console
+.. #   .. code-block:: shell-session
 ..
 .. #      pip3 install beartype
 ..
 .. # - Anaconda_, a third-party Python package manager:
 ..
-.. #   .. code-block:: console
+.. #   .. code-block:: shell-session
 ..
 .. #      conda config --add channels conda-forge
 .. #      conda install beartype
@@ -77,11 +82,12 @@ continuously stress-tested with `Travis CI`_ **+** pytest_ **+** tox_, and
 Cheatsheet
 ==========
 
-#FIXME: Validate that this actually parses correctly. :)
-
 .. code-block:: python
 
+   # The @beartype.beartype decorator type-checks like... greased lightning?
    from beartype import beartype
+
+   # [optional] The bear cave collects types usable with @beartype.beartype.
    from beartype.cave import (
        AnyType,
        FunctionTypes,
@@ -97,9 +103,11 @@ Cheatsheet
        SequenceTypes,
        VersionTypes,
    )
+
+   # Fictional user-defined class imported for demonstration purposes.
    from my_package.my_module import MyClass
 
-   # Decorate callables to be type-checked with "@beartype".
+   # Decorated callable to be type-checked. If it feels good, it must be.
    @beartype
    def bare_necessities(
        # Annotate builtin types as is, delimited by a colon (":" character).
@@ -122,7 +130,7 @@ Cheatsheet
        # Annotate multiple types as tuples containing a mixture of both types
        # and fully-qualified classnames.
        param6_must_be_any_of_multiple_types_named: (
-           list, 'my_package.my_module.MyOtherClass', int,),
+           list, 'my_package.my_module.MyOtherClass', NoneType,),
 
        # Annotate multiple types as the concatenation of arbitrarily many
        # tuples containing arbitrarily many types.
@@ -131,8 +139,8 @@ Cheatsheet
        # Annotate variadic positional arguments as above, too.
        *args: VersionTypes + (NoneType, 'my_package.my_module.MyVersionType',)
    # Annotate return types as above, delimited by an arrow ("->" substring).
-   ) ->
-       NumericTypes + (str,) + (MyClass, 'my_package.my_module.MyOtherClass',): 
+   ) -> (
+       NumericTypes + (str, 'my_package.my_module.MyOtherClass', bool)):
        return 0xDEADBEEF
    
 
@@ -169,7 +177,7 @@ Cheatsheet
            return range(0x0B00B135 + int(self._scalar), 0xB16B00B5)
 
        # Decorate property setter methods as above.
-       @bare_getter.setter
+       @bare_gettermethod.setter
        @beartype
        def bare_settermethod(
            self, bad: IntOrNoneTypes = 0xBAAAAAAD) -> NoneType:
@@ -183,7 +191,8 @@ supports different types of type-checking, each declared with a different type
 of **type hint** (i.e., annotation applied to a parameter or return value of a
 callable).
 
-This is simpler than it sounds. Let's begin with the simplest, shall we?
+This is simpler than it sounds. Would we lie? Instead of answering that, let's
+begin with the simplest type of type-checking supported by ``@beartype``.
 
 Builtin Types
 -------------
@@ -239,8 +248,9 @@ this function's implementation and/or return type annotation:
    beartype.roar.BeartypeCallTypeReturnException: @beartyped law_of_the_jungle() return value None not a <class 'tuple'>.
 
 *Bad function.* Let's conveniently resolve this by permitting this function to
-return either a tuple or ``None``, as `detailed below <Tuples of Arbitrary
-Types_>`__:
+return either a tuple or ``None``:
+
+.. # as `detailed below <Tuples of Arbitrary Types_>`__:
 
 .. code-block:: python
 
@@ -348,14 +358,83 @@ Good generator. Let's call it again with bad types:
    beartype.roar.BeartypeCallTypeParamException: @beartyped inform_baloo() parameter maxims=['Oppress not the cubs of the stranger,', '     but hail them as Sister and ...'] not a <class '__main__.MaximsOfBaloo'>.
 
 Good generator! The type hints applied to these callables now accurately
-document their respective APIs. Thanks to the pernicious magic of beartype,
-all ends typed well... *yet again.*
+document their respective APIs. Thanks to the pernicious magic of beartype, all
+ends typed well... *yet again.*
 
-Tuples of Arbitrary Types
+.. # Tuples of Arbitrary Types
+.. # -------------------------
+
+PEP 484 & Friends
+-----------------
+
+For efficiency, beartype does *not* currently support any of the rapidly
+proliferating **Python Enhancement Proposals (PEPs)** for officially sanctioned
+type-checking, including (but *not* limited to):
+
+.. # Note: intentionally sorted in numeric order for collective sanity.
+
+* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
+* `PEP 484 -- Type Hints <PEP 484_>`__.
+* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
+  544_>`_.
+* `PEP 586 -- Literal Types <PEP 586_>`__.
+* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
+  <PEP 589_>`__.
+
+Why? Because implementing even the core `PEP 484`_ standard in pure Python
+while preserving beartype's ``O(1)`` time complexity guarantee is infeasible.
+
+Consider a hypothetical `PEP 484`_-compliant ``@slothtype`` decorator
+decorating a hypothetical callable accepting a list of strings and returning
+anything, like so:
+
+.. code-block:: python
+   
+   from slothtype import slothtype
+   from typing import Any, List
+
+   @slothtype
+   def slothful(sluggard: List[str]) -> Any:
+       return sluggard
+
+This is hardly the worst-case usage scenario. By compare to some of the more
+grotesque outliers enabled by the ``typing`` API (e.g., infinitely recursive
+type annotations), a non-nested iterable of scalars is rather tame. Sadly,
+``slothful`` still exhibits ``Ω(n)`` time complexity for ``n`` the size of the
+passed list, where ``Ω`` may be read as "at least as asymptotically complex as"
+under the standard Knuth definition.
+
+**That's bad.** Each call to ``slothful`` now type-checks each item of a list
+of arbitrary size *before* performing any meaningful work. Python prohibits
+monkey-patching builtin types, so this up-front cost *cannot* be amortized
+across all calls to ``slothful`` (e.g., by monkey-patching the builtin ``list``
+type to cache the result of prior type-checks of lists previously passed to
+``slothful`` and invalidating these caches on external changes to these lists)
+but *must* instead be paid on each call to ``slothful``. Ergo, ``Ω(n)``.
+
+PEP 484 & Friends (Redux)
 -------------------------
 
-Tuples of arbitrary types are also usable and this usage shall be documented
-and this shall be good.
+Beartype does intend to support the proper subset of `PEP 484`_ (and its
+vituperative band of ne'er-do-wells) that *is* efficiently implementable in
+pure Python – whatever that is. Full compliance may be off the map, but at
+least partial compliance with the portions of these standards that average
+users care about is well within the realm of "maybe?".
+
+Preserving beartype's ``O(1)`` time complexity guarantee is the ultimate
+barometer for what will be and will not be implemented. That and @leycec's
+declining sanity. Our bumpy roadmap to a better-typed future now resembles:
+
++------------------+--------------------------------+
+| Beartype version | Partial PEP compliance planned |
++------------------+--------------------------------+
+| **1.0.0**        | PEP 484                        |
+| **2.0.0**        | PEP 544                        |
+| **3.0.0**        | PEP 586                        |
+| **4.0.0**        | PEP 589                        |
++------------------+--------------------------------+
+
+If we wish upon a GitHub star, even the improbable is possible.
 
 License
 =======
@@ -366,8 +445,9 @@ Beartype is `open-source software released <license_>`__ under the
 Funding
 =======
 
-Beartype is currently financed as a purely volunteer open-source project.
-However, prior funding sources include:
+Beartype is currently financed as a purely volunteer open-source project –
+which is to say, it's unfinanced. Prior funding sources (*yes, they once
+existed*) include:
 
 #. Over the period 2015—2018 preceding the untimely death of `Paul Allen`_,
    beartype was graciously associated with the `Paul Allen Discovery Center`_
@@ -384,7 +464,7 @@ decorators, explicit function calls, and import hooks) include:
 
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
-* beartype. :sup:`...that's us.`
+* beartype. :sup:`...'sup.`
 * typeguard_.
 
 **Static type checkers** (i.e., third-party tooling *not* implemented in Python
@@ -407,6 +487,7 @@ Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
+* `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 
@@ -433,6 +514,10 @@ Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
    https://www.alleninstitute.org/what-we-do/frontiers-group
 .. _Tufts University:
    https://www.tufts.edu
+
+.. # ------------------( LINKS ~ beartype : issues          )------------------
+.. _PEP 484 issue:
+   .
 
 .. # ------------------( LINKS ~ kipling                    )------------------
 .. _The Jungle Book:
@@ -470,6 +555,8 @@ Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
    https://www.python.org/dev/peps/pep-0544
+.. _PEP 586:
+   https://www.python.org/dev/peps/pep-0586
 .. _PEP 589:
    https://www.python.org/dev/peps/pep-0589
 

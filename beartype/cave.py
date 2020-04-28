@@ -57,15 +57,6 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
    https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Define a new "TypingType" or "Pep484Type" type rooted at either the
-#"typing.TypingMeta" metaclass or "typing._TypingBase" superclass. Obviously,
-#we currently have no means of type-checking metaclasses... but the latter is
-#explicitly private. Ergo, all roads lead to Hell.
-#FIXME: Use this new type in the @beartype decorator to raise exceptions when
-#passed such a type, which we currently do *NOT* support. This is critical, as
-#users *MUST* be explicitly informed of this deficiency.
-
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
