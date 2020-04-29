@@ -1,0 +1,52 @@
+---
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2020 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# GitHub-specific continuous integration (CI) configuration.
+#
+# --------------------( SEE ALSO                          )--------------------
+# * https://hynek.me/articles/python-github-actions
+#   Well-authored blog post strongly inspiring this configuration.
+
+# ....................{ METADATA                          }....................
+name: Beartype CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# ....................{ MAIN                              }....................
+jobs:
+  tests:
+    name: "Python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    
+    #FIXME: Uncomment after properly researching code coverage integration.
+    #On doing so, add "coverage[toml]" to the set of Python packages
+    #installed with "pip" below.
+    #env:
+    #  USING_COVERAGE: '3.6,3.8'
+
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
+
+    steps:
+    - uses: 'actions/checkout@v2'
+    - uses: 'actions/setup-python@v1'
+      with:
+        python-version: '${{ matrix.python-version }}'
+    - name: 'Installing package dependencies...'
+      run: |
+        set -xe
+        python -VV
+        python -m site
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install --upgrade virtualenv tox tox-gh-actions
+    - name: 'Testing under tox against Python ${{ matrix.python-version }}...'
+      run: |
+        python -m tox
