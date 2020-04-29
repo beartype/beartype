@@ -47,6 +47,49 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Suck it, "typing". Suck it.
 
+#FIXME: *HIGHEST PRIORITY!* Handle PEP 563:
+#    https://www.python.org/dev/peps/pep-0563
+#This fundamentally breaks everything and will become the standard going
+#forward, so... careful consideration is warranted. Python 3.7 introduces:
+#    from __future__ import annotations
+#Under Python 4, this behaviour becomes the default. What this does is coerce
+#every annotation into an unevaluated string, which runtime type checkers like
+#ours must then dynamically evaluate at runtime. This is insane, but... welcome
+#to Python type checking.
+#
+#On the bright side, testing for whether a module under Python 3.7 through 3.10
+#enable this feature is trivial: if the module defines the "annotations"
+#attribute *AND* this attribute is equivalent to the "__future__.annotations"
+#object, then that module has enabled PEP 563 compliance.
+#
+#Likewise, note that the module object for an arbitrary object is trivially
+#obtained via "sys.modules[type(obj).__module__]". Likewise, since function
+#objects define the exact same "__module__" attribute, we can:
+#
+#    # Module declaring this callable.
+#    func_module = sys.modules[func.__module__]
+#
+#    #FIXME: Untested, but theoretically viable assuming the special
+#    #"__future__" module behaves sanely.
+#    # True only if this module enables PEP 563-style deferred annotations.
+#    is_func_annotations_deferred = (
+#        getattr(func_module, 'annotations', None) is __future__.annotations or
+#        #FIXME: Clearly, do this properly.
+#        python_version >= 4.0.0
+#    )
+#
+#Given that, we can deterministically decide whether to enable a PEP
+#563-compliant code path. The key takeaways from that PEP appear to be:
+#
+#* For each annotated type hint:
+#  * That hint *MUST* be a string containing the code expressing that
+#    annotation. Raise an exception if *NOT* the case.
+#  * Call the following to obtain the evaluated expression:
+#    annotation = eval(annotation_str, func.__globals__, ())
+#
+#Not terribly arduous, but certainly annoying. This is absolutely critical, so
+#we *MUST* do this as soon as feasible. *URGH!*
+
 #FIXME: Document all exceptions raised.
 
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
@@ -107,6 +150,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #type hints, so so should we:
 #    https://www.python.org/dev/peps/pep-0484/#using-none
 #    https://stackoverflow.com/a/39429578/2809027
+
+#FIXME: [FEATURE] Add support for unqualified classnames, referred to as
+#"forward references" in PEP 484 jargon: e.g.,
+#    @beartype
+#    def testemall(ride: 'Lightning') -> 'Lightning': return ride
+#    class Lightning(object): pass
+#To do so, note that the fully-qualified name of the decorated callable is
+#trivially obtainable as "func.__module__". So, this should be trivial.
 
 #FIXME: Validate all tuple annotations to be non-empty. Empty tuple annotations
 #imply *NOTHING* to be valid, which would render the resulting callable
