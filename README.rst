@@ -1,7 +1,7 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
 =====================================================
-beartype —————[ …the barely there type checker ]—————
+beartype ———[ …the barely there type checker ]———
 =====================================================
 
 |GitHub Actions badge|
@@ -380,6 +380,8 @@ type-checking, including (but *not* limited to):
 * `PEP 484 -- Type Hints <PEP 484_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
+* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
+* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
@@ -398,7 +400,7 @@ anything, like so:
 
    @slothtype
    def slothful(sluggard: List[str]) -> Any:
-       return sluggard
+       ...
 
 This is hardly the worst-case usage scenario. By compare to some of the more
 grotesque outliers enabled by the ``typing`` API (e.g., infinitely recursive
@@ -431,6 +433,7 @@ declining sanity. Our bumpy roadmap to a better-typed future now resembles:
 +------------------+--------------------------------+
 | Beartype version | Partial PEP compliance planned |
 +------------------+--------------------------------+
+| **0.2.0**        | PEP 563                        |
 | **1.0.0**        | PEP 484                        |
 | **2.0.0**        | PEP 544                        |
 | **3.0.0**        | PEP 586                        |
@@ -480,19 +483,6 @@ application stack at tool rather than Python runtime) include:
 * mypy_.
 * `pyright from Microsoft <pyright_>`__.
 * `pytype from Google <pytype_>`__.
-
-Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
-
-.. # Note: intentionally sorted in numeric order for collective sanity.
-
-* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
-* `PEP 484 -- Type Hints <PEP 484_>`__.
-* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
-  544_>`_.
-* `PEP 586 -- Literal Types <PEP 586_>`__.
-* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
-  <PEP 589_>`__.
 
 .. # ------------------( IMAGES                             )------------------
 .. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/ci/badge.svg
@@ -563,6 +553,8 @@ Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
    https://www.python.org/dev/peps/pep-0544
+.. _PEP 563:
+   https://www.python.org/dev/peps/pep-0563
 .. _PEP 586:
    https://www.python.org/dev/peps/pep-0586
 .. _PEP 589:

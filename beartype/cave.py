@@ -111,14 +111,31 @@ from weakref import (
 #
 # These are the lesser of multiple evils.
 from types import (
-    AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
-    CoroutineType as _CoroutineType,
     FunctionType as _FunctionType,
     GeneratorType as _GeneratorType,
     MethodType as _MethodType,
     ModuleType as _ModuleType,
 )
+
+#FIXME: After dropping Python 3.5 support:
+#
+#* Unconditionally import these types with their brethren above.
+#* Reduce the definitions of "AsyncGeneratorCType" and "AsyncCoroutineCType"
+#  below to simply:
+#    AsyncGeneratorCType = _AsyncGeneratorType
+#    AsyncCoroutineCType = _CoroutineType
+
+# Attempt to import types unavailable under Python 3.5.
+try:
+    from types import (
+        AsyncGeneratorType as _AsyncGeneratorType,
+        CoroutineType as _CoroutineType,
+    )
+# If this is Python 3.5, define placeholder globals of the same name.
+except ImportError:
+    _AsyncGeneratorType = None
+    _CoroutineType = None
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -171,6 +188,16 @@ Note that, for obscure and uninteresting reasons, the standard :mod:`types`
 module defined the same type with the same name under Python 2.x but *not* 3.x.
 Depressingly, this type must now be manually redefined everywhere.
 '''
+
+
+class UnavailableType(object):
+    '''
+    Placeholder value for all **unavailable types** (i.e., types *not*
+    available under the active Python interpreter, typically due to
+    insufficient Python version or uninstalled third-party dependencies).
+    '''
+
+    pass
 
 # ....................{ TYPES ~ arg                       }....................
 ArgParserType = _ArgumentParser
@@ -304,7 +331,8 @@ implicitly passed that class as their first parameter, unlike class methods).
 '''
 
 # ....................{ TYPES ~ callable ~ return : async }....................
-AsyncGeneratorCType = _AsyncGeneratorType
+AsyncGeneratorCType = (
+    UnavailableType if _AsyncGeneratorType is None else _AsyncGeneratorType)
 '''
 C-based type returned by all **asynchronous pure-Python generators** (i.e.,
 callables implemented in pure Python containing one or more ``yield``
@@ -316,10 +344,14 @@ Caveats
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
+
+**This type is unavailable under Python 3.5,** where it defaults to
+:data:`UnavailableType` for safety.
 '''
 
 
-AsyncCoroutineCType = _CoroutineType
+AsyncCoroutineCType = (
+    UnavailableType if _CoroutineType is None else _CoroutineType)
 '''
 C-based type returned by all **asynchronous coroutines** (i.e., callables
 implemented in pure Python *not* containing one or more ``yield`` statements
@@ -331,6 +363,9 @@ Caveats
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
+
+**This type is unavailable under Python 3.5,** where it defaults to
+:data:`UnavailableType` for safety.
 '''
 
 # ....................{ TYPES ~ callable ~ return : gener }....................
@@ -862,9 +897,10 @@ objects *and* bound methods, which require specific handling.
 
 # ....................{ TUPLES ~ lib : numpy              }....................
 # Defined by the "TUPLES ~ init" subsection below.
-NumpyArrayType = None
+NumpyArrayType = UnavailableType
 '''
-Type of all NumPy arrays if :mod:`numpy` is importable *or* ``None`` otherwise.
+Type of all NumPy arrays if :mod:`numpy` is importable *or*
+:data:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
 
 This class is a synonym of the :class:`numpy.ndarray` class, permitting callers
 to avoid importing that class.
@@ -872,10 +908,11 @@ to avoid importing that class.
 
 
 # Defined by the "TUPLES ~ init" subsection below.
-NumpyScalarType = None
+NumpyScalarType = UnavailableType
 '''
 Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
-:mod:`numpy` is importable *or* ``None`` otherwise.
+:mod:`numpy` is importable *or* :data:`UnavailableType` otherwise (i.e., if
+:mod:`numpy` is unimportable).
 
 This class is a synonym of the :class:`numpy.generic` class, permitting callers
 to avoid importing that class.
