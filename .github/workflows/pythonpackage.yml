@@ -18,7 +18,7 @@
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
-name: ci
+name: tests
 
 on:
   push:

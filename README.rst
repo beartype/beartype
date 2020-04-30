@@ -20,25 +20,26 @@ efficiency, portability, and thrilling puns.
 Unlike comparable static type checkers operating at the coarse-grained
 application level (e.g., Pyre_, mypy_, pyright_, pytype_), beartype operates
 exclusively at the fine-grained callable level of pure-Python functions and
-methods via the decorator design pattern. This renders beartype natively
-compatible with interpreters and compilers targeting the Python language –
-including CPython_, PyPy_, and Numba_.
+methods via the standard decorator design pattern. This renders beartype
+natively compatible with *all* interpreters and compilers targeting the Python
+language – including CPython_, PyPy_, and Numba_.
 
 Unlike comparable runtime type checkers (e.g., typeguard_), beartype
-dynamically generates one unique wrapper for each decorated callable
-implementing optimal type-checking for that callable. Since "performance by
-default" is a first-class concern, *all* wrappers are guaranteed to:
+dynamically wraps each decorated callable with a unique wrapper implementing
+strongly optimized type-checking for that callable. Since "performance by
+default" is our first-class concern, *all* wrappers are guaranteed to:
 
 * Exhibit ``O(1)`` time complexity with negligible constant factors.
-* Be either more efficient (in the common case) or exactly as efficient (in
-  the worst case) as equivalent type-checking implemented by hand.
+* Be either more efficient (in the common case) or exactly as efficient minus
+  the cost of an additional stack frame (in the worst case) as equivalent
+  type-checking implemented by hand.
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
 
 Beartype is `portably implemented <codebase_>`__ in pure `Python 3`_,
-continuously stress-tested with `Travis CI`_ **+** pytest_ **+** tox_, and
-`permissively distributed <license_>`__ under the `MIT license`_.
+`continuously stress-tested <tests_>`__ with `GitHub Actions`_ **+** tox_ **+**
+pytest_, and `permissively distributed <license_>`__ under the `MIT license`_.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -485,8 +486,8 @@ application stack at tool rather than Python runtime) include:
 * `pytype from Google <pytype_>`__.
 
 .. # ------------------( IMAGES                             )------------------
-.. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/ci/badge.svg
-   :target: https://github.com/beartype/beartype/actions?workflow=ci
+.. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
+   :target: https://github.com/beartype/beartype/actions?workflow=tests
    :alt: GitHub Actions status
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
@@ -496,6 +497,8 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ beartype : remote          )------------------
 .. _codebase:
    https://github.com/beartype/beartype/tree/master/beartype
+.. _tests:
+   https://github.com/beartype/beartype/actions?workflow=tests
 
 .. # ------------------( LINKS ~ beartype : funding         )------------------
 .. _BETSE:
@@ -581,8 +584,8 @@ application stack at tool rather than Python runtime) include:
    https://github.com/Microsoft/pyright
 
 .. # ------------------( LINKS ~ service                    )------------------
-.. _Travis CI:
-   https://travis-ci.org
+.. _GitHub Actions:
+   https://github.com/features/actions
 
 .. # ------------------( LINKS ~ standard                   )------------------
 .. _MIT license:
