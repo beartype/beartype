@@ -4,14 +4,21 @@
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                          )--------------------
-# GitHub-specific continuous integration (CI) configuration.
+# GitHub-specific continuous integration (CI) configuration, enabling the usual
+# GitHub Actions workflow for pure-Python packages exercised by "tox".
 #
 # --------------------( SEE ALSO                          )--------------------
 # * https://hynek.me/articles/python-github-actions
 #   Well-authored blog post strongly inspiring this configuration.
 
 # ....................{ METADATA                          }....................
-name: Beartype CI
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Changes to this name *MUST* be manually synchronized with:
+# * The "|GitHub Actions badge|" image URL in the top-level "README.rst".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Non-human-readable (i.e., machine-readable) label associated with this
+# GitHub Actions workflow.
+name: ci
 
 on:
   push:
@@ -23,23 +30,49 @@ on:
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }}"
+
+    #FIXME: As required, generalize to macOS and Windows by:
+    #* Uncommenting the following line here:
+    #runs-on: ${{ matrix.platform }}
+    #* Uncommenting the "strategy/matrix/platform" line below.
+    #* Replacing the "envlist" setting in "tox.ini" with something resembling:
+    #    envlist = py3{5,6,7,8}-{linux,macos,windows},pypy3-{linux,macos,windows}
     runs-on: ubuntu-latest
-    
+
+    # ..................{ VARIABLES                         }..................
     #FIXME: Uncomment after properly researching code coverage integration.
     #On doing so, add "coverage[toml]" to the set of Python packages
     #installed with "pip" below.
     #env:
     #  USING_COVERAGE: '3.6,3.8'
 
+    # ..................{ MATRIX                            }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # WARNING: Changes to this section *MUST* be manually synchronized with:
+    # * The "[tox]" and "[gh-actions]" subsections of "tox.ini".
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     strategy:
       matrix:
+        # platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
 
+    # ..................{ PROCESS                           }..................
     steps:
     - uses: 'actions/checkout@v2'
     - uses: 'actions/setup-python@v1'
       with:
         python-version: '${{ matrix.python-version }}'
+
+    # Note that:
+    #
+    # * "set -xe" enables Bash:
+    #   * Reporting (i.e., "-x"), which implicitly prints each command to
+    #     stdout *BEFORE* running that command.
+    #   * Strictness (i.e., "-e").
+    # * Packaging dependencies (e.g., "pip") are installed *BEFORE* all
+    #   remaining dependencies (e.g., "tox").
+    # * "tox-gh-actions" is a third-party Python package automating integration
+    #   of GitHub Actions and "tox".
     - name: 'Installing package dependencies...'
       run: |
         set -xe
@@ -47,6 +80,6 @@ jobs:
         python -m site
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install --upgrade virtualenv tox tox-gh-actions
-    - name: 'Testing under tox against Python ${{ matrix.python-version }}...'
+    - name: 'Testing under toxic Python ${{ matrix.python-version }}...'
       run: |
         python -m tox

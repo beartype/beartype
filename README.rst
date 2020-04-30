@@ -1,8 +1,10 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
-========
-beartype
-========
+=====================================================
+beartype —————[ …the barely there type checker ]—————
+=====================================================
+
+|GitHub Actions badge|
 
 .. parsed-literal::
 
@@ -10,7 +12,7 @@ beartype
      the simple bare necessities.
    Forget about your worries and your strife.
 
-   – `The Jungle Book`_.
+                           — `The Jungle Book`_.
 
 **Beartype** is an open-source pure-Python runtime type checker emphasizing
 efficiency, portability, and thrilling puns.
@@ -82,12 +84,14 @@ Installation
 Cheatsheet
 ==========
 
+Let's type-check like greased lightning:
+
 .. code-block:: python
 
-   # The @beartype.beartype decorator type-checks like... greased lightning?
+   # Import the core @beartype decorator.
    from beartype import beartype
 
-   # [optional] The bear cave collects types usable with @beartype.beartype.
+   # Import generic types for use with @beartype.
    from beartype.cave import (
        AnyType,
        FunctionTypes,
@@ -104,37 +108,36 @@ Cheatsheet
        VersionTypes,
    )
 
-   # Fictional user-defined class imported for demonstration purposes.
+   # Import user-defined classes for use with @beartype, too.
    from my_package.my_module import MyClass
 
-   # Decorated callable to be type-checked. If it feels good, it must be.
+   # Decorate functions with @beartype and...
    @beartype
    def bare_necessities(
        # Annotate builtin types as is, delimited by a colon (":" character).
-       param1_must_be_of_single_type: str,
+       param1_must_be_of_type: str,
 
        # Annotate user-defined classes as is, too.
-       param2_must_be_of_single_type_too: MyClass,
+       param2_must_be_of_type: MyClass,
 
        # Annotate fully-qualified classnames dynamically resolved at call time
-       # (referred to as "forward references") with "."-delimited strings.
-       param3_must_be_of_single_type_named: 'my_package.my_module.MyClass',
+       # (referred to as "forward references") as "."-delimited strings.
+       param3_must_be_of_type: 'my_package.my_module.MyClass',
 
-       # Annotate multiple types as tuples. In PEP 484, this is equivalent to:
-       # param4_must_be_any_of_multiple_types: typing.Union[dict, MyClass, None,]
-       param4_must_be_any_of_multiple_types: (dict, MyClass, NoneType,),
+       # Annotate unions of types as tuples. In PEP 484, this is equivalent to:
+       # param4_may_be_any_of_several_types: typing.Union[dict, MyClass, None,]
+       param4_may_be_any_of_several_types: (dict, MyClass, NoneType,),
 
-       # Annotate multiple types as tuples predefined within the beartype cave.
-       param5_must_be_any_of_multiple_types_too: SequenceTypes,
+       # Annotate unions of types as tuples predefined by the beartype cave.
+       param5_may_be_any_of_several_types: SequenceTypes,
 
-       # Annotate multiple types as tuples containing a mixture of both types
-       # and fully-qualified classnames.
-       param6_must_be_any_of_multiple_types_named: (
+       # Annotate unions of types as tuples containing both types and
+       # fully-qualified classnames.
+       param6_may_be_any_of_several_types: (
            list, 'my_package.my_module.MyOtherClass', NoneType,),
 
-       # Annotate multiple types as the concatenation of arbitrarily many
-       # tuples containing arbitrarily many types.
-       param7_must_be_any_of_multiple_types_added: (str, int,) + IterableTypes,
+       # Annotate unions of types as tuples concatenated together.
+       param7_may_be_any_of_several_types: (str, int,) + IterableTypes,
 
        # Annotate variadic positional arguments as above, too.
        *args: VersionTypes + (NoneType, 'my_package.my_module.MyVersionType',)
@@ -490,6 +493,11 @@ Lastly, relevant **Python Enhancement Proposals (PEPs)** include:
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
+
+.. # ------------------( IMAGES                             )------------------
+.. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/ci/badge.svg
+   :target: https://github.com/beartype/beartype/actions?workflow=ci
+   :alt: GitHub Actions status
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
 .. _license:
