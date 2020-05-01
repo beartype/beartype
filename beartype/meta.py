@@ -259,7 +259,7 @@ Optional runtime dependencies for this package defined as a tuple of
 '''
 
 
-LIBS_TESTING_MANDATORY = (
+LIBS_TESTTIME_MANDATORY = (
     # pytest should ideally remain the only hard dependency for testing on
     # local machines. While our testing regime optionally leverages third-party
     # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
@@ -269,7 +269,7 @@ LIBS_TESTING_MANDATORY = (
     'pytest >=4.0.0',
 )
 '''
-Optional test-time dependencies for this package defined as a tuple of
+Mandatory test-time dependencies for this package defined as a tuple of
 :mod:`setuptools`-specific requirements strings of the format
 ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
 

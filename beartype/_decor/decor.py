@@ -159,16 +159,37 @@ This private submodule is *not* intended for importation by downstream callers.
 #To do so, note that the fully-qualified name of the decorated callable is
 #trivially obtainable as "func.__module__". So, this should be trivial.
 
-#FIXME: Validate all tuple annotations to be non-empty. Empty tuple annotations
-#imply *NOTHING* to be valid, which would render the resulting callable
-#uncallable, which would be entirely senseless. To do so, consider raising an
-#exception from the _check_type_annotation() function: e.g.,
+#FIXME: Emit one non-fatal warning for each annotated type that is either:
+#
+#* "beartype.cave.UnavailableType".
+#* "beartype.cave.UnavailableTypes".
+#
+#Both cases imply user-side misconfiguration, but not sufficiently awful enough
+#to warrant fatal exceptions. Moreover, emitting warnings rather than
+#exceptions enables end users to unconditionally disable all unwanted warnings,
+#whereas no such facilities exist for unwanted exceptions.
+#FIXME: Validate all tuple annotations to be non-empty *EXCLUDING*
+#"beartype.cave.UnavailableTypes", which is intentionally empty. All
+#user-defined empty tuple annotations imply *NOTHING* to be valid, which would
+#render the resulting callable uncallable, which would be entirely senseless.
+#To do so, consider raising an exception from the _check_type_annotation()
+#function: e.g.,
 #
 #    # This is bad and should raise an exception at decoration time.
 #    @beartype
 #    def badfuncisbad(nonsense_is_nonsense: ()) -> ():
 #        pass
 #FIXME: Unit test the above edge case.
+
+#FIXME: Reduce tuples containing only one item to those items as is for
+#efficiency: e.g.,
+#
+#    # This...
+#    @beartype
+#    def slowerfunc(dumbedgecase: (int,))
+#
+#    # ...should be exactly as efficient as this.
+#    def fasterfunc(idealworld: int)
 
 #FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
 #
@@ -183,6 +204,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #the naive heuristic of "tuple(set(annotation_tuple))" generally fails.
 #Instead, we'll need to implement some sort of manual pruning algorithm
 #optimized for the general case of a tuple containing *NO* duplicates.
+#FIXME: Ah! Actually, the following should mostly work (untested, of course):
+#   tuple_uniquified = tuple({id(item): item for item in tuple}.values()}
+#Mildly clever, though I'm sure I'm the one millionth coder to reinvent that
+#wheel. The core idea here is that object IDs are guaranteed to be hashable,
+#even if arbitrary objects aren't. Ergo, we dynamically construct a dictionary
+#mapping from object ID to object via a dictionary comprehension over possibly
+#duplicate tuple items and then construct a new tuple given the guaranteeably
+#unique values of that dictionary. Bam! Done.
 
 #FIXME: Add support for all possible kinds of parameters. @beartype currently
 #supports most but *NOT* all types. Specifically:

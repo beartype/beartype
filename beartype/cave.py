@@ -147,29 +147,6 @@ Type of all objects regardless of type.
 '''
 
 
-ClassType = type
-'''
-Type of all types.
-'''
-
-
-FileType = _IOBase
-'''
-Abstract base class implemented by *all* **file-like objects** (i.e., objects
-implementing the standard ``read()`` and ``write()`` methods).
-
-This class is a synonym of the :class:`io.IOBase` class, provided merely as a
-convenience to callers preferring to avoid importing that class.
-'''
-
-
-ModuleType = _ModuleType
-'''
-Type of all **C- and Python-based modules** (i.e., importable files implemented
-either as C extensions or in pure Python).
-'''
-
-
 NoneType = type(None)
 '''
 Type of the ``None`` singleton.
@@ -190,14 +167,70 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
+ClassType = type
+'''
+Type of all types.
+'''
+
+# ....................{ TYPES ~ unavailable               }....................
+# Unavailable types are defined *BEFORE* any subsequent types, as the latter
+# commonly leverage the former.
+
 class UnavailableType(object):
     '''
-    Placeholder value for all **unavailable types** (i.e., types *not*
-    available under the active Python interpreter, typically due to
-    insufficient Python version or uninstalled third-party dependencies).
+    **Unavailable type** (i.e., type *not* available under the active Python
+    interpreter, typically due to insufficient Python version or non-installed
+    third-party dependencies).
     '''
 
     pass
+
+
+# Private, as it's unclear whether anyone desperately wants access to this yet.
+class _UnavailableTypesTuple(tuple):
+    '''
+    Type of any **tuple of unavailable types** (i.e., types *not* available
+    under the active Python interpreter, typically due to insufficient Python
+    version or non-installed third-party dependencies).
+    '''
+
+    pass
+
+
+UnavailableTypes = _UnavailableTypesTuple()
+'''
+**Tuple of unavailable types** (i.e., types *not* available under the active
+Python interpreter, typically due to insufficient Python version or
+non-installed third-party dependencies).
+
+Caveats
+----------
+**This tuple should always be used in lieu of the empty tuple.** Although
+technically equivalent to the empty tuple, the :func:`beartype.beartype`
+decorator explicitly distinguishes between this tuple and the empty tuple.
+Specifically, for any callable parameter or return type annotated with:
+
+* This tuple, :func:`beartype.beartype` emits a non-fatal warning ignorable
+  with a simple :mod:`warnings` filter.
+* The empty tuple, :func:`beartype.beartype` raises a fatal exception.
+'''
+
+# ....................{ TYPES ~ py                        }....................
+FileType = _IOBase
+'''
+Abstract base class implemented by *all* **file-like objects** (i.e., objects
+implementing the standard ``read()`` and ``write()`` methods).
+
+This class is a synonym of the :class:`io.IOBase` class, provided merely as a
+convenience to callers preferring to avoid importing that class.
+'''
+
+
+ModuleType = _ModuleType
+'''
+Type of all **C- and Python-based modules** (i.e., importable files implemented
+either as C extensions or in pure Python).
+'''
 
 # ....................{ TYPES ~ arg                       }....................
 ArgParserType = _ArgumentParser
@@ -891,9 +924,11 @@ objects *and* bound methods, which require specific handling.
 
 # ....................{ TUPLES ~ lib                      }....................
 # Types conditionally dependent upon the importability of third-party
-# dependencies. For safety, all such types default to "None" for simple types
-# and the empty tuple for tuples of simple types and are subsequently redefined
-# by the try-except block below.
+# dependencies. These types are subsequently redefined by try-except blocks
+# below and initially default to either:
+#
+# * "UnavailableType" for simple types.
+# * "UnavailableTypes" for tuples of simple types.
 
 # ....................{ TUPLES ~ lib : numpy              }....................
 # Defined by the "TUPLES ~ init" subsection below.
@@ -920,13 +955,13 @@ to avoid importing that class.
 
 
 # Defined by the "TUPLES ~ init" subsection below.
-NumpyDataTypes = ()
+NumpyDataTypes = UnavailableTypes
 '''
 Tuple of the **NumPy data type** (i.e., NumPy-specific numeric scalar type
 homogeneously constraining all elements of all NumPy arrays) and all scalar
 Python types transparently supported by NumPy as implicit data types (i.e.,
 :class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
-:mod:`numpy` is importable *or* the empty tuple otherwise.
+:mod:`numpy` is importable *or* :data:`UnavailableTypes` otherwise.
 
 This class is a synonym of the :class:`numpy.dtype` class, permitting callers
 to avoid importing that class.
@@ -934,21 +969,21 @@ to avoid importing that class.
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
 # Defined by the "TUPLES ~ init" subsection below.
-DistributionSetuptoolsOrNoneTypes = ()
+DistributionSetuptoolsOrNoneTypes = UnavailableTypes
 '''
 Tuple of the type of all :mod:`setuptools`-specific package metadata objects
-and of the ``None`` singleton if :mod:`pkg_resources` is importable *or* the
-empty tuple otherwise.
+as well as the ``None`` singleton if :mod:`pkg_resources` is importable *or*
+:data:`UnavailableTypes` otherwise.
 '''
 
 
 # Defined by the "TUPLES ~ init" subsection below.
-VersionSetuptoolsTypes = ()
+VersionSetuptoolsTypes = UnavailableTypes
 '''
 Tuple of all :mod:`setuptools`-specific version types (i.e., types instantiated
 and returned by the stable :func:`pkg_resources.parse_version` function bundled
-with :mod:`setuptools`) if :mod:`pkg_resources` is importable *or* the empty
-tuple otherwise.
+with :mod:`setuptools`) if :mod:`pkg_resources` is importable *or*
+:data:`UnavailableTypes` otherwise.
 
 Specifically, this tuple contains the following types if :mod:`pkg_resources`
 is importable:

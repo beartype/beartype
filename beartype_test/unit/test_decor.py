@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright 2014-2020 by Alexis Pietak & Cecil Curry.
+# Copyright 2014-2020 by Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
-**Beartype tests.**
+**Beartype decorator unit tests.**
 
-This submodule provides unit tests exercising various portions of the
-:mod:`beartype.beartype` decorator.
+This submodule unit tests the :func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#WARNING: To raise human-readable test errors, avoid importing from
-#package-specific submodules at module scope.
+# WARNING: To raise human-readable test errors, avoid importing from
+# package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import pytest

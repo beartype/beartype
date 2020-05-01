@@ -225,11 +225,11 @@ _SETUP_OPTIONS = {
         # key below into an arbitrarily named extra. This is required *ONLY*
         # for integration with the top-level "tox.ini" file. See the "extras"
         # key in that file for further details.
-        'test': meta.LIBS_TESTING_MANDATORY,
+        'test': meta.LIBS_TESTTIME_MANDATORY,
     },
 
     # Mandatory testing dependencies.
-    'tests_require': meta.LIBS_TESTING_MANDATORY,
+    'tests_require': meta.LIBS_TESTTIME_MANDATORY,
 
     # ..................{ PACKAGES                          }..................
     # List of the fully-qualified names of all Python packages (i.e.,
