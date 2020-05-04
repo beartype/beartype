@@ -37,9 +37,12 @@ first-class concern, *all* wrappers are guaranteed to:
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
 
-Beartype is `portably implemented <codebase_>`__ in pure `Python 3`_,
-`continuously stress-tested <tests_>`__ with `GitHub Actions`_ **+** tox_ **+**
-pytest_, and `permissively distributed <license_>`__ under the `MIT license`_.
+Beartype is `portably implemented <codebase_>`__ in `pure Python 3
+<Python_>`__, `continuously stress-tested <tests_>`__ with `GitHub Actions`_
+**+** tox_ **+** pytest_, and `permissively distributed <license_>`__ under the
+`MIT license`_. Beartype has no runtime dependencies, `only one test-time
+dependency <pytest_>`__, and supports `all Python 3.x releases still in active
+development <Python status_>`__.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -530,8 +533,10 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ py                         )------------------
 .. _Anaconda:
    https://docs.conda.io/en/latest/miniconda.html
-.. _Python 3:
+.. _Python:
    https://www.python.org
+.. _Python status:
+   https://devguide.python.org/#status-of-python-branches
 .. _pip:
    https://pip.pypa.io
 

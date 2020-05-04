@@ -15,10 +15,48 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import argparse, functools, sys
+import argparse, functools, re, sys
+
+# ....................{ TODO                              }....................
+#FIXME: Unit test the following types, which remain untested for the initial
+#0.1.0 release due to non-trivialities with asynchronous testing:
+#* "AsyncGeneratorCType".
+#* "AsyncCoroutineCType".
+#* "AsyncCTypes".
+
+# ....................{ FUNCTIONS                         }....................
+# Test vanilla function.
+def _we_were_dreamers_dreaming_greatly_in_the_man_stifled_town(): pass
+
+# Test generator function.
+def _we_yearned_beyond_the_sky_line_where_the_strange_roads_go_down(): yield
+
+# ....................{ CLASSES                           }....................
+# Test class defining all possible class-specific callables, including...
+class _WeHaveFedOurSeaForAThousandYears(object):
+    # Instance method.
+    def and_she_calls_us_still_unfed(self): pass
+
+    # Class method.
+    @classmethod
+    def though_theres_never_a_wave_of_all_her_waves(cls): pass
+
+    # Static method.
+    @staticmethod
+    def but_marks_our_english_dead(): pass
+
+    # Property getter method.
+    @property
+    def we_have_strawed_our_best_to_the_weeds_unrest(self): pass
+
+    # Property setter method.
+    @we_have_strawed_our_best_to_the_weeds_unrest.setter
+    def we_have_strawed_our_best_to_the_weeds_unrest(
+        self, to_the_shark_and_the_sheering_gull):
+        pass
 
 # ....................{ ASSERTERS                         }....................
-def _assert_objects_type(cls: type, *objects: object) -> None:
+def _assert_type_objects(cls: type, *objects: object) -> None:
     '''
     Assert all passed objects to be instances of the passed type.
 
@@ -38,22 +76,29 @@ def _assert_objects_type(cls: type, *objects: object) -> None:
         assert isinstance(obj, cls)
 
 
-def _assert_tuple(types: tuple) -> None:
+def _assert_tuple_objects(clses: tuple, *objects: object) -> None:
     '''
-    Assert each item of the passed tuple to be a type.
+    Assert all passed objects to be instances of one or more types contained in
+    the passed tuple.
 
     Parameters
     ----------
-    types : tuple
-        Tuple of arbitrary objects to be validated.
+    clses : tuple
+        Tuple of types to validate these objects to be instances of.
+    objects : tuple
+        Tuple of all objects to be validated as instances of these types.
     '''
 
     # Assert that this tuple actually is.
-    assert isinstance(types, tuple)
+    assert isinstance(clses, tuple)
 
-    # Assert that each item of this tuple is a type.
-    for item in types:
-        assert isinstance(item, type)
+    # Assert all items of this tuple to be types.
+    for cls in clses:
+        assert isinstance(cls, type)
+
+    # Assert these objects to all be instances of this type.
+    for obj in objects:
+        assert isinstance(obj, clses)
 
 # ....................{ TESTS ~ types                     }....................
 def test_api_cave_types_core() -> None:
@@ -70,98 +115,126 @@ def test_api_cave_types_core() -> None:
     # * An object expected to be of this type is of this type.
     from beartype import cave
 
-    # Class defining all possible class-specific callables, including...
-    class WeHaveFedOurSeaForAThousandYears(object):
-        # Instance method.
-        def and_she_calls_us_still_unfed(self): pass
-
-        # Class method.
-        @classmethod
-        def though_theres_never_a_wave_of_all_her_waves(cls): pass
-
-        # Static method.
-        @staticmethod
-        def but_marks_our_english_dead(): pass
-
-        # Property getter method.
-        @property
-        def we_have_strawed_our_best_to_the_weeds_unrest(self): pass
-
-        # Property setter method.
-        @we_have_strawed_our_best_to_the_weeds_unrest.setter
-        def we_have_strawed_our_best_to_the_weeds_unrest(
-            self, to_the_shark_and_the_sheering_gull):
-            pass
-
     # Instance of this class.
-    lord_god_we_ha_paid_in_full = WeHaveFedOurSeaForAThousandYears()
+    lord_god_we_ha_paid_in_full = _WeHaveFedOurSeaForAThousandYears()
 
     # Test "AnyType".
-    _assert_objects_type(cave.AnyType, object())
+    _assert_type_objects(cave.AnyType, object())
 
     # Test "NoneType".
-    _assert_objects_type(cave.NoneType, None)
+    _assert_type_objects(cave.NoneType, None)
 
     # Test "ClassType".
-    _assert_objects_type(cave.ClassType, WeHaveFedOurSeaForAThousandYears)
+    _assert_type_objects(cave.ClassType, _WeHaveFedOurSeaForAThousandYears)
 
     # Test "UnavailableType". By definition, no objects of this type exist;
     # ergo, we only test that this type is actually a type.
-    _assert_objects_type(cave.UnavailableType)
+    _assert_type_objects(cave.UnavailableType)
 
     # Test "FileType".
     with open(__file__, 'r') as (
         by_the_bones_about_the_wayside_ye_shall_come_to_your_own):
-        _assert_objects_type(
+        _assert_type_objects(
             cave.FileType,
             by_the_bones_about_the_wayside_ye_shall_come_to_your_own)
 
     # Test "ModuleType".
-    _assert_objects_type(cave.ModuleType, sys.modules[__name__])
+    _assert_type_objects(cave.ModuleType, sys.modules[__name__])
 
     # Test "CallableCType".
-    _assert_objects_type(cave.CallableCType, id)
+    _assert_type_objects(cave.CallableCType, id)
 
     # Test "CallablePartialType".
-    _assert_objects_type(
+    _assert_type_objects(
         cave.CallablePartialType, functools.partial(divmod, 2))
 
     # Test "FunctionType". Since many types not commonly thought of as
     # functions are ambiguously implemented as functions, explicitly test...
-    def we_were_dreamers_dreaming_greatly_in_the_man_stifled_town(): pass
-    _assert_objects_type(
+    _assert_type_objects(
         cave.FunctionType,
         # Standard function.
-        we_were_dreamers_dreaming_greatly_in_the_man_stifled_town,
+        _we_were_dreamers_dreaming_greatly_in_the_man_stifled_town,
         # Lambda function.
         lambda: None,
         # Unbound instance method.
-        WeHaveFedOurSeaForAThousandYears.and_she_calls_us_still_unfed,
+        _WeHaveFedOurSeaForAThousandYears.and_she_calls_us_still_unfed,
         # Static method accessed on a class.
-        WeHaveFedOurSeaForAThousandYears.but_marks_our_english_dead,
+        _WeHaveFedOurSeaForAThousandYears.but_marks_our_english_dead,
         # Static method accessed on an instance.
-             lord_god_we_ha_paid_in_full.but_marks_our_english_dead,
+        lord_god_we_ha_paid_in_full.but_marks_our_english_dead,
     )
 
     # Test "MethodBoundInstanceOrClassType". Since instance and class methods
     # types are both ambiguously implemented as bound methods depending on
     # context, explicitly test...
-    _assert_objects_type(
+    _assert_type_objects(
         cave.MethodBoundInstanceOrClassType,
         # Bound instance method.
         lord_god_we_ha_paid_in_full.and_she_calls_us_still_unfed,
         # Bound class method accessed on a class.
-        WeHaveFedOurSeaForAThousandYears.though_theres_never_a_wave_of_all_her_waves,
+        _WeHaveFedOurSeaForAThousandYears.though_theres_never_a_wave_of_all_her_waves,
         # Bound class method accessed on an instance.
-             lord_god_we_ha_paid_in_full.though_theres_never_a_wave_of_all_her_waves,
-        )
+        lord_god_we_ha_paid_in_full.though_theres_never_a_wave_of_all_her_waves,
+    )
+
+    # Test "MethodBoundInstanceDunderCType".
+    _assert_type_objects(cave.MethodBoundInstanceDunderCType, ''.__add__)
+
+    # Test "MethodUnboundClassCType".
+    _assert_type_objects(
+        cave.MethodUnboundClassCType, dict.__dict__['fromkeys'])
+
+    # Test "MethodUnboundInstanceDunderCType".
+    _assert_type_objects(cave.MethodUnboundInstanceDunderCType, str.__add__)
+
+    # Test "MethodUnboundInstanceNondunderCType".
+    _assert_type_objects(cave.MethodUnboundInstanceNondunderCType, str.upper)
+
+    # Test "MethodDecoratorClassType". Note that instances of this type are
+    # *ONLY* accessible with the low-level "object.__dict__" dictionary.
+    _assert_type_objects(
+        cave.MethodDecoratorClassType,
+        _WeHaveFedOurSeaForAThousandYears.__dict__[
+            'though_theres_never_a_wave_of_all_her_waves'])
+
+    # Test "MethodDecoratorPropertyType".
+    _assert_type_objects(
+        cave.MethodDecoratorPropertyType,
+        _WeHaveFedOurSeaForAThousandYears.we_have_strawed_our_best_to_the_weeds_unrest)
+
+    # Test "MethodDecoratorStaticType". Note that instances of this type are
+    # *ONLY* accessible with the low-level "object.__dict__" dictionary.
+    _assert_type_objects(
+        cave.MethodDecoratorStaticType,
+        _WeHaveFedOurSeaForAThousandYears.__dict__[
+            'but_marks_our_english_dead'])
+
+    #FIXME: Also test a class implementing "collections.abc.Generator" by
+    #subclassing "_WeHaveFedOurSeaForAThousandYears" from this class and
+    #implementing the requisite abstract methods.
+
+    # Test "GeneratorType" by explicitly testing...
+    came_the_whisper_came_the_vision_came_the_power_with_the_need = (
+        _we_yearned_beyond_the_sky_line_where_the_strange_roads_go_down())
+    _assert_type_objects(
+        cave.GeneratorType,
+        # Generator function return object.
+        came_the_whisper_came_the_vision_came_the_power_with_the_need,
+        # Generator comprehension.
+         (l33t for l33t in range(0x1CEB00DA, 0xC00010FF)),
+    )
+
+    # Test "GeneratorCType".
+    _assert_type_objects(
+        cave.GeneratorCType,
+        came_the_whisper_came_the_vision_came_the_power_with_the_need)
 
     # Test "ArgParserType".
     arg_parser = argparse.ArgumentParser()
-    _assert_objects_type(cave.ArgParserType, arg_parser)
+    _assert_type_objects(cave.ArgParserType, arg_parser)
 
     # Test "ArgSubparsersType".
-    _assert_objects_type(cave.ArgSubparsersType, arg_parser.add_subparsers())
+    _assert_type_objects(cave.ArgSubparsersType, arg_parser.add_subparsers())
 
 # ....................{ TESTS ~ tuples                    }....................
 def test_api_cave_tuples_core() -> None:
@@ -180,6 +253,7 @@ def test_api_cave_tuples_core() -> None:
     #   are of these types.
     from beartype import cave
 
-    # Test "UnavailableTypes".
-    _assert_tuple(cave.UnavailableTypes)
+    # Test "UnavailableTypes". By definition, no objects of these types exist;
+    # ergo, we only test that this tuple is simply an empty tuple.
+    _assert_tuple_objects(cave.UnavailableTypes)
     assert cave.UnavailableTypes == ()

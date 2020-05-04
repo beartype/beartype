@@ -233,10 +233,22 @@ Python *not* associated with an owning class or instance of a class).
 
 Caveats
 ----------
-This type does *not* distinguish between conventional named functions and
-unnamed lambda functions. Since doing so would usually be seen as overly
-specific and insufficiently general, this ambiguity is *not* necessarily a bad
-thing.
+**Many types not commonly thought of as functions are ambiguously implemented
+as functions in Python.** This includes:
+
+* **Lambda functions.** Of course, distinguishing between conventional named
+  functions and unnamed lambda functions would usually be seen as overly
+  specific. So, this ambiguity is *not* necessarily a bad thing.
+* **Unbound instance methods** (i.e., instance methods accessed on their
+  declaring classes rather than bound instances).
+* **Static methods** (i.e., methods decorated with the builtin
+  :func:`staticmethod` decorator regardless of whether accessed on their
+  declaring classes or associated instances).
+
+See Also
+----------
+:data:`MethodBoundInstanceOrClassType`
+    Type of all pure-Python bound instance and class methods.
 '''
 
 # ....................{ TYPES ~ callable : method : bound }....................
@@ -257,16 +269,6 @@ the ``PyInstanceMethod_Type`` C type explicitly admits that:
     This instance of PyTypeObject represents the Python instance method type.
     It is not exposed to Python programs.
 
-Likewise, there exists *no* corresponding :data:`MethodUnboundClassType` type,
-as class methods are necessarily bound at class definition time to their
-defining classes.
-
-Lastly, there exists *no* corresponding :data:`MethodBoundStaticType` or
-:data:`MethodUnboundStaticType` types, as static methods are (by definition)
-*not* bound to their defining classes. Much like unbound instance methods,
-static methods are ambiguously implemented as functions of type
-:data:`FunctionType` indistinguishable from conventional functions.
-
 .. _PyInstanceMethod_Type documentation:
    https://docs.python.org/3/c-api/method.html#c.PyInstanceMethod_Type
 '''
@@ -276,49 +278,116 @@ static methods are ambiguously implemented as functions of type
 # standard "types.MethodWrapperType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
 # to *ALWAYS* exist is obtained instead.
-MethodBoundWrapperCType = type(''.__add__)
+MethodBoundInstanceDunderCType = type(''.__add__)
 '''
-Type of all **C-based bound method wrappers** (i.e., bound special methods
-implemented in low-level C of a small subset of builtin types).
+Type of all **C-based bound method wrappers** (i.e., callable objects
+implemented in low-level C, associated with special methods of builtin types
+when accessed as instance rather than class attributes).
+
+See Also
+----------
+:data:`MethodUnboundInstanceDunderCType`
+    Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-# ....................{ TYPES ~ callable : method : unbou }....................
+# ....................{ TYPES ~ callable : method : unbound }..................
+# Although Python >= 3.7 now exposes an explicit method wrapper type via the
+# standard "types.ClassMethodDescriptorType" object, this is of no benefit to
+# older versions of Python. Ergo, the type of an arbitrary method descriptor
+# guaranteed to *ALWAYS* exist is obtained instead.
+MethodUnboundClassCType = type(dict.__dict__['fromkeys'])
+'''
+Type of all **C-based unbound class method descriptors** (i.e., callable
+objects implemented in low-level C, associated with class methods of
+builtin types when accessed with the low-level :attr:`object.__dict__`
+dictionary rather than as class or instance attributes).
+
+Despite being unbound, class method descriptors remain callable (e.g., by
+explicitly passing the intended ``cls`` objects as their first parameters).
+'''
+
+
+# Although Python >= 3.7 now exposes an explicit method wrapper type via the
+# standard "types.WrapperDescriptorType" object, this is of no benefit to older
+# versions of Python. Ergo, the type of an arbitrary method descriptor
+# guaranteed to *ALWAYS* exist is obtained instead.
+MethodUnboundInstanceDunderCType = type(str.__add__)
+'''
+Type of all **C-based unbound dunder method wrapper descriptors** (i.e.,
+callable objects implemented in low-level C, associated with dunder methods of
+builtin types when accessed as class rather than instance attributes).
+
+Despite being unbound, method descriptor wrappers remain callable (e.g., by
+explicitly passing the intended ``self`` objects as their first parameters).
+
+See Also
+----------
+:data:`MethodBoundInstanceDunderCType`
+    Type of all C-based unbound dunder method wrappers.
+:data:`MethodUnboundInstanceNondunderCType`
+    Type of all C-based unbound non-dunder method descriptors.
+'''
+
+
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.MethodDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundDescriptorType = type(str.upper)
+MethodUnboundInstanceNondunderCType = type(str.upper)
 '''
-Type of all **pure-Python unbound method descriptors** (i.e., unbound functions
-implemented in pure Python, accessed as class rather than instance attributes).
+Type of all **C-based unbound non-dunder method descriptors** (i.e., callable
+objects implemented in low-level C, associated with non-dunder methods of
+builtin types when accessed as class rather than instance attributes).
 
-Note that, despite being unbound, method descriptors remain callable (e.g., by
-explicitly passing the intended ``self`` object as their first parameter).
-'''
+Despite being unbound, method descriptors remain callable (e.g., by explicitly
+passing the intended ``self`` objects as their first parameters).
 
-
-MethodUnboundDescriptorPropertyType = property
-'''
-Type of all **pure-Python unbound property method descriptors** (i.e., unbound
-functions implemented in pure Python, accessed as class rather than instance
-attributes and decorated by the builtin :class:`property` class decorator).
-
-Note that, unlike comparable method descriptors and slot wrappers, property
-objects are *not* callable (i.e., their implementations fail to define the
-special ``__call__`` method).
+See Also
+----------
+:data:`MethodUnboundInstanceDunderCType`
+    Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-
-# Since Python appears to expose no explicit slot wrapper type via any standard
-# module (e.g., "types", "collections.abc"), the type of an arbitrary slot
-# wrapper guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundWrapperSlotCType = type(str.__len__)
+# ....................{ TYPES ~ callable : method : decorator }................
+MethodDecoratorClassType = classmethod
 '''
-Type of all **C-based unbound slot wrappers** (i.e., unbound methods
-implemented in low-level C accessed as class rather than instance attributes).
+Type of all **C-based unbound class method descriptors** (i.e., non-callable
+instances of the builtin :class:`classmethod` decorator class implemented in
+low-level C, associated with class methods implemented in pure Python, and
+accessed with the low-level :attr:`object.__dict__` dictionary rather than as
+class or instance attributes).
 
-Note that, despite being unbound, slot wrappers remain callable (e.g., by
-explicitly passing the intended ``self`` object as their first parameters).
+Class method objects are *not* callable, as their implementations fail to
+define the ``__call__`` dunder method.
+'''
+
+
+MethodDecoratorPropertyType = property
+'''
+Type of all **C-based unbound property method descriptors** (i.e., non-callable
+instances of the builtin :class:`property` decorator class implemented in
+low-level C, associated with property getter and setter methods implemented in
+pure Python, and accessed as class rather than instance attributes).
+
+Like instances of the comparable :data:`MethodDecoratorClassType` and
+:data:`MethodDecoratorStaticType` decorator classes, property objects are *not*
+callable, as their implementations fail to define the ``__call__`` dunder
+method. However, unlike such instances, property objects are accessible as
+class attributes rather than only with the low-level :attr:`object.__dict__`
+dictionary.
+'''
+
+
+MethodDecoratorStaticType = staticmethod
+'''
+Type of all **C-based unbound static method descriptors** (i.e., non-callable
+instances of the builtin :class:`classmethod` decorator class implemented in
+low-level C, associated with static methods implemented in pure Python, and
+accessed with the low-level :attr:`object.__dict__` dictionary rather than as
+class or instance attributes).
+
+Static method objects are *not* callable, as their implementations fail to
+define the ``__call__`` dunder method.
 '''
 
 # ....................{ TYPES ~ callable : return : async }....................
@@ -697,37 +766,56 @@ functions and methods.
 '''
 
 
-MethodBoundTypes = (MethodBoundInstanceOrClassType, MethodBoundWrapperCType)
+MethodBoundTypes = (
+    MethodBoundInstanceOrClassType, MethodBoundInstanceDunderCType)
 '''
-Tuple of all **bound method types** (i.e., types whose instances are
-callable objects bound to either classes or instances of classes).
+Tuple of all **bound method types** (i.e., types whose instances are callable
+objects bound to either instances or classes).
 '''
 
 
 MethodUnboundTypes = (
-    MethodUnboundDescriptorType,
-    MethodUnboundDescriptorPropertyType,
-    MethodUnboundWrapperSlotCType,
+    MethodUnboundClassCType,
+    MethodUnboundInstanceDunderCType,
+    MethodUnboundInstanceNondunderCType,
 )
 '''
 Tuple of all **unbound method types** (i.e., types whose instances are callable
-objects bound to neither classes nor instances of classes).
+objects bound to neither instances nor classes)
 
-Note that property objects are *not* callable and thus intentionally excluded.
+Unbound decorator objects (e.g., non-callable instances of the builtin
+:class:`classmethod`, :class:`property`, or :class:`staticmethod` decorator
+classes) are *not* callable and thus intentionally excluded.
+'''
+
+
+MethodDecoratorBuiltinTypes = (
+    MethodDecoratorClassType,
+    MethodDecoratorPropertyType,
+    MethodDecoratorStaticType,
+)
+'''
+Tuple of all **C-based unbound method decorator objects** (i.e., non-callable
+instances of a builtin decorator class implemented in low-level C, associated
+with methods implemented in pure Python)
 '''
 
 
 MethodTypes = (CallableCType,) + MethodBoundTypes + MethodUnboundTypes
 '''
-Tuple of all **method types** (i.e., types whose instances are either built-in
-or user-defined methods).
+Tuple of all **method types** (i.e., types whose instances are callable objects
+associated with methods implemented in either low-level C or pure Python).
+
+Unbound decorator objects (e.g., non-callable instances of the builtin
+:class:`classmethod`, :class:`property`, or :class:`staticmethod` decorator
+classes) are *not* callable and thus intentionally excluded.
 
 Caveats
 ----------
 **This tuple may yield false positives when used to validate types.** Since
 Python fails to distinguish between C-based functions and methods, this tuple
-is the set of all bound and unbound method types as well as the ambiguous type
-of all C-based functions and methods.
+is the set of all pure-Python bound and unbound method types as well as the
+ambiguous type of all C-based bound methods and non-method functions.
 '''
 
 
