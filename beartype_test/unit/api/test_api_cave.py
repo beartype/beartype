@@ -15,7 +15,8 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import argparse, functools, re, sys
+import argparse, functools, re, sys, weakref
+from collections import deque
 
 # ....................{ TODO                              }....................
 #FIXME: Unit test the following types, which remain untested for the initial
@@ -23,6 +24,15 @@ import argparse, functools, re, sys
 #* "AsyncGeneratorCType".
 #* "AsyncCoroutineCType".
 #* "AsyncCTypes".
+
+# ....................{ GLOBALS                           }....................
+_THE_SONG_OF_THE_DEAD = [
+    'Hear now the Song of the Dead -- in the North by the torn berg-edges --',
+    'They that look still to the Pole, asleep by their hide-stripped sledges.',
+    'Song of the Dead in the South -- in the sun by their skeleton horses,',
+    'Where the warrigal whimpers and bays through the dust',
+    'of the sear river-courses.',
+]
 
 # ....................{ FUNCTIONS                         }....................
 # Test vanilla function.
@@ -141,8 +151,8 @@ def test_api_cave_types_core() -> None:
     # Test "ModuleType".
     _assert_type_objects(cave.ModuleType, sys.modules[__name__])
 
-    # Test "CallableCType".
-    _assert_type_objects(cave.CallableCType, id)
+    # Test "FunctionOrMethodCType".
+    _assert_type_objects(cave.FunctionOrMethodCType, id)
 
     # Test "CallablePartialType".
     _assert_type_objects(
@@ -228,6 +238,30 @@ def test_api_cave_types_core() -> None:
     _assert_type_objects(
         cave.GeneratorCType,
         came_the_whisper_came_the_vision_came_the_power_with_the_need)
+
+    # Test "WeakRefCType" by explicitly testing...
+    _assert_type_objects(
+        cave.WeakRefCType,
+        # Weak non-method references.
+        weakref.ref(_we_were_dreamers_dreaming_greatly_in_the_man_stifled_town),
+        # Weak method references.
+        weakref.WeakMethod(lord_god_we_ha_paid_in_full.and_she_calls_us_still_unfed),
+    )
+
+    # Test "IterableType".
+    _assert_type_objects(cave.IterableType, _THE_SONG_OF_THE_DEAD)
+
+    # Test "IteratorType".
+    _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
+
+    # Test "QueueType".
+    _assert_type_objects(cave.QueueType, deque(_THE_SONG_OF_THE_DEAD))
+
+    # Test "SetType".
+    _assert_type_objects(cave.SetType, set(_THE_SONG_OF_THE_DEAD))
+
+    # Test "SizedType".
+    _assert_type_objects(cave.SizedType, _THE_SONG_OF_THE_DEAD)
 
     # Test "ArgParserType".
     arg_parser = argparse.ArgumentParser()

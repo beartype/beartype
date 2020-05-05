@@ -57,6 +57,21 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
    https://www.python.org/dev/peps/pep-0484
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Add types for all remaining useful "collections.abc" interfaces,
+#including:
+#* "Collection".
+#* "Reversible".
+#* "AsyncIterable".
+#* "AsyncIterator".
+#* "AsyncGenerator".
+#
+#There certainly exist other "collections.abc" interfaces as well, but it's
+#unclear whether they have any practical real-world utility during type
+#checking. These include:
+#* "ByteString". (wut)
+#* Dictionary-specific views (e.g., "MappingView", "ItemsView").
+
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
@@ -81,6 +96,7 @@ from collections.abc import (
     Mapping as _Mapping,
     MutableMapping as _MutableMapping,
     Sequence as _Sequence,
+    MutableSequence as _MutableSequence,
     Set as _Set,
     Sized as _Sized,
 )
@@ -91,9 +107,7 @@ from enum import (
 from io import IOBase as _IOBase
 from weakref import (
     ref as _ref,
-    CallableProxyType as _CallableProxyType,
-    ProxyType as _ProxyType,
-    WeakMethod as _WeakMethod,
+    ProxyTypes as _ProxyTypes,
 )
 
 # Note that:
@@ -188,11 +202,8 @@ class UnavailableType(object):
 # ....................{ TYPES ~ py                        }....................
 FileType = _IOBase
 '''
-Abstract base class implemented by *all* **file-like objects** (i.e., objects
-implementing the standard ``read()`` and ``write()`` methods).
-
-This class is a synonym of the :class:`io.IOBase` class, provided merely as a
-convenience to callers preferring to avoid importing that class.
+Abstract base class of all **file-like objects** (i.e., objects implementing
+the standard ``read()``, ``write()``, and ``close()`` methods).
 '''
 
 
@@ -202,16 +213,7 @@ Type of all **C- and Python-based modules** (i.e., importable files implemented
 either as C extensions or in pure Python).
 '''
 
-# ....................{ TYPES ~ callable                  }....................
-CallableCType = _BuiltinFunctionType
-'''
-Type of all **C-based callables** (i.e., functions and methods implemented with
-low-level C rather than high-level Python, typically either in third-party C
-extensions, official stdlib C extensions, or the active Python interpreter
-itself).
-'''
-
-
+# ....................{ TYPES ~ call                      }....................
 CallablePartialType = _functools.partial
 '''
 Type of all **pure-Python partial callables** (i.e., callables dynamically
@@ -225,7 +227,7 @@ by :class:`functools.partial` is C-based or pure Python -- only that some
 callable of indeterminate origin is in fact wrapped.
 '''
 
-
+# ....................{ TYPES ~ call : function           }....................
 FunctionType = _FunctionType
 '''
 Type of all **pure-Python functions** (i.e., functions implemented in pure
@@ -251,7 +253,16 @@ See Also
     Type of all pure-Python bound instance and class methods.
 '''
 
-# ....................{ TYPES ~ callable : method : bound }....................
+
+FunctionOrMethodCType = _BuiltinFunctionType
+'''
+Type of all **C-based callables** (i.e., functions and methods implemented with
+low-level C rather than high-level Python, typically either in third-party C
+extensions, official stdlib C extensions, or the active Python interpreter
+itself).
+'''
+
+# ....................{ TYPES ~ call : method : bound     }....................
 MethodBoundInstanceOrClassType = _MethodType
 '''
 Type of all **pure-Python bound instance and class methods** (i.e., methods
@@ -290,7 +301,7 @@ See Also
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-# ....................{ TYPES ~ callable : method : unbound }..................
+# ....................{ TYPES ~ call : method : unbound   }....................
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.ClassMethodDescriptorType" object, this is of no benefit to
 # older versions of Python. Ergo, the type of an arbitrary method descriptor
@@ -348,7 +359,7 @@ See Also
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-# ....................{ TYPES ~ callable : method : decorator }................
+# ....................{ TYPES ~ call : method : decorator }....................
 MethodDecoratorClassType = classmethod
 '''
 Type of all **C-based unbound class method descriptors** (i.e., non-callable
@@ -356,6 +367,13 @@ instances of the builtin :class:`classmethod` decorator class implemented in
 low-level C, associated with class methods implemented in pure Python, and
 accessed with the low-level :attr:`object.__dict__` dictionary rather than as
 class or instance attributes).
+
+Caveats
+----------
+Class method objects are *only* accessible with the low-level
+:attr:`object.__dict__` dictionary. When accessed as class or instance
+attributes, class methods are instances of the standard
+:data:`MethodBoundInstanceOrClassType` type.
 
 Class method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.
@@ -369,12 +387,14 @@ instances of the builtin :class:`property` decorator class implemented in
 low-level C, associated with property getter and setter methods implemented in
 pure Python, and accessed as class rather than instance attributes).
 
-Like instances of the comparable :data:`MethodDecoratorClassType` and
-:data:`MethodDecoratorStaticType` decorator classes, property objects are *not*
-callable, as their implementations fail to define the ``__call__`` dunder
-method. However, unlike such instances, property objects are accessible as
-class attributes rather than only with the low-level :attr:`object.__dict__`
-dictionary.
+Caveats
+----------
+Property objects are accessible both as class attributes *and* with the
+low-level :attr:`object.__dict__` dictionary. Property objects are *not*
+accessible as instance attributes, for hopefully obvious reasons.
+
+Property objects are *not* callable, as their implementations fail to define
+the ``__call__`` dunder method.
 '''
 
 
@@ -386,11 +406,18 @@ low-level C, associated with static methods implemented in pure Python, and
 accessed with the low-level :attr:`object.__dict__` dictionary rather than as
 class or instance attributes).
 
+Caveats
+----------
+Static method objects are *only* accessible with the low-level
+:attr:`object.__dict__` dictionary. When accessed as class or instance
+attributes, static methods are instances of the standard :data:`FunctionType`
+type.
+
 Static method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.
 '''
 
-# ....................{ TYPES ~ callable : return : async }....................
+# ....................{ TYPES ~ call : return : async     }....................
 AsyncGeneratorCType = (
     UnavailableType if _AsyncGeneratorType is None else _AsyncGeneratorType)
 '''
@@ -428,7 +455,7 @@ callables is simply :data:`CallableTypes`.
 :data:`UnavailableType` for safety.
 '''
 
-# ....................{ TYPES ~ callable : return : gener }....................
+# ....................{ TYPES ~ call : return : generator }....................
 GeneratorType = _Generator
 '''
 Type of all **C- and Python-based generator objects** (i.e., iterators
@@ -439,10 +466,6 @@ implementing the :class:`collections.abc.Generator` protocol), including:
   ``yield`` statements.
 * C-based generator comprehensions created by pure-Python syntax delimited by
   ``(`` and ``)``.
-
-This class is a synonym of the :class:`collections.abc.Generator` class,
-provided merely as a convenience to callers preferring to avoid importing that
-class.
 
 Caveats
 ----------
@@ -480,101 +503,153 @@ implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
 '''
 
-# ....................{ TYPES ~ callable : weakref        }....................
+# ....................{ TYPES ~ call : weakref            }....................
 WeakRefCType = _ref
 '''
-Type of all **C-based unproxied general-purpose weak references** (i.e.,
-callable objects implemented in low-level C yielding a strong reference to
-their referred object when called).
+Type of all **unproxied weak references** (i.e., callable objects yielding
+strong references to their referred objects when called).
+
+This type matches both the C-based :class:`weakref.ref` class *and* the
+pure-Python :class:`weakref.WeakMethod` class.
+'''
+
+# ....................{ TYPES ~ contain                   }....................
+IterableType = _Iterable
+'''
+Type of all **iterables** (i.e., concrete instances of the abstract
+:class:`collections.abc.Iterable` base class).
+
+Iterables are containers that may be indirectly iterated over by calling the
+builtin :func:`iter` function, which internally calls the ``__iter__`` dunder
+methods implemented by these containers, which return **iterators** (i.e.,
+instances of the :data:`IteratorType` type), which directly support iteration.
+
+**Iterables are the most important container type.** They're sufficiently
+important, in fact, that the builtin :func:`isinstance` and :func:`issubclass`
+functions (which the :func:`beartype.beartype` decorator internally defers to)
+intentionally misidentify types declaring ``__iter__`` dunder methods *not*
+subclassing the abstract :class:`collections.abc.Iterable` base class as
+subclassing the abstract :class:`collections.abc.Iterable` base class:
+
+.. code-block:: python
+
+   >>> from collections.abc import Iterable
+   >>> class FakeIterable(object):
+   ...     def __iter__(self): return iter([0x1337C0D3, 0x1337BABE])
+   >>> FakeIterable.__mro__
+   ... (FakeIterable, object)
+   >>> isinstance(FakeIterable(), Iterable)
+   True
+   >>> issubclass(FakeIterable, Iterable)
+   True
+
+Yes, Python violates the "explicit is better than implicit" maxim of `PEP 20
+("The Zen of Python") <PEP 20_>`__ by intentionally deceiving you for your own
+benefit, which you of course appreciate. That's how important iterables are.
+
+.. _PEP 20:
+   https://www.python.org/dev/peps/pep-0020
+
+See Also
+----------
+:class:`IteratorType`
+    Further details.
 '''
 
 
-WeakRefMethodBoundInstanceOrClassType = _WeakMethod
-'''
-Type of all **pure-Python unproxied bound instance and class method weak
-references** (i.e., callable objects implemented in pure Python yielding a
-strong reference to their referred bound instance or class method when called).
-'''
-
-# ....................{ TYPES ~ container                 }....................
 IteratorType = _Iterator
 '''
-Abstract interface implemented by all **iterators** (i.e., objects implementing
-the standard ``__iter__()`` and ``__next__()`` methods, typically iterating
-over an associated container).
+Type of all **iterators** (i.e., concrete instances of the abstract
+:class:`collections.abc.Iterator` base class, which typically iterate over
+associated container objects).
 
-This class is a synonym of the :class:`collections.abc.Iterator` class,
-provided merely as a convenience to callers preferring to avoid importing that
-class.
+Iterators implement at least two dunder methods:
+
+* ``__next__``, iteratively returning successive items from associated data
+  streams (e.g., container objects) until throwing standard
+  :data:`StopIteration` exceptions on reaching the ends of those streams.
+* ``__iter__``, returning themselves. Since iterables (i.e., instances of the
+  :data:`IterableType` type) are *only* required to implement the ``__iter__``
+  dunder method, all iterators are by definition iterables as well.
+
+See Also
+----------
+:class:`IterableType`
+    Further details.
 '''
 
 
 QueueType = _deque
 '''
-Concrete type of the only available queue implementation in Python's stdlib.
-
-This class is a synonym of the :class:`collections.deque` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+Type of all **double-ended queues** (i.e., instances of the concrete
+:class:`collections.deque` class), the only queue type implemented within the
+Python stdlib.
 
 Caveats
 ----------
-Since the :mod:`collections.abc` subpackage currently provides no corresponding
-abstract interface to formalize queue types, this type applies *only* to the
-standard double-ended queue implementation.
+The :mod:`collections.abc` subpackage currently provides no corresponding
+abstract interface to formalize queue types. Double-ended queues are it, sadly.
 '''
 
 
 SetType = _Set
 '''
-Abstract interface implemented by all **set-like containers** (i.e., containers
-guaranteeing uniqueness across all items in these containers), including both
-the standard :class:`set` and :class:`frozenset` types *and* the types of the
-:class:`dict`-specific views returned by the :meth:`dict.items` and
-:meth:`dict.keys` (but *not* :meth:`dict.values`) methods.
+Type of all **set-like containers** (i.e., concrete instances of the abstract
+:class:`collections.abc.Set` base class, which are containers guaranteeing
+uniqueness across all contained items).
 
-This class is a synonym of the :class:`collections.abc.Set` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+This type matches both the standard :class:`set` and :class:`frozenset` types
+*and* the types of the :class:`dict`-specific views returned by the
+:meth:`dict.items` and :meth:`dict.keys` (but *not* :meth:`dict.values`)
+methods.
 '''
 
 
 SizedType = _Sized
 '''
-Abstract interface implemented by all containers defining the special
-``__len__()`` method internally called by the :func:`len` builtin.
-
-This class is a synonym of the :class:`collections.abc.Sized` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+Type of all **sized containers** (i.e., concrete instances of the abstract
+:class:`collections.abc.Sized` base class, which are containers defining the
+dunder ``__len__()`` method internally called by the :func:`len` builtin).
 '''
 
-# ....................{ TYPES ~ container : mapping       }....................
+# ....................{ TYPES ~ contain : mapping         }....................
 HashableType = _Hashable
 '''
-Abstract interface implemented by all **hashables** (i.e., objects implementing
-the standard ``__hash__()`` method required by all dictionary keys).
-
-This class is a synonym of the :class:`collections.abc.Hashable` class,
-provided merely as a convenience to callers preferring to avoid importing that
-class.
+Type of all **hashable objects** (i.e., concrete instances of the abstract
+:class:`collections.abc.Hashable` base class, which are objects implementing
+the dunder ``__hash__()`` method required for all dictionary keys and set
+items).
 '''
 
 
 MappingType = _Mapping
 '''
-Abstract interface implemented by all dictionary-like objects, both mutable and
-immutable.
+Type of all **mutable and immutable mappings** (i.e., concrete instances of the
+abstract :class:`collections.abc.Mapping` base class, which are dictionary-like
+containers containing key-value pairs mapping from hashable keys to
+corresponding values).
 
-This class is a synonym of the :class:`collections.abc.Mapping` class, provided
-merely as a convenience to callers preferring to avoid importing that class.
+Caveats
+----------
+**This type does not guarantee mutability** (i.e., the capacity to modify
+instances of this type after instantiation). This type ambiguously matches both
+mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
+:class:`mappingproxy`). If mutability is required, prefer the non-ambiguous
+:data:`MappingMutableType` type instead.
 '''
 
 
 MappingMutableType = _MutableMapping
 '''
-Abstract interface implemented by all mutable dictionary-like objects.
+Type of all **mutable mappings** (i.e., concrete instances of the abstract
+:class:`collections.abc.MutableMapping` base class, which are dictionary-like
+containers containing key-value pairs mapping from hashable keys to
+corresponding values that also permit modification of those pairs).
 
-This class is a synonym of the :class:`collections.abc.MutableMapping` class,
-provided merely as a convenience to callers preferring to avoid importing that
-class.
+See Also
+----------
+:data:`MappingType`
+    Type of all mutable and immutable mappings.
 '''
 
 # ....................{ TYPES ~ enum                      }....................
@@ -585,13 +660,10 @@ EnumType = _EnumMeta
 Metaclass of all **enumeration types** (i.e., classes containing all
 enumeration members comprising those enumerations).
 
-This class is a synonym of the :class:`enum.EnumMeta` class, permitting callers
-to avoid importing that class.
-
 Motivation
 ----------
-This type is commonly used to type check callable parameters as enumerations.
-In recognition of its popularity, this type is intentionally named ``EnumType``
+This type is commonly used to validate callable parameters as enumerations. In
+recognition of its popularity, this type is intentionally named ``EnumType``
 rather than ``EnumMetaType``. While the latter *would* technically be less
 ambiguous, the former has the advantage of inviting correctness throughout
 downstream codebases -- a less abundant resource.
@@ -602,22 +674,26 @@ Why? Because *all* enumeration types are instances of this type rather than the
 adhere to standard Pythonic semantics. Notably, the following non-standard
 invariants hold across *all* enumerations:
 
-    >>> from beartype.cave import (
-    ...     ClassType, EnumType, EnumClassType, EnumMemberType)
-    >>> GyreType = EnumClassType(
-    ...     'Gyre', ('The', 'falcon', 'cannot', 'hear', 'the', 'falconer'))
-    >>> isinstance(GyreType, EnumType)
-    True
-    >>> isinstance(GyreType, EnumClassType)
-    False
-    >>> isinstance(GyreType, ClassType)
-    True
-    >>> isinstance(GyreType.falcon, EnumType)
-    False
-    >>> isinstance(GyreType.falcon, EnumMemberType)
-    True
-    >>> isinstance(GyreType.falcon, ClassType)
-    False
+.. code-block:: python
+
+   >>> from beartype.cave import (
+   ...     ClassType, EnumType, EnumClassType, EnumMemberType)
+   >>> GyreType = EnumClassType(
+   ...     'Gyre', ('The', 'falcon', 'cannot', 'hear', 'the', 'falconer'))
+   >>> isinstance(GyreType, EnumType)
+   True
+   >>> isinstance(GyreType, EnumClassType)
+   False
+   >>> isinstance(GyreType, ClassType)
+   True
+   >>> isinstance(GyreType.falcon, EnumType)
+   False
+   >>> isinstance(GyreType.falcon, EnumMemberType)
+   True
+   >>> isinstance(GyreType.falcon, ClassType)
+   False
+
+Yes, this is insane. Yes, this is Python.
 '''
 
 
@@ -625,9 +701,6 @@ EnumClassType = _Enum
 '''
 Abstract base class of all **enumeration types** (i.e., classes containing all
 enumeration members comprising those enumerations).
-
-This class is a synonym of the :class:`enum.Enum` class, permitting callers to
-avoid importing that class.
 
 See Also
 ----------
@@ -640,9 +713,6 @@ EnumMemberType = _Enum
 '''
 Abstract base class implemented by all **enumeration members** (i.e.,
 alternative choices comprising their parent enumerations).
-
-This class is a synonym of the :class:`enum.Enum` class, permitting callers
-to avoid importing that class.
 
 Caveats
 ----------
@@ -664,9 +734,6 @@ ArgParserType = _ArgumentParser
 '''
 Type of argument parsers parsing all command-line arguments for either
 top-level commands *or* subcommands of those commands.
-
-This class is a synonym of the :class:`argparse.ArgumentParser` class,
-permitting callers to avoid importing that class.
 '''
 
 
@@ -674,9 +741,6 @@ ArgSubparsersType = _SubParsersAction
 '''
 Type of argument subparser containers parsing subcommands for parent argument
 parsers parsing either top-level commands *or* subcommands of those commands.
-
-This class is a synonym of the :class:`argparse._SubParsersAction` class,
-permitting callers to avoid importing that private class.
 '''
 
 # ....................{ TYPES ~ stdlib : re               }....................
@@ -751,8 +815,8 @@ Specifically, for any callable parameter or return type annotated with:
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
-# ....................{ TUPLES ~ callable                 }....................
-FunctionTypes = (FunctionType, CallableCType,)
+# ....................{ TUPLES ~ call                     }....................
+FunctionTypes = (FunctionType, FunctionOrMethodCType,)
 '''
 Tuple of all **function types** (i.e., types whose instances are either
 built-in or user-defined functions).
@@ -765,7 +829,7 @@ is the set of all function types as well as the ambiguous type of all C-based
 functions and methods.
 '''
 
-
+# ....................{ TUPLES ~ call : method            }....................
 MethodBoundTypes = (
     MethodBoundInstanceOrClassType, MethodBoundInstanceDunderCType)
 '''
@@ -801,7 +865,7 @@ with methods implemented in pure Python)
 '''
 
 
-MethodTypes = (CallableCType,) + MethodBoundTypes + MethodUnboundTypes
+MethodTypes = (FunctionOrMethodCType,) + MethodBoundTypes + MethodUnboundTypes
 '''
 Tuple of all **method types** (i.e., types whose instances are callable objects
 associated with methods implemented in either low-level C or pure Python).
@@ -818,13 +882,13 @@ is the set of all pure-Python bound and unbound method types as well as the
 ambiguous type of all C-based bound methods and non-method functions.
 '''
 
-
+# ....................{ TUPLES ~ call : callable          }....................
 # For DRY, this tuple is defined as the set union of all function and method
 # types defined above converted back to a tuple.
 #
 # While this tuple could also be defined as the simple concatenation of the
 # "FunctionTypes" and "MethodTypes" tuples, doing so would duplicate all types
-# ambiguously residing in both tuples (i.e., "CallableCType"). Doing so would
+# ambiguously residing in both tuples (i.e., "FunctionOrMethodCType"). Doing so would
 # induce inefficiencies during type checking, which would be awfully bad.
 CallableTypes = tuple(set(FunctionTypes) | set(MethodTypes))
 '''
@@ -855,7 +919,7 @@ as decorators. Since most classes are *not* callable, however, this tuple may
 yield false positives when passed classes.
 '''
 
-# ....................{ TUPLES ~ callable : return        }....................
+# ....................{ TUPLES ~ call : return            }....................
 AsyncCTypes = (AsyncGeneratorCType, AsyncCoroutineCType)
 '''
 Tuple of all C-based types returned by all **asynchronous callables** (i.e.,
@@ -863,8 +927,8 @@ callables implemented in pure Python whose declaration is preceded by the
 ``async`` keyword).
 '''
 
-# ....................{ TUPLES ~ callable : weakref       }....................
-WeakRefProxyCTypes = (_CallableProxyType, _ProxyType)
+# ....................{ TUPLES ~ call : weakref           }....................
+WeakRefProxyCTypes = _ProxyTypes
 '''
 Tuple of all **C-based weak reference proxy classes** (i.e., classes
 implemented in low-level C whose instances are weak references to other
@@ -872,17 +936,6 @@ instances masquerading as those instances).
 
 This tuple contains classes matching both callable and uncallable weak
 reference proxies.
-'''
-
-
-WeakRefTypes = (WeakRefCType, WeakRefMethodBoundInstanceOrClassType)
-'''
-Tuple of all **unproxied weak reference classes** (i.e., classes whose
-instances are weak references to other instances *not* masquerading as those
-instances).
-
-This tuple contains classes matching unproxied weak references of both standard
-objects *and* bound methods, which require specific handling.
 '''
 
 # ....................{ TUPLES ~ container                }....................
@@ -893,19 +946,6 @@ Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`collections.abc.Container` API and hence
 defining the special ``__contains__()`` method internally called by the ``in``
 operator.
-
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
-
-
-# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
-IterableTypes = (_Iterable,)
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Iterable` API.
 
 See Also
 ----------
@@ -940,17 +980,9 @@ subclass :class:`collections.abc.Sequence` despite implementing the entirety of
 that that API.
 '''
 
-SequenceStandardTypes = (list, tuple)
-'''
-Tuple of all **standard container base classes** (i.e., classes defined by
-Python's stdlib and hence guaranteed to exist) both conforming to *and*
-subclassing the canonical :class:`collections.abc.Sequence` API.
 
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
+#FIXME: Docstring and test us up.
+SequenceMutableTypes = (_MutableSequence,)
 
 # ....................{ TUPLES ~ scalar                   }....................
 # Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
@@ -1034,9 +1066,6 @@ NumpyArrayType = UnavailableType
 '''
 Type of all NumPy arrays if :mod:`numpy` is importable *or*
 :data:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
-
-This class is a synonym of the :class:`numpy.ndarray` class, permitting callers
-to avoid importing that class.
 '''
 
 
@@ -1046,9 +1075,6 @@ NumpyScalarType = UnavailableType
 Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
 :mod:`numpy` is importable *or* :data:`UnavailableType` otherwise (i.e., if
 :mod:`numpy` is unimportable).
-
-This class is a synonym of the :class:`numpy.generic` class, permitting callers
-to avoid importing that class.
 '''
 
 
@@ -1060,9 +1086,6 @@ homogeneously constraining all elements of all NumPy arrays) and all scalar
 Python types transparently supported by NumPy as implicit data types (i.e.,
 :class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
 :mod:`numpy` is importable *or* :data:`UnavailableTypes` otherwise.
-
-This class is a synonym of the :class:`numpy.dtype` class, permitting callers
-to avoid importing that class.
 '''
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
@@ -1123,7 +1146,6 @@ try:
     # Extend NumPy-agnostic types with NumPy-specific types.
     BoolTypes += (_numpy.bool_,)
     ContainerTypes += (NumpyArrayType,)
-    IterableTypes  += (NumpyArrayType,)
     SequenceTypes  += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:
@@ -1164,7 +1186,7 @@ API.
 '''
 
 
-NumericOrIterableTypes = NumericSimpleTypes + IterableTypes
+NumericOrIterableTypes = NumericSimpleTypes + (IterableType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Iterable`
@@ -1257,7 +1279,7 @@ Tuple of all testable types *and* the type of the ``None`` singleton.
 '''
 
 # ....................{ TUPLES ~ none : container         }....................
-IterableOrNoneTypes = IterableTypes + NoneTypes
+IterableOrNoneTypes = (IterableType, NoneType)
 '''
 Tuple of all container base classes conforming to (but _not_ necessarily
 subclassing) the canonical :class:`_Iterable` API as well as the type of the
@@ -1265,7 +1287,7 @@ subclassing) the canonical :class:`_Iterable` API as well as the type of the
 '''
 
 
-MappingOrNoneTypes = (MappingType,) + NoneTypes
+MappingOrNoneTypes = (MappingType, NoneTypes)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`_Mapping` API as well as the type of the
