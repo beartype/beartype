@@ -154,7 +154,20 @@ except ImportError:
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ TYPES                             }....................
+# ....................{ TYPES ~ unavailable               }....................
+# Unavailable types are defined *BEFORE* any subsequent types, as the latter
+# commonly leverage the former.
+
+class UnavailableType(object):
+    '''
+    **Unavailable type** (i.e., type *not* available under the active Python
+    interpreter, typically due to insufficient Python version or non-installed
+    third-party dependencies).
+    '''
+
+    pass
+
+# ....................{ TYPES ~ core                      }....................
 AnyType = object
 '''
 Type of all objects regardless of type.
@@ -185,19 +198,6 @@ ClassType = type
 '''
 Type of all types.
 '''
-
-# ....................{ TYPES ~ unavailable               }....................
-# Unavailable types are defined *BEFORE* any subsequent types, as the latter
-# commonly leverage the former.
-
-class UnavailableType(object):
-    '''
-    **Unavailable type** (i.e., type *not* available under the active Python
-    interpreter, typically due to insufficient Python version or non-installed
-    third-party dependencies).
-    '''
-
-    pass
 
 # ....................{ TYPES ~ py                        }....................
 FileType = _IOBase
@@ -249,7 +249,7 @@ as functions in Python.** This includes:
 
 See Also
 ----------
-:data:`MethodBoundInstanceOrClassType`
+:class:`MethodBoundInstanceOrClassType`
     Type of all pure-Python bound instance and class methods.
 '''
 
@@ -271,9 +271,9 @@ implicitly passed those instances or classes as their first parameters).
 
 Caveats
 ----------
-There exists *no* corresponding :data:`MethodUnboundInstanceType` type, as
+There exists *no* corresponding :class:`MethodUnboundInstanceType` type, as
 unbound pure-Python instance methods are ambiguously implemented as functions
-of type :data:`FunctionType` indistinguishable from conventional functions.
+of type :class:`FunctionType` indistinguishable from conventional functions.
 Indeed, `official documentation <PyInstanceMethod_Type documentation_>`__ for
 the ``PyInstanceMethod_Type`` C type explicitly admits that:
 
@@ -297,7 +297,7 @@ when accessed as instance rather than class attributes).
 
 See Also
 ----------
-:data:`MethodUnboundInstanceDunderCType`
+:class:`MethodUnboundInstanceDunderCType`
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
@@ -333,9 +333,9 @@ explicitly passing the intended ``self`` objects as their first parameters).
 
 See Also
 ----------
-:data:`MethodBoundInstanceDunderCType`
+:class:`MethodBoundInstanceDunderCType`
     Type of all C-based unbound dunder method wrappers.
-:data:`MethodUnboundInstanceNondunderCType`
+:class:`MethodUnboundInstanceNondunderCType`
     Type of all C-based unbound non-dunder method descriptors.
 '''
 
@@ -355,7 +355,7 @@ passing the intended ``self`` objects as their first parameters).
 
 See Also
 ----------
-:data:`MethodUnboundInstanceDunderCType`
+:class:`MethodUnboundInstanceDunderCType`
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
@@ -373,7 +373,7 @@ Caveats
 Class method objects are *only* accessible with the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
 attributes, class methods are instances of the standard
-:data:`MethodBoundInstanceOrClassType` type.
+:class:`MethodBoundInstanceOrClassType` type.
 
 Class method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.
@@ -410,7 +410,7 @@ Caveats
 ----------
 Static method objects are *only* accessible with the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
-attributes, static methods are instances of the standard :data:`FunctionType`
+attributes, static methods are instances of the standard :class:`FunctionType`
 type.
 
 Static method objects are *not* callable, as their implementations fail to
@@ -433,7 +433,7 @@ callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
 
 **This type is unavailable under Python 3.5,** where it defaults to
-:data:`UnavailableType` for safety.
+:class:`UnavailableType` for safety.
 '''
 
 
@@ -452,7 +452,7 @@ callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
 
 **This type is unavailable under Python 3.5,** where it defaults to
-:data:`UnavailableType` for safety.
+:class:`UnavailableType` for safety.
 '''
 
 # ....................{ TYPES ~ call : return : generator }....................
@@ -520,13 +520,15 @@ Type of all **iterables** (i.e., concrete instances of the abstract
 :class:`collections.abc.Iterable` base class).
 
 Iterables are containers that may be indirectly iterated over by calling the
-builtin :func:`iter` function, which internally calls the ``__iter__`` dunder
-methods implemented by these containers, which return **iterators** (i.e.,
-instances of the :data:`IteratorType` type), which directly support iteration.
+:func:`iter` builtin, which internally calls the ``__iter__`` dunder methods
+implemented by these containers, which return **iterators** (i.e., instances of
+the :class:`IteratorType` type), which directly support iteration.
 
+Motivation
+----------
 **Iterables are the most important container type.** They're sufficiently
-important, in fact, that the builtin :func:`isinstance` and :func:`issubclass`
-functions (which the :func:`beartype.beartype` decorator internally defers to)
+important, in fact, that the :func:`isinstance` and :func:`issubclass` builtins
+(which the :func:`beartype.beartype` decorator internally defers to)
 intentionally misidentify types declaring ``__iter__`` dunder methods *not*
 subclassing the abstract :class:`collections.abc.Iterable` base class as
 subclassing the abstract :class:`collections.abc.Iterable` base class:
@@ -538,9 +540,9 @@ subclassing the abstract :class:`collections.abc.Iterable` base class:
    ...     def __iter__(self): return iter([0x1337C0D3, 0x1337BABE])
    >>> FakeIterable.__mro__
    ... (FakeIterable, object)
-   >>> isinstance(FakeIterable(), Iterable)
-   True
    >>> issubclass(FakeIterable, Iterable)
+   True
+   >>> isinstance(FakeIterable(), Iterable)
    True
 
 Yes, Python violates the "explicit is better than implicit" maxim of `PEP 20
@@ -560,8 +562,8 @@ See Also
 IteratorType = _Iterator
 '''
 Type of all **iterators** (i.e., concrete instances of the abstract
-:class:`collections.abc.Iterator` base class, which typically iterate over
-associated container objects).
+:class:`collections.abc.Iterator` base class; objects iterating over associated
+data streams, which are typically containers).
 
 Iterators implement at least two dunder methods:
 
@@ -569,7 +571,7 @@ Iterators implement at least two dunder methods:
   streams (e.g., container objects) until throwing standard
   :data:`StopIteration` exceptions on reaching the ends of those streams.
 * ``__iter__``, returning themselves. Since iterables (i.e., instances of the
-  :data:`IterableType` type) are *only* required to implement the ``__iter__``
+  :class:`IterableType` type) are *only* required to implement the ``__iter__``
   dunder method, all iterators are by definition iterables as well.
 
 See Also
@@ -582,8 +584,8 @@ See Also
 QueueType = _deque
 '''
 Type of all **double-ended queues** (i.e., instances of the concrete
-:class:`collections.deque` class), the only queue type implemented within the
-Python stdlib.
+:class:`collections.deque` class, the only queue type implemented in the Python
+stdlib).
 
 Caveats
 ----------
@@ -595,8 +597,8 @@ abstract interface to formalize queue types. Double-ended queues are it, sadly.
 SetType = _Set
 '''
 Type of all **set-like containers** (i.e., concrete instances of the abstract
-:class:`collections.abc.Set` base class, which are containers guaranteeing
-uniqueness across all contained items).
+:class:`collections.abc.Set` base class; containers guaranteeing uniqueness
+across all contained items).
 
 This type matches both the standard :class:`set` and :class:`frozenset` types
 *and* the types of the :class:`dict`-specific views returned by the
@@ -608,24 +610,23 @@ methods.
 SizedType = _Sized
 '''
 Type of all **sized containers** (i.e., concrete instances of the abstract
-:class:`collections.abc.Sized` base class, which are containers defining the
-dunder ``__len__()`` method internally called by the :func:`len` builtin).
+:class:`collections.abc.Sized` base class; containers defining the
+``__len__()`` dunder method internally called by the :func:`len` builtin).
 '''
 
 # ....................{ TYPES ~ contain : mapping         }....................
 HashableType = _Hashable
 '''
 Type of all **hashable objects** (i.e., concrete instances of the abstract
-:class:`collections.abc.Hashable` base class, which are objects implementing
-the dunder ``__hash__()`` method required for all dictionary keys and set
-items).
+:class:`collections.abc.Hashable` base class; objects implementing the
+``__hash__()`` dunder method required for all dictionary keys and set items).
 '''
 
 
 MappingType = _Mapping
 '''
 Type of all **mutable and immutable mappings** (i.e., concrete instances of the
-abstract :class:`collections.abc.Mapping` base class, which are dictionary-like
+abstract :class:`collections.abc.Mapping` base class; dictionary-like
 containers containing key-value pairs mapping from hashable keys to
 corresponding values).
 
@@ -635,20 +636,19 @@ Caveats
 instances of this type after instantiation). This type ambiguously matches both
 mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
 :class:`mappingproxy`). If mutability is required, prefer the non-ambiguous
-:data:`MappingMutableType` type instead.
+:class:`MappingMutableType` type instead.
 '''
 
 
 MappingMutableType = _MutableMapping
 '''
 Type of all **mutable mappings** (i.e., concrete instances of the abstract
-:class:`collections.abc.MutableMapping` base class, which are dictionary-like
-containers containing key-value pairs mapping from hashable keys to
-corresponding values that also permit modification of those pairs).
+:class:`collections.abc.MutableMapping` base class; dictionary-like containers
+permitting modification of contained key-value pairs).
 
 See Also
 ----------
-:data:`MappingType`
+:class:`MappingType`
     Type of all mutable and immutable mappings.
 '''
 
@@ -657,8 +657,8 @@ See Also
 
 EnumType = _EnumMeta
 '''
-Metaclass of all **enumeration types** (i.e., classes containing all
-enumeration members comprising those enumerations).
+Type of all **enumeration types** (i.e., metaclass of all classes containing
+all enumeration members comprising those enumerations).
 
 Motivation
 ----------
@@ -676,43 +676,31 @@ invariants hold across *all* enumerations:
 
 .. code-block:: python
 
-   >>> from beartype.cave import (
-   ...     ClassType, EnumType, EnumClassType, EnumMemberType)
-   >>> GyreType = EnumClassType(
-   ...     'Gyre', ('The', 'falcon', 'cannot', 'hear', 'the', 'falconer'))
-   >>> isinstance(GyreType, EnumType)
-   True
-   >>> isinstance(GyreType, EnumClassType)
+   >>> from enum import Enum
+   >>> GyreType = Enum(
+   ...     'GyreType', ('THE', 'FALCON', 'CANNOT', 'HEAR', 'THE', 'FALCONER'))
+   >>> from beartype import cave
+   >>> isinstance(GyreType, Enum)
    False
-   >>> isinstance(GyreType, ClassType)
+   >>> isinstance(GyreType, cave.EnumType)
    True
-   >>> isinstance(GyreType.falcon, EnumType)
+   >>> isinstance(GyreType, cave.ClassType)
+   True
+   >>> isinstance(GyreType.FALCON, cave.EnumType)
    False
-   >>> isinstance(GyreType.falcon, EnumMemberType)
+   >>> isinstance(GyreType.FALCON, cave.EnumMemberType)
    True
-   >>> isinstance(GyreType.falcon, ClassType)
+   >>> isinstance(GyreType.FALCON, cave.ClassType)
    False
 
 Yes, this is insane. Yes, this is Python.
 '''
 
 
-EnumClassType = _Enum
-'''
-Abstract base class of all **enumeration types** (i.e., classes containing all
-enumeration members comprising those enumerations).
-
-See Also
-----------
-:class:`EnumType`
-    Further details.
-'''
-
-
 EnumMemberType = _Enum
 '''
-Abstract base class implemented by all **enumeration members** (i.e.,
-alternative choices comprising their parent enumerations).
+Type of all **enumeration members** (i.e., abstract base class of all
+alternative choices defined as enumeration fields).
 
 Caveats
 ----------
@@ -721,9 +709,9 @@ where the callable permissively accepts any enumeration member type rather than
 a specific enumeration member type. In the latter case, that type is simply
 that enumeration's type and should be directly referenced as such: e.g.,
 
+    >>> from enum import Enum
     >>> from beartype import beartype
-    >>> from beartype.cave import EnumClassType
-    >>> EndymionType = EnumClassType('EndymionType', ('BEAUTY', 'JOY',))
+    >>> EndymionType = Enum('EndymionType', ('BEAUTY', 'JOY',))
     >>> @beartype
     ... def our_feet_were_soft_in_flowers(superlative: EndymionType) -> str:
     ...     return str(superlative).lower()
@@ -762,24 +750,11 @@ Type of all compiled regular expressions.
 # Yes, this is the most time-efficient means of obtaining this type. No, this
 # type is *NOT* directly importable. Although this type's classname is
 # published to be "_sre.SRE_Match", the "_sre" C extension provides no such
-# type for pure-Python importation.
+# type for pure-Python importation. So it goes.
 RegexMatchType = type(_re.match(r'', ''))
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
-'''
-
-# ....................{ TUPLES                            }....................
-ModuleOrStrTypes = (str, ModuleType)
-'''
-Tuple of both the module *and* string type.
-'''
-
-
-TestableTypes = (ClassType, tuple)
-'''
-Tuple of all **testable types** (i.e., types suitable for use as the second
-parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
 '''
 
 # ....................{ TUPLES ~ unavailable              }....................
@@ -813,6 +788,19 @@ Specifically, for any callable parameter or return type annotated with:
 * This tuple, :func:`beartype.beartype` emits a non-fatal warning ignorable
   with a simple :mod:`warnings` filter.
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
+'''
+
+# ....................{ TUPLES ~ py                       }....................
+ModuleOrStrTypes = (str, ModuleType)
+'''
+Tuple of both the module *and* string type.
+'''
+
+
+TestableTypes = (ClassType, tuple)
+'''
+Tuple of all **testable types** (i.e., types suitable for use as the second
+parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
 '''
 
 # ....................{ TUPLES ~ call                     }....................
@@ -939,7 +927,14 @@ reference proxies.
 '''
 
 # ....................{ TUPLES ~ container                }....................
-# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+# Note that the following tuple of types need *NOT* be defined:
+#     IterableTypes = (_Iterable, numpy.ndarray)
+# Why? Because the isinstance() and issubclass() builtins implicitly
+# misidentify types defining __iter__() but *NOT* subclassing
+# "collections.abc.Iterable" (i.e., "numpy.ndarray") as effectively subclassing
+# "collections.abc.Iterable". See the "IterableType" docstring.
+
+# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
 ContainerTypes = (_Container,)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
@@ -954,7 +949,7 @@ See Also
 '''
 
 
-# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
 SequenceTypes = (_Sequence,)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
@@ -985,7 +980,7 @@ that that API.
 SequenceMutableTypes = (_MutableSequence,)
 
 # ....................{ TUPLES ~ scalar                   }....................
-# Note: this is conditionally expanded by the "TUPLES ~ init" subsection below.
+# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
 BoolTypes = (bool,)
 '''
 Tuple of all strictly boolean types, including both the standard :class:`bool`
@@ -1065,7 +1060,7 @@ regular expressions or losslessly convertible to such types).
 NumpyArrayType = UnavailableType
 '''
 Type of all NumPy arrays if :mod:`numpy` is importable *or*
-:data:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
+:class:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
 '''
 
 
@@ -1073,7 +1068,7 @@ Type of all NumPy arrays if :mod:`numpy` is importable *or*
 NumpyScalarType = UnavailableType
 '''
 Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
-:mod:`numpy` is importable *or* :data:`UnavailableType` otherwise (i.e., if
+:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
 :mod:`numpy` is unimportable).
 '''
 
