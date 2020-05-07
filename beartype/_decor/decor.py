@@ -229,6 +229,25 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "_PARAM_KIND_IGNORABLE" set.
 #* Remove the "_PARAM_KIND_IGNORABLE" set entirely.
 
+#FIXME: [FEATURE] Add support for PEP 544. First, note that this PEP defines
+#protocol types as classes *DIRECTLY* subclassing the new "typing.Protocol"
+#abstract base class. Classes *INDIRECTLY* subclassing that class through
+#transitivity are not detected as protocols. That's nice.
+#
+#Second, thanks to the obscure magic of abstract base classes as implemented by
+#the "ABCMeta" metaclass, all classes with the "ABCMeta" metaclass provide
+#highly efficient __instancecheck__() and __subclasscheck__() dunder method
+#implementations by default that successfully test arbitrary objects as
+#implicitly implementing an abstract base class if those objects implement all
+#abstract methods declared by that base class -- even for objects whose types
+#do *NOT* explicitly subclass that base class.
+#
+#In theory, this means that testing whether an arbitrary object "a" satisfies
+#an arbitrary protocol "B" should reduce to simply:
+#
+#    # Yup. Really.
+#    isinstance(a, B)
+
 #FIXME: Cray-cray optimization: don't crucify us here, folks, but eliminating
 #the innermost call to the original callable in the generated wrapper may be
 #technically feasible. It's probably a BadIdea™, but the idea goes like this:
@@ -296,6 +315,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import functools, inspect
 from beartype._decor.code import (
+
     _CODE_SIGNATURE,
     _CODE_PARAM_VARIADIC_POSITIONAL,
     _CODE_PARAM_KEYWORD_ONLY,

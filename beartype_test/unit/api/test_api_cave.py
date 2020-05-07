@@ -17,9 +17,13 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 
 import argparse, functools, re, sys, weakref
 from collections import deque
+from collections.abc import Iterable
 from enum import Enum
 
 # ....................{ TODO                              }....................
+#FIXME: Add unit tests conditionally testing NumPy arrays against various
+#container types if available as well.
+
 #FIXME: Unit test the following types, which remain untested for the initial
 #0.1.0 release due to non-trivialities with asynchronous testing:
 #* "AsyncGeneratorCType".
@@ -104,6 +108,16 @@ _EPITAPHS_OF_THE_WAR = {
     ),
 }
 
+# Test double-ended queue.
+_RECESSIONAL = deque((
+    'For heathen heart that puts her trust',
+    '  in reeking tube and iron shard--',
+    'All valiant dust that builds on dust,',
+    '  and guarding, calls not Thee to guard,',
+    'For frantic boast and foolish word--',
+    'Thy mercy on Thy People, Lord!',
+))
+
 # ....................{ GLOBALS ~ regex                   }....................
 # Test regular expression compiled object.
 _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY = re.compile(
@@ -134,30 +148,53 @@ def _assert_type_objects(cls: type, *objects: object) -> None:
     for obj in objects:
         assert isinstance(obj, cls)
 
+# ....................{ ASSERTERS ~ tuple                 }....................
+def _assert_tuples_objects(tuples: Iterable, *objects: object) -> None:
+    '''
+    Assert all passed objects to be instances of one or more types contained in
+    each tuple in the passed iterable of such tuples.
 
-def _assert_tuple_objects(clses: tuple, *objects: object) -> None:
+    Parameters
+    ----------
+    tuples : Iterable[tuples]
+        Iterable of tuples of types to validate these objects to be instances
+        of.
+    objects : tuple
+        Tuple of all objects to be validated as instances of these types.
+    '''
+
+    # Assert that this iterable of tuples actually is.
+    assert isinstance(tuples, Iterable)
+
+    # For each tuple in this iterable, assert these objects to all be instances
+    # of one or more types contained in this tuple.
+    for types in tuples:
+        _assert_tuple_objects(types, *objects)
+
+
+def _assert_tuple_objects(types: tuple, *objects: object) -> None:
     '''
     Assert all passed objects to be instances of one or more types contained in
     the passed tuple.
 
     Parameters
     ----------
-    clses : tuple
+    types : tuple
         Tuple of types to validate these objects to be instances of.
     objects : tuple
         Tuple of all objects to be validated as instances of these types.
     '''
 
     # Assert that this tuple actually is.
-    assert isinstance(clses, tuple)
+    assert isinstance(types, tuple)
 
     # Assert all items of this tuple to be types.
-    for cls in clses:
+    for cls in types:
         assert isinstance(cls, type)
 
     # Assert these objects to all be instances of this type.
     for obj in objects:
-        assert isinstance(obj, clses)
+        assert isinstance(obj, types)
 
 # ....................{ TESTS ~ types                     }....................
 def test_api_cave_types_core() -> None:
@@ -297,6 +334,21 @@ def test_api_cave_types_core() -> None:
             _LORD_GOD_WE_HA_PAID_IN_FULL.and_she_calls_us_still_unfed),
     )
 
+    # Test "ContainerType" against...
+    #
+    # Note that NumPy arrays are conditionally tested elsewhere for safety.
+    _assert_type_objects(
+        cave.ContainerType,
+        # Mutable mapping.
+        _EPITAPHS_OF_THE_WAR,
+        # Mutable sequence.
+        _THE_SONG_OF_THE_DEAD,
+        # Immutable sequence.
+        _EPITAPHS_OF_THE_WAR['COMMON FORM'],
+        # Double-ended queue.
+        _RECESSIONAL,
+    )
+
     # Test "IterableType".
     _assert_type_objects(cave.IterableType, _THE_SONG_OF_THE_DEAD)
 
@@ -304,7 +356,27 @@ def test_api_cave_types_core() -> None:
     _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
 
     # Test "QueueType".
-    _assert_type_objects(cave.QueueType, deque(_THE_SONG_OF_THE_DEAD))
+    _assert_type_objects(cave.QueueType, _RECESSIONAL)
+
+    # Test "SequenceType" against...
+    _assert_type_objects(
+        cave.SequenceType,
+        # Immutable sequence.
+        _EPITAPHS_OF_THE_WAR['COMMON FORM'],
+        # Mutable sequence.
+        _THE_SONG_OF_THE_DEAD,
+        # Double-ended queue.
+        _RECESSIONAL,
+    )
+
+    # Test "SequenceMutableType" against...
+    _assert_type_objects(
+        cave.SequenceMutableType,
+        # Mutable sequence.
+        _THE_SONG_OF_THE_DEAD,
+        # Double-ended queue.
+        _RECESSIONAL,
+    )
 
     # Test "SetType".
     _assert_type_objects(cave.SetType, set(_THE_SONG_OF_THE_DEAD))
@@ -388,9 +460,16 @@ def test_api_cave_tuples_core() -> None:
         _EPITAPHS_OF_THE_WAR['A DEAD STATESMAN'],
     )
 
-    # Test "FunctionTypes" against...
-    _assert_tuple_objects(
-        cave.FunctionTypes,
+    # Tuple of all tuples of types matching at least callable types.
+    all_callable_types = (
+        cave.CallableTypes,
+        cave.CallableOrStrTypes,
+        cave.DecoratorTypes,
+    )
+
+    # Test "FunctionTypes" and all derived types against...
+    _assert_tuples_objects(
+        (cave.FunctionTypes,) + all_callable_types,
         # Pure-Python function. Since the test_api_cave_types_core() unit test
         # already exhaustively tests *ALL* possible pure-Python function types,
         # testing only one such type here suffices.
@@ -399,18 +478,18 @@ def test_api_cave_tuples_core() -> None:
         id,
     )
 
-    # Test "MethodBoundTypes" against...
-    _assert_tuple_objects(
-        cave.MethodBoundTypes,
+    # Test "MethodBoundTypes" and all derived types against...
+    _assert_tuples_objects(
+        (cave.MethodBoundTypes, cave.MethodTypes,) + all_callable_types,
         # Bound pure-Python instance method.
         _LORD_GOD_WE_HA_PAID_IN_FULL.and_she_calls_us_still_unfed,
         # Bound C-based instance dunder method.
         ''.__add__,
     )
 
-    # Test "MethodUnboundTypes" against...
-    _assert_tuple_objects(
-        cave.MethodUnboundTypes,
+    # Test "MethodUnboundTypes" and all derived types against...
+    _assert_tuples_objects(
+        (cave.MethodUnboundTypes, cave.MethodTypes,) + all_callable_types,
         # Unbound class method.
         dict.__dict__['fromkeys'],
         # Unbound C-based instance dunder method.
@@ -432,31 +511,30 @@ def test_api_cave_tuples_core() -> None:
             'but_marks_our_english_dead'],
     )
 
-    # Test "MethodUnboundTypes" against...
-    _assert_tuple_objects(
-        cave.MethodUnboundTypes,
-        # Unbound C-based class method.
-        dict.__dict__['fromkeys'],
-        # Unbound C-based instance dunder method.
-        str.__add__,
-        # Unbound C-based instance non-dunder method.
-        str.upper,
-    )
-
-    # Test "MethodTypes" against all of the above (excluding non-callable
-    # decorator objects) and thus including...
+    # Test "MethodTypes" against only the following, as prior logic already
+    # tested this tuple against all other types of callables...
     _assert_tuple_objects(
         cave.MethodTypes,
-        # Bound pure-Python instance method.
-        _LORD_GOD_WE_HA_PAID_IN_FULL.and_she_calls_us_still_unfed,
         # Bound C-based instance dunder method.
         _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub,
-        # Bound C-based instance non-dunder method.
-        ''.__add__,
-        # Unbound class method.
-        dict.__dict__['fromkeys'],
-        # Unbound C-based instance dunder method.
-        str.__add__,
-        # Unbound C-based instance non-dunder method.
-        str.upper,
     )
+
+    # Test "CallableOrStrTypes" against only a string, as prior logic already
+    # tested this tuple against all types of callables.
+    _assert_tuple_objects(cave.CallableOrStrTypes, 'beartype.beartype')
+
+    # Test "DecoratorTypes" against only a class, as prior logic already
+    # tested this tuple against all types of callables.
+    _assert_tuple_objects(
+        cave.DecoratorTypes, _WeHaveFedOurSeaForAThousandYears)
+
+    # Test "WeakRefProxyCTypes" against...
+    _assert_tuple_objects(
+        cave.WeakRefProxyCTypes,
+        # Callable weak reference proxy.
+        weakref.proxy(
+            _we_were_dreamers_dreaming_greatly_in_the_man_stifled_town),
+        # Uncallable weak reference proxy.
+        weakref.proxy(_LORD_GOD_WE_HA_PAID_IN_FULL),
+    )
+

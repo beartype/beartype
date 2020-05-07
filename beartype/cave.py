@@ -235,8 +235,8 @@ Python *not* associated with an owning class or instance of a class).
 
 Caveats
 ----------
-**Many types not commonly thought of as functions are ambiguously implemented
-as functions in Python.** This includes:
+**This type ambiguously matches many callable types not commonly associated
+with "named functions,"** including:
 
 * **Lambda functions.** Of course, distinguishing between conventional named
   functions and unnamed lambda functions would usually be seen as overly
@@ -510,52 +510,77 @@ Type of all **unproxied weak references** (i.e., callable objects yielding
 strong references to their referred objects when called).
 
 This type matches both the C-based :class:`weakref.ref` class *and* the
-pure-Python :class:`weakref.WeakMethod` class.
+pure-Python :class:`weakref.WeakMethod` class, which subclasses the former.
 '''
 
 # ....................{ TYPES ~ contain                   }....................
+ContainerType = _Container
+'''
+Type of all **containers** (i.e., concrete instances of the abstract
+:class:`collections.abc.Container` base class as well as arbitrary objects
+whose classes implement all abstract methods declared by that base class
+regardless of whether those classes actually subclass that base class).
+
+Caveats
+----------
+This type ambiguously matches both:
+
+* **Explicit container subtypes** (i.e., concrete subclasses of the
+  :class:`collections.abc.Container` abstract base class (ABC)).
+* **Structural container subtypes** (i.e., arbitrary classes implementing the
+  abstract ``__contains__`` method declared by that ABC *without* subclassing
+  that ABC), as formalized by `PEP 544 -- Protocols: Structural subtyping
+  (static duck typing) <PEP 544_>`_. Notably, since the **NumPy array type**
+  (i.e., :class:`numpy.ndarray`) defines that method, this type magically
+  matches the NumPy array type as well.
+
+Of course, distinguishing between explicit and structural subtypes would
+usually be seen as overly specific. So, this ambiguity is *not* necessarily a
+BadThing™.
+
+What is a BadThing™ is that container ABCs violate the "explicit is better than
+implicit" maxim of `PEP 20 -- The Zen of Python <PEP 20_>`__ by intentionally
+deceiving you for your own benefit, which you of course appreciate. Thanks to
+arcane dunder magics buried in the :class:`abc.ABCMeta` metaclass, the
+:func:`isinstance` and :func:`issubclass` builtin functions (which the
+:func:`beartype.beartype` decorator internally defers) ambiguously misidentify
+structural container subtypes as explicit container subtypes:
+
+.. code-block:: python
+
+   >>> from collections.abc import Container
+   >>> class FakeContainer(object):
+   ...     def __contains__(self, obj): return True
+   >>> FakeContainer.__mro__
+   ... (FakeContainer, object)
+   >>> issubclass(FakeContainer, Container)
+   True
+   >>> isinstance(FakeContainer(), Container)
+   True
+
+.. _PEP 20:
+   https://www.python.org/dev/peps/pep-0020
+.. _PEP 544:
+   https://www.python.org/dev/peps/pep-0544
+'''
+
+
 IterableType = _Iterable
 '''
 Type of all **iterables** (i.e., concrete instances of the abstract
 :class:`collections.abc.Iterable` base class).
 
 Iterables are containers that may be indirectly iterated over by calling the
-:func:`iter` builtin, which internally calls the ``__iter__`` dunder methods
+:func:`iter` builtin, which internally calls the ``__iter__()`` dunder methods
 implemented by these containers, which return **iterators** (i.e., instances of
 the :class:`IteratorType` type), which directly support iteration.
 
-Motivation
-----------
-**Iterables are the most important container type.** They're sufficiently
-important, in fact, that the :func:`isinstance` and :func:`issubclass` builtins
-(which the :func:`beartype.beartype` decorator internally defers to)
-intentionally misidentify types declaring ``__iter__`` dunder methods *not*
-subclassing the abstract :class:`collections.abc.Iterable` base class as
-subclassing the abstract :class:`collections.abc.Iterable` base class:
-
-.. code-block:: python
-
-   >>> from collections.abc import Iterable
-   >>> class FakeIterable(object):
-   ...     def __iter__(self): return iter([0x1337C0D3, 0x1337BABE])
-   >>> FakeIterable.__mro__
-   ... (FakeIterable, object)
-   >>> issubclass(FakeIterable, Iterable)
-   True
-   >>> isinstance(FakeIterable(), Iterable)
-   True
-
-Yes, Python violates the "explicit is better than implicit" maxim of `PEP 20
-("The Zen of Python") <PEP 20_>`__ by intentionally deceiving you for your own
-benefit, which you of course appreciate. That's how important iterables are.
-
-.. _PEP 20:
-   https://www.python.org/dev/peps/pep-0020
-
 See Also
 ----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 :class:`IteratorType`
-    Further details.
+    Further details on iteration.
 '''
 
 
@@ -567,24 +592,27 @@ data streams, which are typically containers).
 
 Iterators implement at least two dunder methods:
 
-* ``__next__``, iteratively returning successive items from associated data
+* ``__next__()``, iteratively returning successive items from associated data
   streams (e.g., container objects) until throwing standard
   :data:`StopIteration` exceptions on reaching the ends of those streams.
-* ``__iter__``, returning themselves. Since iterables (i.e., instances of the
-  :class:`IterableType` type) are *only* required to implement the ``__iter__``
-  dunder method, all iterators are by definition iterables as well.
+* ``__iter__()``, returning themselves. Since iterables (i.e., instances of the
+  :class:`IterableType` type) are *only* required to implement the
+  ``__iter__()`` dunder method, all iterators are by definition iterables as
+  well.
 
 See Also
 ----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 :class:`IterableType`
-    Further details.
+    Further details on iteration.
 '''
 
 
 QueueType = _deque
 '''
 Type of all **double-ended queues** (i.e., instances of the concrete
-:class:`collections.deque` class, the only queue type implemented in the Python
+:class:`collections.deque` class, the only queue type defined by the Python
 stdlib).
 
 Caveats
@@ -604,6 +632,11 @@ This type matches both the standard :class:`set` and :class:`frozenset` types
 *and* the types of the :class:`dict`-specific views returned by the
 :meth:`dict.items` and :meth:`dict.keys` (but *not* :meth:`dict.values`)
 methods.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 '''
 
 
@@ -612,6 +645,11 @@ SizedType = _Sized
 Type of all **sized containers** (i.e., concrete instances of the abstract
 :class:`collections.abc.Sized` base class; containers defining the
 ``__len__()`` dunder method internally called by the :func:`len` builtin).
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 '''
 
 # ....................{ TYPES ~ contain : mapping         }....................
@@ -620,6 +658,11 @@ HashableType = _Hashable
 Type of all **hashable objects** (i.e., concrete instances of the abstract
 :class:`collections.abc.Hashable` base class; objects implementing the
 ``__hash__()`` dunder method required for all dictionary keys and set items).
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 '''
 
 
@@ -637,6 +680,11 @@ instances of this type after instantiation). This type ambiguously matches both
 mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
 :class:`mappingproxy`). If mutability is required, prefer the non-ambiguous
 :class:`MappingMutableType` type instead.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 '''
 
 
@@ -648,9 +696,48 @@ permitting modification of contained key-value pairs).
 
 See Also
 ----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 :class:`MappingType`
     Type of all mutable and immutable mappings.
 '''
+
+# ....................{ TYPES ~ contain : sequence        }....................
+SequenceType = _Sequence
+'''
+Tuple of all container base classes conforming to (but *not* necessarily
+subclassing) the canonical :class:`collections.abc.Sequence` API.
+
+Sequences are iterables supporting efficient element access via integer
+indices. Most sequences implement the :class:`collections.abc.Sequence`
+abstract base class, including the concrete :class:`str` string class. All
+sequences define the special ``__getitem__()`` and ``__len__()`` methods
+(amongst various others).
+
+Motivation
+----------
+While all sequences are iterables, not all iterables are sequences. Generally
+speaking, sequences correspond to the proper subset of iterables whose elements
+are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
+:class:`dict` implements :class:`collections.abc.Iterable` but *not*
+:class:`collections.abc._Sequence`, due to failing to support integer
+index-based lookup; :class:`OrderedDict` implements both, due to supporting
+such lookup.
+
+For generality, this tuple matches both pure-Python sequences
+*and* non-Pythonic Fortran-based NumPy arrays and matrices -- which fail to
+subclass :class:`collections.abc.Sequence` despite implementing the entirety of
+that that API.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+'''
+
+
+#FIXME: Document and test us up.
+SequenceMutableType = _MutableSequence
 
 # ....................{ TYPES ~ enum                      }....................
 # Enumeration types are sufficiently obscure to warrant formalization here.
@@ -876,8 +963,8 @@ ambiguous type of all C-based bound methods and non-method functions.
 #
 # While this tuple could also be defined as the simple concatenation of the
 # "FunctionTypes" and "MethodTypes" tuples, doing so would duplicate all types
-# ambiguously residing in both tuples (i.e., "FunctionOrMethodCType"). Doing so would
-# induce inefficiencies during type checking, which would be awfully bad.
+# ambiguously residing in both tuples (i.e., "FunctionOrMethodCType"). Doing so
+# would induce inefficiencies during type checking. That would be bad.
 CallableTypes = tuple(set(FunctionTypes) | set(MethodTypes))
 '''
 Tuple of all **callable types** (i.e., types whose instances are callable
@@ -926,31 +1013,10 @@ This tuple contains classes matching both callable and uncallable weak
 reference proxies.
 '''
 
-# ....................{ TUPLES ~ container                }....................
-# Note that the following tuple of types need *NOT* be defined:
-#     IterableTypes = (_Iterable, numpy.ndarray)
-# Why? Because the isinstance() and issubclass() builtins implicitly
-# misidentify types defining __iter__() but *NOT* subclassing
-# "collections.abc.Iterable" (i.e., "numpy.ndarray") as effectively subclassing
-# "collections.abc.Iterable". See the "IterableType" docstring.
-
+# ....................{ TUPLES ~ contain                  }....................
+#FIXME: Revise docstring and test us up.
 # Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
-ContainerTypes = (_Container,)
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Container` API and hence
-defining the special ``__contains__()`` method internally called by the ``in``
-operator.
-
-See Also
-----------
-:class:`SequenceTypes`
-    Further details.
-'''
-
-
-# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceTypes = (_Sequence,)
+SequenceMutableOrNumPyArrayTypes = (_Sequence,)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`collections.abc.Sequence` API.
@@ -961,6 +1027,8 @@ abstract base class, including the concrete :class:`str` string class. All
 sequences define the special ``__getitem__()`` and ``__len__()`` methods
 (amongst various others).
 
+Motivation
+----------
 While all sequences are iterables, not all iterables are sequences. Generally
 speaking, sequences correspond to the proper subset of iterables whose elements
 are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
@@ -969,15 +1037,11 @@ are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
 index-based lookup; :class:`OrderedDict` implements both, due to supporting
 such lookup.
 
-For generality, this tuple contains classes matching both pure-Python sequences
+For generality, this tuple matches both pure-Python sequences
 *and* non-Pythonic Fortran-based NumPy arrays and matrices -- which fail to
 subclass :class:`collections.abc.Sequence` despite implementing the entirety of
 that that API.
 '''
-
-
-#FIXME: Docstring and test us up.
-SequenceMutableTypes = (_MutableSequence,)
 
 # ....................{ TUPLES ~ scalar                   }....................
 # Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
@@ -1140,8 +1204,7 @@ try:
 
     # Extend NumPy-agnostic types with NumPy-specific types.
     BoolTypes += (_numpy.bool_,)
-    ContainerTypes += (NumpyArrayType,)
-    SequenceTypes  += (NumpyArrayType,)
+    SequenceMutableOrNumPyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:
     pass
@@ -1165,7 +1228,7 @@ except:
 # ....................{ TUPLES ~ post-init : container    }....................
 # Tuples of types assuming the above initialization to have been performed.
 
-MappingOrSequenceTypes = (MappingType,) + SequenceTypes
+MappingOrSequenceTypes = (MappingType, SequenceType)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`collections.abc.Mapping` *or*
@@ -1173,7 +1236,7 @@ subclassing) the canonical :class:`collections.abc.Mapping` *or*
 '''
 
 
-ModuleOrSequenceTypes = (ModuleType,) + SequenceTypes
+ModuleOrSequenceTypes = (ModuleType, SequenceType)
 '''
 Tuple of the module type *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
@@ -1189,7 +1252,7 @@ API.
 '''
 
 
-NumericOrSequenceTypes = NumericSimpleTypes + SequenceTypes
+NumericOrSequenceTypes = NumericSimpleTypes + (SequenceType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
@@ -1282,7 +1345,7 @@ subclassing) the canonical :class:`_Iterable` API as well as the type of the
 '''
 
 
-MappingOrNoneTypes = (MappingType, NoneTypes)
+MappingOrNoneTypes = (MappingType, NoneType)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`_Mapping` API as well as the type of the
@@ -1312,7 +1375,7 @@ Tuple of all NumPy data types *and* the type of the ``None`` singleton.
 '''
 
 
-SequenceOrNoneTypes = SequenceTypes + NoneTypes
+SequenceOrNoneTypes = (SequenceType, NoneType)
 '''
 Tuple of all container base classes conforming to (but *not* necessarily
 subclassing) the canonical :class:`_Sequence` API as well as the type of the
@@ -1324,7 +1387,6 @@ SetOrNoneTypes = (SetType, NoneType)
 '''
 Tuple of both the set type *and* the type of the ``None`` singleton.
 '''
-
 
 # ....................{ TUPLES ~ none : scalar            }....................
 BoolOrNoneTypes = (bool, NoneType)
