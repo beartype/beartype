@@ -60,7 +60,6 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 # ....................{ TODO                              }....................
 #FIXME: Add types for all remaining useful "collections.abc" interfaces,
 #including:
-#* "Collection".
 #* "Reversible".
 #* "AsyncIterable".
 #* "AsyncIterator".
@@ -88,6 +87,7 @@ from argparse import (
 )
 from collections import deque as _deque
 from collections.abc import (
+    Collection as _Collection,
     Container as _Container,
     Generator as _Generator,
     Hashable as _Hashable,
@@ -543,7 +543,7 @@ implicit" maxim of `PEP 20 -- The Zen of Python <PEP 20_>`__ by intentionally
 deceiving you for your own benefit, which you of course appreciate. Thanks to
 arcane dunder magics buried in the :class:`abc.ABCMeta` metaclass, the
 :func:`isinstance` and :func:`issubclass` builtin functions (which the
-:func:`beartype.beartype` decorator internally defers) ambiguously misidentify
+:func:`beartype.beartype` decorator internally defers to) ambiguously mistype
 structural container subtypes as explicit container subtypes:
 
 .. code-block:: python
@@ -567,13 +567,16 @@ structural container subtypes as explicit container subtypes:
 
 IterableType = _Iterable
 '''
-Type of all **iterables** (i.e., concrete instances of the abstract
-:class:`collections.abc.Iterable` base class).
+Type of all **iterables** (i.e., both concrete and structural instances of the
+abstract :class:`collections.abc.Iterable` base class).
 
 Iterables are containers that may be indirectly iterated over by calling the
 :func:`iter` builtin, which internally calls the ``__iter__()`` dunder methods
 implemented by these containers, which return **iterators** (i.e., instances of
 the :class:`IteratorType` type), which directly support iteration.
+
+This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
+via structural subtyping.
 
 See Also
 ----------
@@ -586,9 +589,9 @@ See Also
 
 IteratorType = _Iterator
 '''
-Type of all **iterators** (i.e., concrete instances of the abstract
-:class:`collections.abc.Iterator` base class; objects iterating over associated
-data streams, which are typically containers).
+Type of all **iterators** (i.e., both concrete and structural instances of
+the abstract :class:`collections.abc.Iterator` base class; objects iterating
+over associated data streams, which are typically containers).
 
 Iterators implement at least two dunder methods:
 
@@ -609,6 +612,39 @@ See Also
 '''
 
 
+SizedType = _Sized
+'''
+Type of all **sized containers** (i.e., both concrete and structural instances
+of the abstract :class:`collections.abc.Sized` base class; containers defining
+the ``__len__()`` dunder method internally called by the :func:`len` builtin).
+
+This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
+via structural subtyping.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+'''
+
+
+CollectionType = _Collection
+'''
+Type of all **collections** (i.e., both concrete and structural instances of
+the abstract :class:`collections.abc.Collection` base class; sized iterable
+containers defining the ``__contains__()``, ``__iter__()``, and ``__len__()``
+dunder methods).
+
+This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
+via structural subtyping.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+'''
+
+
 QueueType = _deque
 '''
 Type of all **double-ended queues** (i.e., instances of the concrete
@@ -624,9 +660,9 @@ abstract interface to formalize queue types. Double-ended queues are it, sadly.
 
 SetType = _Set
 '''
-Type of all **set-like containers** (i.e., concrete instances of the abstract
-:class:`collections.abc.Set` base class; containers guaranteeing uniqueness
-across all contained items).
+Type of all **set-like containers** (i.e., both concrete and structural
+instances of the abstract :class:`collections.abc.Set` base class; containers
+guaranteeing uniqueness across all contained items).
 
 This type matches both the standard :class:`set` and :class:`frozenset` types
 *and* the types of the :class:`dict`-specific views returned by the
@@ -639,25 +675,13 @@ See Also
     Further details on structural subtyping.
 '''
 
-
-SizedType = _Sized
-'''
-Type of all **sized containers** (i.e., concrete instances of the abstract
-:class:`collections.abc.Sized` base class; containers defining the
-``__len__()`` dunder method internally called by the :func:`len` builtin).
-
-See Also
-----------
-:class:`ContainerType`
-    Further details on structural subtyping.
-'''
-
 # ....................{ TYPES ~ contain : mapping         }....................
 HashableType = _Hashable
 '''
-Type of all **hashable objects** (i.e., concrete instances of the abstract
-:class:`collections.abc.Hashable` base class; objects implementing the
-``__hash__()`` dunder method required for all dictionary keys and set items).
+Type of all **hashable objects** (i.e., both concrete and structural instances
+of the abstract :class:`collections.abc.Hashable` base class; objects
+implementing the ``__hash__()`` dunder method required for all dictionary keys
+and set items).
 
 See Also
 ----------
@@ -668,17 +692,17 @@ See Also
 
 MappingType = _Mapping
 '''
-Type of all **mutable and immutable mappings** (i.e., concrete instances of the
-abstract :class:`collections.abc.Mapping` base class; dictionary-like
-containers containing key-value pairs mapping from hashable keys to
-corresponding values).
+Type of all **mutable** and **immutable mappings** (i.e., both concrete and
+structural instances of the abstract :class:`collections.abc.Mapping` base
+class; dictionary-like containers containing key-value pairs mapping from
+hashable keys to corresponding values).
 
 Caveats
 ----------
 **This type does not guarantee mutability** (i.e., the capacity to modify
 instances of this type after instantiation). This type ambiguously matches both
 mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
-:class:`mappingproxy`). If mutability is required, prefer the non-ambiguous
+:class:`mappingproxy`). Where mutability is required, prefer the non-ambiguous
 :class:`MappingMutableType` type instead.
 
 See Also
@@ -690,9 +714,10 @@ See Also
 
 MappingMutableType = _MutableMapping
 '''
-Type of all **mutable mappings** (i.e., concrete instances of the abstract
-:class:`collections.abc.MutableMapping` base class; dictionary-like containers
-permitting modification of contained key-value pairs).
+Type of all **mutable mappings** (i.e., both concrete and structural instances
+of the abstract :class:`collections.abc.MutableMapping` base class;
+dictionary-like containers permitting modification of contained key-value
+pairs).
 
 See Also
 ----------
@@ -705,29 +730,41 @@ See Also
 # ....................{ TYPES ~ contain : sequence        }....................
 SequenceType = _Sequence
 '''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Sequence` API.
+Type of all **mutable** and **immutable sequences** (i.e., both concrete and
+structural instances of the abstract :class:`collections.abc.Sequence` base
+class; reversible collections whose items are efficiently accessible but *not*
+necessarily modifiable with 0-based integer-indexed lookup).
 
-Sequences are iterables supporting efficient element access via integer
-indices. Most sequences implement the :class:`collections.abc.Sequence`
-abstract base class, including the concrete :class:`str` string class. All
-sequences define the special ``__getitem__()`` and ``__len__()`` methods
-(amongst various others).
-
-Motivation
+Caveats
 ----------
-While all sequences are iterables, not all iterables are sequences. Generally
-speaking, sequences correspond to the proper subset of iterables whose elements
-are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
-:class:`dict` implements :class:`collections.abc.Iterable` but *not*
-:class:`collections.abc._Sequence`, due to failing to support integer
-index-based lookup; :class:`OrderedDict` implements both, due to supporting
-such lookup.
+**This type does not guarantee mutability** (i.e., the capacity to modify
+instances of this type after instantiation). This type ambiguously matches both
+mutable sequence types (e.g., :class:`list`) and immutable sequence types
+(e.g., :class:`tuple`). Where mutability is required, prefer the non-ambiguous
+:class:`SequenceMutableType` type instead.
 
-For generality, this tuple matches both pure-Python sequences
-*and* non-Pythonic Fortran-based NumPy arrays and matrices -- which fail to
-subclass :class:`collections.abc.Sequence` despite implementing the entirety of
-that that API.
+**This type matches the string type (i.e., :class:`str`),** which satisfies the
+:class:`collections.abc.Sequence` API but *not* the
+:class:`collections.abc.MutableSequence` API. Where **non-string sequences**
+(i.e., sequences that are anything but strings) are required, prefer the
+non-ambiguous :class:`SequenceMutableType` type instead.
+
+**This type does not match the NumPy array type (i.e.,
+:class:`numpy.ndarray`),** which satisfies most but *not* all of the
+:class:`collections.abc.Sequence` API. Specifically, NumPy arrays fail to
+define:
+
+* The ``__reversible__`` dunder method.
+* The ``count`` public method.
+* The ``index`` public method.
+
+Most callables accepting sequences *never* invoke these edge-case methods and
+should thus be typed to accept NumPy arrays as well. To do so, prefer either:
+
+* The :class:`SequenceOrNumPyArrayTypes` tuple of types matching both sequences
+  and NumPy arrays.
+* The :class:`SequenceMutableOrNumPyArrayTypes` tuple of types matching both
+  mutable sequences and NumPy arrays.
 
 See Also
 ----------
@@ -736,8 +773,42 @@ See Also
 '''
 
 
-#FIXME: Document and test us up.
 SequenceMutableType = _MutableSequence
+'''
+Type of all **mutable sequences** (i.e., both concrete and structural instances
+of the abstract :class:`collections.abc.Sequence` base class; reversible
+collections whose items are both efficiently accessible *and* modifiable with
+0-based integer-indexed lookup).
+
+Caveats
+----------
+**This type does not match the NumPy array type (i.e.,
+:class:`numpy.ndarray`),** which satisfies most but *not* all of the
+:class:`collections.abc.MutableSequence` API. Specifically, NumPy arrays fail
+to define:
+
+* The ``__reversible__`` dunder method.
+* The ``append`` public method.
+* The ``count`` public method.
+* The ``extend`` public method.
+* The ``index`` public method.
+* The ``insert`` public method.
+* The ``pop`` public method.
+* The ``remove`` public method.
+* The ``reverse`` public method.
+
+Most callables accepting mutable sequences *never* invoke these edge-case
+methods and should thus be typed to accept NumPy arrays as well. To do so,
+prefer the :class:`SequenceMutableOrNumPyArrayTypes` tuple of types matching
+both mutable sequences and NumPy arrays.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+:class:`SequenceType`
+    Further details on sequences.
+'''
 
 # ....................{ TYPES ~ enum                      }....................
 # Enumeration types are sufficiently obscure to warrant formalization here.
@@ -1013,38 +1084,8 @@ This tuple contains classes matching both callable and uncallable weak
 reference proxies.
 '''
 
-# ....................{ TUPLES ~ contain                  }....................
-#FIXME: Revise docstring and test us up.
-# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceMutableOrNumPyArrayTypes = (_Sequence,)
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`collections.abc.Sequence` API.
-
-Sequences are iterables supporting efficient element access via integer
-indices. Most sequences implement the :class:`collections.abc.Sequence`
-abstract base class, including the concrete :class:`str` string class. All
-sequences define the special ``__getitem__()`` and ``__len__()`` methods
-(amongst various others).
-
-Motivation
-----------
-While all sequences are iterables, not all iterables are sequences. Generally
-speaking, sequences correspond to the proper subset of iterables whose elements
-are ordered. :class:`dict` and :class:`OrderedDict` are the canonical examples.
-:class:`dict` implements :class:`collections.abc.Iterable` but *not*
-:class:`collections.abc._Sequence`, due to failing to support integer
-index-based lookup; :class:`OrderedDict` implements both, due to supporting
-such lookup.
-
-For generality, this tuple matches both pure-Python sequences
-*and* non-Pythonic Fortran-based NumPy arrays and matrices -- which fail to
-subclass :class:`collections.abc.Sequence` despite implementing the entirety of
-that that API.
-'''
-
 # ....................{ TUPLES ~ scalar                   }....................
-# Note this is conditionally expanded by the "TUPLES ~ init" subsection below.
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
 BoolTypes = (bool,)
 '''
 Tuple of all strictly boolean types, including both the standard :class:`bool`
@@ -1065,6 +1106,15 @@ results. Rather, such variables should *always* be coerced into the standard
 '''
 
 
+#FIXME: Generalize away from the specific "float" and "int" types to the
+#generic "numbers.Rational" and "numbers.Integral" ABCs. To do so, reduce to:
+#    NumberFloatOrIntType = numbers.Rational
+#This works as expected, as numbers.Integral subclasses numbers.Rational. Avoid
+#calling this "NumberRationalOrIntegralType", as nobody knows what that means.
+#FIXME: Note in the docstring that this also matches all relevant NumPy types,
+#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
+#on first importation. Nice, eh?
+#FIXME: Note this in all of the docstrings below as well.
 NumericSimpleTypes = (float, int,)
 '''
 Tuple of all **builtin simple numeric types** (i.e., classes whose instances
@@ -1076,6 +1126,8 @@ special handling.
 '''
 
 
+#FIXME: Reduce this to simply:
+#    NumberType = numbers.Number
 NumericTypes = (complex,) + NumericSimpleTypes
 '''
 Tuple of all **builtin numeric types** (i.e., classes whose instances are
@@ -1083,6 +1135,9 @@ scalar numbers), comprising integer, real number, and complex number types.
 '''
 
 
+#FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
+#has been fully defined below. At that point, refactor this to resemble:
+#    NumberOrBoolTypes = (NumberType,) + BoolTypes
 NumericlikeTypes = (bool,) + NumericTypes
 '''
 Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
@@ -1098,6 +1153,9 @@ Perl) typically implicitly convert:
 '''
 
 
+#FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
+#has been fully defined below. At that point, refactor this to resemble:
+#    ScalarTypes = (str,) + NumberOrBoolTypes
 ScalarTypes = (str,) + NumericlikeTypes
 '''
 Tuple of all **builtin scalar types** (i.e., classes whose instances are
@@ -1145,6 +1203,50 @@ homogeneously constraining all elements of all NumPy arrays) and all scalar
 Python types transparently supported by NumPy as implicit data types (i.e.,
 :class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
 :mod:`numpy` is importable *or* :data:`UnavailableTypes` otherwise.
+'''
+
+
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
+SequenceOrNumPyArrayTypes = (SequenceType,)
+'''
+Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
+and structural subclasses of the abstract :class:`collections.abc.Sequence`
+base class; reversible collections whose items are efficiently accessible but
+*not* necessarily modifiable with 0-based integer-indexed lookup) as well as
+the **NumPy array type** (i.e., :class:`numpy.ndarray`) if :mod:`numpy` is
+importable.
+
+The NumPy array type satisfies most but not all of the
+:class:`collections.abc.Sequence` API and *must* thus be matched explicitly.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+:class:`SequenceType`
+    Further details on the :class:`collections.abc.Sequence` mismatch.
+'''
+
+
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
+SequenceMutableOrNumPyArrayTypes = (SequenceMutableType,)
+'''
+Tuple of all **mutable sequence types** (i.e., both concrete and structural
+subclasses of the abstract :class:`collections.abc.Sequence` base class;
+reversible collections whose items are both efficiently accessible *and*
+modifiable with 0-based integer-indexed lookup) as well as the the **NumPy
+array type** (i.e., :class:`numpy.ndarray`) if :mod:`numpy` is importable.
+
+The NumPy array type satisfies most but not all of the
+:class:`collections.abc.MutableSequence` API and *must* thus be matched
+explicitly.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
+:class:`SequenceMutableType`
+    Further details on the :class:`collections.abc.MutableSequence` mismatch.
 '''
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
@@ -1204,6 +1306,7 @@ try:
 
     # Extend NumPy-agnostic types with NumPy-specific types.
     BoolTypes += (_numpy.bool_,)
+    SequenceOrNumPyArrayTypes += (NumpyArrayType,)
     SequenceMutableOrNumPyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:

@@ -349,11 +349,17 @@ def test_api_cave_types_core() -> None:
         _RECESSIONAL,
     )
 
+    # Test "SizedType".
+    _assert_type_objects(cave.SizedType, _THE_SONG_OF_THE_DEAD)
+
     # Test "IterableType".
     _assert_type_objects(cave.IterableType, _THE_SONG_OF_THE_DEAD)
 
     # Test "IteratorType".
     _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
+
+    # Test "CollectionType".
+    _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
 
     # Test "QueueType".
     _assert_type_objects(cave.QueueType, _RECESSIONAL)
@@ -380,9 +386,6 @@ def test_api_cave_types_core() -> None:
 
     # Test "SetType".
     _assert_type_objects(cave.SetType, set(_THE_SONG_OF_THE_DEAD))
-
-    # Test "SizedType".
-    _assert_type_objects(cave.SizedType, _THE_SONG_OF_THE_DEAD)
 
     # Test "HashableType".
     _assert_type_objects(cave.HashableType, _THE_SONG_OF_THE_DEAD[0])
