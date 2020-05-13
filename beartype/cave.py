@@ -91,7 +91,6 @@ from argparse import (
 )
 from collections import deque as _deque
 from collections.abc import (
-    Collection as _Collection,
     Container as _Container,
     Generator as _Generator,
     Hashable as _Hashable,
@@ -146,6 +145,7 @@ from types import (
 
 # Attempt to import types unavailable under Python 3.5.
 try:
+    from collections.abc import Collection as _Collection
     from types import (
         AsyncGeneratorType as _AsyncGeneratorType,
         CoroutineType as _CoroutineType,
@@ -153,6 +153,7 @@ try:
 # If this is Python 3.5, define placeholder globals of the same name.
 except ImportError:
     _AsyncGeneratorType = None
+    _Collection = None
     _CoroutineType = None
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -637,7 +638,8 @@ CollectionType = _Collection
 Type of all **collections** (i.e., both concrete and structural instances of
 the abstract :class:`collections.abc.Collection` base class; sized iterable
 containers defining the ``__contains__()``, ``__iter__()``, and ``__len__()``
-dunder methods).
+dunder methods) if the active Python interpreter is at least version 3.6.0 *or*
+``None`` otherwise.
 
 This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
 via structural subtyping.
