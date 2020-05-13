@@ -58,6 +58,9 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Revise all "README.rst" examples in accordance with recent changes to
+#this submodule. Let's preserve worky, please.
+
 #FIXME: Add types for all remaining useful "collections.abc" interfaces,
 #including:
 #* "Reversible".
@@ -80,6 +83,7 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import functools as _functools
+import numbers as _numbers
 import re as _re
 from argparse import (
     _SubParsersAction,
@@ -875,6 +879,42 @@ that enumeration's type and should be directly referenced as such: e.g.,
     ...     return str(superlative).lower()
 '''
 
+# ....................{ TYPES ~ scalar                    }....................
+NumberRealType = _numbers.Real
+'''
+Type of all **real numbers** (i.e., concrete instances of the abstract
+:class:`numbers.Real` base class).
+
+This type matches:
+
+* **Integers** (i.e., numbers expressible without fractional components),
+  including:
+  * **Builtin integers** (i.e., :class:`int` instances).
+  * **NumPy integer datatypes** (e.g., :class:`numpy.int_` instances), all of
+    which are implicitly registered at :mod:`numpy` importation time as
+    :class:`numbers.Integral` subclasses.
+* **Rational numbers** (i.e., numbers expressible as the ratio of two
+  integers), including:
+  * **Builtin floating-point numbers** (i.e., :class:`float` instances).
+  * **NumPy floating-point datatypes** (e.g., :class:`numpy.single` instances),
+    all of which are implicitly registered at :mod:`numpy` importation time as
+    :class:`numbers.Rational` subclasses.
+  * **Stdlib fractions** (i.e., :class:`fractions.Fraction` instances).
+* **Irrational numbers** (i.e., real numbers *not* expressible as the ratio of
+  two integers), including:
+  * SymPy symbolic objects whose ``is_irrational`` assumption evaluates to
+    ``True``.
+
+Caveats
+----------
+This type does *not* match **stdlib decimals** (i.e., :class:`decimal.Decimal`
+instances), which support both unrounded decimal (i.e., fixed-point arithmetic)
+and rounded floating-point arithmetic. Despite being strictly rational, the
+:class:`decimal.Decimal` class only subclasses the coarse-grained abstract
+:class:`numbers.Number` base superclass rather than the fine-grained abstract
+:class:`numbers.Rational` base subclass. So it goes.
+'''
+
 # ....................{ TYPES ~ stdlib : argparse         }....................
 ArgParserType = _ArgumentParser
 '''
@@ -913,6 +953,29 @@ RegexMatchType = type(_re.match(r'', ''))
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
+'''
+
+# ....................{ TYPES ~ lib                       }....................
+# Types conditionally dependent upon the importability of third-party
+# dependencies. These types are subsequently redefined by try-except blocks
+# below and initially default to "UnavailableType" for simple types.
+
+# ....................{ TYPES ~ lib : numpy               }....................
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
+NumpyArrayType = UnavailableType
+'''
+Type of all **NumPy arrays** (i.e., instances of the :mod:`numpy.ndarray` type
+implemented in low-level C and Fortran, if :mod:`numpy` is importable *or*
+:class:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
+'''
+
+
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
+NumpyScalarType = UnavailableType
+'''
+Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
+:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
+:mod:`numpy` is unimportable).
 '''
 
 # ....................{ TUPLES ~ unavailable              }....................
@@ -1106,29 +1169,12 @@ results. Rather, such variables should *always* be coerced into the standard
 '''
 
 
-#FIXME: Generalize away from the specific "float" and "int" types to the
-#generic "numbers.Rational" and "numbers.Integral" ABCs. To do so, reduce to:
-#    NumberFloatOrIntType = numbers.Rational
-#This works as expected, as numbers.Integral subclasses numbers.Rational. Avoid
-#calling this "NumberRationalOrIntegralType", as nobody knows what that means.
+#FIXME: Reduce this to simply:
+#    NumberType = numbers.Number
 #FIXME: Note in the docstring that this also matches all relevant NumPy types,
 #as NumPy implicitly registers these types with the appropriate "numbers" ABCs
 #on first importation. Nice, eh?
-#FIXME: Note this in all of the docstrings below as well.
-NumericSimpleTypes = (float, int,)
-'''
-Tuple of all **builtin simple numeric types** (i.e., classes whose instances
-are trivial scalar numbers), comprising both integer and real number types.
-
-This tuple intentionally excludes complex number types - whose non-trivial
-encapsulation of a pair of real numbers *usually* necessitates non-trivial
-special handling.
-'''
-
-
-#FIXME: Reduce this to simply:
-#    NumberType = numbers.Number
-NumericTypes = (complex,) + NumericSimpleTypes
+NumericTypes = (complex, NumberRealType)
 '''
 Tuple of all **builtin numeric types** (i.e., classes whose instances are
 scalar numbers), comprising integer, real number, and complex number types.
@@ -1138,6 +1184,9 @@ scalar numbers), comprising integer, real number, and complex number types.
 #FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
 #has been fully defined below. At that point, refactor this to resemble:
 #    NumberOrBoolTypes = (NumberType,) + BoolTypes
+#FIXME: Note in the docstring that this also matches all relevant NumPy types,
+#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
+#on first importation. Nice, eh?
 NumericlikeTypes = (bool,) + NumericTypes
 '''
 Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
@@ -1156,6 +1205,25 @@ Perl) typically implicitly convert:
 #FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
 #has been fully defined below. At that point, refactor this to resemble:
 #    ScalarTypes = (str,) + NumberOrBoolTypes
+#FIXME: Actually, we should incorporate *ALL* NumPy scalar types. So:
+#    # If NumPy is available:
+#    ScalarTypes = (str, NumpyScalarType) + NumberTypes
+#
+#    # If NumPy is unavailable:
+#    ScalarTypes = (str,) + NumberTypes
+#To automate this, just default this to:
+#    ScalarTypes = (str,) + NumberTypes
+#...and then append that by "(NumpyScalarType,)" if NumPy is importable. Yeah!
+#FIXME: Oh, wait. That's almost perfect, but omits "bool". O.K., then:
+#    # Default to this.
+#    ScalarTypes = (bool, str,) + NumberTypes
+#
+#    # ...appended by this if NumPy is importable.
+#    ScalarTypes += (NumpyScalarType,)
+#Since "NumpyScalarType" covers "_numpy.bool_", that should suffice us up.
+#FIXME: Note in the docstring that this also matches all relevant NumPy types,
+#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
+#on first importation. Nice, eh?
 ScalarTypes = (str,) + NumericlikeTypes
 '''
 Tuple of all **builtin scalar types** (i.e., classes whose instances are
@@ -1172,30 +1240,11 @@ regular expressions or losslessly convertible to such types).
 # ....................{ TUPLES ~ lib                      }....................
 # Types conditionally dependent upon the importability of third-party
 # dependencies. These types are subsequently redefined by try-except blocks
-# below and initially default to either:
-#
-# * "UnavailableType" for simple types.
-# * "UnavailableTypes" for tuples of simple types.
+# below and initially default to "UnavailableTypes" for tuples of simple types.
 
 # ....................{ TUPLES ~ lib : numpy              }....................
-# Defined by the "TUPLES ~ init" subsection below.
-NumpyArrayType = UnavailableType
-'''
-Type of all NumPy arrays if :mod:`numpy` is importable *or*
-:class:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
-'''
-
-
-# Defined by the "TUPLES ~ init" subsection below.
-NumpyScalarType = UnavailableType
-'''
-Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
-:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
-:mod:`numpy` is unimportable).
-'''
-
-
-# Defined by the "TUPLES ~ init" subsection below.
+#FIXME: Excise this. The "ScalarTypes" tuple should now cover this fully.
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
 NumpyDataTypes = UnavailableTypes
 '''
 Tuple of the **NumPy data type** (i.e., NumPy-specific numeric scalar type
@@ -1206,7 +1255,7 @@ Python types transparently supported by NumPy as implicit data types (i.e.,
 '''
 
 
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
 SequenceOrNumPyArrayTypes = (SequenceType,)
 '''
 Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
@@ -1306,7 +1355,7 @@ try:
 
     # Extend NumPy-agnostic types with NumPy-specific types.
     BoolTypes += (_numpy.bool_,)
-    SequenceOrNumPyArrayTypes += (NumpyArrayType,)
+    SequenceOrNumPyArrayTypes        += (NumpyArrayType,)
     SequenceMutableOrNumPyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:
@@ -1347,7 +1396,7 @@ API.
 '''
 
 
-NumericOrIterableTypes = NumericSimpleTypes + (IterableType,)
+NumericOrIterableTypes = NumericTypes + (IterableType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Iterable`
@@ -1355,7 +1404,7 @@ API.
 '''
 
 
-NumericOrSequenceTypes = NumericSimpleTypes + (SequenceType,)
+NumericOrSequenceTypes = NumericTypes + (SequenceType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
@@ -1504,7 +1553,7 @@ Tuple of both the integer type *and* that of the ``None`` singleton.
 '''
 
 
-NumericOrNoneTypes = NumericSimpleTypes + NoneTypes
+NumericOrNoneTypes = NumericTypes + NoneTypes
 '''
 Tuple of all numeric types *and* the type of the singleton ``None`` object.
 '''

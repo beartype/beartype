@@ -18,6 +18,8 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 import argparse, functools, re, sys, weakref
 from collections import deque
 from collections.abc import Iterable
+from decimal import Decimal
+from fractions import Fraction
 from enum import Enum
 
 # ....................{ TODO                              }....................
@@ -405,6 +407,21 @@ def test_api_cave_types_core() -> None:
     _assert_type_objects(
         cave.EnumMemberType,
         _AsTheDeerBreaksAsTheSteerBreaksFromTheHerdWhereTheyGraze.THEN_THE_WOOD_FAILED)
+
+    #FIXME: Test that NumPy datatypes match this as well elsewhere.
+    # Test "NumberRealType" against...
+    _assert_type_objects(
+        cave.NumberRealType,
+        # Builtin integer.
+        0xCAFED00D,
+        # Builtin float.
+        1.1851851851851851,
+        # Stdlib fraction.
+        Fraction(32, 27),
+        #FIXME: Oddly, decimals only satisfy "numbers.Number". *sigh*
+        # Stdlib decimal.
+        #Decimal('0.1428571428571428571428571429'),
+    )
 
     # Test "ArgParserType".
     arg_parser = argparse.ArgumentParser()
