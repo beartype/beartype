@@ -172,6 +172,15 @@ class UnavailableType(object):
 
     pass
 
+
+def _get_type_or_unavailable(cls: type) -> type:
+    '''
+    Return the passed type if non-``None`` *or* :class:`UnavailableType`
+    otherwise (i.e., if this type is ``None``).
+    '''
+
+    return UnavailableType if cls is None else cls
+
 # ....................{ TYPES ~ core                      }....................
 AnyType = object
 '''
@@ -423,12 +432,14 @@ define the ``__call__`` dunder method.
 '''
 
 # ....................{ TYPES ~ call : return : async     }....................
-AsyncGeneratorCType = (
-    UnavailableType if _AsyncGeneratorType is None else _AsyncGeneratorType)
+AsyncGeneratorCType = _get_type_or_unavailable(_AsyncGeneratorType)
 '''
 C-based type returned by all **asynchronous pure-Python generators** (i.e.,
 callables implemented in pure Python containing one or more ``yield``
-statements whose declaration is preceded by the ``async`` keyword).
+statements whose declaration is preceded by the ``async`` keyword) if the
+active Python interpreter is at least version 3.6.0 *or*
+:class:`UnavailableType` otherwise.
+
 
 Caveats
 ----------
@@ -442,12 +453,12 @@ callables is simply :data:`CallableTypes`.
 '''
 
 
-AsyncCoroutineCType = (
-    UnavailableType if _CoroutineType is None else _CoroutineType)
+AsyncCoroutineCType = _get_type_or_unavailable(_CoroutineType)
 '''
 C-based type returned by all **asynchronous coroutines** (i.e., callables
 implemented in pure Python *not* containing one or more ``yield`` statements
-whose declaration is preceded by the ``async`` keyword).
+whose declaration is preceded by the ``async`` keyword) if the active Python
+interpreter is at least version 3.6.0 *or* :class:`UnavailableType` otherwise.
 
 Caveats
 ----------
@@ -633,13 +644,13 @@ See Also
 '''
 
 
-CollectionType = _Collection
+CollectionType = _get_type_or_unavailable(_Collection)
 '''
 Type of all **collections** (i.e., both concrete and structural instances of
 the abstract :class:`collections.abc.Collection` base class; sized iterable
 containers defining the ``__contains__()``, ``__iter__()``, and ``__len__()``
 dunder methods) if the active Python interpreter is at least version 3.6.0 *or*
-``None`` otherwise.
+:class:`UnavailableType` otherwise.
 
 This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
 via structural subtyping.
