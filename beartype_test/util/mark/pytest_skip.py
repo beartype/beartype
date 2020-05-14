@@ -17,7 +17,7 @@ parameters are satisfied (e.g., the importability of the passed module name).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import pytest, sys
+import platform, pytest, sys
 from beartype_test.util.mark import pytest_mark
 from collections.abc import (
     Mapping as Mapping,
@@ -108,6 +108,24 @@ def skip(reason: str):
     return skip_if(True, reason=reason)
 
 # ....................{ SKIP ~ py                         }....................
+def skip_if_pypy():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is the
+    PyPy, a third-party implementation emphasizing Just In Time (JIT) bytecode
+    optimization.
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator skipping this text or fixture if this interpreter is PyPy
+        *or* the identity decorator reducing to a noop otherwise.
+    '''
+
+    # Skip this test if the active Python interpreter is PyPy.
+    return skip_if(
+        platform.python_implementation() == 'PyPy', reason='PyPy.')
+
+
 def skip_if_python_version_less_than(minimum_version: str):
     '''
     Skip the decorated test or fixture if the version of the active Python

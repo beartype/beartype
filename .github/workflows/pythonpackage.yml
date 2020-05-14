@@ -70,16 +70,16 @@ jobs:
     #     stdout *BEFORE* running that command.
     #   * Strictness (i.e., "-e").
     # * Packaging dependencies (e.g., "pip") are installed *BEFORE* all
-    #   remaining dependencies (e.g., "tox").
-    # * "tox-gh-actions" is a third-party Python package automating integration
-    #   of GitHub Actions and "tox".
+    #   remaining dependencies (e.g., "tox"), which include:
+    #   * "numpy", enabling conditional unit tests requiring NumPy.
+    #   * "tox-gh-actions", automating integration of GitHub Actions and "tox".
     - name: 'Installing package dependencies...'
       run: |
         set -xe
         python -VV
         python -m site
         python -m pip install --upgrade pip setuptools wheel
-        python -m pip install --upgrade virtualenv tox tox-gh-actions
+        python -m pip install --upgrade numpy virtualenv tox tox-gh-actions
     - name: 'Testing under toxic Python ${{ matrix.python-version }}...'
       run: |
         python -m tox

@@ -17,19 +17,17 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 
 import argparse, functools, re, sys, weakref
 from beartype_test.util.mark.pytest_skip import (
+    skip_if_pypy,
     skip_if_python_version_less_than,
     skip_unless_module,
 )
 from collections import deque
 from collections.abc import Iterable
-# from decimal import Decimal
+from decimal import Decimal
 from fractions import Fraction
 from enum import Enum
 
 # ....................{ TODO                              }....................
-#FIXME: Add unit tests conditionally testing NumPy arrays against various
-#container types if available as well.
-
 #FIXME: Unit test the following types, which remain untested for the initial
 #0.1.0 release due to non-trivialities with asynchronous testing:
 #* "AsyncGeneratorCType".
@@ -135,6 +133,28 @@ _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY = re.match(
     'Follow after -- follow after! We have watered the root,')
 
 # ....................{ ASSERTERS                         }....................
+def _assert_types_objects(types: Iterable, *objects: object) -> None:
+    '''
+    Assert all passed objects to be instances of all types contained in the
+    passed iterable of such types.
+
+    Parameters
+    ----------
+    types : Iterable[type]
+        Iterable of types to validate these objects to be instances of.
+    objects : tuple
+        Tuple of all objects to be validated as instances of these types.
+    '''
+
+    # Assert that this iterable of types actually is.
+    assert isinstance(types, Iterable)
+
+    # For each type in this iterable, assert these objects to all be instances
+    # of this type.
+    for cls in types:
+        _assert_type_objects(cls, *objects)
+
+
 def _assert_type_objects(cls: type, *objects: object) -> None:
     '''
     Assert all passed objects to be instances of the passed type.
@@ -260,14 +280,12 @@ def test_api_cave_types_core() -> None:
         _LORD_GOD_WE_HA_PAID_IN_FULL.but_marks_our_english_dead,
     )
 
-    # Test "FunctionOrMethodCType" against...
-    _assert_type_objects(
-        cave.FunctionOrMethodCType,
-        # Unbound C-based function.
-        id,
-        # Bound C-based instance non-dunder method.
-        _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub,
-    )
+    # Test "FunctionOrMethodCType" against an unbound C-based function.
+    #
+    # Note that testing this type against a bound C-based instance non-dunder
+    # method is PyPy-incompatible and *MUST* thus be deferred to the
+    # test_api_cave_types_core_nonpypy() unit test.
+    _assert_type_objects(cave.FunctionOrMethodCType, id)
 
     # Test "MethodBoundInstanceOrClassType" against...
     _assert_type_objects(
@@ -340,36 +358,15 @@ def test_api_cave_types_core() -> None:
             _LORD_GOD_WE_HA_PAID_IN_FULL.and_she_calls_us_still_unfed),
     )
 
-    # Test "ContainerType" against...
-    #
-    # Note that NumPy arrays are conditionally tested elsewhere for safety.
-    _assert_type_objects(
-        cave.ContainerType,
-        # Mutable mapping.
-        _EPITAPHS_OF_THE_WAR,
-        # Mutable sequence.
-        _THE_SONG_OF_THE_DEAD,
-        # Immutable sequence.
-        _EPITAPHS_OF_THE_WAR['COMMON FORM'],
-        # Double-ended queue.
-        _RECESSIONAL,
-    )
-
-    # Test "SizedType".
-    _assert_type_objects(cave.SizedType, _THE_SONG_OF_THE_DEAD)
-
-    # Test "IterableType".
-    _assert_type_objects(cave.IterableType, _THE_SONG_OF_THE_DEAD)
-
-    # Test "IteratorType".
-    _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
-
-    # Test "QueueType".
-    _assert_type_objects(cave.QueueType, _RECESSIONAL)
-
-    # Test "SequenceType" against...
-    _assert_type_objects(
-        cave.SequenceType,
+    # Test "ContainerType", "SizedType", "IterableType", and "SequenceType"
+    # against...
+    _assert_types_objects(
+        {
+            cave.ContainerType,
+            cave.SizedType,
+            cave.IterableType,
+            cave.SequenceType,
+        },
         # Immutable sequence.
         _EPITAPHS_OF_THE_WAR['COMMON FORM'],
         # Mutable sequence.
@@ -387,17 +384,34 @@ def test_api_cave_types_core() -> None:
         _RECESSIONAL,
     )
 
-    # Test "SetType".
-    _assert_type_objects(cave.SetType, set(_THE_SONG_OF_THE_DEAD))
+    # Test "ContainerType", "MappingType", and "MappingMutableType" against...
+    _assert_types_objects(
+        {
+            cave.ContainerType,
+            cave.MappingType,
+            cave.MappingMutableType,
+        },
+        # Mutable mapping.
+        _EPITAPHS_OF_THE_WAR,
+    )
+
+    # Test "IteratorType".
+    _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
+
+    # Test "QueueType".
+    _assert_type_objects(cave.QueueType, _RECESSIONAL)
+
+    # Test "SetType" against...
+    _assert_type_objects(
+        cave.SetType,
+        # Immutable set.
+        frozenset(_THE_SONG_OF_THE_DEAD),
+        # Mutable set.
+        set(_THE_SONG_OF_THE_DEAD),
+    )
 
     # Test "HashableType".
     _assert_type_objects(cave.HashableType, _THE_SONG_OF_THE_DEAD[0])
-
-    # Test "MappingType".
-    _assert_type_objects(cave.MappingType, _EPITAPHS_OF_THE_WAR)
-
-    # Test "MappingMutableType".
-    _assert_type_objects(cave.MappingMutableType, _EPITAPHS_OF_THE_WAR)
 
     # Test "EnumType".
     _assert_type_objects(
@@ -409,19 +423,26 @@ def test_api_cave_types_core() -> None:
         cave.EnumMemberType,
         _AsTheDeerBreaksAsTheSteerBreaksFromTheHerdWhereTheyGraze.THEN_THE_WOOD_FAILED)
 
-    #FIXME: Test that NumPy datatypes match this as well elsewhere.
-    # Test "NumberRealType" against...
-    _assert_type_objects(
-        cave.NumberRealType,
+    # Test "NumberType" and "NumberRealType" against...
+    _assert_types_objects(
+        {
+            cave.NumberType,
+            cave.NumberRealType,
+        },
         # Builtin integer.
         0xCAFED00D,
         # Builtin float.
         1.1851851851851851,
         # Stdlib fraction.
         Fraction(32, 27),
-        #FIXME: Oddly, decimals only satisfy "numbers.Number". *sigh*
-        # Stdlib decimal.
-        #Decimal('0.1428571428571428571428571429'),
+    )
+
+    #FIXME: Test builtin complex numbers here as well.
+    # Test "NumberType" against...
+    _assert_type_objects(
+        cave.NumberType,
+        # Stdlib decimal, which oddly only satisfies "numbers.Number". *sigh*
+        Decimal('0.1428571428571428571428571429'),
     )
 
     # Test "ArgParserType".
@@ -441,12 +462,31 @@ def test_api_cave_types_core() -> None:
         cave.RegexMatchType,
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
 
+# ....................{ TESTS ~ types : skip              }....................
+@skip_if_pypy()
+def test_api_cave_types_core_nonpypy() -> None:
+    '''
+    Test all core simple types published by the :mod:`beartype.cave` submodule
+    requiring the active Python interpreter to *not* be PyPy where this is the
+    case *or* reduce to a noop otherwise.
+    '''
+
+    # Import this submodule.
+    from beartype import cave
+
+    # Test "FunctionOrMethodCType" against a bound C-based instance non-dunder
+    # method. Under PyPy, this method is a regular pure-Python bound method.
+    _assert_type_objects(
+        cave.FunctionOrMethodCType,
+        _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub)
+
 
 @skip_if_python_version_less_than('3.6.0')
 def test_api_cave_types_core_python_3_6_0_or_newer() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
-    requiring the active Python interpreter version to be at least 3.6.0.
+    requiring the active Python interpreter version to be at least 3.6.0 where
+    this is the case *or* reduce to a noop otherwise.
     '''
 
     # Import this submodule.
@@ -573,3 +613,48 @@ def test_api_cave_tuples_core() -> None:
         weakref.proxy(_LORD_GOD_WE_HA_PAID_IN_FULL),
     )
 
+# ....................{ TESTS ~ lib                       }....................
+@skip_unless_module('numpy')
+def test_api_cave_numpy() -> None:
+    '''
+    Test all core simple types published by the :mod:`beartype.cave` submodule
+    against various NumPy objects if the third-party :mod:`numpy` package is
+    importable *or* reduce to a noop otherwise.
+    '''
+
+    # Import this submodule.
+    import numpy
+    from beartype import cave
+
+    # NumPy floating-point array prepopulated with an infamous rational series.
+    array_float = numpy.asarray((1, 3/2, 7/5, 17/12, 41/29, 99/70))
+
+    # NumPy integer array prepopulated with the GIF header in ASCII code.
+    array_int = numpy.asarray((47, 49, 46, 38, 39, 61))
+
+    # Test all container protocols satisfied by NumPy arrays against these
+    # specific arrays.
+    _assert_types_objects(
+        {
+            cave.ContainerType,
+            cave.SizedType,
+            cave.IterableType,
+        },
+        # NumPy floating-point array.
+        array_float,
+        # NumPy integer array.
+        array_int,
+    )
+
+    # Test all number protocols satisfied by NumPy numbers against items of
+    # these specific arrays.
+    _assert_types_objects(
+        {
+            cave.NumberType,
+            cave.NumberRealType,
+        },
+        # NumPy floating-point number.
+        array_float[0],
+        # NumPy integer.
+        array_int[0],
+    )

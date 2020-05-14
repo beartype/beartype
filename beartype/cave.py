@@ -893,39 +893,66 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ scalar                    }....................
+NumberType = _numbers.Number
+'''
+Type of all **numbers** (i.e., concrete instances of the abstract
+:class:`numbers.Number` base class).
+
+This type effectively matches *all* numbers regardless of implementation,
+including:
+
+* **Integers** (i.e., numbers expressible without fractional components),
+  including:
+  * **Builtin integers** (i.e., :class:`int` instances).
+  * **NumPy integers** (e.g., :class:`numpy.int_` instances), whose types are
+    all implicitly registered at :mod:`numpy` importation time as satisfying
+    the :class:`numbers.Integral` protocol.
+  * **SymPy integers** (e.g., :class:`sympy.core.numbers.Integer` instances),
+    whose type is implicitly registered at :mod:`sympy` importation time as
+    satisfying the class:`numbers.Integral` protocol.
+* **Rational numbers** (i.e., numbers expressible as the ratio of two
+  integers), including:
+  * **Builtin floating-point numbers** (i.e., :class:`float` instances).
+  * **NumPy floating-point numbers** (e.g., :class:`numpy.single` instances),
+    all of which are implicitly registered at :mod:`numpy` importation time as
+    :class:`numbers.Rational` subclasses.
+  * **Stdlib fractions** (i.e., :class:`fractions.Fraction` instances).
+  * **SymPy floating-point numbers** (e.g., :class:`sympy.core.numbers.Float`
+    instances), whose type implicitly registered at :mod:`sympy` importation
+    time as satisfying the class:`numbers.Real` protocol.
+  * **SymPy rational numbers** (e.g., :class:`sympy.core.numbers.Rational`
+    instances), whose type implicitly registered at :mod:`sympy` importation
+    time as satisfying the class:`numbers.Rational` protocol.
+* **Irrational numbers** (i.e., real numbers *not* expressible as the ratio of
+  two integers), including:
+  * **SymPy irrational numbers** (i.e., SymPy-specific symbolic objects whose
+    ``is_irrational`` assumption evaluates to ``True``).
+
+Caveats
+----------
+This type does *not* match:
+
+* **Stdlib decimals** (i.e., :class:`decimal.Decimal` instances), which support
+  both unrounded decimal (i.e., fixed-point arithmetic) and rounded
+  floating-point arithmetic. Despite being strictly rational, the
+  :class:`decimal.Decimal` class only subclasses the coarse-grained abstract
+  :class:`numbers.Number` base superclass rather than the fine-grained abstract
+  :class:`numbers.Rational` base subclass. So it goes.
+* **SymPy complex numbers,** which are "non-atomic" (i.e., defined as the
+  combination of two separate real and imaginary components rather than as one
+  unified complex number containing these components) and thus incommensurable
+  with all of the above "atomic" types.
+'''
+
+
 NumberRealType = _numbers.Real
 '''
 Type of all **real numbers** (i.e., concrete instances of the abstract
 :class:`numbers.Real` base class).
 
-This type matches:
-
-* **Integers** (i.e., numbers expressible without fractional components),
-  including:
-  * **Builtin integers** (i.e., :class:`int` instances).
-  * **NumPy integer datatypes** (e.g., :class:`numpy.int_` instances), all of
-    which are implicitly registered at :mod:`numpy` importation time as
-    :class:`numbers.Integral` subclasses.
-* **Rational numbers** (i.e., numbers expressible as the ratio of two
-  integers), including:
-  * **Builtin floating-point numbers** (i.e., :class:`float` instances).
-  * **NumPy floating-point datatypes** (e.g., :class:`numpy.single` instances),
-    all of which are implicitly registered at :mod:`numpy` importation time as
-    :class:`numbers.Rational` subclasses.
-  * **Stdlib fractions** (i.e., :class:`fractions.Fraction` instances).
-* **Irrational numbers** (i.e., real numbers *not* expressible as the ratio of
-  two integers), including:
-  * SymPy symbolic objects whose ``is_irrational`` assumption evaluates to
-    ``True``.
-
-Caveats
-----------
-This type does *not* match **stdlib decimals** (i.e., :class:`decimal.Decimal`
-instances), which support both unrounded decimal (i.e., fixed-point arithmetic)
-and rounded floating-point arithmetic. Despite being strictly rational, the
-:class:`decimal.Decimal` class only subclasses the coarse-grained abstract
-:class:`numbers.Number` base superclass rather than the fine-grained abstract
-:class:`numbers.Rational` base subclass. So it goes.
+This fine-grained type matches all types matched by the coarse-grained
+:class:`NumberType` type excluding complex numbers, whose imaginary components
+are (as the name implies) non-real.
 '''
 
 # ....................{ TYPES ~ stdlib : argparse         }....................
@@ -1182,25 +1209,13 @@ results. Rather, such variables should *always* be coerced into the standard
 '''
 
 
-#FIXME: Reduce this to simply:
-#    NumberType = numbers.Number
-#FIXME: Note in the docstring that this also matches all relevant NumPy types,
-#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
-#on first importation. Nice, eh?
-NumericTypes = (complex, NumberRealType)
-'''
-Tuple of all **builtin numeric types** (i.e., classes whose instances are
-scalar numbers), comprising integer, real number, and complex number types.
-'''
-
-
 #FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
 #has been fully defined below. At that point, refactor this to resemble:
 #    NumberOrBoolTypes = (NumberType,) + BoolTypes
 #FIXME: Note in the docstring that this also matches all relevant NumPy types,
 #as NumPy implicitly registers these types with the appropriate "numbers" ABCs
 #on first importation. Nice, eh?
-NumericlikeTypes = (bool,) + NumericTypes
+NumericlikeTypes = (NumberType, bool,)
 '''
 Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
 either scalar numbers or types trivially convertible into scalar numbers),
@@ -1409,7 +1424,7 @@ API.
 '''
 
 
-NumericOrIterableTypes = NumericTypes + (IterableType,)
+NumberOrIterableTypes = (NumberType, IterableType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Iterable`
@@ -1417,7 +1432,7 @@ API.
 '''
 
 
-NumericOrSequenceTypes = NumericTypes + (SequenceType,)
+NumberOrSequenceTypes = (NumberType, SequenceType,)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
@@ -1526,7 +1541,7 @@ well as the type of the ``None`` singleton.
 '''
 
 
-NumericOrSequenceOrNoneTypes = NumericOrSequenceTypes + NoneTypes
+NumberOrSequenceOrNoneTypes = NumberOrSequenceTypes + NoneTypes
 '''
 Tuple of all numeric types, all container base classes conforming to (but *not*
 necessarily subclassing) the canonical :class:`int`, :class:`float`, *or*
@@ -1566,7 +1581,7 @@ Tuple of both the integer type *and* that of the ``None`` singleton.
 '''
 
 
-NumericOrNoneTypes = NumericTypes + NoneTypes
+NumberOrNoneTypes = (NumberType, NoneType)
 '''
 Tuple of all numeric types *and* the type of the singleton ``None`` object.
 '''
