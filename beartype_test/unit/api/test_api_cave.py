@@ -16,9 +16,13 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import argparse, functools, re, sys, weakref
+from beartype_test.util.mark.pytest_skip import (
+    skip_if_python_version_less_than,
+    skip_unless_module,
+)
 from collections import deque
 from collections.abc import Iterable
-from decimal import Decimal
+# from decimal import Decimal
 from fractions import Fraction
 from enum import Enum
 
@@ -360,9 +364,6 @@ def test_api_cave_types_core() -> None:
     # Test "IteratorType".
     _assert_type_objects(cave.IteratorType, iter(_THE_SONG_OF_THE_DEAD))
 
-    # Test "CollectionType".
-    _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
-
     # Test "QueueType".
     _assert_type_objects(cave.QueueType, _RECESSIONAL)
 
@@ -439,6 +440,20 @@ def test_api_cave_types_core() -> None:
     _assert_type_objects(
         cave.RegexMatchType,
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
+
+
+@skip_if_python_version_less_than('3.6.0')
+def test_api_cave_types_core_python_3_6_0_or_newer() -> None:
+    '''
+    Test all core simple types published by the :mod:`beartype.cave` submodule
+    requiring the active Python interpreter version to be at least 3.6.0.
+    '''
+
+    # Import this submodule.
+    from beartype import cave
+
+    # Test "CollectionType".
+    _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
 
 # ....................{ TESTS ~ tuples                    }....................
 def test_api_cave_tuples_core() -> None:

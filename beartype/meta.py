@@ -61,7 +61,11 @@ Human-readable name of the license this package is licensed under.
 # ....................{ PYTHON ~ version                  }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this section *MUST* be synchronized with:
+# * Continuous integration test matrices, including:
+#   * The "jobs/tests/strategy/matrix/python-version" subkey of the
+#     ".github/workflows/pythonpackage.yml" file.
 # * Front-facing documentation (e.g., "README.rst", "doc/md/INSTALL.md").
+#
 # On bumping the minimum required version of Python, consider also documenting
 # the justification for doing so in the "Python Version" section of this
 # submodule's docstring above.
@@ -147,7 +151,7 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
     #     >>> import sys
     #     >>> sys.version
     #     '3.6.5 (default, Oct 28 2018, 19:51:39) \n[GCC 7.3.0]'
-    PYTHON_VERSION = '.'.join(
+    _PYTHON_VERSION = '.'.join(
         str(version_part) for version_part in _sys.version_info[:3])
 
     # Die ignominiously.
@@ -155,7 +159,7 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
         '{} requires at least Python {}, but '
         'the active interpreter only targets Python {}. '
         'We feel unbearable sadness for you.'.format(
-            NAME, PYTHON_VERSION_MIN, PYTHON_VERSION))
+            NAME, PYTHON_VERSION_MIN, _PYTHON_VERSION))
 
 # ....................{ METADATA ~ version                }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
