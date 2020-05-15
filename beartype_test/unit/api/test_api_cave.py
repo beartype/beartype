@@ -423,15 +423,34 @@ def test_api_cave_types_core() -> None:
         cave.EnumMemberType,
         _AsTheDeerBreaksAsTheSteerBreaksFromTheHerdWhereTheyGraze.THEN_THE_WOOD_FAILED)
 
-    # Test "NumberType" and "NumberRealType" against...
+    # Test "BoolType" against...
+    _assert_type_objects(
+        cave.BoolType,
+        # Falsehood.
+        False,
+        # Truth.
+        True,
+    )
+
+    # Test "NumberType", "NumberIntOrFloatType", and ""NumberIntType"
+    # against...
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberRealType,
+            cave.NumberIntOrFloatType,
+            cave.NumberIntType,
         },
-        # Builtin integer.
+        # Integer.
         0xCAFED00D,
-        # Builtin float.
+    )
+
+    # Test "NumberType" and "NumberIntOrFloatType" against...
+    _assert_types_objects(
+        {
+            cave.NumberType,
+            cave.NumberIntOrFloatType,
+        },
+        # Float.
         1.1851851851851851,
         # Stdlib fraction.
         Fraction(32, 27),
@@ -613,6 +632,17 @@ def test_api_cave_tuples_core() -> None:
         weakref.proxy(_LORD_GOD_WE_HA_PAID_IN_FULL),
     )
 
+    # Test "BoolOrNumberTypes" against...
+    _assert_tuple_objects(
+        cave.BoolOrNumberTypes,
+        # Boolean.
+        True,
+        # Integer.
+        0xCAFED00D,
+        # Float.
+        1.1851851851851851,
+    )
+
 # ....................{ TESTS ~ lib                       }....................
 @skip_unless_module('numpy')
 def test_api_cave_numpy() -> None:
@@ -625,6 +655,9 @@ def test_api_cave_numpy() -> None:
     # Import this submodule.
     import numpy
     from beartype import cave
+
+    # NumPy boolean array prepopulated with NumPy boolean false values.
+    array_bool = numpy.ones((1, 6))
 
     # NumPy floating-point array prepopulated with an infamous rational series.
     array_float = numpy.asarray((1, 3/2, 7/5, 17/12, 41/29, 99/70))
@@ -646,15 +679,31 @@ def test_api_cave_numpy() -> None:
         array_int,
     )
 
+    # Test all boolean protocols against items of this boolean arrays.
+    _assert_type_objects(
+        cave.BoolType,
+        # NumPy boolean.
+        array_bool[0],
+    )
+
     # Test all number protocols satisfied by NumPy numbers against items of
     # these specific arrays.
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberRealType,
+            cave.NumberIntOrFloatType,
+            cave.NumpyScalarType,
         },
         # NumPy floating-point number.
         array_float[0],
+    )
+    _assert_types_objects(
+        {
+            cave.NumberType,
+            cave.NumberIntOrFloatType,
+            cave.NumberIntType,
+            cave.NumpyScalarType,
+        },
         # NumPy integer.
         array_int[0],
     )

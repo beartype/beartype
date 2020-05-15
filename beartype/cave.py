@@ -89,6 +89,7 @@ from argparse import (
     _SubParsersAction,
     ArgumentParser as _ArgumentParser,
 )
+from beartype._cave.abc import _BoolType
 from collections import deque as _deque
 from collections.abc import (
     Container as _Container,
@@ -135,6 +136,10 @@ from types import (
     ModuleType as _ModuleType,
 )
 
+# See the "beartype.__init__" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ IMPORTS ~ conditional             }....................
 #FIXME: After dropping Python 3.5 support:
 #
 #* Unconditionally import these types with their brethren above.
@@ -155,9 +160,6 @@ except ImportError:
     _AsyncGeneratorType = None
     _Collection = None
     _CoroutineType = None
-
-# See the "beartype.__init__" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TYPES ~ unavailable               }....................
 # Unavailable types are defined *BEFORE* any subsequent types, as the latter
@@ -591,8 +593,8 @@ Iterables are containers that may be indirectly iterated over by calling the
 implemented by these containers, which return **iterators** (i.e., instances of
 the :class:`IteratorType` type), which directly support iteration.
 
-This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
-via structural subtyping.
+This type also matches **NumPy arrays** (i.e., instances of the concrete
+:class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
 ----------
@@ -634,8 +636,8 @@ Type of all **sized containers** (i.e., both concrete and structural instances
 of the abstract :class:`collections.abc.Sized` base class; containers defining
 the ``__len__()`` dunder method internally called by the :func:`len` builtin).
 
-This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
-via structural subtyping.
+This type also matches **NumPy arrays** (i.e., instances of the concrete
+:class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
 ----------
@@ -652,8 +654,8 @@ containers defining the ``__contains__()``, ``__iter__()``, and ``__len__()``
 dunder methods) if the active Python interpreter is at least version 3.6.0 *or*
 :class:`UnavailableType` otherwise.
 
-This type also matches the **NumPy array type** (i.e., :class:`numpy.ndarray`)
-via structural subtyping.
+This type also matches **NumPy arrays** (i.e., instances of the concrete
+:class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
 ----------
@@ -766,8 +768,8 @@ mutable sequence types (e.g., :class:`list`) and immutable sequence types
 (i.e., sequences that are anything but strings) are required, prefer the
 non-ambiguous :class:`SequenceMutableType` type instead.
 
-**This type does not match the NumPy array type (i.e.,
-:class:`numpy.ndarray`),** which satisfies most but *not* all of the
+**This type does not match NumPy arrays (i.e., instances of the concrete
+:class:`numpy.ndarray` class),** which satisfy most but *not* all of the
 :class:`collections.abc.Sequence` API. Specifically, NumPy arrays fail to
 define:
 
@@ -799,8 +801,8 @@ collections whose items are both efficiently accessible *and* modifiable with
 
 Caveats
 ----------
-**This type does not match the NumPy array type (i.e.,
-:class:`numpy.ndarray`),** which satisfies most but *not* all of the
+**This type does not match NumPy arrays (i.e., instances of the concrete
+:class:`numpy.ndarray` class),** which satisfy most but *not* all of the
 :class:`collections.abc.MutableSequence` API. Specifically, NumPy arrays fail
 to define:
 
@@ -893,6 +895,43 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ scalar                    }....................
+BoolType = _BoolType
+'''
+Type of all **booleans** (i.e., objects defining the ``__bool__()`` dunder
+method; objects reducible in boolean contexts like ``if`` conditionals to
+either ``True`` or ``False``).
+
+This type matches:
+
+* **Builtin booleans** (i.e., instances of the standard :class:`bool` class
+  implemented in low-level C).
+* **NumPy booleans** (i.e., instances of the :class:`numpy.bool_` class
+  implemented in low-level C and Fortran) if :mod:`numpy` is importable.
+
+Usage
+----------
+Non-standard boolean types like NumPy booleans are typically *not*
+interoperable with the standard standard :class:`bool` type. In particular, it
+is typically *not* the case, for any variable ``my_bool`` of non-standard
+boolean type and truthy value, that either ``my_bool is True`` or ``my_bool ==
+True`` yield the desired results. Rather, such variables should *always* be
+coerced into the standard :class:`bool` type before being compared -- either:
+
+* Implicitly (e.g., ``if my_bool: pass``).
+* Explicitly (e.g., ``if bool(my_bool): pass``).
+
+Caveats
+----------
+**There exists no abstract base class governing booleans in Python.** Although
+numerous Python Enhancement Proposals (PEPs) have been authored on the subject,
+all have been thoughtlessly rejected as of this writing. Instead, this type
+trivially implements an ad-hoc abstract base class (ABC) detecting objects
+satisfying the boolean protocol via structural subtyping. Although no actual
+real-world classes subclass this :mod:`beartype`-specific ABC, the detection
+implemented by this ABC suffices to match *all* boolean types. So it goes.
+'''
+
+# ....................{ TYPES ~ scalar : number           }....................
 NumberType = _numbers.Number
 '''
 Type of all **numbers** (i.e., concrete instances of the abstract
@@ -901,7 +940,7 @@ Type of all **numbers** (i.e., concrete instances of the abstract
 This type effectively matches *all* numbers regardless of implementation,
 including:
 
-* **Integers** (i.e., numbers expressible without fractional components),
+* **Integers** (i.e., real numbers expressible without fractional components),
   including:
   * **Builtin integers** (i.e., :class:`int` instances).
   * **NumPy integers** (e.g., :class:`numpy.int_` instances), whose types are
@@ -910,7 +949,7 @@ including:
   * **SymPy integers** (e.g., :class:`sympy.core.numbers.Integer` instances),
     whose type is implicitly registered at :mod:`sympy` importation time as
     satisfying the class:`numbers.Integral` protocol.
-* **Rational numbers** (i.e., numbers expressible as the ratio of two
+* **Rational numbers** (i.e., real numbers expressible as the ratio of two
   integers), including:
   * **Builtin floating-point numbers** (i.e., :class:`float` instances).
   * **NumPy floating-point numbers** (e.g., :class:`numpy.single` instances),
@@ -945,14 +984,50 @@ This type does *not* match:
 '''
 
 
-NumberRealType = _numbers.Real
+NumberRealType = NumberIntOrFloatType = _numbers.Real
 '''
 Type of all **real numbers** (i.e., concrete instances of the abstract
-:class:`numbers.Real` base class).
+:class:`numbers.Real` base class; numbers expressible as linear values on the
+real number line).
 
-This fine-grained type matches all types matched by the coarse-grained
-:class:`NumberType` type excluding complex numbers, whose imaginary components
-are (as the name implies) non-real.
+This type matches all numbers matched by :class:`NumberType` *except* complex
+numbers with non-zero imaginary components, which (as the name implies) are
+non-real.
+
+Equivalently, this type matches all integers (e.g., :class:`int`,
+:class:`numpy.int_`), floating-point numbers (e.g., :class:`float`,
+:class:`numpy.single`), rational numbers (e.g., :class:`fractions.Fraction`,
+:class:`sympy.core.numbers.Rational`), and irrational numbers. However,
+rational and irrational numbers are rarely used in comparison to integers and
+floating-point numbers. This type thus reduces to matching all integer and
+floating-point types in practice and is thus also accessible under the alias
+:class:`NumberIntOrFloatType` -- a less accurate but more readable name than
+:class:`NumberRealType`.
+
+See Also
+----------
+:class:`NumberType`
+    Further details.
+'''
+
+
+NumberIntType = NumberIntType = _numbers.Integral
+'''
+Type of all **integers** (i.e., concrete instances of the abstract
+:class:`numbers.Integral` base class; real numbers expressible without
+fractional components).
+
+This type matches all numbers matched by the :class:`NumberType` *except*
+complex numbers with non-zero imaginary components, rational numbers with
+denominators not equal to one, and irrational numbers.
+
+Equivalently, this type matches all integers (e.g., :class:`int`,
+:class:`numpy.int_`).
+
+See Also
+----------
+:class:`NumberType`
+    Further details.
 '''
 
 # ....................{ TYPES ~ stdlib : argparse         }....................
@@ -1004,16 +1079,18 @@ Type of all **regular expression match objects** (i.e., objects returned by the
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
 NumpyArrayType = UnavailableType
 '''
-Type of all **NumPy arrays** (i.e., instances of the :mod:`numpy.ndarray` type
-implemented in low-level C and Fortran, if :mod:`numpy` is importable *or*
-:class:`UnavailableType` otherwise (i.e., if :mod:`numpy` is unimportable).
+Type of all **NumPy arrays** (i.e., instances of the concrete
+:class:`numpy.ndarray` class implemented in low-level C and Fortran) if
+:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
+:mod:`numpy` is unimportable).
 '''
 
 
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
 NumpyScalarType = UnavailableType
 '''
-Superclass of all NumPy scalar subclasses (e.g., :class:`numpy.bool_`) if
+Type of all **NumPy scalars** (i.e., instances of the abstract
+:class:`numpy.generic` base class implemented in low-level C and Fortran) if
 :mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
 :mod:`numpy` is unimportable).
 '''
@@ -1188,45 +1265,20 @@ reference proxies.
 '''
 
 # ....................{ TUPLES ~ scalar                   }....................
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
-BoolTypes = (bool,)
+BoolOrNumberTypes = (BoolType, NumberType,)
 '''
-Tuple of all strictly boolean types, including both the standard :class:`bool`
-builtin *and* the non-standard NumPy-specific boolean type (when NumPy is
-importable in the active Python interpreter).
+Tuple of all **boolean** and **number types** (i.e., classes whose instances
+are either numbers or types trivially convertible into numbers).
 
-Caveats
-----------
-Non-standard boolean types are typically *not* interoperable with the standard
-standard :class:`bool` type. In particular, it is typically *not* the case, for
-any variable ``my_bool`` of non-standard boolean type and truthy value,
-that either ``my_bool is True`` or ``my_bool == True`` yield the desired
-results. Rather, such variables should *always* be coerced into the standard
-:class:`bool` type before being compared -- either:
-
-* Implicitly (e.g., ``if my_bool: pass``).
-* Explicitly (e.g., ``if bool(my_bool): pass``).
-'''
-
-
-#FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
-#has been fully defined below. At that point, refactor this to resemble:
-#    NumberOrBoolTypes = (NumberType,) + BoolTypes
-#FIXME: Note in the docstring that this also matches all relevant NumPy types,
-#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
-#on first importation. Nice, eh?
-NumericlikeTypes = (NumberType, bool,)
-'''
-Tuple of all **builtin numeric-like types** (i.e., classes whose instances are
-either scalar numbers or types trivially convertible into scalar numbers),
-comprising boolean, integer, real number, and complex number types.
+This tuple matches booleans, integers, rational numbers, irrational numbers,
+real numbers, and complex numbers.
 
 Booleans are trivially convertible into integers. While details differ by
 implementation, common implementations in lower-level languages (e.g., C, C++,
 Perl) typically implicitly convert:
 
-* ``False`` to ``0``.
-* ``True`` to ``1``.
+* ``False`` to ``0`` and vice versa.
+* ``True`` to ``1`` and vice versa.
 '''
 
 
@@ -1252,7 +1304,7 @@ Perl) typically implicitly convert:
 #FIXME: Note in the docstring that this also matches all relevant NumPy types,
 #as NumPy implicitly registers these types with the appropriate "numbers" ABCs
 #on first importation. Nice, eh?
-ScalarTypes = (str,) + NumericlikeTypes
+ScalarTypes = (str,) + BoolOrNumberTypes
 '''
 Tuple of all **builtin scalar types** (i.e., classes whose instances are
 single scalar primitives), comprising all boolean, numeric, and textual types.
@@ -1271,18 +1323,6 @@ regular expressions or losslessly convertible to such types).
 # below and initially default to "UnavailableTypes" for tuples of simple types.
 
 # ....................{ TUPLES ~ lib : numpy              }....................
-#FIXME: Excise this. The "ScalarTypes" tuple should now cover this fully.
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyDataTypes = UnavailableTypes
-'''
-Tuple of the **NumPy data type** (i.e., NumPy-specific numeric scalar type
-homogeneously constraining all elements of all NumPy arrays) and all scalar
-Python types transparently supported by NumPy as implicit data types (i.e.,
-:class:`bool`, :class:`complex`, :class:`float`, and :class:`int`) if
-:mod:`numpy` is importable *or* :data:`UnavailableTypes` otherwise.
-'''
-
-
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
 SequenceOrNumPyArrayTypes = (SequenceType,)
 '''
@@ -1379,7 +1419,6 @@ try:
     # Define NumPy-specific types.
     NumpyArrayType  =  _numpy.ndarray
     NumpyScalarType =  _numpy.generic
-    NumpyDataTypes  = (_numpy.dtype,) + NumericlikeTypes
 
     # Extend NumPy-agnostic types with NumPy-specific types.
     BoolTypes += (_numpy.bool_,)
@@ -1546,12 +1585,6 @@ NumberOrSequenceOrNoneTypes = NumberOrSequenceTypes + NoneTypes
 Tuple of all numeric types, all container base classes conforming to (but *not*
 necessarily subclassing) the canonical :class:`int`, :class:`float`, *or*
 :class:`_Sequence` APIs as well as the type of the singleton ``None`` object.
-'''
-
-
-NumpyDataOrNoneTypes = NumpyDataTypes + NoneTypes
-'''
-Tuple of all NumPy data types *and* the type of the ``None`` singleton.
 '''
 
 
