@@ -77,6 +77,12 @@ def _we_yearned_beyond_the_sky_line_where_the_strange_roads_go_down(): yield
 # Test user-defined class instance.
 _LORD_GOD_WE_HA_PAID_IN_FULL = _WeHaveFedOurSeaForAThousandYears()
 
+# Test user-defined Unicode string.
+_THE_PHANTOM_RICKSHAW = (
+    'More men are killed by overwork '
+    'than the importance of the world justifies.'
+)
+
 # ....................{ GLOBALS ~ generator               }....................
 # Test generator function return type.
 _CAME_THE_WHISPER_CAME_THE_VISION_CAME_THE_POWER_WITH_THE_NEED = (
@@ -643,6 +649,30 @@ def test_api_cave_tuples_core() -> None:
         1.1851851851851851,
     )
 
+    # Test "RegexTypes" and "StringTypes" against...
+    _assert_tuples_objects(
+        {
+            cave.StringTypes,
+            cave.RegexTypes,
+        },
+        # Builtin Unicode string.
+        _THE_PHANTOM_RICKSHAW
+    )
+
+    # Test "RegexTypes" against...
+    _assert_tuple_objects(
+        cave.RegexTypes,
+        # Compiled regular expression.
+        _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY,
+    )
+
+    # Test "VersionComparableTypes" against...
+    _assert_tuple_objects(
+        cave.VersionComparableTypes,
+        # Tuple-based version specifier.
+        (6, 9, 6),
+    )
+
 # ....................{ TESTS ~ lib                       }....................
 @skip_unless_module('numpy')
 def test_api_cave_numpy() -> None:
@@ -652,7 +682,7 @@ def test_api_cave_numpy() -> None:
     importable *or* reduce to a noop otherwise.
     '''
 
-    # Import this submodule.
+    # Defer heavyweight imports.
     import numpy
     from beartype import cave
 
@@ -665,6 +695,14 @@ def test_api_cave_numpy() -> None:
     # NumPy integer array prepopulated with the GIF header in ASCII code.
     array_int = numpy.asarray((47, 49, 46, 38, 39, 61))
 
+    # NumPy string array prepopulated with Rudyard Kipling, because Truth™.
+    array_str = numpy.asarray((
+        'I keep six honest serving-men:',
+        '(They taught me all I knew)',
+        'Their names are What and Where and When',
+        'And How and Why and Who.',
+    ))
+
     # Test all container protocols satisfied by NumPy arrays against these
     # specific arrays.
     _assert_types_objects(
@@ -673,10 +711,14 @@ def test_api_cave_numpy() -> None:
             cave.SizedType,
             cave.IterableType,
         },
+        # NumPy boolean array.
+        array_bool,
         # NumPy floating-point array.
         array_float,
         # NumPy integer array.
         array_int,
+        # NumPy string array.
+        array_str,
     )
 
     # Test all boolean protocols against items of this boolean arrays.
@@ -684,6 +726,16 @@ def test_api_cave_numpy() -> None:
         cave.BoolType,
         # NumPy boolean.
         array_bool[0],
+    )
+
+    # Test all string protocols against items of this string array.
+    _assert_tuples_objects(
+        {
+            cave.StringTypes,
+            cave.ScalarTypes,
+        },
+        # NumPy Unicode string.
+        array_str[0],
     )
 
     # Test all number protocols satisfied by NumPy numbers against items of
@@ -706,4 +758,46 @@ def test_api_cave_numpy() -> None:
         },
         # NumPy integer.
         array_int[0],
+    )
+
+
+
+@skip_unless_module('pkg_resources')
+def test_api_cave_setuptools() -> None:
+    '''
+    Test all core simple types published by the :mod:`beartype.cave` submodule
+    against various :mod:`setuptools` objects if that third-party package is
+    importable *or* reduce to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    #
+    # Note that the "packaging" package is available as both a top-level
+    # "packaging" package *AND* as the "pkg_resources.extern.packaging"
+    # subpackage implicitly called by various "pkg_resources" functions
+    # (e.g., pkg_resources.parse_version()). As the latter is generally more
+    # stable than the former, we ignore "packaging" entirely and simply call
+    # "pkg_resources" functions directly instead.
+    import pkg_resources
+    from beartype import cave
+
+    # Test "SetuptoolsDistributionOrNoneTypes" against...
+    _assert_tuple_objects(
+        cave.SetuptoolsDistributionOrNoneTypes,
+        # Setuptools distribution guaranteed to exist by definition.
+        pkg_resources.get_distribution('packaging'),
+        # None singleton.
+        None,
+    )
+
+    # Test "VersionComparableTypes" and "SetuptoolsVersionTypes" against...
+    _assert_tuples_objects(
+        {
+            cave.VersionComparableTypes,
+            cave.SetuptoolsVersionTypes,
+        },
+        # PEP 440-compliant version object.
+        pkg_resources.parse_version('6.9.6a'),
+        # PEP 440-noncompliant version object.
+        pkg_resources.parse_version('6.9.6t'),
     )

@@ -9,6 +9,33 @@
 This submodule declares non-standard ABCs subclassed by  implementing .
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Refactor this private submodule into a new public "beartype.caver"
+#submodule, so-named as it enables users to externally create new ad-hoc
+#protocols implementing structural subtyping resembling those predefined by
+#"beartype.cave". To do so:
+#
+#* In the "beartype.caver" submodule:
+#  * Define a new make_type_structural() function with signature resembling:
+#    def make_type_structural(name: str, method_names: Iterable) -> type:
+#  * Implement this function to dynamically create a new type with the passed
+#    classname defining:
+#    * Abstract methods with the passed method names.
+#    * A __subclasshook__() dunder method checking the passed class for
+#      concrete methods with these names.
+#    To do so, note that abstract methods *CANNOT* be dynamically
+#    monkey-patched in after class creation but *MUST* instead be statically
+#    defined at class creation time (due to metaclass shenanigans).
+#    Fortunately, doing so is trivial; simply use the three-argument form of
+#    the type() constructor, as demonstrated by this StackOverflow answer:
+#    https://stackoverflow.com/a/14219244/2809027
+#* Replace the current manual definition of "_BoolType" below with an in-place
+#  call to that method from the "beartype.cave" submodule: e.g.,
+#    BoolType = _make_type_structural(
+#        name='BoolType', method_names=('__bool__',))
+#
+#Dis goin' be good.
+
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta, abstractmethod
 

@@ -780,9 +780,9 @@ define:
 Most callables accepting sequences *never* invoke these edge-case methods and
 should thus be typed to accept NumPy arrays as well. To do so, prefer either:
 
-* The :class:`SequenceOrNumPyArrayTypes` tuple of types matching both sequences
+* The :class:`SequenceOrNumpyArrayTypes` tuple of types matching both sequences
   and NumPy arrays.
-* The :class:`SequenceMutableOrNumPyArrayTypes` tuple of types matching both
+* The :class:`SequenceMutableOrNumpyArrayTypes` tuple of types matching both
   mutable sequences and NumPy arrays.
 
 See Also
@@ -818,7 +818,7 @@ to define:
 
 Most callables accepting mutable sequences *never* invoke these edge-case
 methods and should thus be typed to accept NumPy arrays as well. To do so,
-prefer the :class:`SequenceMutableOrNumPyArrayTypes` tuple of types matching
+prefer the :class:`SequenceMutableOrNumpyArrayTypes` tuple of types matching
 both mutable sequences and NumPy arrays.
 
 See Also
@@ -1055,7 +1055,8 @@ parsers parsing either top-level commands *or* subcommands of those commands.
 # provide this type, it does so in a private and hence non-portable manner.
 RegexCompiledType = type(_re.compile(r''))
 '''
-Type of all compiled regular expressions.
+Type of all **compiled regular expressions** (i.e., objects created and
+returned by the stdlib :func:`re.compile` function).
 '''
 
 
@@ -1230,6 +1231,9 @@ Tuple of all callable types as well as the string type.
 '''
 
 
+#FIXME: Define a new "CallableClassType" by copying the "BoolType" approach
+#except for the __call__() dunder method instead.
+#FIXME: Replace "ClassType" below by "CallableClassType".
 DecoratorTypes = CallableTypes + (ClassType,)
 '''
 Tuple of all **decorator types** (i.e., both callable classes *and* the type of
@@ -1282,40 +1286,53 @@ Perl) typically implicitly convert:
 '''
 
 
-#FIXME: Defer the definition of this type until *AFTER* the "BoolTypes" tuple
-#has been fully defined below. At that point, refactor this to resemble:
-#    ScalarTypes = (str,) + NumberOrBoolTypes
-#FIXME: Actually, we should incorporate *ALL* NumPy scalar types. So:
-#    # If NumPy is available:
-#    ScalarTypes = (str, NumpyScalarType) + NumberTypes
-#
-#    # If NumPy is unavailable:
-#    ScalarTypes = (str,) + NumberTypes
-#To automate this, just default this to:
-#    ScalarTypes = (str,) + NumberTypes
-#...and then append that by "(NumpyScalarType,)" if NumPy is importable. Yeah!
-#FIXME: Oh, wait. That's almost perfect, but omits "bool". O.K., then:
-#    # Default to this.
-#    ScalarTypes = (bool, str,) + NumberTypes
-#
-#    # ...appended by this if NumPy is importable.
-#    ScalarTypes += (NumpyScalarType,)
-#Since "NumpyScalarType" covers "_numpy.bool_", that should suffice us up.
-#FIXME: Note in the docstring that this also matches all relevant NumPy types,
-#as NumPy implicitly registers these types with the appropriate "numbers" ABCs
-#on first importation. Nice, eh?
-ScalarTypes = (str,) + BoolOrNumberTypes
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
+StringTypes = (str,)
 '''
-Tuple of all **builtin scalar types** (i.e., classes whose instances are
-single scalar primitives), comprising all boolean, numeric, and textual types.
+Tuple of all **unencoded Unicode string types** (i.e., classes whose instances
+are sequences of abstract Unicode codepoints that have yet to be encoded into
+physical encoded bytes in encoded byte strings).
+
+This tuple matches:
+
+* **Builtin Unicode strings** (i.e., :class:`str` instances).
+* **NumPy Unicode strings** (i.e., :class:`numpy.string_` instances) if
+  :mod:`numpy` is importable.
+
+Caveats
+----------
+This tuple does *not* match **encoded byte string types** (i.e., classes whose
+instances are sequences of physical encoded bytes, including the builtin
+:class:`bytestring` type), as byte strings require foreknowledge of the
+encoding previously used to encode those bytes. Since unencoded Unicode string
+types require no such foreknowlede, these two categories of strings are
+incommensurable.
 '''
 
-# ....................{ TUPLES ~ stdlib                   }....................
-RegexTypes = (str, RegexCompiledType)
+# ....................{ TUPLES ~ version                  }....................
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
+VersionComparableTypes = (tuple,)
 '''
-Tuple of all **regular expression-like types** (i.e., types either defining
-regular expressions or losslessly convertible to such types).
+Tuple of all **comparable version types** (i.e., types suitable for use both as
+parameters to callables accepting arbitrary version specifiers *and* as
+operands to numeric operators comparing such specifiers) if
+:mod:`pkg_resources` is importable *or* ``(tuple,)`` otherwise.
+
+This is the proper subset of types listed by the :data:`VersionTypes` tuple
+that are directly comparable, thus excluding the :class:`str` type.
+``.``-delimited version specifier strings are only indirectly comparable after
+conversion to a comparable version type.
+
+Caveats
+----------
+Note that all types listed by this tuple are *only* safely comparable with
+versions of the same type. In particular, the types listed by the
+:class:`SetuptoolsVersionTypes` tuple do *not* necessarily support direct
+comparison with either the :class:`tuple` *or* `class:`str` version types;
+ironically, those types supported both under older but *not* newer versions of
+:mod:`setuptools`. This is why we can't have good things.
 '''
+
 
 # ....................{ TUPLES ~ lib                      }....................
 # Types conditionally dependent upon the importability of third-party
@@ -1323,8 +1340,8 @@ regular expressions or losslessly convertible to such types).
 # below and initially default to "UnavailableTypes" for tuples of simple types.
 
 # ....................{ TUPLES ~ lib : numpy              }....................
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
-SequenceOrNumPyArrayTypes = (SequenceType,)
+# Conditionally expanded by the "TUPLES ~ init" subsection below.
+SequenceOrNumpyArrayTypes = (SequenceType,)
 '''
 Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
 and structural subclasses of the abstract :class:`collections.abc.Sequence`
@@ -1346,7 +1363,7 @@ See Also
 
 
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceMutableOrNumPyArrayTypes = (SequenceMutableType,)
+SequenceMutableOrNumpyArrayTypes = (SequenceMutableType,)
 '''
 Tuple of all **mutable sequence types** (i.e., both concrete and structural
 subclasses of the abstract :class:`collections.abc.Sequence` base class;
@@ -1367,30 +1384,36 @@ See Also
 '''
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
-# Defined by the "TUPLES ~ init" subsection below.
-DistributionSetuptoolsOrNoneTypes = UnavailableTypes
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
+SetuptoolsDistributionOrNoneTypes = UnavailableTypes
 '''
-Tuple of the type of all :mod:`setuptools`-specific package metadata objects
-as well as the ``None`` singleton if :mod:`pkg_resources` is importable *or*
-:data:`UnavailableTypes` otherwise.
+Tuple of the type of all **:mod:`setuptools`-specific package metadata
+objects** (i.e., instances of the third-party
+:class:`pkg_resources.Distribution` class bundled
+with :mod:`setuptools`) as well as the ``None`` singleton if
+:mod:`pkg_resources` is importable *or* :data:`UnavailableTypes` otherwise
+(i.e., if :mod:`pkg_resources` is unimportable).
 '''
 
 
-# Defined by the "TUPLES ~ init" subsection below.
-VersionSetuptoolsTypes = UnavailableTypes
+# Conditionally redefined by the "TUPLES ~ init" subsection below.
+SetuptoolsVersionTypes = UnavailableTypes
 '''
-Tuple of all :mod:`setuptools`-specific version types (i.e., types instantiated
-and returned by the stable :func:`pkg_resources.parse_version` function bundled
-with :mod:`setuptools`) if :mod:`pkg_resources` is importable *or*
-:data:`UnavailableTypes` otherwise.
+Tuple of all **:mod:`setuptools`-specific version types** (i.e., types
+instantiated and returned by both the third-party
+:func:`packaging.version.parse` *and* :func:`pkg_resources.parse_version`
+functions bundled with :mod:`setuptools`) if :mod:`pkg_resources` is importable
+*or* :data:`UnavailableTypes` otherwise (i.e., if :mod:`pkg_resources` is
+unimportable).
 
-Specifically, this tuple contains the following types if :mod:`pkg_resources`
-is importable:
+This tuple matches these types if :mod:`pkg_resources` is importable:
 
-* :class:`pkg_resources.packaging.version.Version`, a `PEP 440`_-compliant
-  version type.
-* :class:`pkg_resources.packaging.version.LegacyVersion`, a `PEP
-  440`_-noncompliant version type.
+* **Strict `PEP 440`_-compliant versions** (i.e., instances of the
+  :class:`packaging.version.Version` or
+  :class:`pkg_resources.packaging.version.Version` classes).
+* **Less strict `PEP 440`_-noncompliant versions** (i.e., instances of the
+  :class:`packaging.version.LegacyVersion` or
+  :class:`pkg_resources.packaging.version.LegacyVersion` classes).
 
 .. _PEP 440:
     https://www.python.org/dev/peps/pep-0440
@@ -1417,13 +1440,13 @@ try:
     import numpy as _numpy
 
     # Define NumPy-specific types.
-    NumpyArrayType  =  _numpy.ndarray
-    NumpyScalarType =  _numpy.generic
+    NumpyArrayType  = _numpy.ndarray
+    NumpyScalarType = _numpy.generic
 
     # Extend NumPy-agnostic types with NumPy-specific types.
-    BoolTypes += (_numpy.bool_,)
-    SequenceOrNumPyArrayTypes        += (NumpyArrayType,)
-    SequenceMutableOrNumPyArrayTypes += (NumpyArrayType,)
+    StringTypes += (_numpy.string_,)
+    SequenceOrNumpyArrayTypes        += (NumpyArrayType,)
+    SequenceMutableOrNumpyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:
     pass
@@ -1434,11 +1457,12 @@ try:
     import pkg_resources as _pkg_resources
 
     # Define setuptools-specific types.
-    DistributionSetuptoolsOrNoneTypes = (_pkg_resources.Distribution, NoneType)
-    VersionSetuptoolsTypes = (
+    SetuptoolsDistributionOrNoneTypes = (_pkg_resources.Distribution, NoneType)
+    SetuptoolsVersionTypes = (
         _pkg_resources.packaging.version.Version,
         _pkg_resources.packaging.version.LegacyVersion,
     )
+    VersionComparableTypes += SetuptoolsVersionTypes
 # Else, setuptools is unimportable. While this should typically *NEVER* be the
 # case, edge cases gonna edge case.
 except:
@@ -1478,30 +1502,34 @@ Tuple of all numeric types *and* all container base classes conforming to (but
 API.
 '''
 
+# ....................{ TUPLES ~ post-init : scalar       }....................
+ScalarTypes = BoolOrNumberTypes + StringTypes
+'''
+Tuple of all **scalar types** (i.e., classes whose instances are atomic scalar
+primitives).
+
+This tuple matches all:
+
+* **Boolean types** (i.e., types satisfying the :class:`BoolType` protocol).
+* **Numeric types** (i.e., types satisfying the :class:`NumberType` protocol).
+* **Textual types** (i.e., types contained in the :class:`StringTypes` tuple).
+'''
+
+# ....................{ TUPLES ~ stdlib                   }....................
+RegexTypes = (RegexCompiledType,) + StringTypes
+'''
+Tuple of all **regular expression-like types** (i.e., types either defining
+regular expressions or losslessly convertible to such types).
+
+This tuple matches:
+
+* The **compiled regular expression type** (i.e., type of all objects created
+  and returned by the stdlib :func:`re.compile` function).
+* All **textual types** (i.e., types contained in the :class:`StringTypes`
+  tuple).
+'''
+
 # ....................{ TUPLES ~ post-init : version      }....................
-VersionComparableTypes = (tuple,) + VersionSetuptoolsTypes
-'''
-Tuple of all **comparable version types** (i.e., types suitable for use both as
-parameters to callables accepting arbitrary version specifiers *and* as
-operands to numeric operators comparing such specifiers) if
-:mod:`pkg_resources` is importable *or* ``(tuple,)`` otherwise.
-
-This is the proper subset of types listed by the :data:`VersionTypes` tuple
-that are directly comparable, thus excluding the :class:`str` type.
-``.``-delimited version specifier strings are only indirectly comparable after
-conversion to a comparable version type.
-
-Caveats
-----------
-Note that all types listed by this tuple are *only* safely comparable with
-versions of the same type. In particular, the types listed by the
-:class:`VersionSetuptoolsTypes` tuple do *not* necessarily support direct
-comparison with either the :class:`tuple` *or* `class:`str` version types;
-ironically, those types supported both under older but *not* newer versions of
-:mod:`setuptools`. This is why we can't have good things.
-'''
-
-
 VersionTypes = (str,) + VersionComparableTypes
 '''
 Tuple of all **version types** (i.e., types suitable for use as parameters to
@@ -1514,9 +1542,9 @@ This includes:
   (e.g., ``2.4.14.2.1.356.23``).
 * :class:`tuple`, specifying versions as one or more positive integers (e.g.,
   ``(2, 4, 14, 2, 1, 356, 23)``),
-* :class:`VersionSetuptoolsTypes`, whose :mod:`setuptools`-specific types
+* :class:`SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types
   specify versions as instance variables convertible into both of the prior
-  formats (e.g., ``VersionSetuptoolsTypes[0]('2.4.14.2.1.356.23')``).
+  formats (e.g., ``SetuptoolsVersionTypes[0]('2.4.14.2.1.356.23')``).
 '''
 
 # ....................{ TUPLES ~ none                     }....................
