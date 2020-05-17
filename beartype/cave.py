@@ -61,6 +61,36 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 #FIXME: Revise all "README.rst" examples in accordance with recent changes to
 #this submodule. Let's preserve worky, please.
 
+#FIXME: Replace all "OrNoneTypes" tuples defined below with this sane approach:
+#
+#* Define a new "beartype._cave.mapping.py" submodule, in which we:
+#  * Define a new "_NoneTypeOr" defaultdict implementation. As we recall the
+#    standard "defaultdict" requires lambda expressions rather than full-blown
+#    callables and is thus largely useful. In any case, we need a defaultdict
+#    implementation that, when indexed with a missing key "type_or_tuple",
+#    internally creates, caches, and returns a new tuple produced by
+#    concatenating the "NoneType" onto the passed type or tuple of types. In
+#    untested pseudocode, this might resemble:
+#
+#    def __getvalue__(self, type_or_tuple) -> object:
+#        if key in self:
+#            return self.get(type_or_tuple)  # probably recursive, so fixup please!
+#
+#        type_or_tuple_or_none = None
+#        if isinstance(type_or_tuple_or_none, type):
+#            type_or_tuple_or_none = (type_or_tuple, NoneType)
+#        elif isinstance(type_or_tuple_or_none, tuple):
+#            type_or_tuple_or_none = type_or_tuple + NoneTypes
+#        else:
+#            raise BeartypeException(
+#                '"NoneTypeOr" index {!r} neither type nor tuple of types.')
+#
+#        self.set(key, type_or_tuple_or_none)
+#        return type_or_tuple_or_none
+#* Import that class below as "NoneTypeOr = _NoneTypeOr" and document below.
+#* Remove all of the tuples defined below appended by "OrNoneTypes".
+#* Unit test extensively.
+
 #FIXME: Add types for all remaining useful "collections.abc" interfaces,
 #including:
 #* "Reversible".
@@ -929,6 +959,11 @@ trivially implements an ad-hoc abstract base class (ABC) detecting objects
 satisfying the boolean protocol via structural subtyping. Although no actual
 real-world classes subclass this :mod:`beartype`-specific ABC, the detection
 implemented by this ABC suffices to match *all* boolean types. So it goes.
+
+See Also
+----------
+:class:`ContainerType`
+    Further details on structural subtyping.
 '''
 
 # ....................{ TYPES ~ scalar : number           }....................
@@ -984,7 +1019,7 @@ This type does *not* match:
 '''
 
 
-NumberRealType = NumberIntOrFloatType = _numbers.Real
+NumberRealType = IntOrFloatType = _numbers.Real
 '''
 Type of all **real numbers** (i.e., concrete instances of the abstract
 :class:`numbers.Real` base class; numbers expressible as linear values on the
@@ -1001,7 +1036,7 @@ Equivalently, this type matches all integers (e.g., :class:`int`,
 rational and irrational numbers are rarely used in comparison to integers and
 floating-point numbers. This type thus reduces to matching all integer and
 floating-point types in practice and is thus also accessible under the alias
-:class:`NumberIntOrFloatType` -- a less accurate but more readable name than
+:class:`IntOrFloatType` -- a less accurate but more readable name than
 :class:`NumberRealType`.
 
 See Also
@@ -1011,7 +1046,7 @@ See Also
 '''
 
 
-NumberIntType = NumberIntType = _numbers.Integral
+IntType = IntType = _numbers.Integral
 '''
 Type of all **integers** (i.e., concrete instances of the abstract
 :class:`numbers.Integral` base class; real numbers expressible without
@@ -1286,8 +1321,12 @@ Perl) typically implicitly convert:
 '''
 
 
+#FIXME: Actually, this should be reducible to a single "StrType" via
+#structural subtyping on the __str__() dunder method -- but we'll need to do a
+#bit of research to validate that, of course.
+
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-StringTypes = (str,)
+StrTypes = (str,)
 '''
 Tuple of all **unencoded Unicode string types** (i.e., classes whose instances
 are sequences of abstract Unicode codepoints that have yet to be encoded into
@@ -1444,7 +1483,7 @@ try:
     NumpyScalarType = _numpy.generic
 
     # Extend NumPy-agnostic types with NumPy-specific types.
-    StringTypes += (_numpy.string_,)
+    StrTypes += (_numpy.string_,)
     SequenceOrNumpyArrayTypes        += (NumpyArrayType,)
     SequenceMutableOrNumpyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
@@ -1503,7 +1542,7 @@ API.
 '''
 
 # ....................{ TUPLES ~ post-init : scalar       }....................
-ScalarTypes = BoolOrNumberTypes + StringTypes
+ScalarTypes = BoolOrNumberTypes + StrTypes
 '''
 Tuple of all **scalar types** (i.e., classes whose instances are atomic scalar
 primitives).
@@ -1512,11 +1551,11 @@ This tuple matches all:
 
 * **Boolean types** (i.e., types satisfying the :class:`BoolType` protocol).
 * **Numeric types** (i.e., types satisfying the :class:`NumberType` protocol).
-* **Textual types** (i.e., types contained in the :class:`StringTypes` tuple).
+* **Textual types** (i.e., types contained in the :class:`StrTypes` tuple).
 '''
 
 # ....................{ TUPLES ~ stdlib                   }....................
-RegexTypes = (RegexCompiledType,) + StringTypes
+RegexTypes = (RegexCompiledType,) + StrTypes
 '''
 Tuple of all **regular expression-like types** (i.e., types either defining
 regular expressions or losslessly convertible to such types).
@@ -1525,7 +1564,7 @@ This tuple matches:
 
 * The **compiled regular expression type** (i.e., type of all objects created
   and returned by the stdlib :func:`re.compile` function).
-* All **textual types** (i.e., types contained in the :class:`StringTypes`
+* All **textual types** (i.e., types contained in the :class:`StrTypes`
   tuple).
 '''
 

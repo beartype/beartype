@@ -438,23 +438,23 @@ def test_api_cave_types_core() -> None:
         True,
     )
 
-    # Test "NumberType", "NumberIntOrFloatType", and ""NumberIntType"
+    # Test "NumberType", "IntOrFloatType", and ""IntType"
     # against...
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberIntOrFloatType,
-            cave.NumberIntType,
+            cave.IntOrFloatType,
+            cave.IntType,
         },
         # Integer.
         0xCAFED00D,
     )
 
-    # Test "NumberType" and "NumberIntOrFloatType" against...
+    # Test "NumberType" and "IntOrFloatType" against...
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberIntOrFloatType,
+            cave.IntOrFloatType,
         },
         # Float.
         1.1851851851851851,
@@ -649,10 +649,10 @@ def test_api_cave_tuples_core() -> None:
         1.1851851851851851,
     )
 
-    # Test "RegexTypes" and "StringTypes" against...
+    # Test "RegexTypes" and "StrTypes" against...
     _assert_tuples_objects(
         {
-            cave.StringTypes,
+            cave.StrTypes,
             cave.RegexTypes,
         },
         # Builtin Unicode string.
@@ -731,7 +731,7 @@ def test_api_cave_numpy() -> None:
     # Test all string protocols against items of this string array.
     _assert_tuples_objects(
         {
-            cave.StringTypes,
+            cave.StrTypes,
             cave.ScalarTypes,
         },
         # NumPy Unicode string.
@@ -743,7 +743,7 @@ def test_api_cave_numpy() -> None:
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberIntOrFloatType,
+            cave.IntOrFloatType,
             cave.NumpyScalarType,
         },
         # NumPy floating-point number.
@@ -752,8 +752,8 @@ def test_api_cave_numpy() -> None:
     _assert_types_objects(
         {
             cave.NumberType,
-            cave.NumberIntOrFloatType,
-            cave.NumberIntType,
+            cave.IntOrFloatType,
+            cave.IntType,
             cave.NumpyScalarType,
         },
         # NumPy integer.
