@@ -61,36 +61,6 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 #FIXME: Revise all "README.rst" examples in accordance with recent changes to
 #this submodule. Let's preserve worky, please.
 
-#FIXME: Replace all "OrNoneTypes" tuples defined below with this sane approach:
-#
-#* Define a new "beartype._cave.mapping.py" submodule, in which we:
-#  * Define a new "_NoneTypeOr" defaultdict implementation. As we recall the
-#    standard "defaultdict" requires lambda expressions rather than full-blown
-#    callables and is thus largely useful. In any case, we need a defaultdict
-#    implementation that, when indexed with a missing key "type_or_tuple",
-#    internally creates, caches, and returns a new tuple produced by
-#    concatenating the "NoneType" onto the passed type or tuple of types. In
-#    untested pseudocode, this might resemble:
-#
-#    def __getvalue__(self, type_or_tuple) -> object:
-#        if key in self:
-#            return self.get(type_or_tuple)  # probably recursive, so fixup please!
-#
-#        type_or_tuple_or_none = None
-#        if isinstance(type_or_tuple_or_none, type):
-#            type_or_tuple_or_none = (type_or_tuple, NoneType)
-#        elif isinstance(type_or_tuple_or_none, tuple):
-#            type_or_tuple_or_none = type_or_tuple + NoneTypes
-#        else:
-#            raise BeartypeException(
-#                '"NoneTypeOr" index {!r} neither type nor tuple of types.')
-#
-#        self.set(key, type_or_tuple_or_none)
-#        return type_or_tuple_or_none
-#* Import that class below as "NoneTypeOr = _NoneTypeOr" and document below.
-#* Remove all of the tuples defined below appended by "OrNoneTypes".
-#* Unit test extensively.
-
 #FIXME: Add types for all remaining useful "collections.abc" interfaces,
 #including:
 #* "Reversible".
@@ -120,6 +90,7 @@ from argparse import (
     ArgumentParser as _ArgumentParser,
 )
 from beartype._cave.abc import _BoolType
+from beartype._cave.mapping import _NoneTypeOr
 from collections import deque as _deque
 from collections.abc import (
     Container as _Container,
@@ -966,6 +937,32 @@ See Also
     Further details on structural subtyping.
 '''
 
+
+StrType = str    # Well, isn't that special.
+'''
+Type of all **unencoded Unicode strings** (i.e., instances of the builtin
+:class:`str` class; sequences of abstract Unicode codepoints that have yet to
+be encoded into physical encoded bytes in encoded byte strings).
+
+This type matches:
+
+* **Builtin Unicode strings** (i.e., :class:`str` instances).
+* **NumPy Unicode strings** (i.e., :class:`numpy.str_` instances) if
+  :mod:`numpy` is importable. Whereas most NumPy scalar types do *not* subclass
+  builtin scalar types, the :class:`numpy.str_` class *does* subclass the
+  builtin :class:`str` type. NumPy Unicode strings are thus usable wherever
+  builtin Unicode strings are usable.
+
+Caveats
+----------
+This tuple does *not* match **encoded byte string types** (i.e., classes whose
+instances are sequences of physical encoded bytes, including the builtin
+:class:`bytestring` type), as byte strings require foreknowledge of the
+encoding previously used to encode those bytes. Since unencoded Unicode string
+types require no such foreknowlede, these two categories of strings are
+incommensurable.
+'''
+
 # ....................{ TYPES ~ scalar : number           }....................
 NumberType = _numbers.Number
 '''
@@ -1164,6 +1161,82 @@ Specifically, for any callable parameter or return type annotated with:
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
+# ....................{ TUPLES ~ core                     }....................
+#FIXME: Extensively unit test us up, please.
+NoneTypeOr = _NoneTypeOr
+'''
+**:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary
+types or tuples of types to the same types or tuples of types concatenated with
+the type of the ``None`` singleton).
+
+This factory efficiently generates and caches tuples of types containing
+:class:``NoneType`` from arbitrary user-specified types and tuples of types. To
+do so, simply index this factory with any desired type *or* tuple of types; the
+corresponding value will then be another tuple containing :class:``NoneType``
+and that type *or* those types.
+
+Motivation
+----------
+This factory is commonly used to type-hint **optional callable parameters**
+(i.e., parameters defaulting to ``None`` when *not* explicitly passed by the
+caller). Although such parameters may also be type-hinted with a tuple manually
+containing :class:``NoneType``, doing so inefficiently recreates these tuples
+for each optional callable parameter across the entire codebase.
+
+This factory avoids such inefficient recreation. Instead, when indexed with any
+arbitrary key:
+
+* If that key has already been successfully accessed on this factory, this
+  factory returns the existing value (i.e., tuple containing
+  :class:``NoneType`` and that key if that key is a type *or* the items of that
+  key if that key is a tuple) previously mapped and cached to that key.
+* Else, if that key is:
+
+  * A type, this factory:
+
+    #. Creates a new tuple containing that type and :class:``NoneType``.
+    #. Associates that key with that tuple.
+    #. Returns that tuple.
+
+  * A tuple of types, this factory:
+
+    #. Creates a new tuple containing these types and :class:``NoneType``.
+    #. Associates that key with that tuple.
+    #. Returns that tuple.
+
+  * Any other object, raises a human-readable
+    :class:`beartype.roar.BeartypeCaveNoneTypeOrKeyException` exception.
+
+This factory is analogous to the `PEP 484`_-compliant :class:`typing.Optional`
+type despite otherwise *not* complying with `PEP 484`_.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+
+Examples
+----------
+Function accepting an optional parameter with neither :mod:`beartype.cave` nor
+:mod:`typing`:
+
+    >>> def to_autumn(season_of_mists: (str, type(None)) = None) -> str
+    ...     return season_of_mists if isinstance(season_of_mists, str) else (
+    ...         'Then in a wailful choir the small gnats mourn')
+
+Function accepting an optional parameter with :mod:`beartype.cave`:
+
+    >>> from beartype.cave import NoneTypeOr
+    >>> def to_autumn(season_of_mists: NoneTypeOr[str] = None) -> str
+    ...     return season_of_mists if isinstance(season_of_mists, str) else (
+    ...         'Then in a wailful choir the small gnats mourn')
+
+Function accepting an optional parameter with :mod:`typing`:
+
+    >>> from typing import Optional
+    >>> def to_autumn(season_of_mists: Optional[str] = None) -> str
+    ...     return season_of_mists if isinstance(season_of_mists, str) else (
+    ...         'Or sinking as the light wind lives or dies;')
+'''
+
 # ....................{ TUPLES ~ py                       }....................
 ModuleOrStrTypes = (str, ModuleType)
 '''
@@ -1320,34 +1393,6 @@ Perl) typically implicitly convert:
 * ``True`` to ``1`` and vice versa.
 '''
 
-
-#FIXME: Actually, this should be reducible to a single "StrType" via
-#structural subtyping on the __str__() dunder method -- but we'll need to do a
-#bit of research to validate that, of course.
-
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
-StrTypes = (str,)
-'''
-Tuple of all **unencoded Unicode string types** (i.e., classes whose instances
-are sequences of abstract Unicode codepoints that have yet to be encoded into
-physical encoded bytes in encoded byte strings).
-
-This tuple matches:
-
-* **Builtin Unicode strings** (i.e., :class:`str` instances).
-* **NumPy Unicode strings** (i.e., :class:`numpy.string_` instances) if
-  :mod:`numpy` is importable.
-
-Caveats
-----------
-This tuple does *not* match **encoded byte string types** (i.e., classes whose
-instances are sequences of physical encoded bytes, including the builtin
-:class:`bytestring` type), as byte strings require foreknowledge of the
-encoding previously used to encode those bytes. Since unencoded Unicode string
-types require no such foreknowlede, these two categories of strings are
-incommensurable.
-'''
-
 # ....................{ TUPLES ~ version                  }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
 VersionComparableTypes = (tuple,)
@@ -1424,18 +1469,6 @@ See Also
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-SetuptoolsDistributionOrNoneTypes = UnavailableTypes
-'''
-Tuple of the type of all **:mod:`setuptools`-specific package metadata
-objects** (i.e., instances of the third-party
-:class:`pkg_resources.Distribution` class bundled
-with :mod:`setuptools`) as well as the ``None`` singleton if
-:mod:`pkg_resources` is importable *or* :data:`UnavailableTypes` otherwise
-(i.e., if :mod:`pkg_resources` is unimportable).
-'''
-
-
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
 SetuptoolsVersionTypes = UnavailableTypes
 '''
 Tuple of all **:mod:`setuptools`-specific version types** (i.e., types
@@ -1483,7 +1516,6 @@ try:
     NumpyScalarType = _numpy.generic
 
     # Extend NumPy-agnostic types with NumPy-specific types.
-    StrTypes += (_numpy.string_,)
     SequenceOrNumpyArrayTypes        += (NumpyArrayType,)
     SequenceMutableOrNumpyArrayTypes += (NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
@@ -1496,7 +1528,6 @@ try:
     import pkg_resources as _pkg_resources
 
     # Define setuptools-specific types.
-    SetuptoolsDistributionOrNoneTypes = (_pkg_resources.Distribution, NoneType)
     SetuptoolsVersionTypes = (
         _pkg_resources.packaging.version.Version,
         _pkg_resources.packaging.version.LegacyVersion,
@@ -1542,7 +1573,7 @@ API.
 '''
 
 # ....................{ TUPLES ~ post-init : scalar       }....................
-ScalarTypes = BoolOrNumberTypes + StrTypes
+ScalarTypes = BoolOrNumberTypes + (StrType,)
 '''
 Tuple of all **scalar types** (i.e., classes whose instances are atomic scalar
 primitives).
@@ -1555,7 +1586,7 @@ This tuple matches all:
 '''
 
 # ....................{ TUPLES ~ stdlib                   }....................
-RegexTypes = (RegexCompiledType,) + StrTypes
+RegexTypes = (RegexCompiledType, StrType)
 '''
 Tuple of all **regular expression-like types** (i.e., types either defining
 regular expressions or losslessly convertible to such types).
@@ -1584,110 +1615,4 @@ This includes:
 * :class:`SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types
   specify versions as instance variables convertible into both of the prior
   formats (e.g., ``SetuptoolsVersionTypes[0]('2.4.14.2.1.356.23')``).
-'''
-
-# ....................{ TUPLES ~ none                     }....................
-# Tuples of types containing at least the type of the singleton "None" object.
-
-NoneTypes = (NoneType,)
-'''
-Tuple of only the type of the ``None`` singleton.
-
-This tuple is principally intended for use in efficiently constructing other
-tuples of types containing this type.
-'''
-
-
-CallableOrNoneTypes = CallableTypes + NoneTypes
-'''
-Tuple of all callable classes *and* the type of the ``None`` singleton.
-'''
-
-
-ClassOrNoneTypes = (ClassType, NoneType)
-'''
-Tuple of the type of all types *and* that of the ``None`` singleton.
-'''
-
-
-RegexMatchOrNoneTypes = (RegexMatchType, NoneType)
-'''
-Tuple of both the regular expression match object type *and* the type of the
-``None`` singleton.
-'''
-
-
-TestableOrNoneTypes = TestableTypes + NoneTypes
-'''
-Tuple of all testable types *and* the type of the ``None`` singleton.
-'''
-
-# ....................{ TUPLES ~ none : container         }....................
-IterableOrNoneTypes = (IterableType, NoneType)
-'''
-Tuple of all container base classes conforming to (but _not_ necessarily
-subclassing) the canonical :class:`_Iterable` API as well as the type of the
-``None`` singleton.
-'''
-
-
-MappingOrNoneTypes = (MappingType, NoneType)
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`_Mapping` API as well as the type of the
-``None`` singleton.
-'''
-
-
-MappingOrSequenceOrNoneTypes = MappingOrSequenceTypes + NoneTypes
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`_Mapping` *or* :class:`_Sequence` APIs as
-well as the type of the ``None`` singleton.
-'''
-
-
-NumberOrSequenceOrNoneTypes = NumberOrSequenceTypes + NoneTypes
-'''
-Tuple of all numeric types, all container base classes conforming to (but *not*
-necessarily subclassing) the canonical :class:`int`, :class:`float`, *or*
-:class:`_Sequence` APIs as well as the type of the singleton ``None`` object.
-'''
-
-
-SequenceOrNoneTypes = (SequenceType, NoneType)
-'''
-Tuple of all container base classes conforming to (but *not* necessarily
-subclassing) the canonical :class:`_Sequence` API as well as the type of the
-``None`` singleton.
-'''
-
-
-SetOrNoneTypes = (SetType, NoneType)
-'''
-Tuple of both the set type *and* the type of the ``None`` singleton.
-'''
-
-# ....................{ TUPLES ~ none : scalar            }....................
-BoolOrNoneTypes = (bool, NoneType)
-'''
-Tuple of both the boolean type *and* that of the ``None`` singleton.
-'''
-
-
-IntOrNoneTypes = (int, NoneType)
-'''
-Tuple of both the integer type *and* that of the ``None`` singleton.
-'''
-
-
-NumberOrNoneTypes = (NumberType, NoneType)
-'''
-Tuple of all numeric types *and* the type of the singleton ``None`` object.
-'''
-
-
-StrOrNoneTypes = (str, NoneType)
-'''
-Tuple of both the string type *and* the type of the ``None`` singleton.
 '''

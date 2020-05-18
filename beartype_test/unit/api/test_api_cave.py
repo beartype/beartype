@@ -429,14 +429,11 @@ def test_api_cave_types_core() -> None:
         cave.EnumMemberType,
         _AsTheDeerBreaksAsTheSteerBreaksFromTheHerdWhereTheyGraze.THEN_THE_WOOD_FAILED)
 
-    # Test "BoolType" against...
-    _assert_type_objects(
-        cave.BoolType,
-        # Falsehood.
-        False,
-        # Truth.
-        True,
-    )
+    # Test "BoolType."
+    _assert_type_objects(cave.BoolType, False, True)
+
+    # Test "StrType".
+    _assert_type_objects(cave.StrType, _THE_PHANTOM_RICKSHAW)
 
     # Test "NumberType", "IntOrFloatType", and ""IntType"
     # against...
@@ -649,21 +646,13 @@ def test_api_cave_tuples_core() -> None:
         1.1851851851851851,
     )
 
-    # Test "RegexTypes" and "StrTypes" against...
-    _assert_tuples_objects(
-        {
-            cave.StrTypes,
-            cave.RegexTypes,
-        },
-        # Builtin Unicode string.
-        _THE_PHANTOM_RICKSHAW
-    )
-
     # Test "RegexTypes" against...
     _assert_tuple_objects(
         cave.RegexTypes,
         # Compiled regular expression.
         _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY,
+        # Builtin Unicode string.
+        _THE_PHANTOM_RICKSHAW,
     )
 
     # Test "VersionComparableTypes" against...
@@ -687,7 +676,7 @@ def test_api_cave_numpy() -> None:
     from beartype import cave
 
     # NumPy boolean array prepopulated with NumPy boolean false values.
-    array_bool = numpy.ones((1, 6))
+    array_bool = numpy.ones((6,))
 
     # NumPy floating-point array prepopulated with an infamous rational series.
     array_float = numpy.asarray((1, 3/2, 7/5, 17/12, 41/29, 99/70))
@@ -722,17 +711,20 @@ def test_api_cave_numpy() -> None:
     )
 
     # Test all boolean protocols against items of this boolean arrays.
-    _assert_type_objects(
-        cave.BoolType,
+    _assert_types_objects(
+        {
+            cave.BoolType,
+            cave.NumpyScalarType,
+        },
         # NumPy boolean.
         array_bool[0],
     )
 
     # Test all string protocols against items of this string array.
-    _assert_tuples_objects(
+    _assert_types_objects(
         {
-            cave.StrTypes,
-            cave.ScalarTypes,
+            cave.StrType,
+            cave.NumpyScalarType,
         },
         # NumPy Unicode string.
         array_str[0],
@@ -760,6 +752,18 @@ def test_api_cave_numpy() -> None:
         array_int[0],
     )
 
+    # Assert all NumPy scalar types to be general-purpose scalar types.
+    _assert_tuple_objects(
+        cave.ScalarTypes,
+        # NumPy boolean.
+        array_bool[0],
+        # NumPy Unicode string.
+        array_str[0],
+        # NumPy floating-point number.
+        array_float[0],
+        # NumPy integer.
+        array_int[0],
+    )
 
 
 @skip_unless_module('pkg_resources')
@@ -780,15 +784,6 @@ def test_api_cave_setuptools() -> None:
     # "pkg_resources" functions directly instead.
     import pkg_resources
     from beartype import cave
-
-    # Test "SetuptoolsDistributionOrNoneTypes" against...
-    _assert_tuple_objects(
-        cave.SetuptoolsDistributionOrNoneTypes,
-        # Setuptools distribution guaranteed to exist by definition.
-        pkg_resources.get_distribution('packaging'),
-        # None singleton.
-        None,
-    )
 
     # Test "VersionComparableTypes" and "SetuptoolsVersionTypes" against...
     _assert_tuples_objects(

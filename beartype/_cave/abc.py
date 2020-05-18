@@ -29,6 +29,9 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 #    Fortunately, doing so is trivial; simply use the three-argument form of
 #    the type() constructor, as demonstrated by this StackOverflow answer:
 #    https://stackoverflow.com/a/14219244/2809027
+#  * *WAIT!* There's no need to call the type() constructor diroctly. Instead,
+#    define a new make_type() function in this new submodule copied from the
+#    betse.util.type.classes.define_class() function (but renamed, obviously).
 #* Replace the current manual definition of "_BoolType" below with an in-place
 #  call to that method from the "beartype.cave" submodule: e.g.,
 #    BoolType = _make_type_structural(
@@ -80,7 +83,7 @@ def _check_methods(C: type, *methods: str) -> (bool, type(NotImplemented)):
 
     return True
 
-# ....................{ TYPES ~ scalar                    }....................
+# ....................{ CLASSES                           }....................
 # This class is documented in the "beartype.cave" for readability.
 class _BoolType(metaclass=ABCMeta):
     '''

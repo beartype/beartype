@@ -43,6 +43,32 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
 
     pass
 
+# ....................{ EXCEPTIONS ~ cave                 }....................
+class BeartypeCaveException(BeartypeException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype cave exceptions.**
+
+    Instances of subclasses of this exception are raised at usage time from
+    various types published by the :func:`beartype.cave` submodule.
+    '''
+
+    pass
+
+
+class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveException):
+    '''
+    **Beartype cave ``None`` tuple factory exception.**
+
+    This exception is raised when indexing the :func:`beartype.cave.NoneTypeOr`
+    dictionary with a key that is neither a:
+
+    * **Type** (i.e., :class:`beartype.cave.ClassType` instance).
+    * **Tuple of types** (i.e., :class:`tuple` whose items are all
+      :class:`beartype.cave.ClassType` instances).
+    '''
+
+    pass
+
 # ....................{ EXCEPTIONS ~ decor                }....................
 class BeartypeDecorException(BeartypeException, metaclass=_ABCMeta):
     '''
