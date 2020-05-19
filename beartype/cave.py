@@ -90,7 +90,7 @@ from argparse import (
     ArgumentParser as _ArgumentParser,
 )
 from beartype._cave.abc import _BoolType
-from beartype._cave.mapping import _NoneTypeOr
+from beartype._cave.mapping import _NoneTypeOrType
 from collections import deque as _deque
 from collections.abc import (
     Container as _Container,
@@ -924,12 +924,12 @@ coerced into the standard :class:`bool` type before being compared -- either:
 Caveats
 ----------
 **There exists no abstract base class governing booleans in Python.** Although
-numerous Python Enhancement Proposals (PEPs) have been authored on the subject,
-all have been thoughtlessly rejected as of this writing. Instead, this type
-trivially implements an ad-hoc abstract base class (ABC) detecting objects
-satisfying the boolean protocol via structural subtyping. Although no actual
-real-world classes subclass this :mod:`beartype`-specific ABC, the detection
-implemented by this ABC suffices to match *all* boolean types. So it goes.
+various Python Enhancement Proposals (PEPs) were authored on the subject, all
+were rejected as of this writing. Instead, this type trivially implements an
+ad-hoc abstract base class (ABC) detecting objects satisfying the boolean
+protocol via structural subtyping. Although no actual real-world classes
+subclass this :mod:`beartype`-specific ABC, the detection implemented by this
+ABC suffices to match *all* boolean types. So it goes.
 
 See Also
 ----------
@@ -955,12 +955,35 @@ This type matches:
 
 Caveats
 ----------
-This tuple does *not* match **encoded byte string types** (i.e., classes whose
-instances are sequences of physical encoded bytes, including the builtin
-:class:`bytestring` type), as byte strings require foreknowledge of the
-encoding previously used to encode those bytes. Since unencoded Unicode string
-types require no such foreknowlede, these two categories of strings are
-incommensurable.
+This type does *not* match **encoded byte strings** (i.e., sequences of
+physical encoded bytes, including the builtin :class:`bytestring` type), which
+require foreknowledge of the encoding previously used to encode those bytes.
+Unencoded Unicode strings require no such foreknowledge and are thus
+incompatible with encoded byte strings at the API level.
+
+This type only matches **builtin Unicode strings** (i.e., :class:`str`
+instances) and instances of subtypes of that type (e.g., :class:`numpy.str_`,
+the NumPy Unicode string type). Whereas the comparable :class:`BoolType`
+matches arbitrary objects satisfying the boolean protocol (i.e., ``__bool__()``
+dunder method) via structural subtyping, this type does *not* match arbitrary
+objects satisfying the string protocol via structural subtyping -- because
+there is no string protocol. While Python's data model does define a
+``__str__()`` dunder method called to implicitly convert arbitrary objects into
+strings, that method is called infrequently. As exhibited by the infamously
+rejected `PEP 3140`_ proposal, the :meth:`list.__str__` implementation
+stringifies list items by erroneously calling the unrelated ``__repr__()``
+method rather than the expected ``__str__()`` method on those items. Moreover,
+``__str__()`` fails to cover common string operations such as string
+concatenation and repetition. Covering those operations would require a new
+abstract base class (ABC) matching arbitrary objects satisfying the
+:class:`Sequence` protocol as well as ``__str__()`` via structural subtyping;
+while trivial, that ABC would then ambiguously match all builtin sequence types
+(e.g., :class:`list`, :class:`tuple`) as string types, which they clearly are
+not. In short, matching only :class:`str` is the *only* unambiguous means of
+matching Unicode string types.
+
+.. _PEP 3140:
+   https://www.python.org/dev/peps/pep-3140
 '''
 
 # ....................{ TYPES ~ scalar : number           }....................
@@ -1162,8 +1185,7 @@ Specifically, for any callable parameter or return type annotated with:
 '''
 
 # ....................{ TUPLES ~ core                     }....................
-#FIXME: Extensively unit test us up, please.
-NoneTypeOr = _NoneTypeOr
+NoneTypeOr = _NoneTypeOrType()
 '''
 **:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary
 types or tuples of types to the same types or tuples of types concatenated with
@@ -1219,26 +1241,26 @@ Function accepting an optional parameter with neither :mod:`beartype.cave` nor
 :mod:`typing`:
 
     >>> def to_autumn(season_of_mists: (str, type(None)) = None) -> str
-    ...     return season_of_mists if isinstance(season_of_mists, str) else (
-    ...         'Then in a wailful choir the small gnats mourn')
+    ...     return season_of_mists if season_of_mists is not None else (
+    ...         'While barred clouds bloom the soft-dying day,')
 
 Function accepting an optional parameter with :mod:`beartype.cave`:
 
     >>> from beartype.cave import NoneTypeOr
     >>> def to_autumn(season_of_mists: NoneTypeOr[str] = None) -> str
-    ...     return season_of_mists if isinstance(season_of_mists, str) else (
+    ...     return season_of_mists if season_of_mists is not None else (
     ...         'Then in a wailful choir the small gnats mourn')
 
 Function accepting an optional parameter with :mod:`typing`:
 
     >>> from typing import Optional
     >>> def to_autumn(season_of_mists: Optional[str] = None) -> str
-    ...     return season_of_mists if isinstance(season_of_mists, str) else (
+    ...     return season_of_mists if season_of_mists is not None else (
     ...         'Or sinking as the light wind lives or dies;')
 '''
 
 # ....................{ TUPLES ~ py                       }....................
-ModuleOrStrTypes = (str, ModuleType)
+ModuleOrStrTypes = (ModuleType, StrType)
 '''
 Tuple of both the module *and* string type.
 '''
@@ -1333,7 +1355,7 @@ and method descriptors).
 '''
 
 
-CallableOrStrTypes = CallableTypes + (str,)
+CallableOrStrTypes = CallableTypes + (StrType,)
 '''
 Tuple of all callable types as well as the string type.
 '''
@@ -1342,6 +1364,7 @@ Tuple of all callable types as well as the string type.
 #FIXME: Define a new "CallableClassType" by copying the "BoolType" approach
 #except for the __call__() dunder method instead.
 #FIXME: Replace "ClassType" below by "CallableClassType".
+#FIXME: Add the "CallableClassType" type to the "CallableTypes" tuple as well.
 DecoratorTypes = CallableTypes + (ClassType,)
 '''
 Tuple of all **decorator types** (i.e., both callable classes *and* the type of
@@ -1416,7 +1439,6 @@ comparison with either the :class:`tuple` *or* `class:`str` version types;
 ironically, those types supported both under older but *not* newer versions of
 :mod:`setuptools`. This is why we can't have good things.
 '''
-
 
 # ....................{ TUPLES ~ lib                      }....................
 # Types conditionally dependent upon the importability of third-party
@@ -1600,16 +1622,16 @@ This tuple matches:
 '''
 
 # ....................{ TUPLES ~ post-init : version      }....................
-VersionTypes = (str,) + VersionComparableTypes
+VersionTypes = (StrType,) + VersionComparableTypes
 '''
 Tuple of all **version types** (i.e., types suitable for use as parameters to
 callables accepting arbitrary version specifiers) if :mod:`pkg_resources` is
-importable *or* ``(str, tuple,)`` otherwise.
+importable *or* ``(StrType, tuple,)`` otherwise.
 
 This includes:
 
-* :class:`str`, specifying versions in ``.``-delimited positive integer format
-  (e.g., ``2.4.14.2.1.356.23``).
+* :class:`StrType`, specifying versions in ``.``-delimited positive integer
+  format (e.g., ``2.4.14.2.1.356.23``).
 * :class:`tuple`, specifying versions as one or more positive integers (e.g.,
   ``(2, 4, 14, 2, 1, 356, 23)``),
 * :class:`SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types

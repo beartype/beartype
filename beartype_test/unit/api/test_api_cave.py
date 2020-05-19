@@ -15,7 +15,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import argparse, functools, re, sys, weakref
+import argparse, functools, pytest, re, sys, weakref
 from beartype_test.util.mark.pytest_skip import (
     skip_if_pypy,
     skip_if_python_version_less_than,
@@ -228,17 +228,16 @@ def _assert_tuple_objects(types: tuple, *objects: object) -> None:
     for obj in objects:
         assert isinstance(obj, types)
 
-# ....................{ TESTS ~ types                     }....................
-def test_api_cave_types_core() -> None:
+# ....................{ TESTS ~ type                      }....................
+def test_api_cave_type_core() -> None:
     '''
     Test all **core simple types** (i.e., types unconditionally published for
     *all* supported Python versions regardless of the importability of optional
     third-party dependencies) published by the :mod:`beartype.cave` submodule.
     '''
 
-    # Import this submodule. For each core simple type published by this
-    # submodule type, assert below that:
-    #
+    # Defer heavyweight imports. For each simple type published by the beartype
+    # cave, assert below that:
     # * This type is a simple type.
     # * An object expected to be of this type is of this type.
     from beartype import cave
@@ -484,9 +483,10 @@ def test_api_cave_types_core() -> None:
         cave.RegexMatchType,
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
 
-# ....................{ TESTS ~ types : skip              }....................
+
+# ....................{ TESTS ~ type : skip               }....................
 @skip_if_pypy()
-def test_api_cave_types_core_nonpypy() -> None:
+def test_api_cave_type_core_nonpypy() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
     requiring the active Python interpreter to *not* be PyPy where this is the
@@ -504,7 +504,7 @@ def test_api_cave_types_core_nonpypy() -> None:
 
 
 @skip_if_python_version_less_than('3.6.0')
-def test_api_cave_types_core_python_3_6_0_or_newer() -> None:
+def test_api_cave_type_core_python_3_6_0_or_newer() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
     requiring the active Python interpreter version to be at least 3.6.0 where
@@ -517,8 +517,8 @@ def test_api_cave_types_core_python_3_6_0_or_newer() -> None:
     # Test "CollectionType".
     _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
 
-# ....................{ TESTS ~ tuples                    }....................
-def test_api_cave_tuples_core() -> None:
+# ....................{ TESTS ~ tuple                     }....................
+def test_api_cave_tuple_core() -> None:
     '''
     Test all **core tuple types** (i.e., tuples of types unconditionally
     published for *all* supported Python versions regardless of the
@@ -526,9 +526,8 @@ def test_api_cave_tuples_core() -> None:
     :mod:`beartype.cave` submodule.
     '''
 
-    # Import this submodule. For each core tuple type published by this
-    # submodule type, assert below that:
-    #
+    # Defer heavyweight imports. For each tuple type published by the beartype
+    # cave, assert below that:
     # * This tuple contains only simple types.
     # * One or more objects expected to be of one or more types in this tuple
     #   are of these types.
@@ -662,9 +661,61 @@ def test_api_cave_tuples_core() -> None:
         (6, 9, 6),
     )
 
+
+def test_api_cave_tuple_nonetypeor() -> None:
+    '''
+    Test the **core :class:`beartype.cave.NoneType` tuple factory** (i.e., the
+    :class:`beartype.cave.NoneTypeOr` mutable mapping) published by the
+    :mod:`beartype.cave` submodule, which is sufficiently distinct from all
+    other attributes defined by that submodule to warrant distinct unit tests.
+    '''
+
+    # Defer heavyweight imports.
+    # from beartype import cave
+    from beartype.cave import (
+        AnyType, CallableTypes, MappingMutableType, NoneType, NoneTypeOr)
+    from beartype.roar import BeartypeCaveNoneTypeOrKeyException
+
+    # Assert this factory to be a mutable mapping.
+    assert isinstance(NoneTypeOr, MappingMutableType)
+
+    # Assert this factory to be initially empty.
+    assert not NoneTypeOr
+
+    # Assert this factory to *NOT* be indexable by arbitrary objects that are
+    # neither types nor tuples of types.
+    with pytest.raises(BeartypeCaveNoneTypeOrKeyException):
+        NoneTypeOr['If you can dream--and not make dreams your master;']
+    with pytest.raises(BeartypeCaveNoneTypeOrKeyException):
+        NoneTypeOr[('If you can think--and not make thoughts your aim;',)]
+
+    # Assert that indexing this factory with "NoneType" creates, caches, and
+    # returns a tuple containing only "NoneType".
+    NoneTypes = NoneTypeOr[NoneType]
+    assert NoneTypes == (NoneType,)
+
+    # Assert that indexing this factory with "NoneType" again returns the same
+    # tuple implicitly created and cached by the prior indexation.
+    assert NoneTypeOr[NoneType] is NoneTypes
+
+    # Assert that indexing this factory with any type *EXCEPT* "NoneType"
+    # creates, caches, and returns a new tuple containing that type followed by
+    # "NoneType".
+    AnyOrNoneTypes = (AnyType, NoneType,)
+    assert NoneTypeOr[AnyType] == AnyOrNoneTypes
+
+    # Assert that indexing this factory with a tuple already containing
+    # "NoneType" returns the same tuple unmodified.
+    assert NoneTypeOr[AnyOrNoneTypes] == AnyOrNoneTypes
+
+    # Assert that indexing this factory with a tuple *NOT* already containing
+    # "NoneType" creates, caches, and returns a new tuple containing the types
+    # contained in the original tuple followed by "NoneType".
+    assert NoneTypeOr[CallableTypes] == CallableTypes + (NoneType,)
+
 # ....................{ TESTS ~ lib                       }....................
 @skip_unless_module('numpy')
-def test_api_cave_numpy() -> None:
+def test_api_cave_lib_numpy() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
     against various NumPy objects if the third-party :mod:`numpy` package is
@@ -767,7 +818,7 @@ def test_api_cave_numpy() -> None:
 
 
 @skip_unless_module('pkg_resources')
-def test_api_cave_setuptools() -> None:
+def test_api_cave_lib_setuptools() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
     against various :mod:`setuptools` objects if that third-party package is

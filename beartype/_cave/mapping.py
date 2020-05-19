@@ -48,8 +48,13 @@ Tuple of only the type of the ``None`` singleton.
 
 # ....................{ CLASSES                           }....................
 # This class is documented in the "beartype.cave" for readability.
-class _NoneTypeOr(dict):
+class _NoneTypeOrType(dict):
     '''
+    **:class:``NoneType`` tuple factory type** (i.e., :class:`dict` subclass,
+    instances of which are dictionaries mapping from arbitrary types or tuples
+    of types to the same types or tuples of types concatenated with the type of
+    the ``None`` singleton).
+
     See Also
     ----------
     :class:`beartype.cave.NoneTypeOr`
@@ -57,7 +62,7 @@ class _NoneTypeOr(dict):
         :mod:`beartype`-specific types.
     '''
 
-    # ..................{ SLOTS                             }..................
+    # ..................{ DUNDERS                           }..................
     def __missing__(self, type_or_types: (type, tuple)) -> tuple:
         '''
         Dunder method explicitly called by the superclass

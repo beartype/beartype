@@ -91,17 +91,21 @@ Let's type-check like greased lightning:
    # Import generic types for use with @beartype.
    from beartype.cave import (
        AnyType,
+       BoolType,
        FunctionTypes,
        CallableTypes,
        GeneratorType,
-       IntOrNoneTypes,
-       IterableTypes,
+       IntOrFloatType,
+       IntType,
+       IterableType,
        IteratorType,
        NoneType,
-       NumericTypes,
+       NoneTypeOr,
+       NumberType,
        RegexTypes,
        ScalarTypes,
-       SequenceTypes,
+       SequenceType,
+       StrType,
        VersionTypes,
    )
 
@@ -112,37 +116,53 @@ Let's type-check like greased lightning:
    @beartype
    def bare_necessities(
        # Annotate builtin types as is, delimited by a colon (":" character).
-       param1_must_be_of_type: str,
+       param1_must_be_of_builtin_type: str,
 
        # Annotate user-defined classes as is, too.
-       param2_must_be_of_type: MyClass,
+       param2_must_be_of_user_type: MyClass,
 
-       # Annotate fully-qualified classnames dynamically resolved at call time
-       # (referred to as "forward references") as "."-delimited strings.
-       param3_must_be_of_type: 'my_package.my_module.MyClass',
+       # Annotate generic types predefined by the beartype cave.
+       param3_must_be_of_generic_type: NumberType,
 
-       # Annotate unions of types as tuples. In PEP 484, this is equivalent to:
-       # param4_may_be_any_of_several_types: typing.Union[dict, MyClass, None,]
-       param4_may_be_any_of_several_types: (dict, MyClass, NoneType,),
+       # Annotate forward references dynamically resolved (and cached) at first
+       # call time as fully-qualified "."-delimited classnames.
+       param4_must_be_of_forward_type: 'my_package.my_module.MyClass',
 
-       # Annotate unions of types as tuples predefined by the beartype cave.
-       param5_may_be_any_of_several_types: SequenceTypes,
+       # Annotate unions of types as tuples. In PEP 484, this is:
+       # param5_may_be_any_of_several_types: typing.Union[dict, MyClass, int,],
+       param5_may_be_any_of_several_types: (dict, MyClass, int,),
 
-       # Annotate unions of types as tuples containing both types and
-       # fully-qualified classnames.
-       param6_may_be_any_of_several_types: (
-           list, 'my_package.my_module.MyOtherClass', NoneType,),
+       # Annotate generic unions of types predefined by the beartype cave.
+       param6_may_be_any_of_several_generic_types: CallableTypes,
+
+       # Annotate forward references in unions of types, too.
+       param7_may_be_any_of_several_forward_types: (
+           IterableType, 'my_package.my_module.MyOtherClass', NoneType,),
 
        # Annotate unions of types as tuples concatenated together.
-       param7_may_be_any_of_several_types: (str, int,) + IterableTypes,
+       param8_may_be_any_of_several_concatenated_types: (
+           IteratorType,) + ScalarTypes,
+
+       # Annotate optional types by indexing "NoneTypeOr" with those types. In
+       # PEP 484, this is:
+       # param9_must_be_of_type_if_passed: typing.Optional[float] = None,
+       param9_must_be_of_type_if_passed: NoneTypeOr[float] = None,
+
+       # Annotate optional unions of types by indexing "NoneTypeOr" with tuples
+       # of those types. In PEP 484, this is:
+       # param10_may_be_of_several_types_if_passed: typing.Optional[float, int] = None,
+       param10_may_be_of_several_types_if_passed: NoneTypeOr[(float, int)] = None,
 
        # Annotate variadic positional arguments as above, too.
-       *args: VersionTypes + (NoneType, 'my_package.my_module.MyVersionType',)
-   # Annotate return types as above, delimited by an arrow ("->" substring).
-   ) -> (
-       NumericTypes + (str, 'my_package.my_module.MyOtherClass', bool)):
+       *args: VersionTypes + (
+           IntOrFloatType, 'my_package.my_module.MyVersionType',),
+
+       # Annotate keyword-only arguments as above, too.
+       paramN_must_be_passed_by_keyword_only: SequenceType,
+   # Annotate return types as above, delimited by an arrow ("->" string).
+   ) -> (IntType, 'my_package.my_module.MyOtherClass', BoolType):
        return 0xDEADBEEF
-   
+
 
    # Decorate generators as above but returning a generator type.
    @beartype
@@ -179,8 +199,7 @@ Let's type-check like greased lightning:
        # Decorate property setter methods as above.
        @bare_gettermethod.setter
        @beartype
-       def bare_settermethod(
-           self, bad: IntOrNoneTypes = 0xBAAAAAAD) -> NoneType:
+       def bare_settermethod(self, bad: IntType = 0xBAAAAAAD) -> NoneType:
            self._scalar = bad if bad else 0xBADDCAFE
 
 Usage
