@@ -323,11 +323,11 @@ in a strictly typed manner, *just 'cause*:
 .. code-block:: python
 
    from beartype import beartype
-   from beartype.cave import GeneratorType, IterableTypes, NoneType
+   from beartype.cave import GeneratorType, IterableType, NoneType
 
    class MaximsOfBaloo(object):
        @beartype
-       def __init__(self, sayings: IterableTypes): 
+       def __init__(self, sayings: IterableType): 
            self.sayings = sayings
 
    @beartype
@@ -336,7 +336,7 @@ in a strictly typed manner, *just 'cause*:
            yield saying
 
 For genericity, the ``MaximsOfBaloo`` class initializer accepts *any* generic
-iterable (via the ``beartype.cave.IterableTypes`` tuple listing all valid
+iterable (via the ``beartype.cave.IterableType`` tuple listing all valid
 iterable types) rather than an overly specific ``list`` or ``tuple`` type. Your
 users may thank you later.
 
@@ -371,17 +371,185 @@ Good generator. Let's call it again with bad types:
    ...     'Oppress not the cubs of the stranger,',
    ...     '     but hail them as Sister and Brother,',
    ... ]): print(maxim.splitlines()[-1])
-   File "<ipython-input-10-7763b15e5591>", line 30, in <module>
-     '     but hail them as Sister and Brother,',
-   File "<string>", line 12, in __inform_baloo_beartyped__
+   Traceback (most recent call last):
+     File "<ipython-input-10-7763b15e5591>", line 30, in <module>
+       '     but hail them as Sister and Brother,',
+     File "<string>", line 12, in __inform_baloo_beartyped__
    beartype.roar.BeartypeCallTypeParamException: @beartyped inform_baloo() parameter maxims=['Oppress not the cubs of the stranger,', '     but hail them as Sister and ...'] not a <class '__main__.MaximsOfBaloo'>.
 
 Good generator! The type hints applied to these callables now accurately
 document their respective APIs. Thanks to the pernicious magic of beartype, all
 ends typed well... *yet again.*
 
-.. # Tuples of Arbitrary Types
-.. # -------------------------
+Unions of Types
+---------------
+
+That's all typed well, but everything above only applies to parameters and
+return values constrained to *singular* types. In practice, parameters and
+return values are often relaxed to any of *multiple* types referred to as
+**unions of types.** :superscript:`You can thank set theory for the jargon...
+unless you hate set theory. Then it's just our fault.`
+
+Unions of types are trivially type-checked by annotating parameters and return
+values with tuples containing those types. Let's declare another beartyped
+function accepting either a mapping *or* a string and returning either another
+function *or* an integer:
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.cave import FunctionType, IntType, MappingType
+
+   @beartype
+   def toomai_of_the_elephants(memory: (str, MappingType)) -> (
+       IntType, FunctionType):
+       return len(memory) if isinstance(memory, str) else lambda key: memory[key]
+
+For genericity, the ``toomai_of_the_elephants`` function accepts *any* generic
+integer (via the ``beartype.cave.IntType`` abstract base class (ABC) matching
+both builtin integers and third-party integers from frameworks like NumPy_ and
+SymPy_) rather than an overly specific ``int`` type. The API you relax may very
+well be your own.
+
+Let's call that function with good types:
+
+.. code-block:: python
+
+   >>> memory_of_kala_nag = {
+   ...     'remember': 'I will remember what I was, I am sick of rope and chain—',
+   ...     'strength': 'I will remember my old strength and all my forest affairs.',
+   ...     'not sell': 'I will not sell my back to man for a bundle of sugar-cane:',
+   ...     'own kind': 'I will go out to my own kind, and the wood-folk in their lairs.',
+   ...     'morning':  'I will go out until the day, until the morning break—',
+   ...     'caress':   'Out to the wind’s untainted kiss, the water’s clean caress;',
+   ...     'forget':   'I will forget my ankle-ring and snap my picket stake.',
+   ...     'revisit':  'I will revisit my lost loves, and playmates masterless!',
+   ... }
+   >>> toomai_of_the_elephants(memory_of_kala_nag['remember'])
+   56
+   >>> toomai_of_the_elephants(memory_of_kala_nag)('remember')
+   'I will remember what I was, I am sick of rope and chain—'
+
+Good function. Let's call it again with a tastelessly bad type:
+
+.. code-block:: python
+
+   >>> toomai_of_the_elephants(0xDEADBEEF)
+   Traceback (most recent call last):
+     File "<ipython-input-7-e323f8d6a4a0>", line 1, in <module>
+       toomai_of_the_elephants(0xDEADBEEF)
+     File "<string>", line 12, in __toomai_of_the_elephants_beartyped__
+   BeartypeCallTypeParamException: @beartyped toomai_of_the_elephants() parameter memory=3735928559 not a (<class 'str'>, <class 'collections.abc.Mapping'>).
+
+Good function! The type hints applied to this callable now accurately documents
+its API. All ends typed well... *still again and again.*
+
+Optional Types
+~~~~~~~~~~~~~~
+
+That's also all typed well, but everything above only applies to *mandatory*
+parameters and return values whose types are never ``NoneType``. In practice,
+parameters and return values are often relaxed to optionally accept any of
+multiple types including ``NoneType`` referred to as **optional types.**
+
+Optional types are trivially type-checked by annotating optional parameters
+(parameters whose values default to ``None``) and optional return values
+(callables returning ``None`` rather than raising exceptions in edge cases)
+with the ``NoneTypeOr`` tuple factory indexed by those types or tuples of
+types.
+
+Let's declare another beartyped function accepting either an enumeration type
+*or* ``None`` and returning either an enumeration member *or* ``None``:
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.cave import EnumType, EnumMemberType, NoneTypeOr
+   from enum import Enum
+
+   class Lukannon(Enum):
+       WINTER_WHEAT = 'The Beaches of Lukannon—the winter wheat so tall—'
+       SEA_FOG      = 'The dripping, crinkled lichens, and the sea-fog drenching all!'
+       PLAYGROUND   = 'The platforms of our playground, all shining smooth and worn!'
+       HOME         = 'The Beaches of Lukannon—the home where we were born!'
+       MATES        = 'I met my mates in the morning, a broken, scattered band.'
+       CLUB         = 'Men shoot us in the water and club us on the land;'
+       DRIVE        = 'Men drive us to the Salt House like silly sheep and tame,'
+       SEALERS      = 'And still we sing Lukannon—before the sealers came.'
+
+   @beartype
+   def tell_the_deep_sea_viceroys(story: NoneTypeOr[EnumType] = None) -> (
+       NoneTypeOr[EnumMemberType]):
+       return story if story is None else list(story.__members__.values())[-1]
+
+For efficiency, the ``NoneTypeOr`` tuple factory creates, caches, and returns
+new tuples of types appending ``NoneType`` to the original types and tuples of
+types it's indexed with. Since efficiency is good, ``NoneTypeOr`` is also good.
+
+Let's call that function with good types:
+
+.. code-block:: python
+
+   >>> tell_the_deep_sea_viceroys(Lukannon)
+   <Lukannon.SEALERS: 'And still we sing Lukannon—before the sealers came.'>
+   >>> tell_the_deep_sea_viceroys()
+   None
+
+You may now be pondering to yourself grimly in the dark: "...but could we not
+already do this just by manually annotating optional types with tuples
+containing ``NoneType``?"
+
+You would, of course, be correct. Let's grimly redeclare the same function
+accepting and returning the same types – only annotated with ``NoneType``
+rather than ``NoneTypeOr``:
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.cave import EnumType, EnumMemberType, NoneType
+
+   @beartype
+   def tell_the_deep_sea_viceroys(story: (EnumType, NoneType) = None) -> (
+       (EnumMemberType, NoneType)):
+       return list(story.__members__.values())[-1] if story is not None else None
+
+This manual approach has the same exact effect as the prior factoried approach
+with one exception: the factoried approach efficiently caches and reuses tuples
+over every annotated type, whereas the manual approach inefficiently recreates
+tuples for each annotated type. For small codebases, that difference is
+negligible; for large codebases, that difference is still probably negligible.
+Still, "waste not want not" is the maxim we type our lives by here.
+
+Naturally, the ``NoneTypeOr`` tuple factory accepts tuples of types as well.
+Let's declare another beartyped function accepting either an enumeration type,
+enumeration type member, or ``None`` and returning either an enumeration type,
+enumeration type member, or ``None``:
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.cave import EnumType, EnumMemberType, NoneTypeOr
+
+   EnumOrEnumMemberType = (EnumType, EnumMemberType)
+
+   @beartype
+   def sang_them_up_the_beach(
+       woe: NoneTypeOr[EnumOrEnumMemberType] = None) -> (
+       NoneTypeOr[EnumOrEnumMemberType]):
+       return woe if isinstance(woe, NoneTypeOr[EnumMemberType]) else (
+           list(woe.__members__.values())[-1])
+
+Let's call that function with good types:
+
+.. code-block:: python
+
+   >>> sang_them_up_the_beach(Lukannon)
+   <Lukannon.SEALERS: 'And still we sing Lukannon—before the sealers came.'>
+   >>> sang_them_up_the_beach()
+   None
+
+Behold! The terrifying power of the ``NoneTypeOr`` tuple factory, resplendent
+in its highly over-optimized cache utilization.
 
 PEP 484 & Friends
 -----------------
@@ -566,6 +734,12 @@ application stack at tool rather than Python runtime) include:
    https://www.pypy.org
 .. _Numba:
    https://numba.pydata.org
+
+.. # ------------------( LINKS ~ py : package               )------------------
+.. _NumPy:
+   https://numpy.org
+.. _SymPy:
+   https://www.sympy.org
 
 .. # ------------------( LINKS ~ py : pep                   )------------------
 .. _PEP 483:

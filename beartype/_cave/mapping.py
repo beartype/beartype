@@ -85,18 +85,8 @@ class _NoneTypeOrType(dict):
               :class:`beartype.cave.ClassType` instances).
         '''
 
-        # Existing tuple of types previously cached by a prior call to this
-        # dunder method for this key if any *OR* "None" otherwise (i.e., if
-        # this is the first call to this method for this key).
-        #
-        # Note that the superclass dict.get() method explicitly does *NOT*
-        # call this dunder method, thus preventing unwanted recursion here.
-        type_or_types_or_none = self.get(type_or_types, None)
-
-        # If this tuple of types has already been cached, return this tuple.
-        if type_or_types_or_none is not None:
-            return type_or_types_or_none
-        # Else, this tuple of types has *NOT* already been cached. Do so!
+        # Tuple of types to be cached and returned by this call.
+        type_or_types_or_none = None
 
         # If this key is a type...
         if isinstance(type_or_types, type):
