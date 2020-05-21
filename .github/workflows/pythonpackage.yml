@@ -58,30 +58,30 @@ jobs:
 
     # ..................{ PROCESS                           }..................
     steps:
-    - name: "Checking out repository..."
-      uses: 'actions/checkout@v2'
-    - name: "Installing Python ${{ matrix.python-version }}..."
-      uses: 'actions/setup-python@v1'
-      with:
-        python-version: '${{ matrix.python-version }}'
+      - name: "Checking out repository..."
+        uses: 'actions/checkout@v2'
+      - name: "Installing Python ${{ matrix.python-version }}..."
+        uses: 'actions/setup-python@v1'
+        with:
+          python-version: '${{ matrix.python-version }}'
 
-    # Note that:
-    #
-    # * "set -xe" enables Bash:
-    #   * Reporting (i.e., "-x"), which implicitly prints each command to
-    #     stdout *BEFORE* running that command.
-    #   * Strictness (i.e., "-e").
-    # * Packaging dependencies (e.g., "pip") are installed *BEFORE* all
-    #   remaining dependencies (e.g., "tox"), which include:
-    #   * "numpy", enabling conditional unit tests requiring NumPy.
-    #   * "tox-gh-actions", automating integration of GitHub Actions and "tox".
-    - name: 'Installing package dependencies...'
-      run: |
-        set -xe
-        python -VV
-        python -m site
-        python -m pip install --upgrade pip setuptools wheel
-        python -m pip install --upgrade numpy virtualenv tox tox-gh-actions
-    - name: 'Testing package with "tox"...'
-      run: |
-        python -m tox
+      # Note that:
+      #
+      # * "set -xe" enables Bash:
+      #   * Reporting (i.e., "-x"), which implicitly prints each command to
+      #     stdout *BEFORE* running that command.
+      #   * Strictness (i.e., "-e").
+      # * Packaging dependencies (e.g., "pip") are installed *BEFORE* all
+      #   remaining dependencies (e.g., "tox"), which include:
+      #   * "numpy", enabling conditional unit tests requiring NumPy.
+      #   * "tox-gh-actions", automating integration of GitHub Actions and "tox".
+      - name: 'Installing package dependencies...'
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade numpy virtualenv tox tox-gh-actions
+      - name: 'Testing package with "tox"...'
+        run: |
+          python -m tox
