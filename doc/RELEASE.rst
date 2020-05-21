@@ -40,27 +40,6 @@ Procedure
 
 beartype is releasable to all supported platforms as follows:
 
-#. **Install** wheel_, a third-party pure-Python package permitting this
-   release to be packaged into a cross-platform pre-compiled binary
-   distribution supported by both PyPI_ and ``pip``. This mandatory dependency
-   augments setuptools with the ``bdist_wheel`` subcommand invoked below.
-
-   .. code-block:: console
-
-      $ sudo pip3 install wheel
-
-#. (\ *Optional*\ ) **Install** twine_, a third-party pure-Python package
-   simplifying remote communication with both `PyPI itself <PyPI_>`__ and
-   `Test PyPI`_. While optional, securely registering and uploading PyPI
-   distributions *without* twine_ is typically non-trivial, banal, and tedious.
-   :sup:`Your mileage may vary.` **Do not attempt to install twine via the
-   Debian-based package manager "apt", as doing so typically produces a subtly
-   broken "twine" installation.** Instead, *always* install twine_ via ``pip``.
-
-   .. code-block:: console
-
-      $ sudo pip3 install twine
-
 #. (\ *Optional*\ ) **Validate reStructuredText (reST) rendering.** The
    human-readable description for this release derives directly from `the
    top-level README.rst file <readme_>`__ for this project. Sadly, PyPI's reST
@@ -85,6 +64,16 @@ beartype is releasable to all supported platforms as follows:
    #. After submitting this release to PyPI below, manually browse to `the
       PyPI-hosted page <PyPI beartype_>`__ for this project and verify by
       cursory inspection that this project's description is rendered as HTML.
+
+#. (\ *Optional*\ ) **Install** wheel_, a third-party pure-Python package
+   permitting this release to be packaged into a cross-platform pre-compiled
+   binary distribution supported by both PyPI_ and ``pip``. This optional
+   dependency augments setuptools with the ``bdist_wheel`` subcommand invoked
+   below when locally testing the generation of binary wheels.
+
+   .. code-block:: console
+
+      $ sudo pip3 install wheel
 
 #. (\ *Optional*\ ) **Test packaging both a source tarball and binary wheel.**
 
