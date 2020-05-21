@@ -58,8 +58,10 @@ jobs:
 
     # ..................{ PROCESS                           }..................
     steps:
-    - uses: 'actions/checkout@v2'
-    - uses: 'actions/setup-python@v1'
+    - name: "Checking out repository..."
+      uses: 'actions/checkout@v2'
+    - name: "Installing Python ${{ matrix.python-version }}..."
+      uses: 'actions/setup-python@v1'
       with:
         python-version: '${{ matrix.python-version }}'
 
@@ -80,6 +82,6 @@ jobs:
         python -m site
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install --upgrade numpy virtualenv tox tox-gh-actions
-    - name: 'Testing under toxic Python ${{ matrix.python-version }}...'
+    - name: 'Testing package with "tox"...'
       run: |
         python -m tox
