@@ -333,7 +333,7 @@ beartype is releasable to all supported platforms as follows:
 
             $ rm -rf /tmp/beartype-pypi /tmp/sample_sim && cd -
 
-#. (\ *Outdated*\ ) **Manually publish this release to** `PyPI`_.
+#. (\ *Obsolete*\ ) **Manually publish this release to** `PyPI`_.
    
    .. note::
     

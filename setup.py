@@ -158,7 +158,7 @@ def _sanitize_classifiers(
     # For each minor version of Python 3.x supported by this package,
     # formally classify this version as such.
     for python_version_minor in range(
-        python_version_min_parts[1], python_version_minor_max):
+        python_version_min_parts[1], python_version_minor_max + 1):
         classifiers_sane.append(
             'Programming Language :: Python :: {}.{}'.format(
                 PYTHON_VERSION_MAJOR, python_version_minor,))
