@@ -24,8 +24,8 @@ methods via the standard decorator design pattern. This renders beartype
 natively compatible with *all* interpreters and compilers targeting the Python
 language – including CPython_, PyPy_, and Numba_.
 
-Unlike comparable runtime type checkers (e.g., typeguard_), beartype wraps each
-decorated callable with a dynamically generated wrapper efficiently
+Unlike comparable runtime type checkers (e.g., pytypes_, typeguard_), beartype
+wraps each decorated callable with a dynamically generated wrapper efficiently
 type-checking that specific callable. Since "performance by default" is our
 first-class concern, *all* wrappers are guaranteed to:
 
@@ -655,6 +655,7 @@ decorators, explicit function calls, and import hooks) include:
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
 * beartype. :sup:`...'sup.`
+* pytypes_.
 * typeguard_.
 
 **Static type checkers** (i.e., third-party tooling *not* implemented in Python
@@ -764,6 +765,8 @@ application stack at tool rather than Python runtime) include:
    https://tox.readthedocs.io
 
 .. # ------------------( LINKS ~ py : type : runtime        )------------------
+.. _pytypes:
+   https://github.com/Stewori/pytypes
 .. _typeguard:
    https://github.com/agronholm/typeguard
 
