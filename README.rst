@@ -566,6 +566,7 @@ type-checking, including (but *not* limited to):
   544_>`_.
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
+* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
@@ -753,6 +754,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0544
 .. _PEP 563:
    https://www.python.org/dev/peps/pep-0563
+.. _PEP 585:
+   https://www.python.org/dev/peps/pep-0585
 .. _PEP 586:
    https://www.python.org/dev/peps/pep-0586
 .. _PEP 589:
