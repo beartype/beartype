@@ -39,7 +39,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # otherwise (i.e., if this annotation is a class) if this class declares
 #    # this name *OR* a placeholder name otherwise. Since this name is only
 #    # required to test for PEP 484 "typing" types, placeholders are safe.
-#    annotation_module_name = getattr(
+#    hint_module_name = getattr(
 #        annotation if isinstance(annotation, ClassType) else type(annotation),
 #        '__module__',
 #        '__beartype_frabjous')
@@ -72,7 +72,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    #FIXME: Untested, but theoretically viable assuming the special
 #    #"__future__" module behaves sanely.
 #    # True only if this module enables PEP 563-style deferred annotations.
-#    is_func_annotations_deferred = (
+#    is_func_hints_deferred = (
 #        getattr(func_module, 'annotations', None) is __future__.annotations or
 #        #FIXME: Clearly, do this properly.
 #        python_version >= 4.0.0
@@ -85,7 +85,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * That hint *MUST* be a string containing the code expressing that
 #    annotation. Raise an exception if *NOT* the case.
 #  * Call the following to obtain the evaluated expression:
-#    annotation = eval(annotation_str, func.__globals__, ())
+#    annotation = eval(hint_str, func.__globals__, ())
 #
 #Not terribly arduous, but certainly annoying. This is absolutely critical, so
 #we *MUST* do this as soon as feasible. *URGH!*
@@ -172,7 +172,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #"beartype.cave.UnavailableTypes", which is intentionally empty. All
 #user-defined empty tuple annotations imply *NOTHING* to be valid, which would
 #render the resulting callable uncallable, which would be entirely senseless.
-#To do so, consider raising an exception from the _check_type_annotation()
+#To do so, consider raising an exception from the _verify_hint()
 #function: e.g.,
 #
 #    # This is bad and should raise an exception at decoration time.
@@ -201,7 +201,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    def fasterfunc(idealworld: int)
 #
 #Note that most types are *NOT* hashable and thus *NOT* addable to a set -- so,
-#the naive heuristic of "tuple(set(annotation_tuple))" generally fails.
+#the naive heuristic of "tuple(set(hint_tuple))" generally fails.
 #Instead, we'll need to implement some sort of manual pruning algorithm
 #optimized for the general case of a tuple containing *NO* duplicates.
 #FIXME: Ah! Actually, the following should mostly work (untested, of course):
@@ -313,9 +313,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #Although this will probably never happen, it's still mildly fun to ponder.
 
 # ....................{ IMPORTS                           }....................
-import functools, inspect
+import functools, inspect, sys
 from beartype._decor.code import (
-
     _CODE_SIGNATURE,
     _CODE_PARAM_VARIADIC_POSITIONAL,
     _CODE_PARAM_KEYWORD_ONLY,
@@ -329,8 +328,8 @@ from beartype._decor.code import (
     _CODE_TUPLE_STR_APPEND,
     _CODE_TUPLE_CLASS_APPEND,
     _CODE_TUPLE_REPLACE,
-    _CODE_ANNOTATIONS_PARAM,
-    _CODE_ANNOTATIONS_RETURN,
+    _CODE_PARAM_HINT,
+    _CODE_RETURN_HINT,
 )
 from beartype.cave import (
     CallableTypes,
@@ -339,7 +338,8 @@ from beartype.cave import (
 from beartype.roar import (
     BeartypeDecorHintValueException,
     BeartypeDecorParamNameException,
-    BeartypeDecorParseException,
+    BeartypeDecorWrappeeException,
+    BeartypeDecorWrapperException,
 )
 from inspect import Parameter, Signature
 
@@ -358,7 +358,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # callables by adding these attributes to the "local_attrs" dictionary and then
 # explicitly passing each such attribute as a unique keyword parameter to those
 # callables. Since doing so would uselessly incur a runtime performance penalty
-# for no tangible gain, the current technique is preferable.
+# for no tangible gain, the current approach is preferable.
 from beartype._decor.util import trim_object_repr as __beartype_trim
 from beartype.roar import (
     BeartypeCallTypeParamException  as __beartype_param_exception,
@@ -408,38 +408,60 @@ This includes:
 
 def beartype(func: CallableTypes) -> CallableTypes:
     '''
-    Decorate the passed **callable** (e.g., function, method) to validate
-    both all annotated parameters passed to this callable *and* the
-    annotated value returned by this callable if any.
+    Decorate the passed **callable** (e.g., function, method) to validate both
+    all annotated parameters passed to this callable *and* the annotated value
+    returned by this callable if any.
 
     This decorator performs rudimentary type checking based on Python 3.x
-    function annotations, as officially documented by PEP 484 ("Type
-    Hints"). While PEP 484 supports arbitrarily complex type composition,
-    this decorator requires *all* parameter and return value annotations to
-    be either:
+    function annotations, as officially documented by PEP 484 ("Type Hints").
+    While PEP 484 supports arbitrarily complex type composition, this decorator
+    requires *all* parameter and return value annotations to be either:
 
     * Classes (e.g., :class:`int`, :class:`OrderedDict`).
     * Tuples of classes (e.g., ``(int, OrderedDict)``).
 
-    If optimizations are enabled by the active Python interpreter (e.g.,
-    due to option ``-O`` passed to this interpreter), this decorator
-    reduces to a noop.
+    If optimizations are enabled by the active Python interpreter (e.g., due to
+    option ``-O`` passed to this interpreter), this decorator reduces to a
+    noop.
+
+    Parameters
+    ----------
+    func : CallableTypes
+        **Non-class callable** (i.e., callable object that is *not* a class) to
+        be decorated by a dynamically generated new callable wrapping this
+        original callable with pure-Python type-checking.
+
+    Returns
+    ----------
+    CallableTypes
+        Dynamically generated new callable wrapping this original callable with
+        pure-Python type-checking.
 
     Raises
     ----------
     BeartypeDecorParamNameException
-        If any parameter has the reserved name ``__beartype_func``.
+        If the name of any parameter declared on this callable is prefixed by
+        the reserved substring ``__beartype_``.
     BeartypeDecorHintTupleItemException
         If any item of any **type-hinted :class:`tuple`** (i.e., :class:`tuple`
         applied as a parameter or return value annotation) is of an unsupported
         type. Supported types include:
 
-        * :class:`ClassType` (i.e., classes).
+        * :class:`type` (i.e., classes).
         * :class:`str` (i.e., strings).
-    BeartypeException
-        If the kind of any parameter is unrecognized. This should *never*
-        happen, assuming no significant changes to Python semantics.
+    BeartypeDecorWrappeeException
+        If this callable is either uncallable or a class.
     '''
+
+    # Validate the type of the decorated object *BEFORE* performing any work
+    # assuming this object to define attributes (e.g., "func.__name__").
+    #
+    # If this object is uncallable, raise an exception.
+    if not callable(func):
+        raise BeartypeDecorWrappeeException('{!r} not callable.'.format(func))
+    # Else if this object is a class, raise an exception.
+    elif isinstance(func, ClassType):
+        raise BeartypeDecorWrappeeException('{!r} is a class.'.format(func))
 
     # Human-readable name of this function for use in exceptions.
     func_name = '@beartyped {}()'.format(func.__name__)
@@ -451,9 +473,8 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # preserving human-readability.
     func_beartyped_name = '__{}_beartyped__'.format(func.__name__)
 
-    # "Signature" instance encapsulating this callable's signature, dynamically
-    # parsed by the stdlib "inspect" module from this callable.
-    func_sig = inspect.signature(func)
+    # "Signature" instance encapsulating this callable's signature.
+    func_sig = _get_func_sig(func)
 
     # Raw string of Python statements comprising the body of this wrapper,
     # including (in order):
@@ -481,143 +502,11 @@ def beartype(func: CallableTypes) -> CallableTypes:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is thankfully the most ideal.
-    func_body = _CODE_SIGNATURE.format(func_beartyped_name=func_beartyped_name)
-
-    # For the name of each parameter passed to this callable and the
-    # "Parameter" instance encapsulating this parameter (in the passed
-    # order)...
-    for func_arg_index, func_arg in enumerate(func_sig.parameters.values()):
-        # If this callable redefines a parameter initialized to a default value
-        # by this wrapper, raise an exception. Permitting this unlikely edge
-        # case would permit unsuspecting users to "accidentally" override these
-        # defaults.
-        if func_arg.name.startswith('__beartype_'):
-            raise BeartypeDecorParamNameException(
-                'Parameter "{}" reserved for use by @beartype.'.format(
-                    func_arg.name))
-
-        # Annotation for this parameter if any *OR* "Parameter.empty" otherwise
-        # (i.e., if this parameter is unannotated).
-        func_arg_annotation = func_arg.annotation
-
-        # If this parameter is annotated and non-ignorable for purposes of type
-        # checking, type check this parameter with this annotation.
-        if (func_arg_annotation is not Parameter.empty and
-            func_arg.kind not in _PARAM_KIND_IGNORABLE):
-            # Human-readable label describing this annotation.
-            func_arg_annotation_label = (
-                '{} parameter "{}" type annotation'.format(
-                    func_name, func_arg.name))
-
-            # Validate this annotation.
-            _check_type_annotation(
-                annotation=func_arg_annotation,
-                annotation_label=func_arg_annotation_label,
-            )
-
-            # String evaluating to this parameter's annotated type.
-            func_arg_type_expr = _CODE_ANNOTATIONS_PARAM.format(func_arg.name)
-
-            # String evaluating to this parameter's current value when
-            # passed as a keyword.
-            func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
-
-            # Replace all classnames in this annotation by the corresponding
-            # classes.
-            func_body += _get_code_replacing_annotation_by_types(
-                annotation=func_arg_annotation,
-                annotation_expr=func_arg_type_expr,
-                annotation_label=func_arg_annotation_label,
-            )
-
-            # If this parameter is a tuple of positional variadic parameters
-            # (e.g., "*args"), iteratively check these parameters.
-            if func_arg.kind is Parameter.VAR_POSITIONAL:
-                func_body += _CODE_PARAM_VARIADIC_POSITIONAL.format(
-                    func_name=func_name,
-                    arg_name=func_arg.name,
-                    arg_index=func_arg_index,
-                    arg_type_expr=func_arg_type_expr,
-                )
-            # Else if this parameter is keyword-only, check this parameter only
-            # by lookup in the variadic "**kwargs" dictionary.
-            elif func_arg.kind is Parameter.KEYWORD_ONLY:
-                func_body += _CODE_PARAM_KEYWORD_ONLY.format(
-                    func_name=func_name,
-                    arg_name=func_arg.name,
-                    arg_type_expr=func_arg_type_expr,
-                    arg_value_key_expr=func_arg_value_key_expr,
-                )
-            # Else, this parameter may be passed either positionally or as a
-            # keyword. Check this parameter both by lookup in the variadic
-            # "**kwargs" dictionary *AND* by index into the variadic "*args"
-            # tuple.
-            else:
-                # String evaluating to this parameter's current value when
-                # passed positionally.
-                func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
-                func_body += _CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
-                    func_name=func_name,
-                    arg_name=func_arg.name,
-                    arg_index=func_arg_index,
-                    arg_type_expr=func_arg_type_expr,
-                    arg_value_key_expr=func_arg_value_key_expr,
-                    arg_value_pos_expr=func_arg_value_pos_expr,
-                )
-
-    # Value of the annotation for this callable's return value.
-    func_return_annotation = func_sig.return_annotation
-
-    # If this callable's return value is both annotated and non-ignorable for
-    # purposes of type checking, type check this value. Specifically, if this
-    # annotation is neither...
-    #
-    # Ideally, this test would reduce to the more efficient set membership test
-    # "func_return_annotation not in {Signature.empty, None}". Sadly, many
-    # common mutable types (e.g., lists) are *NOT* hashable and thus *NOT*
-    # safely applicable to the "in" operator. So, we prefer the explicit route.
-    if (
-        # "Signature.empty", signifying a callable whose return value is not
-        # annotated with a type hint *NOR*...
-        func_return_annotation is not Signature.empty and
-        # "None", signifying a callable returning no value. By convention,
-        # callables returning no value are typically annotated to return
-        # "None". Technically, callables whose return values are annotated as
-        # "None" *could* be explicitly checked to return "None" rather than
-        # a none-"None" value. Since return values are safely ignorable by
-        # callers, however, there appears to be little real-world utility in
-        # enforcing this constraint.
-        func_return_annotation is not None
-    ):
-        # Human-readable label describing this annotation.
-        func_return_annotation_label = (
-            '{} return type annotation'.format(func_name))
-
-        # Validate this annotation.
-        _check_type_annotation(
-            annotation=func_return_annotation,
-            annotation_label=func_return_annotation_label,
-        )
-
-        # String evaluating to this return value's annotated type.
-        func_return_type_expr = _CODE_ANNOTATIONS_RETURN
-        #print('Return annotation: {{}}'.format({func_return_type_expr}))
-
-        # Replace all classnames in this annotation by the corresponding
-        # classes.
-        func_body += _get_code_replacing_annotation_by_types(
-            annotation=func_return_annotation,
-            annotation_expr=func_return_type_expr,
-            annotation_label=func_return_annotation_label,
-        )
-
-        # Call this callable, type check the returned value, and return this
-        # value from this wrapper.
-        func_body += _CODE_CALL_CHECKED.format(
-            func_name=func_name, return_type=func_return_type_expr)
-    # Else, call this callable and return this value from this wrapper.
-    else:
-        func_body += _CODE_CALL_UNCHECKED
+    func_body = '{}{}{}'.format(
+        _CODE_SIGNATURE.format(func_beartyped_name=func_beartyped_name),
+        _get_code_checking_params(func_name=func_name, func_sig=func_sig),
+        _get_code_checking_return(func_name=func_name, func_sig=func_sig),
+    )
 
     # Dictionary mapping from local attribute names to values passed to the
     # module-scoped outermost definition (but *NOT* the actual body) of this
@@ -687,7 +576,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # If doing so fails for any reason, raise a decorator-specific exception
     # embedding the entire body of this function for debugging purposes.
     except Exception as exception:
-        raise BeartypeDecorParseException(
+        raise BeartypeDecorWrapperException(
             '@beartype {}() wrapper unparseable:\n{}'.format(
                 func_name, func_body)) from exception
 
@@ -711,15 +600,252 @@ def beartype(func: CallableTypes) -> CallableTypes:
     return func_beartyped
 
 
-def _get_code_replacing_annotation_by_types(
-    annotation: object,
-    annotation_expr: str,
-    annotation_label: str,
-) -> str:
+def _get_func_sig(func: CallableTypes) -> Signature:
     '''
-    Python code snippet dynamically replacing all classnames in the function
-    annotation settable by the passed Python expression with the corresponding
-    classes.
+    :class:`Signature` instance encapsulating the passed callable's signature.
+
+    If `PEP 563`_ is conditionally active for this callable, this function
+    additionally resolves all postponed annotations on this callable to the
+    actual annotations to which those postponed annotations refer. Note that
+    `PEP 563`_ is conditionally active for this callable if the active Python
+    interpreter is either:
+
+    * At least Python 3.7.0 *and* the module declaring this callable
+      explicitly enables `PEP 563`_ support with a future pragma of the form
+      ``from __future__ import annotations``.
+    * At least Python 4.0.0, where the `PEP 563`_ is expected to be mandatory.
+
+    .. _PEP 563:
+       https://www.python.org/dev/peps/pep-0563
+
+    Parameters
+    ----------
+    func : CallableTypes
+        Non-class callable to parse the signature of.
+
+    Returns
+    ----------
+    Signature
+        :class:`Signature` instance encapsulating this callable's signature,
+        dynamically parsed by the :mod:`inspect` module from this callable.
+    '''
+    assert callable(func), '{!r} uncallable.'.format(func)
+
+    #FIXME: Implement us up.
+    # If this at least Python 3.7, evaluate all PEP 563-style postponed
+    # annotations on this callable *BEFORE* parsing the actual annotations
+    # these postponed annotations evaluate to.
+    # if sys.version >= (3, 7):
+    #     pass
+
+    # "Signature" instance encapsulating this callable's signature, dynamically
+    # parsed by the stdlib "inspect" module from this callable.
+    return inspect.signature(func)
+
+# ....................{ DECORATORS ~ code                 }....................
+def _get_code_checking_params(func_name: str, func_sig: Signature) -> str:
+    '''
+    Python code snippet type-checking all annotated parameters declared by the
+    passed signature of the passed callable name.
+
+    Parameters
+    ----------
+    func_name : str
+        Human-readable name of this callable.
+    func_sig : Signature
+        :class:`Signature` instance encapsulating this callable's signature,
+        dynamically parsed by the :mod:`inspect` module from this callable.
+
+    Returns
+    ----------
+    str
+        Python code snippet type-checking all annotated parameters declared by
+        this signature of this callable name.
+
+    Raises
+    ----------
+    BeartypeDecorParamNameException
+        If the name of any parameter declared on this callable is prefixed by
+        the reserved substring ``__beartype_``.
+    BeartypeDecorHintTupleItemException
+        If any item of any **type-hinted :class:`tuple`** (i.e., :class:`tuple`
+        applied as a parameter or return value annotation) is of an unsupported
+        type. Supported types include:
+
+        * :class:`type` (i.e., classes).
+        * :class:`str` (i.e., strings).
+    '''
+
+    # Python code snippet to be returned.
+    func_body = ''
+
+    # For the name of each parameter accepted by this callable and the
+    # "Parameter" instance encapsulating this parameter (in declaration
+    # order)...
+    for func_arg_index, func_arg in enumerate(func_sig.parameters.values()):
+        # If this callable redefines a parameter initialized to a default value
+        # by this wrapper, raise an exception. Permitting this unlikely edge
+        # case would permit unsuspecting users to accidentally override these
+        # defaults.
+        if func_arg.name.startswith('__beartype_'):
+            raise BeartypeDecorParamNameException(
+                '{} parameter "{}" reserved by @beartype.'.format(
+                    func_name, func_arg.name))
+
+        # Annotation for this parameter if any *OR* "Parameter.empty" otherwise
+        # (i.e., if this parameter is unannotated).
+        func_arg_hint = func_arg.annotation
+
+        # If this parameter is annotated and non-ignorable for purposes of type
+        # checking, type check this parameter with this annotation.
+        if (func_arg_hint is not Parameter.empty and
+            func_arg.kind not in _PARAM_KIND_IGNORABLE):
+            # Human-readable label describing this annotation.
+            func_arg_hint_label = (
+                '{} parameter "{}" type hint'.format(func_name, func_arg.name))
+
+            # Validate this annotation.
+            _verify_hint(hint=func_arg_hint, hint_label=func_arg_hint_label)
+
+            # String evaluating to this parameter's annotated type.
+            func_arg_type_expr = _CODE_PARAM_HINT.format(func_arg.name)
+
+            # String evaluating to this parameter's current value when
+            # passed as a keyword.
+            func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
+
+            # Replace all classnames in this annotation by the corresponding
+            # classes.
+            func_body += _get_code_resolving_forward_refs(
+                hint=func_arg_hint,
+                hint_expr=func_arg_type_expr,
+                hint_label=func_arg_hint_label,
+            )
+
+            # If this parameter is a tuple of positional variadic parameters
+            # (e.g., "*args"), iteratively check these parameters.
+            if func_arg.kind is Parameter.VAR_POSITIONAL:
+                func_body += _CODE_PARAM_VARIADIC_POSITIONAL.format(
+                    func_name=func_name,
+                    arg_name=func_arg.name,
+                    arg_index=func_arg_index,
+                    arg_type_expr=func_arg_type_expr,
+                )
+            # Else if this parameter is keyword-only, check this parameter only
+            # by lookup in the variadic "**kwargs" dictionary.
+            elif func_arg.kind is Parameter.KEYWORD_ONLY:
+                func_body += _CODE_PARAM_KEYWORD_ONLY.format(
+                    func_name=func_name,
+                    arg_name=func_arg.name,
+                    arg_type_expr=func_arg_type_expr,
+                    arg_value_key_expr=func_arg_value_key_expr,
+                )
+            # Else, this parameter may be passed either positionally or as a
+            # keyword. Check this parameter both by lookup in the variadic
+            # "**kwargs" dictionary *AND* by index into the variadic "*args"
+            # tuple.
+            else:
+                # String evaluating to this parameter's current value when
+                # passed positionally.
+                func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
+                func_body += _CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
+                    func_name=func_name,
+                    arg_name=func_arg.name,
+                    arg_index=func_arg_index,
+                    arg_type_expr=func_arg_type_expr,
+                    arg_value_key_expr=func_arg_value_key_expr,
+                    arg_value_pos_expr=func_arg_value_pos_expr,
+                )
+
+    # Return this Python code snippet.
+    return func_body
+
+
+def _get_code_checking_return(func_name: str, func_sig: Signature) -> str:
+    '''
+    Python code snippet type-checking the annotated return value declared by
+    the passed signature of the passed callable name if any *or* reduce to a
+    noop otherwise (i.e., if this value is unannotated).
+
+    Parameters
+    ----------
+    func_name : str
+        Human-readable name of this callable.
+    func_sig : Signature
+        :class:`Signature` instance encapsulating this callable's signature,
+        dynamically parsed by the :mod:`inspect` module from this callable.
+
+    Returns
+    ----------
+    str
+        Python code snippet type-checking the annotated return value declared
+        by this signature of this callable name if any *or* reduce to a noop
+        otherwise (i.e., if this value is unannotated).
+    '''
+
+    # Python code snippet to be returned.
+    func_body = ''
+
+    # Value of the annotation for this callable's return value.
+    func_return_hint = func_sig.return_annotation
+
+    # If this callable's return value is both annotated and non-ignorable for
+    # purposes of type checking, type check this value. Specifically, if this
+    # annotation is neither...
+    #
+    # Ideally, this test would reduce to the more efficient set membership test
+    # "func_return_hint not in {Signature.empty, None}". Sadly, many
+    # common mutable types (e.g., lists) are *NOT* hashable and thus *NOT*
+    # safely applicable to the "in" operator. So, we prefer the explicit route.
+    if (
+        # "Signature.empty", signifying a callable whose return value is not
+        # annotated with a type hint *NOR*...
+        func_return_hint is not Signature.empty and
+        # "None", signifying a callable returning no value. By convention,
+        # callables returning no value are typically annotated to return
+        # "None". Technically, callables whose return values are annotated as
+        # "None" *could* be explicitly checked to return "None" rather than
+        # a none-"None" value. Since return values are safely ignorable by
+        # callers, however, there appears to be little real-world utility in
+        # enforcing this constraint.
+        func_return_hint is not None
+    ):
+        # Human-readable label describing this annotation.
+        func_return_hint_label = '{} return type annotation'.format(func_name)
+
+        # Validate this annotation.
+        _verify_hint(hint=func_return_hint, hint_label=func_return_hint_label)
+
+        # String evaluating to this return value's annotated type.
+        func_return_type_expr = _CODE_RETURN_HINT
+        #print('Return annotation: {{}}'.format({func_return_type_expr}))
+
+        # Replace all classnames in this annotation by the corresponding
+        # classes.
+        func_body += _get_code_resolving_forward_refs(
+            hint=func_return_hint,
+            hint_expr=func_return_type_expr,
+            hint_label=func_return_hint_label,
+        )
+
+        # Call this callable, type check the returned value, and return this
+        # value from this wrapper.
+        func_body += _CODE_CALL_CHECKED.format(
+            func_name=func_name, return_type=func_return_type_expr)
+    # Else, call this callable and return this value from this wrapper.
+    else:
+        func_body += _CODE_CALL_UNCHECKED
+
+    # Return this Python code snippet.
+    return func_body
+
+
+def _get_code_resolving_forward_refs(
+    hint: object, hint_expr: str, hint_label: str) -> str:
+    '''
+    Python code snippet dynamically replacing all **forward references** (i.e.,
+    fully-qualified classnames) in the passed annotation settable by the passed
+    Python expression with the corresponding classes.
 
     Specifically, this function returns either:
 
@@ -736,14 +862,14 @@ def _get_code_replacing_annotation_by_types(
 
     Parameters
     ----------
-    annotation : object
+    hint : object
         Annotation to be inspected, assumed to be either a class,
         fully-qualified classname, or tuple of classes and/or classnames. Since
-        the previously called :func:`_check_type_annotation` function already
-        validates this to be the case, this assumption is *always* safe.
-    annotation_expr : str
+        the previously called :func:`_verify_hint` function already validates
+        this to be the case, this assumption is *always* safe.
+    hint_expr : str
         Python expression evaluating to the annotation to be replaced.
-    annotation_label : str
+    hint_label : str
         Human-readable label describing this annotation, interpolated into
         exceptions raised by this function (e.g.,
         ``@beartyped myfunc() parameter "myparam" type annotation``).
@@ -755,10 +881,10 @@ def _get_code_replacing_annotation_by_types(
         function annotation settable by this Python expression with the
         corresponding classes.
     '''
-    assert isinstance(annotation_expr, str), (
-        '"{!r}" not a string.'.format(annotation_expr))
-    assert isinstance(annotation_label, str), (
-        '"{!r}" not a string.'.format(annotation_label))
+    assert isinstance(hint_expr, str), (
+        '"{!r}" not a string.'.format(hint_expr))
+    assert isinstance(hint_label, str), (
+        '"{!r}" not a string.'.format(hint_label))
 
     #FIXME: Validate that all string classnames are valid Python identifiers
     #*BEFORE* generating code embedding these classnames. Sadly, doing so will
@@ -770,57 +896,57 @@ def _get_code_replacing_annotation_by_types(
     #validation by regular expression here. Make it so, in other words.
 
     # If this annotation is a classname...
-    if isinstance(annotation, str):
+    if isinstance(hint, str):
         # Import statement importing the module defining this class if any
         # (i.e., if this classname contains at least one ".") *OR* the empty
         # string otherwise (i.e., if this class is a builtin type requiring no
         # explicit importation).
-        annotation_type_import_code = ''
+        hint_type_import_code = ''
 
         # If this classname contains at least one "." delimiter...
-        if '.' in annotation:
+        if '.' in hint:
             # Fully-qualified module name and unqualified attribute basename
             # parsed from this classname. It is good.
-            annotation_type_module_name, annotation_type_basename = (
-                annotation.rsplit(sep='.', maxsplit=1))
+            hint_type_module_name, hint_type_basename = (
+                hint.rsplit(sep='.', maxsplit=1))
 
-            # print('Importing "{annotation_type_module_name}.{annotation_type_basename}"...')
+            # print('Importing "{hint_type_module_name}.{hint_type_basename}"...')
             # Import statement importing this module.
-            annotation_type_import_code = _CODE_STR_IMPORT.format(
-                annotation_type_module_name=annotation_type_module_name,
-                annotation_type_basename=annotation_type_basename,
+            hint_type_import_code = _CODE_STR_IMPORT.format(
+                hint_type_module_name=hint_type_module_name,
+                hint_type_basename=hint_type_basename,
             )
         # Else, this classname contains *NO* "." delimiters and hence signifies
         # a builtin type (e.g., "int"). In this case, the unqualified basename
         # of this this type is simply its classname.
         else:
-            annotation_type_basename = annotation
+            hint_type_basename = hint
 
         # Block of Python code to be returned.
         return _CODE_STR_REPLACE.format(
-            annotation_expr=annotation_expr,
-            annotation_label=annotation_label,
-            annotation_type_basename=annotation_type_basename,
-            annotation_type_import_code=annotation_type_import_code,
+            hint_expr=hint_expr,
+            hint_label=hint_label,
+            hint_type_basename=hint_type_basename,
+            hint_type_import_code=hint_type_import_code,
         )
     # Else if this annotation is a tuple containing one or more classnames...
-    elif isinstance(annotation, tuple):
+    elif isinstance(hint, tuple):
         # Tuple of the indices of all classnames in this annotation.
-        annotation_type_name_indices = tuple(
-            subannotation_index
-            for subannotation_index, subannotation in enumerate(annotation)
-            if isinstance(subannotation, str)
+        hint_type_name_indices = tuple(
+            subhint_index
+            for subhint_index, subhint in enumerate(hint)
+            if isinstance(subhint, str)
         )
 
         # If this annotation contains no classnames, this annotation requires
         # no replacement at runtime. Return the empty string signifying a noop.
-        if not annotation_type_name_indices:
+        if not hint_type_name_indices:
             return ''
         # Else, this annotation contains one or more classnames...
 
         # String evaluating to the first classname in this annotation.
-        subannotation_type_name_expr = '{}[{}]'.format(
-            annotation_expr, annotation_type_name_indices[0])
+        subhint_type_name_expr = '{}[{}]'.format(
+            hint_expr, hint_type_name_indices[0])
 
         # Block of Python code to be returned.
         #
@@ -831,79 +957,74 @@ def _get_code_replacing_annotation_by_types(
         # Why? Because this approach trivially circumvents class basename
         # collisions (e.g., between the hypothetical classnames "rising.Sun"
         # and "sinking.Sun", which share the same basename "Sun").
-        annotation_replacement_code = _CODE_TUPLE_STR_TEST.format(
-            subannotation_type_name_expr=subannotation_type_name_expr)
+        hint_replacement_code = _CODE_TUPLE_STR_TEST.format(
+            subhint_type_name_expr=subhint_type_name_expr)
 
         # For the 0-based index of each item and that item of this
         # annotation...
-        for subannotation_index, subannotation in enumerate(annotation):
+        for subhint_index, subhint in enumerate(hint):
             # String evaluating to this item's annotated type.
-            subannotation_expr = '{}[{}]'.format(
-                annotation_expr, subannotation_index)
+            subhint_expr = '{}[{}]'.format(hint_expr, subhint_index)
 
             # If this item is a classname...
-            if isinstance(subannotation, str):
+            if isinstance(subhint, str):
                 # If this classname contains at least one "." delimiter...
                 #
                 # Note that the following logic is similar to but subtly
                 # different enough from similar logic above that the two cannot
                 # reasonably be unified into a general-purpose function.
-                if '.' in subannotation:
+                if '.' in subhint:
                     # Fully-qualified module name and unqualified attribute
                     # basename parsed from this classname. It is good.
-                    subannotation_type_module_name, \
-                    subannotation_type_basename = (
-                        subannotation.rsplit(sep='.', maxsplit=1))
+                    subhint_type_module_name, subhint_type_basename = (
+                        subhint.rsplit(sep='.', maxsplit=1))
 
                     # Import statement importing this module.
-                    annotation_replacement_code += (
+                    hint_replacement_code += (
                         _CODE_TUPLE_STR_IMPORT.format(
-                            subannotation_type_module_name=subannotation_type_module_name,
-                            subannotation_type_basename=subannotation_type_basename,
+                            subhint_type_module_name=subhint_type_module_name,
+                            subhint_type_basename=subhint_type_basename,
                         ))
                 # Else, this classname contains *NO* "." delimiters and hence
                 # signifies a builtin type (e.g., "int"). In this case, the
                 # unqualified basename of this this type is its classname.
                 else:
-                    subannotation_type_basename = subannotation
+                    subhint_type_basename = subhint
 
                 # Block of Python code to be returned.
-                annotation_replacement_code += _CODE_TUPLE_STR_APPEND.format(
-                    annotation_label=annotation_label,
-                    subannotation_type_basename=subannotation_type_basename,
+                hint_replacement_code += _CODE_TUPLE_STR_APPEND.format(
+                    hint_label=hint_label,
+                    subhint_type_basename=subhint_type_basename,
                 )
             # Else, this member is assumed to be a class. In this case...
             else:
                 # Block of Python code to be returned.
-                annotation_replacement_code += _CODE_TUPLE_CLASS_APPEND.format(
-                    subannotation_expr=subannotation_expr)
+                hint_replacement_code += _CODE_TUPLE_CLASS_APPEND.format(
+                    subhint_expr=subhint_expr)
 
         # Block of Python code to be returned.
-        annotation_replacement_code += _CODE_TUPLE_REPLACE.format(
-            annotation_expr=annotation_expr)
+        hint_replacement_code += _CODE_TUPLE_REPLACE.format(
+            hint_expr=hint_expr)
 
         # Return this block.
-        return annotation_replacement_code
+        return hint_replacement_code
     # Else, this annotation requires no replacement at runtime. In this case,
     # return the empty string signifying a noop.
     else:
         return ''
 
-
-def _check_type_annotation(
-    annotation: object,
-    annotation_label: str,
-    is_str_valid: bool = True,
-) -> None:
+# ....................{ DECORATORS ~ verify               }....................
+def _verify_hint(
+    hint: object, hint_label: str, is_str_valid: bool = True) -> None:
     '''
     Validate the passed annotation to be a valid annotation type supported by
     the :func:`beartype.beartype` decorator.
 
     Parameters
     ----------
-    annotation : object
+    hint : object
         Annotation to be validated.
-    annotation_label : str
+    hint_label : str
         Human-readable label describing this annotation, interpolated into
         exceptions raised by this function (e.g.,
         ``@beartyped myfunc() parameter "myparam" type annotation``).
@@ -931,23 +1052,22 @@ def _check_type_annotation(
     '''
 
     # If this annotation is a class, no further validation is needed.
-    if isinstance(annotation, ClassType):
+    if isinstance(hint, ClassType):
         pass
     # Else, this annotation is *NOT* a class.
     #
     # If string annotations are acceptable...
     elif is_str_valid:
         # If this annotation is a tuple...
-        if isinstance(annotation, tuple):
+        if isinstance(hint, tuple):
             # If any member of this tuple is neither a class nor string, raise
             # an exception.
-            for subannotation in annotation:
-                if not isinstance(
-                    subannotation, _HINTED_TUPLE_ITEM_VALID_TYPES):
+            for subhint in hint:
+                if not isinstance(subhint, _HINTED_TUPLE_ITEM_VALID_TYPES):
                     raise BeartypeDecorHintValueException(
                         '{} tuple item {} neither a class nor '
                         'fully-qualified classname.'.format(
-                            annotation_label, subannotation))
+                            hint_label, subhint))
         # Else if this annotation is *NOT* a string, raise an exception.
         #
         # Ideally, this function would also validate this module to be
@@ -962,27 +1082,28 @@ def _check_type_annotation(
         # importing that target module from that source module -- triggering a
         # circular import dependency in susceptible source modules. So, that
         # validation *MUST* be deferred to function call time.
-        elif not isinstance(annotation, str):
+        elif not isinstance(hint, str):
             raise BeartypeDecorHintValueException(
                 '{} {} unsupported (i.e., neither a class, '
                 'fully-qualified classname, nor '
                 'tuple of classes and/or classnames).'.format(
-                    annotation_label, annotation))
+                    hint_label, hint))
     # Else, string annotations are unacceptable.
     #
     # If this annotation is a tuple...
-    elif isinstance(annotation, tuple):
+    elif isinstance(hint, tuple):
         # If any members of this tuple is *NOT* a class, raise an exception.
-        for subannotation in annotation:
-            if not isinstance(subannotation, ClassType):
+        for subhint in hint:
+            if not isinstance(subhint, ClassType):
                 raise BeartypeDecorHintValueException(
                     '{} tuple member {} not a class.'.format(
-                        annotation_label, subannotation))
+                        hint_label, subhint))
     # Else, this annotation is of unsupported type. Raise an exception.
     else:
         raise BeartypeDecorHintValueException(
-            '{} {} unsupported (i.e., neither a class nor '
-            'tuple of classes).'.format(annotation_label, annotation))
+            '{} {} unsupported '
+            '(i.e., neither a class nor tuple of classes).'.format(
+                hint_label, hint))
 
 # ....................{ OPTIMIZATION                      }....................
 # If the active Python interpreter is optimized (e.g., option "-O" was passed

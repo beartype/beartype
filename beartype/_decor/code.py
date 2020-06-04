@@ -20,6 +20,20 @@ _CODE_SIGNATURE = '''
 def {func_beartyped_name}(*args, __beartype_func=__beartype_func, **kwargs):
 '''
 
+# ....................{ CODE ~ annotations                }....................
+_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
+'''
+Code snippet accessing the annotation with an arbitrary name formatted into
+this snippet by the caller.
+'''
+
+
+_CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
+'''
+Code snippet accessing the **return annotation** (i.e., annotation synopsizing
+the type hint for this callable's return value).
+'''
+
 # ....................{ CODE ~ param                      }....................
 _CODE_PARAM_VARIADIC_POSITIONAL = '''
     for __beartype_arg in args[{arg_index!r}:]:
@@ -74,15 +88,15 @@ _CODE_STR_REPLACE = '''
     # replaced by the corresponding class, implying this to be the first call
     # to this callable. Perform this replacement in this call, preventing
     # subsequent calls to this callable from repeatedly doing so.
-    if isinstance({annotation_expr}, str):
-        {annotation_type_import_code}
+    if isinstance({hint_expr}, str):
+        {hint_type_import_code}
 
         # Validate this class to be either a class or tuple of classes,
         # preventing this attribute from being yet another classname. (The
         # recursion definitively ends here, folks.)
-        _check_type_annotation(
-            annotation={annotation_type_basename},
-            annotation_label={annotation_label!r},
+        _verify_hint(
+            hint={hint_type_basename},
+            hint_label={hint_label!r},
             is_str_valid=False,
         )
 
@@ -90,7 +104,7 @@ _CODE_STR_REPLACE = '''
         # function's signature by this class -- guaranteeing that subsequent
         # access of this annotation via "__beartype_func.__annotations__"
         # accesses this class rather than this classname.
-        {annotation_expr} = {annotation_type_basename}
+        {hint_expr} = {hint_type_basename}
 '''
 
 
@@ -98,7 +112,7 @@ _CODE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" or "ModuleNotFoundError"
         # exception on failure.
-        from {annotation_type_module_name} import {annotation_type_basename}
+        from {hint_type_module_name} import {hint_type_basename}
 '''
 
 # ....................{ CODE ~ tuple                      }....................
@@ -108,17 +122,17 @@ _CODE_TUPLE_STR_TEST = '''
     # than classnames, implying this to be the first call to this callable.
     # Perform this replacement in this call, preventing subsequent calls to
     # this callable from repeatedly doing so.
-    if isinstance({subannotation_type_name_expr}, str):
+    if isinstance({subhint_type_name_expr}, str):
         # List replacing all classnames in this tuple with the classes with
         # these classnames with which this tuple will be subsequently replaced.
-        __beartype_func_annotation_list = []
+        __beartype_func_hint_list = []
 '''
 
 
 _CODE_TUPLE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" exception on failure.
-        from {subannotation_type_module_name} import {subannotation_type_basename}
+        from {subhint_type_module_name} import {subhint_type_basename}
 '''
 
 
@@ -126,19 +140,19 @@ _CODE_TUPLE_STR_APPEND = '''
         # Validate this member to be a class, preventing this member from being
         # yet another classname or tuple of classes and/or classnames. (The
         # recursion definitively ends here, folks.)
-        if not isinstance({subannotation_type_basename}, type):
+        if not isinstance({subhint_type_basename}, type):
             raise BeartypeException(
-                '{annotation_label} tuple member {{}} not a class.'.format(
-                    {subannotation_type_basename}))
+                '{hint_label} tuple member {{}} not a class.'.format(
+                    {subhint_type_basename}))
 
         # Append this class to this list.
-        __beartype_func_annotation_list.append({subannotation_type_basename})
+        __beartype_func_hint_list.append({subhint_type_basename})
 '''
 
 
 _CODE_TUPLE_CLASS_APPEND = '''
         # Append this class copied from the original tuple to this list.
-        __beartype_func_annotation_list.append({subannotation_expr})
+        __beartype_func_hint_list.append({subhint_expr})
 '''
 
 
@@ -149,37 +163,8 @@ _CODE_TUPLE_REPLACE = '''
         # subsequent access of this annotation via
         # "__beartype_func.__annotations__" accesses this class rather than
         # this classname.
-        {annotation_expr} = tuple(__beartype_func_annotation_list)
+        {hint_expr} = tuple(__beartype_func_hint_list)
 
         # Nullify this list for safety.
-        __beartype_func_annotation_list = None
-'''
-
-# ....................{ CODE ~ annotations                }....................
-# Code constants intentionally deferred to the end of this submodule to
-# circumvent syntax highlighting issues under Vim. *sigh*
-
-_CODE_ANNOTATIONS_PARAM = "__beartype_func.__annotations__[{!r}]"
-'''
-Code snippet accessing the annotation with an arbitrary name formatted into
-this snippet by the caller.
-
-See Also
-----------
-https://github.com/python-mode/python-mode/issues/1083
-    Vim ``python-mode`` issue documenting this trouble caused by this string,
-    which is intentionally double- rather than single-quoted.
-'''
-
-
-_CODE_ANNOTATIONS_RETURN = "__beartype_func.__annotations__['return']"
-'''
-Code snippet accessing the **return annotation** (i.e., annotation synopsizing
-the type hint for this callable's return value).
-
-See Also
-----------
-https://github.com/python-mode/python-mode/issues/1083
-    Vim ``python-mode`` issue documenting this trouble caused by this string,
-    which is intentionally double- rather than single-quoted.
+        __beartype_func_hint_list = None
 '''

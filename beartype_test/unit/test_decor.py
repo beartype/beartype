@@ -226,6 +226,29 @@ def test_decor_pass_return_none() -> None:
     assert xenos(
         'Luna Wolves', diasporex='Iron Hands Legion') is None
 
+# ....................{ TESTS ~ fail                      }....................
+def test_decor_fail_wrappee_type() -> None:
+    '''
+    Test type checking for **invalid wrappees** (i.e., objects *not*
+    decoratable by the :func:`beartype.beartype` decorator).
+    '''
+
+    # Import this decorator.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorWrappeeException
+
+    EARLY_CODICES = ('Book of the Astronomican', 'Slaves to Darkness',)
+
+    # Assert that...
+    with pytest.raises(BeartypeDecorWrappeeException):
+        # Uncallable objects cannot be wrapped by @beartype.
+        beartype(EARLY_CODICES)
+
+        # Callable classes cannot be wrapped by @beartype.
+        @beartype
+        class ImperiumNihilus(object):
+            pass
+
 # ....................{ TESTS ~ fail : param              }....................
 def test_decor_fail_param_name() -> None:
     '''

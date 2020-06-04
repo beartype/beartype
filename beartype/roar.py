@@ -24,12 +24,6 @@ from abc import ABCMeta as _ABCMeta
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-#FIXME: Differentiate these two types of exceptions: e.g.,
-#
-#* Define a new "BeartypeDecorException(BeartypeException)" raised only
-#  at decoration time.
-#* Define a new "BeartypeCheckException(BeartypeException)" raised only at
-#  callable call time.
 class BeartypeException(Exception, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype exceptions.**
@@ -81,13 +75,26 @@ class BeartypeDecorException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeDecorParseException(BeartypeDecorException):
+class BeartypeDecorWrappeeException(BeartypeDecorException):
+    '''
+    **Beartype decorator wrappee exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator if passed a **wrappee** (i.e., object
+    to be decorated by this decorator) of invalid type.
+    '''
+
+    pass
+
+
+class BeartypeDecorWrapperException(BeartypeDecorException):
     '''
     **Beartype decorator parse exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on generating an unparseable (i.e.,
-    syntactically invalid) new callable to wrap the original callable.
+    :func:`beartype.beartype` decorator on accidentally generating an
+    unparseable (i.e., syntactically invalid) new callable to wrap the original
+    callable.
     '''
 
     pass
