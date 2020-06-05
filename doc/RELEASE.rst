@@ -177,7 +177,10 @@ beartype is releasable to all supported platforms as follows:
      ``{version}`` is the current value of the ``beartype.__version__`` global.
    * Remaining lines are a changelog synopsizing the significant changes
      implemented by this release -- ideally in GitHub-flavoured Markdown (GHFM)
-     format, as depicted below.
+     format, as depicted below. Note that this format requires enabling the
+     ``[commit] cleanup = scissors`` setting in the ``~/.gitconfig`` file, as
+     ``git`` otherwise treats lines prefixed by "#" characters (e.g., Markdown
+     headers) in commit messages as ignorable comments to be removed.
 
    For example:
 
