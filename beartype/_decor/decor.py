@@ -306,9 +306,9 @@ from beartype.cave import (
 from beartype.roar import (
     BeartypeDecorHintValueException,
     BeartypeDecorParamNameException,
+    BeartypeDecorPep563EvalException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
-    BeartypePEP563Warning,
 )
 from beartype._util import (
     IS_PYTHON_AT_LEAST_3_7,
@@ -559,7 +559,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # embedding the entire body of this function for debugging purposes.
     except Exception as exception:
         raise BeartypeDecorWrapperException(
-            '@beartype {}() wrapper unparseable:\n{}'.format(
+            '{} wrapper unparseable:\n{}'.format(
                 func_name, func_body)) from exception
 
     # This wrapper.
@@ -654,56 +654,23 @@ def _get_func_sig(func_name: str, func: CallableTypes) -> Signature:
     # annotations to their intended objects *BEFORE* parsing the actual
     # annotations these postponed annotations evaluate to.
     if is_func_hints_postponed:
-        # True only if a warning has already been emitted by iteration below.
-        is_warned = False
+        # print('annotations: {!r}'.format(func.__annotations__))
+
+        # Dictionary mapping from parameter name to resolved annotation for
+        # each annotated parameter of this callable.
+        func_annotations_resolved = {}
 
         # For the parameter name (or "return" for the return value) and
-        # corresponding type hint of each of this callable's annotations...
-        for param_name, param_hint in func.__annotations__:
-            # If this annotation is *NOT* a string and thus *NOT* actually
-            # postponed, safely assume that prior external logic elsewhere
-            # (e.g., yet another third-party runtime type checker) has already
-            # resolved this type hint to its referent.
+        # corresponding annotation of each of this callable's annotations...
+        for param_name, param_hint in func.__annotations__.items():
+            # If this annotation is postponed (i.e., is a string), resolve this
+            # annotation to its referent against the global variables (if any)
+            # defined by the module defining this callable. Note that any local
+            # variables referenced by this annotation are now inaccessible and
+            # *MUST* be ignored, thus raising an exception here on attempting
+            # to evaluate this annotation against a non-inaccessible local.
             #
-            # Note that raising a fatal exception would be overly violent here,
-            # as PEP 563 provides no means of distinguishing expected from
-            # unexpected evaluation of postponed annotations. Did we mention
-            # that PEP 563 is balls awful and an indictment of Guido himself,
-            # who allowed this festering mess that critically breaks backward
-            # compatibility with the Python 3 ecosystem, non-orthogonally
-            # prohibits annotations from accessing local state, unhelpfully
-            # provides no general-purpose API for either detecting objects with
-            # postponed annotations or resolving those annotations, and
-            # dramatically reduces the efficiency of runtime annotation-based
-            # decorators for no particularly good reason? Because it is.
-            if not isinstance(param_hint, str):
-                # If a warning has *NOT* yet been emitted by this iteration...
-                if not is_warned:
-                    # Non-fatal warning message to be emitted.
-                    warning_message = (
-                        '{} parameter {} annotation {!r} not postponed '
-                        '(i.e., not a string); '
-                        'expected postponed annotation, since '
-                        'PEP 563 active for this callable.'
-                    ).format(func_name, param_name, param_hint)
-
-                    # Emit this warning.
-                    warnings.warn(warning_message, BeartypePEP563Warning)
-
-                    # Prevent subsequent non-postponed annotations from
-                    # spamming end users with needlessly redundant warnings.
-                    is_warned = True
-
-                # Continue to the next annotation.
-                continue
-
-            # Resolve this postponed annotation to its referent against the
-            # global variables (if any) defined by the module defining that
-            # function. Note that any local variables referenced by this
-            # annotation are now inaccessible and *MUST* be ignored, thus
-            # raising an exception here on attempting to evaluate this
-            # annotation against a non-inaccessible local. Yes, this is
-            # patently absurd but also unavoidable. To quote PEP 563:
+            # Yes, this is absurd. Yes, this is unavoidable. To quote PEP 563:
             #
             # "When running eval(), the value of globals can be gathered in the
             #  following way:
@@ -713,8 +680,85 @@ def _get_func_sig(func_name: str, func: CallableTypes) -> Signature:
             #  The value of localns cannot be reliably retrieved for functions
             #  because in all likelihood the stack frame at the time of the
             #  call no longer exists."
-            func.__annotations__[param_name] = eval(
-                param_hint, func.__globals__, ())
+            if isinstance(param_hint, str):
+                # Attempt to resolve this postponed annotation to its referent.
+                try:
+                    func_annotations_resolved[param_name] = eval(
+                        param_hint, func.__globals__)
+                # If this fails (as it commonly does), wrap the low-level (and
+                # usually non-human-readable) exception raised by eval() with a
+                # higher-level human-readable beartype-specific exception.
+                except Exception as exception:
+                    raise BeartypeDecorPep563EvalException(
+                        '{} parameter "{}" postponed annotation "{}" '
+                        'not evaluatable.'.format(
+                            func_name, param_name, param_hint)
+                    ) from exception
+            # Else, this annotation is *NOT* postponed (i.e., *NOT* a string).
+            # In this case, silently preserve this annotation as is. Since PEP
+            # 563 provides no means of distinguishing expected from unexpected
+            # evaluation of postponed annotations, either emitting a non-fatal
+            # warning or raising a fatal exception here would be overly
+            # violent. Instead, we conservatively assume that this annotation
+            # was previously postponed but has already been properly resolved
+            # to its referent by external logic elsewhere (e.g., yet another
+            # runtime type checker).
+            #
+            # Did we mention that PEP 563 is a shambolic cesspit of inelegant
+            # language design and thus an indictment of Guido himself, who
+            # approved this festering mess that:
+            #
+            # * Critically breaks backward compatibility throughout the
+            #   well-established Python 3 ecosystem.
+            # * Unhelpfully provides no general-purpose API for either:
+            #   * Detecting postponed annotations on arbitrary objects.
+            #   * Resolving those annotations.
+            # * Dramatically reduces the efficiency of annotation-based
+            #   decorators for no particularly good reason.
+            # * Non-orthogonally prohibits annotations from accessing local
+            #   state.
+            #
+            # Because we should probably mention those complaints here.
+            else:
+                func_annotations_resolved[param_name] = param_hint
+
+        # Replace this callable's postponed annotations with these resolved
+        # annotations all at once for both safety and efficiency.
+        func.__annotations__ = func_annotations_resolved
+
+        # Efficiently and safely resolve all postponed annotations on this
+        # callable all-at-once with a single dictionary comprehension.
+        #
+        # Specifically, for each annotation on this callable that is actually
+        # postponed (i.e., is a string), resolve this annotation to its
+        # referent against the global variables (if any) defined by the module
+        # defining this callable. Note that any local variables referenced by
+        # this annotation are now inaccessible and *MUST* be ignored, thus
+        # raising an exception here on attempting to evaluate this annotation
+        # against a non-inaccessible local.
+        #
+        # Yes, this is absurd. Yes, this is unavoidable. To quote PEP 563:
+        #
+        # "When running eval(), the value of globals can be gathered in the
+        #  following way:
+        #  * function objects hold a reference to their respective globals
+        #    in an attribute called __globals__;
+        #  ...
+        #  The value of localns cannot be reliably retrieved for functions
+        #  because in all likelihood the stack frame at the time of the
+        #  call no longer exists."
+        #
+        func.__annotations__ = {
+            param_name: (
+                # Referent to which this postponed annotation resolves...
+                eval(param_hint, func.__globals__, ())
+                # If this annotation is postponed *OR* this annotation as is.
+                if isinstance(param_hint, str) else param_hint
+            )
+            # For the name of each parameter and annotation on that parameter
+            # for this callable...
+            for param_name, param_hint in func.__annotations__.items()
+        }
 
     # "Signature" instance encapsulating this callable's signature, dynamically
     # parsed by the stdlib "inspect" module from this callable.

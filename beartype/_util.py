@@ -17,13 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 import re, sys
 
 # ....................{ CONSTANTS ~ py                     }....................
-IS_PYTHON_AT_LEAST_4_0 = sys.version >= (4, 0)
+IS_PYTHON_AT_LEAST_4_0 = sys.version_info >= (4, 0)
 '''
 ``True`` only if the active Python interpreter targets at least Python 4.0.0.
 '''
 
 
-IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_4_0 or sys.version >= (3, 7)
+IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 7)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.7.0.
 '''

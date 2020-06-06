@@ -22,7 +22,7 @@ application level (e.g., Pyre_, mypy_, pyright_, pytype_), beartype operates
 exclusively at the fine-grained callable level of pure-Python functions and
 methods via the standard decorator design pattern. This renders beartype
 natively compatible with *all* interpreters and compilers targeting the Python
-language – including CPython_, PyPy_, and Numba_.
+language – including CPython_, PyPy_, Numba_, and Nuitka_.
 
 Unlike comparable runtime type checkers (e.g., pytypes_, typeguard_), beartype
 wraps each decorated callable with a dynamically generated wrapper efficiently
@@ -734,6 +734,8 @@ application stack at tool rather than Python runtime) include:
    https://github.com/python/cpython
 .. _PyPy:
    https://www.pypy.org
+.. _Nuitka:
+   https://nuitka.net
 .. _Numba:
    https://numba.pydata.org
 

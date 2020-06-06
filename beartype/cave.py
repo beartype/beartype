@@ -1066,7 +1066,7 @@ See Also
 '''
 
 
-IntType = IntType = _numbers.Integral
+IntType = _numbers.Integral
 '''
 Type of all **integers** (i.e., concrete instances of the abstract
 :class:`numbers.Integral` base class; real numbers expressible without
