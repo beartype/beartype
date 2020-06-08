@@ -92,9 +92,9 @@ class BeartypeDecorWrapperException(BeartypeDecorException):
     **Beartype decorator parse exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on accidentally generating an
-    unparseable (i.e., syntactically invalid) new callable to wrap the original
-    callable.
+    :func:`beartype.beartype` decorator on accidentally generating an **invalid
+    wrapper** (i.e., syntactically invalid new callable to wrap the original
+    callable).
     '''
 
     pass
@@ -162,7 +162,7 @@ class BeartypeDecorPepException(BeartypeDecorException, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeDecorPep563EvalException(BeartypeDecorPepException):
+class BeartypeDecorPep563Exception(BeartypeDecorPepException):
     '''
     **Beartype decorator** `PEP 563`_ **evaluation exception.**
 

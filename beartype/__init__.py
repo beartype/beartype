@@ -33,7 +33,7 @@ automation.
 # ....................{ IMPORTS                           }....................
 # Publicize the private @beartype._decor.beartype decorator as
 # @beartype.beartype, preserving all implementation details as private.
-from beartype._decor.decor import beartype
+from beartype._decor.main import beartype
 
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.

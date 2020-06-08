@@ -83,13 +83,19 @@ def test_decor_noop() -> None:
     # Import this decorator.
     from beartype import beartype
 
-    # Unannotated function to be type checked.
-    @beartype
+    # Undecorated unannotated function.
     def khorne(gork, mork):
         return gork + mork
 
+    # Decorated unannotated function.
+    khorne_typed = beartype(khorne)
+
+    # Assert that @beartype efficiently reduced to a noop (i.e., the identity
+    # decorator) by simply returning the undecorated callable as is.
+    assert khorne_typed is khorne
+
     # Call this function and assert the expected return value.
-    assert khorne('WAAAGH!', '!HGAAAW') == 'WAAAGH!!HGAAAW'
+    assert khorne_typed('WAAAGH!', '!HGAAAW') == 'WAAAGH!!HGAAAW'
 
 # ....................{ TESTS ~ pass : param              }....................
 def test_decor_pass_param_position_keyword() -> None:
