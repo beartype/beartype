@@ -202,6 +202,51 @@ Let's type-check like greased lightning:
        def bare_settermethod(self, bad: IntType = 0xBAAAAAAD) -> NoneType:
            self._scalar = bad if bad else 0xBADDCAFE
 
+Features
+========
+
++------------+---------------------+-------------------------+---------------------------------------------------------+
+| feature    |                     | versions                | note                                                    |
++============+=====================+=========================+=========================================================+
+| callables  | coroutines          | *none*                  |                                                         |
++------------+---------------------+-------------------------+---------------------------------------------------------+
+| parameters | keyword-only        | **0.1.0**\ —\ *current* |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | positional-only     | *none*                  |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | variadic keyword    | *none*                  |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | variadic positional | **0.1.0**\ —\ *current* |                                                         |
++------------+---------------------+-------------------------+---------------------------------------------------------+
+| PEP        | `484 <PEP 484_>`__  | *none*                  | Beartype will *never* offer full `PEP 484`_ compliance. |
+|            |                     |                         | Doing so would violate                                  |
+|            |                     |                         | ``O(1)`` time complexity guarantees,                    |
+|            |                     |                         | other PEPs which `PEP 484`_ `itself violates            |
+|            |                     |                         | <PEP 484 numbers_>`__ (e.g., `PEP 3141`_),              |
+|            |                     |                         | and preferable beartype-specific features (e.g.,        |
+|            |                     |                         | fully-qualified forward references).                    |
+|            |                     |                         | In short, `PEP 484`_ is `problematic                    |
+|            |                     |                         | <PEP 484 & Friends_>`__.                                |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | `544 <PEP 544_>`__  | *none*                  |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | `563 <PEP 563_>`__  | **0.1.1**\ —\ *current* |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | `585 <PEP 585_>`__  | *none*                  |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | `586 <PEP 586_>`__  | *none*                  |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | `589 <PEP 589_>`__  | *none*                  |                                                         |
++------------+---------------------+-------------------------+---------------------------------------------------------+
+| Python     | 3.5                 | **0.1.0**\ —\ *current* |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | 3.6                 | **0.1.0**\ —\ *current* |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | 3.7                 | **0.1.0**\ —\ *current* |                                                         |
+|            +---------------------+-------------------------+---------------------------------------------------------+
+|            | 3.8                 | **0.1.0**\ —\ *current* |                                                         |
++------------+---------------------+-------------------------+---------------------------------------------------------+
+
 Usage
 =====
 
@@ -228,7 +273,7 @@ and returning a tuple:
    from beartype import beartype
 
    @beartype
-   def law_of_the_jungle(wolf: str, pack: dict) -> tuple: 
+   def law_of_the_jungle(wolf: str, pack: dict) -> tuple:
        return (wolf, pack[wolf]) if wolf in pack else None
 
 Let's call that function with good types:
@@ -267,15 +312,13 @@ this function's implementation and/or return type annotation:
    beartype.roar.BeartypeCallTypeReturnException: @beartyped law_of_the_jungle() return value None not a <class 'tuple'>.
 
 *Bad function.* Let's conveniently resolve this by permitting this function to
-return either a tuple or ``None``:
-
-.. # as `detailed below <Tuples of Arbitrary Types_>`__:
+return either a tuple or ``None`` as `detailed below <Unions of Types_>`__:
 
 .. code-block:: python
 
    >>> from beartype.cave import NoneType
    >>> @beartype
-   ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, NoneType): 
+   ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, NoneType):
    ...     return (wolf, pack[wolf]) if wolf in pack else None
    >>> law_of_the_jungle(wolf='Leela', pack={'Akela': 'alone', 'Raksha': 'protection'})
    None
@@ -293,7 +336,7 @@ listed in place of ``NoneType`` above: e.g.,
 .. code-block:: python
 
    >>> @beartype
-   ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, type(None)): 
+   ... def law_of_the_jungle(wolf: str, pack: dict) -> (tuple, type(None)):
    ...     return (wolf, pack[wolf]) if wolf in pack else None
    >>> law_of_the_jungle(wolf='Leela', pack={'Akela': 'alone', 'Raksha': 'protection'})
    None
@@ -327,11 +370,11 @@ in a strictly typed manner, *just 'cause*:
 
    class MaximsOfBaloo(object):
        @beartype
-       def __init__(self, sayings: IterableType): 
+       def __init__(self, sayings: IterableType):
            self.sayings = sayings
 
    @beartype
-   def inform_baloo(maxims: MaximsOfBaloo) -> GeneratorType: 
+   def inform_baloo(maxims: MaximsOfBaloo) -> GeneratorType:
        for saying in maxims.sayings:
            yield saying
 
@@ -562,14 +605,17 @@ type-checking, including (but *not* limited to):
 
 * `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
 * `PEP 484 -- Type Hints <PEP 484_>`__.
+* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
-* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
+
+Efficiency Concerns
+~~~~~~~~~~~~~~~~~~~
 
 Why? Because implementing even the core `PEP 484`_ standard in pure Python
 while preserving beartype's ``O(1)`` time complexity guarantee is infeasible.
@@ -579,7 +625,7 @@ decorating a hypothetical callable accepting a list of strings and returning
 anything, like so:
 
 .. code-block:: python
-   
+
    from slothtype import slothtype
    from typing import Any, List
 
@@ -602,14 +648,40 @@ type to cache the result of prior type-checks of lists previously passed to
 ``slothful`` and invalidating these caches on external changes to these lists)
 but *must* instead be paid on each call to ``slothful``. Ergo, ``Ω(n)``.
 
+Safety Concerns
+~~~~~~~~~~~~~~~
+
+**That's not all,** though. `PEP 484`_ itself violates prior PEPs, including:
+
+* `PEP 3141 -- A Type Hierarchy for Numbers <PEP 3141_>`__, which `PEP 484`_
+  authors `subjectively deride without evidence or explanation as suffering
+  "some issues" <PEP 484 numbers_>`__ despite offering only a substantially
+  *worse* solution – seemingly just to promote the abstract type hierarchy
+  defined by the `"typing" module`_ over those defined by other (presumably
+  "lesser") stdlib modules. Rather than reuse the `existing numeric tower used
+  by all third-party numeric frameworks <"numbers" module>`_ (e.g., `NumPy`_,
+  `SymPy`_), fully compliant `PEP 484`_ type checkers instead silently coerce
+  callables annotated as accepting or returning `float` types into *also*
+  accepting or returning `int` types. Clearly, integers are *not*
+  floating-point numbers and exhibit markedly different characteristics. Under
+  `PEP 484`_, preserving these distinctions is infeasible.
+* The entirety of `PEP 20 -- The Zen of Python <PEP 20_>`__, especially the
+  sanity-preserving and safety-enhancing "Explicit is better than implicit"
+  maxim, which `PEP 484`_ repeatedly violates by implicitly coercing:
+
+    * The non-type ``None`` singleton to ``type(None)``.
+    * ``complex`` to ``Union[complex, float, int]``.
+    * ``float`` to ``Union[float, int]``.
+
 PEP 484 & Friends (Redux)
 -------------------------
 
 Beartype does intend to support the proper subset of `PEP 484`_ (and its
-vituperative band of ne'er-do-wells) that *is* efficiently implementable in
-pure Python – whatever that is. Full compliance may be off the map, but at
-least partial compliance with the portions of these standards that average
-users care about is well within the realm of "maybe?".
+vituperative band of ne'er-do-wells) that both complies with prior PEPs *and*
+is efficiently implementable in pure Python – whatever that is. Full compliance
+will always be off the map, but at least partial compliance with the portions
+of these standards that average users care about is well within the realm of
+"...maybe?".
 
 Preserving beartype's ``O(1)`` time complexity guarantee is the ultimate
 barometer for what will be and will not be implemented. That and @leycec's
@@ -618,11 +690,12 @@ declining sanity. Our bumpy roadmap to a better-typed future now resembles:
 +------------------+--------------------------------+
 | Beartype version | Partial PEP compliance planned |
 +------------------+--------------------------------+
-| **0.2.0**        | PEP 563                        |
-| **1.0.0**        | PEP 484                        |
-| **2.0.0**        | PEP 544                        |
-| **3.0.0**        | PEP 586                        |
-| **4.0.0**        | PEP 589                        |
+| **0.2.0**        | `PEP 563`_                     |
+| **1.0.0**        | `PEP 484`_                     |
+| **1.1.0**        | `PEP 585`_                     |
+| **2.0.0**        | `PEP 544`_                     |
+| **3.0.0**        | `PEP 586`_                     |
+| **4.0.0**        | `PEP 589`_                     |
 +------------------+--------------------------------+
 
 If we wish upon a GitHub star, even the improbable is possible.
@@ -746,10 +819,10 @@ application stack at tool rather than Python runtime) include:
    https://www.sympy.org
 
 .. # ------------------( LINKS ~ py : pep                   )------------------
+.. _PEP 20:
+   https://www.python.org/dev/peps/pep-0020
 .. _PEP 483:
    https://www.python.org/dev/peps/pep-0483
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 .. _PEP 526:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
@@ -762,6 +835,20 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0586
 .. _PEP 589:
    https://www.python.org/dev/peps/pep-0589
+.. _PEP 3141:
+   https://www.python.org/dev/peps/pep-3141
+
+.. # ------------------( LINKS ~ py : pep : 484             )------------------
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+.. _PEP 484 numbers:
+   https://www.python.org/dev/peps/pep-0484/#id27
+
+.. # ------------------( LINKS ~ py : stdlib                )------------------
+.. _"numbers" module:
+   https://docs.python.org/3/library/numbers.html
+.. _"typing" module:
+   https://docs.python.org/3/library/typing.html
 
 .. # ------------------( LINKS ~ py : test                  )------------------
 .. _pytest:
