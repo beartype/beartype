@@ -653,15 +653,17 @@ Safety Concerns
 * `PEP 3141 -- A Type Hierarchy for Numbers <PEP 3141_>`__, which `PEP 484`_
   authors `subjectively deride without evidence or explanation as suffering
   "some issues" <PEP 484 numbers_>`__ despite offering only a substantially
-  *worse* solution – seemingly just to promote the abstract type hierarchy
-  defined by the `"typing" module`_ over those defined by other (presumably
-  "lesser") stdlib modules. Rather than reuse the `existing numeric tower used
-  by all third-party numeric frameworks <"numbers" module>`_ (e.g., `NumPy`_,
-  `SymPy`_), fully compliant `PEP 484`_ type checkers instead silently coerce
-  callables annotated as accepting or returning `float` types into *also*
-  accepting or returning `int` types. Clearly, integers are *not*
-  floating-point numbers and exhibit markedly different characteristics. Under
-  `PEP 484`_, preserving these distinctions is infeasible.
+  *worse* solution – seemingly just to promote the type hierarchy defined by
+  the `"typing" module`_ over those defined by other (presumably lesser)
+  modules. Rather than reuse the `existing numeric tower used by all
+  third-party numeric frameworks <"numbers" module>`_ (e.g., `NumPy`_,
+  `SymPy`_), `PEP 484`_-compliant type checkers instead silently coerce
+  ``float`` types into ``Union[float, int]`` types and ``complex`` types into
+  ``Union[complex, float, int]`` types. This is blatantly bad. A function
+  internally guaranteed to return a floating-point number *never* returns an
+  integer. Integers, floating point numbers, and complex numbers exhibit
+  markedly different usage, safety, and performance characteristics. Under `PEP
+  484`_, preserving these distinctions is infeasible.
 * The entirety of `PEP 20 -- The Zen of Python <PEP 20_>`__, especially the
   sanity-preserving and safety-enhancing "Explicit is better than implicit"
   maxim, which `PEP 484`_ repeatedly violates by implicitly coercing:
