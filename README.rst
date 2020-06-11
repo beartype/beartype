@@ -691,7 +691,7 @@ Let's chart current and prospective new features for future generations:
 +------------+-------------------------------------+-------------------------+---------------------------------------+
 |            | ``SupportsRound``                   | *none*                  |                                       |
 +------------+-------------------------------------+-------------------------+---------------------------------------+
-|            | ``Text``                            | *none*                  |                                       |
+|            | ``Text``                            | **0.1.0**\ —\ *current* |                                       |
 +------------+-------------------------------------+-------------------------+---------------------------------------+
 |            | ``TextIO``                          | *none*                  |                                       |
 +------------+-------------------------------------+-------------------------+---------------------------------------+
@@ -744,7 +744,6 @@ Beartype does *not* currently support the following type-checking-centric
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
-* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
@@ -758,7 +757,7 @@ while preserving beartype's ``O(1)`` time complexity guarantee is infeasible.
 
 Consider a hypothetical `PEP 484`_-compliant ``@slothtype`` decorator
 decorating a hypothetical callable accepting a list of strings and returning
-anything, like so:
+anything:
 
 .. code-block:: python
 
@@ -771,10 +770,10 @@ anything, like so:
 
 This is hardly the worst-case usage scenario. By compare to some of the more
 grotesque outliers enabled by the ``typing`` API (e.g., infinitely recursive
-type annotations), a non-nested iterable of scalars is rather tame. Sadly,
-``slothful`` still exhibits ``Ω(n)`` time complexity for ``n`` the size of the
-passed list, where ``Ω`` may be read as "at least as asymptotically complex as"
-under the standard Knuth definition.
+types), a non-nested iterable of scalars is rather tame. Sadly, ``slothful``
+still exhibits ``Ω(n)`` time complexity for length ``n`` of the passed list,
+where ``Ω`` may be read as "at least as asymptotically complex as" under the
+standard Knuth definition.
 
 **That's bad.** Each call to ``slothful`` now type-checks each item of a list
 of arbitrary size *before* performing any meaningful work. Python prohibits
@@ -924,7 +923,7 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ beartype : issues          )------------------
 
 .. # ------------------( LINKS ~ compsci                    )------------------
-.. covariance:
+.. _covariance:
    https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
 .. # ------------------( LINKS ~ kipling                    )------------------
