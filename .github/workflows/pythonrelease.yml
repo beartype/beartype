@@ -18,7 +18,7 @@
 # ....................{ METADATA                          }....................
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
-name: release
+name: "New stable version packaging and distribution."
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
 
   # ...................{ PYPI                              }...................
   pypi:
-    needs: github
+    needs: release
 
     name: "Publish tagged release to PyPI"
     runs-on: ubuntu-latest

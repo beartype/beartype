@@ -51,13 +51,13 @@ beartype is releasable to all supported platforms as follows:
 
    #. Install the ``collective.checkdocs`` Python package.
 
-      .. code-block:: console
+      .. code-block:: shell-session
 
          $ sudo pip3 install collective.checkdocs
 
    #. Validate the PyPI-specific compatilibility of `this file <readme_>`__.
 
-      .. code-block:: console
+      .. code-block:: shell-session
 
          $ python3 setup.py checkdocs
 
@@ -71,13 +71,13 @@ beartype is releasable to all supported platforms as follows:
    dependency augments setuptools with the ``bdist_wheel`` subcommand invoked
    below when locally testing the generation of binary wheels.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ sudo pip3 install wheel
 
 #. (\ *Optional*\ ) **Test packaging both a source tarball and binary wheel.**
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ python3 setup.py sdist bdist_wheel
 
@@ -85,7 +85,7 @@ beartype is releasable to all supported platforms as follows:
    ``${version}`` is the purely numeric version of this release (e.g.,
    ``0.4.1``). Verify by inspection that no unwanted paths were packaged.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ tar -tvzf dist/beartype-${version}.tar.gz | less
 
@@ -97,26 +97,26 @@ beartype is releasable to all supported platforms as follows:
 
       #. **Create a new empty (venv)** (i.e., virtual environment).
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ python3 -m venv --clear /tmp/beartype-sdist
 
       #. **Install this source tarball into this venv.**\ [#venv]_
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ /tmp/beartype-sdist/bin/pip3 install wheel
             $ /tmp/beartype-sdist/bin/pip3 install dist/beartype-${version}.tar.gz
 
       #. **Test this release from this venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ cd /tmp && /tmp/beartype-sdist/bin/beartype try
 
       #. **Remove this venv and return to the prior directory.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ rm -rf /tmp/beartype-sdist && cd -
 
@@ -124,27 +124,27 @@ beartype is releasable to all supported platforms as follows:
 
       #. **Create a new empty venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ python3 -m venv --clear /tmp/beartype-wheel
 
       #. **Install this binary wheel into this venv.**\ [#venv]_
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ /tmp/beartype-wheel/bin/pip3 install \
               dist/beartype-${version}-py3-none-any.whl
 
       #. **Test this release from this venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ cd /tmp && /tmp/beartype-wheel/bin/beartype try
 
       #. **Remove this venv and sample simulation and return to the prior
          directory.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ rm -rf /tmp/beartype-wheel /tmp/sample_sim && cd -
 
@@ -157,7 +157,7 @@ beartype is releasable to all supported platforms as follows:
 #. (\ *Optional*\ ) **List all existing tags.** For reference, listing all
    previously created tags *before* creating new tags is often advisable.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ git tag
 
@@ -167,7 +167,7 @@ beartype is releasable to all supported platforms as follows:
    instability into an otherwise stable release. Of course, this assumes that
    the prior non-empty commit passed all continuous integration (CI) hosts.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ git commit --allow-empty
 
@@ -245,7 +245,7 @@ beartype is releasable to all supported platforms as follows:
      ``beartype.__version__`` global.
    * Message is the same commit message created above.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ git tag -a v{version}
 
@@ -271,7 +271,7 @@ beartype is releasable to all supported platforms as follows:
    typically require manual intervention. **This release has now been
    officially distributed to GitHub and PyPI.**
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ git push && git push --tags
 
@@ -280,7 +280,7 @@ beartype is releasable to all supported platforms as follows:
    that subsequent attempts to install downstream packages requiring this
    version (e.g., BETSE_, BETSEE_) will behave as expected.
 
-   .. code-block:: console
+   .. code-block:: shell-session
 
       $ pip3 install -e .
 
@@ -295,7 +295,7 @@ beartype is releasable to all supported platforms as follows:
          `official instructions <Test PyPI instructions_>`__ for doing so.
       #. **Register this project with** `Test PyPI`_.
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ python3 setup.py register -r testpypi
 
@@ -306,33 +306,33 @@ beartype is releasable to all supported platforms as follows:
 
       #. **Upload this source tarball and binary wheel to** `Test PyPI`_.
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ twine upload -r testpypi dist/beartype-${version}*
 
       #. **Create a new empty venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ python3 -m venv --clear /tmp/beartype-pypi
 
       #. **Install this release into this venv.**\ [#venv]_
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ /tmp/beartype-pypi/bin/pip3 install \
               install -i https://testpypi.python.org/pypi beartype
 
       #. **Test this release from this venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ cd /tmp && /tmp/beartype-pypi/bin/beartype try
 
       #. **Remove this venv and sample simulation and return to the prior
          directory.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ rm -rf /tmp/beartype-pypi /tmp/sample_sim && cd -
 
@@ -352,12 +352,18 @@ beartype is releasable to all supported platforms as follows:
       upload (and hence creation) for this project.
    #. **Create a** ``~/.pypirc`` **dotfile,** ideally by following the
       `official instructions <Test PyPI instructions_>`__ for doing so.
+   #. **Package both a source tarball and binary wheel.**
+
+      .. code-block:: shell-session
+
+         $ python3 setup.py sdist bdist_wheel
+
    #. **Upload this source tarball and binary wheel to** `PyPI`_. If this is
       the first such upload for this project, a `PyPI`_-hosted project page
       will be implicitly created by this upload. `PyPI` neither requires,
       recommends, nor supports end user intervention in this process.
 
-      .. code-block:: console
+      .. code-block:: shell-session
 
          $ twine upload dist/beartype-${version}*
 
@@ -370,26 +376,26 @@ beartype is releasable to all supported platforms as follows:
 
       #. **Create a new empty venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ python3 -m venv --clear /tmp/beartype-pypi
 
       #. **Install this release into this venv.**\ [#venv]_
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ /tmp/beartype-pypi/bin/pip3 install beartype
 
       #. **Test this release from this venv.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ cd /tmp && /tmp/beartype-pypi/bin/beartype try
 
       #. **Remove this venv and sample simulation and return to the prior
          directory.**
 
-         .. code-block:: console
+         .. code-block:: shell-session
 
             $ rm -rf /tmp/beartype-pypi /tmp/sample_sim && cd -
 
@@ -409,7 +415,7 @@ beartype is releasable to all supported platforms as follows:
      #. Locally clone this forked feedstock repository.
      #. Locally create a new branch of this repository specific to this update.
 
-        .. code-block:: console
+        .. code-block:: shell-session
 
            $ git checkout -b beartype-${version}
 
@@ -427,13 +433,13 @@ beartype is releasable to all supported platforms as follows:
 
      #. Locally stage and commit these changes.
 
-        .. code-block:: console
+        .. code-block:: shell-session
 
            $ git commit --all
 
      #. Locally push these changes to the upstream fork.
 
-        .. code-block:: console
+        .. code-block:: shell-session
 
            $ git push --set-upstream origin beartype-v${version}
 
