@@ -255,6 +255,34 @@ def test_decor_fail_wrappee_type() -> None:
         class ImperiumNihilus(object):
             pass
 
+
+def test_decor_fail_hint_unhashable() -> None:
+    '''
+    Test type checking for **unhashable annotations** (i.e., annotations that
+    are *not* hashable and thus neither classes, strings, tuples, nor tuples of
+    classes and/or strings).
+    '''
+
+    # Import this decorator.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorHintValueException
+
+    # Assert the expected exception from attempting to type check a function
+    # with an unhashable parameter annotation.
+    with pytest.raises(BeartypeDecorHintValueException):
+        @beartype
+        def before_the_fall(
+            craftworld: ['Alaitoc', 'Black Library', 'Biel-Tan',]) -> str:
+            return craftworld[0]
+
+    # Assert the expected exception from attempting to type check a function
+    # with an unhashable return value annotation.
+    with pytest.raises(BeartypeDecorHintValueException):
+        @beartype
+        def after_the_fall(craftworld: str) -> [
+            'Iyanden', 'Saim-Hann', 'Ulthwé',]:
+            return [craftworld,]
+
 # ....................{ TESTS ~ fail : param              }....................
 def test_decor_fail_param_name() -> None:
     '''

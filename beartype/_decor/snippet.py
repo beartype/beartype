@@ -16,26 +16,26 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CODE                              }....................
-_CODE_SIGNATURE = '''
+CODE_SIGNATURE = '''
 def {func_beartyped_name}(*args, __beartype_func=__beartype_func, **kwargs):
 '''
 
 # ....................{ CODE ~ annotations                }....................
-_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
+CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
 '''
 Code snippet accessing the annotation with an arbitrary name formatted into
 this snippet by the caller.
 '''
 
 
-_CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
+CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
 '''
 Code snippet accessing the **return annotation** (i.e., annotation synopsizing
 the type hint for this callable's return value).
 '''
 
 # ....................{ CODE ~ param                      }....................
-_CODE_PARAM_VARIADIC_POSITIONAL = '''
+CODE_PARAM_VARIADIC_POSITIONAL = '''
     for __beartype_arg in args[{arg_index!r}:]:
         if not isinstance(__beartype_arg, {arg_type_expr}):
             raise __beartype_param_exception(
@@ -45,7 +45,7 @@ _CODE_PARAM_VARIADIC_POSITIONAL = '''
 '''
 
 
-_CODE_PARAM_KEYWORD_ONLY = '''
+CODE_PARAM_KEYWORD_ONLY = '''
     if {arg_name!r} in kwargs and not isinstance(
         {arg_value_key_expr}, {arg_type_expr}):
         raise __beartype_param_exception(
@@ -55,35 +55,35 @@ _CODE_PARAM_KEYWORD_ONLY = '''
 '''
 
 
-_CODE_PARAM_POSITIONAL_OR_KEYWORD = '''
+CODE_PARAM_POSITIONAL_OR_KEYWORD = '''
     if not (
         isinstance({arg_value_pos_expr}, {arg_type_expr})
-        if {arg_index} < len(args) else
+        if len(args) > {arg_index} else
         isinstance({arg_value_key_expr}, {arg_type_expr})
         if {arg_name!r} in kwargs else True):
             raise __beartype_param_exception(
                 '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim({arg_value_pos_expr} if {arg_index} < len(args) else {arg_value_key_expr}),
+                __beartype_trim({arg_value_pos_expr} if len(args) > {arg_index} else {arg_value_key_expr}),
                 {arg_type_expr}))
 '''
 
-# ....................{ CODE ~ call                       }....................
-_CODE_CALL_CHECKED = '''
+# ....................{ CODE ~ return                     }....................
+CODE_RETURN_CHECKED = '''
     __beartype_return_value = __beartype_func(*args, **kwargs)
-    if not isinstance(__beartype_return_value, {return_type}):
+    if not isinstance(__beartype_return_value, {return_type_expr}):
         raise __beartype_return_exception(
             '{func_name} return value {{}} not a {{!r}}.'.format(
-                __beartype_trim(__beartype_return_value), {return_type}))
+                __beartype_trim(__beartype_return_value), {return_type_expr}))
     return __beartype_return_value
 '''
 
 
-_CODE_CALL_UNCHECKED = '''
+CODE_RETURN_UNCHECKED = '''
     return __beartype_func(*args, **kwargs)
 '''
 
-# ....................{ CODE ~ str                        }....................
-_CODE_STR_REPLACE = '''
+# ....................{ CODE ~ reference : str            }....................
+CODE_STR_REPLACE = '''
     # If this annotation is still a classname, this annotation has yet to be
     # replaced by the corresponding class, implying this to be the first call
     # to this callable. Perform this replacement in this call, preventing
@@ -94,7 +94,7 @@ _CODE_STR_REPLACE = '''
         # Validate this class to be either a class or tuple of classes,
         # preventing this attribute from being yet another classname. (The
         # recursion definitively ends here, folks.)
-        _verify_hint(
+        __beartype_verify_hint(
             hint={hint_type_basename},
             hint_label={hint_label!r},
             is_str_valid=False,
@@ -103,20 +103,20 @@ _CODE_STR_REPLACE = '''
         # Replace the external copy of this annotation stored in this
         # function's signature by this class -- guaranteeing that subsequent
         # access of this annotation via "__beartype_func.__annotations__"
-        # accesses this class rather than this classname.
+        # access this class rather than this classname.
         {hint_expr} = {hint_type_basename}
 '''
 
 
-_CODE_STR_IMPORT = '''
+CODE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" or "ModuleNotFoundError"
         # exception on failure.
         from {hint_type_module_name} import {hint_type_basename}
 '''
 
-# ....................{ CODE ~ tuple                      }....................
-_CODE_TUPLE_STR_TEST = '''
+# ....................{ CODE ~ reference : tuple          }....................
+CODE_TUPLE_STR_TEST = '''
     # If the first classname in this annotation is still a classname, this
     # annotation has yet to be replaced by a tuple containing classes rather
     # than classnames, implying this to be the first call to this callable.
@@ -129,14 +129,14 @@ _CODE_TUPLE_STR_TEST = '''
 '''
 
 
-_CODE_TUPLE_STR_IMPORT = '''
+CODE_TUPLE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" exception on failure.
         from {subhint_type_module_name} import {subhint_type_basename}
 '''
 
 
-_CODE_TUPLE_STR_APPEND = '''
+CODE_TUPLE_STR_APPEND = '''
         # Validate this member to be a class, preventing this member from being
         # yet another classname or tuple of classes and/or classnames. (The
         # recursion definitively ends here, folks.)
@@ -150,13 +150,13 @@ _CODE_TUPLE_STR_APPEND = '''
 '''
 
 
-_CODE_TUPLE_CLASS_APPEND = '''
+CODE_TUPLE_CLASS_APPEND = '''
         # Append this class copied from the original tuple to this list.
         __beartype_func_hint_list.append({subhint_expr})
 '''
 
 
-_CODE_TUPLE_REPLACE = '''
+CODE_TUPLE_REPLACE = '''
         # Replace the external copy of this annotation stored in this
         # function's signature by this list coerced back into a tuple for
         # conformance with isinstance() constraints -- guaranteeing that

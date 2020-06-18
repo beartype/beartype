@@ -140,8 +140,7 @@ Let's type-check like greased lightning:
            IterableType, 'my_package.my_module.MyOtherClass', NoneType,),
 
        # Annotate unions of types as tuples concatenated together.
-       param8_may_be_any_of_several_concatenated_types: (
-           IteratorType,) + ScalarTypes,
+       param8_may_be_any_of_several_concatenated_types: (IteratorType,) + ScalarTypes,
 
        # Annotate optional types by indexing "NoneTypeOr" with those types. In
        # PEP 484, this is:

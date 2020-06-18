@@ -7,10 +7,9 @@
 **Beartype decorator signature introspection.**
 
 This private submodule introspects the signatures of callables to be decorated
-by the :func:`beartype.beartype` decorator. Notably, this submodule implements:
-
-* `PEP 563`_ (i.e., Postponed Evaluation of Annotations) support by safely
-  resolving all postponed annotations on this callable to their referents.
+by the :func:`beartype.beartype` decorator. Notably, this submodule implements
+`PEP 563`_ (i.e., Postponed Evaluation of Annotations) support by safely
+resolving all postponed annotations on this callable to their referents.
 
 This private submodule is *not* intended for importation by downstream callers.
 
