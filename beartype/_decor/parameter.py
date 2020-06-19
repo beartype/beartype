@@ -28,7 +28,7 @@ from beartype._decor.snippet import (
     CODE_PARAM_POSITIONAL_OR_KEYWORD,
     CODE_PARAM_HINT,
 )
-# from beartype.cave import ()
+from beartype.cave import (AnyType,)
 from beartype.roar import (
     BeartypeDecorParamNameException,
 )
@@ -38,7 +38,7 @@ from inspect import Parameter, Signature
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_PARAM_HINT_IGNORABLE = {Parameter.empty,}
+_PARAM_HINT_IGNORABLE = {Parameter.empty, AnyType,}
 '''
 Set of all parameter annotation types to be ignored during annotation-based
 type checking in the :func:`beartype` decorator.
@@ -47,6 +47,11 @@ This includes:
 
 * The :class:`Parameter.empty` type, denoting **unannotated parameters** (i.e.,
   parameters *not* annotated with a type hint).
+* The :class:`AnyType` type, synonymous with the builtin :class:`object` class.
+  Since :class:`object` is the transitive superclass of all classes, parameters
+  annotated as :class:`object` unconditionally match *all* objects under
+  :func:`isinstance`-based type covariance and are thus equivalent to
+  unannotated parameters.
 '''
 
 

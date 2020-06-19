@@ -267,7 +267,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import functools
 from beartype._decor import parameter, returnval, signature
-from beartype._decor.snippet import CODE_SIGNATURE
+from beartype._decor.snippet import CODE_SIGNATURE, CODE_RETURN_UNCHECKED
 from beartype.cave import (
     CallableTypes,
     ClassType,
@@ -391,6 +391,10 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # "Signature" instance encapsulating this callable's signature.
     func_sig = signature.get_func_signature(func=func, func_name=func_name)
 
+    # Python code declaring the signature of the wrapper defined below.
+    func_code_sig = CODE_SIGNATURE.format(
+        func_beartyped_name=func_beartyped_name)
+
     # Raw string of Python statements comprising the body of this wrapper,
     # including (in order):
     #
@@ -417,13 +421,35 @@ def beartype(func: CallableTypes) -> CallableTypes:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is thankfully the most ideal.
-    func_body = '{}{}{}'.format(
-        CODE_SIGNATURE.format(func_beartyped_name=func_beartyped_name),
+    func_code = '{}{}{}'.format(
+        func_code_sig,
         parameter.get_code_checking_params(
             func_name=func_name, func_sig=func_sig),
         returnval.get_code_checking_return(
             func_name=func_name, func_sig=func_sig),
     )
+
+    # If this wrapper proxies this callable *WITHOUT* type checking,
+    # efficiently reduce to a noop (i.e., the identity decorator) by returning
+    # this callable as is.
+    #
+    # Note this edge case is distinct from the related edge case above that
+    # similarly reduces to a noop for unannotated callables. This edge case is
+    # triggered for annotated callables whose annotations are all ignorable
+    # (e.g., "beartype.cave.AnyType", "object", "typing.Any"): e.g.,
+    #
+    #     >>> from beartype.cave import AnyType
+    #     >>> from typing import Any
+    #     >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any:
+    #     ...     pass
+    #     >>> muh_func is beartype(muh_func)
+    #     True
+    if func_code == func_code_sig + CODE_RETURN_UNCHECKED:
+        return func
+
+    #FIXME: Exercise this edge case by ensuring that the following is a noop:
+    #    @beartype
+    #    def fun(param: typing.Any) -> typing.Any: pass
 
     # Dictionary mapping from local attribute names to values passed to the
     # module-scoped outermost definition (but *NOT* the actual body) of this
@@ -470,7 +496,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     #stdlib @functools.wraps() decorator is probably the optimal solution for
     #preserving metadata on the original callable into our wrapper callable.
     #While we absolutely should *NOT* depend on that or any other third-party
-    #package, that package's implementation should lend useful insight.
+    #package, that package's implementation should lend us useful insight.
 
     # Attempt to define this wrapper as a closure of this decorator. For
     # obscure and presumably uninteresting reasons, Python fails to locally
@@ -480,9 +506,10 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # Note that the same result may also be achieved via the compile() builtin
     # and "types.FunctionType" class: e.g.,
     #
-    #     func_code = compile(func_body, "<string>", "exec").co_consts[0]
+    #     func_code_compiled = compile(
+    #         func_code, "<string>", "exec").co_consts[0]
     #     return types.FunctionType(
-    #         code=func_code,
+    #         code=func_code_compiled,
     #         globals=globals(),
     #         argdefs=('__beartype_func', func)
     #     )
@@ -490,14 +517,14 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print('@beartype {}() wrapper\n{}'.format(func_name, func_body))
-        exec(func_body, globals(), local_attrs)
+        # print('@beartype {}() wrapper\n{}'.format(func_name, func_code))
+        exec(func_code, globals(), local_attrs)
     # If doing so fails for any reason, raise a decorator-specific exception
     # embedding the entire body of this function for debugging purposes.
     except Exception as exception:
         raise BeartypeDecorWrapperException(
             '{} wrapper unparseable:\n{}'.format(
-                func_name, func_body)) from exception
+                func_name, func_code)) from exception
 
     # This wrapper.
     #

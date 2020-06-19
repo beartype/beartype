@@ -27,7 +27,7 @@ from beartype._decor.snippet import (
     CODE_RETURN_UNCHECKED,
     CODE_RETURN_HINT,
 )
-# from beartype.cave import ()
+from beartype.cave import (AnyType,)
 # from beartype.roar import ()
 from inspect import Signature
 
@@ -35,7 +35,7 @@ from inspect import Signature
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_RETURN_HINT_IGNORABLE = {Signature.empty, None}
+_RETURN_HINT_IGNORABLE = {Signature.empty, AnyType,}
 '''
 Set of all return value annotation types to be ignored during annotation-based
 type checking in the :func:`beartype` decorator.
@@ -44,12 +44,8 @@ This includes:
 
 * The :class:`Signature.empty` type, denoting **unannotated return values**
   (i.e., return values *not* annotated with a type hint).
-* ``None``, signifying a callable returning no value. By convention, callables
-  returning no value are typically annotated to return ``None``. Technically,
-  callables whose return values are annotated as ``None`` *could* be explicitly
-  checked to return ``None`` rather than a none-``None`` value. Since return
-  values are safely ignorable by callers, however, there appears to be little
-  real-world utility in enforcing this constraint.
+* The :class:`AnyType` type. See the comparable set global constant
+  :attr:`beartype._decor.parameter._PARAM_HINT_IGNORABLE` for commentary.
 '''
 
 # ....................{ GETTERS                           }....................

@@ -82,20 +82,32 @@ def test_decor_noop() -> None:
 
     # Import this decorator.
     from beartype import beartype
+    from beartype.cave import AnyType
 
     # Undecorated unannotated function.
     def khorne(gork, mork):
         return gork + mork
 
+    # Undecorated annotated function with ignorable type hints.
+    def ork(stompa: AnyType, gargant: object) -> AnyType:
+        return stompa + gargant
+
     # Decorated unannotated function.
     khorne_typed = beartype(khorne)
 
-    # Assert that @beartype efficiently reduced to a noop (i.e., the identity
-    # decorator) by simply returning the undecorated callable as is.
-    assert khorne_typed is khorne
+    # Decorated annotated function with ignorable type hints.
+    ork_typed = beartype(ork)
 
-    # Call this function and assert the expected return value.
+    # Assert that @beartype efficiently reduces to a noop (i.e., the identity
+    # decorator) when decorating either unannotated functions or annotated
+    # functions with ignorable type hints.
+    assert khorne_typed is khorne
+    assert ork_typed is ork
+
+    # Call these functions and assert the expected return valuesH.
     assert khorne_typed('WAAAGH!', '!HGAAAW') == 'WAAAGH!!HGAAAW'
+    assert ork_typed('Goff Klawstompa', 'Mega-Gargant') == (
+        'Goff KlawstompaMega-Gargant')
 
 # ....................{ TESTS ~ pass : param              }....................
 def test_decor_pass_param_position_keyword() -> None:
@@ -212,25 +224,6 @@ def test_decor_pass_param_str() -> None:
     # Call this function with an instance of the type named above.
     assert sisters_of_battle('Abbess Sanctorum', Random()) in range(
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
-
-# ....................{ TESTS ~ pass : return             }....................
-def test_decor_pass_return_none() -> None:
-    '''
-    Test type checking for a function call successfully returning ``None`` and
-    annotated as such.
-    '''
-
-    # Import this decorator.
-    from beartype import beartype
-
-    # Function to be type checked.
-    @beartype
-    def xenos(interex: str, diasporex: str) -> None:
-        print(interex + diasporex)
-
-    # Call this function and assert no value to be returned.
-    assert xenos(
-        'Luna Wolves', diasporex='Iron Hands Legion') is None
 
 # ....................{ TESTS ~ fail                      }....................
 def test_decor_fail_wrappee_type() -> None:
