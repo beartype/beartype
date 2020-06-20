@@ -22,12 +22,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor import annotation
+from beartype._decor.annotation import HINTS_IGNORABLE
 from beartype._decor.snippet import (
     CODE_RETURN_CHECKED,
     CODE_RETURN_UNCHECKED,
     CODE_RETURN_HINT,
 )
-from beartype.cave import (AnyType,)
+# from beartype.cave import ()
 # from beartype.roar import ()
 from inspect import Signature
 
@@ -35,7 +36,7 @@ from inspect import Signature
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_RETURN_HINT_IGNORABLE = {Signature.empty, AnyType,}
+_RETURN_HINTS_IGNORABLE = {Signature.empty,} | HINTS_IGNORABLE
 '''
 Set of all return value annotation types to be ignored during annotation-based
 type checking in the :func:`beartype` decorator.
@@ -44,8 +45,8 @@ This includes:
 
 * The :class:`Signature.empty` type, denoting **unannotated return values**
   (i.e., return values *not* annotated with a type hint).
-* The :class:`AnyType` type. See the comparable set global constant
-  :attr:`beartype._decor.parameter._PARAM_HINT_IGNORABLE` for commentary.
+* All context-agnostic types listed in the
+  :attr:`beartype._decor.annotation.HINTS_IGNORABLE` set global constant.
 '''
 
 # ....................{ GETTERS                           }....................
@@ -84,7 +85,7 @@ def get_code_checking_return(func_name: str, func_sig: Signature) -> str:
     try:
         # If this annotation is silently ignorable, return code calling this
         # callable unchecked and returning this value from this wrapper.
-        if func_return_hint in _RETURN_HINT_IGNORABLE:
+        if func_return_hint in _RETURN_HINTS_IGNORABLE:
             return CODE_RETURN_UNCHECKED
     # If this annotation is unhashable, the above code raises a "TypeError".
     except TypeError as type_error:

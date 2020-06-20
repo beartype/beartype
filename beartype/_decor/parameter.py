@@ -22,13 +22,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor import annotation
+from beartype._decor.annotation import HINTS_IGNORABLE
 from beartype._decor.snippet import (
     CODE_PARAM_VARIADIC_POSITIONAL,
     CODE_PARAM_KEYWORD_ONLY,
     CODE_PARAM_POSITIONAL_OR_KEYWORD,
     CODE_PARAM_HINT,
 )
-from beartype.cave import (AnyType,)
 from beartype.roar import (
     BeartypeDecorParamNameException,
 )
@@ -38,7 +38,7 @@ from inspect import Parameter, Signature
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_PARAM_HINT_IGNORABLE = {Parameter.empty, AnyType,}
+_PARAM_HINTS_IGNORABLE = {Parameter.empty,} | HINTS_IGNORABLE
 '''
 Set of all parameter annotation types to be ignored during annotation-based
 type checking in the :func:`beartype` decorator.
@@ -47,15 +47,12 @@ This includes:
 
 * The :class:`Parameter.empty` type, denoting **unannotated parameters** (i.e.,
   parameters *not* annotated with a type hint).
-* The :class:`AnyType` type, synonymous with the builtin :class:`object` class.
-  Since :class:`object` is the transitive superclass of all classes, parameters
-  annotated as :class:`object` unconditionally match *all* objects under
-  :func:`isinstance`-based type covariance and are thus equivalent to
-  unannotated parameters.
+* All context-agnostic types listed in the
+  :attr:`beartype._decor.annotation.HINTS_IGNORABLE` set global constant.
 '''
 
 
-_PARAM_KIND_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
+_PARAM_KINDS_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
 '''
 Set of all :attr:`inspect.Parameter.kind` constants to be ignored during
 annotation-based type checking in the :func:`beartype` decorator.
@@ -144,8 +141,8 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
             #   "typing" module) *AND* since types are hashable, this is
             #   generally the case for that object. Nonetheless, exception
             #   handling is still warranted to catch edge cases.
-            if (func_arg_hint in _PARAM_HINT_IGNORABLE or
-                func_arg.kind in _PARAM_KIND_IGNORABLE):
+            if (func_arg_hint in _PARAM_HINTS_IGNORABLE or
+                func_arg.kind in _PARAM_KINDS_IGNORABLE):
                 continue
         # If this annotation is unhashable and hence *NOT* a beartype-supported
         # type (e.g., class, string, tuple of classes and/or strings), the

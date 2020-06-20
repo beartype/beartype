@@ -31,17 +31,43 @@ from beartype._decor.snippet import (
     CODE_TUPLE_REPLACE,
 )
 from beartype.cave import (
+    AnyType,
     ClassType,
 )
 from beartype.roar import (
     BeartypeDecorHintValueException,
 )
+from typing import Any
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_HINTED_TUPLE_ITEM_VALID_TYPES = (ClassType, str)
+HINTS_IGNORABLE = {AnyType, Any,}
+'''
+Set of all annotation objects to be unconditionally ignored during
+annotation-based type checking in the :func:`beartype` decorator regardless of
+callable context (e.g., parameter, return value).
+
+This includes:
+
+* The :class:`AnyType` type, synonymous with the builtin :class:`object` type.
+  Since :class:`object` is the transitive superclass of all classes, parameters
+  annotated as :class:`object` unconditionally match *all* objects under
+  :func:`isinstance`-based type covariance and are thus equivalent to
+  unannotated parameters.
+* The `PEP 484`_-specific :class:`Any` type, functionally synonymous with the
+  :class:`AnyType` and hence :class:`object` classes. Although `PEP
+  484`_-specific logic should typically be isolated to the private
+  :mod:`beartype._decor.pep484` subpackage for maintainability, listing this
+  type here *improves* maintainability by centralizing similar logic.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+'''
+
+# ....................{ CONSTANTS ~ private               }....................
+_HINT_TUPLE_ITEM_VALID_TYPES = (ClassType, str)
 '''
 Tuple of all **valid :class:`tuple` annotation item types** (i.e., classes
 whose instances are suitable as the items of any :class:`tuple` hinted for a
@@ -281,7 +307,7 @@ def verify_hint(
             # If any member of this tuple is neither a class nor string, raise
             # an exception.
             for subhint in hint:
-                if not isinstance(subhint, _HINTED_TUPLE_ITEM_VALID_TYPES):
+                if not isinstance(subhint, _HINT_TUPLE_ITEM_VALID_TYPES):
                     raise BeartypeDecorHintValueException(
                         '{} tuple item {} neither a class nor '
                         'fully-qualified classname.'.format(

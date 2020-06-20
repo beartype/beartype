@@ -24,7 +24,7 @@ from beartype_test.util.mark.pytest_skip import (
 
 # ....................{ TESTS ~ type                      }....................
 @skip_if_python_version_less_than('3.7.0')
-def test_pep_563() -> None:
+def test_p563() -> None:
     '''
     Test **PEP 563** (i.e., "Postponed Evaluation of Annotations") support
     implemented in the :func:`beartype.beartype` decorator if the active Python
@@ -34,7 +34,7 @@ def test_pep_563() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype_test.unit.pep.p563.data_pep_563 import (
+    from beartype_test.unit.pep.p563.data_pep563 import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_stanza,
     )

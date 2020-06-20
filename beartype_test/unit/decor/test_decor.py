@@ -73,42 +73,6 @@ from random import Random
 #Self-obviously, the latter is the way to go for us. A trivial five-line
 #fixture dominates a non-trivial third-party dependency any asynchronous day.
 
-# ....................{ TESTS ~ pass                      }....................
-def test_decor_noop() -> None:
-    '''
-    Test type checking for a function with no function annotations, reducing to
-    *no* type checking.
-    '''
-
-    # Import this decorator.
-    from beartype import beartype
-    from beartype.cave import AnyType
-
-    # Undecorated unannotated function.
-    def khorne(gork, mork):
-        return gork + mork
-
-    # Undecorated annotated function with ignorable type hints.
-    def ork(stompa: AnyType, gargant: object) -> AnyType:
-        return stompa + gargant
-
-    # Decorated unannotated function.
-    khorne_typed = beartype(khorne)
-
-    # Decorated annotated function with ignorable type hints.
-    ork_typed = beartype(ork)
-
-    # Assert that @beartype efficiently reduces to a noop (i.e., the identity
-    # decorator) when decorating either unannotated functions or annotated
-    # functions with ignorable type hints.
-    assert khorne_typed is khorne
-    assert ork_typed is ork
-
-    # Call these functions and assert the expected return valuesH.
-    assert khorne_typed('WAAAGH!', '!HGAAAW') == 'WAAAGH!!HGAAAW'
-    assert ork_typed('Goff Klawstompa', 'Mega-Gargant') == (
-        'Goff KlawstompaMega-Gargant')
-
 # ....................{ TESTS ~ pass : param              }....................
 def test_decor_pass_param_position_keyword() -> None:
     '''

@@ -28,6 +28,58 @@ IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 7)
 ``True`` only if the active Python interpreter targets at least Python 3.7.0.
 '''
 
+# ....................{ GETTERS                            }....................
+def get_obj_type(obj: object) -> type:
+    '''
+    Either the passed object if this object is a class *or* the class of this
+    object otherwise (i.e., if this object is *not* a class).
+
+    Note that this function *never* raises exceptions on arbitrary objects,
+    since the :func:`type` builtin wisely returns itself when passed itself:
+    e.g.,
+
+        >>> type(type(type)) is type
+        True
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    type
+        Type of this object.
+    '''
+
+    return obj if isinstance(obj, type) else type(obj)
+
+
+def get_obj_module_name_or_none(obj: object) -> (str, type(None)):
+    '''
+    Fully-qualified name of the module declaring either the passed object if
+    this object is a class *or* the class of this object otherwise (i.e., if
+    this object is *not* a class) if this class declares a ``__module__``
+    dunder attribute *or* ``None`` otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    (str, type(None))
+        Either:
+
+        * Fully-qualified name of the module declaring the type of this object
+          if this type declares a ``__module__`` dunder attribute.
+        * ``None`` otherwise.
+    '''
+
+    # Make it so, ensign.
+    return getattr(get_obj_type(obj), '__module__', None)
+
 # ....................{ TRIMMERS                           }....................
 def trim_object_repr(obj: object, max_len: int = 76) -> str:
     '''
