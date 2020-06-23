@@ -14,8 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype import _util
-from beartype.cave import (ClassType,)
+from beartype._util import utilobj
+from beartype._util.utilcache import callable_cached
+# from beartype.cave import (ClassType,)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -27,7 +28,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #Ideally, we would replace each such function by the underlying "superclass"
 #type originally passed to that function, but we have no idea if that's even
 #feasible. Welcome to "typing", friends.
-def is_type_pep484(obj: object) -> bool:
+
+@callable_cached
+def is_typing(obj: object) -> bool:
     '''
     ``True`` only if the passed object is a `PEP 484`_-specific type (i.e., a
     public class defined by the stdlib :mod:`typing` module implementing the
@@ -66,7 +69,7 @@ def is_type_pep484(obj: object) -> bool:
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
-    obj_type = _util.get_obj_type(obj)
+    obj_type = utilobj.get_obj_type(obj)
 
     # If this type is defined by the stdlib "typing" module, return true.
     #
@@ -92,7 +95,7 @@ def is_type_pep484(obj: object) -> bool:
     #   exceptions with reliable messages across *ALL* Python versions.
     #
     # In short, there is no general-purpose clever solution. *sigh*
-    if _util.get_obj_module_name_or_none(obj_type) == 'typing':
+    if utilobj.get_obj_module_name_or_none(obj_type) == 'typing':
         return True
 
     # For each superclass of this class...
@@ -106,7 +109,7 @@ def is_type_pep484(obj: object) -> bool:
     #    class UserDefinedGeneric(Generic[T]): pass
     for obj_type_supertype in obj_type.__mro__:
         # If this superclass is defined by "typing", return true.
-        if _util.get_obj_module_name_or_none(obj_type_supertype) == 'typing':
+        if utilobj.get_obj_module_name_or_none(obj_type_supertype) == 'typing':
             return True
 
     # Else, neither this type nor any superclass of this type is defined by the

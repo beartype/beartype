@@ -289,7 +289,7 @@ from beartype.roar import (
     BeartypeCallTypeReturnException as __beartype_return_exception,
 )
 from beartype._decor.annotation import verify_hint as __beartype_verify_hint
-from beartype._util import trim_object_repr as __beartype_trim
+from beartype._util.utilstr import trim_object_repr as __beartype_trim
 
 # ....................{ DECORATORS                        }....................
 #FIXME: Replace the "CallableTypes" annotation with a subset of that tuple

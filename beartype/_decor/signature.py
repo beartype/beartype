@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import __future__, inspect, sys
 from beartype.cave import CallableTypes
 from beartype.roar import BeartypeDecorPep563Exception
-from beartype._util import (
+from beartype._util.utilpy import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_4_0,
 )

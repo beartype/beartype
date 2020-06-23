@@ -18,6 +18,38 @@ whether arbitrary objects comply with `PEP 484`_).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import typing
+
+# ....................{ GLOBALS ~ typevar                 }....................
+#FIXME: Test additional "typing" types.
+#FIXME: Test various non-"typing" types.
+
+T = typing.TypeVar('T')
+'''
+User-defined generic :mod:`typing` type variable.
+'''
+
+# ....................{ CLASSES                           }....................
+class GenericUserDefined(typing.Generic[T]):
+    '''
+    User-defined generic :mod:`typing` type.
+    '''
+
+    pass
+
+# ....................{ GLOBALS ~ typing                  }....................
+P484_TYPES = (
+    typing.Any,
+    typing.Callable[[], str],
+    typing.Dict[str, str],
+    typing.List[float],
+    typing.Tuple[str, int],
+    T,
+    GenericUserDefined,
+)
+'''
+Various :mod:`typing` types of interest.
+'''
 
 # ....................{ TESTS ~ type                      }....................
 def test_p484_detect() -> None:
@@ -29,33 +61,12 @@ def test_p484_detect() -> None:
     '''
 
     # Defer heavyweight imports.
-    import typing
-    from beartype._decor.pep484.p484_test import is_type_pep484
-
-    # User-defined generic "typing" type variable.
-    T = typing.TypeVar('T')
-
-    # User-defined generic "typing" type.
-    class GenericUserDefined(typing.Generic[T]): pass
-
-    #FIXME: Test additional "typing" types.
-    #FIXME: Test various non-"typing" types.
-
-    # Various "typing" types of interest.
-    P484_TYPES = (
-        typing.Any,
-        typing.Callable[[], str],
-        typing.Dict[str, str],
-        typing.List[float],
-        typing.Tuple[str, int],
-        T,
-        GenericUserDefined,
-    )
+    from beartype._decor.pep484.p484test import is_typing
 
     # Assert that various "typing" types are correctly detected as such.
     for p484_type in P484_TYPES:
         print('PEP 484 type: {!r}'.format(p484_type))
-        assert is_type_pep484(p484_type) is True
+        assert is_typing(p484_type) is True
 
     # Assert that various non-"typing" types are correctly detected as such.
     # assert is_type_pep484(
