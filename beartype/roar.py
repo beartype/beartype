@@ -229,6 +229,18 @@ class BeartypeCallTypeReturnException(BeartypeCallTypeException):
 
     pass
 
+# ....................{ EXCEPTIONS ~ util                 }....................
+class BeartypeCallableCachedException(BeartypeException):
+    '''
+    **Beartype memoization exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilcache.callable_cached` decorator when the
+    signature of the decorated callable is unsupported.
+    '''
+
+    pass
+
 # ....................{ WARNINGS                          }....................
 class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     '''

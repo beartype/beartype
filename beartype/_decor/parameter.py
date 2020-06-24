@@ -54,7 +54,7 @@ This includes:
 
 _PARAM_KINDS_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
 '''
-Set of all :attr:`inspect.Parameter.kind` constants to be ignored during
+Set of all :attr:`Parameter.kind` constants to be ignored during
 annotation-based type checking in the :func:`beartype` decorator.
 
 This includes:

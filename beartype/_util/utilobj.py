@@ -14,6 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+# ....................{ COSTANTS                          }....................
+SENTINEL = object()
+'''
+Sentinel object of arbitrary value.
+
+This object is internally leveraged by various utility functions to identify
+erroneous and edge-case input (e.g., iterables of insufficient length).
+'''
 
 # ....................{ GETTERS                           }....................
 def get_obj_type(obj: object) -> type:

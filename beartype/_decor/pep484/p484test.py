@@ -14,9 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+# from beartype.cave import (ClassType,)
 from beartype._util import utilobj
 from beartype._util.utilcache import callable_cached
-# from beartype.cave import (ClassType,)
+# from beartype._util.utilobj import SENTINEL
+from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -32,9 +34,10 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 @callable_cached
 def is_typing(obj: object) -> bool:
     '''
-    ``True`` only if the passed object is a `PEP 484`_-specific type (i.e., a
-    public class defined by the stdlib :mod:`typing` module implementing the
-    `PEP 484`_ "standard," such as it is).
+    ``True`` only if the passed object is a `PEP 484`_-specific type (i.e.,
+    public class defined by the stdlib :mod:`typing` module).
+
+    For efficiency, this tester is memoized.
 
     Motivation
     ----------
@@ -64,7 +67,7 @@ def is_typing(obj: object) -> bool:
         ``True`` only if this object is a `PEP 484`_-specific type.
 
     .. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Either the passed object if this object is a class *OR* the class of this
@@ -115,3 +118,52 @@ def is_typing(obj: object) -> bool:
     # Else, neither this type nor any superclass of this type is defined by the
     # "typing" module. Ergo, this is *NOT* a PEP 484-compliant type.
     return False
+
+
+@callable_cached
+def is_typing_typevar(obj: object) -> bool:
+    '''
+    ``True`` only if the passed object either is a `PEP 484`_-specific **type
+    variable** (i.e., instance of the :mod:`typing.TypeVar` class) *or* is a
+    `PEP 484`_-specific type parametrized by one or more type variables (e.g.,
+    ``typing.List[typing.TypeVar['T']]``).
+
+    For efficiency, this tester is memoized.
+
+    Motivation
+    ----------
+    Since type variables are not themselves types but rather placeholders
+    dynamically replaced with types by type checkers according to various
+    arcane heuristics, both type variables and types parametrized by type
+    variables warrant special-purpose handling.
+
+    Parameters
+    ----------
+    obj : object
+        `PEP 484`_-specific type to be inspected for type variables.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this type either is a type variable or has been
+        parametrized by one or more type variables.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # Return true only if this type either...
+    return (
+        # Is a type variable *OR*...
+        isinstance(obj, TypeVar) or
+        # Has been parametrized by one or more type variables, trivially
+        # equivalent to whether the tuple of all type variables parametrizing
+        # this "typing" type if this type is a generic (e.g.,
+        # "typing._GenericAlias" subtype) *OR* the empty tuple otherwise is
+        # non-empty.
+        #
+        # Note that the "typing._GenericAlias.__parameters__" dunder attribute
+        # tested here is defined by the typing._collect_type_vars() function at
+        # subtype declaration time.
+        len(getattr(obj, '__parameters__', ())) > 0
+    )

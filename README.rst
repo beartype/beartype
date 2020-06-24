@@ -801,6 +801,11 @@ Safety Concerns
   integer. Integers, floating point numbers, and complex numbers exhibit
   markedly different usage, safety, and performance characteristics. Under `PEP
   484`_, preserving these distinctions is infeasible.
+* `PEP 570 -- Python Positional-Only Parameters <PEP 570_>`__, which `PEP 484`_
+  violates by mandating that type checkers interpret parameters whose names are
+  prefixed but *not* suffixed by ``__`` to be positional-only parameters
+  regardless of whether those parameters actually are positional-only
+  parameters or not.
 * The entirety of `PEP 20 -- The Zen of Python <PEP 20_>`__, especially the
   sanity-preserving and safety-enhancing "Explicit is better than implicit"
   maxim, which `PEP 484`_ repeatedly violates by implicitly coercing:
@@ -974,6 +979,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0544
 .. _PEP 563:
    https://www.python.org/dev/peps/pep-0563
+.. _PEP 570:
+   https://www.python.org/dev/peps/pep-0570
 .. _PEP 585:
    https://www.python.org/dev/peps/pep-0585
 .. _PEP 586:
