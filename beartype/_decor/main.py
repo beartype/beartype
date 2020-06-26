@@ -47,8 +47,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Suck it, "typing". Suck it.
 
-#FIXME: Document all exceptions raised.
-
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely
 #called as is. Detecting coroutines is trivial, thankfully: e.g.,
@@ -256,8 +254,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import functools
-from beartype._decor import parameter, returnval, signature
-from beartype._decor.snippet import CODE_SIGNATURE, CODE_RETURN_UNCHECKED
+from beartype._decor._code import codemain
+from beartype._decor._data import BeartypeData
 from beartype.cave import (
     CallableTypes,
     ClassType,
@@ -288,8 +286,12 @@ from beartype.roar import (
     BeartypeCallTypeParamException  as __beartype_param_exception,
     BeartypeCallTypeReturnException as __beartype_return_exception,
 )
-from beartype._decor.annotation import verify_hint as __beartype_verify_hint
-from beartype._util.utilstr import trim_object_repr as __beartype_trim
+from beartype._decor._code._codehint import (
+    verify_hint as __beartype_verify_hint,
+)
+from beartype._util.utilstr import (
+    trim_object_repr as __beartype_trim,
+)
 
 # ....................{ DECORATORS                        }....................
 #FIXME: Replace the "CallableTypes" annotation with a subset of that tuple
@@ -375,78 +377,17 @@ def beartype(func: CallableTypes) -> CallableTypes:
         # returning this callable as is.
         return func
 
-    # Human-readable name of this function for use in exceptions.
-    func_name = '@beartyped {}()'.format(func.__name__)
+    # Object aggregating metadata for this callable.
+    func_data = BeartypeData(func)
 
-    # Machine-readable name of the type-checking function to be dynamically
-    # created and returned by this decorator. To efficiently (albeit
-    # non-perfectly) avoid clashes with existing attributes of the module
-    # defining this function, this name is mildly obfuscated while still
-    # preserving human-readability.
-    func_beartyped_name = '__{}_beartyped__'.format(func.__name__)
+    # Generate the raw string of Python statements implementing this wrapper.
+    codemain.code(func_data)
 
-    # "Signature" instance encapsulating this callable's signature.
-    func_sig = signature.get_func_signature(func=func, func_name=func_name)
-
-    # Python code declaring the signature of the wrapper defined below.
-    func_code_sig = CODE_SIGNATURE.format(
-        func_beartyped_name=func_beartyped_name)
-
-    # Raw string of Python statements comprising the body of this wrapper,
-    # including (in order):
-    #
-    # * A private "__beartype_func" parameter initialized to this function. In
-    #   theory, the "func" parameter passed to this decorator should be
-    #   accessible as a closure-style local in this wrapper. For unknown
-    #   reasons (presumably, a subtle bug in the exec() builtin), this is *NOT*
-    #   the case. Instead, a closure-style local must be simulated by passing
-    #   the "func" parameter to this function at function definition time as
-    #   the default value of an arbitrary parameter. To ensure this default is
-    #   *NOT* overwritten by a function accepting a parameter of the same name,
-    #   this unlikely edge case is guarded against below.
-    # * Assert statements type checking parameters passed to this callable.
-    # * A call to this callable.
-    # * An assert statement type checking the value returned by this callable.
-    #
-    # While there exist numerous alternatives (e.g., appending to a list or
-    # bytearray before joining the items of that iterable into a string), these
-    # alternatives are either:
-    #
-    # * Slower, as in the case of a list (e.g., due to the high up-front cost
-    #   of list construction).
-    # * Cumbersome, as in the case of a bytearray.
-    #
-    # Since string concatenation is heavily optimized by the official CPython
-    # interpreter, the simplest approach is thankfully the most ideal.
-    func_code = '{}{}{}'.format(
-        func_code_sig,
-        parameter.get_code_checking_params(
-            func_name=func_name, func_sig=func_sig),
-        returnval.get_code_checking_return(
-            func_name=func_name, func_sig=func_sig),
-    )
-
-    # If this wrapper proxies this callable *WITHOUT* type checking,
+    # If this wrapper proxies this callable *WITHOUT* type-checking,
     # efficiently reduce to a noop (i.e., the identity decorator) by returning
     # this callable as is.
-    #
-    # Note this edge case is distinct from the related edge case above that
-    # similarly reduces to a noop for unannotated callables. This edge case is
-    # triggered for annotated callables whose annotations are all ignorable
-    # (e.g., "beartype.cave.AnyType", "object", "typing.Any"): e.g.,
-    #
-    #     >>> from beartype.cave import AnyType
-    #     >>> from typing import Any
-    #     >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any:
-    #     ...     pass
-    #     >>> muh_func is beartype(muh_func)
-    #     True
-    if func_code == func_code_sig + CODE_RETURN_UNCHECKED:
+    if func_data.is_func_code_noop:
         return func
-
-    #FIXME: Exercise this edge case by ensuring that the following is a noop:
-    #    @beartype
-    #    def fun(param: typing.Any) -> typing.Any: pass
 
     # Dictionary mapping from local attribute names to values passed to the
     # module-scoped outermost definition (but *NOT* the actual body) of this
@@ -464,6 +405,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # wrapper-specific "__beartype_func" attribute.
     local_attrs = {
         '__beartype_func': func,
+        '__beartype_hints': func_data.func_hints,
     }
 
     #FIXME: Actually, we absolutely *DO* want to leverage the example
@@ -515,13 +457,14 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # the current circumspect approach is preferred.
     try:
         # print('@beartype {}() wrapper\n{}'.format(func_name, func_code))
-        exec(func_code, globals(), local_attrs)
+        exec(func_data.func_code, globals(), local_attrs)
     # If doing so fails for any reason, raise a decorator-specific exception
     # embedding the entire body of this function for debugging purposes.
     except Exception as exception:
         raise BeartypeDecorWrapperException(
             '{} wrapper unparseable:\n{}'.format(
-                func_name, func_code)) from exception
+                func_data.func_name, func_data.func_code)
+        ) from exception
 
     # This wrapper.
     #
@@ -529,12 +472,12 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # dictionary is guaranteed to contain a key with this wrapper's name whose
     # value is this wrapper. Ergo, no additional validation of the existence of
     # this key or type of this wrapper is needed.
-    func_beartyped = local_attrs[func_beartyped_name]
+    func_wrapper = local_attrs[func_data.func_wrapper_name]
 
     # Declare this wrapper to be generated by @beartype, which tests for the
     # existence of this attribute above to avoid re-decorating callables
     # already decorated by @beartype by efficiently reducing to a noop.
-    func_beartyped.__beartype_wrapper = True
+    func_wrapper.__beartype_wrapper = True
 
     # Propagate identifying metadata (stored as special attributes) from the
     # original function to this wrapper for debuggability, including:
@@ -542,10 +485,10 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # * "__name__", the unqualified name of this function.
     # * "__doc__", the docstring of this function (if any).
     # * "__module__", the fully-qualified name of this function's module.
-    functools.update_wrapper(wrapper=func_beartyped, wrapped=func)
+    functools.update_wrapper(wrapper=func_wrapper, wrapped=func)
 
     # Return this wrapper.
-    return func_beartyped
+    return func_wrapper
 
 # ....................{ OPTIMIZATION                      }....................
 # If the active Python interpreter is optimized (e.g., option "-O" was passed

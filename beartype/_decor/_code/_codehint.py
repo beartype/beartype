@@ -21,7 +21,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor.snippet import (
+from beartype.cave import (
+    AnyType,
+    ClassType,
+)
+from beartype.roar import (
+    BeartypeDecorHintValueException,
+)
+from beartype._decor._code._snippet import (
     CODE_STR_IMPORT,
     CODE_STR_REPLACE,
     CODE_TUPLE_STR_TEST,
@@ -29,13 +36,6 @@ from beartype._decor.snippet import (
     CODE_TUPLE_STR_APPEND,
     CODE_TUPLE_CLASS_APPEND,
     CODE_TUPLE_REPLACE,
-)
-from beartype.cave import (
-    AnyType,
-    ClassType,
-)
-from beartype.roar import (
-    BeartypeDecorHintValueException,
 )
 from typing import Any
 
@@ -83,8 +83,8 @@ Specifically, this tuple contains:
   decoration time.
 '''
 
-# ....................{ GETTERS                           }....................
-def get_code_resolving_forward_refs(
+# ....................{ CODERS                            }....................
+def code_resolve_forward_refs(
     hint: object, hint_expr: str, hint_label: str) -> str:
     '''
     Python code snippet dynamically replacing all **forward references** (i.e.,
@@ -109,8 +109,8 @@ def get_code_resolving_forward_refs(
     hint : object
         Annotation to be inspected, assumed to be either a class,
         fully-qualified classname, or tuple of classes and/or classnames. Since
-        the previously called :func:`verify_hint` function already validates
-        this to be the case, this assumption is *always* safe.
+        the previously called :func:`verify_hint` function has already
+        validated this to be the case, this assumption is *always* safe.
     hint_expr : str
         Python expression evaluating to the annotation to be replaced.
     hint_label : str

@@ -177,6 +177,46 @@ class BeartypeDecorPep563Exception(BeartypeDecorPepException):
 
     pass
 
+# ....................{ EXCEPTIONS ~ decor : pep : 484    }....................
+class BeartypeDecorPep484Exception(
+    BeartypeDecorPepException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype decorator** `PEP 484`_
+    **exceptions.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    violating either `PEP 484`_ itself or our implementation of `PEP 484`_.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    pass
+
+
+class BeartypeDecorPep484TypeUnsupportedException(
+    BeartypeDecorPep484Exception):
+    '''
+    **Beartype decorator** `PEP 484`_ **unsupported type exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on failing to dynamically evaluate a
+    postponed annotation of the decorated callable when `PEP 563`_ is active
+    for that callable.
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more `PEP 484`_ types (i.e., classes and objects
+    defined by the stdlib :mod:`typing` module) currently unsupported by this
+    decorator.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    pass
+
 # ....................{ EXCEPTIONS ~ call                 }....................
 class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
     '''

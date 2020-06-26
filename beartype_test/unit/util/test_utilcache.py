@@ -43,14 +43,23 @@ def test_callable_cached_pass() -> None:
         still_i_rise(bitter, twisted, lies) is
         still_i_rise(bitter, twisted, lies))
 
-    #FIXME: Uncomment if we ever decide to implement keyword argument support.
-    # Assert that memoizing two calls passed the same keyword arguments cache
-    # and return the same value. To exercise the insignificance of the order of
-    # keyword arguments, the second call intentionally passes these arguments
-    # in a fundamentally different order.
-    # assert (
-    #     still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is
-    #     still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
+    # Assert that memoizing two calls passed the same positional and keyword
+    # arguments in the same order caches and returns the same value.
+    assert (
+        still_i_rise(bitter, twisted=twisted, lies=lies) is
+        still_i_rise(bitter, twisted=twisted, lies=lies))
+
+    # Assert that memoizing two calls passed the same keyword arguments in the
+    # same order cache and return the same value.
+    assert (
+        still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is
+        still_i_rise(bitter=bitter, twisted=twisted, lies=lies))
+
+    # Assert that memoizing two calls passed the same keyword arguments in a
+    # differing order cache and return differing values.
+    assert (
+        still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is not
+        still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
 
 
 def test_callable_cached_fail() -> None:
@@ -68,22 +77,13 @@ def test_callable_cached_fail() -> None:
     def still_i_rise(moons, suns, tides):
         return moons | suns | tides
 
-    # Assert that attempting to memoize one or more keyword parameters fails
-    # with the expected exception.
-    with pytest.raises(TypeError):
-        still_i_rise(
-            moons={'Just', 'like', 'moons',},
-            suns={'and', 'like', 'suns',},
-            tides={'With the certainty of tides',},
-        )
-
     # Assert that attempting to memoize one or more unhashable parameters
     # fails with the expected exception.
     with pytest.raises(TypeError):
         still_i_rise(
-            {'Just', 'like', 'hopes',},
-            {'springing', 'high,',},
-            {'Still', "I'll", 'rise.',},
+            frozenset('Just', 'like', 'moons',),
+            frozenset('and', 'like', 'suns',),
+            frozenset('With the certainty of tides',),
         )
 
     # Assert that attempting to memoize a callable accepting one or more

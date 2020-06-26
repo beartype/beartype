@@ -21,17 +21,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor import annotation
-from beartype._decor.annotation import HINTS_IGNORABLE
-from beartype._decor.snippet import (
+from beartype.roar import BeartypeDecorParamNameException
+from beartype._decor._code import _codehint
+from beartype._decor._code._codehint import HINTS_IGNORABLE
+from beartype._decor._code._snippet import (
     CODE_PARAM_VARIADIC_POSITIONAL,
     CODE_PARAM_KEYWORD_ONLY,
     CODE_PARAM_POSITIONAL_OR_KEYWORD,
     CODE_PARAM_HINT,
 )
-from beartype.roar import (
-    BeartypeDecorParamNameException,
-)
+from beartype._decor._data import BeartypeData
 from inspect import Parameter, Signature
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -67,25 +66,23 @@ This includes:
   provide no syntactic means for specifying positional-only parameters.
 '''
 
-# ....................{ GETTERS                           }....................
-def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
+# ....................{ CODERS                            }....................
+def code_check_params(data: BeartypeData) -> str:
     '''
     Python code snippet type-checking all annotated parameters declared by the
-    passed signature of the passed callable name.
+    the decorated callable if any *or* the empty string otherwise (i.e., if
+    these parameters are unannotated).
 
     Parameters
     ----------
-    func_name : str
-        Human-readable name of this callable.
-    func_sig : Signature
-        :class:`Signature` instance encapsulating this callable's signature,
-        dynamically parsed by the :mod:`inspect` module from this callable.
+    data : BeartypeData
+        Decorated callable to be type-checked.
 
     Returns
     ----------
     str
         Python code snippet type-checking all annotated parameters declared by
-        this signature of this callable name.
+        the decorated callable if any *or* the empty string otherwise.
 
     Raises
     ----------
@@ -93,16 +90,15 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__beartype_``.
     BeartypeDecorHintTupleItemException
-        If any item of any **type-hinted :class:`tuple`** (i.e., :class:`tuple`
-        applied as a parameter or return value annotation) is of an unsupported
-        type. Supported types include:
+        If any item of any **type-hinted tuple** (i.e., tuple applied as a
+        parameter or return value annotation) is of an unsupported type.
+        Supported types include:
 
         * :class:`type` (i.e., classes).
         * :class:`str` (i.e., strings).
     '''
-    assert isinstance(func_name, str), '{!r} not a string.'.format(func_name)
-    assert isinstance(func_sig, Signature), (
-        '{!r} not a signature.'.format(func_sig))
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
 
     # Python code snippet to be returned.
     func_body = ''
@@ -110,7 +106,8 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
     # For the name of each parameter accepted by this callable and the
     # "Parameter" instance encapsulating this parameter (in declaration
     # order)...
-    for func_arg_index, func_arg in enumerate(func_sig.parameters.values()):
+    for func_arg_index, func_arg in enumerate(
+        data.func_sig.parameters.values()):
         # If this callable redefines a parameter initialized to a default value
         # by this wrapper, raise an exception. Permitting this unlikely edge
         # case would permit unsuspecting users to accidentally override these
@@ -118,7 +115,7 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
         if func_arg.name.startswith('__beartype_'):
             raise BeartypeDecorParamNameException(
                 '{} parameter "{}" reserved by @beartype.'.format(
-                    func_name, func_arg.name))
+                    data.func_name, func_arg.name))
 
         # Annotation for this parameter if any *OR* "Parameter.empty" otherwise
         # (i.e., if this parameter is unannotated).
@@ -161,10 +158,11 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
 
         # Human-readable label describing this annotation.
         func_arg_hint_label = (
-            '{} parameter "{}" type hint'.format(func_name, func_arg.name))
+            '{} parameter "{}" type hint'.format(
+                data.func_name, func_arg.name))
 
         # Validate this annotation.
-        annotation.verify_hint(
+        _codehint.verify_hint(
             hint=func_arg_hint, hint_label=func_arg_hint_label)
 
         # String evaluating to this parameter's annotated type.
@@ -176,7 +174,7 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
 
         # Replace all classnames in this annotation by the corresponding
         # classes.
-        func_body += annotation.get_code_resolving_forward_refs(
+        func_body += _codehint.code_resolve_forward_refs(
             hint=func_arg_hint,
             hint_expr=func_arg_type_expr,
             hint_label=func_arg_hint_label,
@@ -186,7 +184,7 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
         # (e.g., "*args"), iteratively check these parameters.
         if func_arg.kind is Parameter.VAR_POSITIONAL:
             func_body += CODE_PARAM_VARIADIC_POSITIONAL.format(
-                func_name=func_name,
+                func_name=data.func_name,
                 arg_name=func_arg.name,
                 arg_index=func_arg_index,
                 arg_type_expr=func_arg_type_expr,
@@ -195,7 +193,7 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
         # by lookup in the variadic "**kwargs" dictionary.
         elif func_arg.kind is Parameter.KEYWORD_ONLY:
             func_body += CODE_PARAM_KEYWORD_ONLY.format(
-                func_name=func_name,
+                func_name=data.func_name,
                 arg_name=func_arg.name,
                 arg_type_expr=func_arg_type_expr,
                 arg_value_key_expr=func_arg_value_key_expr,
@@ -209,7 +207,7 @@ def get_code_checking_params(func_name: str, func_sig: Signature) -> str:
             # passed positionally.
             func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
             func_body += CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
-                func_name=func_name,
+                func_name=data.func_name,
                 arg_name=func_arg.name,
                 arg_index=func_arg_index,
                 arg_type_expr=func_arg_type_expr,

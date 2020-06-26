@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator code constants.**
+**Beartype decorator** `PEP 484`_-agnostic **code constants.**
 
 This private submodule *only* defines **code constants** (i.e., global
 triple-quoted strings containing pure-Python code snippets required at
@@ -12,23 +12,34 @@ decorate time by the :func:`beartype.beartype` decorator to dynamically
 generate a new callable wrapping the decorated callable with runtime type
 checking).
 
+This private submodule is the `PEP 484`_-agnostic analogue to the `PEP
+484_`-specific :mod:`beartype._decor.pep484.p484snippet` submodule.
+
 This private submodule is *not* intended for importation by downstream callers.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ CODE                              }....................
 CODE_SIGNATURE = '''
-def {func_beartyped_name}(*args, __beartype_func=__beartype_func, **kwargs):
+def {func_wrapper_name}(
+    *args,
+    __beartype_func=__beartype_func,
+    __beartype_hints=__beartype_hints,
+    **kwargs
+):
 '''
 
 # ....................{ CODE ~ annotations                }....................
-CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
+CODE_PARAM_HINT = '__beartype_hints[{!r}]'
 '''
 Code snippet accessing the annotation with an arbitrary name formatted into
 this snippet by the caller.
 '''
 
 
-CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
+CODE_RETURN_HINT = "__beartype_hints['return']"
 '''
 Code snippet accessing the **return annotation** (i.e., annotation synopsizing
 the type hint for this callable's return value).
@@ -102,8 +113,8 @@ CODE_STR_REPLACE = '''
 
         # Replace the external copy of this annotation stored in this
         # function's signature by this class -- guaranteeing that subsequent
-        # access of this annotation via "__beartype_func.__annotations__"
-        # access this class rather than this classname.
+        # access of this annotation via "__beartype_hints" access this class
+        # rather than this classname.
         {hint_expr} = {hint_type_basename}
 '''
 
@@ -160,9 +171,8 @@ CODE_TUPLE_REPLACE = '''
         # Replace the external copy of this annotation stored in this
         # function's signature by this list coerced back into a tuple for
         # conformance with isinstance() constraints -- guaranteeing that
-        # subsequent access of this annotation via
-        # "__beartype_func.__annotations__" accesses this class rather than
-        # this classname.
+        # subsequent access of this annotation via "__beartype_hints" accesses
+        # this class rather than this classname.
         {hint_expr} = tuple(__beartype_func_hint_list)
 
         # Nullify this list for safety.

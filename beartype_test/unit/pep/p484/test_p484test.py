@@ -68,12 +68,12 @@ User-defined :mod:`typing` type alias.
 # ....................{ TESTS ~ type                      }....................
 def test_is_typing() -> None:
     '''
-    Test the :func:`beartype._decor.pep484.p484test.is_typing` tester.
+    Test the :func:`beartype._decor._code._pep484.p484test.is_typing` tester.
     '''
 
     # Defer heavyweight imports.
     from beartype import cave
-    from beartype._decor.pep484.p484test import is_typing
+    from beartype._decor._code._pep484.p484test import is_typing
 
     # Tuple of various "typing" types of interest.
     P484_TYPES = (
@@ -113,13 +113,14 @@ def test_is_typing() -> None:
         assert is_typing(non_p484_type) is False
 
 
-def test_is_typing_typevar() -> None:
+def test_is_typing_typevarish() -> None:
     '''
-    Test the :func:`beartype._decor.pep484.p484test.is_typing_typevar` tester.
+    Test the
+    :func:`beartype._decor._code._pep484.p484test.is_typing_typevarish` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._decor.pep484.p484test import is_typing_typevar
+    from beartype._decor._code._pep484.p484test import is_typing_typevarish
 
     # Tuple of various "TypeVar"-centric types of interest.
     TYPEVAR_TYPES = (
@@ -149,9 +150,9 @@ def test_is_typing_typevar() -> None:
     # Assert that various "TypeVar"-centric types are correctly detected.
     for typevar_type in TYPEVAR_TYPES:
         print('"TypeVar"-centric type: {!r}'.format(typevar_type))
-        assert is_typing_typevar(typevar_type) is True
+        assert is_typing_typevarish(typevar_type) is True
 
     # Assert that various "TypeVar"-agnostic types are correctly detected.
     for non_typevar_type in NON_TYPEVAR_TYPES:
         print('"TypeVar"-agnostic type: {!r}'.format(non_typevar_type))
-        assert is_typing_typevar(non_typevar_type) is False
+        assert is_typing_typevarish(non_typevar_type) is False

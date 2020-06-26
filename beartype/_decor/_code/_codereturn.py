@@ -21,15 +21,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor import annotation
-from beartype._decor.annotation import HINTS_IGNORABLE
-from beartype._decor.snippet import (
+from beartype._decor._code import _codehint
+from beartype._decor._code._codehint import HINTS_IGNORABLE
+from beartype._decor._code._snippet import (
     CODE_RETURN_CHECKED,
     CODE_RETURN_UNCHECKED,
     CODE_RETURN_HINT,
 )
-# from beartype.cave import ()
-# from beartype.roar import ()
+from beartype._decor._data import BeartypeData
 from inspect import Signature
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -49,34 +48,29 @@ This includes:
   :attr:`beartype._decor.annotation.HINTS_IGNORABLE` set global constant.
 '''
 
-# ....................{ GETTERS                           }....................
-def get_code_checking_return(func_name: str, func_sig: Signature) -> str:
+# ....................{ CODERS                            }....................
+def code_check_return(data: BeartypeData) -> str:
     '''
     Python code snippet type-checking the annotated return value declared by
-    the passed signature of the passed callable name if any *or* reduce to a
-    noop otherwise (i.e., if this value is unannotated).
+    the decorated callable if any *or* the empty string otherwise (i.e., if
+    this value is unannotated).
 
     Parameters
     ----------
-    func_name : str
-        Human-readable name of this callable.
-    func_sig : Signature
-        :class:`Signature` instance encapsulating this callable's signature,
-        dynamically parsed by the :mod:`inspect` module from this callable.
+    data : BeartypeData
+        Decorated callable to be type-checked.
 
     Returns
     ----------
     str
         Python code snippet type-checking the annotated return value declared
-        by this signature of this callable name if any *or* reduce to a noop
-        otherwise (i.e., if this value is unannotated).
+         by this callable if any *or* the empty string otherwise.
     '''
-    assert isinstance(func_name, str), '{!r} not a string.'.format(func_name)
-    assert isinstance(func_sig, Signature), (
-        '{!r} not a signature.'.format(func_sig))
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
 
     # Value of the annotation for this callable's return value.
-    func_return_hint = func_sig.return_annotation
+    func_return_hint = data.func_sig.return_annotation
 
     # Attempt to...
     #
@@ -95,10 +89,10 @@ def get_code_checking_return(func_name: str, func_sig: Signature) -> str:
             raise
 
     # Human-readable label describing this annotation.
-    func_return_hint_label = '{} return type annotation'.format(func_name)
+    func_return_hint_label = '{} return type annotation'.format(data.func_name)
 
     # Validate this annotation.
-    annotation.verify_hint(
+    _codehint.verify_hint(
         hint=func_return_hint, hint_label=func_return_hint_label)
 
     # String evaluating to this return value's annotated type.
@@ -108,7 +102,7 @@ def get_code_checking_return(func_name: str, func_sig: Signature) -> str:
     # Python code snippet to be returned.
     func_body = '{}{}'.format(
         # Replace all classnames in this annotation with those classes.
-        annotation.get_code_resolving_forward_refs(
+        _codehint.code_resolve_forward_refs(
             hint=func_return_hint,
             hint_expr=func_return_type_expr,
             hint_label=func_return_hint_label,
@@ -116,7 +110,7 @@ def get_code_checking_return(func_name: str, func_sig: Signature) -> str:
         # Call this callable, type check the returned value, and return this
         # value from this wrapper.
         CODE_RETURN_CHECKED.format(
-            func_name=func_name, return_type_expr=func_return_type_expr),
+            func_name=data.func_name, return_type_expr=func_return_type_expr),
     )
 
     # Return this Python code snippet.

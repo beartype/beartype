@@ -20,9 +20,8 @@ from beartype.roar import BeartypeCallableCachedException
 from functools import wraps
 from inspect import Parameter
 
-# ....................{ COSTANTS ~ private                }....................
+# ....................{ CONSTANTS ~ private               }....................
 _PARAM_KINDS_UNSUPPORTED = {
-    Parameter.KEYWORD_ONLY,
     Parameter.VAR_KEYWORD,
     Parameter.VAR_POSITIONAL,
 }
@@ -31,78 +30,29 @@ Set of all :attr:`Parameter.kind` constants signifying parameter types *not*
 currently supported by the :func:`callable_cached` decorator.
 '''
 
+# ....................{ CONSTANTS ~ private : sentinel    }....................
+_SENTINEL_KWARGS_KEYS = (object(),)
+'''
+Sentinel tuple signifying subsequent keyword argument names.
+
+This tuple is internally leveraged by the :func:`callable_cached` decorator to
+differentiate keyword argument names from preceding positional arguments in the
+flattened tuple of all parameters passed to the decorated callable.
+'''
+
+
+_SENTINEL_KWARGS_VALUES = (object(),)
+'''
+Sentinel tuple signifying subsequent keyword argument values.
+
+This tuple is internally leveraged by the :func:`callable_cached` decorator to
+differentiate keyword argument names from preceding positional arguments in the
+flattened tuple of all parameters passed to the decorated callable.
+'''
+
 # ....................{ DECORATORS                        }....................
-#FIXME: As needed, this callable may be generalized to support:
-#
-#* Keyword arguments with logic resembling:
-#      # Dictionary mapping from the name of each parameters accepted by the
-#      # decorated callable to the 0-based index of that parameter in the
-#      # signature of this callable.
-#      param_name_to_index = {
-#          param_name: param_index
-#          for param_index, param_name in enumerate(func_sig.parameters.keys())
-#      }
-#
-#      @wraps(func)
-#      def _callable_cached(*args, **kwargs):
-#
-#          # Flatten the passed tuple of positional arguments and dictionary of
-#          # keyword arguments into a single tuple containing both positional and
-#          # keyword arguments. To minimize space consumption, this tuple contains
-#          # these arguments as is with *NO* nested containers.
-#          #
-#          # For example, when a decorated callable with signature:
-#          #     def muh_func(muh_arg1, muh_arg2, muh_arg3, muh_arg4)
-#          # ...is called as:
-#          #     muh_func('a', 'b', muh_arg3=0, muh_arg4=1)
-#          # ...this wrapper receives
-#          #    *args = ('a', 'b')
-#          #    *kwargs = {'muh_arg3': 0, 'muh_arg4': 1}
-#          # ...which the following logic flattens into:
-#          #    params_flat = ('a', 'b', 0, 1)
-#          #
-#          # If one or more keyword arguments are passed...
-#          if kwargs:
-#              # Convert the passed tuple of positional arguments into a list.
-#              params_flat = list(args)
-#
-#              # For the name and value of each passed keyword argument...
-#              for kwarg_name, kwarg_value in kwargs.items():
-#                  # Convert this keyword argument into a positional argument by
-#                  # setting the 0-based index of this argument when passed as a
-#                  # positional argument in this list to this value.
-#                  params_flat[param_name_to_index[kwarg_name]] = kwarg_value
-#
-#              # Convert this list back into a tuple.
-#              params_flat = tuple(params_flat)
-#          # Else, only positional arguments are passed. In this case, reuse this
-#          # tuple of such arguments as is.
-#          else:
-#              params_flat = args
-#  The above isn't quite right, of course -- which is one of many reasons why
-#  we abandoned the attempt to implement efficient memoization of keyword
-#  arguments. While functools.lru_cache() does (of course) support keyword
-#  arguments, it does so only at considerable space consumption by caching each
-#  keyword argument as a nested tuple pair. The alternative is to flatten these
-#  keyword arguments and append to the passed tuple of positional arguments, as
-#  we attempt (but fail) to do above. In theory, the above can be made to work
-#  with hopefully little effort by padding the "params_flat" list to the
-#  number of passed parameters: e.g., something resembling
-#              params_flat = list(args)
-#              params_flat.extend([None] * (len(func_sig.parameters) - len(args)))
-#  Alternately, it might be more efficient to:
-#      # Placeholder list preallocated to the number of accepted parameters.
-#      PARAMS_FLAT_EMPTY = [None] * (len(func_sig.parameters)
-#
-#      ...
-#              # Flattened list initialized to this placeholder list.
-#              params_flat = PARAMS_FLAT_EMPTY[:]
-#
-#              #FIXME: This doesn't work, of course. Manually assign if all
-#              #else fails, though there probably is a clever way to do this.
-#              # Add all passed positional arguments to this list.
-#              params_flat[:len(args)] = args
-#* Variadic parameters by appending to "params_flat":
+#FIXME: As needed, this callable may be generalized to support variadic
+#parameters by appending to "params_flat":
 #  1. A placeholder sentinel object after all positional and keyword arguments.
 #  2. Those variadic parameters.
 
@@ -138,24 +88,23 @@ def callable_cached(func: CallableTypes) -> CallableTypes:
     immutable). Ergo, this decorator *cannot* memoize callables either
     accepting or returning mutable containers (e.g., `list`, `dict`).
 
-    **All parameters passed to the decorated callable must be positional.**
-    Equivalently, *no* parameters passed to this callable may be keyword
-    arguments. While supporting keyword arguments would of course be feasible,
-    doing so would also reduce the efficiency of the memoization performed
-    by this decorator -- which is the whole point of this decorator, after all.
-
     **No parameters accepted by the decorated callable may be variadic** (i.e.,
     either variadic positional or keyword arguments).
 
+    **Order of keyword arguments passed to the decorated callable is
+    significant.** This decorator recaches return values produced by calls to
+    the decorated callable when passed the same keyword arguments in differing
+    order (e.g., ``muh_func(muh_kw=0, mah_kw=1)`` and ``muh_func(mah_kw=1,
+    muh_kw=0)``, cached as two distinct calls by this decorator despite these
+    calls ultimately receiving the same arguments).
+
+    **Maximize efficiency by only calling the decorated callable with
+    positional arguments.** While calling this callable with keyword arguments
+    is supported, doing so reduces the efficiency of the memoization performed
+    by this decorator -- which is the whole point of this decorator, after all.
+
     Details
     ----------
-    **Order of keyword arguments passed to the decorated callable is
-    insignificant.** This decorator caches return values produced by calls to
-    the decorated callable when passed the same keyword arguments in different
-    orders (e.g., ``muh_func(muh_kw=0, mah_kw=1)`` and ``muh_func(mah_kw=1,
-    muh_kw=0)``, cached as the same calls by this decorator despite these
-    calls receiving the same keyword arguments in differing order).
-
     **This decorator is intentionally not implemented in terms of the stdlib**
     :func:`functools.lru_cache` **decorator,** as that decorator is inefficient
     in the special case of unbounded caching with ``maxsize=None``, mostly as
@@ -184,14 +133,10 @@ def callable_cached(func: CallableTypes) -> CallableTypes:
     Raises
     ----------
     BeartypeCallableCachedException
-        If any parameter passed to this callable is either:
+        If any parameter passed to this callable is **variadic**: i.e., either
 
-        * **Keyword-only** (i.e., preceded by a placeholder ``*,``
-          pseudo-argument).
-        * **Variadic**: i.e., either
-
-            * A variadic positional argument resembling ``*args``.
-            * A variadic keyword argument resembling ``**kwargs``.
+        * A variadic positional argument resembling ``*args``.
+        * A variadic keyword argument resembling ``**kwargs``.
 
     Returns
     ----------
@@ -226,17 +171,15 @@ def callable_cached(func: CallableTypes) -> CallableTypes:
     params_flat_to_return_value_get = params_flat_to_return_value.get
 
     @wraps(func)
-    def _callable_cached(*args):
+    def _callable_cached(*args, **kwargs):
         '''
         Memoized variant of the {}() callable.
 
         Raises
         ----------
         TypeError
-            If any parameter passed to this callable is either:
-
-            * A **keyword argument.**
-            * **Unhashable** (i.e., mutable).
+            If any parameter passed to this callable is **unhashable** (i.e.,
+            mutable).
 
         See Also
         ----------
@@ -244,14 +187,51 @@ def callable_cached(func: CallableTypes) -> CallableTypes:
             Further details.
         '''.format(func.__name__)
 
-        # Passed tuple of positional arguments possibly flattened for
-        # space-efficient use as a dictionary key.
-        params_flat = args
-
-        # If passed only a single parameter, minimize space consumption by
-        # reducing this tuple of a single parameter into that parameter itself.
-        if len(params_flat) == 1:
-            params_flat = params_flat[0]
+        # Flatten the passed tuple of positional arguments and dictionary of
+        # keyword arguments into a single tuple containing both positional and
+        # keyword arguments. To minimize space consumption, this tuple contains
+        # these arguments as is with *NO* nested containers.
+        #
+        # For example, when a decorated callable with signature:
+        #    def muh_func(muh_arg1, muh_arg2, muh_arg3, muh_arg4)
+        # ...is called as:
+        #    muh_func('a', 'b', muh_arg3=0, muh_arg4=1)
+        # ...this closure receives these variadic arguments:
+        #    *args = ('a', 'b')
+        #    *kwargs = {'muh_arg3': 0, 'muh_arg4': 1}
+        # ...which the following logic flattens into this tuple:
+        #    params_flat = (
+        #        'a', 'b',
+        #        _SENTINEL_KWARGS_KEYS, 'muh_arg3', 'muh_arg4',
+        #        _SENTINEL_KWARGS_VALUES, 0, 1,
+        #    )
+        #
+        # If one or more keyword arguments are passed, construct this flattened
+        # tuple by concatenating together:
+        #
+        # * The passed tuple of positional arguments.
+        # * A sentinel tuple differentiating the preceding positional arguments
+        #   from subsequent keyword argument names.
+        # * The names of all passed keyword arguments coerced into a tuple.
+        # * A sentinel tuple differentiating the preceding keyword argument
+        #   names from subsequent keyword argument values.
+        # * The values of all passed keyword arguments coerced into a tuple.
+        if kwargs:
+            params_flat = (
+                args +
+                _SENTINEL_KWARGS_KEYS   + tuple(kwargs.keys()) +
+                _SENTINEL_KWARGS_VALUES + tuple(kwargs.values())
+            )
+        # Else, only positional arguments are passed.
+        #
+        # If passed only one positional argument, minimize space consumption by
+        # flattening this tuple of only that argument into that argument.
+        elif len(args) == 1:
+            params_flat = args[0]
+        # Else, one or more positional arguments are passed. In this case,
+        # reuse this tuple as is.
+        else:
+            params_flat = args
 
         # Value returned by a prior call to the decorated callable when passed
         # these parameters *OR* the sentinel placeholder otherwise (i.e., if
@@ -269,7 +249,8 @@ def callable_cached(func: CallableTypes) -> CallableTypes:
 
         # Call this parameter with these parameters and cache the value
         # returned by this call to these parameters.
-        return_value = params_flat_to_return_value[params_flat] = func(*args)
+        return_value = params_flat_to_return_value[params_flat] = func(
+            *args, **kwargs)
 
         # Return this value.
         return return_value
