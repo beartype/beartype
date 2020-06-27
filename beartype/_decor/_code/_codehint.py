@@ -162,7 +162,7 @@ def code_resolve_forward_refs(
             )
         # Else, this classname contains *NO* "." delimiters and hence signifies
         # a builtin type (e.g., "int"). In this case, the unqualified basename
-        # of this this type is simply its classname.
+        # of this type is simply its classname.
         else:
             hint_type_basename = hint
 

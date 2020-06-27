@@ -28,15 +28,19 @@ def get_obj_type(obj: object) -> type:
     '''
     Either the passed object if this object is a class *or* the class of this
     object otherwise (i.e., if this object is *not* a class).
+
     Note that this function *never* raises exceptions on arbitrary objects,
     since the :func:`type` builtin wisely returns itself when passed itself:
     e.g.,
+
         >>> type(type(type)) is type
         True
+
     Parameters
     ----------
     obj : object
         Object to be inspected.
+
     Returns
     ----------
     type
@@ -45,21 +49,84 @@ def get_obj_type(obj: object) -> type:
 
     return obj if isinstance(obj, type) else type(obj)
 
-
-def get_obj_module_name_or_none(obj: object) -> (str, type(None)):
+# ....................{ GETTERS ~ name                    }....................
+def get_name_qualified(obj: object) -> str:
     '''
-    Fully-qualified name of the module declaring either the passed object if
-    this object is a class *or* the class of this object otherwise (i.e., if
-    this object is *not* a class) if this class declares a ``__module__``
-    dunder attribute *or* ``None`` otherwise.
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring module) of either passed object if this object is a class *or*
+    the class of this object otherwise (i.e., if this object is *not* a class).
+
     Parameters
     ----------
     obj : object
         Object to be inspected.
+
+    Returns
+    ----------
+    str
+        Fully-qualified name of the type of this object.
+    '''
+
+    # Type of this object.
+    cls = get_obj_type(obj)
+
+    # Unqualified name of this type.
+    cls_basename = get_name_unqualified(cls)
+
+    # Fully-qualified name of the module defining this class if this class is
+    # defined by a module *OR* "None" otherwise.
+    cls_module_name = get_obj_module_name_or_none(cls)
+
+    # Return either...
+    return (
+        # The "."-delimited concatenation of this class basename and module
+        # name if this module name exists.
+        '{}.{}'.format(cls_module_name, cls_basename)
+        if cls_module_name is not None else
+        # This class basename as is otherwise.
+        cls_basename
+    )
+
+
+def get_name_unqualified(obj: object) -> str:
+    '''
+    **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
+    object if this object is a class *or* the class of this object otherwise
+    (i.e., if this object is *not* a class).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    str
+        Unqualified name of this class.
+    '''
+
+    # Elegant simplicity diminishes aggressive tendencies.
+    return get_obj_type(obj).__name__
+
+# ....................{ GETTERS ~ name : module           }....................
+def get_obj_module_name_or_none(obj: object) -> (str, None):
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring either the passed object if this
+    object is a class *or* the class of this object otherwise (i.e., if this
+    object is *not* a class) if this class declares a ``__module__`` dunder
+    attribute *or* ``None`` otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
     Returns
     ----------
     (str, type(None))
         Either:
+
         * Fully-qualified name of the module declaring the type of this object
           if this type declares a ``__module__`` dunder attribute.
         * ``None`` otherwise.

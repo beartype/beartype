@@ -28,7 +28,10 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 #    Internally, this function should call make_type() to do so.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeCaveNoneTypeOrKeyException
+from beartype.roar import (
+    BeartypeCaveNoneTypeOrKeyException,
+    BeartypeCaveNoneTypeOrMutabilityException,
+)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -50,7 +53,7 @@ Tuple of only the type of the ``None`` singleton.
 # This class is documented in the "beartype.cave" for readability.
 class _NoneTypeOrType(dict):
     '''
-    **:class:``NoneType`` tuple factory type** (i.e., :class:`dict` subclass,
+    :class:`NoneType` **tuple factory type** (i.e., :class:`dict` subclass,
     instances of which are dictionaries mapping from arbitrary types or tuples
     of types to the same types or tuples of types concatenated with the type of
     the ``None`` singleton).
@@ -63,22 +66,71 @@ class _NoneTypeOrType(dict):
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __missing__(self, type_or_types: (type, tuple)) -> tuple:
+    def __setitem__(self, key: object, value: object) -> None:
         '''
-        Dunder method explicitly called by the superclass
-        :meth:`dict.__getitem__` method implicitly called on ``[``- and
-        ``]``-delimited dictionary lookups of the passed key.
+        Dunder method explicitly called by the superclass on setting the passed
+        key-value pair with``[``- and ``]``-delimited syntax.
+
+        Specifically, this method prohibits external attempts to explicitly set
+        key-value pairs on this factory by unconditionally raising an
+        exception.
 
         Parameters
         ----------
+        key : object
+            Key to map this value to.
+        value : object
+            Value to be mapped to.
+
+        Raises
+        ----------
+        BeartypeCaveNoneTypeOrMutabilityException
+            Unconditionally.
+        '''
+
+        raise BeartypeCaveNoneTypeOrMutabilityException(
+            '{!r} externally immutable (i.e., not settable).'.format(self))
+
+
+    def __missing__(self, type_or_types: (type, tuple)) -> tuple:
+        '''
+        Dunder method explicitly called by the superclass
+        :meth:`dict.__getitem__` method implicitly called on getting the passed
+        missing key with ``[``- and ``]``-delimited syntax.
+
+        Specifically, this method:
+
+        * If a single type is passed:
+
+          #. Creates a new 2-tuple containing only that type and the type of
+             the ``None`` singleton.
+          #. Maps the passed type to that 2-tuple.
+          #. Returns that 2-tuple.
+
+        * Else if a tuple of one or more types is passed:
+
+          #. Creates a new tuple appending the type of the ``None`` singleton
+             to the passed tuple.
+          #. Maps the passed type to the new tuple.
+          #. Returns the new tuple.
+
+        * Else, raises an exception.
+
+        Parameters
+        ----------
+        type_or_types : (type, tuple)
+            Type or tuple of types *not* currently cached by this factory.
 
         Returns
         ----------
+        tuple
+            Tuple of types appending the type of the ``None`` singleton to the
+            passed type or tuple of types.
 
         Raises
         ----------
         BeartypeCaveNoneTypeOrKeyException
-            If this key is neither a:
+            If this key is either the empty tuple *or* neither a:
 
             * **Type** (i.e., :class:`beartype.cave.ClassType` instance).
             * **Tuple of types** (i.e., :class:`tuple` whose items are all
@@ -99,7 +151,13 @@ class _NoneTypeOrType(dict):
             else:
                 type_or_types_or_none = (type_or_types, _NoneType)
         # Else if this key is a tuple...
-        elif isinstance (type_or_types, tuple):
+        elif isinstance(type_or_types, tuple):
+            # If this tuple is empty, raise an exception.
+            if not type_or_types:
+                raise BeartypeCaveNoneTypeOrKeyException(
+                    '"NoneTypeOr" key {!r} is empty tuple.'.format(
+                        type_or_types))
+
             # If any item of this tuple is *NOT* a type...
             if any(not isinstance(item, type) for item in type_or_types):
                 # For each item of this tuple...

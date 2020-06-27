@@ -93,7 +93,26 @@ This private submodule is *not* intended for importation by downstream callers.
 #    def testemall(ride: 'Lightning') -> 'Lightning': return ride
 #    class Lightning(object): pass
 #To do so, note that the fully-qualified name of the decorated callable is
-#trivially obtainable as "func.__module__". So, this should be trivial.
+#trivially obtainable as "func.__module__". So, this should be trivial --
+#except that there exists a common edge case: *BUILTIN TYPES* (e.g., "dict"),
+#which are also unqualified but signify something completely different.
+#
+#Fortunately, differentiating these two cases isn't terribly arduous. Note that
+#the trivial expression "set(dir(builtins))", which yields a set of the names
+#of all builtins, *NEARLY* gets us there. Since that set contains the names of
+#builtins that are *NOT* types (e.g., sum(), super()), however, we then need to
+#filter that expression for all types: e.g., something resembling:
+#
+#    import builtins
+#    _BUILTIN_TYPE_NAMES = set(
+#        getattr(builtins, builtin_name)
+#        for builtin_name in dir(builtins)
+#        if isinstance(getattr(builtins, builtin_name), type)
+#    )
+#
+#I can confirm that works, but it also calls getattr() excessively. Perhaps
+#there's an "inspect" function that yields not simply the names but also the
+#objects defined by a passed module. *shrug*
 
 #FIXME: Emit one non-fatal warning for each annotated type that is either:
 #

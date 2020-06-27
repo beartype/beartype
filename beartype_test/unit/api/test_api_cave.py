@@ -674,7 +674,10 @@ def test_api_cave_tuple_nonetypeor() -> None:
     # from beartype import cave
     from beartype.cave import (
         AnyType, CallableTypes, MappingMutableType, NoneType, NoneTypeOr)
-    from beartype.roar import BeartypeCaveNoneTypeOrKeyException
+    from beartype.roar import (
+        BeartypeCaveNoneTypeOrKeyException,
+        BeartypeCaveNoneTypeOrMutabilityException,
+    )
 
     # Assert this factory to be a mutable mapping.
     assert isinstance(NoneTypeOr, MappingMutableType)
@@ -688,6 +691,14 @@ def test_api_cave_tuple_nonetypeor() -> None:
         NoneTypeOr['If you can dream--and not make dreams your master;']
     with pytest.raises(BeartypeCaveNoneTypeOrKeyException):
         NoneTypeOr[('If you can think--and not make thoughts your aim;',)]
+
+    # Assert this factory to *NOT* be indexable by the empty tuple.
+    with pytest.raises(BeartypeCaveNoneTypeOrKeyException):
+        NoneTypeOr[()]
+
+    # Assert this factory to *NOT* be explicitly settable.
+    with pytest.raises(BeartypeCaveNoneTypeOrMutabilityException):
+        NoneTypeOr['If you can meet with'] = 'Triumph and Disaster'
 
     # Assert that indexing this factory with "NoneType" creates, caches, and
     # returns a tuple containing only "NoneType".
