@@ -32,6 +32,7 @@ from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
 )
+from beartype._util import utilhint
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -92,7 +93,7 @@ class _NoneTypeOrType(dict):
             '{!r} externally immutable (i.e., not settable).'.format(self))
 
 
-    def __missing__(self, type_or_types: (type, tuple)) -> tuple:
+    def __missing__(self, hint: (type, tuple)) -> tuple:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on getting the passed
@@ -100,14 +101,14 @@ class _NoneTypeOrType(dict):
 
         Specifically, this method:
 
-        * If a single type is passed:
+        * If a single type or string is passed:
 
-          #. Creates a new 2-tuple containing only that type and the type of
+          #. Creates a new 2-tuple containing only that object and the type of
              the ``None`` singleton.
           #. Maps the passed type to that 2-tuple.
           #. Returns that 2-tuple.
 
-        * Else if a tuple of one or more types is passed:
+        * Else if a tuple of one or more types and/or strings is passed:
 
           #. Creates a new tuple appending the type of the ``None`` singleton
              to the passed tuple.
@@ -118,76 +119,70 @@ class _NoneTypeOrType(dict):
 
         Parameters
         ----------
-        type_or_types : (type, tuple)
-            Type or tuple of types *not* currently cached by this factory.
+        hint : (type, str, tuple)
+            Type, string, or tuple of one or more types and/or strings *not*
+            currently cached by this factory.
 
         Returns
         ----------
         tuple
             Tuple of types appending the type of the ``None`` singleton to the
-            passed type or tuple of types.
+            passed type, string, or tuple of types and/or strings.
 
         Raises
         ----------
         BeartypeCaveNoneTypeOrKeyException
-            If this key is either the empty tuple *or* neither a:
+            If this key is neither:
 
-            * **Type** (i.e., :class:`beartype.cave.ClassType` instance).
-            * **Tuple of types** (i.e., :class:`tuple` whose items are all
-              :class:`beartype.cave.ClassType` instances).
+            * A **string** (i.e., forward reference specified as either a
+              fully-qualified or unqualified classname).
+            * A **type** (i.e., class).
+            * A **non-empty tuple** (i.e., semantic union of types) containing
+              only strings and types.
         '''
 
+        # If this missing key is *NOT* a PEP-noncompliant type hint, raise an
+        # exception.
+        utilhint.die_unless_hint_nonpep(
+            hint=hint,
+            exception_cls=BeartypeCaveNoneTypeOrKeyException,
+            exception_label='"NoneTypeOr" key',
+        )
+
         # Tuple of types to be cached and returned by this call.
-        type_or_types_or_none = None
+        hint_or_none = None
 
         # If this key is a type...
-        if isinstance(type_or_types, type):
+        if isinstance(hint, type):
             # If this type is "NoneType", reuse the existing "_NoneTypes" tuple
             # containing only this type.
-            if type_or_types is _NoneType:
-                type_or_types_or_none = _NoneTypes
+            if hint is _NoneType:
+                hint_or_none = _NoneTypes
             # Else, this type is *NOT* "NoneType". In this case, instantiate a
             # new tuple of types concatenating this type with "NoneType".
             else:
-                type_or_types_or_none = (type_or_types, _NoneType)
-        # Else if this key is a tuple...
-        elif isinstance(type_or_types, tuple):
-            # If this tuple is empty, raise an exception.
-            if not type_or_types:
-                raise BeartypeCaveNoneTypeOrKeyException(
-                    '"NoneTypeOr" key {!r} is empty tuple.'.format(
-                        type_or_types))
-
-            # If any item of this tuple is *NOT* a type...
-            if any(not isinstance(item, type) for item in type_or_types):
-                # For each item of this tuple...
-                for item in type_or_types:
-                    # If this is the first item of this tuple that is *NOT* a
-                    # type, raise a human-readable exception.
-                    if not isinstance(item, type):
-                        raise BeartypeCaveNoneTypeOrKeyException(
-                            '"NoneTypeOr" key {!r} item {!r} not a '
-                            'type.'.format(type_or_types, item))
-            # Else, all items of this tuple are types.
-
-            # If "NoneType" is already in this tuple, use this tuple as is.
-            if _NoneType in type_or_types:
-                type_or_types_or_none = type_or_types
+                hint_or_none = (hint, _NoneType)
+        # Else if this key is a non-empty tuple...
+        elif isinstance(hint, tuple):
+            # If "NoneType" is already in this tuple, reuse this tuple as is.
+            if _NoneType in hint:
+                hint_or_none = hint
             # Else, "NoneType" is *NOT* already in this tuple. In this case,
             # instantiate a new tuple of types concatenating this tuple with
             # "NoneType".
             else:
-                type_or_types_or_none = type_or_types + _NoneTypes
-        # Else, this key is neither a type nor tuple and is thus invalid. In
-        # this case, raise a human-readable exception.
+                hint_or_none = hint + _NoneTypes
+        # Else, this key is invalid. Thanks to the initial call to the
+        # utilhint.die_unless_hint_nonpep() function, this edge case should
+        # *NEVER* occur. Nonetheless, raise a human-readable exception to
+        # safeguard against insanity.
         else:
             raise BeartypeCaveNoneTypeOrKeyException(
-                '"NoneTypeOr" key {!r} neither a '
-                'type nor tuple of types.'.format(type_or_types))
+                '"NoneTypeOr" key {!r} unsupported.'.format(hint))
 
-        # Return this new tuple of types.
+        # Return this new tuple.
         #
         # The superclass dict.__getitem__() dunder method then implicitly maps
         # the passed missing key to this new tuple of types by effectively:
-        #     self[type_or_types] = type_or_types_or_none
-        return type_or_types_or_none
+        #     self[hint] = hint_or_none
+        return hint_or_none

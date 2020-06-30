@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 563`_ **data module.**
+**Beartype** `PEP 563`_ **data submodule.**
 
 This submodule exercises `PEP 563`_ support implemented in the
 :func:`beartype.beartype` decorator by enabling this support with a leading
@@ -13,14 +13,14 @@ decorated by that decorator. External unit tests are expected to conditionally
 import this submodule if the active Python interpreter targets at least
 Python 3.7.0 and then call that callable.
 
-.. _PEP 563:
-   https://www.python.org/dev/peps/pep-0563
-
 Caveats
 ----------
 **This submodule requires the active Python interpreter to target at least
 Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 :class:`AttributeError` exception.
+
+.. _PEP 563:
+   https://www.python.org/dev/peps/pep-0563
 '''
 
 # ....................{ IMPORTS                           }....................

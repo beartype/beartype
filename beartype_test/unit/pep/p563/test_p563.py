@@ -34,7 +34,7 @@ def test_p563() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype_test.unit.pep.p563.data_pep563 import (
+    from beartype_test.unit.pep.p563.data_p563 import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_stanza,
     )

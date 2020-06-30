@@ -15,7 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import inspect
-from beartype.cave import CallableTypes
 from beartype.roar import BeartypeCallableCachedException
 from functools import wraps
 from inspect import Parameter
@@ -56,7 +55,7 @@ flattened tuple of all parameters passed to the decorated callable.
 #  1. A placeholder sentinel object after all positional and keyword arguments.
 #  2. Those variadic parameters.
 
-def callable_cached(func: CallableTypes) -> CallableTypes:
+def callable_cached(func):
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
     values of the passed callable rather than inefficiently recalling that
