@@ -32,7 +32,7 @@ from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
 )
-from beartype._util import utilhint
+from beartype._util.utilhint import die_unless_hint_nonpep
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -143,10 +143,10 @@ class _NoneTypeOrType(dict):
 
         # If this missing key is *NOT* a PEP-noncompliant type hint, raise an
         # exception.
-        utilhint.die_unless_hint_nonpep(
+        die_unless_hint_nonpep(
             hint=hint,
+            hint_label='"NoneTypeOr" key',
             exception_cls=BeartypeCaveNoneTypeOrKeyException,
-            exception_label='"NoneTypeOr" key',
         )
 
         # Tuple of types to be cached and returned by this call.

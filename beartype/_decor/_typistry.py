@@ -18,6 +18,32 @@ from beartype._util import utilobj
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
+# ....................{ REGISTRARS                        }....................
+def register_type(cls: type) -> None:
+    '''
+    Register the passed type with the beartypistry singleton.
+
+    This function is syntactic sugar improving consistency throughout the
+    codebase, but is otherwise equivalent to:
+
+        >>> from beartype._decor._typistry import BEARTYPISTRY
+        >>> from beartype._util import utilobj
+        >>> BEARTYPISTRY[utilobj.get_name_qualified(cls)] = cls
+
+    Parameters
+    ----------
+    cls : type
+        Class to be registered.
+    '''
+
+    # One-liners for reasonable justice.
+    #
+    # Note that both the utilobj.get_name_qualified() function explicitly
+    # called here *AND* the Beartypistry.__setitem__() dunder method implicitly
+    # called by this assignment validate their passed argument(s). Ergo, avoid
+    # doing so here to preserve DRY.
+    BEARTYPISTRY[utilobj.get_name_qualified(cls)] = cls
+
 # ....................{ CLASSES                           }....................
 class Beartypistry(dict):
     '''

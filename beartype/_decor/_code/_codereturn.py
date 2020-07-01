@@ -21,14 +21,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code import _codehint
-from beartype._decor._code._codehint import HINTS_IGNORABLE
+from beartype._decor._code._codehint import (
+    HINTS_IGNORABLE,
+    code_resolve_forward_refs,
+)
 from beartype._decor._code._snippet import (
     CODE_RETURN_CHECKED,
     CODE_RETURN_UNCHECKED,
     CODE_RETURN_HINT,
 )
 from beartype._decor._data import BeartypeData
+from beartype._util.utilhint import die_unless_hint_nonpep
 from inspect import Signature
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -92,7 +95,7 @@ def code_check_return(data: BeartypeData) -> str:
     func_return_hint_label = '{} return type annotation'.format(data.func_name)
 
     # Validate this annotation.
-    _codehint.verify_hint(
+    die_unless_hint_nonpep(
         hint=func_return_hint, hint_label=func_return_hint_label)
 
     # String evaluating to this return value's annotated type.
@@ -102,7 +105,7 @@ def code_check_return(data: BeartypeData) -> str:
     # Python code snippet to be returned.
     func_body = '{}{}'.format(
         # Replace all classnames in this annotation with those classes.
-        _codehint.code_resolve_forward_refs(
+        code_resolve_forward_refs(
             hint=func_return_hint,
             hint_expr=func_return_type_expr,
             hint_label=func_return_hint_label,

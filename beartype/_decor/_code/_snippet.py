@@ -26,20 +26,29 @@ CODE_SIGNATURE = '''
 def {func_wrapper_name}(
     *args,
     __beartype_func=__beartype_func,
-    __beartype_hints=__beartype_hints,
+    __beartypistry=__beartypistry,
     **kwargs
 ):
 '''
+#FIXME: Add above if desired:
+#     __beartype_hints=__beartype_hints,
 
 # ....................{ CODE ~ annotations                }....................
-CODE_PARAM_HINT = '__beartype_hints[{!r}]'
+#FIXME: Refactor type and forward reference annotations access to access
+#fully-qualified classnames on the "__beartypistry". That said, note that tuple
+#annotations will probably continue to require accessing this function-specific
+#dictionary. So it goes.
+
+CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
+# CODE_PARAM_HINT = '__beartype_hints[{!r}]'
 '''
 Code snippet accessing the annotation with an arbitrary name formatted into
 this snippet by the caller.
 '''
 
 
-CODE_RETURN_HINT = "__beartype_hints['return']"
+CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
+# CODE_RETURN_HINT = "__beartype_hints['return']"
 '''
 Code snippet accessing the **return annotation** (i.e., annotation synopsizing
 the type hint for this callable's return value).
@@ -105,7 +114,7 @@ CODE_STR_REPLACE = '''
         # Validate this class to be either a class or tuple of classes,
         # preventing this attribute from being yet another classname. (The
         # recursion definitively ends here, folks.)
-        __beartype_verify_hint(
+        __beartype_die_unless_hint_nonpep(
             hint={hint_type_basename},
             hint_label={hint_label!r},
             is_str_valid=False,

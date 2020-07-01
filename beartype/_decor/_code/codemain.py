@@ -4,11 +4,19 @@
 # See "LICENSE" for further details.
 
 '''
-**Callable coder** (i.e., class generating the pure-Python code for the wrapper
-function type-checking the callable currently being decorated by the
-:func:`beartype.beartype` decorator).**
+**Beartype decorator code generator.**
+
+This private submodule dynamically generates both the signature and body of the
+wrapper function type-checking all annotated parameters and return value of the
+the callable currently being decorated by the :func:`beartype.beartype`
+decorator in a general-purpose manner. For genericity, this relatively
+high-level submodule implements *no* support for annotation-based PEPs (e.g.,
+`PEP 484`_); other lower-level submodules do so instead.
 
 This private submodule is *not* intended for importation by downstream callers.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................

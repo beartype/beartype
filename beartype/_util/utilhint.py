@@ -18,13 +18,18 @@ from beartype._util.utilcache import callable_cached
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
+#FIXME: Validate strings to be syntactically valid classnames via a globally
+#scaped compiled regular expression. Raising early exceptions at decoration
+#time is preferable to raising late exceptions at call time.
+
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
+    is_str_valid: bool = True,
+    hint_label: str = 'Type hint',
     exception_cls: type = BeartypeDecorHintValueException,
-    exception_label: str = 'Type hint',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant type
@@ -35,33 +40,44 @@ def die_unless_hint_nonpep(
     ----------
     obj : object
         Object to be validated.
+    is_str_valid : Optional[bool]
+        ``True`` only if this function permits this object to be a string.
+        Defaults to ``True``. If this boolean is:
+
+        * ``True``, this object is valid only if this object is either a class,
+          classname, or tuple of classes and/or classnames.
+        * ``False``, this object is valid only if this object is either a class
+          or tuple of classes.
+    hint_label : str
+        Human-readable noun prefixing this object's representation in the
+        exception message to be raised by this function unless this object is a
+        PEP-noncompliant type hint. Defaults to ``Type hint``.
     exception_cls : type
         Type of the exception to be raised by this function unless this object
         is a PEP-noncompliant type hint. Defaults to
         :class:`BeartypeDecorHintValueException`.
-    exception_label : str
-        Human-readable noun prefixing this object's representation in the
-        exception message to be raised by this function unless this object is a
-        PEP-noncompliant type hint. Defaults to ``Type hint``.
 
     Raises
     ----------
     exception_type
         If this object is neither:
 
-        * A **string** (i.e., forward reference specified as either a
-          fully-qualified or unqualified classname).
         * A **type** (i.e., class).
-        * A **non-empty tuple** (i.e., semantic union of types) containing only
-          strings and types.
+        * If ``is_str_valid``, a **string** (i.e., forward reference specified
+          as either a fully-qualified or unqualified classname).
+        * A **non-empty tuple** (i.e., semantic union of types) containing one
+          or more:
+
+          * Types.
+          * If ``is_str_valid``, strings.
     '''
     assert isinstance(exception_cls, type), (
         '{!r} not a type.'.format(exception_cls))
-    assert isinstance(exception_label, str), (
-        '{!r} not a string.'.format(exception_label))
+    assert isinstance(hint_label, str), (
+        '{!r} not a string.'.format(hint_label))
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Duplicate all changes below into the tuple iteration below.
+    # BEGIN: Synchronize changes here with the tuple iteration below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is a forward reference (i.e., fully-qualified or
@@ -70,17 +86,32 @@ def die_unless_hint_nonpep(
     # * A PEP-noncompliant type hint and is thus valid.
     # * A PEP 484 type hint and is thus invalid.
     #
-    # However, Forward references are only safely resolvable at call time.
-    # Attempting to resolve a forward reference at an earlier time typically
-    # provokes a circular import dependency. Avoiding circular import
-    # dependencies is the entire point of annotating callables with indirect
-    # forward references rather than direct class objects is the first place.
+    # However, forward references are only safely resolvable at call time.
+    # Attempting to resolve a forward reference at an earlier time usually
+    # induces a circular import dependency (i.e., edge-case in which two
+    # modules mutually import one other, usually transitively rather than
+    # directly). Circumventing these dependencies is the entire raison d'etre
+    # (i.e., reason for existence) of forward references in the first place.
+    #
+    # Validating this reference here would require importing the module
+    # defining this attribute. Since the @beartype decorator calling this
+    # function is typically invoked via the global scope of a source module,
+    # importing this target module here would be functionally equivalent to
+    # importing that target module from that source module -- triggering a
+    # circular import dependency in susceptible source modules.
     #
     # Ergo, there exists no means of differentiating between these two cases at
     # this presumably early time. Instead, we silently accept this string as is
     # for now and subsequently validate its type immediately after resolving
-    # this string to its referent at some later time.
+    # this string to its referent at wrapper function call time.
     if isinstance(hint, str):
+        # If forward references are unsupported, raise an exception.
+        if not is_str_valid:
+            raise exception_cls(
+                '{} forward reference {!r} unsupported.'.format(
+                    hint_label, hint))
+
+        # Else, silently accept this forward reference as is for now.
         return
     # Else, this object is *NOT* a forward reference.
 
@@ -89,7 +120,7 @@ def die_unless_hint_nonpep(
         # If this is a PEP 484-compliant class, raise an exception.
         if is_hint_typing(hint):
             raise exception_cls(
-                '{} {!r} is a PEP 484 type.'.format(exception_label, hint))
+                '{} PEP 484 type {!r} unsupported.'.format(hint_label, hint))
 
         # Else, this is a PEP-noncompliant class. In this case, silently accept
         # this class as is.
@@ -97,15 +128,14 @@ def die_unless_hint_nonpep(
     # Else, this object is neither a forward reference nor class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # END: Duplicate all changes above into the tuple iteration below.
+    # END: Synchronize changes above with the tuple iteration below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is a tuple...
     if isinstance(hint, tuple):
         # If this tuple is empty, raise an exception.
         if not hint:
-            raise exception_cls(
-                '{} is the empty tuple.'.format(exception_label))
+            raise exception_cls('{} tuple empty.'.format(hint_label))
         # Else, this tuple is non-empty.
 
         # For each item of this tuple...
@@ -114,8 +144,15 @@ def die_unless_hint_nonpep(
             # more importantly to avoid exhausting the stack), avoid calling
             # this function recursively to do so. *shrug*
 
-            # If this item is a forward reference, silently accept this item.
+            # If this item is a forward reference,
             if isinstance(hint_item, str):
+                # If forward references are unsupported, raise an exception.
+                if not is_str_valid:
+                    raise exception_cls(
+                        '{} {!r} forward reference {!r} unsupported.'.format(
+                            hint_label, hint, hint_item))
+
+                # Else, silently accept this item.
                 continue
             # Else, this item is *NOT* a forward reference.
 
@@ -124,19 +161,28 @@ def die_unless_hint_nonpep(
                 # If this is a PEP 484-compliant class, raise an exception.
                 if is_hint_typing(hint_item):
                     raise exception_cls(
-                        '{} {!r} item {!r} is a PEP 484 type.'.format(
-                            exception_label, hint, hint_item))
+                        '{} {!r} PEP 484 type {!r} unsupported.'.format(
+                            hint_label, hint, hint_item))
 
                 # Else, this is a PEP-noncompliant class. In this case,
                 # silently accept this class as is.
                 continue
 
             # Else, this item is neither a forward reference nor class. Ergo,
-            # this item is *NOT* a PEP-noncompliant type hint. Raise an
-            # exception.
-            raise exception_cls(
-                '{} {!r} item {!r} neither a type nor string.'.format(
-                    exception_label, hint, hint_item))
+            # this item is *NOT* a PEP-noncompliant type hint.
+            #
+            # If forward references are supported, raise an exception noting
+            # that.
+            if is_str_valid:
+                raise exception_cls(
+                    '{} {!r} item {!r} neither type nor string.'.format(
+                        hint_label, hint, hint_item))
+            # Else, forward references are unsupported. In this case, raise an
+            # exception noting that.
+            else:
+                raise exception_cls(
+                    '{} {!r} item {!r} not type.'.format(
+                        hint_label, hint, hint_item))
 
         # Since the prior iteration failed to raise an exception, this tuple
         # contains only forward references and/or PEP-noncompliant classes.
@@ -144,10 +190,19 @@ def die_unless_hint_nonpep(
         return
 
     # Else, this object is neither a forward reference, class, nor tuple. Ergo,
-    # this object is *NOT* a PEP-noncompliant type hint. Raise an exception.
-    raise exception_cls(
-        '{} {!r} neither a type, string, nor '
-        'tuple of types and/or strings.'.format(exception_label, hint))
+    # this object is *NOT* a PEP-noncompliant type hint.
+    #
+    # If forward references are supported, raise an exception noting that.
+    if is_str_valid:
+        raise exception_cls(
+            '{} {!r} neither type, string, nor '
+            'tuple of types and strings.'.format(hint_label, hint))
+    # Else, forward references are unsupported. In this case, raise an
+    # exception noting that.
+    else:
+        raise exception_cls(
+            '{} {!r} neither type nor tuple of types.'.format(
+                hint_label, hint))
 
 # ....................{ TESTERS                           }....................
 #FIXME: Detect functions created by "typing.NewType(subclass_name, superclass)"

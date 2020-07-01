@@ -124,16 +124,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #exceptions enables end users to unconditionally disable all unwanted warnings,
 #whereas no such facilities exist for unwanted exceptions.
 #FIXME: Validate all tuple annotations to be non-empty *EXCLUDING*
-#"beartype.cave.UnavailableTypes", which is intentionally empty. All
-#user-defined empty tuple annotations imply *NOTHING* to be valid, which would
-#render the resulting callable uncallable, which would be entirely senseless.
-#To do so, consider raising an exception from the _verify_hint()
-#function: e.g.,
-#
-#    # This is bad and should raise an exception at decoration time.
-#    @beartype
-#    def badfuncisbad(nonsense_is_nonsense: ()) -> ():
-#        pass
+#"beartype.cave.UnavailableTypes", which is intentionally empty.
 #FIXME: Unit test the above edge case.
 
 #FIXME: Reduce tuples containing only one item to those items as is for
@@ -275,6 +266,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import functools
 from beartype._decor._code import codemain
 from beartype._decor._data import BeartypeData
+from beartype._decor._typistry import BEARTYPISTRY
 from beartype.cave import (
     CallableTypes,
     ClassType,
@@ -305,8 +297,8 @@ from beartype.roar import (
     BeartypeCallTypeParamException  as __beartype_param_exception,
     BeartypeCallTypeReturnException as __beartype_return_exception,
 )
-from beartype._decor._code._codehint import (
-    verify_hint as __beartype_verify_hint,
+from beartype._util.utilhint import (
+    die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,
 )
 from beartype._util.utilstr import (
     trim_object_repr as __beartype_trim,
@@ -424,7 +416,10 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # wrapper-specific "__beartype_func" attribute.
     local_attrs = {
         '__beartype_func': func,
-        '__beartype_hints': func_data.func_hints,
+        '__beartypistry': BEARTYPISTRY,
+
+        #FIXME: Uncomment if desired.
+        # '__beartype_hints': func_data.func_hints,
     }
 
     #FIXME: Actually, we absolutely *DO* want to leverage the example
