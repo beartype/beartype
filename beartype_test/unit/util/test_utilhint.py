@@ -25,7 +25,7 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
 
     # Defer heavyweight imports.
     from beartype import cave
-    from beartype.roar import BeartypeDecorHintValueException
+    from beartype.roar import BeartypeDecorHintValueNonPepException
     from beartype._util.utilhint import die_unless_hint_nonpep
     # from beartype_test.unit.pep.p484.data_p484 import P484_TYPES
 
@@ -59,7 +59,7 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
 
     # Explicitly assert this function rejects objects excepted to be rejected.
     for obj_invalid in OBJS_INVALID:
-        with pytest.raises(BeartypeDecorHintValueException):
+        with pytest.raises(BeartypeDecorHintValueNonPepException):
             die_unless_hint_nonpep(obj_invalid)
 
 

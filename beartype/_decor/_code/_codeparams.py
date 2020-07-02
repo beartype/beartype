@@ -15,39 +15,23 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
-from beartype._decor._code._codehint import (
-    HINTS_IGNORABLE,
-    code_resolve_forward_refs,
-)
-# from beartype._decor._code._nonpep.nonpepparam import nonpep_code_check_param
-from beartype._decor._code._snippet import (
-    CODE_PARAM_VARIADIC_POSITIONAL,
-    CODE_PARAM_KEYWORD_ONLY,
-    CODE_PARAM_POSITIONAL_OR_KEYWORD,
-    CODE_PARAM_HINT,
-)
+from beartype._decor._code._codehint import HINTS_IGNORABLE
+from beartype._decor._code._nonpep.nonpepparam import nonpep_code_check_param
+# from beartype._decor._code._snippet import (
+#     CODE_PARAM_VARIADIC_POSITIONAL,
+#     CODE_PARAM_KEYWORD_ONLY,
+#     CODE_PARAM_POSITIONAL_OR_KEYWORD,
+#     CODE_PARAM_HINT,
+# )
 from beartype._decor._data import BeartypeData
-from beartype._util.utilhint import die_unless_hint_nonpep
+from beartype._util.utilhint import (
+    die_unless_hint, die_unless_hint_nonpep, is_hint_typing)
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_PARAM_HINTS_IGNORABLE = {Parameter.empty,} | HINTS_IGNORABLE
-'''
-Set of all parameter annotation types to be ignored during annotation-based
-type checking in the :func:`beartype` decorator.
-
-This includes:
-
-* The :class:`Parameter.empty` type, denoting **unannotated parameters** (i.e.,
-  parameters *not* annotated with a type hint).
-* All context-agnostic types listed in the
-  :attr:`beartype._decor.annotation.HINTS_IGNORABLE` set global constant.
-'''
-
-
 _PARAM_KINDS_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
 '''
 Set of all :attr:`Parameter.kind` constants to be ignored during
@@ -66,7 +50,7 @@ This includes:
 # ....................{ CODERS                            }....................
 def code_check_params(data: BeartypeData) -> str:
     '''
-    Python code snippet type-checking all annotated parameters of the decorated
+    Python code type-checking all annotated parameters of the decorated
     callable if any *or* the empty string otherwise (i.e., if these parameters
     are unannotated).
 
@@ -86,13 +70,15 @@ def code_check_params(data: BeartypeData) -> str:
     BeartypeDecorParamNameException
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__beartyp``.
-    BeartypeDecorHintTupleItemException
-        If any item of any **type-hinted tuple** (i.e., tuple applied as a
-        parameter or return value annotation) is of an unsupported type.
-        Supported types include:
-
-        * :class:`type` (i.e., classes).
-        * :class:`str` (i.e., strings).
+    BeartypeDecorHintValueNonPepException
+        If any type hint annotating any parameter of this callable is *not*
+        **PEP-noncompliant** (i.e., fails to comply with
+        :mod:`beartype`-specific semantics, including tuple unions and
+        fully-qualified forward references).
+    BeartypeDecorHintValueUnhashableException
+        If any type hint annotating any parameter of this callable is
+        **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
+        function and thus unusable in hash-based containers like dictionaries).
     '''
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
@@ -105,6 +91,15 @@ def code_check_params(data: BeartypeData) -> str:
     # order)...
     for func_arg_index, func_arg in enumerate(
         data.func_sig.parameters.values()):
+        # If this parameter is unannotated, continue to the next parameter.
+        if func_arg.annotation is Parameter.empty:
+            continue
+        # Else, this parameter is annotated.
+
+        # If this annotation is unsupported, raise an exception; else, this
+        # annotation is guaranteed to be supported and thus hashable.
+        die_unless_hint(func_arg.annotation)
+
         # If this callable redefines a parameter initialized to a default value
         # by this wrapper, raise an exception. Permitting this unlikely edge
         # case would permit unsuspecting users to accidentally override these
@@ -114,103 +109,37 @@ def code_check_params(data: BeartypeData) -> str:
                 '{} parameter "{}" reserved by @beartype.'.format(
                     data.func_name, func_arg.name))
 
-        # Annotation for this parameter if any *OR* "Parameter.empty" otherwise
-        # (i.e., if this parameter is unannotated).
-        func_arg_hint = func_arg.annotation
+        # If the type of either this parameter or annotation is silently
+        # ignorable, continue to the next parameter.
+        #
+        # Note the "in" operator when applied to a set() object requires that
+        # the first operand (i.e., "func_arg_hint" and "func_arg_kind") to be
+        # hashable. Since:
+        #
+        # * "func_arg.annotation" is guaranteed to be hashable by the prior
+        #   call to the die_unless_hint() validator.
+        # * "func_arg_kind" derives from the stdlib "inspect" module, this
+        #   should *ALWAYS* be the case for that object.
+        if (func_arg.annotation in HINTS_IGNORABLE or
+            func_arg.kind in _PARAM_KINDS_IGNORABLE):
+            continue
 
-        # Attempt to...
-        try:
-            # If the type of either this parameter or annotation is silently
-            # ignorable, continue to the next parameter.
-            #
-            # Note the "in" operator when applied to a set() object requires
-            # that the first operand (i.e., "func_arg_hint" and
-            # "func_arg_kind") to be hashable. Since:
-            #
-            # * "func_arg_kind" derives from the stdlib "inspect" module, this
-            #   should *ALWAYS* be the case for that object.
-            # * "func_arg_hint" is an arbitrary user-defined object, this is
-            #   *NOT* necessarily the case for that object. However, since most
-            #   annotations are types (including those generated by the stdlib
-            #   "typing" module) *AND* since types are hashable, this is
-            #   generally the case for that object. Nonetheless, exception
-            #   handling is still warranted to catch edge cases.
-            if (func_arg_hint in _PARAM_HINTS_IGNORABLE or
-                func_arg.kind in _PARAM_KINDS_IGNORABLE):
-                continue
-        # If this annotation is unhashable and hence *NOT* a beartype-supported
-        # type (e.g., class, string, tuple of classes and/or strings), the
-        # above code raises a "TypeError".
-        except TypeError as type_error:
-            # If this exception does *NOT* denote unhashability, this exception
-            # is unexpected. Raise this exception as is. Note that:
-            #     >>> [] in {,}
-            #     TypeError: unhashable type: 'list'
-            if not str(type_error).startswith("unhashable type: '"):
-                raise
-            # Else, this exception denotes unhashability. In this case, simply
-            # ignore this low-level non-human-readable exception. The
-            # subsequent call to annotation._verify_hint() will raise a
-            # high-level human-readable exception describing this failure.
-
-        # Human-readable label describing this annotation.
-        func_arg_hint_label = (
-            '{} parameter "{}" type hint'.format(
-                data.func_name, func_arg.name))
-
-        # Validate this annotation.
-        die_unless_hint_nonpep(
-            hint=func_arg_hint, hint_label=func_arg_hint_label)
-
-        # String evaluating to this parameter's annotated type.
-        func_arg_type_expr = CODE_PARAM_HINT.format(func_arg.name)
-
-        # String evaluating to this parameter's current value when passed
-        # as a keyword.
-        func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
-
-        # Replace all classnames in this annotation by the corresponding
-        # classes.
-        func_code += code_resolve_forward_refs(
-            hint=func_arg_hint,
-            hint_expr=func_arg_type_expr,
-            hint_label=func_arg_hint_label,
-        )
-
-        # If this parameter is a tuple of positional variadic parameters
-        # (e.g., "*args"), iteratively check these parameters.
-        if func_arg.kind is Parameter.VAR_POSITIONAL:
-            func_code += CODE_PARAM_VARIADIC_POSITIONAL.format(
-                func_name=data.func_name,
-                arg_name=func_arg.name,
-                arg_index=func_arg_index,
-                arg_type_expr=func_arg_type_expr,
-            )
-        # Else if this parameter is keyword-only, check this parameter only
-        # by lookup in the variadic "**kwargs" dictionary.
-        elif func_arg.kind is Parameter.KEYWORD_ONLY:
-            func_code += CODE_PARAM_KEYWORD_ONLY.format(
-                func_name=data.func_name,
-                arg_name=func_arg.name,
-                arg_type_expr=func_arg_type_expr,
-                arg_value_key_expr=func_arg_value_key_expr,
-            )
-        # Else, this parameter may be passed either positionally or as a
-        # keyword. Check this parameter both by lookup in the variadic
-        # "**kwargs" dictionary *AND* by index into the variadic "*args"
-        # tuple.
+        # If this is a PEP-compliant annotation...
+        if is_hint_typing(func_arg.annotation):
+            #FIXME: Implement us up. Raise a placeholder exception for now.
+            die_unless_hint_nonpep(
+                hint=func_arg.annotation,
+                hint_label=('{} parameter "{}" type hint'.format(
+                    data.func_name, func_arg.name)))
+        # Else, this is a PEP-noncompliant annotation. In this case...
         else:
-            # String evaluating to this parameter's current value when
-            # passed positionally.
-            func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
-            func_code += CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
-                func_name=data.func_name,
-                arg_name=func_arg.name,
-                arg_index=func_arg_index,
-                arg_type_expr=func_arg_type_expr,
-                arg_value_key_expr=func_arg_value_key_expr,
-                arg_value_pos_expr=func_arg_value_pos_expr,
+            # Append Python statements to the body of this wrapper function
+            # type-checking this parameter against this annotation.
+            func_code += nonpep_code_check_param(
+                data=data,
+                func_arg=func_arg,
+                func_arg_index=func_arg_index,
             )
 
-    # Return this Python code snippet.
+    # Return this Python code.
     return func_code

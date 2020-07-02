@@ -23,6 +23,52 @@ This object is internally leveraged by various utility functions to identify
 erroneous and edge-case input (e.g., iterables of insufficient length).
 '''
 
+# ....................{ TESTERS                           }....................
+# Note that this tester function *CANNOT* be memoized by the @callable_cached
+# decorator, which requires all passed parameters to already be hashable.
+def is_hashable(obj: object) -> bool:
+    '''
+    ``True`` only if the passed object is **hashable** (i.e., passable to the
+    builtin :func:`hash` function *without* raising an exception and thus
+    usable in hash-based containers like dictionaries and sets).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is hashable.
+    '''
+
+    # Attempt to hash this object. If doing so raises *any* exception
+    # whatsoever, this object is by definition unhashable.
+    #
+    # Note that there also exists a "collections.abc.Hashable" superclass.
+    # Sadly, this superclass is mostly useless for all practical purposes. Why?
+    # Because user-defined classes are free to subclass that superclass
+    # despite overriding the __hash__() dunder method implicitly called by the
+    # builtin hash() function to raise exceptions: e.g.,
+    #
+    #     from collections.abc import Hashable
+    #     class HashUmUp(Hashable):
+    #         def __hash__(self):
+    #             raise ValueError('uhoh')
+    #
+    # Note also that we catch all possible exceptions rather than merely the
+    # standard "TypeError" exception raised by unhashable builtin types (e.g.,
+    # dictionaries, lists, sets). Why? For the same exact reason as above.
+    try:
+        hash(obj)
+    # If this object is unhashable, return false.
+    except Exception:
+        return False
+
+    # Else, this object is hashable. Return true.
+    return True
+
 # ....................{ GETTERS                           }....................
 def get_obj_type(obj: object) -> type:
     '''

@@ -9,27 +9,98 @@
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Validate strings to be syntactically valid classnames via a globally
+#scoped compiled regular expression. Raising early exceptions at decoration
+#time is preferable to raising late exceptions at call time.
+
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintValueException
-from beartype._util import utilobj
+from beartype.roar import (
+    BeartypeDecorHintValueNonPepException,
+    BeartypeDecorHintValueUnhashableException,
+)
+from beartype._util.utilobj import (
+    is_hashable,
+    get_obj_module_name_or_none,
+    get_obj_type,
+)
 from beartype._util.utilcache import callable_cached
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-#FIXME: Validate strings to be syntactically valid classnames via a globally
-#scaped compiled regular expression. Raising early exceptions at decoration
-#time is preferable to raising late exceptions at call time.
+#FIXME: Unit test us up.
+def die_unless_hint(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Type hint',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **supported type hint**
+    (i.e., object supported by the :func:`beartype.beartype` decorator as a
+    valid type hint annotating callable parameters and return values).
+
+    Specifically, this function raises an exception if this object is neither:
+
+    * A **PEP-compliant type hint** (i.e., :mod:`beartype`-agnostic annotation
+      compliant with annotation-centric PEPs).
+    * A **PEP-noncompliant type hint** (i.e., :mod:`beartype`-specific
+      annotation intentionally *not* compliant with annotation-centric PEPs).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : str
+        Human-readable noun prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``Type hint``.
+
+    Raises
+    ----------
+    BeartypeDecorHintValueUnhashableException
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
+    BeartypeDecorHintValueNonPepException
+        If this object is hashable but is neither a PEP-compliant nor
+        -noncompliant type hint.
+    '''
+
+    # If this object is unhashable, this object is an unsupported type hint. In
+    # this case, raise an exception.
+    if not is_hashable(hint):
+        raise BeartypeDecorHintValueUnhashableException(
+            '{} {!r} unhashable.'.format(hint_label, hint))
+    # Else, this object is hashable.
+
+    # If this object is PEP-compliant, raise an exception only if this object
+    # is currently unsupported by @beartype.
+    if is_hint_typing(hint):
+        #FIXME: Implement us up. To do so, we probably want to:
+        #
+        #* Shift the die_if_typing_unsupported() function defined elsewhere
+        #  into this submodule, probably renamed to
+        #  die_unless_hint_typing_supported().
+        #* Call that function here.
+
+        return
+    # Else, this object is *NOT* PEP-compliant. In this case, raise an
+    # exception only if this object is also *NOT* PEP-noncompliant.
+    else:
+        die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
+
 
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = True,
     hint_label: str = 'Type hint',
-    exception_cls: type = BeartypeDecorHintValueException,
+    is_str_valid: bool = True,
+    exception_cls: type = BeartypeDecorHintValueNonPepException,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant type
@@ -38,8 +109,11 @@ def die_unless_hint_nonpep(
 
     Parameters
     ----------
-    obj : object
+    hint : object
         Object to be validated.
+    hint_label : str
+        Human-readable noun prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : Optional[bool]
         ``True`` only if this function permits this object to be a string.
         Defaults to ``True``. If this boolean is:
@@ -48,14 +122,9 @@ def die_unless_hint_nonpep(
           classname, or tuple of classes and/or classnames.
         * ``False``, this object is valid only if this object is either a class
           or tuple of classes.
-    hint_label : str
-        Human-readable noun prefixing this object's representation in the
-        exception message to be raised by this function unless this object is a
-        PEP-noncompliant type hint. Defaults to ``Type hint``.
     exception_cls : type
-        Type of the exception to be raised by this function unless this object
-        is a PEP-noncompliant type hint. Defaults to
-        :class:`BeartypeDecorHintValueException`.
+        Type of the exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintValueNonPepException`.
 
     Raises
     ----------
@@ -253,7 +322,7 @@ def is_hint_typing(hint: object) -> bool:
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = utilobj.get_obj_type(hint)
+    hint_type = get_obj_type(hint)
 
     # If this type is defined by the stdlib "typing" module, return true.
     #
@@ -279,7 +348,7 @@ def is_hint_typing(hint: object) -> bool:
     #   exceptions with reliable messages across *ALL* Python versions.
     #
     # In short, there is no general-purpose clever solution. *sigh*
-    if utilobj.get_obj_module_name_or_none(hint_type) == 'typing':
+    if get_obj_module_name_or_none(hint_type) == 'typing':
         return True
 
     # For each superclass of this class...
@@ -293,8 +362,7 @@ def is_hint_typing(hint: object) -> bool:
     #    class UserDefinedGeneric(Generic[T]): pass
     for hint_type_supertype in hint_type.__mro__:
         # If this superclass is defined by "typing", return true.
-        if utilobj.get_obj_module_name_or_none(
-            hint_type_supertype) == 'typing':
+        if get_obj_module_name_or_none(hint_type_supertype) == 'typing':
             return True
 
     # Else, neither this type nor any superclass of this type is defined by the

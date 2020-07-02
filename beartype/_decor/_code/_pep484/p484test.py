@@ -13,9 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-# from beartype.cave import (ClassType,)
-from beartype.roar import BeartypeDecorPep484TypeUnsupportedException
-from beartype._util import utilhint
+from beartype.roar import BeartypeDecorHintValuePep484UnsupportedException
+from beartype._util.utilhint import is_hint_typing
 from beartype._util.utilcache import callable_cached
 from typing import TypeVar
 
@@ -42,7 +41,7 @@ def die_if_typing_unsupported(hint: object) -> None:
 
     Raises
     ----------
-    BeartypeDecorPep484TypeUnsupportedException
+    BeartypeDecorHintValuePep484UnsupportedException
         If this object is an unsupported `PEP 484`_ type.
 
     .. _PEP 484:
@@ -55,16 +54,15 @@ def die_if_typing_unsupported(hint: object) -> None:
     # If this object is either a PEP 484 type variable *OR* PEP 484 type
     # parametrized by one or more such variables, raise an exception.
     if is_hint_typing_typevar(hint):
-        raise BeartypeDecorPep484TypeUnsupportedException(
+        raise BeartypeDecorHintValuePep484UnsupportedException(
             EXCEPTION_MESSAGE_TEMPLATE.format(
                 'Type variable {!r}'.format(hint)))
     # Else if this object is a PEP 484 type parametrized by one or more such
     # variables, raise an exception.
     elif is_hint_typing_args_typevar(hint):
-        raise BeartypeDecorPep484TypeUnsupportedException(
+        raise BeartypeDecorHintValuePep484UnsupportedException(
             EXCEPTION_MESSAGE_TEMPLATE.format(
-                'Generic parametrized by '
-                'one or more type variables {!r}'.format(hint)))
+                'Type variable-parametrized generic {!r}'.format(hint)))
 
 # ....................{ TESTERS ~ typevar                 }....................
 #FIXME: Consider excising. Unsure if we actually require this. *sigh*
@@ -165,6 +163,6 @@ def is_hint_typing_args_typevar(hint: object) -> bool:
     # tested here is defined by the typing._collect_type_vars() function at
     # subtype declaration time. Yes, this is insane. Yes, this is PEP 484.
     return (
-        utilhint.is_hint_typing(hint) and
+        is_hint_typing(hint) and
         len(getattr(hint, '__parameters__', ())) > 0
     )

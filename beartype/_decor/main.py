@@ -343,13 +343,22 @@ def beartype(func: CallableTypes) -> CallableTypes:
 
     Raises
     ----------
-    BeartypeDecorHintTupleItemException
-        If any item of any **type-hinted :class:`tuple`** (i.e., :class:`tuple`
-        applied as a parameter or return value annotation) is of an unsupported
-        type. Supported types include:
+    BeartypeDecorHintValueException
+        If any annotation on this callable is neither:
 
-        * :class:`type` (i.e., classes).
-        * :class:`str` (i.e., strings).
+        * A **PEP-compliant type** (i.e., instance or class complying with a
+          PEP supported by :mod:`beartype`), including:
+
+          * `PEP 484`_ types (i.e., instance or class declared by the stdlib
+            :mod:`typing` module).
+
+        * A **PEP-noncompliant type** (i.e., instance or class complying with
+          :mod:`beartype`-specific semantics rather than a PEP), including:
+
+          * **Fully-qualified forward references** (i.e., strings specified as
+            fully-qualified classnames).
+          * **Tuple unions** (i.e., tuples containing one or more classes
+            and/or forward references).
     BeartypeDecorParamNameException
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__beartype_``.
@@ -361,6 +370,8 @@ def beartype(func: CallableTypes) -> CallableTypes:
     BeartypeDecorWrappeeException
         If this callable is either uncallable or a class.
 
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''

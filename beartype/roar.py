@@ -130,7 +130,7 @@ class BeartypeDecorWrapperException(BeartypeDecorException):
 # ....................{ EXCEPTIONS ~ decor : hint         }....................
 class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
     '''
-    Abstract base class of all **beartype decorator type hinting exceptions.**
+    Abstract base class of all **beartype decorator type hint exceptions.**
 
     Instances of subclasses of this exception are raised at decoration time
     from the :func:`beartype.beartype` decorator on receiving a callable
@@ -139,15 +139,91 @@ class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
 
     pass
 
-
-class BeartypeDecorHintValueException(BeartypeDecorHintException):
+# ....................{ EXCEPTIONS ~ decor : hint : value }....................
+class BeartypeDecorHintValueException(
+    BeartypeDecorHintException, metaclass=_ABCMeta):
     '''
-    **Beartype decorator "full" type hinting exception.**
+    Abstract base class of all **beartype decorator type hint value
+    exceptions.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    type-hinted with one or more **invalid annotations** (i.e., annotations
+    that neither comply with PEPs supported by :mod:`beartype` *nor*
+    :mod:`beartype`-specific semantics, including tuple unions and
+    fully-qualified forward references).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintValueNonPepException(BeartypeDecorHintValueException):
+    '''
+    **Beartype decorator PEP-noncompliant type hint value exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable type-hinted
-    with an invalid object (e.g., which is neither a class, fully-qualified
-    classname, nor tuple of classes and/or classnames).
+    with one or more **PEP-noncompliant annotations** (i.e., annotations that
+    fail to comply with :mod:`beartype`-specific semantics, including tuple
+    unions and fully-qualified forward references) in a semantic context
+    expecting PEP-noncompliant annotations.
+
+    Tuple unions, for example, are required to contain *only* PEP-noncompliant
+    annotations. This exception is thus raised for callables type-hinted with
+    tuples containing one or more PEP-compliant items (e.g., instances or
+    classes declared by the stdlib :mod:`typing` module) *or* arbitrary objects
+    (e.g., dictionaries, lists, numbers, sets).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintValueUnhashableException(
+    BeartypeDecorHintValueException):
+    '''
+    **Beartype decorator unhashable type hint value exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable type-hinted
+    with one or more **unhashable objects** (i.e., annotations that are *not*
+    hashable by the builtin :func:`hash` function and thus unusable in
+    hash-based containers like dictionaries and sets).
+    '''
+
+    pass
+
+# ....................{ EXCEPTIONS ~ decor : hint : p484  }....................
+class BeartypeDecorHintValuePep484Exception(
+    BeartypeDecorHintValueException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype decorator** `PEP 484`_ **type hint
+    value exceptions.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    violating either `PEP 484`_ itself or this decorator's implementation of
+    `PEP 484`_.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    pass
+
+
+class BeartypeDecorHintValuePep484UnsupportedException(
+    BeartypeDecorHintValuePep484Exception):
+    '''
+    **Beartype decorator** `PEP 484`_ **unsupported type hint exception.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more `PEP 484`_ types (i.e., instances or classes
+    declared by the stdlib :mod:`typing` module) currently unsupported by this
+    decorator.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
@@ -201,46 +277,6 @@ class BeartypeDecorPep563Exception(BeartypeDecorPepException):
 
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
-    '''
-
-    pass
-
-# ....................{ EXCEPTIONS ~ decor : pep : 484    }....................
-class BeartypeDecorPep484Exception(
-    BeartypeDecorPepException, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype decorator** `PEP 484`_
-    **exceptions.**
-
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    violating either `PEP 484`_ itself or our implementation of `PEP 484`_.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    '''
-
-    pass
-
-
-class BeartypeDecorPep484TypeUnsupportedException(
-    BeartypeDecorPep484Exception):
-    '''
-    **Beartype decorator** `PEP 484`_ **unsupported type exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on failing to dynamically evaluate a
-    postponed annotation of the decorated callable when `PEP 563`_ is active
-    for that callable.
-
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    annotated with one or more `PEP 484`_ types (i.e., classes and objects
-    defined by the stdlib :mod:`typing` module) currently unsupported by this
-    decorator.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
