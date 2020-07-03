@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype annotation and type hinting utilities.**
+**Beartype PEP-noncompliant type hint utilities.**
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,82 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintValueNonPepException,
-    BeartypeDecorHintValueUnhashableException,
 )
-from beartype._util.utilobj import (
-    is_hashable,
-    get_obj_module_name_or_none,
-    get_obj_type,
-)
-from beartype._util.utilcache import callable_cached
+from beartype._util.hint.utilhintpep import is_hint_typing
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-#FIXME: Unit test us up.
-def die_unless_hint(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    hint_label: str = 'Type hint',
-) -> None:
-    '''
-    Raise an exception unless the passed object is a **supported type hint**
-    (i.e., object supported by the :func:`beartype.beartype` decorator as a
-    valid type hint annotating callable parameters and return values).
-
-    Specifically, this function raises an exception if this object is neither:
-
-    * A **PEP-compliant type hint** (i.e., :mod:`beartype`-agnostic annotation
-      compliant with annotation-centric PEPs).
-    * A **PEP-noncompliant type hint** (i.e., :mod:`beartype`-specific
-      annotation intentionally *not* compliant with annotation-centric PEPs).
-
-    Parameters
-    ----------
-    hint : object
-        Object to be validated.
-    hint_label : str
-        Human-readable noun prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
-
-    Raises
-    ----------
-    BeartypeDecorHintValueUnhashableException
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
-    BeartypeDecorHintValueNonPepException
-        If this object is hashable but is neither a PEP-compliant nor
-        -noncompliant type hint.
-    '''
-
-    # If this object is unhashable, this object is an unsupported type hint. In
-    # this case, raise an exception.
-    if not is_hashable(hint):
-        raise BeartypeDecorHintValueUnhashableException(
-            '{} {!r} unhashable.'.format(hint_label, hint))
-    # Else, this object is hashable.
-
-    # If this object is PEP-compliant, raise an exception only if this object
-    # is currently unsupported by @beartype.
-    if is_hint_typing(hint):
-        #FIXME: Implement us up. To do so, we probably want to:
-        #
-        #* Shift the die_if_typing_unsupported() function defined elsewhere
-        #  into this submodule, probably renamed to
-        #  die_unless_hint_typing_supported().
-        #* Call that function here.
-
-        return
-    # Else, this object is *NOT* PEP-compliant. In this case, raise an
-    # exception only if this object is also *NOT* PEP-noncompliant.
-    else:
-        die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
-
-
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -140,13 +71,15 @@ def die_unless_hint_nonpep(
           * Types.
           * If ``is_str_valid``, strings.
     '''
-    assert isinstance(exception_cls, type), (
-        '{!r} not a type.'.format(exception_cls))
     assert isinstance(hint_label, str), (
         '{!r} not a string.'.format(hint_label))
+    assert isinstance(is_str_valid, bool), (
+        '{!r} not a boolean.'.format(is_str_valid))
+    assert isinstance(exception_cls, type), (
+        '{!r} not a type.'.format(exception_cls))
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with the tuple iteration below.
+    # BEGIN: Synchronize changes here with tuple iteration performed below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is a forward reference (i.e., fully-qualified or
@@ -197,7 +130,7 @@ def die_unless_hint_nonpep(
     # Else, this object is neither a forward reference nor class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # END: Synchronize changes above with the tuple iteration below.
+    # END: Synchronize changes above with tuple iteration performed below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is a tuple...
@@ -272,99 +205,3 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             '{} {!r} neither type nor tuple of types.'.format(
                 hint_label, hint))
-
-# ....................{ TESTERS                           }....................
-#FIXME: Detect functions created by "typing.NewType(subclass_name, superclass)"
-#somehow, either here or elsewhere. These functions are simply the identity
-#function at runtime and thus a complete farce. They're not actually types!
-#Ideally, we would replace each such function by the underlying "superclass"
-#type originally passed to that function, but we have no idea if that's even
-#feasible. Welcome to "typing", friends.
-
-@callable_cached
-def is_hint_typing(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a `PEP 484`_ type (i.e., class or
-    object declared by the stdlib :mod:`typing` module).
-
-    For efficiency, this tester is memoized.
-
-    Motivation
-    ----------
-    Standard types allow callers to test for compliance with protocols,
-    interfaces, and abstract base classes by calling either the
-    :func:`isinstance` or :func:`issubclass` builtins. This is the
-    well-established Pythonic standard for deciding conformance to an API.
-
-    Insanely, `PEP 484`_ *and* the :mod:`typing` module implementing `PEP 484`_
-    reject community standards by explicitly preventing callers from calling
-    either the :func:`isinstance` or :func:`issubclass` builtins on `PEP
-    484`_ types. Moreover, neither `PEP 484`_ nor :mod:`typing` implement
-    public APIs for testing whether arbitrary objects comply with `PEP 484`_ or
-    :mod:`typing`.
-
-    Thus this tester function, which "fills in the gaps" by implementing this
-    laughably critical oversight.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a `PEP 484`_ type.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    '''
-
-    # Either the passed object if this object is a class *OR* the class of this
-    # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = get_obj_type(hint)
-
-    # If this type is defined by the stdlib "typing" module, return true.
-    #
-    # Note that there might exist an alternate means of deciding this boolean,
-    # documented here merely for completeness:
-    #
-    #     try:
-    #         isinstance(obj, object)
-    #         return False
-    #     except TypeError as type_error:
-    #         return str(type_error).endswith(
-    #             'cannot be used with isinstance()')
-    #
-    # The above effectively implements an Aikido throw by using the fact that
-    # "typing" types prohibit isinstance() calls against those types. While
-    # clever (and deliciously obnoxious), the above logic:
-    #
-    # * Requires catching exceptions in the common case and is thus *MUCH* less
-    #   efficient than the preferable approach implemented here.
-    # * Assumes that *ALL* "typing" types prohibit such calls. Sadly, only a
-    #   proper subset of such types prohibit such calls.
-    # * Assumes that those "typing" types that do prohibit such calls raise
-    #   exceptions with reliable messages across *ALL* Python versions.
-    #
-    # In short, there is no general-purpose clever solution. *sigh*
-    if get_obj_module_name_or_none(hint_type) == 'typing':
-        return True
-
-    # For each superclass of this class...
-    #
-    # This edge case is required to handle user-defined subclasses declared in
-    # user-defined modules of superclasses declared by the "typing" module:
-    #
-    #    # In a user-defined module...
-    #    from typing import TypeVar, Generic
-    #    T = TypeVar('T')
-    #    class UserDefinedGeneric(Generic[T]): pass
-    for hint_type_supertype in hint_type.__mro__:
-        # If this superclass is defined by "typing", return true.
-        if get_obj_module_name_or_none(hint_type_supertype) == 'typing':
-            return True
-
-    # Else, neither this type nor any superclass of this type is defined by the
-    # "typing" module. Ergo, this is *NOT* a PEP 484-compliant type.
-    return False

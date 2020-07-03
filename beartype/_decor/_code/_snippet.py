@@ -21,6 +21,8 @@ This private submodule is *not* intended for importation by downstream callers.
    https://www.python.org/dev/peps/pep-0484
 '''
 
+#FIXME: Shift PEP-noncompliant-specific snippets elsewhere.
+
 # ....................{ CODE                              }....................
 CODE_SIGNATURE = '''
 def {func_wrapper_name}(

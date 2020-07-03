@@ -23,7 +23,6 @@ from beartype._decor._code._snippet import (
     CODE_PARAM_HINT,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.utilhint import die_unless_hint_nonpep
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.

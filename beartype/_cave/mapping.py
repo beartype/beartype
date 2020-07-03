@@ -32,7 +32,7 @@ from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
 )
-from beartype._util.utilhint import die_unless_hint_nonpep
+from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -172,10 +172,9 @@ class _NoneTypeOrType(dict):
             # "NoneType".
             else:
                 hint_or_none = hint + _NoneTypes
-        # Else, this key is invalid. Thanks to the initial call to the
-        # utilhint.die_unless_hint_nonpep() function, this edge case should
-        # *NEVER* occur. Nonetheless, raise a human-readable exception to
-        # safeguard against insanity.
+        # Else, this key is invalid. Thanks to the above call to the
+        # die_unless_hint_nonpep() function, this should *NEVER* occur.
+        # Nonetheless, raise a human-readable exception for sanity.
         else:
             raise BeartypeCaveNoneTypeOrKeyException(
                 '"NoneTypeOr" key {!r} unsupported.'.format(hint))

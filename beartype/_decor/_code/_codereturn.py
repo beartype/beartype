@@ -31,7 +31,7 @@ from beartype._decor._code._snippet import (
     CODE_RETURN_HINT,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.utilhint import die_unless_hint_nonpep
+from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from inspect import Signature
 
 # See the "beartype.__init__" submodule for further commentary.

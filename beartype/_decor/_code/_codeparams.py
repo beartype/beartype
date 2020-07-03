@@ -13,19 +13,16 @@ annotated parameters of the callable currently being decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+#FIXME: Unify this submodule with the "_codehint" and "_codereturn" submodules.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codehint import HINTS_IGNORABLE
 from beartype._decor._code._nonpep.nonpepparam import nonpep_code_check_param
-# from beartype._decor._code._snippet import (
-#     CODE_PARAM_VARIADIC_POSITIONAL,
-#     CODE_PARAM_KEYWORD_ONLY,
-#     CODE_PARAM_POSITIONAL_OR_KEYWORD,
-#     CODE_PARAM_HINT,
-# )
 from beartype._decor._data import BeartypeData
-from beartype._util.utilhint import (
-    die_unless_hint, die_unless_hint_nonpep, is_hint_typing)
+from beartype._util.hint.utilhint import die_unless_hint
+from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
+from beartype._util.hint.utilhintpep import is_hint_typing
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.

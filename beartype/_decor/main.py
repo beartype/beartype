@@ -297,7 +297,7 @@ from beartype.roar import (
     BeartypeCallTypeParamException  as __beartype_param_exception,
     BeartypeCallTypeReturnException as __beartype_return_exception,
 )
-from beartype._util.utilhint import (
+from beartype._util.hint.utilhintnonpep import (
     die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,
 )
 from beartype._util.utilstr import (
