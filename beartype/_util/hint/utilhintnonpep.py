@@ -42,7 +42,7 @@ def die_unless_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str
+    hint_label : Optional[str]
         Human-readable noun prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : Optional[bool]
@@ -53,7 +53,7 @@ def die_unless_hint_nonpep(
           classname, or tuple of classes and/or classnames.
         * ``False``, this object is valid only if this object is either a class
           or tuple of classes.
-    exception_cls : type
+    exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintValueNonPepException`.
 

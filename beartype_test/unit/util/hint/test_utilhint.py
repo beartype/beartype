@@ -26,25 +26,41 @@ def test_utilhint_die_unless_hint() -> None:
 
     # Defer heavyweight imports.
     from beartype import cave
-    from beartype.roar import BeartypeDecorHintValueNonPepException
-    from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
+    from beartype.roar import (
+        BeartypeDecorHintValueNonPepException,
+        BeartypeDecorHintValueUnhashableException,
+    )
+    from beartype._util.hint.utilhint import die_unless_hint
 
-    # Tuple of PEP-noncompliant type hints accepted by this function.
+    #FIXME: Add PEP-compliant objects *AFTER* supported by this function.
+    # Tuple of PEP-compliant and -noncompliant objects accepted by this
+    # function.
     HINTS_VALID = (
-        # Type *NOT* defined by the stdlib "typing" module.
+        # PEP-compliant types.
+        #typing.Any,
+        # PEP-noncompliant type *NOT* defined by the stdlib "typing" module.
         dict,
-        # Forward reference.
+        # PEP-noncompliant forward reference.
         'dict',
-        # Tuple containing only such types and forward references.
+        # PEP-noncompliant tuple containing only PEP-noncompliant types and
+        # forward references.
         (str, 'str', cave.AnyType, cave.NoneType,),
     )
 
-    # Tuple of other objects rejected by this function.
-    HINTS_INVALID = (
-        # Type defined by the stdlib "typing" module.
-        typing.Any,
-        # Object neither a type nor forward reference despite containing both.
-        {dict, 'dict',},
+    # Tuple of unhashable objects rejected by this function.
+    HINTS_INVALID_UNHASHABLE = (
+        # Dictionary.
+        {'For all things turn to barrenness': 'In the dim glass the demons hold,',},
+        # List.
+        ['The glass of outer weariness,', 'Made when God slept in times of old.',],
+        # Set.
+        {'There, through the broken branches, go', 'The ravens of unresting thought;',},
+    )
+
+    # Tuple of hashable non-PEP-noncompliant objects rejected by this function.
+    HINTS_INVALID_NONPEP = (
+        # Number.
+        0xDEADBEEF,
         # Empty tuple.
         (),
         # Tuple containing a type defined by the stdlib "typing" module.
@@ -53,11 +69,21 @@ def test_utilhint_die_unless_hint() -> None:
         (list, 'list', 0, cave.NoneType,),
     )
 
-    # Implicitly assert this function accepts PEP-noncompliant type hints.
+    # Assert this function accepts PEP-noncompliant type hints.
     for hint_valid in HINTS_VALID:
-        die_unless_hint_nonpep(hint_valid)
+        die_unless_hint(hint_valid)
 
-    # Explicitly assert this function rejects objects excepted to be rejected.
-    for hint_invalid in HINTS_INVALID:
+    # Assert this function rejects unhashable objects.
+    for hint_invalid_unhashable in HINTS_INVALID_UNHASHABLE:
+        with pytest.raises(BeartypeDecorHintValueUnhashableException):
+            die_unless_hint(hint_invalid_unhashable)
+
+    # Assert this function rejects non-PEP-noncompliant objects.
+    for hint_invalid_nonpep in HINTS_INVALID_NONPEP:
         with pytest.raises(BeartypeDecorHintValueNonPepException):
-            die_unless_hint_nonpep(hint_invalid)
+            print('Non-PEP-noncompliant hint: {!r}'.format(hint_invalid_nonpep))
+            die_unless_hint(hint_invalid_nonpep)
+
+    # Assert this function rejects forward references when instructed to do so.
+    with pytest.raises(BeartypeDecorHintValueNonPepException):
+        die_unless_hint(hint='dict', is_str_valid=False)

@@ -33,12 +33,14 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #@callable_cached decorator to memoize not merely return values but *RAISED
 #EXCEPTIONS* as well. This shouldn't be terribly arduous and has
 #general-purpose merit beyond merely this function.
+
 def die_unless_hint(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
     hint_label: str = 'Type hint',
+    is_str_valid: bool = True,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **supported type hint**
@@ -56,9 +58,17 @@ def die_unless_hint(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str
+    hint_label : Optional[str]
         Human-readable noun prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
+    is_str_valid : Optional[bool]
+        ``True`` only if this function permits this object to be a string.
+        Defaults to ``True``. If this boolean is:
+
+        * ``True``, this object is valid only if this object is either a class,
+          classname, or tuple of classes and/or classnames.
+        * ``False``, this object is valid only if this object is either a class
+          or tuple of classes.
 
     Raises
     ----------
@@ -92,4 +102,8 @@ def die_unless_hint(
     # Else, this object is *NOT* PEP-compliant. In this case, raise an
     # exception only if this object is also *NOT* PEP-noncompliant.
     else:
-        die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
+        die_unless_hint_nonpep(
+            hint=hint,
+            hint_label=hint_label,
+            is_str_valid=is_str_valid,
+        )

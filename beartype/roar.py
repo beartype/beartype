@@ -300,7 +300,7 @@ class BeartypeCallBeartypistryException(BeartypeCallException):
 
     This exception is raised from the wrapper function when that function
     erroneously accesses the **beartypistry** (i.e.,
-    :class:`beartype._decor._typistry.BEARTYPISTRY` singleton).
+    :class:`beartype._decor._typistry.bear_typistry` singleton).
 
     This exception denotes a critical issue and should thus *never* be raised.
     '''

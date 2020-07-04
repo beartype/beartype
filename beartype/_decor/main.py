@@ -266,7 +266,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import functools
 from beartype._decor._code import codemain
 from beartype._decor._data import BeartypeData
-from beartype._decor._typistry import BEARTYPISTRY
+from beartype._decor._typistry import bear_typistry
 from beartype.cave import (
     CallableTypes,
     ClassType,
@@ -427,7 +427,7 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # wrapper-specific "__beartype_func" attribute.
     local_attrs = {
         '__beartype_func': func,
-        '__beartypistry': BEARTYPISTRY,
+        '__beartypistry': bear_typistry,
 
         #FIXME: Uncomment if desired.
         # '__beartype_hints': func_data.func_hints,

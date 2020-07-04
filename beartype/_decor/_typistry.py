@@ -13,7 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeCallBeartypistryException
-from beartype._util import utilobj
+from beartype._util.utilobj import get_name_qualified
+from beartype._util.hint.utilhint import die_unless_hint
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -26,23 +27,42 @@ def register_type(cls: type) -> None:
     This function is syntactic sugar improving consistency throughout the
     codebase, but is otherwise equivalent to:
 
-        >>> from beartype._decor._typistry import BEARTYPISTRY
-        >>> from beartype._util import utilobj
-        >>> BEARTYPISTRY[utilobj.get_name_qualified(cls)] = cls
+        >>> from beartype._decor._typistry import bear_typistry
+        >>> from beartype._util.utilobj import get_name_qualified
+        >>> bear_typistry[get_name_qualified(cls)] = cls
+
+    Caveats
+    ----------
+    **There intentionally exists no corresponding** ``register_tuple()``
+    **function,** as that function would offer no meaningful benefit over the
+    existing public :data:`bear_typistry` singleton. Whereas types publish
+    the fully-qualified names of the module attribute declaring those types via
+    dunder attributes on those types (e.g., ``__module__``), no similar dunder
+    attributes exist for arbitrary objects in general or tuples in specific.
 
     Parameters
     ----------
     cls : type
-        Class to be registered.
+        Type to be registered.
+
+    Raises
+    ----------
+    BeartypeCallBeartypistryException
+        If this type is *not* a type.
     '''
+
+    # If this type is *NOT* a type, raise an exception.
+    if not isinstance(cls, type):
+        raise BeartypeCallBeartypistryException(
+            '{!r} not a class.'.format(cls))
 
     # One-liners for reasonable justice.
     #
-    # Note that both the utilobj.get_name_qualified() function explicitly
+    # Note that both the get_name_qualified() function explicitly
     # called here *AND* the Beartypistry.__setitem__() dunder method implicitly
     # called by this assignment validate their passed argument(s). Ergo, avoid
     # doing so here to preserve DRY.
-    BEARTYPISTRY[utilobj.get_name_qualified(cls)] = cls
+    bear_typistry[get_name_qualified(cls)] = cls
 
 # ....................{ CLASSES                           }....................
 class Beartypistry(dict):
@@ -66,10 +86,12 @@ class Beartypistry(dict):
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __setitem__(self, clsname: str, cls: type) -> None:
+    def __setitem__(self, hint_name: str, hint: object) -> None:
         '''
         Dunder method explicitly called by the superclass on setting the passed
-        key-value pair with``[``- and ``]``-delimited syntax.
+        key-value pair with``[``- and ``]``-delimited syntax, mapping the name
+        of the module attribute declaring the passed :mod:`beartype`-supported
+        type hint to that hint.
 
         Specifically, this method:
 
@@ -78,47 +100,59 @@ class Beartypistry(dict):
 
         Parameters
         ----------
-        clsname : str
-            Fully-qualified classname to map this class to.
-        cls : type
-            Class to be mapped to.
+        hint_name: str : str
+            **Name** (i.e., fully-qualified name of the module attribute
+            declaring this hint) of this hint.
+        hint: object
+            :mod:`beartype`-supported type hint to map to this name to.
 
         Raises
         ----------
         BeartypeCallBeartypistryException
             If either:
 
-            * This key is *not* the fully-qualified classname of this class.
-            * This value is *not* a class.
+            * This name is *not* a string.
+            * This hint is a type but this name is *not* the fully-qualified
+              classname of this type.
+        BeartypeDecorHintValueUnhashableException
+            If this hint is **unhashable** (i.e., *not* hashable by the builtin
+            :func:`hash` function and thus unusable in hash-based containers
+            like dictionaries and sets). All supported type hints are hashable.
+        BeartypeDecorHintValueNonPepException
+            If this hint is hashable but is neither a PEP-compliant nor
+            -noncompliant type hint.
         '''
 
-        # If this classname is *NOT* a string, raise an exception.
-        if not isinstance(clsname, str):
+        # If this name is *NOT* a string, raise an exception.
+        if not isinstance(hint_name, str):
             raise BeartypeCallBeartypistryException(
                 'Beartypistry key {!r} not a '
-                'fully-qualified classname.'.format(clsname))
+                'fully-qualified module attribute name.'.format(hint_name))
 
-        # If this class is *NOT* a class, raise an exception.
-        if not isinstance(cls, type):
-            raise BeartypeCallBeartypistryException(
-                'Beartypistry value {!r} not a class.'.format(cls))
+        # If this hint is *NOT* a valid hint, raise an exception.
+        die_unless_hint(
+            hint=hint,
+            hint_label='Beartypistry value {!r}'.format(hint),
+            is_str_valid=False,
+        )
 
-        # Fully-qualified name of this class as declared by this class.
-        clsname_true = utilobj.get_name_qualified(cls)
+        # If this hint is a type...
+        if isinstance(hint, type):
+            # Fully-qualified name of this type as declared by this type.
+            clsname = get_name_qualified(hint)
 
-        # If the passed classname is *NOT* the actual classname, raise an
-        # exception.
-        if clsname != clsname_true:
-            raise BeartypeCallBeartypistryException(
-                'Beartypistry classname "{}" not '
-                'the actual classname "{}" of type {!r}.'.format(
-                    clsname, clsname_true, cls))
+            # If the passed name is *NOT* this name, raise an exception.
+            if hint_name != clsname:
+                raise BeartypeCallBeartypistryException(
+                    'Beartypistry key "{}" not '
+                    'classname "{}" of type {!r}.'.format(
+                        hint_name, clsname, hint))
 
         # Map this classname to this class.
-        super().__setitem__(clsname, cls)
+        super().__setitem__(hint_name, hint)
 
 
-    def __missing__(self, clsname: str) -> type:
+    def __missing__(self, hint_name: str) -> type:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on getting the passed
@@ -132,13 +166,16 @@ class Beartypistry(dict):
 
         Parameters
         ----------
-        clsname : str
-            Fully-qualified classname to be resolved as a forward reference.
+        hint_name : str
+            **Name** (i.e., fully-qualified name of the module attribute
+            declaring this hint) of this hint to be resolved as a forward
+            reference.
 
         Returns
         ----------
-        type
-            Class whose fully-qualified classname is this missing key.
+        object
+            :mod:`beartype`-supported type hint whose fully-qualified module
+            attribute name is this missing key.
 
         Raises
         ----------
@@ -148,31 +185,32 @@ class Beartypistry(dict):
             * *Not* a string.
         '''
 
-        # If this classname is *NOT* a string, raise an exception.
-        if not isinstance(clsname, str):
+        # If this name is *NOT* a string, raise an exception.
+        if not isinstance(hint_name, str):
             raise BeartypeCallBeartypistryException(
                 'Beartypistry key {!r} not a '
-                'fully-qualified classname.'.format(clsname))
+                'fully-qualified module attribute name.'.format(hint_name))
 
-        #FIXME: Dynamically import this type here.
-        # Class dynamically imported as this classname.
-        cls = None
+        #FIXME: Dynamically import this object here.
+        # Type hint dynamically imported from this name.
+        hint = None
 
-        # If this class is *NOT* a class, raise an exception.
-        if not isinstance(cls, type):
-            raise BeartypeCallBeartypistryException(
-                'Beartypistry classname "{}" '
-                'value {!r} not a class.'.format(clsname, cls))
+        # If this hint is *NOT* a valid hint, raise an exception.
+        die_unless_hint(
+            hint=hint,
+            hint_label='Beartypistry value {!r}'.format(hint),
+            is_str_valid=False,
+        )
 
-        # Return this class.
+        # Return this hint.
         #
         # The superclass dict.__getitem__() dunder method then implicitly maps
         # the passed missing key to this class by effectively:
-        #     self[clsname] = cls
-        return cls
+        #     self[hint_name] = hint
+        return hint
 
 # ....................{ SINGLETONS                        }....................
-BEARTYPISTRY = Beartypistry()
+bear_typistry = Beartypistry()
 '''
 **Beartypistry** (i.e., singleton dictionary mapping from the fully-qualified
 classnames of all type hints annotating callables decorated by the
