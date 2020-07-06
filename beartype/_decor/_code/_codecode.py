@@ -13,17 +13,18 @@ annotated parameters of the callable currently being decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-#FIXME: Unify this submodule with the "_codehint" and "_codereturn" submodules.
-
 # ....................{ IMPORTS                           }....................
+from beartype.cave import AnyType
 from beartype.roar import BeartypeDecorParamNameException
-from beartype._decor._code._codehint import HINTS_IGNORABLE
-from beartype._decor._code._nonpep.nonpepparam import nonpep_code_check_param
+from beartype._decor._code._codesnip import CODE_RETURN_UNCHECKED
+from beartype._decor._code._nonpep.nonpepcode import (
+    nonpep_code_check_param, nonpep_code_check_return)
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.utilhint import die_unless_hint
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from beartype._util.hint.utilhintpep import is_hint_typing
-from inspect import Parameter
+from inspect import Parameter, Signature
+from typing import Any
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -42,6 +43,44 @@ This includes:
   non-pure-Python callables (e.g., defined by C extensions). The
   :func:`beartype` decorator applies *only* to pure-Python callables, which
   provide no syntactic means for specifying positional-only parameters.
+'''
+
+# ....................{ CONSTANTS ~ hint                  }....................
+_HINTS_IGNORABLE = {AnyType, Any,}
+'''
+Set of all annotation objects to be unconditionally ignored during
+annotation-based type checking in the :func:`beartype` decorator regardless of
+callable context (e.g., parameter, return value).
+
+This includes:
+
+* The :class:`AnyType` type, synonymous with the builtin :class:`object` type.
+  Since :class:`object` is the transitive superclass of all classes, parameters
+  annotated as :class:`object` unconditionally match *all* objects under
+  :func:`isinstance`-based type covariance and are thus equivalent to
+  unannotated parameters.
+* The `PEP 484`_-specific :class:`Any` type, functionally synonymous with the
+  :class:`AnyType` and hence :class:`object` classes. Although `PEP
+  484`_-specific logic should typically be isolated to the private
+  :mod:`beartype._decor.pep484` subpackage for maintainability, listing this
+  type here *improves* maintainability by centralizing similar logic.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+'''
+
+
+_PARAM_HINT_EMPTY = Parameter.empty
+'''
+:mod:`inspect`-specific sentinel value indicating an **unannotated parameter**
+(i.e., parameter *not* annotated with a type hint).
+'''
+
+
+_RETURN_HINT_EMPTY = Signature.empty
+'''
+:mod:`inspect`-specific sentinel value indicating an **unannotated return**
+(i.e., return *not* annotated with a type hint).
 '''
 
 # ....................{ CODERS                            }....................
@@ -68,10 +107,12 @@ def code_check_params(data: BeartypeData) -> str:
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__beartyp``.
     BeartypeDecorHintValueNonPepException
-        If any type hint annotating any parameter of this callable is *not*
-        **PEP-noncompliant** (i.e., fails to comply with
-        :mod:`beartype`-specific semantics, including tuple unions and
-        fully-qualified forward references).
+        If any type hint annotating any parameter of this callable is neither:
+
+        * **PEP-compliant** (i.e., :mod:`beartype`-agnostic hint compliant with
+          annotation-centric PEPs).
+        * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
+          compliant with annotation-centric PEPs)).
     BeartypeDecorHintValueUnhashableException
         If any type hint annotating any parameter of this callable is
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
@@ -89,13 +130,13 @@ def code_check_params(data: BeartypeData) -> str:
     for func_arg_index, func_arg in enumerate(
         data.func_sig.parameters.values()):
         # If this parameter is unannotated, continue to the next parameter.
-        if func_arg.annotation is Parameter.empty:
+        if func_arg.annotation is _PARAM_HINT_EMPTY:
             continue
         # Else, this parameter is annotated.
 
-        # If this annotation is unsupported, raise an exception; else, this
-        # annotation is guaranteed to be supported and thus hashable.
+        # If this parameter's type hint is unsupported, raise an exception.
         die_unless_hint(func_arg.annotation)
+        # Else, this hint is guaranteed to be supported and thus hashable.
 
         # If this callable redefines a parameter initialized to a default value
         # by this wrapper, raise an exception. Permitting this unlikely edge
@@ -106,7 +147,7 @@ def code_check_params(data: BeartypeData) -> str:
                 '{} parameter "{}" reserved by @beartype.'.format(
                     data.func_name, func_arg.name))
 
-        # If the type of either this parameter or annotation is silently
+        # If either this hint *OR* the type of this parameter is silently
         # ignorable, continue to the next parameter.
         #
         # Note the "in" operator when applied to a set() object requires that
@@ -117,21 +158,20 @@ def code_check_params(data: BeartypeData) -> str:
         #   call to the die_unless_hint() validator.
         # * "func_arg_kind" derives from the stdlib "inspect" module, this
         #   should *ALWAYS* be the case for that object.
-        if (func_arg.annotation in HINTS_IGNORABLE or
+        if (func_arg.annotation in _HINTS_IGNORABLE or
             func_arg.kind in _PARAM_KINDS_IGNORABLE):
             continue
 
-        # If this is a PEP-compliant annotation...
+        # If this is a PEP-compliant hint...
         if is_hint_typing(func_arg.annotation):
             #FIXME: Implement us up. Raise a placeholder exception for now.
             die_unless_hint_nonpep(
                 hint=func_arg.annotation,
                 hint_label=('{} parameter "{}" type hint'.format(
                     data.func_name, func_arg.name)))
-        # Else, this is a PEP-noncompliant annotation. In this case...
+        # Else, this is a PEP-noncompliant hint. In this case, append Python
+        # code type-checking this parameter against this hint.
         else:
-            # Append Python statements to the body of this wrapper function
-            # type-checking this parameter against this annotation.
             func_code += nonpep_code_check_param(
                 data=data,
                 func_arg=func_arg,
@@ -140,3 +180,54 @@ def code_check_params(data: BeartypeData) -> str:
 
     # Return this Python code.
     return func_code
+
+# ....................{ CODERS                            }....................
+def code_check_return(data: BeartypeData) -> str:
+    '''
+    Python code snippet type-checking the annotated return value declared by
+    the decorated callable if any *or* the empty string otherwise (i.e., if
+    this value is unannotated).
+
+    Parameters
+    ----------
+    data : BeartypeData
+        Decorated callable to be type-checked.
+
+    Returns
+    ----------
+    str
+        Python code snippet type-checking the annotated return value declared
+         by this callable if any *or* the empty string otherwise.
+    '''
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
+
+    # Type hint annotating this callable's return value if any *OR*
+    # "Signature.Empty" otherwise.
+    func_return_hint = data.func_sig.return_annotation
+
+    # If this return value is unannotated, return code calling this callable
+    # unchecked and returning this value from this wrapper.
+    if func_return_hint is _RETURN_HINT_EMPTY:
+        return CODE_RETURN_UNCHECKED
+    # Else, this return value is annotated.
+
+    # If this hint is unsupported, raise an exception.
+    die_unless_hint(func_return_hint)
+    # Else, this hint is guaranteed to be supported and thus hashable.
+
+    # If this hint is silently ignorable, return code calling this callable
+    # unchecked and returning this value from this wrapper.
+    if func_return_hint in _HINTS_IGNORABLE:
+        return CODE_RETURN_UNCHECKED
+
+    # If this is a PEP-compliant hint...
+    if is_hint_typing(func_return_hint):
+        #FIXME: Implement us up. Raise a placeholder exception for now.
+        die_unless_hint_nonpep(
+            hint=func_return_hint,
+            hint_label=('{} return type hint'.format(data.func_name)))
+    # Else, this is a PEP-noncompliant hint. In this case, return Python code
+    # type-checking this return value against this hint.
+    else:
+        return nonpep_code_check_return(data)

@@ -4,38 +4,20 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** `PEP 484`_-agnostic **code constants.**
+**Beartype decorator PEP-noncompliant code snippets.**
 
-This private submodule *only* defines **code constants** (i.e., global
-triple-quoted strings containing pure-Python code snippets required at
-decorate time by the :func:`beartype.beartype` decorator to dynamically
-generate a new callable wrapping the decorated callable with runtime type
-checking).
+This private submodule *only* defines **PEP-noncompliant code snippets** (i.e.,
+triple-quoted pure-Python code constants formatted and concatenated together
+into wrapper functions implementing type-checking for decorated callables
+annotated with PEP-noncompliant type hints).
 
-This private submodule is the `PEP 484`_-agnostic analogue to the `PEP
-484_`-specific :mod:`beartype._decor.pep484.p484snippet` submodule.
+This private submodule is the PEP-noncompliant analogue to the `PEP
+484_`-specific :mod:`beartype._decor._pep._pepsnip` submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
-#FIXME: Shift PEP-noncompliant-specific snippets elsewhere.
-
-# ....................{ CODE                              }....................
-CODE_SIGNATURE = '''
-def {func_wrapper_name}(
-    *args,
-    __beartype_func=__beartype_func,
-    __beartypistry=__beartypistry,
-    **kwargs
-):
-'''
-#FIXME: Add above if desired:
-#     __beartype_hints=__beartype_hints,
-
-# ....................{ CODE ~ annotations                }....................
+# ....................{ CODE ~ hint                       }....................
 #FIXME: Refactor type and forward reference annotations access to access
 #fully-qualified classnames on the "__beartypistry". That said, note that tuple
 #annotations will probably continue to require accessing this function-specific
@@ -97,11 +79,6 @@ CODE_RETURN_CHECKED = '''
             '{func_name} return value {{}} not a {{!r}}.'.format(
                 __beartype_trim(__beartype_return_value), {return_type_expr}))
     return __beartype_return_value
-'''
-
-
-CODE_RETURN_UNCHECKED = '''
-    return __beartype_func(*args, **kwargs)
 '''
 
 # ....................{ CODE ~ reference : str            }....................

@@ -4,20 +4,25 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator annotation introspection.**
+**Beartype decorator PEP-noncompliant type-checking code generators.**
 
-This private submodule introspects the annotations of callables to be decorated
-by the :func:`beartype.beartype` decorator in a general-purpose manner.
+This private submodule dynamically generates pure-Python code type-checking all
+parameters and return values annotated with **PEP-noncompliant type hints**
+(i.e., :mod:`beartype`-specific annotation *not* compliant with
+annotation-centric PEPs) of the decorated callable.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import (
-    AnyType,
-    ClassType,
-)
-from beartype._decor._code._snippet import (
+from beartype.roar import BeartypeDecorHintValueNonPepException
+from beartype._decor._code._nonpep._nonpepsnip import (
+    CODE_PARAM_VARIADIC_POSITIONAL,
+    CODE_PARAM_KEYWORD_ONLY,
+    CODE_PARAM_POSITIONAL_OR_KEYWORD,
+    CODE_PARAM_HINT,
+    CODE_RETURN_CHECKED,
+    CODE_RETURN_HINT,
     CODE_STR_IMPORT,
     CODE_STR_REPLACE,
     CODE_TUPLE_STR_TEST,
@@ -26,53 +31,171 @@ from beartype._decor._code._snippet import (
     CODE_TUPLE_CLASS_APPEND,
     CODE_TUPLE_REPLACE,
 )
-from typing import Any
+from beartype._decor._data import BeartypeData
+from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
-HINTS_IGNORABLE = {AnyType, Any,}
-'''
-Set of all annotation objects to be unconditionally ignored during
-annotation-based type checking in the :func:`beartype` decorator regardless of
-callable context (e.g., parameter, return value).
-
-This includes:
-
-* The :class:`AnyType` type, synonymous with the builtin :class:`object` type.
-  Since :class:`object` is the transitive superclass of all classes, parameters
-  annotated as :class:`object` unconditionally match *all* objects under
-  :func:`isinstance`-based type covariance and are thus equivalent to
-  unannotated parameters.
-* The `PEP 484`_-specific :class:`Any` type, functionally synonymous with the
-  :class:`AnyType` and hence :class:`object` classes. Although `PEP
-  484`_-specific logic should typically be isolated to the private
-  :mod:`beartype._decor.pep484` subpackage for maintainability, listing this
-  type here *improves* maintainability by centralizing similar logic.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-'''
-
-# ....................{ CONSTANTS ~ private               }....................
-_HINT_TUPLE_ITEM_VALID_TYPES = (ClassType, str)
-'''
-Tuple of all **valid :class:`tuple` annotation item types** (i.e., classes
-whose instances are suitable as the items of any :class:`tuple` hinted for a
-callable annotation type-checked with the :func:`beartype` decorator).
-
-Specifically, this tuple contains:
-
-* The **type of all classes,** as :func:`beartype` naturally accepts types as
-  type hints.
-* The **string type,** as :func:`beartype` also accepts strings (denoted
-  "forward references") as type hints referring to the fully-qualified names of
-  types dynamically resolved later at call time rather than earlier at
-  decoration time.
-'''
-
 # ....................{ CODERS                            }....................
+def nonpep_code_check_param(
+    data: BeartypeData,
+    func_arg: Parameter,
+    func_arg_index: int,
+) -> str:
+    '''
+    Python code type-checking the parameter with the passed signature and index
+    annotated with a **PEP-noncompliant type hint**
+    (e.g.,:mod:`beartype`-specific annotation *not* compliant with
+    annotation-centric PEPs) of the decorated callable.
+
+    Parameters
+    ----------
+    data : BeartypeData
+        Decorated callable to be type-checked.
+    func_arg : Parameter
+        :mod:`inspect`-specific object describing this parameter.
+    func_arg_index : int
+        0-based index of this parameter in this callable's signature.
+
+    Returns
+    ----------
+    str
+        Python code type-checking all parameters annotated with
+        PEP-noncompliant type hints of the decorated callable if any *or* the
+        empty string otherwise.
+
+    Raises
+    ----------
+    BeartypeDecorHintValueNonPepException
+        If any type hint annotating any parameter of this callable is *not*
+        **PEP-noncompliant** (i.e., :mod:`beartype`-specific annotation *not*
+        compliant with annotation-centric PEPs).
+    '''
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
+    assert isinstance(func_arg, Parameter), (
+        '{!r} not parameter metadata.'.format(func_arg))
+    assert isinstance(func_arg_index, int), (
+        '{!r} not parameter index.'.format(func_arg_index))
+
+    # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
+    # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
+    # design, the caller already guarantees this to be the case.
+    #
+    # Human-readable label describing this hint.
+    func_arg_hint_label = (
+        '{} parameter "{}" type hint'.format(
+            data.func_name, func_arg.name))
+
+    # Python code evaluating to this hint.
+    func_arg_type_expr = CODE_PARAM_HINT.format(func_arg.name)
+
+    # Python code evaluating to this parameter's current value when passed
+    # as a keyword.
+    func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
+
+    # Python code to be returned, initialized with one or more Python
+    # statements resolving forward references in this hint.
+    func_code = _code_resolve_refs(
+        hint=func_arg.annotation,
+        hint_expr=func_arg_type_expr,
+        hint_label=func_arg_hint_label,
+    )
+
+    # If this parameter is a tuple of positional variadic parameters
+    # (e.g., "*args"), iteratively check these parameters.
+    if func_arg.kind is Parameter.VAR_POSITIONAL:
+        func_code += CODE_PARAM_VARIADIC_POSITIONAL.format(
+            func_name=data.func_name,
+            arg_name=func_arg.name,
+            arg_index=func_arg_index,
+            arg_type_expr=func_arg_type_expr,
+        )
+    # Else if this parameter is keyword-only, check this parameter only
+    # by lookup in the variadic "**kwargs" dictionary.
+    elif func_arg.kind is Parameter.KEYWORD_ONLY:
+        func_code += CODE_PARAM_KEYWORD_ONLY.format(
+            func_name=data.func_name,
+            arg_name=func_arg.name,
+            arg_type_expr=func_arg_type_expr,
+            arg_value_key_expr=func_arg_value_key_expr,
+        )
+    # Else, this parameter may be passed either positionally or as a
+    # keyword. Check this parameter both by lookup in the variadic
+    # "**kwargs" dictionary *AND* by index into the variadic "*args"
+    # tuple.
+    else:
+        # String evaluating to this parameter's current value when
+        # passed positionally.
+        func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
+        func_code += CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
+            func_name=data.func_name,
+            arg_name=func_arg.name,
+            arg_index=func_arg_index,
+            arg_type_expr=func_arg_type_expr,
+            arg_value_key_expr=func_arg_value_key_expr,
+            arg_value_pos_expr=func_arg_value_pos_expr,
+        )
+
+    # Return this Python code.
+    return func_code
+
+
+def nonpep_code_check_return(data: BeartypeData) -> str:
+    '''
+    Python code type-checking the return value annotated with a
+    **PEP-noncompliant type hint** (e.g.,:mod:`beartype`-specific annotation
+    *not* compliant with annotation-centric PEPs) of the decorated callable.
+
+    Parameters
+    ----------
+    data : BeartypeData
+        Decorated callable to be type-checked.
+
+    Returns
+    ----------
+    str
+        Python code type-checking the return value annotated with a
+        PEP-noncompliant type hint of the decorated callable if any *or* the
+        empty string otherwise.
+
+    Raises
+    ----------
+    BeartypeDecorHintValueNonPepException
+        If the return value of this callable is annotated with a type hint that
+        is *not* **PEP-noncompliant** (i.e., :mod:`beartype`-specific
+        annotation *not* compliant with annotation-centric PEPs).
+    '''
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
+
+    # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
+    # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
+    # design, the caller already guarantees this to be the case.
+    #
+    # Human-readable label describing this annotation.
+    func_return_hint_label = '{} return type annotation'.format(data.func_name)
+
+    # String evaluating to this return value's annotated type.
+    func_return_type_expr = CODE_RETURN_HINT
+    #print('Return annotation: {{}}'.format({func_return_type_expr}))
+
+    # Return Python code that...
+    return '{}{}'.format(
+        # Resolves forward references in this type hint.
+        _code_resolve_refs(
+            hint=data.func_sig.return_annotation,
+            hint_expr=func_return_type_expr,
+            hint_label=func_return_hint_label,
+        ),
+        # Calls this callable, type-checks the returned value, and returns this
+        # value from this wrapper.
+        CODE_RETURN_CHECKED.format(
+            func_name=data.func_name, return_type_expr=func_return_type_expr),
+    )
+
+# ....................{ CODERS ~ ref                      }....................
 #FIXME: Refactor this function to leverage the "__beartypistry" parameter
 #passed to all wrapper functions. Doing so will *SUBSTANTIALLY* simplify this
 #function's implementation as well as improving efficiency. So, how do we do
@@ -109,18 +232,19 @@ Specifically, this tuple contains:
 #    certainly *NOT* work, as Python probably prohibits tuple subclasses from
 #    overriding __getitem__(). Nonetheless, it's worth brief consideration.
 
-def code_resolve_forward_refs(
-    hint: object, hint_expr: str, hint_label: str) -> str:
+def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
     '''
-    Python code snippet dynamically replacing all **forward references** (i.e.,
-    fully-qualified classnames) in the passed annotation settable by the passed
-    Python expression with the corresponding classes.
+    Python code dynamically replacing all **forward references** (i.e.,
+    fully-qualified classnames) in the passed **PEP-noncompliant type hint**
+    (e.g.,:mod:`beartype`-specific annotation *not* compliant with
+    annotation-centric PEPs) settable by the passed Python expression with the
+    corresponding classes.
 
     Specifically, this function returns either:
 
-    * If this annotation is a string, a snippet replacing this annotation with
-      the class whose name is this string.
-    * If this annotation is a tuple containing one or more strings, a snippet
+    * If this annotation is a string, code replacing this annotation with the
+      class whose name is this string.
+    * If this annotation is a tuple containing one or more strings, code
       replacing this annotation with a new tuple such that each item of the
       original tuple that is:
 
@@ -132,10 +256,7 @@ def code_resolve_forward_refs(
     Parameters
     ----------
     hint : object
-        Annotation to be inspected, assumed to be either a class,
-        fully-qualified classname, or tuple of classes and/or classnames. Since
-        the previously called :func:`verify_hint` function has already
-        validated this to be the case, this assumption is *always* safe.
+        PEP-noncompliant type hint to be inspected.
     hint_expr : str
         Python expression evaluating to the annotation to be replaced.
     hint_label : str
@@ -149,6 +270,13 @@ def code_resolve_forward_refs(
         Python code snippet dynamically replacing all classnames in the
         function annotation settable by this Python expression with the
         corresponding classes.
+
+    Raises
+    ----------
+    BeartypeDecorHintValueNonPepException
+        If this type hint is *not* **PEP-noncompliant** (i.e.,
+        :mod:`beartype`-specific annotation *not* compliant with
+        annotation-centric PEPs).
     '''
     assert isinstance(hint_expr, str), (
         '"{!r}" not a string.'.format(hint_expr))
@@ -265,8 +393,17 @@ def code_resolve_forward_refs(
                     hint_label=hint_label,
                     subhint_type_basename=subhint_type_basename,
                 )
-            # Else, this member is assumed to be a class. In this case...
+            # Else, this item is *NOT* a classname. In this case...
             else:
+                # If this item is *NOT* a type, raise an exception.
+                #
+                # Note this should *NEVER* be the case, thanks to a prior call
+                # to the die_unless_hint() function for this hint.
+                if not isinstance(subhint, type):
+                    raise BeartypeDecorHintValueNonPepException(
+                        '{} item {!r} neither type nor string.'.format(
+                            hint_label, subhint))
+
                 # Block of Python code to be returned.
                 hint_replacement_code += CODE_TUPLE_CLASS_APPEND.format(
                     subhint_expr=subhint_expr)

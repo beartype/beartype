@@ -20,11 +20,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code import _codeparams, _codereturn
-from beartype._decor._code._snippet import (
-    CODE_RETURN_UNCHECKED,
-    CODE_SIGNATURE,
-)
+from beartype._decor._code._codecode import (
+    code_check_params, code_check_return)
+from beartype._decor._code._codesnip import (
+    CODE_RETURN_UNCHECKED, CODE_SIGNATURE)
 from beartype._decor._data import BeartypeData
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -62,11 +61,11 @@ def code(data: BeartypeData) -> None:
 
     # Python code snippet type-checking all parameters annotated on this
     # callable if any *or* the empty string otherwise.
-    code_params = _codeparams.code_check_params(data)
+    code_params = code_check_params(data)
 
     # Python code snippet type-checking the return value annotated on this
     # callable if any *or* the empty string otherwise.
-    code_return = _codereturn.code_check_return(data)
+    code_return = code_check_return(data)
 
     # Python code snippet implementing the wrapper type-checking this callable.
     #
