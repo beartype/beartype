@@ -9,17 +9,10 @@
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Validate strings to be syntactically valid classnames via a globally
-#scoped compiled regular expression. Raising early exceptions at decoration
-#time is preferable to raising late exceptions at call time.
-
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeDecorHintValueUnhashableException,
-)
+from beartype.roar import BeartypeDecorHintValueUnhashableException
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
-from beartype._util.hint.utilhintpep import is_hint_typing
+from beartype._util.hint.utilhintpep import die_unless_hint_pep, is_hint_pep
 from beartype._util.utilobj import is_hashable
 # from beartype._util.utilcache import callable_cached
 
@@ -81,26 +74,23 @@ def die_unless_hint(
         -noncompliant type hint.
     '''
 
-    # If this object is unhashable, this object is an unsupported type hint. In
-    # this case, raise an exception.
+    # If this hint is unhashable, this hint is unsupported. In this case, raise
+    # an exception.
     if not is_hashable(hint):
         raise BeartypeDecorHintValueUnhashableException(
             '{} {!r} unhashable.'.format(hint_label, hint))
     # Else, this object is hashable.
 
-    # If this object is PEP-compliant, raise an exception only if this object
-    # is currently unsupported by @beartype.
-    if is_hint_typing(hint):
-        #FIXME: Implement us up. To do so, we probably want to:
-        #
-        #* Shift the die_if_typing_unsupported() function defined elsewhere
-        #  into this submodule, probably renamed to
-        #  die_unless_hint_typing_supported().
-        #* Call that function here.
-
-        return
-    # Else, this object is *NOT* PEP-compliant. In this case, raise an
-    # exception only if this object is also *NOT* PEP-noncompliant.
+    # If this hint is PEP-compliant, raise an exception only if this hint is
+    # currently unsupported by @beartype.
+    if is_hint_pep(hint):
+        die_unless_hint_pep(
+            hint=hint,
+            hint_label=hint_label,
+            # is_str_valid=is_str_valid,
+        )
+    # Else, this hint is *NOT* PEP-compliant. In this case, raise an exception
+    # only if this hint is also *NOT* PEP-noncompliant.
     else:
         die_unless_hint_nonpep(
             hint=hint,

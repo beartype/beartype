@@ -8,7 +8,7 @@
 
 This private submodule dynamically generates pure-Python code type-checking all
 parameters and return values annotated with **PEP-noncompliant type hints**
-(i.e., :mod:`beartype`-specific annotation *not* compliant with
+(i.e., :mod:`beartype`-specific annotations *not* compliant with
 annotation-centric PEPs) of the decorated callable.
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -17,19 +17,17 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintValueNonPepException
 from beartype._decor._code._nonpep._nonpepsnip import (
-    CODE_PARAM_VARIADIC_POSITIONAL,
-    CODE_PARAM_KEYWORD_ONLY,
-    CODE_PARAM_POSITIONAL_OR_KEYWORD,
-    CODE_PARAM_HINT,
-    CODE_RETURN_CHECKED,
-    CODE_RETURN_HINT,
-    CODE_STR_IMPORT,
-    CODE_STR_REPLACE,
-    CODE_TUPLE_STR_TEST,
-    CODE_TUPLE_STR_IMPORT,
-    CODE_TUPLE_STR_APPEND,
-    CODE_TUPLE_CLASS_APPEND,
-    CODE_TUPLE_REPLACE,
+    NONPEP_CODE_PARAM_HINT,
+    NONPEP_CODE_RETURN_CHECKED,
+    NONPEP_CODE_RETURN_HINT,
+    NONPEP_CODE_STR_IMPORT,
+    NONPEP_CODE_STR_REPLACE,
+    NONPEP_CODE_TUPLE_STR_TEST,
+    NONPEP_CODE_TUPLE_STR_IMPORT,
+    NONPEP_CODE_TUPLE_STR_APPEND,
+    NONPEP_CODE_TUPLE_CLASS_APPEND,
+    NONPEP_CODE_TUPLE_REPLACE,
+    PARAM_KIND_TO_NONPEP_CODE,
 )
 from beartype._decor._data import BeartypeData
 from inspect import Parameter
@@ -61,17 +59,16 @@ def nonpep_code_check_param(
     Returns
     ----------
     str
-        Python code type-checking all parameters annotated with
-        PEP-noncompliant type hints of the decorated callable if any *or* the
-        empty string otherwise.
+        Python code type-checking this parameter against this hint.
 
     Raises
     ----------
     BeartypeDecorHintValueNonPepException
-        If any type hint annotating any parameter of this callable is *not*
-        **PEP-noncompliant** (i.e., :mod:`beartype`-specific annotation *not*
-        compliant with annotation-centric PEPs).
+        If either this parameter or this hint is *not* PEP-noncompliant.
     '''
+    # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
+    # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
+    # design, the caller already guarantees this to be the case.
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
     assert isinstance(func_arg, Parameter), (
@@ -79,57 +76,48 @@ def nonpep_code_check_param(
     assert isinstance(func_arg_index, int), (
         '{!r} not parameter index.'.format(func_arg_index))
 
-    # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
-    # design, the caller already guarantees this to be the case.
-    #
     # Human-readable label describing this hint.
     func_arg_hint_label = (
         '{} parameter "{}" type hint'.format(
             data.func_name, func_arg.name))
 
+    # Python code template type-checking this parameter if this type of
+    # parameter is supported *OR* "None" otherwise.
+    func_arg_code_template = PARAM_KIND_TO_NONPEP_CODE.get(func_arg.kind, None)
+
+    # If this type of parameter is unsupported, raise an exception.
+    #
+    # Note this edge case should *NEVER* occur, as the parent
+    # _code_check_params() function should have simply ignored this parameter.
+    if func_arg_code_template is None:
+        raise BeartypeDecorHintValueNonPepException(
+            '{} kind {!r} unsupported.'.format(
+                func_arg_hint_label, func_arg.kind))
+    # Else, this type of parameter is supported. Ergo, this code is non-"None".
+
     # Python code evaluating to this hint.
-    func_arg_type_expr = CODE_PARAM_HINT.format(func_arg.name)
+    func_arg_type_expr = NONPEP_CODE_PARAM_HINT.format(func_arg.name)
 
     # Python code evaluating to this parameter's current value when passed
     # as a keyword.
     func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
 
-    # Python code to be returned, initialized with one or more Python
-    # statements resolving forward references in this hint.
-    func_code = _code_resolve_refs(
-        hint=func_arg.annotation,
-        hint_expr=func_arg_type_expr,
-        hint_label=func_arg_hint_label,
-    )
+    # Python code evaluating to this parameter's current value when passed
+    # positionally.
+    func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
 
-    # If this parameter is a tuple of positional variadic parameters
-    # (e.g., "*args"), iteratively check these parameters.
-    if func_arg.kind is Parameter.VAR_POSITIONAL:
-        func_code += CODE_PARAM_VARIADIC_POSITIONAL.format(
-            func_name=data.func_name,
-            arg_name=func_arg.name,
-            arg_index=func_arg_index,
-            arg_type_expr=func_arg_type_expr,
-        )
-    # Else if this parameter is keyword-only, check this parameter only
-    # by lookup in the variadic "**kwargs" dictionary.
-    elif func_arg.kind is Parameter.KEYWORD_ONLY:
-        func_code += CODE_PARAM_KEYWORD_ONLY.format(
-            func_name=data.func_name,
-            arg_name=func_arg.name,
-            arg_type_expr=func_arg_type_expr,
-            arg_value_key_expr=func_arg_value_key_expr,
-        )
-    # Else, this parameter may be passed either positionally or as a
-    # keyword. Check this parameter both by lookup in the variadic
-    # "**kwargs" dictionary *AND* by index into the variadic "*args"
-    # tuple.
-    else:
-        # String evaluating to this parameter's current value when
-        # passed positionally.
-        func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
-        func_code += CODE_PARAM_POSITIONAL_OR_KEYWORD.format(
+    # Return Python code...
+    return (
+        # Resolving all forward references (i.e., stringified classnames) in
+        # this hint to their referents *AND*...
+        _nonpep_code_resolve_refs(
+            hint=func_arg.annotation,
+            hint_expr=func_arg_type_expr,
+            hint_label=func_arg_hint_label,
+        ) +
+
+        # Type-checking this parameter against this hint.
+        func_arg_code_template.format(
             func_name=data.func_name,
             arg_name=func_arg.name,
             arg_index=func_arg_index,
@@ -137,9 +125,7 @@ def nonpep_code_check_param(
             arg_value_key_expr=func_arg_value_key_expr,
             arg_value_pos_expr=func_arg_value_pos_expr,
         )
-
-    # Return this Python code.
-    return func_code
+    )
 
 
 def nonpep_code_check_return(data: BeartypeData) -> str:
@@ -156,43 +142,40 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
     Returns
     ----------
     str
-        Python code type-checking the return value annotated with a
-        PEP-noncompliant type hint of the decorated callable if any *or* the
-        empty string otherwise.
+        Python code type-checking this return value against this hint.
 
     Raises
     ----------
     BeartypeDecorHintValueNonPepException
-        If the return value of this callable is annotated with a type hint that
-        is *not* **PEP-noncompliant** (i.e., :mod:`beartype`-specific
-        annotation *not* compliant with annotation-centric PEPs).
+        If this hint is *not* PEP-noncompliant.
     '''
-    assert isinstance(data, BeartypeData), (
-        '{!r} not @beartype data.'.format(data))
-
     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
     # design, the caller already guarantees this to be the case.
-    #
+    assert isinstance(data, BeartypeData), (
+        '{!r} not @beartype data.'.format(data))
+
     # Human-readable label describing this annotation.
     func_return_hint_label = '{} return type annotation'.format(data.func_name)
 
     # String evaluating to this return value's annotated type.
-    func_return_type_expr = CODE_RETURN_HINT
+    func_return_type_expr = NONPEP_CODE_RETURN_HINT
     #print('Return annotation: {{}}'.format({func_return_type_expr}))
 
-    # Return Python code that...
-    return '{}{}'.format(
-        # Resolves forward references in this type hint.
-        _code_resolve_refs(
+    # Return Python code...
+    return (
+        # Resolving all forward references (i.e., stringified classnames) in
+        # this hint to their referents *AND*...
+        _nonpep_code_resolve_refs(
             hint=data.func_sig.return_annotation,
             hint_expr=func_return_type_expr,
             hint_label=func_return_hint_label,
-        ),
-        # Calls this callable, type-checks the returned value, and returns this
-        # value from this wrapper.
-        CODE_RETURN_CHECKED.format(
-            func_name=data.func_name, return_type_expr=func_return_type_expr),
+        ) +
+
+        # Calling the decorated callable, type-checking the returned value, and
+        # returning this value from this wrapper function.
+        NONPEP_CODE_RETURN_CHECKED.format(
+            func_name=data.func_name, return_type_expr=func_return_type_expr)
     )
 
 # ....................{ CODERS ~ ref                      }....................
@@ -232,7 +215,8 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
 #    certainly *NOT* work, as Python probably prohibits tuple subclasses from
 #    overriding __getitem__(). Nonetheless, it's worth brief consideration.
 
-def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
+def _nonpep_code_resolve_refs(
+    hint: object, hint_expr: str, hint_label: str) -> str:
     '''
     Python code dynamically replacing all **forward references** (i.e.,
     fully-qualified classnames) in the passed **PEP-noncompliant type hint**
@@ -309,7 +293,7 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
 
             # print('Importing "{hint_type_module_name}.{hint_type_basename}"...')
             # Import statement importing this module.
-            hint_type_import_code = CODE_STR_IMPORT.format(
+            hint_type_import_code = NONPEP_CODE_STR_IMPORT.format(
                 hint_type_module_name=hint_type_module_name,
                 hint_type_basename=hint_type_basename,
             )
@@ -320,7 +304,7 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
             hint_type_basename = hint
 
         # Block of Python code to be returned.
-        return CODE_STR_REPLACE.format(
+        return NONPEP_CODE_STR_REPLACE.format(
             hint_expr=hint_expr,
             hint_label=hint_label,
             hint_type_basename=hint_type_basename,
@@ -354,7 +338,7 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
         # Why? Because this approach trivially circumvents class basename
         # collisions (e.g., between the hypothetical classnames "rising.Sun"
         # and "sinking.Sun", which share the same basename "Sun").
-        hint_replacement_code = CODE_TUPLE_STR_TEST.format(
+        hint_replacement_code = NONPEP_CODE_TUPLE_STR_TEST.format(
             subhint_type_name_expr=subhint_type_name_expr)
 
         # For the 0-based index of each item and that item of this
@@ -378,7 +362,7 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
 
                     # Import statement importing this module.
                     hint_replacement_code += (
-                        CODE_TUPLE_STR_IMPORT.format(
+                        NONPEP_CODE_TUPLE_STR_IMPORT.format(
                             subhint_type_module_name=subhint_type_module_name,
                             subhint_type_basename=subhint_type_basename,
                         ))
@@ -389,7 +373,7 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
                     subhint_type_basename = subhint
 
                 # Block of Python code to be returned.
-                hint_replacement_code += CODE_TUPLE_STR_APPEND.format(
+                hint_replacement_code += NONPEP_CODE_TUPLE_STR_APPEND.format(
                     hint_label=hint_label,
                     subhint_type_basename=subhint_type_basename,
                 )
@@ -405,11 +389,11 @@ def _code_resolve_refs(hint: object, hint_expr: str, hint_label: str) -> str:
                             hint_label, subhint))
 
                 # Block of Python code to be returned.
-                hint_replacement_code += CODE_TUPLE_CLASS_APPEND.format(
+                hint_replacement_code += NONPEP_CODE_TUPLE_CLASS_APPEND.format(
                     subhint_expr=subhint_expr)
 
         # Block of Python code to be returned.
-        hint_replacement_code += CODE_TUPLE_REPLACE.format(
+        hint_replacement_code += NONPEP_CODE_TUPLE_REPLACE.format(
             hint_expr=hint_expr)
 
         # Return this block.

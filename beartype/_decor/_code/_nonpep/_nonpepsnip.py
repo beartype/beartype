@@ -11,68 +11,86 @@ triple-quoted pure-Python code constants formatted and concatenated together
 into wrapper functions implementing type-checking for decorated callables
 annotated with PEP-noncompliant type hints).
 
-This private submodule is the PEP-noncompliant analogue to the `PEP
-484_`-specific :mod:`beartype._decor._pep._pepsnip` submodule.
-
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ PARAMETERS                        }....................
+from inspect import Parameter
+
 # ....................{ CODE ~ hint                       }....................
 #FIXME: Refactor type and forward reference annotations access to access
-#fully-qualified classnames on the "__beartypistry". That said, note that tuple
-#annotations will probably continue to require accessing this function-specific
-#dictionary. So it goes.
+#fully-qualified classnames on the "__beartypistry", as doing so is more
+#efficient and simpler than the existing forward reference resolution
+#mechanism. Moreover, doing so avoids implicit dictionary lookups on
+#"__beartype_func.__dict__" for standard types and is thus more efficient for
+#the common case as well.
+#
+#That said, note that tuple annotations will probably continue to require
+#accessing this function-specific dictionary. So it goes.
 
-CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
-# CODE_PARAM_HINT = '__beartype_hints[{!r}]'
+# NONPEP_CODE_PARAM_HINT = '__beartype_hints[{!r}]'
+NONPEP_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
 '''
-Code snippet accessing the annotation with an arbitrary name formatted into
-this snippet by the caller.
+PEP-noncompliant code snippet accessing the annotation with an arbitrary name
+formatted into this snippet by the caller.
 '''
 
 
-CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
-# CODE_RETURN_HINT = "__beartype_hints['return']"
+# NONPEP_CODE_RETURN_HINT = "__beartype_hints['return']"
+NONPEP_CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
 '''
-Code snippet accessing the **return annotation** (i.e., annotation synopsizing
-the type hint for this callable's return value).
+PEP-noncompliant code snippet accessing the **return annotation** (i.e.,
+annotation synopsizing the type hint for this callable's return value).
 '''
 
 # ....................{ CODE ~ param                      }....................
-CODE_PARAM_VARIADIC_POSITIONAL = '''
+PARAM_KIND_TO_NONPEP_CODE = {
+    # Snippet type-checking any standard positional or keyword parameter both
+    # by lookup in the wrapper function's variadic "**kwargs" dictionary *AND*
+    # by index into the wrapper function's variadic "*args" tuple.
+    Parameter.POSITIONAL_OR_KEYWORD: '''
+    if not (
+        isinstance({arg_value_pos_expr}, {arg_type_expr})
+        if len(args) > {arg_index} else
+        isinstance({arg_value_key_expr}, {arg_type_expr})
+        if {arg_name!r} in kwargs else True
+    ):
+            raise __beartype_param_exception(
+                '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
+                __beartype_trim({arg_value_pos_expr} if len(args) > {arg_index} else {arg_value_key_expr}),
+                {arg_type_expr}))
+''',
+
+    # Snippet type-checking any variadic positional pseudo-parameter (e.g.,
+    # "*args") by iteratively checking all relevant parameters.
+    Parameter.VAR_POSITIONAL: '''
     for __beartype_arg in args[{arg_index!r}:]:
         if not isinstance(__beartype_arg, {arg_type_expr}):
             raise __beartype_param_exception(
                 '{func_name} positional variadic parameter '
                 '{arg_index} {{}} not a {{!r}}.'.format(
                     __beartype_trim(__beartype_arg), {arg_type_expr}))
-'''
+''',
 
-
-CODE_PARAM_KEYWORD_ONLY = '''
+    # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
+    # lookup in the wrapper function's variadic "**kwargs" dictionary.
+    Parameter.KEYWORD_ONLY: '''
     if {arg_name!r} in kwargs and not isinstance(
         {arg_value_key_expr}, {arg_type_expr}):
         raise __beartype_param_exception(
             '{func_name} keyword-only parameter '
             '{arg_name}={{}} not a {{!r}}.'.format(
                 __beartype_trim({arg_value_key_expr}), {arg_type_expr}))
+''',
+}
 '''
-
-
-CODE_PARAM_POSITIONAL_OR_KEYWORD = '''
-    if not (
-        isinstance({arg_value_pos_expr}, {arg_type_expr})
-        if len(args) > {arg_index} else
-        isinstance({arg_value_key_expr}, {arg_type_expr})
-        if {arg_name!r} in kwargs else True):
-            raise __beartype_param_exception(
-                '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim({arg_value_pos_expr} if len(args) > {arg_index} else {arg_value_key_expr}),
-                {arg_type_expr}))
+Dictionary mapping from the type of each callable parameter supported by the
+:func:`beartype.beartype` decorator to a PEP-noncompliant code snippet
+type-checking that type.
 '''
 
 # ....................{ CODE ~ return                     }....................
-CODE_RETURN_CHECKED = '''
+NONPEP_CODE_RETURN_CHECKED = '''
     __beartype_return_value = __beartype_func(*args, **kwargs)
     if not isinstance(__beartype_return_value, {return_type_expr}):
         raise __beartype_return_exception(
@@ -80,9 +98,19 @@ CODE_RETURN_CHECKED = '''
                 __beartype_trim(__beartype_return_value), {return_type_expr}))
     return __beartype_return_value
 '''
+'''
+PEP-noncompliant code snippet type-checking the return value if any.
+
+Specifically, this snippet (in order):
+
+#. Calls the decorated callable.
+#. Localizes the value returned by that call.
+#. Type-checks that value.
+#. Returns that value as this wrapper function's value.
+'''
 
 # ....................{ CODE ~ reference : str            }....................
-CODE_STR_REPLACE = '''
+NONPEP_CODE_STR_REPLACE = '''
     # If this annotation is still a classname, this annotation has yet to be
     # replaced by the corresponding class, implying this to be the first call
     # to this callable. Perform this replacement in this call, preventing
@@ -107,7 +135,7 @@ CODE_STR_REPLACE = '''
 '''
 
 
-CODE_STR_IMPORT = '''
+NONPEP_CODE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" or "ModuleNotFoundError"
         # exception on failure.
@@ -115,7 +143,7 @@ CODE_STR_IMPORT = '''
 '''
 
 # ....................{ CODE ~ reference : tuple          }....................
-CODE_TUPLE_STR_TEST = '''
+NONPEP_CODE_TUPLE_STR_TEST = '''
     # If the first classname in this annotation is still a classname, this
     # annotation has yet to be replaced by a tuple containing classes rather
     # than classnames, implying this to be the first call to this callable.
@@ -128,14 +156,14 @@ CODE_TUPLE_STR_TEST = '''
 '''
 
 
-CODE_TUPLE_STR_IMPORT = '''
+NONPEP_CODE_TUPLE_STR_IMPORT = '''
         # Attempt to import this attribute from this module, implicitly
         # raising a human-readable "ImportError" exception on failure.
         from {subhint_type_module_name} import {subhint_type_basename}
 '''
 
 
-CODE_TUPLE_STR_APPEND = '''
+NONPEP_CODE_TUPLE_STR_APPEND = '''
         # Validate this member to be a class, preventing this member from being
         # yet another classname or tuple of classes and/or classnames. (The
         # recursion definitively ends here, folks.)
@@ -149,13 +177,13 @@ CODE_TUPLE_STR_APPEND = '''
 '''
 
 
-CODE_TUPLE_CLASS_APPEND = '''
+NONPEP_CODE_TUPLE_CLASS_APPEND = '''
         # Append this class copied from the original tuple to this list.
         __beartype_func_hint_list.append({subhint_expr})
 '''
 
 
-CODE_TUPLE_REPLACE = '''
+NONPEP_CODE_TUPLE_REPLACE = '''
         # Replace the external copy of this annotation stored in this
         # function's signature by this list coerced back into a tuple for
         # conformance with isinstance() constraints -- guaranteeing that

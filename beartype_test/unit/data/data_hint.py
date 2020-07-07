@@ -14,10 +14,7 @@ This submodule defines various types (including both `PEP 484`_-compliant and
 '''
 
 # ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To raise human-readable test errors, avoid importing from
-# package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype import cave
 from collections.abc import Sized
 import typing
 
@@ -66,7 +63,7 @@ User-defined :mod:`typing` type alias.
 '''
 
 # ....................{ TUPLES                            }....................
-P484_TYPES = (
+P484_HINTS = (
     typing.Any,
     typing.Callable[[], str],
     typing.Dict[str, str],
@@ -77,16 +74,28 @@ P484_TYPES = (
     typing.Type[dict],
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]],
     typing.Union[str, typing.Sequence[int]],
-    T,
-    TypingUserDefined,
     GenericUserDefined,
     GenericUserDefinedMultiple,
+    T,
     TypeAlias,
+    TypingUserDefined,
 )
 '''
-Tuple of various `PEP 484`_-compliant types exercising *all* edge cases on
+Tuple of various `PEP 484`_-compliant type hints exercising *all* edge cases on
 behalf of test submodules.
 
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+NONPEP_HINTS = (
+    list,
+    str,
+    cave.AnyType,
+    cave.NoneType,
+    cave.NoneTypeOr[cave.AnyType],
+)
+'''
+Tuple of various PEP-noncompliant type hints of interest.
 '''

@@ -192,17 +192,17 @@ class BeartypeDecorHintValueUnhashableException(
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : hint : p484  }....................
-class BeartypeDecorHintValuePep484Exception(
+# ....................{ EXCEPTIONS ~ decor : hint : pep   }....................
+class BeartypeDecorHintValuePepException(
     BeartypeDecorHintValueException, metaclass=_ABCMeta):
     '''
-    Abstract base class of all **beartype decorator** `PEP 484`_ **type hint
+    Abstract base class of all **beartype decorator PEP-compliant type hint
     value exceptions.**
 
     Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    violating either `PEP 484`_ itself or this decorator's implementation of
-    `PEP 484`_.
+    from the :func:`beartype.beartype` decorator on receiving a callable whose
+    annotations either violate an annotation-centric PEP (e.g., `PEP 484`) *or*
+    this decorator's implementation of such a PEP.
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
@@ -211,16 +211,16 @@ class BeartypeDecorHintValuePep484Exception(
     pass
 
 
-class BeartypeDecorHintValuePep484UnsupportedException(
-    BeartypeDecorHintValuePep484Exception):
+class BeartypeDecorHintValuePepUnsupportedException(
+    BeartypeDecorHintValuePepException):
     '''
-    **Beartype decorator** `PEP 484`_ **unsupported type hint exception.**
+    **Beartype decorator unsupported PEP-compliant type hint exception.**
 
     Instances of subclasses of this exception are raised at decoration time
     from the :func:`beartype.beartype` decorator on receiving a callable
-    annotated with one or more `PEP 484`_ types (i.e., instances or classes
-    declared by the stdlib :mod:`typing` module) currently unsupported by this
-    decorator.
+    annotated with one or more PEP-compliant type hints (e.g., instances or
+    classes declared by the stdlib :mod:`typing` module) currently unsupported
+    by this decorator.
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484

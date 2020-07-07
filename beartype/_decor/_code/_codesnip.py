@@ -14,6 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CODE                              }....................
+#FIXME: Add below if desired:
+#     __beartype_hints=__beartype_hints,
 CODE_SIGNATURE = '''
 def {func_wrapper_name}(
     *args,
@@ -22,11 +24,16 @@ def {func_wrapper_name}(
     **kwargs
 ):
 '''
-#FIXME: Add above if desired:
-#     __beartype_hints=__beartype_hints,
-
+'''
+PEP-agnostic code snippet declaring the signature of the wrapper function
+type-checking the decorated callable.
+'''
 
 
 CODE_RETURN_UNCHECKED = '''
     return __beartype_func(*args, **kwargs)
+'''
+'''
+PEP-agnostic code snippet calling the decorated callable *without*
+type-checking the value returned by that call (if any).
 '''
