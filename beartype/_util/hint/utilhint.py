@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintValueUnhashableException
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from beartype._util.hint.utilhintpep import die_unless_hint_pep, is_hint_pep
-from beartype._util.utilobj import is_hashable
+from beartype._util.utilobj import is_object_hashable
 # from beartype._util.utilcache import callable_cached
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -76,7 +76,7 @@ def die_unless_hint(
 
     # If this hint is unhashable, this hint is unsupported. In this case, raise
     # an exception.
-    if not is_hashable(hint):
+    if not is_object_hashable(hint):
         raise BeartypeDecorHintValueUnhashableException(
             '{} {!r} unhashable.'.format(hint_label, hint))
     # Else, this object is hashable.

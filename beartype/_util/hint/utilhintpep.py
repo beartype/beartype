@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintValuePepException
 from beartype._util.utilcache import callable_cached
-from beartype._util.utilobj import get_obj_module_name_or_none, get_obj_type
+from beartype._util.utilobj import get_object_module_name_or_none, get_object_type
 from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -301,7 +301,7 @@ def _is_hint_typing(hint: object) -> bool:
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = get_obj_type(hint)
+    hint_type = get_object_type(hint)
 
     # If this type is defined by the stdlib "typing" module, return true.
     #
@@ -327,7 +327,7 @@ def _is_hint_typing(hint: object) -> bool:
     #   exceptions with reliable messages across *ALL* Python versions.
     #
     # In short, there is no general-purpose clever solution. *sigh*
-    if get_obj_module_name_or_none(hint_type) == 'typing':
+    if get_object_module_name_or_none(hint_type) == 'typing':
         return True
 
     # For each superclass of this class...
@@ -341,7 +341,7 @@ def _is_hint_typing(hint: object) -> bool:
     #    class UserDefinedGeneric(Generic[T]): pass
     for hint_type_supertype in hint_type.__mro__:
         # If this superclass is defined by "typing", return true.
-        if get_obj_module_name_or_none(hint_type_supertype) == 'typing':
+        if get_object_module_name_or_none(hint_type_supertype) == 'typing':
             return True
 
     # Else, neither this type nor any superclass of this type is defined by the

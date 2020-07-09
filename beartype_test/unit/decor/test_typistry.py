@@ -27,15 +27,15 @@ def test_typistry_pass() -> None:
     # Defer heavyweight imports
     from beartype.cave import AnyType, FunctionTypes, NoneType
     from beartype._decor._typistry import bear_typistry, register_type
-    from beartype._util.utilobj import get_name_qualified
+    from beartype._util.utilobj import get_object_name_qualified
 
     # Assert that types are registrable via a trivial function call.
     register_type(AnyType)
-    assert bear_typistry.get(get_name_qualified(AnyType)) is AnyType
+    assert bear_typistry.get(get_object_name_qualified(AnyType)) is AnyType
 
     # Assert that types are also registrable via dictionary syntax.
-    bear_typistry[get_name_qualified(NoneType)] = NoneType
-    assert bear_typistry.get(get_name_qualified(NoneType)) is NoneType
+    bear_typistry[get_object_name_qualified(NoneType)] = NoneType
+    assert bear_typistry.get(get_object_name_qualified(NoneType)) is NoneType
 
     # Assert that tuples are also registrable via dictionary syntax.
     bear_typistry['beartype.cave.FunctionTypes'] = FunctionTypes
@@ -50,14 +50,14 @@ def test_typistry_fail() -> None:
 
     # Defer heavyweight imports
     from beartype.roar import (
-        BeartypeCallBeartypistryException,
+        _BeartypeCallBeartypistryException,
         BeartypeDecorHintValueNonPepException,
         BeartypeDecorHintValueUnhashableException,
     )
     from beartype._decor._typistry import bear_typistry, register_type
 
     # Assert that non-types are *NOT* registrable via the same function.
-    with pytest.raises(BeartypeCallBeartypistryException):
+    with pytest.raises(_BeartypeCallBeartypistryException):
         register_type((
             'The best lack all conviction,',
             'while the worst',
@@ -81,7 +81,7 @@ def test_typistry_fail() -> None:
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
 
     # Assert that beartypistry keys that are *NOT* strings are rejected.
-    with pytest.raises(BeartypeCallBeartypistryException):
+    with pytest.raises(_BeartypeCallBeartypistryException):
         bear_typistry[(
             'And what rough beast, its hour come round at last,',)] = (
             'Slouches towards Bethlehem to be born?',)

@@ -113,6 +113,45 @@ def code(data: BeartypeData) -> None:
     .. _PEP 484:
         https://www.python.org/dev/peps/pep-0484
 
+    Returns
+    ----------
+    (str, bool)
+        2-tuple ``(func_code, is_func_code_noop)`` where:
+
+        * ``func_code`` is Python code defining the wrapper function
+          type-checking the decorated callable, including (in order):
+
+          * A signature declaring this wrapper, accepting both
+            beartype-agnostic and -specific parameters. The latter include:
+
+            * A private ``__beartype_func`` parameter initialized to the
+              decorated callable. In theory, this callable should be accessible
+              as a closure-style local in this wrapper. For unknown reasons
+              (presumably, a subtle bug in the exec() builtin), this is *not*
+              the case. Instead, a closure-style local must be simulated by
+              passing this callable at function definition time as the default
+              value of an arbitrary parameter. To ensure this default is *not*
+              overwritten by a function accepting a parameter of the same name,
+              this unlikely edge case is guarded against elsewhere.
+
+          * Statements type checking parameters passed to this callable.
+          * A call to this callable.
+          * A statement type checking the value returned by this callable.
+
+        * ``is_func_code_noop`` is ``True`` only if ``func_code`` proxies this
+          callable *without* type-checking. Note this edge case is distinct
+          from a related edge case at the head of the :func:`beartype.beartype`
+          decorator reducing to a noop for unannotated callables. By compare,
+          this boolean is ``True`` only for callables annotated with
+          **ignorable type hints** (i.e., :class:`object`,
+          :class:`beartype.cave.AnyType`, :class:`typing.Any`): e.g.,
+
+              >>> from beartype.cave import AnyType
+              >>> from typing import Any
+              >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
+              >>> muh_func is beartype(muh_func)
+              True
+
     Raises
     ----------
     BeartypeDecorParamNameException
@@ -144,7 +183,7 @@ def code(data: BeartypeData) -> None:
     # callable if any *or* the empty string otherwise.
     code_return = _code_check_return(data)
 
-    # Python code snippet implementing the wrapper type-checking this callable.
+    # Python code defining the wrapper type-checking this callable.
     #
     # While there exist numerous alternatives to string formatting (e.g.,
     # appending to a list or bytearray before joining the items of that
@@ -156,11 +195,13 @@ def code(data: BeartypeData) -> None:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal.
-    data.func_code = '{}{}{}'.format(code_sig, code_params, code_return)
+    func_code = '{}{}{}'.format(code_sig, code_params, code_return)
 
     # True only if this code proxies this callable *WITHOUT* type checking.
-    data.is_func_code_noop = (
-        data.func_code == code_sig + CODE_RETURN_UNCHECKED)
+    is_func_code_noop = (func_code == code_sig + CODE_RETURN_UNCHECKED)
+
+    # Return this code and accompanying boolean.
+    return func_code, is_func_code_noop
 
 # ....................{ CODERS ~ private                  }....................
 def _code_check_params(data: BeartypeData) -> str:

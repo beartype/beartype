@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeCallBeartypistryException
-from beartype._util.utilobj import get_name_qualified
+from beartype.roar import _BeartypeCallBeartypistryException
+from beartype._util.utilobj import get_object_name_qualified
 from beartype._util.hint.utilhint import die_unless_hint
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -28,8 +28,8 @@ def register_type(cls: type) -> None:
     codebase, but is otherwise equivalent to:
 
         >>> from beartype._decor._typistry import bear_typistry
-        >>> from beartype._util.utilobj import get_name_qualified
-        >>> bear_typistry[get_name_qualified(cls)] = cls
+        >>> from beartype._util.utilobj import get_object_name_qualified
+        >>> bear_typistry[get_object_name_qualified(cls)] = cls
 
     Caveats
     ----------
@@ -47,22 +47,22 @@ def register_type(cls: type) -> None:
 
     Raises
     ----------
-    BeartypeCallBeartypistryException
+    _BeartypeCallBeartypistryException
         If this type is *not* a type.
     '''
 
     # If this type is *NOT* a type, raise an exception.
     if not isinstance(cls, type):
-        raise BeartypeCallBeartypistryException(
+        raise _BeartypeCallBeartypistryException(
             '{!r} not a class.'.format(cls))
 
     # One-liners for reasonable justice.
     #
-    # Note that both the get_name_qualified() function explicitly
+    # Note that both the get_object_name_qualified() function explicitly
     # called here *AND* the Beartypistry.__setitem__() dunder method implicitly
     # called by this assignment validate their passed argument(s). Ergo, avoid
     # doing so here to preserve DRY.
-    bear_typistry[get_name_qualified(cls)] = cls
+    bear_typistry[get_object_name_qualified(cls)] = cls
 
 # ....................{ CLASSES                           }....................
 class Beartypistry(dict):
@@ -108,7 +108,7 @@ class Beartypistry(dict):
 
         Raises
         ----------
-        BeartypeCallBeartypistryException
+        _BeartypeCallBeartypistryException
             If either:
 
             * This name is *not* a string.
@@ -125,7 +125,7 @@ class Beartypistry(dict):
 
         # If this name is *NOT* a string, raise an exception.
         if not isinstance(hint_name, str):
-            raise BeartypeCallBeartypistryException(
+            raise _BeartypeCallBeartypistryException(
                 'Beartypistry key {!r} not a '
                 'fully-qualified module attribute name.'.format(hint_name))
 
@@ -139,11 +139,11 @@ class Beartypistry(dict):
         # If this hint is a type...
         if isinstance(hint, type):
             # Fully-qualified name of this type as declared by this type.
-            clsname = get_name_qualified(hint)
+            clsname = get_object_name_qualified(hint)
 
             # If the passed name is *NOT* this name, raise an exception.
             if hint_name != clsname:
-                raise BeartypeCallBeartypistryException(
+                raise _BeartypeCallBeartypistryException(
                     'Beartypistry key "{}" not '
                     'classname "{}" of type {!r}.'.format(
                         hint_name, clsname, hint))
@@ -179,7 +179,7 @@ class Beartypistry(dict):
 
         Raises
         ----------
-        BeartypeCallBeartypistryException
+        _BeartypeCallBeartypistryException
             If this classname is either:
 
             * *Not* a string.
@@ -187,7 +187,7 @@ class Beartypistry(dict):
 
         # If this name is *NOT* a string, raise an exception.
         if not isinstance(hint_name, str):
-            raise BeartypeCallBeartypistryException(
+            raise _BeartypeCallBeartypistryException(
                 'Beartypistry key {!r} not a '
                 'fully-qualified module attribute name.'.format(hint_name))
 

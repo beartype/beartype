@@ -403,12 +403,12 @@ def beartype(func: CallableTypes) -> CallableTypes:
     func_data = BeartypeData(func)
 
     # Generate the raw string of Python statements implementing this wrapper.
-    codemain.code(func_data)
+    func_code, is_func_code_noop = codemain.code(func_data)
 
     # If this wrapper proxies this callable *WITHOUT* type-checking,
     # efficiently reduce to a noop (i.e., the identity decorator) by returning
     # this callable as is.
-    if func_data.is_func_code_noop:
+    if is_func_code_noop:
         return func
 
     # Dictionary mapping from local attribute names to values passed to the
@@ -482,13 +482,13 @@ def beartype(func: CallableTypes) -> CallableTypes:
     # the current circumspect approach is preferred.
     try:
         # print('@beartype {}() wrapper\n{}'.format(func_name, func_code))
-        exec(func_data.func_code, globals(), local_attrs)
+        exec(func_code, globals(), local_attrs)
     # If doing so fails for any reason, raise a decorator-specific exception
     # embedding the entire body of this function for debugging purposes.
     except Exception as exception:
         raise BeartypeDecorWrapperException(
             '{} wrapper unparseable:\n{}'.format(
-                func_data.func_name, func_data.func_code)
+                func_data.func_name, func_code)
         ) from exception
 
     # This wrapper.

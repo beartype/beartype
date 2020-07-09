@@ -293,28 +293,15 @@ class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-
-class BeartypeCallBeartypistryException(BeartypeCallException):
-    '''
-    **Beartyped callable beartypistry exception.**
-
-    This exception is raised from the wrapper function when that function
-    erroneously accesses the **beartypistry** (i.e.,
-    :class:`beartype._decor._typistry.bear_typistry` singleton).
-
-    This exception denotes a critical issue and should thus *never* be raised.
-    '''
-
-    pass
-
 # ....................{ EXCEPTIONS ~ call : type          }....................
 class BeartypeCallTypeException(BeartypeCallException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable type exceptions.**
 
-    This exception is raised from the wrapper function when either passed a
-    parameter or returning an object whose value is of **unexpected type**
-    (i.e., violating type hints annotated for that parameter or return value).
+    Instances of subclasses of this exception are raised from the wrapper
+    function when either passed a parameter or returning an object whose value
+    is of **unexpected type** (i.e., violating type hints annotated for that
+    parameter or return value).
     '''
 
     pass
@@ -341,14 +328,57 @@ class BeartypeCallTypeReturnException(BeartypeCallTypeException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ util                 }....................
-class BeartypeCallableCachedException(BeartypeException):
+# ....................{ EXCEPTIONS ~ call : private       }....................
+class _BeartypeCallBeartypistryException(BeartypeCallException):
+    '''
+    **Beartyped callable beartypistry exception.**
+
+    This exception is raised from the wrapper function when that function
+    erroneously accesses the **beartypistry** (i.e.,
+    :class:`beartype._decor._typistry.bear_typistry` singleton).
+
+    This private exception denotes a critical internal issue and should thus
+    *never* be raised -- let alone exposed to end users.
+    '''
+
+    pass
+
+# ....................{ EXCEPTIONS ~ util : private       }....................
+class BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype utility exceptions.**
+
+    Instances of subclasses of this exception are raised by *most* (but *not*
+    all) private submodules of the private :mod:`beartype._util` subpackage.
+    Such exceptions denote critical internal issues and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeCallableCachedException(BeartypeUtilException):
     '''
     **Beartype memoization exception.**
 
     This exception is raised by the
     :func:`beartype._util.utilcache.callable_cached` decorator when the
     signature of the callable being decorated is unsupported.
+    '''
+
+    pass
+
+
+class _BeartypeFixedListException(BeartypeUtilException):
+    '''
+    **Beartype decorator fixed list exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator when an internal callable erroneously
+    accesses a **fixed list** (i.e., :class:`beartype._decor._list._fixedlist`
+    type subclassing the builtin :class:`list` type to a fixed length defined
+    at instantiation time), typically by attempting to modify the length of
+    that list.
     '''
 
     pass

@@ -41,45 +41,8 @@ class BeartypeData(object):
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator).
 
-    Attributes (Boolean)
-    ----------
-    is_func_code_noop : bool
-        ``True`` only if the :attr:`func_code` instance variable proxies this
-        callable *without* type-checking. Note this edge case is distinct from
-        a related edge case at the head of the :func:`beartype.beartype`
-        decorator reducing to a noop for unannotated callables. By compare,
-        this boolean is ``True`` only for callables annotated with **ignorable
-        type hints** (i.e., :class:`object`, :class:`beartype.cave.AnyType`,
-        :class:`typing.Any`): e.g.,
-
-            >>> from beartype.cave import AnyType
-            >>> from typing import Any
-            >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
-            >>> muh_func is beartype(muh_func)
-            True
-
     Attributes (String)
     ----------
-    func_code : str
-        Raw string of Python statements implementing the wrapper function
-        type-checking the decorated callable, including (in order):
-
-        * A signature declaring this wrapper, accepting both beartype-agnostic
-          and -specific parameters. The latter include:
-
-          * A private ``__beartype_func`` parameter initialized to the
-            decorated callable. In theory, this callable should be accessible
-            as a closure-style local in this wrapper. For unknown reasons
-            (presumably, a subtle bug in the exec() builtin), this is *not* the
-            case. Instead, a closure-style local must be simulated by passing
-            this callable at function definition time as the default value of
-            an arbitrary parameter. To ensure this default is *not* overwritten
-            by a function accepting a parameter of the same name, this unlikely
-            edge case is guarded against elsewhere.
-
-        * Statements type checking parameters passed to this callable.
-        * A call to this callable.
-        * A statement type checking the value returned by this callable.
     func_wrapper_name : str
         Machine-readable name of the wrapper function to be generated and
         returned by this decorator. To efficiently (albeit imperfectly) avoid
@@ -116,56 +79,16 @@ class BeartypeData(object):
     # and time complexity across frequently called @beartype decorations.
     __slots__ = (
         'func',
-        'func_wrapper_name',
-        'func_code',
         'func_hints',
         'func_name',
         'func_sig',
-        'is_func_code_noop',
+        'func_wrapper_name',
     )
 
     # ..................{ INITIALIZERS                      }..................
     def __init__(self, func: CallableTypes) -> None:
         '''
         Initialize this object with the passed callable.
-
-        Parameters
-        ----------
-        func : CallableTypes
-            Callable currently being decorated by :func:`beartype.beartype`.
-
-        Raises
-        ----------
-        BeartypeDecorPep563Exception
-            If evaluating a postponed annotation on this callable raises an
-            exception (e.g., due to that annotation referring to local state no
-            longer accessible from this deferred evaluation).
-        '''
-        assert callable(func), '{!r} uncallable.'.format(func)
-
-        # Callable currently being decorated.
-        self.func = func
-
-        # Human-readable name of this function for use in exceptions.
-        self.func_name = '@beartyped {}()'.format(func.__name__)
-
-        # Machine-readable name of the wrapper function to be generated.
-        self.func_wrapper_name = '__{}_beartyped__'.format(func.__name__)
-
-        # Nullify all remaining attributes for safety.
-        self.func_code = None
-        self.func_hints = None
-        self.func_sig = None
-        self.is_func_code_noop = None
-
-        # Introspect this callable's signature and define the "func_hints" and
-        # "func_sig" attributes.
-        self._init_func_sig()
-
-    # ..................{ PRIVATE ~ signature               }..................
-    def _init_func_sig(self) -> None:
-        '''
-        Introspect this callable's signature.
 
         Specifically, this method:
 
@@ -183,9 +106,7 @@ class BeartypeData(object):
         Parameters
         ----------
         func : CallableTypes
-            Non-class callable to parse the signature of.
-        func_name : str
-            Human-readable name of this callable.
+            Callable currently being decorated by :func:`beartype.beartype`.
 
         Raises
         ----------
@@ -197,14 +118,29 @@ class BeartypeData(object):
         .. _PEP 563:
            https://www.python.org/dev/peps/pep-0563
         '''
+        assert callable(func), '{!r} uncallable.'.format(func)
 
         # Avoid circular import dependencies.
-        from beartype._decor import _pep563
+        from beartype._decor._pep563 import resolve_hints_postponed_if_needed
+
+        # Callable currently being decorated.
+        self.func = func
+
+        # Human-readable name of this function for use in exceptions.
+        self.func_name = '@beartyped {}()'.format(func.__name__)
+
+        # Machine-readable name of the wrapper function to be generated.
+        self.func_wrapper_name = '__{}_beartyped__'.format(func.__name__)
+
+        # Nullify all remaining attributes for safety *BEFORE* passing this
+        # object to any functions (e.g., resolve_hints_postponed_if_needed()).
+        self.func_hints = None
+        self.func_sig = None
 
         # Resolve all postponed annotations if any on this callable *BEFORE*
         # parsing the actual annotations these postponed annotations refer to.
-        _pep563.resolve_hints_postponed_if_needed(self)
+        resolve_hints_postponed_if_needed(self)
 
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.
-        self.func_sig = inspect.signature(self.func)
+        self.func_sig = inspect.signature(func)

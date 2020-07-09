@@ -26,7 +26,7 @@ erroneous and edge-case input (e.g., iterables of insufficient length).
 # ....................{ TESTERS                           }....................
 # Note that this tester function *CANNOT* be memoized by the @callable_cached
 # decorator, which requires all passed parameters to already be hashable.
-def is_hashable(obj: object) -> bool:
+def is_object_hashable(obj: object) -> bool:
     '''
     ``True`` only if the passed object is **hashable** (i.e., passable to the
     builtin :func:`hash` function *without* raising an exception and thus
@@ -70,7 +70,7 @@ def is_hashable(obj: object) -> bool:
     return True
 
 # ....................{ GETTERS                           }....................
-def get_obj_type(obj: object) -> type:
+def get_object_type(obj: object) -> type:
     '''
     Either the passed object if this object is a class *or* the class of this
     object otherwise (i.e., if this object is *not* a class).
@@ -96,7 +96,7 @@ def get_obj_type(obj: object) -> type:
     return obj if isinstance(obj, type) else type(obj)
 
 # ....................{ GETTERS ~ name                    }....................
-def get_name_qualified(obj: object) -> str:
+def get_object_name_qualified(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring module) of either passed object if this object is a class *or*
@@ -114,14 +114,14 @@ def get_name_qualified(obj: object) -> str:
     '''
 
     # Type of this object.
-    cls = get_obj_type(obj)
+    cls = get_object_type(obj)
 
     # Unqualified name of this type.
-    cls_basename = get_name_unqualified(cls)
+    cls_basename = get_object_name_unqualified(cls)
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
-    cls_module_name = get_obj_module_name_or_none(cls)
+    cls_module_name = get_object_module_name_or_none(cls)
 
     # Return either...
     return (
@@ -134,7 +134,7 @@ def get_name_qualified(obj: object) -> str:
     )
 
 
-def get_name_unqualified(obj: object) -> str:
+def get_object_name_unqualified(obj: object) -> str:
     '''
     **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
     object if this object is a class *or* the class of this object otherwise
@@ -152,10 +152,10 @@ def get_name_unqualified(obj: object) -> str:
     '''
 
     # Elegant simplicity diminishes aggressive tendencies.
-    return get_obj_type(obj).__name__
+    return get_object_type(obj).__name__
 
 # ....................{ GETTERS ~ name : module           }....................
-def get_obj_module_name_or_none(obj: object) -> (str, None):
+def get_object_module_name_or_none(obj: object) -> (str, None):
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring either the passed object if this
@@ -179,4 +179,4 @@ def get_obj_module_name_or_none(obj: object) -> (str, None):
     '''
 
     # Make it so, ensign.
-    return getattr(get_obj_type(obj), '__module__', None)
+    return getattr(get_object_type(obj), '__module__', None)
