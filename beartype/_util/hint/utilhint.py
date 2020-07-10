@@ -14,7 +14,7 @@ from beartype.roar import BeartypeDecorHintValueUnhashableException
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from beartype._util.hint.utilhintpep import die_unless_hint_pep, is_hint_pep
 from beartype._util.utilobj import is_object_hashable
-# from beartype._util.utilcache import callable_cached
+# from beartype._util.cache.utilcachecall import callable_cached
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

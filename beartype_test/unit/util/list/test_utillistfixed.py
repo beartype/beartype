@@ -7,7 +7,7 @@
 **Beartype utility fixed list unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.list.utillistfixed` submodule.
+:mod:`beartype._util.cache.list.utillistfixed` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,11 +21,11 @@ import pytest
 def test_fixedlist_pass() -> None:
     '''
     Test successful usage of the
-    :mod:`beartype._util.list.utillistfixed` class.
+    :mod:`beartype._util.cache.list.utillistfixed` class.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.list.utillistfixed import FixedList
+    from beartype._util.cache.list.utillistfixed import FixedList
 
     # Fixed list to be tested.
     fixed_list = FixedList(size=11)
@@ -59,11 +59,11 @@ def test_fixedlist_pass() -> None:
 def test_fixedlist_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :mod:`beartype._util.list.utillistfixed` class.
+    :mod:`beartype._util.cache.list.utillistfixed` class.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.list.utillistfixed import FixedList
+    from beartype._util.cache.list.utillistfixed import FixedList
     from beartype.roar import _BeartypeFixedListException
 
     # Fixed list to be tested.

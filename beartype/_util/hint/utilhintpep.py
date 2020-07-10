@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintValuePepException
-from beartype._util.utilcache import callable_cached
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobj import get_object_module_name_or_none, get_object_type
 from typing import TypeVar
 

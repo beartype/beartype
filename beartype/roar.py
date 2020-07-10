@@ -375,10 +375,12 @@ class _BeartypeFixedListException(BeartypeUtilException):
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator when an internal callable erroneously
-    accesses a **fixed list** (i.e., :class:`beartype._decor._list._fixedlist`
-    type subclassing the builtin :class:`list` type to a fixed length defined
-    at instantiation time), typically by attempting to modify the length of
-    that list.
+    mutates a **fixed list** (i.e., list constrained to a fixed length defined
+    at instantiation time), usually by attempting to modify the length of that
+    list.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
     pass

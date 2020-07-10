@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype caching utilities.**
+**Beartype callable caching utilities.**
 
 This private submodule implements supplementary cache-specific utility
 functions required by various :mod:`beartype` facilities, including callables

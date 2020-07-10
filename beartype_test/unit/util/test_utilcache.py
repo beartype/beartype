@@ -7,7 +7,7 @@
 **Beartype utility caching unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilcache` submodule.
+:mod:`beartype._util.cache.utilcachecall` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,11 +21,11 @@ import pytest
 def test_callable_cached_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._util.utilcache.callable_cached` decorator.
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.utilcache import callable_cached
+    from beartype._util.cache.utilcachecall import callable_cached
 
     # Function memoized by this decorator.
     @callable_cached
@@ -68,11 +68,11 @@ def test_callable_cached_pass() -> None:
 def test_callable_cached_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._util.utilcache.callable_cached` decorator.
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.utilcache import callable_cached
+    from beartype._util.cache.utilcachecall import callable_cached
     from beartype.roar import _BeartypeCallableCachedException
 
     # Function memoized by this decorator.
