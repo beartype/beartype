@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype utility caching unit tests.**
+**Beartype callable caching utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.cache.utilcachecall` submodule.

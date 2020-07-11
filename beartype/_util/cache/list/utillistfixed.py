@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Fixed-length list type** (i.e., :class:`list` subclass constrained to a fixed
-length defined at instantiation time).**
+**Fixed list type** (i.e., :class:`list` subclass constrained to a fixed length
+defined at instantiation time).**
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -31,8 +31,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #  __reduce_ex__().
 class FixedList(list):
     '''
-    **Fixed-length list** (i.e., :class:`list` constrained to a fixed length
-    defined at instantiation time).**
+    **Fixed list** (i.e., :class:`list` constrained to a fixed length defined
+    at instantiation time).**
 
     A fixed list is effectively a mutable tuple. Whereas a tuple is immutable
     and thus prohibits changes to its contained items, a fixed list is mutable
@@ -53,14 +53,14 @@ class FixedList(list):
     __slots__ = ()
 
     # ..................{ INITIALIZER                       }..................
-    def __init__(self, size: int) -> None:
+    def __init__(self, size: IntType) -> None:
         '''
         Initialize this fixed list to the passed length and all items of this
         fixed list to ``None``.
 
         Parameters
         ----------
-        size : int
+        size : IntType
             Length to constrain this fixed list to.
 
         Raises
