@@ -399,6 +399,21 @@ def beartype(func: CallableTypes) -> CallableTypes:
         # returning this callable as is.
         return func
 
+    #FIXME: Optimize by caching and reusing previously cached "BeartypeData"
+    #instances across @beartype decorations. To do so:
+    #
+    #* Define a new "beartype._util.cache.utilcachepoolobj" submodule copied
+    #  from the existing "beartype._util.cache.list.utilfixedlistpool"
+    #  submodule. "utilcachepoolobj" should publish a similar API, except:
+    #  * Keys should be arbitrary classes rather than integers.
+    #  * Pool items should be arbitrary objects of those classes rather than
+    #    fixed lists.
+    #* Define a new BeartypeData.init() method resembling the existing
+    #  BeartypeData.__init__() dunder method.
+    #* Call (in order):
+    #  func_data = utilcachepoolobj.acquire_object(BeartypeData)
+    #  func_data.init(func)
+
     # Object aggregating metadata for this callable.
     func_data = BeartypeData(func)
 

@@ -10,13 +10,81 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+import typing
+from abc import abstractmethod, abstractproperty
 from beartype.roar import BeartypeDecorHintValuePepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobj import get_object_module_name_or_none, get_object_type
+from beartype._util.utilobj import (
+    get_object_module_name_or_none, get_object_type)
+from types import (
+    FunctionType,
+    ModuleType,
+)
 from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS                         }....................
+_TYPING_ATTRS_IGNORABLE = frozenset((
+    abstractmethod,
+    abstractproperty,
+))
+'''
+Frozen set of all **ignorable** :mod:`typing` **attributes** (i.e., incidental
+objects erroneously imported into the :mod:`typing` namespace as public
+attributes thus technically comprising part of the public :mod:`typing` API).
+
+Thanks again for the non-sane API, guys. *Yikes.*
+'''
+
+
+_TYPING_ATTR_TYPES_IGNORABLE = frozenset((
+    bool,
+    FunctionType,
+    ModuleType,
+))
+'''
+Frozen set of all **ignorable** :mod:`typing` **attribute types** (i.e., types
+of incidental objects erroneously imported into the :mod:`typing` namespace as
+public attributes thus technically comprising part of the public :mod:`typing`
+API).
+
+Thanks again for the non-sane API, guys. *Yikes.*
+'''
+
+
+_TYPING_HINT_TO_NAME = {
+    # Key-value pair mapping this public "typing" type to the unqualified name
+    # of this type.
+    typing_attr: typing_attr_name
+    # For the unqualified name and value of all "typing" attributes...
+    for typing_attr_name, typing_attr in typing.__dict__.items()
+    # If...
+    if (
+        # This name is public *AND*....
+        typing_attr_name[0] != '_' and
+        # This value is *NOT* an incidental object erroneously imported into
+        # the "typing" namespace as a public attribute.
+        typing_attr not in _TYPING_ATTRS_IGNORABLE and
+        # This value's type implies this value is *NOT* an incidental object.
+        type(typing_attr) not in _TYPING_ATTR_TYPES_IGNORABLE
+    )
+}
+'''
+Dictionary mapping all public non-ignorable :mod:`typing` attributes to their
+unqualified names.
+'''
+
+
+_TYPING_NAMES_SUPPORTED = frozenset((
+    'Any',
+    'Union',
+))
+'''
+Frozen set of the unqualified names of all public :mod:`typing` types
+explicitly supported by the :func:`beartype.beartype` decorator.
+'''
 
 # ....................{ EXCEPTIONS                        }....................
 def die_unless_hint_pep(
@@ -253,37 +321,49 @@ def is_hint_typing_args_typevar(hint: object) -> bool:
     return bool(getattr(hint, '__parameters__', ()))
 
 # ....................{ TESTERS ~ private                 }....................
+# #FIXME: Uncomment once _get_hint_typing_name_or_none() behaves sanely.
+# def _is_hint_typing(hint: object) -> bool:
+#     '''
+#     ``True`` only if the passed object is a **typing type hint** (i.e.,
+#     `PEP 484`_-compliant class or object declared by the :mod:`typing` module).
+#
+#     Parameters
+#     ----------
+#     hint : object
+#         Object to be inspected.
+#
+#     Returns
+#     ----------
+#     bool
+#         ``True`` only if this object is a typing type hint.
+#
+#     See Also
+#     ----------
+#     :func:`_get_hint_typing_name_or_none`
+#         Further details.
+#
+#     .. _PEP 484:
+#        https://www.python.org/dev/peps/pep-0484
+#     '''
+#
+#     # Unqualified name of the root typing type of this object if any *OR*
+#     # "None" otherwise.
+#     #
+#     # Note that this tester trivially reduces to the memoized
+#     # _get_hint_typing_name_or_none() and is thus *NOT* worth memoization.
+#     return _get_hint_typing_name_or_none(hint) is not None
+
 #FIXME: Detect functions created by "typing.NewType(subclass_name, superclass)"
 #somehow, either here or elsewhere. These functions are simply the identity
 #function at runtime and thus a complete farce. They're not actually types!
 #Ideally, we would replace each such function by the underlying "superclass"
 #type originally passed to that function, but we have no idea if that's even
 #feasible. Welcome to "typing", friends.
-
 @callable_cached
 def _is_hint_typing(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a `PEP 484`_-compliant class or
-    object declared by the stdlib :mod:`typing` module.
-
-    For efficiency, this tester is memoized.
-
-    Motivation
-    ----------
-    Standard types allow callers to test for compliance with protocols,
-    interfaces, and abstract base classes by calling either the
-    :func:`isinstance` or :func:`issubclass` builtins. This is the
-    well-established Pythonic standard for deciding conformance to an API.
-
-    Insanely, `PEP 484`_ *and* the :mod:`typing` module implementing `PEP 484`_
-    reject community standards by explicitly preventing callers from calling
-    either the :func:`isinstance` or :func:`issubclass` builtins on `PEP
-    484`_ types. Moreover, neither `PEP 484`_ nor :mod:`typing` implement
-    public APIs for testing whether arbitrary objects comply with `PEP 484`_ or
-    :mod:`typing`.
-
-    Thus this tester function, which "fills in the gaps" by implementing this
-    laughably critical oversight.
+    ``True`` only if the passed object is a **typing type hint** (i.e.,
+    `PEP 484`_-compliant class or object declared by the :mod:`typing` module).
 
     Parameters
     ----------
@@ -293,7 +373,12 @@ def _is_hint_typing(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 484`_ type.
+        ``True`` only if this object is a typing type hint.
+
+    See Also
+    ----------
+    :func:`_get_hint_typing_name_or_none`
+        Further details.
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
@@ -348,3 +433,134 @@ def _is_hint_typing(hint: object) -> bool:
     # "typing" module. Ergo, this is *NOT* a PEP 484-compliant type.
     return False
 
+# ....................{ GETTERS ~ private                 }....................
+#FIXME: Unit test us up.
+#FIXME: Actually, consider removal. Implementing this turns out to be highly
+#non-trivial. We *DO* need some means of detecting supported "typing" types,
+#however. Doing so for unparametrized types like "typing.Any" is trivial, of
+#course. Doing so parametrized types like "typing.List[str]" is less so,
+#however, as "typing.List[str] is not typing.List". Surely one can retrieve
+#the unparametrized parent type (e.g., "typing.List") given a parametrized
+#child type (e.g., "typing.List[str]"). Research us up, please.
+#FIXME: If removed, remove all corresponding global constants required to
+#implement this function above.
+@callable_cached
+def _get_hint_typing_name_or_none(hint: object) -> 'NoneTypeOr[ClassType]':
+    '''
+    **Unqualified name** (i.e., basename excluding the prefixing
+    fully-qualified name of the parent module) of the **public root typing
+    type** (i.e., first public superclass in the method resolution order (MRO)
+    of the passed object declared by the :mod:`typing` module) of this object
+    if this object has a public root typing type and is thus a `PEP
+    484`_-compliant type hint *or* ``None`` otherwise (i.e., if this object has
+    *no* public root typing type and is thus *not* a `PEP 484`_-compliant type
+    hint).
+
+    For efficiency, this getter is memoized.
+
+    Motivation
+    ----------
+    Standard types allow callers to test for compliance with protocols,
+    interfaces, and abstract base classes by calling either the
+    :func:`isinstance` or :func:`issubclass` builtins. This is the
+    well-established Pythonic standard for deciding conformance to an API.
+
+    Insanely, `PEP 484`_ *and* the :mod:`typing` module implementing `PEP 484`_
+    reject community standards by explicitly preventing callers from calling
+    either the :func:`isinstance` or :func:`issubclass` builtins on `PEP
+    484`_ types. Moreover, neither `PEP 484`_ nor :mod:`typing` implement
+    public APIs for testing whether arbitrary objects comply with `PEP 484`_ or
+    :mod:`typing`.
+
+    Thus this getter function, which "fills in the gaps" by implementing this
+    laughably critical oversight.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    NoneTypeOr[ClassType]
+        Either:
+
+        * If this object has a public root typing type, unqualified name of
+          this type.
+        * Else, ``None``.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # Unqualified name of this object if this object is a public "typing" type
+    # hint *OR* "None" otherwise.
+    typing_hint_name_or_none = _TYPING_HINT_TO_NAME.get(hint, None)
+    print('_TYPING_TYPE_TO_NAME: {}'.format(_TYPING_HINT_TO_NAME))
+
+    # If this object is a public "typing" type hint, return this name.
+    if typing_hint_name_or_none is not None:
+        return typing_hint_name_or_none
+    # Else, this object is *NOT* a public "typing" type hint.
+
+    # Either the passed object if this object is a class *OR* the class of this
+    # object otherwise (i.e., if this object is *NOT* a class).
+    hint_type = get_object_type(hint)
+
+    # If...
+    #
+    # Note that there might exist an alternate means of deciding this
+    # condition, documented here merely for completeness:
+    #
+    #     try:
+    #         isinstance(obj, object)
+    #         return False
+    #     except TypeError as type_error:
+    #         return str(type_error).endswith(
+    #             'cannot be used with isinstance()')
+    #
+    # The above effectively implements an Aikido throw by using the fact that
+    # "typing" types prohibit isinstance() calls against those types. While
+    # clever (and deliciously obnoxious), the above logic:
+    #
+    # * Requires catching exceptions in the common case and is thus *MUCH* less
+    #   efficient than the preferable approach implemented here.
+    # * Assumes that *ALL* "typing" types prohibit such calls. Sadly, only a
+    #   proper subset of such types prohibit such calls.
+    # * Assumes that those "typing" types that do prohibit such calls raise
+    #   exceptions with reliable messages across *ALL* Python versions.
+    #
+    # In short, there is no general-purpose clever solution. *sigh*
+    if (
+        # This type is directly defined by the "typing" module *AND*...
+        get_object_module_name_or_none(hint_type) == 'typing' and
+        # This type is public.
+        hint_type.__name__[0] != '_'
+    ):
+        # Return the unqualified name of this type.
+        return hint_type.__name__
+
+    # For each superclass of this class...
+    #
+    # This edge case is required to handle user-defined subclasses declared in
+    # user-defined modules of superclasses declared by the "typing" module:
+    #
+    #    # In a user-defined module...
+    #    from typing import TypeVar, Generic
+    #    T = TypeVar('T')
+    #    class UserDefinedGeneric(Generic[T]): pass
+    for hint_supertype in hint_type.__mro__:
+        # If...
+        if (
+            # This superclass is directly defined by the "typing" module
+            # *AND*...
+            get_object_module_name_or_none(hint_supertype) == 'typing' and
+            # This superclass is public.
+            hint_supertype.__name__[0] != '_'
+        ):
+            # Return the unqualified name of this superclass.
+            return hint_supertype.__name__
+
+    # Else, neither this type nor any superclass of this type is defined by the
+    # "typing" module. Ergo, this is *NOT* a PEP 484-compliant type hint.
+    return None

@@ -30,12 +30,21 @@ def test_callable_cached_pass() -> None:
     # Function memoized by this decorator.
     @callable_cached
     def still_i_rise(bitter, twisted, lies):
+        # If an arbitrary condition, raise an exception whose value depends on
+        # these parameters to exercise this decorator's conditional caching of
+        # exceptions.
+        if len(lies) == 6:
+            raise ValueError(lies)
+
+        # Else, return a value depending on these parameters to exercise this
+        # decorator's conditional caching of return values.
         return bitter + twisted + lies
 
     # Objects to be passed as parameters below.
     bitter  = ('You', 'may', 'write', 'me', 'down', 'in', 'history',)
     twisted = ('With', 'your', 'bitter,', 'twisted,', 'lies.',)
     lies    = ('You', 'may', 'trod,', 'me,', 'in', 'the', 'very', 'dirt',)
+    dust    = ('But', 'still,', 'like', 'dust,', "I'll", 'rise',)
 
     # Assert that memoizing two calls passed the same positional arguments
     # caches and returns the same value.
@@ -54,6 +63,15 @@ def test_callable_cached_pass() -> None:
     assert (
         still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is
         still_i_rise(bitter=bitter, twisted=twisted, lies=lies))
+
+    # Assert that memoizing a call expected to raise an exception does so.
+    with pytest.raises(ValueError) as exception_first_info:
+        still_i_rise(bitter, twisted, dust)
+
+    # Assert that repeating that call reraises the same exception.
+    with pytest.raises(ValueError) as exception_next_info:
+        still_i_rise(bitter, twisted, dust)
+        assert exception_first_info is exception_next_info
 
     #FIXME: Curiously, this assertion fails under only Python 3.5 for unknown
     #reasons. Since Python 3.5 is on the cusp of hitting its EOL *AND* since

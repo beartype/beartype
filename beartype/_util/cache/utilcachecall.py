@@ -58,28 +58,42 @@ flattened tuple of all parameters passed to the decorated callable.
 def callable_cached(func):
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
-    values of the passed callable rather than inefficiently recalling that
+    values of the passed callable as well as all previously raised exceptions
+    of that callable previously rather than inefficiently recalling that
     callable) the passed callable.
 
     Specifically, this decorator (in order):
 
-    #. Creates a local dictionary mapping parameters passed to this callable
-       with the values returned by this callable when passed those parameters.
+    #. Creates:
+
+       * A local dictionary mapping parameters passed to this callable with the
+         values returned by this callable when passed those parameters.
+       * A local dictionary mapping parameters passed to this callable with the
+         exceptions raised by this callable when passed those parameters.
+
     #. Creates and returns a closure transparently wrapping this callable with
        memoization. Specifically, this wrapper (in order):
 
        #. Tests whether this callable has already been called at least once
-          with the passed parameters by lookup of those parameters in this
-          dictionary.
-       #. If this is the case, this wrapper efficiently returns the value
-          previously returned by this callable when passed those parameters by
-          lookup of that value in this dictionary.
+          with the passed parameters by lookup of those parameters in these
+          dictionaries.
+       #. If this callable previously raised an exception when passed these
+          parameters, this wrapper re-raises the same exception.
+       #. Else if this callable returned a value when passed these parameters,
+          this wrapper re-returns the same value.
        #. Else, this wrapper:
 
           #. Calls that callable with those parameters.
-          #. Caches the value returned by that call with those parameters in
-             this dictionary.
-          #. Returns this value.
+          #. If that call raised an exception:
+
+             #. Caches that exception with those parameters in that dictionary.
+             #. Raises that exception.
+
+          #. Else:
+
+             #. Caches the value returned by that call with those parameters in
+                that dictionary.
+             #. Returns that value.
 
     Caveats
     ----------
@@ -113,16 +127,16 @@ def callable_cached(func):
     for optional caching), the callable parameters and return values cached by
     this package are sufficiently small in size to render bounding irrelevant.
 
-    Consider the :func:`beartype._decor.pep484.p484test.is_typing` function,
-    for example. Each call to that function only accepts a single class and
-    returns a boolean. Under conservative assumptions of 4 bytes of storage per
-    class reference and 4 byte of storage per boolean reference, each call to
-    that function requires caching at most 8 bytes of storage. Again, under
-    conservative assumptions of at most 1024 unique type annotations for the
-    average downstream consumer, memoizing that function in full requires at
-    most 1024 * 8 == 8096 bytes or ~8Kb of storage. Clearly, 8Kb of overhead is
-    sufficiently negligible to obviate any space concerns that would warrant an
-    LRU cache in the first place.
+    Consider the :func:`beartype._util.hint.utilhintpep.is_hint_typing`
+    function, for example. Each call to that function only accepts a single
+    class and returns a boolean. Under conservative assumptions of 4 bytes of
+    storage per class reference and 4 byte of storage per boolean reference,
+    each call to that function requires caching at most 8 bytes of storage.
+    Again, under conservative assumptions of at most 1024 unique type
+    annotations for the average downstream consumer, memoizing that function in
+    full requires at most 1024 * 8 == 8096 bytes or ~8Kb of storage. Clearly,
+    8Kb of overhead is sufficiently negligible to obviate any space concerns
+    that would warrant an LRU cache in the first place.
 
     Parameters
     ----------
@@ -163,11 +177,19 @@ def callable_cached(func):
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
-    # call. This is the principal cache with which this callable is memoized.
+    # call if any (i.e., if that call did *NOT* raise an exception).
     params_flat_to_return_value = {}
 
     # get() method of this dictionary, localized for efficiency.
     params_flat_to_return_value_get = params_flat_to_return_value.get
+
+    # Dictionary mapping a tuple of all flattened parameters passed to each
+    # prior call of the decorated callable with the exception raised by that
+    # call if any (i.e., if that call raised an exception).
+    params_flat_to_exception = {}
+
+    # get() method of this dictionary, localized for efficiency.
+    params_flat_to_exception_get = params_flat_to_exception.get
 
     @wraps(func)
     def _callable_cached(*args, **kwargs):
@@ -232,12 +254,25 @@ def callable_cached(func):
         else:
             params_flat = args
 
-        # Value returned by a prior call to the decorated callable when passed
-        # these parameters *OR* the sentinel placeholder otherwise (i.e., if
-        # this callable has yet to be called with these parameters).
+        # Exception raised by a prior call to the decorated callable when
+        # passed these parameters *OR* the sentinel placeholder otherwise
+        # (i.e., if this callable either has yet to be called with these
+        # parameters *OR* has but failed to raise an exception).
         #
         # Note that this call raises a "TypeError" exception if any item of
         # this flattened tuple is unhashable.
+        exception = params_flat_to_exception_get(params_flat, SENTINEL)
+
+        # If this callable previously raised an exception when called with
+        # these parameters, re-raise the same exception.
+        if exception is not SENTINEL:
+            raise exception
+        # Else, this callable either has yet to be called with these parameters
+        # *OR* has but failed to raise an exception.
+
+        # Value returned by a prior call to the decorated callable when passed
+        # these parameters *OR* the sentinel placeholder otherwise (i.e., if
+        # this callable has yet to be called with these parameters).
         return_value = params_flat_to_return_value_get(params_flat, SENTINEL)
 
         # If this callable has already been called with these parameters,
@@ -246,10 +281,19 @@ def callable_cached(func):
             return return_value
         # Else, this callable has yet to be called with these parameters.
 
-        # Call this parameter with these parameters and cache the value
-        # returned by this call to these parameters.
-        return_value = params_flat_to_return_value[params_flat] = func(
-            *args, **kwargs)
+        # Attempt to...
+        try:
+            # Call this parameter with these parameters and cache the value
+            # returned by this call to these parameters.
+            return_value = params_flat_to_return_value[params_flat] = func(
+                *args, **kwargs)
+        # If this call raises an exception...
+        except Exception as exception:
+            # Cache this exception to these parameters.
+            params_flat_to_exception[params_flat] = exception
+
+            # Re-raise this exception.
+            raise exception
 
         # Return this value.
         return return_value

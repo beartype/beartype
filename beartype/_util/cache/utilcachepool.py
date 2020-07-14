@@ -11,6 +11,36 @@ the same list are typically of the same type).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Consider improving the safety of the "KeyPool" class. The current
+#implementation is overly naive. For both simplicity and efficiency, we avoid
+#explicitly validating various conditions on passed objects. For example, the
+#object passed to the KeyPool.release() method is assumed -- but *NOT*
+#validated -- to have been previously returned from a call to the
+#KeyPool.acquire() method.
+#
+#If this ever becomes a demonstrable issue, validation can be implemented with
+#only mild space and time costs as follows:
+#
+#* Define a new "KeyPool._pool_item_ids_acquired" set instance variable,
+#  containing the object IDs of all pool items returned by prior calls to the
+#  acquire() method that have yet to be passed to the release() method.
+#* Define a new "KeyPool._pool_item_ids_released" set instance variable,
+#  containing the object IDs of all pool items passed to prior calls to the
+#  release() method that have yet to be returned from the acquire() method.
+#* Refactor the acquire() method to (in order):
+#  * Validate that the pool item to be returned is in the
+#    "_pool_item_ids_released" set but *NOT* the "_pool_item_ids_acquired" set.
+#  * Remove this item from the "_pool_item_ids_released" set.
+#  * Add this item from the "_pool_item_ids_acquired" set.
+#  * Note that the above procedure fails to account for the edge case of newly
+#    created pool items, which should reside in *NEITHER* set. </sigh>
+#* Refactor the release() method to (in order):
+#  * Validate that the passed pool item is in the
+#    "_pool_item_ids_acquired" set but *NOT* the "_pool_item_ids_released" set.
+#  * Remove this item from the "_pool_item_ids_acquired" set.
+#  * Add this item from the "_pool_item_ids_released" set.
+
 # ....................{ IMPORTS                           }....................
 from beartype.cave import CallableTypes, HashableType
 from collections import defaultdict

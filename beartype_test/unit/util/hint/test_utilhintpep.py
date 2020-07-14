@@ -18,6 +18,30 @@ This submodule unit tests the public API of the private
 import typing
 
 # ....................{ TESTS                             }....................
+#FIXME: Uncomment once working.
+# def test_utilhint_get_hint_typing_name_or_none() -> None:
+#     '''
+#     Test the
+#     :func:`beartype._util.hint.utilhintpep._get_hint_typing_name_or_none`
+#     getter.
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype._util.hint.utilhintpep import _get_hint_typing_name_or_none
+#     from beartype_test.unit.data.data_hint import (
+#         NONPEP_HINTS, P484_HINT_TO_NAME)
+#
+#     # Assert that various "typing" types are correctly detected.
+#     for pep_hint, pep_hint_name in P484_HINT_TO_NAME.items():
+#         print('PEP hint: {!r}'.format(pep_hint))
+#         assert _get_hint_typing_name_or_none(pep_hint) == pep_hint_name
+#
+#     # Assert that various non-"typing" types are correctly detected.
+#     for nonpep_hint in NONPEP_HINTS:
+#         print('Non-PEP hint: {!r}'.format(nonpep_hint))
+#         assert _get_hint_typing_name_or_none(nonpep_hint) is None
+
+
 def test_utilhint_is_hint_typing() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintpep._is_hint_typing` tester.
