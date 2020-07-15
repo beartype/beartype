@@ -177,21 +177,6 @@ class BeartypeDecorHintValueNonPepException(BeartypeDecorHintValueException):
 
     pass
 
-
-class BeartypeDecorHintValueUnhashableException(
-    BeartypeDecorHintValueException):
-    '''
-    **Beartype decorator unhashable type hint value exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable type-hinted
-    with one or more **unhashable objects** (i.e., annotations that are *not*
-    hashable by the builtin :func:`hash` function and thus unusable in
-    hash-based containers like dictionaries and sets).
-    '''
-
-    pass
-
 # ....................{ EXCEPTIONS ~ decor : hint : pep   }....................
 class BeartypeDecorHintValuePepException(
     BeartypeDecorHintValueException, metaclass=_ABCMeta):

@@ -16,12 +16,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintValueNonPepException
-from beartype._util.hint.utilhintpep import is_hint_pep
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.utilhintpep import die_if_hint_pep
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
+@callable_cached
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -35,6 +37,8 @@ def die_unless_hint_nonpep(
     Raise an exception unless the passed object is a **PEP-noncompliant type
     hint** (i.e., :mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs).
+
+    This validator is memoized for efficiency.
 
     Parameters
     ----------
@@ -117,10 +121,12 @@ def die_unless_hint_nonpep(
 
     # If this object is a class...
     if isinstance(hint, type):
-        # If this is a PEP 484-compliant class, raise an exception.
-        if is_hint_pep(hint):
-            raise exception_cls(
-                '{} PEP 484 type {!r} unsupported.'.format(hint_label, hint))
+        # If this is a PEP-compliant class, raise an exception.
+        die_if_hint_pep(
+            hint=hint,
+            hint_label=hint_label,
+            exception_cls=exception_cls,
+        )
 
         # Else, this is a PEP-noncompliant class. In this case, silently accept
         # this class as is.
@@ -159,10 +165,11 @@ def die_unless_hint_nonpep(
             # If this item is a class...
             if isinstance(hint_item, type):
                 # If this is a PEP-compliant class, raise an exception.
-                if is_hint_pep(hint_item):
-                    raise exception_cls(
-                        '{} {!r} PEP 484 type {!r} unsupported.'.format(
-                            hint_label, hint, hint_item))
+                die_if_hint_pep(
+                    hint=hint,
+                    hint_label=hint_label,
+                    exception_cls=exception_cls,
+                )
 
                 # Else, this is a PEP-noncompliant class. In this case,
                 # silently accept this class as is.

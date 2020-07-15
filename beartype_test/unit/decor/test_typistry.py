@@ -50,9 +50,8 @@ def test_typistry_fail() -> None:
 
     # Defer heavyweight imports
     from beartype.roar import (
-        _BeartypeCallBeartypistryException,
         BeartypeDecorHintValueNonPepException,
-        BeartypeDecorHintValueUnhashableException,
+        _BeartypeCallBeartypistryException,
     )
     from beartype._decor._typistry import bear_typistry, register_type
 
@@ -65,7 +64,7 @@ def test_typistry_fail() -> None:
         ))
 
     # Assert that unhashable objects are *NOT* registrable.
-    with pytest.raises(BeartypeDecorHintValueUnhashableException):
+    with pytest.raises(TypeError):
         bear_typistry['Turning.and.turning.in.the.widening.gyre'] = {
             'The falcon cannot hear the falconer;': (
                 'Things fall apart; the centre cannot hold;'),

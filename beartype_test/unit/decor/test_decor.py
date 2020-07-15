@@ -222,11 +222,10 @@ def test_decor_fail_hint_unhashable() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintValueException
 
     # Assert the expected exception from attempting to type check a function
     # with an unhashable parameter annotation.
-    with pytest.raises(BeartypeDecorHintValueException):
+    with pytest.raises(TypeError):
         @beartype
         def before_the_fall(
             craftworld: ['Alaitoc', 'Black Library', 'Biel-Tan',]) -> str:
@@ -234,7 +233,7 @@ def test_decor_fail_hint_unhashable() -> None:
 
     # Assert the expected exception from attempting to type check a function
     # with an unhashable return value annotation.
-    with pytest.raises(BeartypeDecorHintValueException):
+    with pytest.raises(TypeError):
         @beartype
         def after_the_fall(craftworld: str) -> [
             'Iyanden', 'Saim-Hann', 'Ulthwé',]:
@@ -454,5 +453,5 @@ def test_decor_fail_return_hint() -> None:
     # with a return annotation that is *NOT* a supported type.
     with pytest.raises(BeartypeDecorHintValueException):
         @beartype
-        def tzeentch(disc: str, lord_of_change: str) -> ['Player of Games',]:
-            return 0xB16B00B5
+        def tzeentch(disc: str, lord_of_change: str) -> 0xB16B00B5:
+            return len(disc + lord_of_change)

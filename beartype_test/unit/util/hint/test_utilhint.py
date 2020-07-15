@@ -26,10 +26,7 @@ def test_utilhint_die_unless_hint() -> None:
 
     # Defer heavyweight imports.
     from beartype import cave
-    from beartype.roar import (
-        BeartypeDecorHintValueNonPepException,
-        BeartypeDecorHintValueUnhashableException,
-    )
+    from beartype.roar import BeartypeDecorHintValueNonPepException
     from beartype._util.hint.utilhint import die_unless_hint
 
     #FIXME: Add PEP-compliant objects *AFTER* supported by this function.
@@ -75,7 +72,7 @@ def test_utilhint_die_unless_hint() -> None:
 
     # Assert this function rejects unhashable objects.
     for hint_invalid_unhashable in HINTS_INVALID_UNHASHABLE:
-        with pytest.raises(BeartypeDecorHintValueUnhashableException):
+        with pytest.raises(TypeError):
             die_unless_hint(hint_invalid_unhashable)
 
     # Assert this function rejects non-PEP-noncompliant objects.

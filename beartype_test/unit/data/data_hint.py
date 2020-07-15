@@ -63,35 +63,33 @@ User-defined :mod:`typing` type alias.
 '''
 
 # ....................{ MAPPINGS                          }....................
-P484_HINT_TO_NAME = {
-    typing.Any: 'Any',
-    typing.Callable[[], str]: 'Callable',
-    typing.Dict[str, str]: 'Dict',
-    typing.List[float]: 'List',
-    typing.Generator[int, float, str]: 'Generator',
-    typing.NoReturn: 'NoReturn',
-    typing.Tuple[str, int]: 'Tuple',
-    typing.Type[dict]: 'Type',
-    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: 'Union',
-    typing.Union[str, typing.Sequence[int]]: 'Union',
-    GenericUserDefined: 'Generic',
-    GenericUserDefinedMultiple: 'Generic',
-    T: 'TypeVar',
-    TypeAlias: 'Iterable',
-    TypingUserDefined: 'Dict',
+P484_HINT_TO_ATTR = {
+    typing.Any: typing.Any,
+    typing.Callable[[], str]: typing.Callable,
+    typing.Dict[str, str]: typing.Dict,
+    typing.List[float]: typing.List,
+    typing.Generator[int, float, str]: typing.Generator,
+    typing.NoReturn: typing.NoReturn,
+    typing.Tuple[str, int]: typing.Tuple,
+    typing.Type[dict]: typing.Type,
+    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
+    typing.Union[str, typing.Sequence[int]]: typing.Union,
+    GenericUserDefined: typing.Generic,
+    GenericUserDefinedMultiple: typing.Generic,
+    T: typing.TypeVar,
+    TypeAlias: typing.Iterable,
+    TypingUserDefined: typing.Dict,
 }
 '''
-Dictionary mapping various `PEP 484`_-compliant type hints to the unqualified
-names of the **root typing types** (i.e., first superclass in the method
-resolution order (MRO) of the passed object declared by the :mod:`typing`
-module) of those hints.
+Dictionary mapping various `PEP 484`_-compliant type hints to the public
+attributes of the :mod:`typing` module uniquely identifying those hints.
 
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ ITERABLES                         }....................
-P484_HINTS = P484_HINT_TO_NAME.keys()
+P484_HINTS = P484_HINT_TO_ATTR.keys()
 '''
 Iterable of various `PEP 484`_-compliant type hints exercising *all* edge cases
 on behalf of test submodules.

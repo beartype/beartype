@@ -164,7 +164,7 @@ def code(data: BeartypeData) -> None:
           annotation-centric PEPs).
         * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
           compliant with annotation-centric PEPs)).
-    BeartypeDecorHintValueUnhashableException
+    TypeError
         If any type hint annotating any parameter of this callable is
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
@@ -233,7 +233,7 @@ def _code_check_params(data: BeartypeData) -> str:
           annotation-centric PEPs).
         * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
           compliant with annotation-centric PEPs)).
-    BeartypeDecorHintValueUnhashableException
+    TypeError
         If any type hint annotating any parameter of this callable is
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).

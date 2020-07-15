@@ -108,19 +108,19 @@ class Beartypistry(dict):
 
         Raises
         ----------
-        _BeartypeCallBeartypistryException
-            If either:
-
-            * This name is *not* a string.
-            * This hint is a type but this name is *not* the fully-qualified
-              classname of this type.
-        BeartypeDecorHintValueUnhashableException
+        TypeError
             If this hint is **unhashable** (i.e., *not* hashable by the builtin
             :func:`hash` function and thus unusable in hash-based containers
             like dictionaries and sets). All supported type hints are hashable.
         BeartypeDecorHintValueNonPepException
             If this hint is hashable but is neither a PEP-compliant nor
             -noncompliant type hint.
+        _BeartypeCallBeartypistryException
+            If either:
+
+            * This name is *not* a string.
+            * This hint is a type but this name is *not* the fully-qualified
+              classname of that type.
         '''
 
         # If this name is *NOT* a string, raise an exception.

@@ -18,58 +18,34 @@ This submodule unit tests the public API of the private
 import typing
 
 # ....................{ TESTS                             }....................
-#FIXME: Uncomment once working.
-# def test_utilhint_get_hint_typing_name_or_none() -> None:
-#     '''
-#     Test the
-#     :func:`beartype._util.hint.utilhintpep._get_hint_typing_name_or_none`
-#     getter.
-#     '''
-#
-#     # Defer heavyweight imports.
-#     from beartype._util.hint.utilhintpep import _get_hint_typing_name_or_none
-#     from beartype_test.unit.data.data_hint import (
-#         NONPEP_HINTS, P484_HINT_TO_NAME)
-#
-#     # Assert that various "typing" types are correctly detected.
-#     for pep_hint, pep_hint_name in P484_HINT_TO_NAME.items():
-#         print('PEP hint: {!r}'.format(pep_hint))
-#         assert _get_hint_typing_name_or_none(pep_hint) == pep_hint_name
-#
-#     # Assert that various non-"typing" types are correctly detected.
-#     for nonpep_hint in NONPEP_HINTS:
-#         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-#         assert _get_hint_typing_name_or_none(nonpep_hint) is None
-
-
-def test_utilhint_is_hint_typing() -> None:
+def testis_hint_pep() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhintpep._is_hint_typing` tester.
+    Test the :func:`beartype._util.hint.utilhintpep.is_hint_pep` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import _is_hint_typing
+    from beartype._util.hint.utilhintpep import is_hint_pep
     from beartype_test.unit.data.data_hint import NONPEP_HINTS, P484_HINTS
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint in P484_HINTS:
         print('PEP hint: {!r}'.format(pep_hint))
-        assert _is_hint_typing(pep_hint) is True
+        assert is_hint_pep(pep_hint) is True
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert _is_hint_typing(nonpep_hint) is False
+        assert is_hint_pep(nonpep_hint) is False
 
-
-def test_p484test_is_hint_typing_typevarish() -> None:
+# ....................{ TESTS ~ typevar                   }....................
+def test_is_hint_typing_typevar() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhintpep.is_hint_typing_typevarish`
+    Test the :func:`beartype._util.hint.utilhintpep.is_hint_typing_typevar`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import is_hint_typing_typevarish
+    from beartype._util.hint.utilhintpep import is_hint_typing_typevar
     from beartype_test.unit.data.data_hint import (
         S,
         T,
@@ -79,18 +55,13 @@ def test_p484test_is_hint_typing_typevarish() -> None:
         TypingUserDefined,
     )
 
-    # Tuple of various "TypeVar"-centric types of interest.
+    # Tuple of various type variables.
     TYPEVAR_TYPES = (
-        typing.Union[str, typing.Iterable[typing.Tuple[S, T]]],
         S,
         T,
-        GenericUserDefined,
-        GenericUserDefinedMultiple,
-        TypeAlias,
-        TypeAlias[T],
     )
 
-    # Tuple of various "TypeVar"-agnostic types of interest.
+    # Tuple of various non-type variables.
     NON_TYPEVAR_TYPES = (
         typing.Any,
         typing.Callable[[], str],
@@ -101,15 +72,126 @@ def test_p484test_is_hint_typing_typevarish() -> None:
         typing.Tuple[str, int],
         typing.Type[dict],
         typing.Union[str, typing.Sequence[int]],
+        typing.Union[str, typing.Iterable[typing.Tuple[S, T]]],
+        GenericUserDefined,
+        GenericUserDefinedMultiple,
+        TypeAlias,
+        TypeAlias[T],
         TypingUserDefined,
     )
 
     # Assert that various "TypeVar"-centric types are correctly detected.
     for typevar_type in TYPEVAR_TYPES:
-        print('"TypeVar"-centric type: {!r}'.format(typevar_type))
-        assert is_hint_typing_typevarish(typevar_type) is True
+        print('Type variable: {!r}'.format(typevar_type))
+        assert is_hint_typing_typevar(typevar_type) is True
 
     # Assert that various "TypeVar"-agnostic types are correctly detected.
     for non_typevar_type in NON_TYPEVAR_TYPES:
-        print('"TypeVar"-agnostic type: {!r}'.format(non_typevar_type))
-        assert is_hint_typing_typevarish(non_typevar_type) is False
+        print('Non-type variable: {!r}'.format(non_typevar_type))
+        assert is_hint_typing_typevar(non_typevar_type) is False
+
+
+def test_is_hint_typing_typevared() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.utilhintpep.is_hint_typing_typevared` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.utilhintpep import is_hint_typing_typevared
+    from beartype_test.unit.data.data_hint import (
+        S,
+        T,
+        GenericUserDefined,
+        GenericUserDefinedMultiple,
+        TypeAlias,
+        TypingUserDefined,
+    )
+
+    # Tuple of PEP 484 types parametrized by one or more type variables.
+    TYPEVARED_TYPES = (
+        typing.Union[str, typing.Iterable[typing.Tuple[S, T]]],
+        GenericUserDefined,
+        GenericUserDefinedMultiple,
+        TypeAlias,
+        TypeAlias[T],
+    )
+
+    # Tuple of PEP 484 types *NOT* parametrized by one or more type variables.
+    NON_TYPEVARED_TYPES = (
+        typing.Any,
+        typing.Callable[[], str],
+        typing.Dict[str, str],
+        typing.List[float],
+        typing.Generator[int, float, str],
+        typing.NoReturn,
+        typing.Tuple[str, int],
+        typing.Type[dict],
+        typing.Union[str, typing.Sequence[int]],
+        TypingUserDefined,
+        S,
+        T,
+    )
+
+    # Assert that various "TypeVar"-centric types are correctly detected.
+    for typevared_type in TYPEVARED_TYPES:
+        print('"TypeVar"-parametrized type: {!r}'.format(typevared_type))
+        assert is_hint_typing_typevared(typevared_type) is True
+
+    # Assert that various "TypeVar"-agnostic types are correctly detected.
+    for non_typevared_type in NON_TYPEVARED_TYPES:
+        print('"TypeVar"-unparametrized type: {!r}'.format(non_typevared_type))
+        assert is_hint_typing_typevared(non_typevared_type) is False
+
+# ....................{ TESTS ~ private                   }....................
+def test_get_hint_typing_attr_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.utilhintpep._get_hint_typing_attr_or_none`
+    getter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.utilhintpep import _get_hint_typing_attr_or_none
+    from beartype_test.unit.data.data_hint import (
+        NONPEP_HINTS,
+
+        #FIXME: Uncomment after _get_hint_typing_attr_or_none() supports all
+        #possible PEP 484 types. Unsupported types include user-defined types
+        #and thus:
+        #* "GenericUserDefined".
+        #* "GenericUserDefinedMultiple".
+        #* "TypingUserDefined".
+        # P484_HINT_TO_ATTR,
+
+        S,
+        T,
+        TypeAlias,
+    )
+
+    #FIXME: Remove after _get_hint_typing_attr_or_none() supports all possible
+    #PEP 484 types.
+    P484_HINT_TO_ATTR = {
+        typing.Any: typing.Any,
+        typing.Callable[[], str]: typing.Callable,
+        typing.Dict[str, str]: typing.Dict,
+        typing.List[float]: typing.List,
+        typing.Generator[int, float, str]: typing.Generator,
+        typing.NoReturn: typing.NoReturn,
+        typing.Tuple[str, int]: typing.Tuple,
+        typing.Type[dict]: typing.Type,
+        typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
+        typing.Union[str, typing.Sequence[int]]: typing.Union,
+        T: typing.TypeVar,
+        TypeAlias: typing.Iterable,
+    }
+
+    # Assert that various "typing" types are correctly detected.
+    for pep_hint, typing_attr in P484_HINT_TO_ATTR.items():
+        print('PEP hint: {!r}'.format(pep_hint))
+        assert _get_hint_typing_attr_or_none(pep_hint) is typing_attr
+
+    # Assert that various non-"typing" types are correctly detected.
+    for nonpep_hint in NONPEP_HINTS:
+        print('Non-PEP hint: {!r}'.format(nonpep_hint))
+        assert _get_hint_typing_attr_or_none(nonpep_hint) is None

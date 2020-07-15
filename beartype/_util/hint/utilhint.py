@@ -10,23 +10,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintValueUnhashableException
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from beartype._util.hint.utilhintpep import die_unless_hint_pep, is_hint_pep
-from beartype._util.utilobj import is_object_hashable
-# from beartype._util.cache.utilcachecall import callable_cached
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-#FIXME: Memoize this function with @callable_cached, as the tuple iteration
-#performed by the die_unless_hint_nonpep() validator called by this function is
-#particularly costly. However, note that doing so will require generalizing the
-#@callable_cached decorator to memoize not merely return values but *RAISED
-#EXCEPTIONS* as well. This shouldn't be terribly arduous and has
-#general-purpose merit beyond merely this function.
-
+@callable_cached
 def die_unless_hint(
     # Mandatory parameters.
     hint: object,
@@ -47,6 +39,8 @@ def die_unless_hint(
     * A **PEP-noncompliant type hint** (i.e., :mod:`beartype`-specific
       annotation intentionally *not* compliant with annotation-centric PEPs).
 
+    This validator is memoized for efficiency.
+
     Parameters
     ----------
     hint : object
@@ -65,7 +59,7 @@ def die_unless_hint(
 
     Raises
     ----------
-    BeartypeDecorHintValueUnhashableException
+    TypeError
         If this object is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
@@ -74,13 +68,10 @@ def die_unless_hint(
         -noncompliant type hint.
     '''
 
-    # If this hint is unhashable, this hint is unsupported. In this case, raise
-    # an exception.
-    if not is_object_hashable(hint):
-        raise BeartypeDecorHintValueUnhashableException(
-            '{} {!r} unhashable.'.format(hint_label, hint))
-    # Else, this object is hashable.
-
+    # Note that the @callable_cached decorator implicitly raises a "TypeError"
+    # exception *BEFORE* even calling this decorated function if this hint is
+    # unhashable. Ergo, this object is guaranteed to be hashable.
+    #
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
     if is_hint_pep(hint):

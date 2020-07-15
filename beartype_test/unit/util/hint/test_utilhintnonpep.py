@@ -39,12 +39,16 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
         (str, 'str', cave.AnyType, cave.NoneType,),
     )
 
+    # Tuple of unhashable objects rejected by this function.
+    HINTS_UNHASHABLE = (
+        # Object neither a type nor forward reference despite containing both.
+        {dict, 'dict',},
+    )
+
     # Tuple of other objects rejected by this function.
     HINTS_INVALID = (
         # Type defined by the stdlib "typing" module.
         typing.Any,
-        # Object neither a type nor forward reference despite containing both.
-        {dict, 'dict',},
         # Empty tuple.
         (),
         # Tuple containing a type defined by the stdlib "typing" module.
@@ -56,6 +60,11 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
     # Implicitly assert this function accepts PEP-noncompliant type hints.
     for hint_valid in HINTS_VALID:
         die_unless_hint_nonpep(hint_valid)
+
+    # Explicitly assert this function rejects unhashable objects.
+    for hint_invalid in HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            die_unless_hint_nonpep(hint_invalid)
 
     # Explicitly assert this function rejects objects excepted to be rejected.
     for hint_invalid in HINTS_INVALID:
