@@ -14,9 +14,8 @@ This submodule defines various types (including both `PEP 484`_-compliant and
 '''
 
 # ....................{ IMPORTS                           }....................
+import collections, typing
 from beartype import cave
-from collections.abc import Sized
-import typing
 
 # ....................{ TYPE VARIABLES                    }....................
 S = typing.TypeVar('S')
@@ -30,24 +29,13 @@ T = typing.TypeVar('T')
 User-defined generic :mod:`typing` type variable.
 '''
 
-# ....................{ CLASSES                           }....................
-class GenericUserDefined(typing.Generic[S, T]):
-    '''
-    User-defined generic :mod:`typing` subtype.
-    '''
+# ....................{ TYPE ALIASES                      }....................
+TypeAlias = typing.Iterable[typing.Tuple[T, T]]
+'''
+User-defined :mod:`typing` type alias.
+'''
 
-    pass
-
-
-class GenericUserDefinedMultiple(Sized, typing.Generic[T]):
-    '''
-    User-defined generic :mod:`typing` subtype also subclassing a
-    non-:mod:`typing` superclass.
-    '''
-
-    pass
-
-
+# ....................{ CLASSES ~ generic                 }....................
 class TypingUserDefined(typing.Dict[str, typing.List[str]]):
     '''
     User-defined :mod:`typing` subtype.
@@ -56,14 +44,41 @@ class TypingUserDefined(typing.Dict[str, typing.List[str]]):
     pass
 
 
+class TypingUserDefinedMultiple(
+    typing.Iterable[T],
+    typing.Container[T],
+):
+    '''
+    User-defined :mod:`typing` subtype subclassing multiple :mod:`typing`
+    types.
+    '''
 
-TypeAlias = typing.Iterable[typing.Tuple[T, T]]
-'''
-User-defined :mod:`typing` type alias.
-'''
+    pass
+
+# ....................{ CLASSES ~ generic                 }....................
+class GenericUserDefined(typing.Generic[S, T]):
+    '''
+    User-defined generic :mod:`typing` subtype.
+    '''
+
+    pass
+
+
+class GenericUserDefinedMultiple(
+    collections.abc.Sized,
+    typing.Iterable[typing.Tuple[S, T]],
+    typing.Container[typing.Tuple[S, T]],
+    typing.Generic[S, T],
+):
+    '''
+    User-defined generic :mod:`typing` subtype subclassing a heterogeneous
+    amalgam of non-:mod:`typing` and :mod:`typing` superclasses.
+    '''
+
+    pass
 
 # ....................{ MAPPINGS                          }....................
-P484_HINT_TO_ATTR = {
+P484_HINT_TO_ATTRS = {
     typing.Any: typing.Any,
     typing.Callable[[], str]: typing.Callable,
     typing.Dict[str, str]: typing.Dict,
@@ -74,22 +89,23 @@ P484_HINT_TO_ATTR = {
     typing.Type[dict]: typing.Type,
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
     typing.Union[str, typing.Sequence[int]]: typing.Union,
-    GenericUserDefined: typing.Generic,
-    GenericUserDefinedMultiple: typing.Generic,
+    GenericUserDefined: None,
+    GenericUserDefinedMultiple: None,
     T: typing.TypeVar,
     TypeAlias: typing.Iterable,
-    TypingUserDefined: typing.Dict,
+    TypingUserDefined: None,
+    TypingUserDefinedMultiple: None,
 }
 '''
-Dictionary mapping various `PEP 484`_-compliant type hints to the public
-attributes of the :mod:`typing` module uniquely identifying those hints.
+Dictionary mapping various `PEP 484`_-compliant type hints to a set of all
+public attributes of the :mod:`typing` module uniquely identifying those hints.
 
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ ITERABLES                         }....................
-P484_HINTS = P484_HINT_TO_ATTR.keys()
+P484_HINTS = P484_HINT_TO_ATTRS.keys()
 '''
 Iterable of various `PEP 484`_-compliant type hints exercising *all* edge cases
 on behalf of test submodules.

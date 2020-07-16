@@ -16,6 +16,42 @@ This private submodule is *not* intended for importation by downstream callers.
    https://www.python.org/dev/peps/pep-0563
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Refactor to support typing types (i.e., "typing" objects and classes).
+#Naturally, typing types are *NOT* safely resolvable simply by passing to the
+#eval() builtin. Why? Because typing-specific forward references (both explicit
+#ala "List[_ForwardRef('C')]" and implicit ala "List['C']") require
+#surprisingly non-trivial special handling that we're frankly *NOT* equipped to
+#deal with.
+#
+#Fortunately, the "typing" API actually provides a public function that sort-of
+#gets us where we need to go: the public typing.get_type_hints() function,
+#which accepts a callable or class and resolves all postponed "typing" hints on
+#that callable or class -- forward references and all. Of course, @beartype
+#explicitly permits callers to freely mingle PEP-compliant and PEP-noncompliant
+#annotations on the same callable. So, simply calling that getter as is is
+#guaranteed to explode on us.
+#
+#Of course, there's a clever alternative (in order):
+#
+#* Detect whether or not the decorated callable is annotated by one or more
+#  PEP-noncompliant type hints.
+#* If so:
+#  * Shallow-copy the "__annotations__" dictionary of this callable into a new
+#    local dictionary -- or perhaps only the PEP-noncompliant type hints from
+#    "__annotations__" into that local dictionary. Whatevah's easier, clearly.
+#  * Strip all PEP-noncompliant type hints from the original "__annotations__"
+#    dictionary of this callable.
+#  * Pass this callable to typing.get_type_hints() as is to conveniently
+#    resolve all PEP-compliant type hints on that callable.
+#  * Resolve all PEP-noncompliant type hints in that shallow copy.
+#  * Add those resolved PEP-noncompliant type hints back to the original
+#    "__annotations__" dictionary. Voila! Insta-workaround, PEP suckers.
+#* If not, simply pass this callable to typing.get_type_hints() as is to
+#  conveniently resolve all PEP-compliant type hints on that callable.
+#
+#Suck it, typing. Suck it.
+
 # ....................{ IMPORTS                           }....................
 import __future__, sys
 from beartype.roar import BeartypeDecorPep563Exception

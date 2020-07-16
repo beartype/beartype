@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 import typing
 
 # ....................{ TESTS                             }....................
-def testis_hint_pep() -> None:
+def test_is_hint_pep() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintpep.is_hint_pep` tester.
     '''
@@ -147,51 +147,21 @@ def test_is_hint_typing_typevared() -> None:
 def test_get_hint_typing_attr_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.utilhintpep._get_hint_typing_attr_or_none`
+    :func:`beartype._util.hint.utilhintpep.get_hint_typing_attrs_or_none`
     getter.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import _get_hint_typing_attr_or_none
+    from beartype._util.hint.utilhintpep import get_hint_typing_attrs_or_none
     from beartype_test.unit.data.data_hint import (
-        NONPEP_HINTS,
-
-        #FIXME: Uncomment after _get_hint_typing_attr_or_none() supports all
-        #possible PEP 484 types. Unsupported types include user-defined types
-        #and thus:
-        #* "GenericUserDefined".
-        #* "GenericUserDefinedMultiple".
-        #* "TypingUserDefined".
-        # P484_HINT_TO_ATTR,
-
-        S,
-        T,
-        TypeAlias,
-    )
-
-    #FIXME: Remove after _get_hint_typing_attr_or_none() supports all possible
-    #PEP 484 types.
-    P484_HINT_TO_ATTR = {
-        typing.Any: typing.Any,
-        typing.Callable[[], str]: typing.Callable,
-        typing.Dict[str, str]: typing.Dict,
-        typing.List[float]: typing.List,
-        typing.Generator[int, float, str]: typing.Generator,
-        typing.NoReturn: typing.NoReturn,
-        typing.Tuple[str, int]: typing.Tuple,
-        typing.Type[dict]: typing.Type,
-        typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
-        typing.Union[str, typing.Sequence[int]]: typing.Union,
-        T: typing.TypeVar,
-        TypeAlias: typing.Iterable,
-    }
+        P484_HINT_TO_ATTRS, NONPEP_HINTS,)
 
     # Assert that various "typing" types are correctly detected.
-    for pep_hint, typing_attr in P484_HINT_TO_ATTR.items():
+    for pep_hint, typing_attrs in P484_HINT_TO_ATTRS.items():
         print('PEP hint: {!r}'.format(pep_hint))
-        assert _get_hint_typing_attr_or_none(pep_hint) is typing_attr
+        assert get_hint_typing_attrs_or_none(pep_hint) == typing_attrs
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert _get_hint_typing_attr_or_none(nonpep_hint) is None
+        assert get_hint_typing_attrs_or_none(nonpep_hint) is None
