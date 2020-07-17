@@ -89,12 +89,13 @@ P484_HINT_TO_ATTRS = {
     typing.Type[dict]: typing.Type,
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
     typing.Union[str, typing.Sequence[int]]: typing.Union,
-    GenericUserDefined: None,
-    GenericUserDefinedMultiple: None,
+    GenericUserDefined: typing.Generic,
+    GenericUserDefinedMultiple: (
+        typing.Iterable, typing.Container, typing.Generic,),
     T: typing.TypeVar,
     TypeAlias: typing.Iterable,
-    TypingUserDefined: None,
-    TypingUserDefinedMultiple: None,
+    TypingUserDefined: typing.Dict,
+    TypingUserDefinedMultiple: (typing.Iterable, typing.Container,),
 }
 '''
 Dictionary mapping various `PEP 484`_-compliant type hints to a set of all

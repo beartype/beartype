@@ -10,6 +10,28 @@ currently being decorated by the :func:`beartype.beartype` decorator).**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Optimize away the call to the inspect.signature() function by
+#reimplementing this function to assign to instance variables of the current
+#"BeartypeData" object rather than instantiating a new "Signature" object and
+#then one new "Parameter" object for each parameter of the decorated callable.
+#Note, for example, that we don't need to replicate that function's copying of
+#parameter and return value annotations already trivially accessible via the
+#"self.func.__annotations__" dunder attribute. Indeed, we only require these
+#new "BeartypeData" instance variables:
+#
+#* "func_param_names", a tuple of all parameter names.
+#* "func_param_name_to_kind", a dictionary mapping from each parameter name
+#  (including the 'return' pseudo-parameter signifying the return value) to
+#  that parameter's kind (e.g., keyword-only, variadic positional). Naturally,
+#  parameter kinds should probably be defined as enumeration members of a
+#  global public "Enum" class defined in this submodule and accessed elsewhere.
+#
+#Doing so will be non-trivial but entirely feasible and absolutely worthwhile,
+#as the inspect.signature() function is *GUARANTEED* to be a performance
+#bottleneck for us. This is low-priority for the moment and may actually never
+#happen... but it really should.
+
 # ....................{ IMPORTS                           }....................
 import inspect
 from beartype.cave import CallableTypes

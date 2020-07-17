@@ -42,7 +42,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * Add this item from the "_pool_item_ids_released" set.
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import CallableTypes, HashableType
 from collections import defaultdict
 from threading import Lock
 
@@ -85,7 +84,7 @@ class KeyPool(object):
     __slots__ = ('_key_to_pool', '_pool_item_maker', '_thread_lock')
 
     # ..................{ INITIALIZER                       }..................
-    def __init__(self, pool_item_maker: CallableTypes) -> None:
+    def __init__(self, pool_item_maker: 'CallableTypes') -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
@@ -107,7 +106,8 @@ class KeyPool(object):
                from beartype.cave import HashableType
                def pool_item_maker(key: HashableType) -> object: ...
         '''
-        assert callable(pool_item_maker), '{!r} not callable.'.format(pool_item_maker)
+        assert callable(pool_item_maker), (
+            '{!r} not callable.'.format(pool_item_maker))
 
         # Classify these parameters as instance variables.
         self._pool_item_maker = pool_item_maker
@@ -126,7 +126,7 @@ class KeyPool(object):
         self._thread_lock = Lock()
 
     # ..................{ METHODS                           }..................
-    def acquire(self, key: HashableType) -> object:
+    def acquire(self, key: 'HashableType') -> object:
         '''
         Acquire an arbitrary object associated with the passed **arbitrary
         key** (i.e., hashable object).
@@ -189,7 +189,7 @@ class KeyPool(object):
             )
 
 
-    def release(self, key: HashableType, pool_item: object) -> None:
+    def release(self, key: 'HashableType', pool_item: object) -> None:
         '''
         Release the passed object acquired by a prior call to the
         :meth:`acquire` method passed the same passed **arbitrary key** (i.e.,

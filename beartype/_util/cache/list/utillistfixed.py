@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import IntType, IterableType, SizedType
 from beartype.roar import _BeartypeFixedListException
 from beartype._util.utilstr import trim_object_repr
+from collections.abc import Iterable, Sized
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -53,7 +53,7 @@ class FixedList(list):
     __slots__ = ()
 
     # ..................{ INITIALIZER                       }..................
-    def __init__(self, size: IntType) -> None:
+    def __init__(self, size: int) -> None:
         '''
         Initialize this fixed list to the passed length and all items of this
         fixed list to ``None``.
@@ -71,7 +71,7 @@ class FixedList(list):
         '''
 
         # If this length is *NOT* an integer, raise an exception.
-        if not isinstance(size, IntType):
+        if not isinstance(size, int):
             raise _BeartypeFixedListException(
                 'Fixed list length {!r} not integer.'.format(size))
         # Else, this length is an integer.
@@ -132,7 +132,7 @@ class FixedList(list):
         self._die_if_slice_len_ne_value_len(index, value)
 
         # If this index is a tuple of 0-based indices and slice objects...
-        if isinstance(index, IterableType):
+        if isinstance(index, Iterable):
             # For each index or slice in this tuple...
             for subindex in index:
                 # If these parameters indicate an external attempt to change
@@ -179,10 +179,9 @@ class FixedList(list):
         # Else, this index is a slice.
 
         # If this value is *NOT* a sized container, raise an exception.
-        if not isinstance(value, SizedType):
+        if not isinstance(value, Sized):
             raise _BeartypeFixedListException(
-                '{} slice {!r} not settable to '
-                'unsized {}.'.format(
+                '{} slice {!r} not settable to unsized {}.'.format(
                     self._label, index, trim_object_repr(value)))
         # Else, this value is a sized container.
 

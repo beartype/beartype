@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import IntType
 from beartype._util.cache.utilcachepool import KeyPool
 from beartype._util.cache.list.utillistfixed import FixedList
 
@@ -27,7 +26,7 @@ previously instantiated :class:`FixedList` instances of various lengths).
 '''
 
 # ....................{ FUNCTIONS                         }....................
-def acquire_fixed_list(size: IntType) -> FixedList:
+def acquire_fixed_list(size: int) -> FixedList:
     '''
     Acquire an arbitrary **fixed list** (i.e., :class:`list` constrained to a
     fixed length defined at instantiation time) with the passed length.
@@ -45,7 +44,7 @@ def acquire_fixed_list(size: IntType) -> FixedList:
 
     Parameters
     ----------
-    size : IntType
+    size : int
         Length to constrain the fixed list to be acquired to.
 
     Returns

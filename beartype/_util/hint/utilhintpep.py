@@ -13,12 +13,25 @@ This private submodule is *not* intended for importation by downstream callers.
 import typing
 from beartype.roar import BeartypeDecorHintValuePepException
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.list.utillistfixedpool import (
+    acquire_fixed_list, release_fixed_list)
 from beartype._util.utilobj import (
-    get_object_module_name_or_none, get_object_type)
+    SENTINEL,
+    get_object_module_name_or_none,
+    get_object_type,
+)
 from typing import Any, Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS                         }....................
+_GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX = 64
+'''
+Maximum number of :mod:`typing` superclasses the
+:func:`get_hint_typing_attrs_or_none` getter function permits user-defined
+classes to subclass.
+'''
 
 # ....................{ CONSTANTS ~ supported             }....................
 _TYPING_OBJECTS_SUPPORTED = frozenset((
@@ -102,7 +115,7 @@ def die_if_hint_pep(
 
 
 #FIXME: Rename to die_unless_hint_pep_supported() for disambiguity.
-#FIXME: Refactor to just call the get_hint_typing_attr_or_none() getter
+#FIXME: Refactor to just call the get_hint_typing_attrs_or_none() getter
 #instead. Since this validator is cached, any minor efficiency gains granted by
 #the current approach are vastly outweighed by its fragile and error-prone
 #implementation guaranteed to break with both new and old Python releases.
@@ -234,12 +247,12 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Note that this implementation could probably be reduced to simply calling
-    # the get_hint_typing_attr_or_none() function and testing whether the
+    # the get_hint_typing_attrs_or_none() function and testing whether the
     # return value is "None" or not. While certainly more compact and
     # convenient than the current approach, that refactored approach would also
     # be considerably more fragile, failure-prone, and subject to whimsical
     # "improvements" in the already overly hostile "typing" API. Why? Because
-    # the get_hint_typing_attr_or_none() function:
+    # the get_hint_typing_attrs_or_none() function:
     #
     # * Parses the machine-readable string returned by the __repr__() dunder
     #   method of "typing" types. Since this string is *NOT* standardized by
@@ -380,13 +393,59 @@ def is_hint_typing_typevared(hint: object) -> bool:
     return bool(getattr(hint, '__parameters__', ()))
 
 # ....................{ GETTERS ~ attrs                   }....................
+#FIXME: To be genuinely useful during our breadth-first traversal of
+#PEP-compliant type hints, this getter should probably be mildly refactored to
+#return a dictionary mapping from each typing attribute to the original
+#parametrized "typing" superclass associated with that attribute if the type
+#hint is a user-defined subclass of one or more "typing" superclasses: e.g.,
+#
+#        >>> import typing
+#        >>> from beartype._util.hint.utilhintpep import get_hint_typing_attrs_or_none
+#        >>> T = typing.TypeVar('T')
+#        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
+#        # This is what this function currently returns.
+#        >>> get_hint_typing_attrs_or_none(Duplicity)
+#        (typing.Iterable, typing.Container)
+#        # This is what this function should return instead.
+#        >>> get_hint_typing_attrs_or_none(Duplicity)
+#        {typing.Iterable: typing.Iterable[T],
+#         typing.Container: typing.Container[T]}
+#
+#The latter is strongly preferable, as it preserves essential metadata required
+#for code generation during breadth-first traversals.
+#FIXME: Actually, we probably want to also refactor this getter to return a
+#2-dictionary "{hint_typing_attr: hint}" when passed a user-defined class
+#subclassing exactly one "typing" superclass: e.g.,
+#
+#        >>> import collections.abc, typing
+#        >>> from beartype._util.hint.utilhintpep import get_hint_typing_attrs_or_none
+#        >>> T = typing.TypeVar('T')
+#        >>> class Genericity(collections.abc.Sized, typing.Generic[T]): pass
+#        # This is what this function currently returns.
+#        >>> get_hint_typing_attrs_or_none(Genericity)
+#        typing.Generic
+#        # This is what this function should return instead.
+#        >>> get_hint_typing_attrs_or_none(Duplicity)
+#        {typing.Generic: typing.Generic[T]}
+#FIXME: Actually, rather than heavily refactor this function, we probably just
+#want to copy-and-paste this function's implementation modified to suite the
+#specific needs of our breadth-first traversal. Maybe. This function's current
+#implementation is suitable for other needs (e.g., die_unless_hint_pep()) and
+#should thus probably be preserved as is. *shrug*
+
 @callable_cached
-def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
+def get_hint_typing_attrs_or_none(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotation',
+) -> 'NoneTypeOr[object]':
     '''
-    Set of all **typing attributes** (i.e., public attributes of the
-    :mod:`typing` module uniquely identifying the passed PEP-compliant type
-    hint defined via the :mod:`typing` module) associated with this class or
-    object if any *or* ``None`` otherwise.
+    **Typing attribute(s)** (i.e., public attribute(s) of the :mod:`typing`
+    module uniquely identifying the passed PEP-compliant type hint defined via
+    the :mod:`typing` module) associated with this class or object if any *or*
+    ``None`` otherwise.
 
     This getter function associates arbitrary PEP-compliant classes and objects
     with corresponding public attributes of the :mod:`typing` module, which
@@ -397,10 +456,15 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
     these attributes are sufficiently unique to enable callers to distinguish
     between numerous broad categories of :mod:`typing` behaviour and logic.
 
-    This getter function is memoized for efficiency. Note that a set rather
-    than frozen set is intentionally returned, as the latter offers no
-    performance advantages and is actually slightly *more* time-intensive to
-    instantiate in this case.
+    For efficiency, this getter function is memoized and returns either:
+
+    * A single typing attribute if the passed object is associated with exactly
+      a single typing attribute. This minimizes memoization space costs for the
+      common case by avoiding unnecessary tuple instantiations as well forcing
+      callers to handle this common case *without* iteration, which is
+      surprisingly slow in Python.
+    * A tuple of one or more typing attributes if the passed object is
+      associated with one or more typing attributes.
 
     Motivation
     ----------
@@ -415,93 +479,42 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
     Thus this function, which "fills in the gaps" by implementing this
     laughably critical oversight.
 
-    Caveats
-    ----------
-    This function returns ``None`` for user-defined types subclassing
-    :mod:`typing` types. Ideally, this function would instead iterate over the
-    superclasses of user-defined types and iteratively construct and return the
-    subset of these superclasses declared by the :mod:`typing` module.
-
-    Non-ideally, this is the real world. As we've established both above and
-    elsewhere throughout the codebase, `PEP 484`_ and friends are fundamentally
-    insane. In this case, `PEP 484`_ is insane by subjecting parametrized
-    :mod:`typing` types employed as base classes to "type erasure," because:
-
-        ...it is common practice in languages with generics (e.g. Java,
-        TypeScript).
-
-    Since Java and TypeScript are both terrible languages, blindly
-    recapitulating bad mistakes baked into such languages is an equally bad
-    mistake. In this case, "type erasure" means that the :mod:`typing` module
-    *intentionally* destroys runtime type information for nebulous and largely
-    unjustifiable reasons (i.e., Big Daddy Java and TypeScript do it, so it
-    must be unquestionably good).
-
-    Specifically, the :mod:`typing` module intentionally strips all
-    parametrization from parametrized :mod:`typing` types employed as base
-    classes -- with no means of subsequently recovering that parametrization.
-    Of course, it gets even worse. The :mod:`typing` module also implicitly
-    converts all superclasses:
-
-    * Whose origin is a builtin container (e.g., ``typing.List[T]``) to
-      that container (e.g., :class:`list`).
-    * Derived from an abstract base class declared by the
-      :mod:`collections.abc` subpackage (e.g., ``typing.Iterable[T]``) to that
-      abstract base class (e.g., :class:`collections.abc.Iterable`).
-
-    Since there exists no counterpart to the :class:`typing.Generic`
-    superclass, the :mod:`typing` module preserves that superclass in
-    unparametrized form. Naturally, this is useless, as an unparametrized
-    :class:`typing.Generic` superclass conveys no meaningful type annotation.
-    All other superclasses are reduced to non-:mod:`typing` counterparts: e.g.,
-
-       .. code-block:: python
-
-       # In a user-defined module...
-       >>> from typing import TypeVar, Generic, Iterable, List
-       >>> T = TypeVar('T')
-       >>> class UserDefinedGeneric(List[T], Iterable[T], Generic[T]): pass
-       # This is type erasure.
-       >>> UserDefinedGeneric.__mro__
-       (list, collections.abc.Iterable, Generic)
-       # This is a hypothetical world without type erasure.
-       >>> UserDefinedGeneric.__mro__
-       (List[T], Iterable[T], Generic[T])
-       # Guess which world we live in?
-
-    In short, the :mod:`typing` module intentionally prohibits runtime type
-    checking of all user-defined types -- and we have no recourse but to
-    calmly grin and accept their abuse.
-
-    In theory, we technically could explicitly convert converted superclasses
-    back to their :mod:`typing` equivalents. Sadly, there'd be no benefit to
-    that. Non-:mod:`typing` counterparts are more efficiently tested than their
-    :mod:`typing` equivalents. Welcome to "typing" hell, where even
-    :mod:`typing` types lie broken and misshapen on the killing floor of
-    overzealous purists.
-
     Parameters
     ----------
     hint : object
         Object to be inspected.
+    hint_label : Optional[str]
+        Human-readable noun prefixing this object's representation in the
+        exception message raised by this function. Defaults to 'Annotation'.
 
     Returns
     ----------
-    NoneTypeOr[set]
+    NoneTypeOr[object]
         Either:
 
-        * If this object is uniquely identified by one or more public
-          attributes of the :mod:`typing` module, a frozenset of these
-          attributes.
+        * If this object is uniquely identified by:
+
+          * One public attribute of the :mod:`typing` module, that attribute.
+          * One or more public attributes of the :mod:`typing` module, a tuple
+            listing these attributes in the same order (e.g., superclass order
+            for user-defined types).
+
         * Else, ``None``.
 
     Raises
     ----------
     BeartypeDecorHintValuePepException
         If this object is PEP-compliant but this function erroneously fails to
-        decide the set of typing attributes associated with this object. This
-        exception denotes a critical internal issue and should thus *never* be
-        raised -- let alone allowed to percolate up the call stack to users.
+        decide the :mod:`typing` attributes associated with this object due to
+        this object either:
+
+        * Failing to define a PEP-specific ``__orig_bases__`` dunder attribute.
+        * Defined that attribute but that attribute contained either:
+
+          * No :mod:`typing` superclasses.
+          * :data:`_GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX` or more
+            :mod:`typing` superclasses. This getter function internally reuses
+            fixed lists of this size to efficiently iterate these superclasses.
 
     Examples
     ----------
@@ -509,24 +522,26 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
         >>> import typing
         >>> from beartype._util.hint.utilhintpep import get_hint_typing_attrs_or_none
         >>> get_hint_typing_attrs_or_none(typing.Any)
-        {typing.Any}
+        typing.Any
         >>> get_hint_typing_attrs_or_none(typing.Union[str, typing.Sequence[int]])
-        {typing.Union}
+        typing.Union
         >>> get_hint_typing_attrs_or_none(typing.Sequence[int])
-        {typing.Sequence}
+        typing.Sequence
         >>> T = typing.TypeVar('T')
         >>> get_hint_typing_attrs_or_none(T)
-        {typing.TypeVar}
+        typing.TypeVar
         >>> class Genericity(typing.Generic[T]): pass
         >>> get_hint_typing_attrs_or_none(Genericity)
-        None
+        typing.Generic
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
         >>> get_hint_typing_attrs_or_none(Duplicity)
-        None
+        (typing.Iterable, typing.Container)
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
     '''
+    assert isinstance(hint_label, str), (
+        '{!r} not a string.'.format(hint_label))
 
     # If this hint is *NOT* PEP-compliant, return "None".
     if not is_hint_pep(hint):
@@ -534,7 +549,6 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
     # Else, this hint is PEP-compliant.
 
     # If this hint is a type variable, return the type of all such variables.
-    #
     # Note that:
     #
     # * This condition is tested for first due to the efficiency of this test
@@ -554,6 +568,184 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
     if isinstance(hint, TypeVar):
         return TypeVar
     # Else, this hint is *NOT* a type variable.
+
+    # Direct typing attribute associated with this hint if this hint is
+    # directly defined by the "typing" module *OR* "None" otherwise.
+    hint_direct_typing_attr = _get_hint_direct_typing_attr_or_none(hint)
+
+    # If this attribute exists, return this attribute.
+    if hint_direct_typing_attr:
+        return hint_direct_typing_attr
+    # Else, no such attribute exists. In this case, this hint is *NOT* directly
+    # declared by the "typing" module. Since this hint is PEP-compliant, this
+    # hint *MUST* necessarily be a user-defined class subclassing one or more
+    # "typing" superclasses: e.g.,
+    #
+    #    # In a user-defined module...
+    #    from typing import TypeVar, Generic
+    #    T = TypeVar('T')
+    #    class UserDefinedGeneric(Generic[T]): pass
+
+    # Either the passed object if this object is a class *OR* the class of this
+    # object otherwise (i.e., if this object is *NOT* a class).
+    hint_type = get_object_type(hint)
+
+    # Original superclasses of this class before the "typing" module
+    # destructively erased these superclasses if this class declares the
+    # "typing"-specific "__orig_bases__" dunder attribute preserving these
+    # original superclasses *OR* the sentinel placeholder otherwise.
+    #
+    # You are probably now agitatedly cogitating to yourself in the darkness:
+    # "But @leycec: what do you mean 'destructively erased'? Surely no public
+    # API defined by the Python stdlib would be so malicious as to silently
+    # modify the tuple of base classes listed by a user-defined subclass?"
+    #
+    # Let me tell you what now. As we've established both above and elsewhere
+    # throughout this codebase, PEP 484 and friends are fundamentally insane.
+    # In this case, PEP 484 is insane by subjecting parametrized "typing" types
+    # employed as base classes to "type erasure," because "it is common
+    # practice in languages with generics (e.g. Java, TypeScript)." Since Java
+    # and TypeScript are both terrible languages, blindly recapitulating bad
+    # mistakes baked into those languages is an equally bad mistake. In this
+    # case, "type erasure" means that the "typing" module intentionally
+    # destroys runtime type information for nebulous and largely unjustifiable
+    # reasons (i.e., Big Daddy Java and TypeScript do it, so it must be
+    # unquestionably good).
+    #
+    # Specifically, the "typing" module intentionally munges all "typing" types
+    # used as base classes in user-defined subclasses as follows:
+    #
+    # * All base classes whose origin is a builtin container (e.g.,
+    #   "typing.List[T]") are reduced to that container (e.g., "list").
+    # * All base classes derived from an abstract base class declared by the
+    #   "collections.abc" subpackage (e.g., "typing.Iterable[T]") are reduced
+    #   to that abstract base class (e.g., "collections.abc.Iterable").
+    # * All surviving base classes that are parametrized (e.g.,
+    #   "typing.Generic[S, T]") are stripped of that parametrization (e.g.,
+    #   "typing.Generic").
+    #
+    # Since there exists no counterpart to the "typing.Generic" superclass,
+    # the "typing" module preserves that superclass in unparametrized form.
+    # All other superclasses are reduced to non-"typing" counterparts.
+    #
+    # The standard "__mro__" dunder attribute of user-defined subclasses with
+    # one or more "typing" superclasses reflects this erasure, while thankfully
+    # preserving the original tuple of user-defined superclasses for those
+    # subclasses in a "typing"-specific "__orig_bases__" dunder attribute:
+    # e.g.,
+    #
+    #     # This is type erasure.
+    #     >>> UserDefinedGeneric.__mro__
+    #     (list, collections.abc.Iterable, Generic)
+    #     # This is type preservation.
+    #     >>> UserDefinedGeneric.__orig_bases__
+    #     (List[T], Iterable[T], Generic[T])
+    #     # Guess which we prefer?
+    #
+    # Ergo, we ignore the useless standard "__mro__" tuple in favour of the
+    # actually useful (albeit non-standard) "__orig_bases__" tuple.
+    #
+    # Welcome to "typing" hell, where even "typing" types lie broken and
+    # misshapen on the killing floor of overzealous theorists.
+    hint_supertypes = getattr(hint_type, '__orig_bases__', SENTINEL)
+
+    # If this user-defined subclass subclassing one or more "typing"
+    # superclasses failed to preserve the original tuple of these superclasses
+    # against type erasure, something has gone wrong. Raise us an exception!
+    if hint_supertypes is SENTINEL:
+        raise BeartypeDecorHintValuePepException(
+            '{} PEP type {!r} subclasses no "typing" types.'.format(
+                hint_label, hint))
+    # Else, this subclass preserved this tuple against type erasure.
+
+    # If this user-defined subclass subclassing more than the maximum number of
+    # "typing" superclasses supported by this function, raise an exception.
+    # This function internally reuses fixed lists of this size to efficiently
+    # iterate these superclasses.
+    if len(hint_supertypes) > _GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX:
+        raise BeartypeDecorHintValuePepException(
+            '{} PEP type {!r} subclasses more than {} "typing" types.'.format(
+                hint_label,
+                hint,
+                _GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX))
+    # Else, this user-defined subclass subclassing less than or equal to this
+    # maximum number of "typing" superclasses supported by this function.
+
+    # Fixed list of all typing attributes associated with this subclass.
+    hint_typing_attrs = acquire_fixed_list(
+        size=_GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX)
+
+    # 0-based index of the current item of this list to insert the next typing
+    # attribute discovered by iteration below at.
+    hint_typing_attrs_index = 0
+
+    # For each original superclass of this class...
+    for hint_supertype in hint_supertypes:
+        # Direct typing attribute associated with this superclass if any *OR*
+        # "None" otherwise.
+        hint_typing_attr = _get_hint_direct_typing_attr_or_none(hint_supertype)
+        # print('hint supertype: {!r} -> {!r}'.format(hint_supertype, hint_direct_typing_attr))
+
+        # If this attribute exists...
+        if hint_typing_attr:
+            # Insert this attribute at the current item of this list.
+            hint_typing_attrs[hint_typing_attrs_index] = hint_typing_attr
+
+            # Increment this index to the next item of this list.
+            hint_typing_attrs_index += 1
+        # Else, no such attribute exists.
+
+    # Tuple sliced from the prefix of this list assigned to above.
+    hint_typing_attrs_tuple = tuple(
+        hint_typing_attrs[:hint_typing_attrs_index])
+
+    # Release and nullify this list *AFTER* defining this tuple.
+    release_fixed_list(hint_typing_attrs)
+    del hint_typing_attrs
+
+    # If this tuple is empty, raise an exception. By the above constraints,
+    # this tuple should contain one or more typing attributes.
+    if hint_typing_attrs_index == 0:
+        raise BeartypeDecorHintValuePepException(
+            '{} PEP type {!r} unassociated with "typing" types.'.format(
+                hint_label, hint))
+    # Else, this tuple is non-empty.
+
+    # If this tuple contains one typing attribute, return only that attribute
+    # *NOT* contained within a tuple to minimize memoized space costs.
+    if hint_typing_attrs_index == 1:
+        return hint_typing_attr
+
+    # Else, this tuple contains ore or more typing attributes. In this case,
+    # return this tuple as is.
+    return hint_typing_attrs_tuple
+
+
+def _get_hint_direct_typing_attr_or_none(hint: object) -> 'NoneTypeOr[object]':
+    '''
+    **Direct typing attribute** (i.e., public attribute of the :mod:`typing`
+    module directly identifying the passed `PEP 484`_-compliant class or object
+    defined via the :mod:`typing` module *without* regard to any superclasses
+    of this class or this object's class) associated with this class or object
+    if any *or* ``None`` otherwise.
+
+    This getter function is *only* intended to be called by the parent
+    :func:`_get_hint_typing_attr_or_none` function.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    NoneTypeOr[object]
+        Either:
+
+        * If this object is directly identified by a public attribute of the
+          :mod:`typing` module, that attribute.
+        * Else, ``None``.
+    '''
 
     # Machine-readable string representation of this hint also serving as the
     # fully-qualified name of the public "typing" attribute uniquely associated
@@ -596,13 +788,8 @@ def get_hint_typing_attrs_or_none(hint: object) -> 'NoneTypeOr[set]':
         # raise an "AttributeError" exception. Since this is an unlikely edge
         # case, we avoid performing any deeper validation here.
         return getattr(typing, typing_attr_name)
+    # Else, this hint is *NOT* a class or object declared by the "typing"
+    # module.
 
-    # Else, no such attribute exists. In this case, this hint is *NOT* a class
-    # or object declared by the "typing" module. Since this hint is
-    # PEP-compliant, this hint *MUST* necessarily be a user-defined class
-    # subclassing one or more superclasses, one or more of which *MUST*
-    # necessarily be "typing" superclasses.
-    #
-    # Return none, as runtime type erasure implemented by the "typing" module
-    # has already stripped all meaningful type hints from this type. *sigh*
+    # Ergo, this hint is unassociated with a public "typing" attribute.
     return None
