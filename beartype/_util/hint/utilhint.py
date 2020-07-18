@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
-from beartype._util.hint.utilhintpep import die_unless_hint_pep, is_hint_pep
+from beartype._util.hint.utilhintpep import die_unless_hint_pep_supported, is_hint_pep
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -75,7 +75,7 @@ def die_unless_hint(
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
     if is_hint_pep(hint):
-        die_unless_hint_pep(
+        die_unless_hint_pep_supported(
             hint=hint,
             hint_label=hint_label,
             # is_str_valid=is_str_valid,

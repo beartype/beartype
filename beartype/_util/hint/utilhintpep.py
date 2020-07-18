@@ -20,7 +20,7 @@ from beartype._util.utilobj import (
     get_object_module_name_or_none,
     get_object_type,
 )
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar, Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -34,34 +34,17 @@ classes to subclass.
 '''
 
 # ....................{ CONSTANTS ~ supported             }....................
-_TYPING_OBJECTS_SUPPORTED = frozenset((
+_TYPING_ATTRS_SUPPORTED = frozenset((
     Any,
+    Union,
 ))
 '''
-Frozen set of all :mod:`typing` objects (typically, singletons) supported by
-the :func:`beartype.beartype` decorator.
-'''
+Frozen set of all **typing attributes** (i.e., public attributes of the
+:mod:`typing` module uniquely identifying PEP-compliant type hints defined via
+the :mod:`typing` module) supported by the :func:`beartype.beartype` decorator.
 
-
-_TYPING_OBJECT_TYPES_SUPPORTED = (
-    #FIXME: Uncomment after supporting type variables.
-    # TypeVar,
-)
-'''
-Tuple of all :mod:`typing` types whose instances are supported by the
-:func:`beartype.beartype` decorator.
-
-This container is intentionally declared as a tuple rather than frozen set to
-enable testing by the :func:`isinstance` builtin.
-'''
-
-
-_TYPING_NAMES_SUPPORTED = frozenset((
-    'typing.Union',
-))
-'''
-Frozen set of the fully-qualified names of all :mod:`typing` types supported by
-the :func:`beartype.beartype` decorator.
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_typing_attrs_or_none` getter function.
 '''
 
 # ....................{ EXCEPTIONS                        }....................
@@ -96,14 +79,10 @@ def die_if_hint_pep(
     Raises
     ----------
     exception_cls
-        If this object is a `PEP 484`_ type hint.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+        If this object is a PEP-compliant type hint.
     '''
 
-    # If this hint is a PEP 484 type or object declared by the "typing" module,
-    # raise an exception of this class.
+    # If this hint is PEP-compliant, raise an exception of this class.
     if is_hint_pep(hint):
         assert isinstance(hint_label, str), (
             '{!r} not a string.'.format(hint_label))
@@ -111,16 +90,52 @@ def die_if_hint_pep(
             '{!r} not a type.'.format(exception_cls))
 
         raise exception_cls(
-            '{} PEP type {!r} unsupported.'.format(hint_label, hint))
+            '{} {!r} is PEP-compliant.'.format(hint_label, hint))
 
 
-#FIXME: Rename to die_unless_hint_pep_supported() for disambiguity.
-#FIXME: Refactor to just call the get_hint_typing_attrs_or_none() getter
-#instead. Since this validator is cached, any minor efficiency gains granted by
-#the current approach are vastly outweighed by its fragile and error-prone
-#implementation guaranteed to break with both new and old Python releases.
-@callable_cached
+#FIXME: Unit test us up.
 def die_unless_hint_pep(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotation',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **PEP-compliant type
+    hint** (i.e., :mod:`beartype`-agnostic annotation compliant with
+    annotation-centric PEPs).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : Optional[str]
+        Human-readable noun prefixing this object's representation in the
+        exception message raised by this function. Defaults to 'Annotation'.
+
+    Raises
+    ----------
+    BeartypeDecorHintValuePepException
+        If this object is *not* a PEP-compliant type hint.
+    '''
+
+    # If this hint is *NOT* PEP-compliant, raise an exception.
+    if not is_hint_pep(hint):
+        assert isinstance(hint_label, str), (
+            '{!r} not a string.'.format(hint_label))
+
+        raise BeartypeDecorHintValuePepException(
+            '{} {!r} not PEP-compliant.'.format(hint_label, hint))
+
+
+#FIXME: Unit test us up.
+@callable_cached
+def die_unless_hint_pep_supported(
     # Mandatory parameters.
     hint: object,
 
@@ -146,61 +161,84 @@ def die_unless_hint_pep(
     Raises
     ----------
     BeartypeDecorHintValuePepException
-        If this object is either not a `PEP 484`_ type *or* is but is currently
-        unsupported by :func:`beartype.beartype`.
+        If this object is either:
 
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+        * *Not* a PEP-compliant type.
+        * Is a PEP-compliant type but is either:
+
+          * Currently unsupported by :func:`beartype.beartype`.
+          * A user-defined class subclassing one or more :mod:`typing`
+            superclasses that either:
+
+            * Fails to define the PEP-specific ``__orig_bases__`` dunder
+              attribute.
+            * Defines that attribute but that attribute contains either:
+
+              * No :mod:`typing` superclasses.
+              * :data:`_GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX` or more
+                :mod:`typing` superclasses. The
+                :mod:`get_hint_typing_attrs_or_none` function underlying this
+                function internally reuses fixed lists of this size to
+                efficiently iterate these superclasses.
     '''
     assert isinstance(hint_label, str), (
         '{!r} not a string.'.format(hint_label))
 
-    # If this hint is *NOT* a PEP 484 type or object declared by the "typing"
-    # module, raise an exception.
-    if not is_hint_pep(hint):
-        raise BeartypeDecorHintValuePepException(
-            '{} {!r} not PEP-compliant.'.format(hint_label, hint))
-    # Else, this hint is a PEP 484 type or object declared by that module.
-    #
-    # Ergo, this hint is safely hashable and thus testable as is against
-    # containers requiring item hashability (e.g., dict keys, set items). By
-    # definition, *ALL* PEP 484 types and objects are hashable.
+    # If this hint is *NOT* PEP-compliant, raise an exception.
+    die_unless_hint_pep(hint=hint, hint_label=hint_label)
+    # Else, this hint is PEP-compliant.
 
-    # If this hint is either...
-    if (
-        # A supported "typing" singleton *OR*...
-        hint in _TYPING_OBJECTS_SUPPORTED or
-        # An instance of a supported "typing" type *OR*...
-        isinstance(hint, _TYPING_OBJECT_TYPES_SUPPORTED)
-    # Then this hint is a supported PEP 484 object. In this case, silently
-    # reduce to a noop.
-    ):
-        return
-    # Else, this hint is *NOT* a supported PEP 484 object.
+    # Public attribute(s) of the "typing" module uniquely identifying this hint
+    # if any *OR* "None" otherwise.
+    hint_typing_attrs = get_hint_typing_attrs_or_none(hint)
+
+    # If no such attributes exists, raise an exception.
+    #
+    # Note that this should *NEVER* happen. By definition, *ALL* PEP-compliant
+    # hints are uniquely identified by one or public attribute(s) of the
+    # "typing" module. Nonetheless, this is the real world. Damn you, Murphy!
+    if not hint_typing_attrs:
+        raise BeartypeDecorHintValuePepException(
+            '{} PEP type {!r} unassociated with "typing" types.'.format(
+                hint_label, hint))
+    # Else, one or more such attributes exist.
 
     # Template for unsupported exception messages raised by this function.
     EXCEPTION_MESSAGE_TEMPLATE = '{} currently unsupported by @beartype.'
 
-    # Exception message to be raised below.
-    exception_message = ''
+    # If two or more such attributes exist...
+    if isinstance(hint_typing_attrs, tuple):
+        # For each such attribute...
+        for hint_typing_attr in hint_typing_attrs:
+            # If this attribute and thus this hint is unsupported, raise an
+            # exception.
+            if hint_typing_attr not in _TYPING_ATTRS_SUPPORTED:
+                raise BeartypeDecorHintValuePepException(
+                    EXCEPTION_MESSAGE_TEMPLATE.format(
+                        '{} PEP type {!r} supertype {!r}'.format(
+                            hint_label, hint, hint_typing_attr)))
+    # Else, only one such attribute exists.
+    #
+    # If this attribute and thus this hint is unsupported, raise an exception.
+    # Note that, as there exists a one-to-one relationship between this hint
+    # and this attribute, this attribute need *NOT* be formatted into this
+    # exception message as well.
+    elif hint_typing_attrs not in _TYPING_ATTRS_SUPPORTED:
+        raise BeartypeDecorHintValuePepException(
+            EXCEPTION_MESSAGE_TEMPLATE.format(
+                '{} PEP type {!r}'.format(hint_label, hint)))
+    # Else, this hint is superficially supported. This does *NOT* necessarily
+    # imply this hint to be fully supported.
 
-    # If this hint is a PEP-484 type variable, note this.
-    if is_hint_typing_typevar(hint):
-        exception_message = EXCEPTION_MESSAGE_TEMPLATE.format(
-            '{} PEP type variable {!r}'.format(hint_label, hint))
-    # Else if this hint is a PEP-484 type parametrized by one or more type
-    # variables, note this.
-    elif is_hint_typing_typevared(hint):
-        exception_message = EXCEPTION_MESSAGE_TEMPLATE.format(
-            '{} PEP type variable-parametrized generic {!r}'.format(
-                hint_label, hint))
-    # Else, genericize this message.
-    else:
-        exception_message = EXCEPTION_MESSAGE_TEMPLATE.format(
-            '{} PEP type {!r}'.format(hint_label, hint))
-
-    # Raise this message.
-    raise BeartypeDecorHintValuePepException(exception_message)
+    # If this hint is parametrized by one or more type variables, raise an
+    # exception. Type variables require non-trivial decorator support that has
+    # yet to be fully implemented.
+    if is_hint_typing_typevared(hint):
+        raise BeartypeDecorHintValuePepException(
+            EXCEPTION_MESSAGE_TEMPLATE.format(
+                '{} variable-parametrized generic PEP type {!r}'.format(
+                    hint_label, hint)))
+    # Else, this hint is fully supported. Phew!
 
 # ....................{ TESTERS ~ private                 }....................
 #FIXME: Detect functions created by "typing.NewType(subclass_name, superclass)"
@@ -355,6 +393,12 @@ def is_hint_typing_typevar(hint: object) -> bool:
     return isinstance(hint, TypeVar)
 
 
+#FIXME: Generalize the is_hint_typing_typevared() to also iteratively
+#inspect each superclass listed by the newly defined
+#utilpep560.get_superclasses_original() function. Given that function,
+#generalizing this function becomes thankfully trivial. See the end of this
+#submodule for implementation details.
+#FIXME: Unit test that up as well.
 @callable_cached
 def is_hint_typing_typevared(hint: object) -> bool:
     '''
@@ -430,7 +474,7 @@ def is_hint_typing_typevared(hint: object) -> bool:
 #FIXME: Actually, rather than heavily refactor this function, we probably just
 #want to copy-and-paste this function's implementation modified to suite the
 #specific needs of our breadth-first traversal. Maybe. This function's current
-#implementation is suitable for other needs (e.g., die_unless_hint_pep()) and
+#implementation is suitable for other needs (e.g., die_unless_hint_pep_supported()) and
 #should thus probably be preserved as is. *shrug*
 
 @callable_cached
@@ -506,10 +550,11 @@ def get_hint_typing_attrs_or_none(
     BeartypeDecorHintValuePepException
         If this object is PEP-compliant but this function erroneously fails to
         decide the :mod:`typing` attributes associated with this object due to
-        this object either:
+        this object being a user-defined class subclassing one or more
+        :mod:`typing` superclasses that either:
 
-        * Failing to define a PEP-specific ``__orig_bases__`` dunder attribute.
-        * Defined that attribute but that attribute contained either:
+        * Fails to define the PEP-specific ``__orig_bases__`` dunder attribute.
+        * Defines that attribute but that attribute contains either:
 
           * No :mod:`typing` superclasses.
           * :data:`_GET_HINT_TYPING_ATTRS_OR_NONE_SUPERCLASSES_MAX` or more
@@ -571,7 +616,7 @@ def get_hint_typing_attrs_or_none(
 
     # Direct typing attribute associated with this hint if this hint is
     # directly defined by the "typing" module *OR* "None" otherwise.
-    hint_direct_typing_attr = _get_hint_direct_typing_attr_or_none(hint)
+    hint_direct_typing_attr = get_hint_direct_typing_attr_or_none(hint)
 
     # If this attribute exists, return this attribute.
     if hint_direct_typing_attr:
@@ -647,6 +692,49 @@ def get_hint_typing_attrs_or_none(
     #
     # Welcome to "typing" hell, where even "typing" types lie broken and
     # misshapen on the killing floor of overzealous theorists.
+
+    #FIXME: Sadly, this is optimistically naive. O.K., it's just broken. The
+    #"__orig_bases__" dunder attribute doesn't actually compute the original
+    #MRO; it just preserves the original bases as directly listed in this
+    #subclass declaration. What we need, however, is the actual original MRO as
+    #that subclass *WOULD* have had had "typing" not subjected it to malignant
+    #type erasure. That's... non-trivial but feasible to compute, so let's do
+    #that. Specifically, let's:
+    #
+    #* Define a new "beartype._util.pep.utilpep560" submodule:
+    #  * Define a new get_superclasses_original() function with signature:
+    #    @callablecached
+    #    def get_superclasses_original(obj: object) -> frozenset
+    #    This function intentionally does *NOT* bother returning a proper MRO.
+    #    While we certainly could do so (e.g., by recursively replacing in the
+    #    "__mro__" of this object all bases modified via type erasure with
+    #    those listed in the "__orig_bases__" attribute of each superclass),
+    #    doing so would both be highly non-trivial and overkill. All we really
+    #    require is the set of all original superclasses of this class. Since
+    #    PEP 560 is (of course) awful, it provides no API for obtaining any of
+    #    this. Fortunately, this shouldn't be *TERRIBLY* hard. We just need to
+    #    implement (wait for it) a breadth-first traversal using fixed lists.
+    #    This might resemble:
+    #    * If the type of the passed object does *NOT* have the
+    #      "__orig_bases__" attribute defined, just:
+    #      return frozenset(obj.__mro__)
+    #    * Else:
+    #      * Acquire a fixed list of sufficient size (e.g., 64). We probably
+    #        want to make this a constant in "utilcachelistfixedpool" for reuse
+    #        everywhere, as this is clearly becoming a common idiom.
+    #      * Slice-assign "__orig_bases__" into this list.
+    #      * Maintain two simple 0-based indices into this list:
+    #        * "bases_index_curr", the current base being visited.
+    #        * "bases_index_last", the end of this list also serving as the
+    #          list position to insert newly discovered bases at.
+    #      * Iterate over this list and keep slice-assigning from either
+    #        "__orig_bases__" (if defined) or "__mro__" (otherwise) into
+    #        "list[bases_index_last:len(__orig_bases__)]". Note that this has
+    #        the unfortunate disadvantage of temporarily iterating over
+    #        duplicates, but... *WHO CARES.* It still works and we subsequently
+    #        eliminate duplicates at the end.
+    #      * Return a frozenset of this list, thus implicitly eliminating
+    #        duplicate superclasses.
     hint_supertypes = getattr(hint_type, '__orig_bases__', SENTINEL)
 
     # If this user-defined subclass subclassing one or more "typing"
@@ -683,7 +771,7 @@ def get_hint_typing_attrs_or_none(
     for hint_supertype in hint_supertypes:
         # Direct typing attribute associated with this superclass if any *OR*
         # "None" otherwise.
-        hint_typing_attr = _get_hint_direct_typing_attr_or_none(hint_supertype)
+        hint_typing_attr = get_hint_direct_typing_attr_or_none(hint_supertype)
         # print('hint supertype: {!r} -> {!r}'.format(hint_supertype, hint_direct_typing_attr))
 
         # If this attribute exists...
@@ -721,7 +809,7 @@ def get_hint_typing_attrs_or_none(
     return hint_typing_attrs_tuple
 
 
-def _get_hint_direct_typing_attr_or_none(hint: object) -> 'NoneTypeOr[object]':
+def get_hint_direct_typing_attr_or_none(hint: object) -> 'NoneTypeOr[object]':
     '''
     **Direct typing attribute** (i.e., public attribute of the :mod:`typing`
     module directly identifying the passed `PEP 484`_-compliant class or object

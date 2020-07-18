@@ -33,7 +33,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.utilhintpep import (
-    die_unless_hint_pep)
+    die_unless_hint_pep_supported)
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -72,7 +72,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #         If either this parameter or this hint is *not* PEP-compliant.
 #     '''
 #     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
-#     # (e.g., by explicitly calling the die_unless_hint_pep() function). By
+#     # (e.g., by explicitly calling the die_unless_hint_pep_supported() function). By
 #     # design, the caller already guarantees this to be the case.
 #     #
 #     assert isinstance(data, BeartypeData), (
@@ -145,7 +145,7 @@ def pep_code_check_return(data: BeartypeData) -> str:
         If this hint is *not* PEP-compliant.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_pep() function). By
+    # (e.g., by explicitly calling the die_unless_hint_pep_supported() function). By
     # design, the caller already guarantees this to be the case.
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
@@ -212,4 +212,4 @@ def _pep_code_check(
         '{!r} not a human-readable label.'.format(hint_label))
 
     # If this is *NOT* a supported PEP-compliant type hint, raise an exception.
-    die_unless_hint_pep(hint)
+    die_unless_hint_pep_supported(hint)
