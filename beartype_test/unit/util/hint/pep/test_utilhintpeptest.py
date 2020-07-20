@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint utility unit tests.**
+**Beartype PEP-compliant type hint tester utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.utilhintpep` submodule.
+:mod:`beartype._util.hint.pep.utilhintpeptest` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,11 +20,12 @@ import typing
 # ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhintpep.is_hint_pep` tester.
+    Test the :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep`
+    tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import is_hint_pep
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
     from beartype_test.unit.data.data_hint import NONPEP_HINTS, P484_HINTS
 
     # Assert that various "typing" types are correctly detected.
@@ -40,12 +41,13 @@ def test_is_hint_pep() -> None:
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhintpep.is_hint_typing_typevar`
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_typing_typevar`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import is_hint_typing_typevar
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_typing_typevar
     from beartype_test.unit.data.data_hint import (
         S,
         T,
@@ -94,11 +96,13 @@ def test_is_hint_typing_typevar() -> None:
 def test_is_hint_typing_typevared() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.utilhintpep.is_hint_typing_typevared` tester.
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_typing_typevared`
+    tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import is_hint_typing_typevared
+    from beartype._util.hint.pep.utilhintpeptest import (
+        is_hint_typing_typevared)
     from beartype_test.unit.data.data_hint import (
         S,
         T,
@@ -142,26 +146,3 @@ def test_is_hint_typing_typevared() -> None:
     for non_typevared_type in NON_TYPEVARED_TYPES:
         print('"TypeVar"-unparametrized type: {!r}'.format(non_typevared_type))
         assert is_hint_typing_typevared(non_typevared_type) is False
-
-# ....................{ TESTS ~ private                   }....................
-def test_get_hint_typing_attr_or_none() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.utilhintpep.get_hint_typing_attrs_or_none`
-    getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.utilhintpep import get_hint_typing_attrs_or_none
-    from beartype_test.unit.data.data_hint import (
-        P484_HINT_TO_ATTRS, NONPEP_HINTS,)
-
-    # Assert that various "typing" types are correctly detected.
-    for pep_hint, typing_attrs in P484_HINT_TO_ATTRS.items():
-        print('PEP hint: {!r}'.format(pep_hint))
-        assert get_hint_typing_attrs_or_none(pep_hint) == typing_attrs
-
-    # Assert that various non-"typing" types are correctly detected.
-    for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert get_hint_typing_attrs_or_none(nonpep_hint) is None

@@ -32,7 +32,7 @@ from beartype._decor._code._pep._pepsnip import (
     # PARAM_KIND_TO_PEP_CODE,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.utilhintpep import (
+from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported)
 from inspect import Parameter
 

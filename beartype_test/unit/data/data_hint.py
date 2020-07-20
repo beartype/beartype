@@ -79,22 +79,22 @@ class GenericUserDefinedMultiple(
 
 # ....................{ MAPPINGS                          }....................
 P484_HINT_TO_ATTRS = {
-    typing.Any: typing.Any,
-    typing.Callable[[], str]: typing.Callable,
-    typing.Dict[str, str]: typing.Dict,
-    typing.List[float]: typing.List,
-    typing.Generator[int, float, str]: typing.Generator,
-    typing.NoReturn: typing.NoReturn,
-    typing.Tuple[str, int]: typing.Tuple,
-    typing.Type[dict]: typing.Type,
-    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: typing.Union,
-    typing.Union[str, typing.Sequence[int]]: typing.Union,
-    GenericUserDefined: typing.Generic,
+    typing.Any: (typing.Any,),
+    typing.Callable[[], str]: (typing.Callable,),
+    typing.Dict[str, str]: (typing.Dict,),
+    typing.List[float]: (typing.List,),
+    typing.Generator[int, float, str]: (typing.Generator,),
+    typing.NoReturn: (typing.NoReturn,),
+    typing.Tuple[str, int]: (typing.Tuple,),
+    typing.Type[dict]: (typing.Type,),
+    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: (typing.Union,),
+    typing.Union[str, typing.Sequence[int]]: (typing.Union,),
+    GenericUserDefined: (typing.Generic,),
     GenericUserDefinedMultiple: (
         typing.Iterable, typing.Container, typing.Generic,),
-    T: typing.TypeVar,
-    TypeAlias: typing.Iterable,
-    TypingUserDefined: typing.Dict,
+    T: (typing.TypeVar,),
+    TypeAlias: (typing.Iterable,),
+    TypingUserDefined: (typing.Dict,),
     TypingUserDefinedMultiple: (typing.Iterable, typing.Container,),
 }
 '''

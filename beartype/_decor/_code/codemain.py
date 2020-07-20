@@ -29,7 +29,7 @@ from beartype._decor._code._nonpep.nonpepcode import (
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.utilhint import die_unless_hint
 from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
-from beartype._util.hint.utilhintpep import is_hint_pep
+from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from inspect import Parameter, Signature
 from typing import Any
 

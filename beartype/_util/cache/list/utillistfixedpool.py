@@ -18,11 +18,28 @@ from beartype._util.cache.list.utillistfixed import FixedList
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GLOBALS                           }....................
+# ....................{ CONSTANTS                         }....................
+SIZE_BIG = 64
+'''
+Reasonably large length to constrain acquired and released fixed lists to.
+
+This constant is intended to be passed to the :func:`acquire_fixed_list`
+function, which then returns a fixed list of this length suitable for use in
+contexts requiring a "reasonably large" list -- where "reasonably" and "large"
+are both subjective but *should* cover 99.9999% of use cases in this codebase.
+'''
+
+# ....................{ SINGLETONS ~ private              }....................
 _fixed_list_pool = KeyPool(pool_item_maker=FixedList)
 '''
 Non-thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching
 previously instantiated :class:`FixedList` instances of various lengths).
+
+Caveats
+----------
+**Avoid accessing this private singleton externally.** Instead, call the public
+:func:`acquire_fixed_list` and :func:`release_fixed_list` functions, which
+efficiently validate both input *and* output to conform to sane expectations.
 '''
 
 # ....................{ FUNCTIONS                         }....................

@@ -185,15 +185,38 @@ class BeartypeDecorHintValuePepException(
     value exceptions.**
 
     Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable whose
-    annotations either violate an annotation-centric PEP (e.g., `PEP 484`) *or*
-    this decorator's implementation of such a PEP.
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more PEP-compliant type hints either violating an
+    annotation-centric PEP (e.g., `PEP 484`_) *or* this decorator's
+    implementation of such a PEP.
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
+
+
+
+class BeartypeDecorHintValuePep560Exception(
+    BeartypeDecorHintValuePepException):
+    '''
+    **Beartype decorator PEP-compliant type hint** `PEP 560_` **exception.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more PEP-compliant type hints (e.g., instances or
+    classes declared by the :mod:`typing` module) either violating `PEP 560`_
+    *or* this decorator's implementation of `PEP 560`_.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    .. _PEP 560:
+       https://www.python.org/dev/peps/pep-0560
+    '''
+
+    pass
+
 
 
 class BeartypeDecorHintValuePepUnsupportedException(
@@ -206,9 +229,6 @@ class BeartypeDecorHintValuePepUnsupportedException(
     annotated with one or more PEP-compliant type hints (e.g., instances or
     classes declared by the stdlib :mod:`typing` module) currently unsupported
     by this decorator.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
