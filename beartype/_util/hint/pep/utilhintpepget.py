@@ -78,7 +78,8 @@ recreated for each recall to that function passed a type variable.
 #implementation is suitable for other needs (e.g.,
 #die_unless_hint_pep_supported()) and should thus probably be preserved as is.
 
-#FIXME: Refactor all callers to unconditionally expect a tuple.
+#FIXME: Rename to merely get_hint_typing_attrs_untypevared_or_none() and
+#refactor to return the empty tuple rather than "None".
 @callable_cached
 def get_hint_typing_attrs_untypevared_or_none(
     # Mandatory parameters.
@@ -88,8 +89,8 @@ def get_hint_typing_attrs_untypevared_or_none(
     hint_label: str = 'Annotation',
 ) -> 'NoneTypeOr[object]':
     '''
-    **Untypevared typing attribute(s)** (i.e., public attribute(s) of the
-    :mod:`typing` module uniquely identifying the passed PEP-compliant type
+    Tuple of all **untypevared typing attributes** (i.e., public attributes of
+    the :mod:`typing` module uniquely identifying the passed PEP-compliant type
     hint defined via the :mod:`typing` module but stripped of all type variable
     parametrization) associated with this class or object if any *or* ``None``
     otherwise.
@@ -130,13 +131,10 @@ def get_hint_typing_attrs_untypevared_or_none(
     NoneTypeOr[object]
         Either:
 
-        * If this object is uniquely identified by:
-
-          * One public attribute of the :mod:`typing` module, that attribute.
-          * One or more public attributes of the :mod:`typing` module, a tuple
-            listing these attributes in the same order (e.g., superclass order
-            for user-defined types).
-
+        * If this object is uniquely identified by one or more public
+          attributes of the :mod:`typing` module, a tuple listing these
+          attributes in the same order (e.g., superclass order for user-defined
+          types).
         * Else, ``None``.
 
     Raises
@@ -417,12 +415,12 @@ def get_hint_typing_attrs_untypevared_or_none(
 def get_hint_direct_typing_attr_untypevared_or_none(
     hint: object) -> 'NoneTypeOr[object]':
     '''
-    **Untypevared direct typing attribute** (i.e., public attribute of the :mod:`typing`
-    module directly identifying the passed `PEP 484`_-compliant class or object
-    defined via the :mod:`typing` module *without* regard to any superclasses
-    of this class or this object's class, stripped of all type variable
-    parametrization) associated with this class or object if any *or* ``None``
-    otherwise.
+    **Untypevared direct typing attribute** (i.e., public attribute of the
+    :mod:`typing` module directly identifying the passed `PEP 484`_-compliant
+    class or object defined via the :mod:`typing` module *without* regard to
+    any superclasses of this class or this object's class, stripped of all type
+    variable parametrization) associated with this class or object if any *or*
+    ``None`` otherwise.
 
     This getter function is *only* intended to be called by the parent
     :func:`_get_hint_typing_attr_or_none` function.
@@ -554,10 +552,10 @@ def get_hint_typing_super_attrs(
     hint_label: str = 'Annotation',
 ) -> tuple:
     '''
-    Tuple of all **:mod:`typing` super attributes** (i.e., public attributes of
-    the :mod:`typing` module originally listed as superclasses of the class of
-    the passed object) of this object if any *or* the empty tuple otherwise
-    (i.e., if that type listed *no* such superclasses).
+    Tuple of all **typing super attributes** (i.e., public attributes of the
+    :mod:`typing` module originally listed as superclasses of the class of the
+    passed PEP-compliant type hint) of this hint if any *or* the empty tuple
+    otherwise.
 
     This getter function is memoized for efficiency.
 
@@ -606,7 +604,12 @@ def get_hint_typing_super_attrs(
     Returns
     ----------
     tuple
-        Tuple of all :mod:`typing` superclasses of this object.
+        Either:
+
+        * If the type of this object has one or more superclasses uniquely
+          identified by one or more public attributes of the :mod:`typing`
+          module, a tuple listing these attributes in the same order.
+        * Else, ``None``.
 
     Raises
     ----------
@@ -679,6 +682,20 @@ def get_hint_typing_super_attrs(
     #    # Initialize this list with the tuple of all direct superclasses of this
     #    # class, which iteration then expands to all transitive superclasses.
     #    hint_orig_mro[:len(hint_bases)] = hint_bases
+    #
+    #    # While the heat death of the universe has been temporarily forestalled...
+    #    while (True):
+    #        # Currently visited superclass of this class.
+    #        hint_base = hint_orig_mro[hint_orig_mro_index_curr]
+    #
+    #        # If this superclass is a typing attribute...
+    #        if is_hint_typing(hint_base):
+    #            ...
+    #        # Else, this superclass is *NOT* a typing attribute. In this case...
+    #        else:
+    #            # Tuple of all direct superclasses originally listed by this class prior to
+    #            # PEP 484 type erasure if any *OR* the empty tuple otherwise.
+    #            hint_base_bases = getattr(hint_base, '__orig_bases__')
 
     # Tuple of all direct superclasses originally listed by this class prior to
     # PEP 484 type erasure if any *OR* the empty tuple otherwise.

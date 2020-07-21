@@ -26,10 +26,10 @@ def test_is_hint_pep() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-    from beartype_test.unit.data.data_hint import NONPEP_HINTS, P484_HINTS
+    from beartype_test.unit.data.data_hint import NONPEP_HINTS, PEP_HINTS
 
     # Assert that various "typing" types are correctly detected.
-    for pep_hint in P484_HINTS:
+    for pep_hint in PEP_HINTS:
         print('PEP hint: {!r}'.format(pep_hint))
         assert is_hint_pep(pep_hint) is True
 

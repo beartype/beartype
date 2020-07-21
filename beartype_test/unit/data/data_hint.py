@@ -16,6 +16,7 @@ This submodule defines various types (including both `PEP 484`_-compliant and
 # ....................{ IMPORTS                           }....................
 import collections, typing
 from beartype import cave
+from collections import namedtuple
 
 # ....................{ TYPE VARIABLES                    }....................
 S = typing.TypeVar('S')
@@ -36,26 +37,7 @@ User-defined :mod:`typing` type alias.
 '''
 
 # ....................{ CLASSES ~ generic                 }....................
-class TypingUserDefined(typing.Dict[str, typing.List[str]]):
-    '''
-    User-defined :mod:`typing` subtype.
-    '''
-
-    pass
-
-
-class TypingUserDefinedMultiple(
-    typing.Iterable[T],
-    typing.Container[T],
-):
-    '''
-    User-defined :mod:`typing` subtype subclassing multiple :mod:`typing`
-    types.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ generic                 }....................
+#FIXME: Rename to "GenericUserDefinedSingle" for disambiguity.
 class GenericUserDefined(typing.Generic[S, T]):
     '''
     User-defined generic :mod:`typing` subtype.
@@ -77,42 +59,137 @@ class GenericUserDefinedMultiple(
 
     pass
 
+# ....................{ CLASSES ~ non-generic             }....................
+#FIXME: Rename to "NongenericUserDefinedSingle" for disambiguity.
+class TypingUserDefined(typing.Dict[str, typing.List[str]]):
+    '''
+    User-defined :mod:`typing` subtype.
+    '''
+
+    pass
+
+
+#FIXME: Rename to "NongenericUserDefinedMultiple" for disambiguity.
+class TypingUserDefinedMultiple(typing.Iterable[T], typing.Container[T],):
+    '''
+    User-defined :mod:`typing` subtype subclassing multiple :mod:`typing`
+    types.
+    '''
+
+    pass
+
 # ....................{ MAPPINGS                          }....................
-P484_HINT_TO_ATTRS = {
-    typing.Any: (typing.Any,),
-    typing.Callable[[], str]: (typing.Callable,),
-    typing.Dict[str, str]: (typing.Dict,),
-    typing.List[float]: (typing.List,),
-    typing.Generator[int, float, str]: (typing.Generator,),
-    typing.NoReturn: (typing.NoReturn,),
-    typing.Tuple[str, int]: (typing.Tuple,),
-    typing.Type[dict]: (typing.Type,),
-    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: (typing.Union,),
-    typing.Union[str, typing.Sequence[int]]: (typing.Union,),
-    GenericUserDefined: (typing.Generic,),
-    GenericUserDefinedMultiple: (
-        typing.Iterable, typing.Container, typing.Generic,),
-    T: (typing.TypeVar,),
-    TypeAlias: (typing.Iterable,),
-    TypingUserDefined: (typing.Dict,),
-    TypingUserDefinedMultiple: (typing.Iterable, typing.Container,),
+PepHintMeta = namedtuple('PepHintMeta', (
+    'attrs_untypevared', 'super_attrs',))
+'''
+**PEP-compliant type hint metadata** (i.e., named tuple whose variables detail
+a PEP-compliant type hint with metadata applicable to testing scenarios).
+
+Attributes
+----------
+attrs_untypevared : tuple
+    Tuple of all **untypevared typing attributes** (i.e., public attributes of
+    the :mod:`typing` module uniquely identifying this PEP-compliant type hint
+    defined via the :mod:`typing` module but stripped of all type variable
+    parametrization).
+super_attrs : tuple
+    Tuple of all **typing super attributes** (i.e., public attributes of
+    the :mod:`typing` module originally listed as superclasses of the class of
+    the passed object).
+'''
+
+
+PEP_HINT_TO_META = {
+    typing.Any: PepHintMeta(
+        attrs_untypevared=(typing.Any,),
+        super_attrs=(),
+    ),
+
+    typing.Callable[[], str]: PepHintMeta(
+        attrs_untypevared=(typing.Callable,),
+        super_attrs=(),
+    ),
+
+    typing.Dict[str, str]: PepHintMeta(
+        attrs_untypevared=(typing.Dict,),
+        super_attrs=(),
+    ),
+
+    typing.List[float]: PepHintMeta(
+        attrs_untypevared=(typing.List,),
+        super_attrs=(),
+    ),
+
+    typing.Generator[int, float, str]: PepHintMeta(
+        attrs_untypevared=(typing.Generator,),
+        super_attrs=(),
+    ),
+
+    typing.NoReturn: PepHintMeta(
+        attrs_untypevared=(typing.NoReturn,),
+        super_attrs=(),
+    ),
+
+    typing.Tuple[str, int]: PepHintMeta(
+        attrs_untypevared=(typing.Tuple,),
+        super_attrs=(),
+    ),
+
+    typing.Type[dict]: PepHintMeta(
+        attrs_untypevared=(typing.Type,),
+        super_attrs=(),
+    ),
+
+    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: PepHintMeta(
+        attrs_untypevared=(typing.Union,),
+        super_attrs=(),
+    ),
+    typing.Union[str, typing.Sequence[int]]: PepHintMeta(
+        attrs_untypevared=(typing.Union,),
+        super_attrs=(),
+    ),
+
+    GenericUserDefined: PepHintMeta(
+        attrs_untypevared=(typing.Generic,),
+        super_attrs=(typing.Generic[S, T],),
+    ),
+    GenericUserDefinedMultiple: PepHintMeta(
+        attrs_untypevared=(typing.Iterable, typing.Container, typing.Generic,),
+        super_attrs=(
+            typing.Iterable[typing.Tuple[S, T]],
+            typing.Container[typing.Tuple[S, T]],
+            typing.Generic[S, T],
+        ),
+    ),
+
+    T: PepHintMeta(
+        attrs_untypevared=(typing.TypeVar,),
+        super_attrs=(),
+    ),
+
+    TypeAlias: PepHintMeta(
+        attrs_untypevared=(typing.Iterable,),
+        super_attrs=(),
+    ),
+
+    TypingUserDefined: PepHintMeta(
+        attrs_untypevared=(typing.Dict,),
+        super_attrs=(typing.Dict[str, typing.List[str]],),
+    ),
+    TypingUserDefinedMultiple: PepHintMeta(
+        attrs_untypevared=(typing.Iterable, typing.Container,),
+        super_attrs=(typing.Iterable[T], typing.Container[T],),
+    ),
 }
 '''
-Dictionary mapping various `PEP 484`_-compliant type hints to a set of all
-public attributes of the :mod:`typing` module uniquely identifying those hints.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
+Dictionary mapping various PEP-compliant type hints to :class:`PepHintMeta`
+instances detailing those hints with metadata applicable to testing scenarios.
 '''
 
 # ....................{ ITERABLES                         }....................
-P484_HINTS = P484_HINT_TO_ATTRS.keys()
+PEP_HINTS = PEP_HINT_TO_META.keys()
 '''
-Iterable of various `PEP 484`_-compliant type hints exercising *all* edge cases
-on behalf of test submodules.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
+Iterable of various PEP-compliant type hints exercising well-known edge cases.
 '''
 
 
@@ -124,5 +201,5 @@ NONPEP_HINTS = (
     cave.NoneTypeOr[cave.AnyType],
 )
 '''
-Tuple of various PEP-noncompliant type hints of interest.
+Tuple of various PEP-noncompliant type hints exercising well-known edge cases.
 '''

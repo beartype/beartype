@@ -160,7 +160,7 @@ def skip_if_python_version_less_than(minimum_version: str):
     # Skip this test if the current Python version is less than this minimum.
     return skip_if(
         _PYTHON_VERSION_TUPLE < minimum_version_tuple,
-        reason='Python {} < {}.'.format(minimum_version, _PYTHON_VERSION_STR))
+        reason='Python {} < {}.'.format(_PYTHON_VERSION_STR, minimum_version))
 
 # ....................{ SKIP ~ py : module                }....................
 def skip_unless_module(module_name: str, minimum_version: str = None):
