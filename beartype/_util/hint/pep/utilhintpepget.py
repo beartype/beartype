@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.roar import BeartypeDecorHintValuePepException
+from beartype.roar import (
+    BeartypeDecorHintValuePepException,
+    BeartypeDecorHintValuePep560Exception,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobj import get_object_type
 from typing import TypeVar
@@ -243,7 +246,7 @@ def get_hint_typing_attrs_untypevared(
     hint : object
         Object to be inspected.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
 
     Returns
@@ -260,16 +263,9 @@ def get_hint_typing_attrs_untypevared(
     Raises
     ----------
     BeartypeDecorHintValuePep560Exception
-        If this object is PEP-compliant but this function erroneously fails to
-        decide the :mod:`typing` attributes associated with this object due to
-        this object being a user-defined class subclassing one or more
-        :mod:`typing` superclasses that either:
-
-        * Fails to define the PEP-specific ``__orig_bases__`` dunder attribute.
-        * Defines that attribute but that attribute describes either:
-
-          * No :mod:`typing` attributes.
-          * :data:`SIZE_BIG` or more :mod:`typing` attributes.
+        If this object is a user-defined class subclassing no :mod:`typing`
+        superclasses (e.g., due to having a ``__orig_bases__`` dunder attribute
+        whose value is the empty tuple).
 
     Examples
     ----------
@@ -365,7 +361,7 @@ def get_hint_typing_attrs_untypevared(
     # If this subclass failed to preserve its original tuple of "typing"
     # superclasses against "type erasure," raise an exception.
     if not hint_typing_superattrs_untypevared:
-        raise BeartypeDecorHintValuePepException(
+        raise BeartypeDecorHintValuePep560Exception(
             '{} PEP type {!r} "typing" superclasses erased.'.format(
                 hint_label, hint))
 
@@ -490,7 +486,7 @@ def get_hint_typing_superattrs(
     hint : object
         Object to be inspected.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
 
     Returns
@@ -691,7 +687,7 @@ def get_hint_typing_superattrs_untypevared(
     hint : object
         Object to be inspected.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
 
     Returns

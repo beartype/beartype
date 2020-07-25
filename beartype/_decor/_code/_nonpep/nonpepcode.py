@@ -43,7 +43,7 @@ def nonpep_code_check_param(
 ) -> str:
     '''
     Python code type-checking the parameter with the passed signature and index
-    annotated with a **PEP-noncompliant type hint**
+    annotated by a **PEP-noncompliant type hint**
     (e.g.,:mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs) of the decorated callable.
 
@@ -60,11 +60,6 @@ def nonpep_code_check_param(
     ----------
     str
         Python code type-checking this parameter against this hint.
-
-    Raises
-    ----------
-    BeartypeDecorHintValueNonPepException
-        If either this parameter or this hint is *not* PEP-noncompliant.
     '''
     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
@@ -78,33 +73,25 @@ def nonpep_code_check_param(
 
     # Human-readable label describing this hint.
     func_arg_hint_label = (
-        '{} parameter "{}" type hint'.format(
+        '{} parameter "{}" non-PEP type hint'.format(
             data.func_name, func_arg.name))
 
-    # Python code template type-checking this parameter if this type of
+    # Python code template type-checking this parameter if this kind of
     # parameter is supported *OR* "None" otherwise.
     func_arg_code_template = PARAM_KIND_TO_NONPEP_CODE.get(func_arg.kind, None)
 
-    # If this type of parameter is unsupported, raise an exception.
+    # If this kind of parameter is unsupported, raise an exception.
     #
-    # Note this edge case should *NEVER* occur, as the parent
-    # _code_check_params() function should have simply ignored this parameter.
+    # Note this edge case should *NEVER* occur, as the parent function should
+    # have simply ignored this parameter.
     if func_arg_code_template is None:
         raise BeartypeDecorHintValueNonPepException(
             '{} kind {!r} unsupported.'.format(
                 func_arg_hint_label, func_arg.kind))
-    # Else, this type of parameter is supported. Ergo, this code is non-"None".
+    # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Python code evaluating to this hint.
     func_arg_type_expr = NONPEP_CODE_PARAM_HINT.format(func_arg.name)
-
-    # Python code evaluating to this parameter's current value when passed
-    # as a keyword.
-    func_arg_value_key_expr = 'kwargs[{!r}]'.format(func_arg.name)
-
-    # Python code evaluating to this parameter's current value when passed
-    # positionally.
-    func_arg_value_pos_expr = 'args[{!r}]'.format(func_arg_index)
 
     # Return Python code...
     return (
@@ -122,8 +109,6 @@ def nonpep_code_check_param(
             arg_name=func_arg.name,
             arg_index=func_arg_index,
             arg_type_expr=func_arg_type_expr,
-            arg_value_key_expr=func_arg_value_key_expr,
-            arg_value_pos_expr=func_arg_value_pos_expr,
         )
     )
 
@@ -143,11 +128,6 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
     ----------
     str
         Python code type-checking this return value against this hint.
-
-    Raises
-    ----------
-    BeartypeDecorHintValueNonPepException
-        If this hint is *not* PEP-noncompliant.
     '''
     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
@@ -156,7 +136,8 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
         '{!r} not @beartype data.'.format(data))
 
     # Human-readable label describing this annotation.
-    func_return_hint_label = '{} return type annotation'.format(data.func_name)
+    func_return_hint_label = '{} return non-PEP type hint'.format(
+        data.func_name)
 
     # String evaluating to this return value's annotated type.
     func_return_type_expr = NONPEP_CODE_RETURN_HINT

@@ -45,7 +45,7 @@ def die_unless_hint_nonpep(
     hint : object
         Object to be validated.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : Optional[bool]
         ``True`` only if this function permits this object to be a string.

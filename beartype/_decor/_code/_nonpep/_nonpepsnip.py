@@ -9,7 +9,7 @@
 This private submodule *only* defines **PEP-noncompliant code snippets** (i.e.,
 triple-quoted pure-Python code constants formatted and concatenated together
 into wrapper functions implementing type-checking for decorated callables
-annotated with PEP-noncompliant type hints).
+annotated by PEP-noncompliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -26,7 +26,15 @@ from inspect import Parameter
 #the common case as well.
 #
 #That said, note that tuple annotations will probably continue to require
-#accessing this function-specific dictionary. So it goes.
+#accessing this function-specific dictionary. So it goes. Ergo, we'll probably
+#want to:
+#
+#* Rename:
+#  * "NONPEP_CODE_PARAM_HINT" to "NONPEP_CODE_PARAM_HINT_TUPLE".
+#  * "NONPEP_CODE_RETURN_HINT" to "NONPEP_CODE_RETURN_HINT_TUPLE".
+#* Define a new:
+#  * "NONPEP_CODE_PARAM_HINT_NONTUPLE" global string constant.
+#  * "NONPEP_CODE_RETURN_HINT_NONTUPLE" global string constant.
 
 # NONPEP_CODE_PARAM_HINT = '__beartype_hints[{!r}]'
 NONPEP_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
@@ -50,15 +58,26 @@ PARAM_KIND_TO_NONPEP_CODE = {
     # by index into the wrapper function's variadic "*args" tuple.
     Parameter.POSITIONAL_OR_KEYWORD: '''
     if not (
-        isinstance({arg_value_pos_expr}, {arg_type_expr})
-        if len(args) > {arg_index} else
-        isinstance({arg_value_key_expr}, {arg_type_expr})
+        isinstance(args[{arg_index}], {arg_type_expr})
+        if {arg_index} < len(args) else
+        isinstance(kwargs[{arg_name!r}], {arg_type_expr})
         if {arg_name!r} in kwargs else True
     ):
             raise __beartype_param_exception(
                 '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim({arg_value_pos_expr} if len(args) > {arg_index} else {arg_value_key_expr}),
+                __beartype_trim(args[{arg_index}] if len(args) > {arg_index} else kwargs[{arg_name!r}]),
                 {arg_type_expr}))
+''',
+
+    # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
+    # lookup in the wrapper function's variadic "**kwargs" dictionary.
+    Parameter.KEYWORD_ONLY: '''
+    if {arg_name!r} in kwargs and not isinstance(
+        kwargs[{arg_name!r}], {arg_type_expr}):
+        raise __beartype_param_exception(
+            '{func_name} keyword-only parameter '
+            '{arg_name}={{}} not a {{!r}}.'.format(
+                __beartype_trim(kwargs[{arg_name!r}]), {arg_type_expr}))
 ''',
 
     # Snippet type-checking any variadic positional pseudo-parameter (e.g.,
@@ -70,17 +89,6 @@ PARAM_KIND_TO_NONPEP_CODE = {
                 '{func_name} positional variadic parameter '
                 '{arg_index} {{}} not a {{!r}}.'.format(
                     __beartype_trim(__beartype_arg), {arg_type_expr}))
-''',
-
-    # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
-    # lookup in the wrapper function's variadic "**kwargs" dictionary.
-    Parameter.KEYWORD_ONLY: '''
-    if {arg_name!r} in kwargs and not isinstance(
-        {arg_value_key_expr}, {arg_type_expr}):
-        raise __beartype_param_exception(
-            '{func_name} keyword-only parameter '
-            '{arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim({arg_value_key_expr}), {arg_type_expr}))
 ''',
 }
 '''

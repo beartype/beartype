@@ -63,7 +63,7 @@ def die_if_hint_pep(
     hint : object
         Object to be validated.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
@@ -108,7 +108,7 @@ def die_unless_hint_pep(
     hint : object
         Object to be validated.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
 
     Raises
@@ -147,7 +147,7 @@ def die_unless_hint_pep_supported(
     hint : object
         Object to be validated.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
 
     Raises
@@ -157,16 +157,6 @@ def die_unless_hint_pep_supported(
     BeartypeDecorHintValuePepUnsupportedException
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintValuePep560Exception
-        If this object is a user-defined class subclassing one or more
-        :mod:`typing` attributes that either:
-
-        * Fail to define the PEP-specific ``__orig_bases__`` dunder
-          attribute.
-        * Defines that attribute but that attribute describes either:
-
-          * No :mod:`typing` attributes.
-          * :data:`SIZE_BIG` or more :mod:`typing` attributes.
     '''
     assert isinstance(hint_label, str), (
         '{!r} not a string.'.format(hint_label))

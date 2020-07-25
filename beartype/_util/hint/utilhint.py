@@ -46,7 +46,7 @@ def die_unless_hint(
     hint : object
         Object to be validated.
     hint_label : Optional[str]
-        Human-readable noun prefixing this object's representation in the
+        Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : Optional[bool]
         ``True`` only if this function permits this object to be a string.
@@ -64,8 +64,12 @@ def die_unless_hint(
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
     BeartypeDecorHintValueNonPepException
-        If this object is hashable but is neither a PEP-compliant nor
-        -noncompliant type hint.
+        If this object is hashable but is neither a PEP- nor PEP-noncompliant
+        type hint.
+    BeartypeDecorHintValuePepUnsupportedException
+        If this object is a PEP-compliant type hint currently unsupported by
+        the :func:`beartype.beartype` decorator.
+
     '''
 
     # Note that the @callable_cached decorator implicitly raises a "TypeError"
