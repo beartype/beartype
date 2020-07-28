@@ -222,6 +222,8 @@ def is_hint_pep(hint: object) -> bool:
     subclasses one or more classes directly defined by the :mod:`typing`
     module).
 
+    This tester is memoized for efficiency.
+
     Motivation
     ----------
     Standard Python types allow callers to test for compliance with protocols,

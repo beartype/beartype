@@ -21,16 +21,29 @@ This private submodule is *not* intended for importation by downstream callers.
    https://www.python.org/dev/peps/pep-0484
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
+#highly non-trivial -- sufficiently so, in fact, that we probably want to do so
+#as cleverly documented in the "_pep563" submodule.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintValuePepException
+from beartype._decor._code._codesnip import CODE_INDENT
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
-    PEP_CODE_HINT,
+    PEP_CODE_CHECK_NONPEP_TYPE,
     PEP_CODE_GET_RETURN,
+    PEP_CODE_PITH_ROOT_NAME,
     PEP_CODE_RETURN_CHECKED,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.utilobj import get_object_name_qualified
+from beartype._decor._typistry import register_typistry_type
+from beartype._util.cache.list.utillistfixedpool import (
+    SIZE_BIG, acquire_fixed_list, release_fixed_list)
+from beartype._util.hint.pep.utilhintpeptest import (
+    die_unless_hint_pep_supported,
+    is_hint_pep,
+)
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -72,37 +85,34 @@ def pep_code_check_param(
     assert isinstance(func_arg_index, int), (
         '{!r} not parameter index.'.format(func_arg_index))
 
+    #FIXME: Generalize this label to embed the kind of parameter as well (e.g.,
+    #"positional-only", "keyword-only", "variadic positional").
     # Human-readable label describing this parameter.
-    func_arg_hint_label = (
+    hint_label = (
         '{} parameter "{}" PEP type hint'.format(
             data.func_name, func_arg.name))
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
-    func_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(
-        func_arg.kind, None)
+    get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_arg.kind, None)
 
     # If this kind of parameter is unsupported, raise an exception.
     #
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
-    if func_arg_code_template is None:
+    if get_arg_code_template is None:
         raise BeartypeDecorHintValuePepException(
-            '{} kind {!r} unsupported.'.format(
-                func_arg_hint_label, func_arg.kind))
+            '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Return Python code to...
     return (
-        # Localize this parameter.
-        func_arg_code_template.format(
-            arg_name=func_arg.name, arg_index=func_arg_index)
+        # Localize this parameter *AND*...
+        get_arg_code_template.format(
+            arg_name=func_arg.name, arg_index=func_arg_index) +
 
         # Type-check this parameter.
-        _pep_code_check(
-            hint=func_arg.annotation,
-            hint_label=func_arg_hint_label,
-        )
+        _pep_code_check(hint=func_arg.annotation, hint_label=hint_label)
     )
 
 
@@ -123,20 +133,22 @@ def pep_code_check_return(data: BeartypeData) -> str:
         Python code type-checking this return value against this hint.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_pep_supported() function). By
-    # design, the caller already guarantees this to be the case.
+    # (e.g., by explicitly calling the die_unless_hint_pep_supported()
+    # function). By design, the caller already guarantees this to be the case.
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
 
     # Human-readable label describing this hint.
-    func_return_hint_label = '{} return PEP type hint'.format(data.func_name)
+    hint_label = '{} return PEP type hint'.format(data.func_name)
 
     # Return Python code to...
     return (
-        # Call the decorated callable and localizing its return value.
+        # Call the decorated callable and localizing its return value *AND*...
         PEP_CODE_GET_RETURN +
 
-        #FIXME: Type-check this localized value here.
+        # Type-check this return value *AND*...
+        _pep_code_check(
+            hint=data.func_sig.return_annotation, hint_label=hint_label) +
 
         # Return this value from this wrapper function.
         PEP_CODE_RETURN_CHECKED
@@ -165,10 +177,148 @@ def _pep_code_check(
     str
         Python code type-checking the previously localized parameter or return
         value against this hint.
+
+    Raises
+    ----------
+    BeartypeDecorHintValuePepException
+        If this object is *not* a PEP-compliant type hint.
+    BeartypeDecorHintValuePepUnsupportedException
+        If this object is a PEP-compliant type hint but is currently
+        unsupported by the :func:`beartype.beartype` decorator.
     '''
+    assert isinstance(hint_label, str), (
+        '"{!r}" not a string.'.format(hint_label))
 
-    # Fully-qualified name of this hint.
-    hint_name = get_object_name_qualified(hint)
+    #FIXME: Implement us up. Raise a placeholder exception for now.
+    from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
+    die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
 
-    # Python expression evaluating to this hint.
-    hint_expr = PEP_CODE_HINT.format(hint_name)
+    # If this hint is currently unsupported, raise an exception.
+    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
+
+    # Python code snippet to be returned.
+    func_code = ''
+
+    # Top-level hint relocalized for disambiguity. For the same reason, delete
+    # the passed parameter whose name is ambiguous within the context of this
+    # code generator.
+    hint_root = hint
+    del hint
+
+    # Currently visited hint.
+    hint_curr = None
+
+    # # Fully-qualified name of the currently visited hint.
+    # hint_curr_name = None
+
+    # Python expression evaluating to the value of the currently visited hint.
+    hint_curr_expr = None
+
+    # Fixed list of all transitive PEP-compliant type hints nested within this
+    # hint (iterated in breadth-first visitation order).
+    hints = acquire_fixed_list(SIZE_BIG)
+
+    # Human-readable label prefixing the representations of child type hints of
+    # this top-level hint in raised exception messages.
+    hint_curr_label = '{} {!r} child '.format(hint_label, hint)
+
+    # Initialize this list with this hint. Since "SIZE_BIG" is guaranteed to be
+    # positive, this assignment is guaranteed to be safe.
+    hints[0] = hint_root
+
+    # 0-based indices of the current and last items of this list.
+    hints_index_curr = 0
+    hints_index_last = 0
+
+    # Code snippet expanding to the current level of indentation appropriate
+    # for the currently visited hint.
+    indent_curr = CODE_INDENT
+
+    # While the heat death of the universe has been temporarily forestalled...
+    while (True):
+        # Currently visited hint.
+        hint_curr = hints[hints_index_curr]
+
+        # If this hint is PEP-compliant...
+        if is_hint_pep(hint_curr):
+            # If this hint is currently unsupported, raise an exception.
+            #
+            # Note the human-readable label prefixing the representations of
+            # child PEP-compliant type hints is unconditionally passed. Since
+            # the top-level hint has already been validated to be supported by
+            # the above call to the same function, this call is guaranteed to
+            # *NEVER* raise an exception for that hint.
+            die_unless_hint_pep_supported(
+                hint=hint_curr, hint_label=hint_curr_label)
+
+            #FIXME: Implement PEP-compliant type checking here.
+
+            #FIXME: Implement breadth-first traversal here.
+            # # Avoid inserting this attribute into the "hint_orig_mro" list.
+            # # Most typing attributes are *NOT* actual classes and those that
+            # # are have no meaningful public superclass. Ergo, iteration
+            # # terminates with typing attributes.
+            # #
+            # # Insert this attribute at the current item of this list.
+            # superattrs[superattrs_index] = hint_base
+            #
+            # # Increment this index to the next item of this list.
+            # superattrs_index += 1
+            #
+            # # If this class subclasses more than the maximum number of "typing"
+            # # attributes supported by this function, raise an exception.
+            # if superattrs_index >= SIZE_BIG:
+            #     raise BeartypeDecorHintValuePep560Exception(
+            #         '{} PEP type {!r} subclasses more than '
+            #         '{} "typing" types.'.format(
+            #             hint_label_pep,
+            #             hint,
+            #             SIZE_BIG))
+
+            #FIXME: Do something like this after dispensing with parent lists.
+            # # Release and nullify this list *AFTER* defining this tuple.
+            # release_fixed_list(superattrs)
+            # superattrs = None
+        # Else, this hint is *NOT* PEP-compliant.
+        #
+        # If this hint is a class...
+        elif isinstance(hint_curr, type):
+            # Python expression evaluating to this type when accessed via the
+            # private "__beartypistry" parameter.
+            hint_curr_expr = register_typistry_type(hint_curr)
+
+            #FIXME: Define "pith_curr_expr" -- probably by prepending the
+            #"hints" fixed list above with a much smaller fixed list containing
+            #a "pith_curr_expr" item (at an arbitrary index) whose value is
+            #"PEP_CODE_PITH_ROOT_NAME".
+
+            # # Append Python code type-checking this pith against this hint.
+            # func_code += PEP_CODE_CHECK_NONPEP_TYPE.format(
+            #     indent_curr=indent_curr,
+            #     pith_curr_expr=pith_curr_expr,
+            #     hint_curr_expr=hint_curr_expr,
+            #     hint_curr_label=hint_curr_label,
+            # )
+        # Else, this hint is neither PEP-compliant *NOR* a class. In this
+        # case, raise an exception. Note that:
+        #
+        # * This should *NEVER* happen, as the "typing" module goes to great
+        #   lengths to validate the integrity of PEP-compliant types at
+        #   declaration time.
+        # * The higher-level die_unless_hint_nonpep() validator is
+        #   intentionally *NOT* called here, as doing so would permit both:
+        #   * PEP-noncompliant forward references, which could admittedly be
+        #     disabled by passing "is_str_valid=False" to that call.
+        #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
+        #     disabled by passing such an option to that call.
+        else:
+            raise BeartypeDecorHintValuePepException(
+                '{} {!r} not PEP-compliant (i.e., '
+                'neither a "typing" object nor a non-"typing" class).'.format(
+                    hint_curr_label, hint_curr))
+
+    # Release this fixed list.
+    release_fixed_list(hints)
+
+    # Return this snippet.
+    return func_code

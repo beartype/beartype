@@ -26,11 +26,11 @@ def test_typistry_pass() -> None:
 
     # Defer heavyweight imports
     from beartype.cave import AnyType, FunctionTypes, NoneType
-    from beartype._decor._typistry import bear_typistry, register_type
+    from beartype._decor._typistry import bear_typistry, register_typistry_type
     from beartype._util.utilobj import get_object_name_qualified
 
     # Assert that types are registrable via a trivial function call.
-    register_type(AnyType)
+    assert isinstance(register_typistry_type(AnyType), str)
     assert bear_typistry.get(get_object_name_qualified(AnyType)) is AnyType
 
     # Assert that types are also registrable via dictionary syntax.
@@ -52,12 +52,13 @@ def test_typistry_fail() -> None:
     from beartype.roar import (
         BeartypeDecorHintValueNonPepException,
         _BeartypeCallBeartypistryException,
+        _BeartypeDecorBeartypistryException,
     )
-    from beartype._decor._typistry import bear_typistry, register_type
+    from beartype._decor._typistry import bear_typistry, register_typistry_type
 
     # Assert that non-types are *NOT* registrable via the same function.
-    with pytest.raises(_BeartypeCallBeartypistryException):
-        register_type((
+    with pytest.raises(_BeartypeDecorBeartypistryException):
+        register_typistry_type((
             'The best lack all conviction,',
             'while the worst',
             'Are full of passionate intensity',

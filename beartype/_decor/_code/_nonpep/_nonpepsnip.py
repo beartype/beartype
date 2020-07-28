@@ -58,37 +58,37 @@ PARAM_KIND_TO_NONPEP_CODE = {
     # by index into the wrapper function's variadic "*args" tuple.
     Parameter.POSITIONAL_OR_KEYWORD: '''
     if not (
-        isinstance(args[{arg_index}], {arg_type_expr})
+        isinstance(args[{arg_index}], {hint_expr})
         if {arg_index} < len(args) else
-        isinstance(kwargs[{arg_name!r}], {arg_type_expr})
+        isinstance(kwargs[{arg_name!r}], {hint_expr})
         if {arg_name!r} in kwargs else True
     ):
-            raise __beartype_param_exception(
+            raise __beartype_nonpep_param_exception(
                 '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
                 __beartype_trim(args[{arg_index}] if len(args) > {arg_index} else kwargs[{arg_name!r}]),
-                {arg_type_expr}))
+                {hint_expr}))
 ''',
 
     # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper function's variadic "**kwargs" dictionary.
     Parameter.KEYWORD_ONLY: '''
     if {arg_name!r} in kwargs and not isinstance(
-        kwargs[{arg_name!r}], {arg_type_expr}):
-        raise __beartype_param_exception(
+        kwargs[{arg_name!r}], {hint_expr}):
+        raise __beartype_nonpep_param_exception(
             '{func_name} keyword-only parameter '
             '{arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim(kwargs[{arg_name!r}]), {arg_type_expr}))
+                __beartype_trim(kwargs[{arg_name!r}]), {hint_expr}))
 ''',
 
     # Snippet type-checking any variadic positional pseudo-parameter (e.g.,
     # "*args") by iteratively checking all relevant parameters.
     Parameter.VAR_POSITIONAL: '''
     for __beartype_arg in args[{arg_index!r}:]:
-        if not isinstance(__beartype_arg, {arg_type_expr}):
-            raise __beartype_param_exception(
+        if not isinstance(__beartype_arg, {hint_expr}):
+            raise __beartype_nonpep_param_exception(
                 '{func_name} positional variadic parameter '
-                '{arg_index} {{}} not a {{!r}}.'.format(
-                    __beartype_trim(__beartype_arg), {arg_type_expr}))
+                '{{}} not a {{!r}}.'.format(
+                    __beartype_trim(__beartype_arg), {hint_expr}))
 ''',
 }
 '''
@@ -100,10 +100,10 @@ type-checking that type.
 # ....................{ CODE ~ return                     }....................
 NONPEP_CODE_RETURN_CHECKED = '''
     __beartype_return_value = __beartype_func(*args, **kwargs)
-    if not isinstance(__beartype_return_value, {return_type_expr}):
-        raise __beartype_return_exception(
+    if not isinstance(__beartype_return_value, {hint_expr}):
+        raise __beartype_nonpep_return_exception(
             '{func_name} return value {{}} not a {{!r}}.'.format(
-                __beartype_trim(__beartype_return_value), {return_type_expr}))
+                __beartype_trim(__beartype_return_value), {hint_expr}))
     return __beartype_return_value
 '''
 '''

@@ -16,37 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Define a new "TypingType" or "Pep484Type" type rooted at either the
-#"typing.TypingMeta" metaclass or "typing._TypingBase" superclass. Obviously,
-#we currently have no means of type-checking metaclasses... but the latter is
-#explicitly private. Ergo, all roads lead to Hell.
-#FIXME: Use this new type in the @beartype decorator to raise exceptions when
-#passed such a type, which we currently do *NOT* support. This is critical, as
-#users *MUST* be explicitly informed of this deficiency.
-#FIXME: *YIKES.* No such public or private type exists -- at least, not across
-#Python major versions. The Python 3.9 implementation of "typing" differs so
-#extremely from the Python 3.6 implementation of "typing", for example, that no
-#common denominator exists. Fortunately, a laughable alternative that actually
-#works exists -- but only because the authors of "typing" are so anally banal
-#that they've prohibited anyone from instantiating or subclassing types defined
-#by "typing". In fact, they even needlessly went a step further and prohibited
-#passing such types to isinstance() or issubclass(), which is just... I don't
-#even. Happily, we can use these absurd constraints against them as follows:
-#
-#* *SAFELY* get the fully-qualified module name for each annotation: e.g.,
-#    # Fully-qualified name of the module declaring either the class of this
-#    # annotation if this annotation is not a class *OR* this annotation
-#    # otherwise (i.e., if this annotation is a class) if this class declares
-#    # this name *OR* a placeholder name otherwise. Since this name is only
-#    # required to test for PEP 484 "typing" types, placeholders are safe.
-#    hint_module_name = getattr(
-#        annotation if isinstance(annotation, ClassType) else type(annotation),
-#        '__module__',
-#        '__beartype_frabjous')
-#* If this name is "typing", raise an exception.
-#
-#Suck it, "typing". Suck it.
-
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely
 #called as is. Detecting coroutines is trivial, thankfully: e.g.,
@@ -294,8 +263,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # callables. Since doing so would uselessly incur a runtime performance penalty
 # for no tangible gain, the current approach is preferable.
 from beartype.roar import (
-    BeartypeCallTypeParamException  as __beartype_param_exception,
-    BeartypeCallTypeReturnException as __beartype_return_exception,
+    BeartypeCallTypeNonPepParamException  as __beartype_nonpep_param_exception,
+    BeartypeCallTypeNonPepReturnException as __beartype_nonpep_return_exception,
+    BeartypeCallTypePepNonPepException as __beartype_pep_nonpep_exception,
 )
 from beartype._util.hint.utilhintnonpep import (
     die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,

@@ -266,7 +266,7 @@ def test_decor_fail_param_call_keyword_unknown() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallTypeParamException
+    from beartype.roar import BeartypeCallTypeNonPepParamException
 
     # Annotated function to be type checked.
     @beartype
@@ -295,7 +295,7 @@ def test_decor_fail_param_call_str() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallTypeParamException
+    from beartype.roar import BeartypeCallTypeNonPepParamException
 
     # Dates between which the Black Legion must have been established.
     ESTABLISHMENT_DATE_MIN = 30000
@@ -309,7 +309,7 @@ def test_decor_fail_param_call_str() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with pytest.raises(BeartypeCallTypeParamException):
+    with pytest.raises(BeartypeCallTypeNonPepParamException):
         black_legion('Horus', 'Abaddon the Despoiler')
 
 
@@ -321,7 +321,7 @@ def test_decor_fail_param_call_nonvariadic() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallTypeParamException
+    from beartype.roar import BeartypeCallTypeNonPepParamException
 
     # Annotated function to be type checked.
     @beartype
@@ -330,7 +330,7 @@ def test_decor_fail_param_call_nonvariadic() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with pytest.raises(BeartypeCallTypeParamException):
+    with pytest.raises(BeartypeCallTypeNonPepParamException):
         eldar('Mother of the Eldar', 100.100)
 
 
@@ -342,7 +342,7 @@ def test_decor_fail_param_call_variadic() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallTypeParamException
+    from beartype.roar import BeartypeCallTypeNonPepParamException
 
     # Annotated function to be type checked.
     @beartype
@@ -352,7 +352,7 @@ def test_decor_fail_param_call_variadic() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with pytest.raises(BeartypeCallTypeParamException):
+    with pytest.raises(BeartypeCallTypeNonPepParamException):
         imperium_of_man(
             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 
@@ -428,7 +428,7 @@ def test_decor_fail_return_call() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallTypeReturnException
+    from beartype.roar import BeartypeCallTypeNonPepReturnException
 
     # Annotated function to be type checked.
     @beartype
@@ -436,7 +436,7 @@ def test_decor_fail_return_call() -> None:
         return 60e6
 
     # Call this function and assert the expected exception.
-    with pytest.raises(BeartypeCallTypeReturnException):
+    with pytest.raises(BeartypeCallTypeNonPepReturnException):
         necron("C'tan", 'Elder Thing')
 
 

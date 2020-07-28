@@ -37,3 +37,9 @@ CODE_RETURN_UNCHECKED = '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
 '''
+
+# ....................{ CODE ~ indent                     }....................
+CODE_INDENT = '    '
+'''
+PEP-agnostic code snippet expanding to a single level of indentation.
+'''

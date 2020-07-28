@@ -26,9 +26,10 @@ from beartype._decor._code._codesnip import (
     CODE_RETURN_UNCHECKED, CODE_SIGNATURE)
 from beartype._decor._code._nonpep.nonpepcode import (
     nonpep_code_check_param, nonpep_code_check_return)
+from beartype._decor._code._pep.pepcode import (
+    pep_code_check_param, pep_code_check_return)
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.utilhint import die_unless_hint
-from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from inspect import Parameter, Signature
 from typing import Any
@@ -282,13 +283,14 @@ def _code_check_params(data: BeartypeData) -> str:
             func_arg.kind in _PARAM_KINDS_IGNORABLE):
             continue
 
-        # If this is a PEP-compliant hint...
+        # If this is a PEP-compliant hint, append Python code type-checking
+        # this parameter against this hint.
         if is_hint_pep(func_arg.annotation):
-            #FIXME: Implement us up. Raise a placeholder exception for now.
-            die_unless_hint_nonpep(
-                hint=func_arg.annotation,
-                hint_label=('{} parameter "{}" type hint'.format(
-                    data.func_name, func_arg.name)))
+            func_code += pep_code_check_param(
+                data=data,
+                func_arg=func_arg,
+                func_arg_index=func_arg_index,
+            )
         # Else, this is a PEP-noncompliant hint. In this case, append Python
         # code type-checking this parameter against this hint.
         else:
@@ -298,7 +300,7 @@ def _code_check_params(data: BeartypeData) -> str:
                 func_arg_index=func_arg_index,
             )
 
-    # Return this Python code.
+    # Return this snippet.
     return func_code
 
 # ....................{ CODERS                            }....................
@@ -341,12 +343,10 @@ def _code_check_return(data: BeartypeData) -> str:
     if func_return_hint in _HINTS_IGNORABLE:
         return CODE_RETURN_UNCHECKED
 
-    # If this is a PEP-compliant hint...
+    # If this is a PEP-compliant hint, return Python code type-checking this
+    # return value against this hint.
     if is_hint_pep(func_return_hint):
-        #FIXME: Implement us up. Raise a placeholder exception for now.
-        die_unless_hint_nonpep(
-            hint=func_return_hint,
-            hint_label=('{} return type hint'.format(data.func_name)))
+        return pep_code_check_return(data)
     # Else, this is a PEP-noncompliant hint. In this case, return Python code
     # type-checking this return value against this hint.
     else:
