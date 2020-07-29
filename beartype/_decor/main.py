@@ -16,6 +16,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Avoid naively passing globals() to the exec() call below. Instead, we
+#should pass a new global constant containing all "__beartype_" global imports:
+#     _GLOBAL_ATTRS = {
+#         '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
+#         '__beartype_nonpep_param_exception': BeartypeCallTypeNonPepParamException,
+#         '__beartype_nonpep_return_exception': BeartypeCallTypeNonPepReturnException,
+#         '__beartype_pep_nonpep_exception': BeartypeCallTypePepNonPepException,
+#         '__beartype_trim': trim_object_repr,
+#     }
+#Then refactor that exec() call to resemble:
+#        exec(func_code, _GLOBAL_ATTRS, local_attrs)
+#Note this is mildly faster as well, as we avoid the globals() call.
+
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely
 #called as is. Detecting coroutines is trivial, thankfully: e.g.,

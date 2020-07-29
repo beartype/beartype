@@ -99,10 +99,10 @@ Note that this snippet intentionally terminates on a line containing only the
 
 # ....................{ CODE ~ check                      }....................
 PEP_CODE_CHECK_NONPEP_TYPE = '''
-    if not (isinstance({pith_curr_expr}, {hint_curr_expr}):
-        raise __beartype_pep_nonpep_exception(
-            '{hint_curr_label} {{}} not a {{!r}}.'.format(
-            __beartype_trim({pith_curr_expr}), {hint_curr_expr}))
+{indent_curr}if not (isinstance({pith_curr_expr}, {hint_curr_expr}):
+{indent_curr}    raise __beartype_pep_nonpep_exception(
+{indent_curr}        '{hint_curr_label} {{}} not a {{!r}}.'.format(
+{indent_curr}        __beartype_trim({pith_curr_expr}), {hint_curr_expr}))
 '''
 '''
 PEP-compliant code snippet type-checking a simple non-:mod:`typing` type (e.g.,

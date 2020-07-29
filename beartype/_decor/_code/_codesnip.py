@@ -39,7 +39,13 @@ type-checking the value returned by that call (if any).
 '''
 
 # ....................{ CODE ~ indent                     }....................
-CODE_INDENT = '    '
+CODE_INDENT_1 = '    '
 '''
 PEP-agnostic code snippet expanding to a single level of indentation.
+'''
+
+
+CODE_INDENT_2 = CODE_INDENT_1*2
+'''
+PEP-agnostic code snippet expanding to two levels of indentation.
 '''

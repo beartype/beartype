@@ -19,7 +19,7 @@ from beartype._util.cache.list.utillistfixed import FixedList
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-SIZE_BIG = 64
+SIZE_BIG = 256
 '''
 Reasonably large length to constrain acquired and released fixed lists to.
 
