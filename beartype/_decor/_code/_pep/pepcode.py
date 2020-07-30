@@ -266,7 +266,7 @@ def _pep_code_check(
     # visited parent hint as a means of efficiently sharing metadata common to
     # all children of that hint).
     hint_meta = acquire_fixed_list(_HINT_META_SIZE)
-    hint_meta[_HINT_META_INDEX_INDENT] = CODE_INDENT_2
+    hint_meta[_HINT_META_INDEX_INDENT   ] = CODE_INDENT_2
     hint_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_NAME
 
     # Python expression evaluating to the value of the currently visited hint.
@@ -391,22 +391,15 @@ def _pep_code_check(
             if hint_curr is object:
                 continue
 
-            # Python expression evaluating to this type when accessed via the
-            # private "__beartypistry" parameter.
-            hint_curr_expr = register_typistry_type(hint_curr)
-
-            #FIXME: Define "pith_curr_expr" -- probably by prepending the
-            #"hints" fixed list above with a much smaller fixed list containing
-            #a "pith_curr_expr" item (at an arbitrary index) whose value is
-            #"PEP_CODE_PITH_ROOT_NAME".
-
             # # Append Python code type-checking this pith against this hint.
-            # func_code += PEP_CODE_CHECK_NONPEP_TYPE.format(
-            #     indent_curr=indent_curr,
-            #     pith_curr_expr=pith_curr_expr,
-            #     hint_curr_expr=hint_curr_expr,
-            #     hint_curr_label=hint_curr_label,
-            # )
+            func_code += PEP_CODE_CHECK_NONPEP_TYPE.format(
+                indent_curr=hint_meta[_HINT_META_INDEX_INDENT],
+                pith_curr_expr=hint_meta[_HINT_META_INDEX_PITH_EXPR],
+                # Python expression evaluating to this hint when accessed via
+                # the private "__beartypistry" parameter.
+                hint_curr_expr=register_typistry_type(hint_curr),
+                hint_curr_label=hint_curr_label,
+            )
         # Else, this hint is neither PEP-compliant *NOR* a class. In this
         # case, raise an exception. Note that:
         #
@@ -422,7 +415,7 @@ def _pep_code_check(
         else:
             raise BeartypeDecorHintValuePepException(
                 '{} {!r} not PEP-compliant (i.e., '
-                'neither a "typing" object nor a non-"typing" class).'.format(
+                'neither "typing" object nor non-"typing" class).'.format(
                     hint_curr_label, hint_curr))
 
     # Release this fixed list.

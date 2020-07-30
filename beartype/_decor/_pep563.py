@@ -51,6 +51,49 @@ This private submodule is *not* intended for importation by downstream callers.
 #  conveniently resolve all PEP-compliant type hints on that callable.
 #
 #Suck it, typing. Suck it.
+#FIXME: The most efficient way I've come up with yet to implement this is:
+#
+#    # ...at the head of _resolve_hints_postponed():
+#
+#    # If one or more postponed annotations on this callable contain one or
+#    # more PEP-compliant unqualified forward references, safely resolve these
+#    # annotations in a PEP-compliant manner.
+#    #
+#    # Note that this test correctly detects both:
+#    #
+#    #     def muh_func(
+#    #         # Top-level PEP-compliant unqualified forward references *AND*...
+#    #         muh_bare_ref: 'MuhTypingType',
+#    #         # Parametrized PEP-compliant unqualified forward references.
+#    #         muh_nest_ref: typing.Tuple['MuhTypingType', ...],
+#    #     ): pass
+#    if any(
+#        "'" in hint_str and '.' not in hint_str
+#        for hint_str in data.func.__annotations__.values()
+#    ):
+#        _resolve_hints_postponed_pep_refs(data)
+#    # Else, no annotations on this callable contain PEP-compliant unqualified
+#    # forward references. In this case, efficiently resolve these annotations
+#    # in a PEP-noncompliant manner.
+#    else:
+#        _resolve_hints_postponed_fast(data)
+#
+#The idea here is that the _resolve_hints_postponed_pep_refs() function will be
+#considerably less efficient than the _resolve_hints_postponed_fast()
+#function, so we only want to call the former when we absolutely must --
+#namely, when we need to resolve a PEP-compliant unqualified forward reference.
+#In all other cases (including the common case in which one or more annotations
+#are PEP-compliant but do *NOT* contain unqualified forward references), the
+#more efficient
+#
+#Then, given the above:
+#
+#* Define a new _resolve_hints_postponed_fast() function whose implementation
+#  resembles that of the current _resolve_hints_postponed() function.
+#* Define a new _resolve_hints_postponed_pep_refs() function whose
+#  implementation resembles that of the algorithm initially documented above.
+#
+#Voila! Insta PEP-compliant forward reference resolution for (mostly) free.
 
 # ....................{ IMPORTS                           }....................
 import __future__, sys

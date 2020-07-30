@@ -23,19 +23,318 @@ from typing import TypeVar
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
-_TYPING_ATTRS_TYPEVAR = (TypeVar,)
+# ....................{ CONSTANTS ~ attrs                 }....................
+_TYPING_ATTRS_ARGLESS_TO_ARGS_EMPTY = {}
 '''
-Tuple containing only the :class:`TypeVar` class.
+Empty dictionary constant.
 
-The memoized :func:`get_hint_typing_attrs_untypevared` function returns
-and thus internally caches this tuple when passed a type variable. To reduce
-space consumption, this tuple is efficiently reused rather than inefficiently
-recreated for each recall to that function passed a type variable.
+The memoized :func:`get_hint_typing_attrs_argless_to_args` function returns and
+thus internally caches this dictionary when passed any object that is *not* a
+PEP-compliant type hint. To reduce space consumption, this dictionary is
+efficiently reused rather than inefficiently recreated for each recall to that
+function passed such a hint.
 '''
 
-# ....................{ GETTERS ~ attr                    }....................
-def get_hint_direct_typing_attr_untypevared(
+
+_TYPING_ATTRS_ARGLESS_TO_ARGS_TYPEVAR = {TypeVar: ()}
+'''
+Dictionary constant mapping only from the :class:`TypeVar` class to the empty
+tuple.
+
+The memoized :func:`get_hint_typing_attrs_argless_to_args` function returns and
+thus internally caches this dictionary when passed a type variable. To reduce
+space consumption, this dictionary is efficiently reused rather than
+inefficiently recreated for each recall to that function passed a type
+variable.
+'''
+
+# ....................{ GETTERS ~ args                    }....................
+@callable_cached
+def get_hint_typing_args(hint: object) -> tuple:
+    '''
+    Tuple of all **typing arguments** (i.e., subscripted objects of the passed
+    PEP-compliant type hint listed by the caller at hint declaration time)
+    if any *or* the empty tuple otherwise.
+
+    This getter function is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This function should always be called in lieu of attempting to directly
+    access the low-level** ``__args__`` **dunder attribute.** Various
+    singleton objects defined by the :mod:`typing` module (e.g.,
+    :attr:`typing.Any`, :attr:`typing.NoReturn`) fail to define this attribute,
+    guaranteeing :class:`AttributeError` exceptions from all general-purpose
+    logic attempting to directly access that attribute.
+
+    Thus this function, which "fills in the gaps" by implementing this
+    laughably critical oversight.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    NoneTypeOr[tuple]
+        Either:
+
+        * If this object defines an ``__args__`` dunder attribute, the value of
+          that attribute.
+        * Else, the empty tuple.
+
+    Examples
+    ----------
+
+        >>> import typing
+        >>> from beartype._util.hint.pep.utilhintpepget import (
+        ...     get_hint_typing_args)
+        >>> get_hint_typing_args(typing.Any)
+        ()
+        >>> get_hint_typing_args(typing.List[int, str, typing.Dict[str, str])
+        (int, str, typing.Dict[str, str])
+    '''
+
+    #FIXME: Consider replacing with this more exacting test:
+    #return getattr(hint, '__args__', ())) if is_hint_pep(hint) else ()
+
+    # Return the value of the "__args__" dunder attribute on this object if
+    # this object defines this attribute *OR* the empty tuple otherwise.
+    return getattr(hint, '__args__', ())
+
+
+@callable_cached
+def get_hint_typing_typevars(hint: object) -> tuple:
+    '''
+    Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
+    instances of the passed PEP-compliant type hint listed by the caller at
+    hint declaration time ignoring duplicates) if any *or* the empty tuple
+    otherwise.
+
+    This getter function is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This function should always be called in lieu of attempting to directly
+    access the low-level** ``__parameters__`` **dunder attribute.** Various
+    singleton objects defined by the :mod:`typing` module (e.g.,
+    :attr:`typing.Any`, :attr:`typing.NoReturn`) fail to define this attribute,
+    guaranteeing :class:`AttributeError` exceptions from all general-purpose
+    logic attempting to directly access that attribute.
+
+    Thus this function, which "fills in the gaps" by implementing this
+    laughably critical oversight.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    NoneTypeOr[tuple]
+        Either:
+
+        * If this object defines a ``__parameters__`` dunder attribute, the
+          value of that attribute.
+        * Else, the empty tuple.
+
+    Examples
+    ----------
+
+        >>> import typing
+        >>> from beartype._util.hint.pep.utilhintpepget import (
+        ...     get_hint_typing_typevars)
+        >>> S = typing.TypeVar('S')
+        >>> T = typing.TypeVar('T')
+        >>> get_hint_typing_typevars(typing.Any)
+        ()
+        >>> get_hint_typing_typevars(typing.List[T, int, S, str, T)
+        (T, S)
+    '''
+
+    #FIXME: Consider replacing with this more exacting test:
+    #return getattr(hint, '__parameters__', ())) if is_hint_pep(hint) else ()
+
+    # Return the value of the "__parameters__" dunder attribute on this object
+    # if this object defines this attribute *OR* the empty tuple otherwise.
+    return getattr(hint, '__parameters__', ())
+
+# ....................{ GETTERS ~ attrs                   }....................
+@callable_cached
+def get_hint_typing_attrs_argless_to_args(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotation',
+) -> dict:
+    '''
+    Dictionary mapping each **argumentless typing attribute** (i.e., public
+    attribute of the :mod:`typing` module uniquely identifying the passed
+    PEP-compliant type hint *sans* arguments) of this hint if any to the tuple
+    of those arguments *or* the empty dictionary otherwise.
+
+    This getter function associates arbitrary objects with corresponding public
+    attributes of the :mod:`typing` module effectively serving as unique
+    pseudo-superclasses of those objects. These attributes are typically *not*
+    actual superclasses, as most actual :mod:`typing` superclasses are private,
+    fragile, and prone to extreme alteration (or even removal) between major
+    Python versions. Nonetheless, these attributes are sufficiently unique to
+    enable callers to distinguish between numerous broad categories of
+    :mod:`typing` behaviour and logic.
+
+    This getter function is memoized for efficiency.
+
+    Motivation
+    ----------
+    Both `PEP 484`_ and the :mod:`typing` module implementing `PEP 484`_ are
+    functionally deficient with respect to their public APIs. Neither provide
+    external callers any means of deciding the types of arbitrary `PEP
+    484`_-compliant classes or objects. For example, there exists no standard
+    means of identifying the parametrized subtype ``typing.List[int]`` as a
+    parametrization of the unparameterized base type ``type.List``.
+
+    Thus this function, which "fills in the gaps" by implementing this
+    laughably critical oversight.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        exception message raised by this function. Defaults to 'Annotation'.
+
+    Returns
+    ----------
+    dict
+        Either:
+
+        * If this object is uniquely identified by one or more public
+          attributes of the :mod:`typing` module, a dictionary mapping these
+          attributes sans arguments to the tuple of those arguments (in method
+          resolution order).
+        * Else, the empty dictionary.
+
+    Raises
+    ----------
+    BeartypeDecorHintValuePep560Exception
+        If this object is a user-defined class subclassing no :mod:`typing`
+        superclasses (e.g., due to having a ``__orig_bases__`` dunder attribute
+        whose value is the empty tuple).
+
+    Examples
+    ----------
+
+        >>> import typing
+        >>> from beartype.cave import AnyType
+        >>> from beartype._util.hint.pep.utilhintpepget import (
+        ...     get_hint_typing_attrs_argless_to_args)
+        >>> get_hint_typing_attrs_argless_to_args(AnyType)
+        {}
+        >>> get_hint_typing_attrs_argless_to_args(typing.Any)
+        {typing.Any: ())
+        >>> get_hint_typing_attrs_argless_to_args(typing.Union[str, typing.Sequence[int]])
+        {typing.Union: (str, typing.Sequence[int])}
+        >>> get_hint_typing_attrs_argless_to_args(typing.Sequence[int])
+        {typing.Sequence: (int,)}
+        >>> T = typing.TypeVar('T')
+        >>> get_hint_typing_attrs_argless_to_args(T)
+        {typing.TypeVar: ()}
+        >>> class Genericity(typing.Generic[T]): pass
+        >>> get_hint_typing_attrs_argless_to_args(Genericity)
+        {typing.Generic: (T,)}
+        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
+        >>> get_hint_typing_attrs_argless_to_args(Duplicity)
+        {typing.Iterable: (T,), typing.Container: (T,)}
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+    assert isinstance(hint_label, str), (
+        '{!r} not a string.'.format(hint_label))
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+
+    # If this hint is *NOT* PEP-compliant, return an empty dictionary constant.
+    #
+    # Note that a global constant rather than new empty dictionary is returned.
+    # Why? Since dictionaries are mutable (unlike tuples), the empty dictionary
+    # (unlike the empty tuple) is *NOT* a singleton object: e.g.,
+    #     >>> () is ()
+    #     True
+    #     >>> {} is {}
+    #     False
+    # This common case thus efficiently recaches the same singleton object for
+    # such hints, reducing the space costs of memoization.
+    if not is_hint_pep(hint):
+        return _TYPING_ATTRS_ARGLESS_TO_ARGS_EMPTY
+    # Else, this hint is PEP-compliant.
+    #
+    # Else if this hint is a type variable, return a dictionary constant
+    # mapping from the common type of all such variables. Note that:
+    #
+    # * This condition is tested for first due to the efficiency of this test
+    #   rather than due to an expectation of type variables being more common
+    #   than other PEP 484 objects and types.
+    # * Unlike most PEP 484 objects and types, the TypeVar.__repr__() dunder
+    #   method insanely returns a string prefixed by "~" rather than "typing.".
+    #   Notably:
+    #      >>> from typing import TypeVar
+    #      >>> repr(TypeVar('T'))
+    #      ~T
+    #   Of course, that brazenly violates Pythonic standards. __repr__() is
+    #   generally assumed to return an evaluatable Python expression that,
+    #   when evaluated, creates an object equal to the original object.
+    #   Instead, this API was designed by incorrigible monkeys who profoundly
+    #   hate the Python language. This is why we can't have sane things.
+    elif isinstance(hint, TypeVar):
+        return _TYPING_ATTRS_ARGLESS_TO_ARGS_TYPEVAR
+    # Else, this hint is PEP-compliant but *NOT* a type variable.
+
+    # Direct argumentless typing attribute associated with this hint if this
+    # hint is directly defined by the "typing" module *OR* "None" otherwise.
+    hint_direct_typing_attr_argless = (
+        _get_hint_direct_typing_attr_argless_or_none(hint))
+
+    # If this attribute exists, return a dictionary mapping from only this
+    # attribute to the tuple of arguments specified on this hint.
+    #
+    # Doing so incurs a memoization space cost that could technically be
+    # avoided by directly returning this attribute instead. Since doing so
+    # would substantially increase implementation complexity (and thus
+    # maintenance cost) in downstream callers, we accept this cost as the
+    # unavoidable price of produce a sane API. *shrug*
+    if hint_direct_typing_attr_argless is not None:
+        return {hint_direct_typing_attr_argless: get_hint_typing_args(hint)}
+    # Else, no such attribute exists. In this case, this hint is *NOT* directly
+    # defined by the "typing" module. Since this hint is PEP-compliant, this
+    # hint *MUST* necessarily be a user-defined class subclassing one or more
+    # "typing" superclasses (e.g., "class CustomList(typing.List[int])").
+
+    # Dictionary mapping each argumentless typing super attribute of this
+    # subclass if any to the tuple of arguments specified on that attribute
+    # *OR* the empty dictionary otherwise.
+    hint_typing_superattrs_untypevared = (
+        _get_hint_typing_superattrs_argless_to_args(
+            hint=hint, hint_label=hint_label))
+
+    # If this subclass failed to preserve its original tuple of "typing"
+    # superclasses against "type erasure," raise an exception.
+    if not hint_typing_superattrs_untypevared:
+        raise BeartypeDecorHintValuePep560Exception(
+            '{} PEP type {!r} "typing" superclasses erased.'.format(
+                hint_label, hint))
+
+    # Else, this subclass preserved this tuple against type erasure. Return
+    # this tuple as is.
+    return hint_typing_superattrs_untypevared
+
+# ....................{ PRIVATE ~ getters : attr          }....................
+def _get_hint_direct_typing_attr_argless(
     # Mandatory parameters.
     hint: object,
 
@@ -43,11 +342,11 @@ def get_hint_direct_typing_attr_untypevared(
     hint_label: str = 'Annotation',
 ) -> 'NoneTypeOr[object]':
     '''
-    **Untypevared direct typing attribute** (i.e., public attribute of the
+    **Argumentless direct typing attribute** (i.e., public attribute of the
     :mod:`typing` module directly identifying the passed PEP-compliant type
-    hint whose type is defined by that module, stripped of all type variable
-    parametrization and ignoring any superclasses of this object's class)
-    associated with this object if any *or* raise an exception otherwise.
+    hint whose type is defined by that module sans arguments and ignoring
+    any superclasses of this object's class) associated with this hint if any
+    *or* raise an exception otherwise.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -60,7 +359,7 @@ def get_hint_direct_typing_attr_untypevared(
 
     Returns
     ----------
-    Untypevared direct typing attribute associated with this object.
+    Argumentless direct typing attribute associated with this object.
 
     Raises
     ----------
@@ -71,32 +370,30 @@ def get_hint_direct_typing_attr_untypevared(
     assert isinstance(hint_label, str), (
         '{!r} not a string.'.format(hint_label))
 
-    # Untypevared direct typing attribute associated with this object if any
+    # Argumentless direct typing attribute associated with this object if any
     # *OR* "None" otherwise.
-    hint_direct_typing_attr_untypevared = (
-        get_hint_direct_typing_attr_untypevared_or_none(hint))
+    hint_direct_typing_attr_argless = (
+        _get_hint_direct_typing_attr_argless_or_none(hint))
 
-    # If this object is associated with such an attribute, return this
-    # attribute as is.
-    if hint_direct_typing_attr_untypevared:
-        return hint_direct_typing_attr_untypevared
+    # If this attribute exists, return this attribute.
+    if hint_direct_typing_attr_argless is not None:
+        return hint_direct_typing_attr_argless
 
-    # Else, this object is unassociated with such an attribute. In this case,
-    # raise an exception.
+    # Else, no such attribute exists. In this case, raise an exception.
     raise BeartypeDecorHintValuePepException(
         '{} PEP type {!r} associated with no "typing" type.'.format(
             hint_label, hint))
 
 
 @callable_cached
-def get_hint_direct_typing_attr_untypevared_or_none(
+def _get_hint_direct_typing_attr_argless_or_none(
     hint: object) -> 'NoneTypeOr[object]':
     '''
-    **Untypevared direct typing attribute** (i.e., public attribute of the
+    **Argumentless direct typing attribute** (i.e., public attribute of the
     :mod:`typing` module directly identifying the passed PEP-compliant type
-    hint whose type is defined by that module, stripped of all type variable
-    parametrization and ignoring any superclasses of this object's class)
-    associated with this object if any *or* ``None`` otherwise.
+    hint whose type is defined by that module sans arguments and ignoring any
+    superclasses of this object's class) associated with this hint if any *or*
+    ``None`` otherwise.
 
     This getter is memoized for efficiency.
 
@@ -111,8 +408,17 @@ def get_hint_direct_typing_attr_untypevared_or_none(
         Either:
 
         * If this object is directly identified by a public attribute of the
-          :mod:`typing` module, that attribute.
+          :mod:`typing` module, that attribute sans arguments.
         * Else, ``None``.
+
+    Raises
+    ----------
+    AttributeError
+        If this object's representation is prefixed by the substring
+        ``typing.``, but the remainder of that representation up to but *not*
+        including the first "[" character in that representation (e.g.,
+        ``Dict`` for the hint ``typing.Dict[str, Tuple[int, ...]]``) is *not*
+        an attribute of the :mod:`typing` module.
     '''
 
     # Machine-readable string representation of this hint also serving as the
@@ -162,216 +468,9 @@ def get_hint_direct_typing_attr_untypevared_or_none(
     # Ergo, this hint is unassociated with a public "typing" attribute.
     return None
 
-# ....................{ GETTERS ~ attrs                   }....................
-#FIXME: To be genuinely useful during our breadth-first traversal of
-#PEP-compliant type hints, this getter should probably be mildly refactored to
-#return a dictionary mapping from each typing attribute to the original
-#parametrized "typing" superclass associated with that attribute if the type
-#hint is a user-defined subclass of one or more "typing" superclasses: e.g.,
-#
-#        >>> import typing
-#        >>> from beartype._util.hint.pep.utilhintpeptest import get_hint_typing_attrs_untypevared
-#        >>> T = typing.TypeVar('T')
-#        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-#        # This is what this function currently returns.
-#        >>> get_hint_typing_attrs_untypevared(Duplicity)
-#        (typing.Iterable, typing.Container)
-#        # This is what this function should return instead.
-#        >>> get_hint_typing_attrs_untypevared(Duplicity)
-#        {typing.Iterable: typing.Iterable[T],
-#         typing.Container: typing.Container[T]}
-#
-#The latter is strongly preferable, as it preserves essential metadata required
-#for code generation during breadth-first traversals.
-#FIXME: Actually, we probably want to also refactor this getter to return a
-#2-dictionary "{hint_typing_attr: hint}" when passed a user-defined class
-#subclassing exactly one "typing" superclass: e.g.,
-#
-#        >>> import collections.abc, typing
-#        >>> from beartype._util.hint.pep.utilhintpeptest import get_hint_typing_attrs_untypevared
-#        >>> T = typing.TypeVar('T')
-#        >>> class Genericity(collections.abc.Sized, typing.Generic[T]): pass
-#        # This is what this function currently returns.
-#        >>> get_hint_typing_attrs_untypevared(Genericity)
-#        typing.Generic
-#        # This is what this function should return instead.
-#        >>> get_hint_typing_attrs_untypevared(Duplicity)
-#        {typing.Generic: typing.Generic[T]}
-#FIXME: Actually, rather than heavily refactor this function, we probably just
-#want to copy-and-paste this function's implementation modified to suite the
-#specific needs of our breadth-first traversal. Maybe. This function's current
-#implementation is suitable for other needs (e.g.,
-#die_unless_hint_pep_supported()) and should thus probably be preserved as is.
-
+# ....................{ PRIVATE ~ getters : super         }....................
 @callable_cached
-def get_hint_typing_attrs_untypevared(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    hint_label: str = 'Annotation',
-) -> 'NoneTypeOr[tuple]':
-    '''
-    Tuple of all **untypevared typing attributes** (i.e., public attributes of
-    the :mod:`typing` module uniquely identifying the passed PEP-compliant type
-    hint defined via the :mod:`typing` module but stripped of all type variable
-    parametrization) associated with this class or object if any *or* the empty
-    tuple otherwise.
-
-    This getter function associates arbitrary PEP-compliant classes and objects
-    with corresponding public attributes of the :mod:`typing` module, which
-    effectively serve as unique pseudo-superclasses of those classes and
-    objects. These attributes are typically *not* superclasses, as most actual
-    :mod:`typing` superclasses are private, fragile, and prone to extreme
-    alteration or even removal between major Python versions. Nonetheless,
-    these attributes are sufficiently unique to enable callers to distinguish
-    between numerous broad categories of :mod:`typing` behaviour and logic.
-
-    This getter function is memoized for efficiency.
-
-    Motivation
-    ----------
-    Both `PEP 484`_ and the :mod:`typing` module implementing `PEP 484`_ are
-    functionally deficient with respect to their public APIs. Neither provide
-    external callers any means of deciding the types of arbitrary `PEP
-    484`_-compliant classes or objects. For example, there exists no standard
-    means of identifying the parametrized subtype ``typing.List[int]`` as a
-    parametrization of the unparameterized base type ``type.List``.
-
-    Thus this function, which "fills in the gaps" by implementing this
-    laughably critical oversight.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
-
-    Returns
-    ----------
-    NoneTypeOr[tuple]
-        Either:
-
-        * If this object is uniquely identified by one or more public
-          attributes of the :mod:`typing` module, a non-empty tuple of these
-          attributes in the same order (e.g., superclass order for user-defined
-          types).
-        * Else, the empty tuple.
-
-    Raises
-    ----------
-    BeartypeDecorHintValuePep560Exception
-        If this object is a user-defined class subclassing no :mod:`typing`
-        superclasses (e.g., due to having a ``__orig_bases__`` dunder attribute
-        whose value is the empty tuple).
-
-    Examples
-    ----------
-
-        >>> import typing
-        >>> from beartype.cave import AnyType
-        >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     get_hint_typing_attrs_untypevared)
-        >>> get_hint_typing_attrs_untypevared(AnyType)
-        None
-        >>> get_hint_typing_attrs_untypevared(typing.Any)
-        (typing.Any,)
-        >>> get_hint_typing_attrs_untypevared(typing.Union[str, typing.Sequence[int]])
-        (typing.Union,)
-        >>> get_hint_typing_attrs_untypevared(typing.Sequence[int])
-        (typing.Sequence,)
-        >>> T = typing.TypeVar('T')
-        >>> get_hint_typing_attrs_untypevared(T)
-        (typing.TypeVar,)
-        >>> class Genericity(typing.Generic[T]): pass
-        >>> get_hint_typing_attrs_untypevared(Genericity)
-        (typing.Generic,)
-        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_typing_attrs_untypevared(Duplicity)
-        (typing.Iterable, typing.Container)
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    '''
-    assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-
-    # If this hint is *NOT* PEP-compliant, return the empty tuple. Note that
-    # the empty tuple is guaranteed to be a singleton object: e.g.,
-    #     >>> () is ()
-    #     True
-    # This common case thus efficiently recaches the same singleton object for
-    # such hints, reducing the space costs of memoization.
-    if not is_hint_pep(hint):
-        return ()
-    # Else, this hint is PEP-compliant.
-
-    # If this hint is a type variable, return a tuple containing only the type
-    # of all such variables. Note that:
-    #
-    # * This condition is tested for first due to the efficiency of this test
-    #   rather than due to an expectation of type variables being more common
-    #   than other PEP 484 objects and types.
-    # * Unlike most PEP 484 objects and types, the TypeVar.__repr__() dunder
-    #   method insanely returns a string prefixed by "~" rather than "typing.".
-    #   Notably:
-    #      >>> from typing import TypeVar
-    #      >>> repr(TypeVar('T'))
-    #      ~T
-    #   Of course, that brazenly violates Pythonic standards. __repr__() is
-    #   generally assumed to return an evaluatable Python expression that,
-    #   when evaluated, creates an object equal to the original object.
-    #   Instead, this API was designed by incorrigible monkeys who profoundly
-    #   hate the Python language. This is why we can't have sane things.
-    if isinstance(hint, TypeVar):
-        return _TYPING_ATTRS_TYPEVAR
-    # Else, this hint is *NOT* a type variable.
-
-    # Direct typing attribute associated with this hint if this hint is
-    # directly defined by the "typing" module *OR* "None" otherwise.
-    hint_direct_typing_attr = get_hint_direct_typing_attr_untypevared_or_none(
-        hint)
-
-    # If this attribute exists, return the trivial 1-tuple containing only this
-    # attribute.
-    #
-    # Doing so incurs a memoization space cost that could technically be
-    # avoided by directly returning this attribute instead. Since doing so
-    # would substantially increase implementation complexity (and thus
-    # maintenance cost) in downstream callers, we accept this cost as the
-    # unavoidable price of produce a sane API. *shrug*
-    if hint_direct_typing_attr:
-        return (hint_direct_typing_attr,)
-    # Else, no such attribute exists. In this case, this hint is *NOT* directly
-    # defined by the "typing" module. Since this hint is PEP-compliant, this
-    # hint *MUST* necessarily be a user-defined class subclassing one or more
-    # "typing" superclasses (e.g., "class CustomList(typing.List[int])").
-
-    # Tuple of all untypevared typing super attributes of this subclass if any
-    # *OR* the empty tuple otherwise.
-    hint_typing_superattrs_untypevared = (
-        get_hint_typing_superattrs_untypevared(
-            hint=hint, hint_label=hint_label))
-
-    # If this subclass failed to preserve its original tuple of "typing"
-    # superclasses against "type erasure," raise an exception.
-    if not hint_typing_superattrs_untypevared:
-        raise BeartypeDecorHintValuePep560Exception(
-            '{} PEP type {!r} "typing" superclasses erased.'.format(
-                hint_label, hint))
-
-    # Else, this subclass preserved this tuple against type erasure. Return
-    # this tuple as is.
-    return hint_typing_superattrs_untypevared
-
-# ....................{ GETTERS ~ super                   }....................
-@callable_cached
-def get_hint_typing_superattrs(
+def _get_hint_typing_superattrs(
     # Mandatory parameters.
     hint: object,
 
@@ -476,7 +575,7 @@ def get_hint_typing_superattrs(
     types. Most true :mod:`typing` superclasses are private, fragile, and prone
     to alteration or even removal between major Python versions. Ergo, this
     function is intentionally not named ``get_hint_typing_superclasses`` or
-    ``get_hint_typing_superattrs``.
+    ``_get_hint_typing_superattrs``.
 
     **Tuples returned by this function may contain types parametrized by one or
     more type variables** (e.g., ``(typing.Container[T], typing.Sized[T])``).
@@ -504,12 +603,12 @@ def get_hint_typing_superattrs(
 
         >>> import typing
         >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     get_hint_typing_superattrs)
+        ...     _get_hint_typing_superattrs)
         >>> T = typing.TypeVar('T')
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_typing_superattrs(typing.Union[str, typing.Sequence[int]])
+        >>> _get_hint_typing_superattrs(typing.Union[str, typing.Sequence[int]])
         ()
-        >>> get_hint_typing_superattrs(Duplicity)
+        >>> _get_hint_typing_superattrs(Duplicity)
         (typing.Iterable[~T], typing.Container[~T])
 
     .. _PEP 484:
@@ -666,19 +765,19 @@ def get_hint_typing_superattrs(
 
 
 @callable_cached
-def get_hint_typing_superattrs_untypevared(
+def _get_hint_typing_superattrs_argless_to_args(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
     hint_label: str = 'Annotation',
-) -> tuple:
+) -> dict:
     '''
-    Tuple of all **untypevared typing super attributes** (i.e., public
-    attributes of the :mod:`typing` module originally listed as superclasses of
-    the class of the passed PEP-compliant type hint, stripped of all type
-    variable parametrization) of this hint if any *or* the empty tuple
-    otherwise.
+    Dictionary mapping each **argumentless typing super attribute** (i.e.,
+    public attribute of the :mod:`typing` module originally listed as a
+    superclass of the class of the passed PEP-compliant type hint *sans*
+    arguments) of this hint if any to the tuple of those arguments *or* the
+    empty dictionary otherwise.
 
     This getter function is memoized for efficiency.
 
@@ -692,33 +791,35 @@ def get_hint_typing_superattrs_untypevared(
 
     Returns
     ----------
-    tuple
+    dict
         Either:
 
         * If the type of this object subclasses one or more superclasses
           uniquely identified by public attributes of the :mod:`typing` module,
-          a tuple listing these attributes stripped of all type variable
-          parametrization (in method resolution order).
-        * Else, the empty tuple.
+          a dictionary mapping these attributes sans arguments to the tuple of
+          those arguments (in method resolution order).
+        * Else, the empty dictionary.
 
     See Also
     ----------
-    :func:`get_hint_typing_superattrs`
+    :func:`_get_hint_typing_superattrs`
         Further details.
     '''
 
     # Tuple of all possibly parametrized typing super attributes of this object
     # if any *OR* the empty tuple otherwise.
-    hint_typing_superattrs = get_hint_typing_superattrs(hint)
+    hint_typing_superattrs = _get_hint_typing_superattrs(hint)
 
     # Return either...
     return (
-        # If this object has *NO* such attributes, the empty tuple;
-        () if not hint_typing_superattrs else
-        # Else the non-empty tuple of these attributes stripped of all type
-        # variable parametrization.
-        tuple(
-            get_hint_direct_typing_attr_untypevared(hint_typing_superattr)
+        # If this object has *NO* such attributes, the empty dictionary;
+        {} if not hint_typing_superattrs else
+        # Else, the non-empty dictionary mapping...
+        {
+            # Each such attribute sans arguments to...
+            _get_hint_direct_typing_attr_argless(hint_typing_superattr): (
+                # The tuple of those arguments.
+                get_hint_typing_args(hint_typing_superattr))
             for hint_typing_superattr in hint_typing_superattrs
-        )
+        }
     )

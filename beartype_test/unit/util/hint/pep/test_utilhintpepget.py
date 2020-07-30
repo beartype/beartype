@@ -15,79 +15,91 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# import typing
 
 # ....................{ TESTS                             }....................
-def test_get_hint_typing_attrs_untypevared() -> None:
+def test_get_hint_typing_attrs_argless_to_args() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_typing_attrs_untypevared`
+    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_typing_attrs_argless_to_args`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_attrs_untypevared)
+        get_hint_typing_attrs_argless_to_args)
     from beartype_test.unit.data.data_hint import (
-        NONPEP_HINTS, PEP_HINT_TO_META,)
+        S, T, NONPEP_HINTS, PEP_HINT_TO_META,)
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
         print('PEP hint: {!r}'.format(pep_hint))
-        assert get_hint_typing_attrs_untypevared(pep_hint) == (
-            pep_hint_meta.attrs_untypevared)
+        assert get_hint_typing_attrs_argless_to_args(pep_hint) == (
+            pep_hint_meta.attrs_argless_to_args)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert get_hint_typing_attrs_untypevared(nonpep_hint) is ()
+        assert get_hint_typing_attrs_argless_to_args(nonpep_hint) == {}
 
-# ....................{ TESTS ~ superattrs                }....................
-def get_hint_typing_superattrs() -> None:
+    # Assert that this getter returns the same non-empty dictionary for two
+    # arbitrarily different "typing" type variables.
+    assert (
+        get_hint_typing_attrs_argless_to_args(S) is
+        get_hint_typing_attrs_argless_to_args(T))
+
+    # Assert that this getter returns the same empty dictionary for two
+    # arbitrarily different non-"typing" types.
+    assert (
+        get_hint_typing_attrs_argless_to_args(NONPEP_HINTS[0]) is
+        get_hint_typing_attrs_argless_to_args(NONPEP_HINTS[1]))
+
+# ....................{ TESTS ~ super                     }....................
+def test_get_hint_typing_superattrs() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_typing_superattrs`
+    :func:`beartype._util.hint.pep.utilhintpepget._get_hint_typing_superattrs`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_superattrs)
+        _get_hint_typing_superattrs)
     from beartype_test.unit.data.data_hint import (
         NONPEP_HINTS, PEP_HINT_TO_META,)
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
         print('PEP hint: {!r}'.format(pep_hint))
-        assert get_hint_typing_superattrs(pep_hint) == (
+        assert _get_hint_typing_superattrs(pep_hint) == (
             pep_hint_meta.superattrs)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert get_hint_typing_superattrs(nonpep_hint) == ()
+        assert _get_hint_typing_superattrs(nonpep_hint) == ()
 
 
-def get_hint_typing_superattrs_untypevared() -> None:
+def test_get_hint_typing_superattrs_argless_to_args() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_typing_superattrs_untypevared`
+    :func:`beartype._util.hint.pep.utilhintpepget._get_hint_typing_superattrs_argless_to_args`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_superattrs_untypevared)
+        _get_hint_typing_superattrs_argless_to_args)
     from beartype_test.unit.data.data_hint import (
         NONPEP_HINTS, PEP_HINT_TO_META,)
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
         print('PEP hint: {!r}'.format(pep_hint))
-        assert get_hint_typing_superattrs_untypevared(pep_hint) == (
-            pep_hint_meta.superattrs_untypevared)
+        assert _get_hint_typing_superattrs_argless_to_args(pep_hint) == (
+            pep_hint_meta.superattrs_argless_to_args)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        assert get_hint_typing_superattrs_untypevared(nonpep_hint) == ()
+        assert _get_hint_typing_superattrs_argless_to_args(
+            nonpep_hint) == {}

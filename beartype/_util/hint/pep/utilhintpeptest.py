@@ -26,21 +26,20 @@ from typing import Any, TypeVar, Union
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS ~ supported             }....................
-_TYPING_ATTRS_SUPPORTED = frozenset((
+_TYPING_ATTRS_ARGLESS_SUPPORTED = frozenset((
     Any,
     Union,
 ))
 '''
-Frozen set of all **typing attributes** (i.e., public attributes of the
-:mod:`typing` module uniquely identifying PEP-compliant type hints defined via
-the :mod:`typing` module) supported by the :func:`beartype.beartype` decorator.
+Frozen set of all **argumentless typing attributes** (i.e., public attributes
+of the :mod:`typing` module uniquely identifying PEP-compliant type hints
+sans arguments) supported by the :func:`beartype.beartype` decorator.
 
 This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_typing_attrs_untypevared` getter function.
+:func:`get_hint_typing_attrs_argless_to_args` getter function.
 '''
 
 # ....................{ EXCEPTIONS                        }....................
-#FIXME: Unit test us up.
 def die_if_hint_pep(
     # Mandatory parameters.
     hint: object,
@@ -86,7 +85,6 @@ def die_if_hint_pep(
             '{} {!r} is PEP-compliant.'.format(hint_label, hint))
 
 
-#FIXME: Unit test us up.
 def die_unless_hint_pep(
     # Mandatory parameters.
     hint: object,
@@ -163,22 +161,24 @@ def die_unless_hint_pep_supported(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_attrs_untypevared)
+        get_hint_typing_attrs_argless_to_args)
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
     # Else, this hint is PEP-compliant.
 
-    # Public attribute(s) of the "typing" module uniquely identifying this hint
-    # if any *OR* "None" otherwise.
-    hint_typing_attrs = get_hint_typing_attrs_untypevared(hint)
+    # Dictionary mapping each argumentless public attribute of the "typing"
+    # module uniquely identifying this hint if any to the tuple of those
+    # arguments *OR* "None" otherwise.
+    hint_typing_attrs_argless_to_args = get_hint_typing_attrs_argless_to_args(
+        hint)
 
     # If no such attributes exists, raise an exception.
     #
     # Note that this should *NEVER* happen. By definition, *ALL* PEP-compliant
     # hints are uniquely identified by one or public attribute(s) of the
     # "typing" module. Nonetheless, this is the real world. Damn you, Murphy!
-    if not hint_typing_attrs:
+    if not hint_typing_attrs_argless_to_args:
         raise BeartypeDecorHintValuePepUnsupportedException(
             '{} PEP type {!r} unassociated with "typing" types.'.format(
                 hint_label, hint))
@@ -187,23 +187,24 @@ def die_unless_hint_pep_supported(
     # Template for unsupported exception messages raised by this function.
     EXCEPTION_MESSAGE_TEMPLATE = '{} currently unsupported by @beartype.'
 
-    # For each such attribute...
-    for hint_typing_attr in hint_typing_attrs:
-        # If this attribute is unsupported, raise an exception.
-        if hint_typing_attr not in _TYPING_ATTRS_SUPPORTED:
-            raise BeartypeDecorHintValuePepUnsupportedException(
-                EXCEPTION_MESSAGE_TEMPLATE.format(
-                    '{} PEP type {!r} supertype {!r}'.format(
-                        hint_label, hint, hint_typing_attr)))
-
+    #FIXME: Remove *AFTER* implementing support for type variables.
     # If this hint is parametrized by one or more type variables, raise an
     # exception. Type variables require non-trivial decorator support that has
     # yet to be fully implemented.
     if is_hint_typing_typevared(hint):
         raise BeartypeDecorHintValuePepUnsupportedException(
             EXCEPTION_MESSAGE_TEMPLATE.format(
-                '{} variable-parametrized generic PEP type {!r}'.format(
+                '{} "TypeVar"-parametrized generic PEP type {!r}'.format(
                     hint_label, hint)))
+
+    # For each argumentless typing attribute associated with this hint...
+    for hint_typing_attr_argless in hint_typing_attrs_argless_to_args.keys():
+        # If this attribute is unsupported, raise an exception.
+        if hint_typing_attr_argless not in _TYPING_ATTRS_ARGLESS_SUPPORTED:
+            raise BeartypeDecorHintValuePepUnsupportedException(
+                EXCEPTION_MESSAGE_TEMPLATE.format(
+                    '{} PEP type {!r} supertype {!r}'.format(
+                        hint_label, hint, hint_typing_attr_argless)))
     # Else, this hint is fully supported. Phew!
 
 # ....................{ TESTERS ~ private                 }....................
@@ -256,12 +257,12 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Note that this implementation could probably be reduced to simply calling
-    # the get_hint_typing_attrs_untypevared() function and testing
+    # the get_hint_typing_attrs_argless_to_args() function and testing
     # whether the return value is "None" or not. While certainly more compact
     # and convenient than the current approach, that refactored approach would
     # also be considerably more fragile, failure-prone, and subject to
     # whimsical "improvements" in the already overly hostile "typing" API. Why?
-    # Because the get_hint_typing_attrs_untypevared() function:
+    # Because the get_hint_typing_attrs_argless_to_args() function:
     #
     # * Parses the machine-readable string returned by the __repr__() dunder
     #   method of "typing" types. Since this string is *NOT* standardized by
@@ -477,8 +478,11 @@ def is_hint_typing_typevared(hint: object) -> bool:
         True
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import get_hint_typing_typevars
+
     #FIXME: Consider replacing with this more exacting test:
-    #return is_hint_pep(hint) and bool(getattr(hint, '__parameters__', ()))
+    #return is_hint_pep(hint) and bool(get_hint_typing_typevars)
 
     # Return true only if this is a "typing" type parametrized by one or more
     # type variables, trivially detected by testing whether the tuple of all
@@ -495,4 +499,4 @@ def is_hint_typing_typevared(hint: object) -> bool:
     #   Thankfully, the "typing" module percolates the "__parameters__" dunder
     #   attribute from "typing" pseudo-superclasses to user-defined subclasses
     #   during PEP 560-style type erasure. Finally: they did something right.
-    return bool(getattr(hint, '__parameters__', ()))
+    return bool(get_hint_typing_typevars(hint))
