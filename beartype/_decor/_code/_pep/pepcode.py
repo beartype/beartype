@@ -38,6 +38,9 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import register_typistry_type
+from beartype._util.hint.pep.utilhintpepget import (
+    get_hint_typing_attrs_argless_to_args)
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.list.utillistfixed import FixedList
 from beartype._util.cache.list.utillistfixedpool import (
     SIZE_BIG, acquire_fixed_list, release_fixed_list)
@@ -145,6 +148,9 @@ def pep_code_check_param(
         '{} parameter "{}" PEP type hint'.format(
             data.func_name, func_arg.name))
 
+    # If this hint is currently unsupported, raise an exception.
+    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
+
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_arg.kind, None)
@@ -194,6 +200,9 @@ def pep_code_check_return(data: BeartypeData) -> str:
     # Human-readable label describing this hint.
     hint_label = '{} return PEP type hint'.format(data.func_name)
 
+    # If this hint is currently unsupported, raise an exception.
+    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
+
     # Return Python code to...
     return (
         # Call the decorated callable and localizing its return value *AND*...
@@ -208,14 +217,34 @@ def pep_code_check_return(data: BeartypeData) -> str:
     )
 
 # ....................{ CODERS ~ check                    }....................
+#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
+#passed "hint_label" parameter, required to raise human-readable exceptions
+#but sadly callable-specific. As we see it, the only sane solution is to
+#*IMMEDIATELY* refactor this function to raise generic private
+#non-human-readable exceptions that the caller is then required to explicitly
+#catch and raise non-generic public human-readable exceptions from. Somewhat
+#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
+# @callable_cached
 def _pep_code_check(
     hint: object,
     hint_label: str,
-):
+) -> str:
     '''
     Python code type-checking the previously localized parameter or return
     value annotated by the passed PEP-compliant type hint against this hint of
     the decorated callable.
+
+    This code generator is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This function intentionally accepts to** ``hint_label`` **parameter.**
+    Why? Since that parameter is typically specific to the caller, accepting
+    that parameter would effectively prevent this code generator from memoizing
+    the passed hint with the returned code, which would rather defeat the
+    point. Instead, this function only raises private generic
+    non-human-readable exceptions that the caller is required to explicitly
+    catch and raise non-generic public human-readable exceptions from.
 
     Parameters
     ----------
@@ -242,12 +271,9 @@ def _pep_code_check(
     assert isinstance(hint_label, str), (
         '"{!r}" not a string.'.format(hint_label))
 
-    #FIXME: Implement us up. Raise a placeholder exception for now.
+    #FIXME: Remove these two statements after implementing this function.
     from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
     die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
-
-    # If this hint is currently unsupported, raise an exception.
-    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
 
     # Python code snippet to be returned.
     func_code = ''
@@ -261,6 +287,13 @@ def _pep_code_check(
     # Currently visited hint.
     hint_curr = None
 
+    # Human-readable label prefixing the representations of child type hints of
+    # this top-level hint in raised exception messages.
+    hint_curr_label = '{} {!r} child '.format(hint_label, hint)
+
+    #FIXME: Consider uncommenting this here:
+    #del hint_Label
+
     # Hint metadata (i.e., fixed list efficiently masquerading as a tuple of
     # metadata describing the currently visited hint, defined by the previously
     # visited parent hint as a means of efficiently sharing metadata common to
@@ -269,20 +302,23 @@ def _pep_code_check(
     hint_meta[_HINT_META_INDEX_INDENT   ] = CODE_INDENT_2
     hint_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_NAME
 
+    # Dictionary mapping each argumentless typing attribute (i.e., public
+    # attribute of the "typing" module uniquely identifying the currently
+    # visited PEP-compliant type hint sans arguments) of this hint if any to
+    # the tuple of those arguments *OR* the empty dictionary otherwise.
+    hint_curr_typing_attrs_argless_to_args = None
+
     # Python expression evaluating to the value of the currently visited hint.
     hint_curr_expr = None
 
+    #FIXME: Consider removal.
     # Python code snippet expanding to the current level of indentation
     # appropriate for the currently visited hint.
-    indent_curr = None
+    # indent_curr = None
 
     # Fixed list of all transitive PEP-compliant type hints nested within this
     # hint (iterated in breadth-first visitation order).
     hints = acquire_fixed_list(SIZE_BIG)
-
-    # Human-readable label prefixing the representations of child type hints of
-    # this top-level hint in raised exception messages.
-    hint_curr_label = '{} {!r} child '.format(hint_label, hint)
 
     # Initialize this list with (in order):
     #
@@ -341,7 +377,23 @@ def _pep_code_check(
             if hint_curr is Any:
                 continue
 
+            # Dictionary mapping each argumentless typing attribute of this
+            # hint to the tuple of those arguments.
+            hint_curr_typing_attrs_argless_to_args = (
+                get_hint_typing_attrs_argless_to_args(hint_curr))
+
+            # If this hint has *NO* such attributes, raise an exception. By the
+            # design of that getter function, this should *NEVER* occur;
+            # nonetheless, this test is minimally expensive and th
+            if not hint_curr_typing_attrs_argless_to_args:
+                raise BeartypeDecorHintValuePepException(
+                    '{} PEP type {!r} "typing" superclasses erased.'.format(
+                        hint_label, hint))
+
             #FIXME: Implement PEP-compliant type checking here.
+            # For each argumentless typing attribute of this hint...
+            # for hint_curr_typing_attrs_argless in (
+            #     hint_curr_typing_attrs_argless_to_args.keys()):
 
             #FIXME: Implement breadth-first traversal here.
             #FIXME: Explicitly avoid traversing into empty type hints (e.g.,

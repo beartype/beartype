@@ -10,6 +10,35 @@ arbitrary objects for attributes specific to PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Generalize get_hint_typing_attrs_argless_to_args() to support
+#parametrization of user-defined subclasses: e.g.,
+#    class CustomSingleTypevared(typing.Generic[S, T]): pass
+#    CustomSingleTypevared[int]
+#
+#Currently, get_hint_typing_attrs_argless_to_args() only returns for that:
+#    {typing.Generic: (S, T)}
+#
+#Instead, get_hint_typing_attrs_argless_to_args() should probably return:
+#    {typing.Generic: (S, T, int)}
+#This assumes, of course, that that "int" is *NOT* intended to substitute for
+#the "S" parametrization on the "typing.Generic" superclass -- which it very
+#well might. In that case, we'd want to replace that "S" entirely with "int":
+#    {typing.Generic: (int, T)}
+#
+#We'll need to research what PEP 484 claims about this. In either case, though:
+#* If the user-defined subclass subclasses "typing.Generic", then the tuple
+#  mapped from "typing.Generic" by get_hint_typing_attrs_argless_to_args()
+#  should be extended with the tuple of arguments on the passed subclass
+#  (i.e., "get_hint_typing_args(hint)").
+#* Else, get_hint_typing_attrs_argless_to_args() should add a new mapping from
+#  "typing.Generic" to the tuple of arguments on the passed subclass (i.e.,
+#  "get_hint_typing_args(hint)").
+#
+#Note that this preserves the invariant that the
+#get_hint_typing_attrs_argless_to_args() getter only returns "typing"
+#attributes while still conforming to PEP 484 nomenclature and semantics. Yeah!
+
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype.roar import (
@@ -48,15 +77,16 @@ inefficiently recreated for each recall to that function passed a type
 variable.
 '''
 
-# ....................{ GETTERS ~ args                    }....................
-@callable_cached
+# ....................{ GETTERS ~ dunder                  }....................
 def get_hint_typing_args(hint: object) -> tuple:
     '''
     Tuple of all **typing arguments** (i.e., subscripted objects of the passed
     PEP-compliant type hint listed by the caller at hint declaration time)
     if any *or* the empty tuple otherwise.
 
-    This getter function is memoized for efficiency.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Caveats
     ----------
@@ -104,7 +134,6 @@ def get_hint_typing_args(hint: object) -> tuple:
     return getattr(hint, '__args__', ())
 
 
-@callable_cached
 def get_hint_typing_typevars(hint: object) -> tuple:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
@@ -112,7 +141,9 @@ def get_hint_typing_typevars(hint: object) -> tuple:
     hint declaration time ignoring duplicates) if any *or* the empty tuple
     otherwise.
 
-    This getter function is memoized for efficiency.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Caveats
     ----------
@@ -173,8 +204,8 @@ def get_hint_typing_attrs_argless_to_args(
     '''
     Dictionary mapping each **argumentless typing attribute** (i.e., public
     attribute of the :mod:`typing` module uniquely identifying the passed
-    PEP-compliant type hint *sans* arguments) of this hint if any to the tuple
-    of those arguments *or* the empty dictionary otherwise.
+    PEP-compliant type hint sans arguments) of this hint if any to the tuple of
+    those arguments *or* the empty dictionary otherwise.
 
     This getter function associates arbitrary objects with corresponding public
     attributes of the :mod:`typing` module effectively serving as unique

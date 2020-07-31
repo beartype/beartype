@@ -16,6 +16,104 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: *WOOPS.* We tragically mucked up most of our memoization across the
+#entire codebase, because we neglected to notice that *WE WERE PASSING THE
+#CALLER-SPECIFIC "hint_label" PARAMETER EVERYWHERE.* You can either memoize or
+#you can pass that parameter, but you can't do both. Instead, we'll now need to
+#refactor the entire codebase as follows:
+#
+#* Define a new "beartype._util.utilerror" submodule.
+#* In that submodule:
+#  * Define a new reraise_exception_reformatted() function resembling:
+#      RERAISE_EXCEPTION_REFORMATTED_TEMPLATE = '{{message_label}}'
+#      def reraise_exception_reformatted(
+#          # Mandatory parameters.
+#          exception: Exception,
+#          format_var: str,
+#
+#          # Optional parameters.
+#          format_var_template = RERAISE_EXCEPTION_REFORMATTED_TEMPLATE,
+#      ) -> None:
+#          '''
+#          See Also
+#          ----------
+#          https://stackoverflow.com/a/62662138/2809027
+#              StackOverflow answer strongly inspiring this function.
+#          '''
+#          # Assert the types of the passed parameters here.
+#
+#          # Clean this critical validation up, clearly.
+#          if not isinstance(exception.args, tuple):
+#              raise SomeException(
+#                  'Exception {!r} arguments {!r} not tuple.'.format(
+#                      exception, exception.args))
+#          if not exception.args:
+#              raise SomeException(
+#                  'Exception {!r} argument tuple empty.'.format(exception))
+#          if not isinstance(exception.args[0], str):
+#              raise SomeException(
+#                  'Exception {!r} first argument {!r} not string.'.format(
+#                      exception, exception.args[0]))
+#
+#          # Else, the first argument tuple item is this exception's message.
+#          #
+#          # If this message does *NOT* contain one or more format variables
+#          # matching this substring, raise an exception.
+#          if format_var_template not in exception.args[0]:
+#              raise SomeException(
+#                  'Exception {!r} message {!r} '
+#                  'substring "{}" not found.'.format(
+#                      exception, exception.args[0], format_var_template))
+#          # Else, this message contains one or more such format variables.
+#
+#          # Reformat this message in-place by interpolating this format
+#          # variable into this message.
+#          exception.args[0] = exception.args[0].format(
+#              format_var_template=format_var)
+#
+#          # Re-raise this exception while preserving its original traceback.
+#          raise exception.with_traceback(exception.__traceback__)
+#
+#* Grep the codebase for all @callable_cached-decorated callables: e.g.,
+#     $ gr @callable_cached|le
+#* For each such callable:
+#  * Strip the "hint_label" parameter from that callable *AS WELL AS ANY OTHER
+#    CALLER-SPECIFIC PARAMETERS THAT CALLABLE MIGHT STILL BE EXPECTING.*
+#  * In that callable's implementation, replace all prior uses of those
+#    parameters with either:
+#    * A single hardcoded format string interpolation (e.g., the
+#      "beartype._util.utilerror.RERAISE_EXCEPTION_REFORMATTED_TEMPLATE"
+#      public global constant defined above), which is *VERY* strict and ideal.
+#    * Hardcoded human-readable equivalents (e.g., 'Annotation'), which is less
+#      strict and thus non-ideal.
+#* Grep the codebase for all high-level callers of those lower-level
+#  @callable_cached-decorated callables.
+#* For each such high-level caller:
+#  * Explicitly catch the type of exception raised by the lower-level
+#    @callable_cached-decorated callable in question.
+#  * In that "except" block:
+#    * Call the reraise_exception_reformatted() function defined above, passing
+#      the desired "hint_label" string as the "format_var" parameter.
+#
+#Non-trivial, but *ABSOLUTELY* essential before we go any further down the
+#memoization hole. As things currently stand, we ain't memoizing *ANYTHING.*
+
+#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
+#passed "hint_label" parameter, required to raise human-readable exceptions
+#but sadly callable-specific. As we see it, the only sane solution is to
+#*IMMEDIATELY* refactor this function to raise generic private
+#non-human-readable exceptions that the caller is then required to explicitly
+#catch and raise non-generic public human-readable exceptions from. Somewhat
+#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
+
+#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
+#passed "hint_label" parameter, required to raise human-readable exceptions
+#but sadly callable-specific. As we see it, the only sane solution is to
+#*IMMEDIATELY* refactor this function to raise generic private
+#non-human-readable exceptions that the caller is then required to explicitly
+#catch and raise non-generic public human-readable exceptions from. Somewhat
+#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
+
 #FIXME: Avoid naively passing globals() to the exec() call below. Instead, we
 #should pass a new global constant containing all "__beartype_" global imports:
 #     _GLOBAL_ATTRS = {
