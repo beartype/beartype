@@ -91,7 +91,7 @@ def test_callable_cached_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype.roar import _BeartypeCallableCachedException
+    from beartype.roar import _BeartypeUtilCachedCallableException
 
     # Function memoized by this decorator.
     @callable_cached
@@ -109,14 +109,14 @@ def test_callable_cached_fail() -> None:
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic positional parameters fails with the expected exception.
-    with pytest.raises(_BeartypeCallableCachedException):
+    with pytest.raises(_BeartypeUtilCachedCallableException):
         @callable_cached
         def see_me_broken(*args):
             return args
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic keyword parameters fails with the expected exception.
-    with pytest.raises(_BeartypeCallableCachedException):
+    with pytest.raises(_BeartypeUtilCachedCallableException):
         @callable_cached
         def my_soulful_cries(**kwargs):
             return kwargs

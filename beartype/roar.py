@@ -412,7 +412,7 @@ class _BeartypeCallBeartypistryException(BeartypeCallException):
     pass
 
 # ....................{ EXCEPTIONS ~ util : private       }....................
-class BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
+class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype utility exceptions.**
 
@@ -424,20 +424,51 @@ class BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-
-class _BeartypeCallableCachedException(BeartypeUtilException):
+# ....................{ EXCEPTIONS ~ util : cache         }....................
+class _BeartypeUtilCacheException(_BeartypeUtilException, metaclass=_ABCMeta):
     '''
-    **Beartype memoization exception.**
+    Abstract base class of all **beartype caching utility exceptions.**
 
-    This exception is raised by the
-    :func:`beartype._util.utilcache.callable_cached` decorator when the
-    signature of the callable being decorated is unsupported.
+    Instances of subclasses of this exception are raised by private submodules
+    of the private :mod:`beartype._util.cache` subpackage. Such exceptions
+    denote critical internal issues and should thus *never* be raised -- let
+    alone allowed to percolate up the call stack to end users.
     '''
 
     pass
 
 
-class _BeartypeFixedListException(BeartypeUtilException):
+class _BeartypeUtilCachedCallableException(_BeartypeUtilCacheException):
+    '''
+    **Beartype memoization exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilcache.utilcachecall.callable_cached` decorator
+    when the signature of the callable being decorated is unsupported.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilCachedExceptionException(_BeartypeUtilCacheException):
+    '''
+    **Beartype memoization exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilcache.utilcacheerror.reraise_exception_cached`
+    function when one or more passed parameters are unsupported or invalid.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilCachedFixedListException(_BeartypeUtilCacheException):
     '''
     **Beartype decorator fixed list exception.**
 

@@ -64,7 +64,7 @@ def test_fixedlist_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.list.utillistfixed import FixedList
-    from beartype.roar import _BeartypeFixedListException
+    from beartype.roar import _BeartypeUtilCachedFixedListException
 
     # Fixed list to be tested.
     fixed_list = FixedList(size=8)
@@ -80,11 +80,11 @@ def test_fixedlist_fail() -> None:
     )
 
     # Assert that fixed lists refuse to support item deletion.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         del fixed_list[0]
 
     # Assert that fixed lists refuse to support in-place addition.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list += (
             'Put your faith in the two inches of humus',
             'that will build under the trees',
@@ -98,12 +98,12 @@ def test_fixedlist_fail() -> None:
         )
 
     # Assert that fixed lists refuse to support in-place multiplication.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list *= 0xDEADBEEF
 
     # Assert that fixed lists refuse to support slicing to an iterable of
     # differing length.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list[0:2] = (
             'Go with your love to the fields.',
             'Lie down in the shade. Rest your head',
@@ -120,24 +120,24 @@ def test_fixedlist_fail() -> None:
         )
 
     # Assert that fixed lists refuse to support appending.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list.append('Love the world. Work for nothing.')
 
     # Assert that fixed lists refuse to support extending.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list.extend((
             'Take all that you have and be poor.',
             'Love someone who does not deserve it.',
         ))
 
     # Assert that fixed lists refuse to support clearing.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list.clear()
 
     # Assert that fixed lists refuse to support popping.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list.pop()
 
     # Assert that fixed lists refuse to support removal.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         fixed_list.remove('Invest in the millennium. Plant sequoias.')

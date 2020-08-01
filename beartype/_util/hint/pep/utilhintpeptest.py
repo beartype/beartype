@@ -16,7 +16,7 @@ from beartype.roar import (
     BeartypeDecorHintValuePepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobj import (
+from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
 )

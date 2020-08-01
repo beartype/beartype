@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import inspect
-from beartype.roar import _BeartypeCallableCachedException
+from beartype.roar import _BeartypeUtilCachedCallableException
 from functools import wraps
 from inspect import Parameter
 
@@ -145,7 +145,7 @@ def callable_cached(func):
 
     Raises
     ----------
-    _BeartypeCallableCachedException
+    _BeartypeUtilCachedCallableException
         If any parameter passed to this callable is **variadic**: i.e., either
 
         * A variadic positional argument resembling ``*args``.
@@ -159,7 +159,7 @@ def callable_cached(func):
     assert callable(func), '{!r} not callable.'.format(func)
 
     # Avoid circular import dependencies.
-    from beartype._util.utilobj import SENTINEL
+    from beartype._util.utilobject import SENTINEL
 
     # Human-readable name of this function for use in exceptions.
     func_name = '@callable_cached {}()'.format(func.__name__)
@@ -171,7 +171,7 @@ def callable_cached(func):
     # an exception.
     for param in func_sig.parameters.values():
         if param.kind in _PARAM_KINDS_UNSUPPORTED:
-            raise _BeartypeCallableCachedException(
+            raise _BeartypeUtilCachedCallableException(
                 ' {}() parameter {} kind {!r} unsupported.'.format(
                     func_name, param.name, param.kind))
 

@@ -46,7 +46,7 @@ from beartype.roar import (
     BeartypeDecorHintValuePep560Exception,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobj import get_object_type
+from beartype._util.utilobject import get_object_type
 from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.

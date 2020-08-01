@@ -27,7 +27,7 @@ def test_typistry_pass() -> None:
     # Defer heavyweight imports
     from beartype.cave import AnyType, FunctionTypes, NoneType
     from beartype._decor._typistry import bear_typistry, register_typistry_type
-    from beartype._util.utilobj import get_object_name_qualified
+    from beartype._util.utilobject import get_object_name_qualified
 
     # Assert that types are registrable via a trivial function call.
     assert isinstance(register_typistry_type(AnyType), str)

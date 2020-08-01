@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeFixedListException
+from beartype.roar import _BeartypeUtilCachedFixedListException
 from beartype._util.utilstr import trim_object_repr
 from collections.abc import Iterable, Sized
 
@@ -43,7 +43,7 @@ class FixedList(list):
     This list enforces this constraint by overriding *all* :class:`list` dunder
     and standard methods that would otherwise modify the length of this list
     (e.g., :meth:`list.__delitem__`, :meth:`list.append`) to instead
-    unconditionally raise an :class:`_BeartypeFixedListException`
+    unconditionally raise an :class:`_BeartypeUtilCachedFixedListException`
     exception.
     '''
 
@@ -65,20 +65,20 @@ class FixedList(list):
 
         Raises
         ----------
-        _BeartypeFixedListException
+        _BeartypeUtilCachedFixedListException
             If this length is either not an integer *or* is but is
             **non-positive** (i.e., is less than or equal to 0).
         '''
 
         # If this length is *NOT* an integer, raise an exception.
         if not isinstance(size, int):
-            raise _BeartypeFixedListException(
+            raise _BeartypeUtilCachedFixedListException(
                 'Fixed list length {!r} not integer.'.format(size))
         # Else, this length is an integer.
 
         # If this length is non-positive, raise an exception.
         if size <= 0:
-            raise _BeartypeFixedListException(
+            raise _BeartypeUtilCachedFixedListException(
                 'Fixed list length {!r} <= 0.'.format(size))
         # Else, this length is positive.
 
@@ -109,18 +109,18 @@ class FixedList(list):
     # to raise exceptions.
 
     def __delitem__(self, index):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} index {!r} not deletable.'.format(self._label, index))
 
 
     def __iadd__(self, value):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not addable by {}.'.format(
                 self._label, trim_object_repr(value)))
 
 
     def __imul__(self, value):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not multipliable by {}.'.format(
                 self._label, trim_object_repr(value)))
 
@@ -165,7 +165,7 @@ class FixedList(list):
 
         Raises
         ----------
-        _BeartypeFixedListException
+        _BeartypeUtilCachedFixedListException
             If this index is a **slice object** (i.e., :class:`slice` instance
             underlying slice syntax) and this value is either:
 
@@ -180,7 +180,7 @@ class FixedList(list):
 
         # If this value is *NOT* a sized container, raise an exception.
         if not isinstance(value, Sized):
-            raise _BeartypeFixedListException(
+            raise _BeartypeUtilCachedFixedListException(
                 '{} slice {!r} not settable to unsized {}.'.format(
                     self._label, index, trim_object_repr(value)))
         # Else, this value is a sized container.
@@ -197,7 +197,7 @@ class FixedList(list):
 
         # If these two lengths differ, raise an exception.
         if slice_len != value_len:
-            raise _BeartypeFixedListException(
+            raise _BeartypeUtilCachedFixedListException(
                 '{} slice {!r} of length {} not settable to '
                 '{} of differing length {}.'.format(
                     self._label,
@@ -212,29 +212,29 @@ class FixedList(list):
     # methods to raise exceptions.
 
     def append(self, obj):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not appendable by {}.'.format(
                 self._label, trim_object_repr(obj)))
 
 
     def clear(self):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not clearable.'.format(self._label))
 
 
     def extend(self, obj):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not extendable by {}.'.format(
                 self._label, trim_object_repr(obj)))
 
 
     def pop(self, *args):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not poppable.'.format(self._label))
 
 
     def remove(self, *args):
-        raise _BeartypeFixedListException(
+        raise _BeartypeUtilCachedFixedListException(
             '{} not removable.'.format(self._label))
 
     # ..................{ PRIVATE ~ property                }..................

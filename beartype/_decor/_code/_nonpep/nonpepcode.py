@@ -178,7 +178,7 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
 #      '''__beartypistry[{hint_clsname}]'''.format(hint_clsname)
 #    ...where "hint_clsname" is trivially embeddable in that body as a string
 #    obtained in the parent function(s) itself via:
-#      hint_clsname = utilobj.get_object_name_qualified(hint)
+#      hint_clsname = utilobject.get_object_name_qualified(hint)
 #    This "just works." If this hint is a type, that type is guaranteed to have
 #    already been registered with the beartypistry; else, this hint is a
 #    string, in which case the __beartypistry.__missing__() dunder method will

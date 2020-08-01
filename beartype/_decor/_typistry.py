@@ -16,7 +16,7 @@ from beartype.roar import (
     _BeartypeDecorBeartypistryException,
     _BeartypeCallBeartypistryException,
 )
-from beartype._util.utilobj import get_object_name_qualified
+from beartype._util.utilobject import get_object_name_qualified
 from beartype._util.hint.utilhint import die_unless_hint
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 
@@ -44,7 +44,7 @@ def register_typistry_type(cls: type) -> str:
     codebase, but is otherwise roughly equivalent to:
 
         >>> from beartype._decor._typistry import bear_typistry
-        >>> from beartype._util.utilobj import get_object_name_qualified
+        >>> from beartype._util.utilobject import get_object_name_qualified
         >>> bear_typistry[get_object_name_qualified(cls)] = cls
 
     This function is memoized for efficiency.

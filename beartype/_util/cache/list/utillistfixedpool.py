@@ -71,7 +71,7 @@ def acquire_fixed_list(size: int) -> FixedList:
 
     Raises
     ----------
-    _BeartypeFixedListException
+    _BeartypeUtilCachedFixedListException
         If this length is either not an integer *or* is but is
         **non-positive** (i.e., is less than or equal to 0).
     '''

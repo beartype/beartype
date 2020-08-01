@@ -67,15 +67,15 @@ def test_fixedlist_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.list.utillistfixedpool import acquire_fixed_list
-    from beartype.roar import _BeartypeFixedListException
+    from beartype.roar import _BeartypeUtilCachedFixedListException
 
     # Assert that fixed lists may only be acquired with positive integers.
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         acquire_fixed_list((
             'Moloch the incomprehensible prison! Moloch the crossbone soulless',
             'jailhouse and Congress of sorrows! Moloch whose buildings are',
             'judgment! Moloch the vast stone of war! Moloch the stunned',
             'governments!',
         ))
-    with pytest.raises(_BeartypeFixedListException):
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
         acquire_fixed_list(-67)
