@@ -63,10 +63,10 @@ def die_unless_hint(
         If this object is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
-    BeartypeDecorHintValueNonPepException
+    BeartypeDecorHintNonPepException
         If this object is hashable but is neither a PEP- nor PEP-noncompliant
         type hint.
-    BeartypeDecorHintValuePepUnsupportedException
+    BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
 

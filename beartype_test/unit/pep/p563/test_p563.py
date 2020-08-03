@@ -19,7 +19,7 @@ This submodule unit tests `PEP 563`_ support implemented in the
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-from beartype_test.util.mark.pytest_skip import (
+from beartype_test.util.mark.pytskip import (
     skip_if_python_version_less_than)
 
 # ....................{ TESTS ~ type                      }....................

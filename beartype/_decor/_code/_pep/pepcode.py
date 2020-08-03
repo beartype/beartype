@@ -27,7 +27,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #as cleverly documented in the "_pep563" submodule.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintValuePepException
+from beartype.roar import BeartypeDecorHintPepException
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
@@ -160,7 +160,7 @@ def pep_code_check_param(
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
     if get_arg_code_template is None:
-        raise BeartypeDecorHintValuePepException(
+        raise BeartypeDecorHintPepException(
             '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
@@ -262,14 +262,14 @@ def _pep_code_check(
 
     Raises
     ----------
-    BeartypeDecorHintValuePepException
+    BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintValuePepUnsupportedException
+    BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
     '''
     assert isinstance(hint_label, str), (
-        '"{!r}" not a string.'.format(hint_label))
+        '"{!r}" not string.'.format(hint_label))
 
     #FIXME: Remove these two statements after implementing this function.
     from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
@@ -386,7 +386,7 @@ def _pep_code_check(
             # design of that getter function, this should *NEVER* occur;
             # nonetheless, this test is minimally expensive and th
             if not hint_curr_typing_attrs_argless_to_args:
-                raise BeartypeDecorHintValuePepException(
+                raise BeartypeDecorHintPepException(
                     '{} PEP type {!r} "typing" superclasses erased.'.format(
                         hint_label, hint))
 
@@ -419,7 +419,7 @@ def _pep_code_check(
             # # If this class subclasses more than the maximum number of "typing"
             # # attributes supported by this function, raise an exception.
             # if superattrs_index >= SIZE_BIG:
-            #     raise BeartypeDecorHintValuePep560Exception(
+            #     raise BeartypeDecorHintPep560Exception(
             #         '{} PEP type {!r} subclasses more than '
             #         '{} "typing" types.'.format(
             #             hint_label_pep,
@@ -465,7 +465,7 @@ def _pep_code_check(
         #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
         #     disabled by passing such an option to that call.
         else:
-            raise BeartypeDecorHintValuePepException(
+            raise BeartypeDecorHintPepException(
                 '{} {!r} not PEP-compliant (i.e., '
                 'neither "typing" object nor non-"typing" class).'.format(
                     hint_curr_label, hint_curr))

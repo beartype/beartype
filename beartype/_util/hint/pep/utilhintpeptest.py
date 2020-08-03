@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
-    BeartypeDecorHintValuePepException,
-    BeartypeDecorHintValuePepUnsupportedException,
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobject import (
@@ -46,7 +46,7 @@ def die_if_hint_pep(
 
     # Optional parameters.
     hint_label: str = 'Annotation',
-    exception_cls: type = BeartypeDecorHintValuePepException,
+    exception_cls: type = BeartypeDecorHintPepException,
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-compliant type
@@ -66,7 +66,7 @@ def die_if_hint_pep(
         exception message raised by this function. Defaults to 'Annotation'.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintValuePepException`.
+        :class:`BeartypeDecorHintPepException`.
 
     Raises
     ----------
@@ -77,7 +77,7 @@ def die_if_hint_pep(
     # If this hint is PEP-compliant, raise an exception of this class.
     if is_hint_pep(hint):
         assert isinstance(hint_label, str), (
-            '{!r} not a string.'.format(hint_label))
+            '{!r} not string.'.format(hint_label))
         assert isinstance(exception_cls, type), (
             '{!r} not a type.'.format(exception_cls))
 
@@ -111,16 +111,16 @@ def die_unless_hint_pep(
 
     Raises
     ----------
-    BeartypeDecorHintValuePepException
+    BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
     '''
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     if not is_hint_pep(hint):
         assert isinstance(hint_label, str), (
-            '{!r} not a string.'.format(hint_label))
+            '{!r} not string.'.format(hint_label))
 
-        raise BeartypeDecorHintValuePepException(
+        raise BeartypeDecorHintPepException(
             '{} {!r} not PEP-compliant.'.format(hint_label, hint))
 
 
@@ -150,14 +150,14 @@ def die_unless_hint_pep_supported(
 
     Raises
     ----------
-    BeartypeDecorHintValuePepException
+    BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintValuePepUnsupportedException
+    BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
     '''
     assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
+        '{!r} not string.'.format(hint_label))
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
@@ -179,7 +179,7 @@ def die_unless_hint_pep_supported(
     # hints are uniquely identified by one or public attribute(s) of the
     # "typing" module. Nonetheless, this is the real world. Damn you, Murphy!
     if not hint_typing_attrs_argless_to_args:
-        raise BeartypeDecorHintValuePepUnsupportedException(
+        raise BeartypeDecorHintPepUnsupportedException(
             '{} PEP type {!r} unassociated with "typing" types.'.format(
                 hint_label, hint))
     # Else, one or more such attributes exist.
@@ -192,7 +192,7 @@ def die_unless_hint_pep_supported(
     # exception. Type variables require non-trivial decorator support that has
     # yet to be fully implemented.
     if is_hint_typing_typevared(hint):
-        raise BeartypeDecorHintValuePepUnsupportedException(
+        raise BeartypeDecorHintPepUnsupportedException(
             EXCEPTION_MESSAGE_TEMPLATE.format(
                 '{} "TypeVar"-parametrized generic PEP type {!r}'.format(
                     hint_label, hint)))
@@ -201,7 +201,7 @@ def die_unless_hint_pep_supported(
     for hint_typing_attr_argless in hint_typing_attrs_argless_to_args.keys():
         # If this attribute is unsupported, raise an exception.
         if hint_typing_attr_argless not in _TYPING_ATTRS_ARGLESS_SUPPORTED:
-            raise BeartypeDecorHintValuePepUnsupportedException(
+            raise BeartypeDecorHintPepUnsupportedException(
                 EXCEPTION_MESSAGE_TEMPLATE.format(
                     '{} PEP type {!r} supertype {!r}'.format(
                         hint_label, hint, hint_typing_attr_argless)))

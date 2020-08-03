@@ -26,7 +26,7 @@ def test_utilhint_die_unless_hint() -> None:
 
     # Defer heavyweight imports.
     from beartype import cave
-    from beartype.roar import BeartypeDecorHintValueNonPepException
+    from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.hint.utilhint import die_unless_hint
 
     #FIXME: Add PEP-compliant objects *AFTER* supported by this function.
@@ -77,10 +77,10 @@ def test_utilhint_die_unless_hint() -> None:
 
     # Assert this function rejects non-PEP-noncompliant objects.
     for hint_invalid_nonpep in HINTS_INVALID_NONPEP:
-        with pytest.raises(BeartypeDecorHintValueNonPepException):
+        with pytest.raises(BeartypeDecorHintNonPepException):
             print('Non-PEP-noncompliant hint: {!r}'.format(hint_invalid_nonpep))
             die_unless_hint(hint_invalid_nonpep)
 
     # Assert this function rejects forward references when instructed to do so.
-    with pytest.raises(BeartypeDecorHintValueNonPepException):
+    with pytest.raises(BeartypeDecorHintNonPepException):
         die_unless_hint(hint='dict', is_str_valid=False)

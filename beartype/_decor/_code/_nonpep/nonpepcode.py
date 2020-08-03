@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintValueNonPepException
+from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._decor._code._nonpep._nonpepsnip import (
     NONPEP_CODE_PARAM_HINT,
     NONPEP_CODE_RETURN_CHECKED,
@@ -86,7 +86,7 @@ def nonpep_code_check_param(
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
     if check_arg_code_template is None:
-        raise BeartypeDecorHintValueNonPepException(
+        raise BeartypeDecorHintNonPepException(
             '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
@@ -237,15 +237,15 @@ def _nonpep_code_resolve_refs(
 
     Raises
     ----------
-    BeartypeDecorHintValueNonPepException
+    BeartypeDecorHintNonPepException
         If this type hint is *not* **PEP-noncompliant** (i.e.,
         :mod:`beartype`-specific annotation *not* compliant with
         annotation-centric PEPs).
     '''
     assert isinstance(hint_expr, str), (
-        '"{!r}" not a string.'.format(hint_expr))
+        '"{!r}" not string.'.format(hint_expr))
     assert isinstance(hint_label, str), (
-        '"{!r}" not a string.'.format(hint_label))
+        '"{!r}" not string.'.format(hint_label))
 
     #FIXME: Validate that all string classnames are valid Python identifiers
     #*BEFORE* generating code embedding these classnames. Sadly, doing so will
@@ -364,7 +364,7 @@ def _nonpep_code_resolve_refs(
                 # Note this should *NEVER* be the case, thanks to a prior call
                 # to the die_unless_hint() function for this hint.
                 if not isinstance(subhint, type):
-                    raise BeartypeDecorHintValueNonPepException(
+                    raise BeartypeDecorHintNonPepException(
                         '{} item {!r} neither type nor string.'.format(
                             hint_label, subhint))
 

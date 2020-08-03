@@ -27,8 +27,8 @@ def test_die_unless_hint_pep_supported() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import (
-        BeartypeDecorHintValuePepException,
-        BeartypeDecorHintValuePepUnsupportedException,
+        BeartypeDecorHintPepException,
+        BeartypeDecorHintPepUnsupportedException,
     )
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep_supported)
@@ -45,13 +45,13 @@ def test_die_unless_hint_pep_supported() -> None:
         # Else, this "typing" type is unsupported. In this case, assert that
         # this validator raises an exception.
         else:
-            with pytest.raises(BeartypeDecorHintValuePepUnsupportedException):
+            with pytest.raises(BeartypeDecorHintPepUnsupportedException):
                 die_unless_hint_pep_supported(pep_hint)
 
     # Assert that various non-"typing" types raise exceptions.
     for nonpep_hint in NONPEP_HINTS:
         print('Non-PEP hint: {!r}'.format(nonpep_hint))
-        with pytest.raises(BeartypeDecorHintValuePepException):
+        with pytest.raises(BeartypeDecorHintPepException):
             die_unless_hint_pep_supported(nonpep_hint)
 
 

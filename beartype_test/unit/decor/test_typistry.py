@@ -50,7 +50,7 @@ def test_typistry_fail() -> None:
 
     # Defer heavyweight imports
     from beartype.roar import (
-        BeartypeDecorHintValueNonPepException,
+        BeartypeDecorHintNonPepException,
         _BeartypeCallBeartypistryException,
         _BeartypeDecorBeartypistryException,
     )
@@ -72,12 +72,12 @@ def test_typistry_fail() -> None:
         }
 
     # Assert that forward references are *NOT* registrable.
-    with pytest.raises(BeartypeDecorHintValueNonPepException):
+    with pytest.raises(BeartypeDecorHintNonPepException):
         bear_typistry['Mere.anarchy.is.loosed.upon.the.world'] = (
             'The blood-dimmed tide is loosed, and everywhere')
 
     # Assert that arbitrary objects are also *NOT* registrable.
-    with pytest.raises(BeartypeDecorHintValueNonPepException):
+    with pytest.raises(BeartypeDecorHintNonPepException):
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
 
     # Assert that beartypistry keys that are *NOT* strings are rejected.

@@ -18,7 +18,7 @@ parameters are satisfied (e.g., the importability of the passed module name).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import platform, pytest, sys
-from beartype_test.util.mark import pytest_mark
+from beartype_test.util.mark import pytmark
 from collections.abc import (
     Mapping as Mapping,
     Sequence as Sequence,
@@ -103,7 +103,7 @@ def skip(reason: str):
     pytest.skipif
         Decorator skipping the decorated test with this justification.
     '''
-    assert isinstance(reason, str), '"{!r}" not a string.'.format(reason)
+    assert isinstance(reason, str), '"{!r}" not string.'.format(reason)
 
     return skip_if(True, reason=reason)
 
@@ -149,7 +149,7 @@ def skip_if_python_version_less_than(minimum_version: str):
         Similar logic performed at :mod:`beartype` importation time.
     '''
     assert isinstance(minimum_version, str), (
-        '"{!r}" not a string.'.format(minimum_version))
+        '"{!r}" not string.'.format(minimum_version))
 
     # Defer heavyweight imports.
     from beartype.meta import _convert_version_str_to_tuple
@@ -185,9 +185,9 @@ def skip_unless_module(module_name: str, minimum_version: str = None):
         decorator reducing to a noop otherwise.
     '''
     assert isinstance(module_name, str), (
-        '"{!r}" not a string.'.format(module_name))
+        '"{!r}" not string.'.format(module_name))
     assert isinstance(minimum_version, (str, _NoneType)), (
-        '"{!r}" not a string.'.format(minimum_version))
+        '"{!r}" not string.'.format(minimum_version))
 
     return _skip_if_callable_raises_exception(
         exception_type=Skipped,
@@ -258,4 +258,4 @@ def _skip_if_callable_raises_exception(
     # permitting this exception to unwind the current call stack.
 
     # Else, this callable raised no exception. Silently reduce to a noop.
-    return pytest_mark.noop
+    return pytmark.noop

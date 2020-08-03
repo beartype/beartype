@@ -42,8 +42,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype.roar import (
-    BeartypeDecorHintValuePepException,
-    BeartypeDecorHintValuePep560Exception,
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPep560Exception,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobject import get_object_type
@@ -251,7 +251,7 @@ def get_hint_typing_attrs_argless_to_args(
 
     Raises
     ----------
-    BeartypeDecorHintValuePep560Exception
+    BeartypeDecorHintPep560Exception
         If this object is a user-defined class subclassing no :mod:`typing`
         superclasses (e.g., due to having a ``__orig_bases__`` dunder attribute
         whose value is the empty tuple).
@@ -285,7 +285,7 @@ def get_hint_typing_attrs_argless_to_args(
        https://www.python.org/dev/peps/pep-0484
     '''
     assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
+        '{!r} not string.'.format(hint_label))
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
@@ -356,7 +356,7 @@ def get_hint_typing_attrs_argless_to_args(
     # If this subclass failed to preserve its original tuple of "typing"
     # superclasses against "type erasure," raise an exception.
     if not hint_typing_superattrs_untypevared:
-        raise BeartypeDecorHintValuePep560Exception(
+        raise BeartypeDecorHintPep560Exception(
             '{} PEP type {!r} "typing" superclasses erased.'.format(
                 hint_label, hint))
 
@@ -394,12 +394,12 @@ def _get_hint_direct_typing_attr_argless(
 
     Raises
     ----------
-    BeartypeDecorHintValuePepException
+    BeartypeDecorHintPepException
         If this object is *not* directly identified by a public attribute of
         the :mod:`typing` module.
     '''
     assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
+        '{!r} not string.'.format(hint_label))
 
     # Argumentless direct typing attribute associated with this object if any
     # *OR* "None" otherwise.
@@ -411,7 +411,7 @@ def _get_hint_direct_typing_attr_argless(
         return hint_direct_typing_attr_argless
 
     # Else, no such attribute exists. In this case, raise an exception.
-    raise BeartypeDecorHintValuePepException(
+    raise BeartypeDecorHintPepException(
         '{} PEP type {!r} associated with no "typing" type.'.format(
             hint_label, hint))
 
@@ -648,7 +648,7 @@ def _get_hint_typing_superattrs(
        https://www.python.org/dev/peps/pep-0560
     '''
     assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
+        '{!r} not string.'.format(hint_label))
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_typing
@@ -725,7 +725,7 @@ def _get_hint_typing_superattrs(
     #            # If this class subclasses more than the maximum number of "typing"
     #            # attributes supported by this function, raise an exception.
     #            if superattrs_index >= SIZE_BIG:
-    #                raise BeartypeDecorHintValuePep560Exception(
+    #                raise BeartypeDecorHintPep560Exception(
     #                    '{} PEP type {!r} subclasses more than '
     #                    '{} "typing" types.'.format(
     #                        hint_label,
@@ -754,7 +754,7 @@ def _get_hint_typing_superattrs(
     #
     #    Raises
     #    ----------
-    #    BeartypeDecorHintValuePep560Exception
+    #    BeartypeDecorHintPep560Exception
     #        If this object defines the ``__orig_bases__`` dunder attribute but that
     #        attribute transitively lists :data:`SIZE_BIG` or more :mod:`typing`
     #        attributes.

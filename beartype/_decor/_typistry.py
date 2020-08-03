@@ -136,7 +136,7 @@ class Beartypistry(dict):
             If this hint is **unhashable** (i.e., *not* hashable by the builtin
             :func:`hash` function and thus unusable in hash-based containers
             like dictionaries and sets). All supported type hints are hashable.
-        BeartypeDecorHintValueNonPepException
+        BeartypeDecorHintNonPepException
             If this hint is hashable but is neither a PEP-compliant nor
             -noncompliant type hint.
         _BeartypeCallBeartypistryException

@@ -27,7 +27,7 @@ def test_reraise_exception_cached_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintValuePepException
+    from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.cache.utilcachecall import callable_cached
     from beartype._util.cache.utilcacheerror import reraise_exception_cached
 
@@ -40,7 +40,7 @@ def test_reraise_exception_cached_pass() -> None:
     @callable_cached
     def portend_low_level_winter(is_winter_coming: bool) -> str:
         if is_winter_coming:
-            raise BeartypeDecorHintValuePepException(
+            raise BeartypeDecorHintPepException(
                 '{} intimates that winter is coming.'.format(FORMAT_VAR))
         else:
             return 'PRAISE THE SUN'
@@ -55,7 +55,7 @@ def test_reraise_exception_cached_pass() -> None:
 
             # Call the low-level memoized callable with raising exceptions.
             print(portend_low_level_winter(is_winter_coming=True))
-        except BeartypeDecorHintValuePepException as exception:
+        except BeartypeDecorHintPepException as exception:
             # print('exception.args: {!r} ({!r})'.format(exception.args, type(exception.args)))
             reraise_exception_cached(
                 exception=exception,
@@ -68,7 +68,7 @@ def test_reraise_exception_cached_pass() -> None:
 
     # Assert this high-level non-memoized callable raises the same type of
     # exception raised by this low-level memoized callable.
-    with pytest.raises(BeartypeDecorHintValuePepException) as exception_info:
+    with pytest.raises(BeartypeDecorHintPepException) as exception_info:
         portend_high_level_winter()
 
     # Assert this exception's message does *NOT* contain the non-human-readable

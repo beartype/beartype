@@ -134,30 +134,80 @@ class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
 
     Instances of subclasses of this exception are raised at decoration time
     from the :func:`beartype.beartype` decorator on receiving a callable
-    type-hinted with invalid annotations.
+    type-hinted with one or more **invalid annotations** (i.e., annotations
+    that are neither PEP-compliant nor PEP-compliant type hints supported by
+    that decorator).
     '''
 
-    pass
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, message: str) -> None:
+        '''
+        Initialize this exception with the passed message.
+
+        Caveats
+        ----------
+        **This message must contain one or more instances of the magic**
+        :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
+        **substring.** If this is *not* the case, this exception raises a
+        :class:`_BeartypeUtilCachedExceptionException` on creation. Why?
+        Because this exception is intended to be raised *only* by lower-level
+        **memoized callables** (e.g., decorated by the
+        :func:`beartype._util.cache.utilcachecall.callable_cached` decorator),
+        which then memoize that exception along with this message. By
+        definition, this message *must* generically apply to each memoized call
+        to those callables passed the same parameters, which this message
+        ensures by containing one or more instances of this magic substring.
+
+        All higher-level non-memoized callables calling lower-level memoized
+        callables *must* (in order):
+
+        #. Catch exceptions raised by those lower-level memoized callables.
+        #. Call the
+           :func:`beartype._util.cache.utilcacheerror.reraise_exception`
+           function with those exceptions and the desired human-readable
+           substring fragments. That function then:
+
+           #. Replaces this magic substring hard-coded into those exception
+              messages with those human-readable substring fragments.
+           #. Reraises the original exceptions in a manner preserving their
+              original tracebacks.
+
+        Parameters
+        ----------
+        message : str
+            Human-readable message describing this exception.
+
+        Raises
+        ----------
+        _BeartypeUtilCachedExceptionException
+            If this message contains *no* magic
+            :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
+            substring(s).
+
+        See Also
+        ----------
+        :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
+            Further details.
+        '''
+        assert isinstance(message, str), (
+            'Exception message {!r} not string.'.format(message))
+
+        # Avoid circular import dependencies.
+        from beartype._util.cache.utilcacheerror import (
+            RERAISE_EXCEPTION_CACHED_FORMAT_VAR)
+
+        # Validate this message *BEFORE* initializing our superclass.
+        if RERAISE_EXCEPTION_CACHED_FORMAT_VAR not in message:
+            raise _BeartypeUtilCachedExceptionException(
+                'Cached exception {!r} '
+                'format variable "{}" not found.'.format(
+                    self, RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
+
+        # Initialize our superclass.
+        super().__init__(message)
 
 # ....................{ EXCEPTIONS ~ decor : hint : value }....................
-class BeartypeDecorHintValueException(
-    BeartypeDecorHintException, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype decorator type hint value
-    exceptions.**
-
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    type-hinted with one or more **invalid annotations** (i.e., annotations
-    that neither comply with PEPs supported by :mod:`beartype` *nor*
-    :mod:`beartype`-specific semantics, including tuple unions and
-    fully-qualified forward references).
-    '''
-
-    pass
-
-
-class BeartypeDecorHintValueNonPepException(BeartypeDecorHintValueException):
+class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     '''
     **Beartype decorator PEP-noncompliant type hint value exception.**
 
@@ -178,8 +228,8 @@ class BeartypeDecorHintValueNonPepException(BeartypeDecorHintValueException):
     pass
 
 # ....................{ EXCEPTIONS ~ decor : hint : pep   }....................
-class BeartypeDecorHintValuePepException(
-    BeartypeDecorHintValueException, metaclass=_ABCMeta):
+class BeartypeDecorHintPepException(
+    BeartypeDecorHintException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype decorator PEP-compliant type hint
     value exceptions.**
@@ -197,9 +247,8 @@ class BeartypeDecorHintValuePepException(
     pass
 
 
-
-class BeartypeDecorHintValuePep560Exception(
-    BeartypeDecorHintValuePepException):
+class BeartypeDecorHintPep560Exception(
+    BeartypeDecorHintPepException):
     '''
     **Beartype decorator PEP-compliant type hint** `PEP 560_` **exception.**
 
@@ -218,9 +267,8 @@ class BeartypeDecorHintValuePep560Exception(
     pass
 
 
-
-class BeartypeDecorHintValuePepUnsupportedException(
-    BeartypeDecorHintValuePepException):
+class BeartypeDecorHintPepUnsupportedException(
+    BeartypeDecorHintPepException):
     '''
     **Beartype decorator unsupported PEP-compliant type hint exception.**
 
@@ -286,22 +334,6 @@ class BeartypeDecorPep563Exception(BeartypeDecorPepException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : private      }....................
-class _BeartypeDecorBeartypistryException(BeartypeDecorException):
-    '''
-    **Beartype decorator beartypistry exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator when erroneously accessing the
-    **beartypistry** (i.e., :class:`beartype._decor._typistry.bear_typistry`
-    singleton).
-
-    This private exception denotes a critical internal issue and should thus
-    *never* be raised -- let alone exposed to end users.
-    '''
-
-    pass
-
 # ....................{ EXCEPTIONS ~ call                 }....................
 class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
     '''
@@ -339,18 +371,6 @@ class BeartypeCallTypePepException(
     parameter or returning an object whose value is of **unexpected
     PEP-compliant type** (i.e., violating a PEP-compliant type hint annotated
     for that parameter or return value).
-    '''
-
-    pass
-
-
-class BeartypeCallTypePepNonPepException(BeartypeCallTypePepException):
-    '''
-    **Beartyped callable parameter PEP-noncompliant type exception.**
-
-    This exception is raised from wrapper functions generated by the
-    :func:`beartype.beartype` decorator when passed a parameter whose value is
-    of unexpected PEP-noncompliant type.
     '''
 
     pass
@@ -395,7 +415,37 @@ class BeartypeCallTypeNonPepReturnException(BeartypeCallTypeNonPepException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ call : private       }....................
+# ....................{ WARNINGS                          }....................
+class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype warnings.**
+
+    Instances of subclasses of this warning are emitted either:
+
+    * At decoration time from the :func:`beartype.beartype` decorator.
+    * At call time from the new callable generated by the
+      :func:`beartype.beartype` decorator to wrap the original callable.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ exceptions : decor      }....................
+class _BeartypeDecorBeartypistryException(BeartypeDecorException):
+    '''
+    **Beartype decorator beartypistry exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator when erroneously accessing the
+    **beartypistry** (i.e., :class:`beartype._decor._typistry.bear_typistry`
+    singleton).
+
+    This private exception denotes a critical internal issue and should thus
+    *never* be raised -- let alone exposed to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ exceptions : call       }....................
 class _BeartypeCallBeartypistryException(BeartypeCallException):
     '''
     **Beartyped callable beartypistry exception.**
@@ -411,7 +461,7 @@ class _BeartypeCallBeartypistryException(BeartypeCallException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ util : private       }....................
+# ....................{ PRIVATE ~ exceptions : util       }....................
 class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype utility exceptions.**
@@ -424,7 +474,7 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ util : cache         }....................
+# ....................{ PRIVATE ~ exceptions : util : cache }..................
 class _BeartypeUtilCacheException(_BeartypeUtilException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype caching utility exceptions.**
@@ -480,20 +530,6 @@ class _BeartypeUtilCachedFixedListException(_BeartypeUtilCacheException):
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-# ....................{ WARNINGS                          }....................
-class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype warnings.**
-
-    Instances of subclasses of this warning are emitted either:
-
-    * At decoration time from the :func:`beartype.beartype` decorator.
-    * At call time from the new callable generated by the
-      :func:`beartype.beartype` decorator to wrap the original callable.
     '''
 
     pass

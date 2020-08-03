@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #time is preferable to raising late exceptions at call time.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintValueNonPepException
+from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
@@ -31,7 +31,7 @@ def die_unless_hint_nonpep(
     # Optional parameters.
     hint_label: str = 'Type hint',
     is_str_valid: bool = True,
-    exception_cls: type = BeartypeDecorHintValueNonPepException,
+    exception_cls: type = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant type
@@ -57,7 +57,7 @@ def die_unless_hint_nonpep(
           or tuple of classes.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintValueNonPepException`.
+        :class:`BeartypeDecorHintNonPepException`.
 
     Raises
     ----------
@@ -74,7 +74,7 @@ def die_unless_hint_nonpep(
           * If ``is_str_valid``, strings.
     '''
     assert isinstance(hint_label, str), (
-        '{!r} not a string.'.format(hint_label))
+        '{!r} not string.'.format(hint_label))
     assert isinstance(is_str_valid, bool), (
         '{!r} not a boolean.'.format(is_str_valid))
     assert isinstance(exception_cls, type), (

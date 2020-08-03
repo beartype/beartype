@@ -14,9 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+import re
 from beartype.roar import _BeartypeUtilCachedExceptionException
 
-# ....................{ COSTANTS                          }....................
+# ....................{ CONSTANTS                         }....................
 RERAISE_EXCEPTION_CACHED_FORMAT_VAR = '{reraise_exception_format_var}'
 '''
 ``{``- and ``}``-delimited format variable substring to be replaced by default
@@ -74,8 +75,18 @@ containing those fragments. The indirect approach avoids percolation, thus
 streamlining the implementations of all callables involved. Phew!
 '''
 
+
+RERAISE_EXCEPTION_CACHED_FORMAT_VAR_REGEX = re.compile(re.escape(
+    RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
+'''
+Compiled regular expression safely matching the magic
+:data:`RERAISE_EXCEPTION_CACHED_FORMAT_VAR` substring.
+
+This expression is intended to be used by external callers (e.g., unit tests
+validating that raised exception messages contain this substring).
+'''
+
 # ....................{ RAISERS                           }....................
-#FIXME: Unit test us up, please.
 def reraise_exception_cached(
     # Mandatory parameters.
     exception: Exception,
@@ -127,7 +138,7 @@ def reraise_exception_cached(
 
     Examples
     ----------
-        >>> from beartype.roar import BeartypeDecorHintValuePepException
+        >>> from beartype.roar import BeartypeDecorHintPepException
         >>> from beartype._util.cache.utilcachecall import callable_cached
         >>> from beartype._util.cache.utilcacheerror import (
         ...     reraise_exception_cached, RERAISE_EXCEPTION_CACHED_FORMAT_VAR)
@@ -135,7 +146,7 @@ def reraise_exception_cached(
         >>> @callable_cached
         ... def portend_low_level_winter(is_winter_coming: bool) -> str:
         ...     if is_winter_coming:
-        ...         raise BeartypeDecorHintValuePepException(
+        ...         raise BeartypeDecorHintPepException(
         ...             '{} intimates that winter is coming.'.format(
         ...                 RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
         ...     else:
@@ -144,7 +155,7 @@ def reraise_exception_cached(
         ...     try:
         ...         print(portend_low_level_winter(is_winter_coming=False))
         ...         print(portend_low_level_winter(is_winter_coming=True))
-        ...     except BeartypeDecorHintValuePepException as exception:
+        ...     except BeartypeDecorHintPepException as exception:
         ...         reraise_exception_cached(
         ...             exception=exception,
         ...             format_str=(
@@ -168,7 +179,7 @@ def reraise_exception_cached(
             *args, **kwargs)
           File "<input>", line 13, in portend_low_level_winter
             RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
-        beartype.roar.BeartypeDecorHintValuePepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
+        beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     # Assert the types of the passed parameters here.
     assert isinstance(exception, Exception), (
