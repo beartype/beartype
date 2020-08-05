@@ -18,7 +18,7 @@ import re
 from beartype.roar import _BeartypeUtilCachedExceptionException
 
 # ....................{ CONSTANTS                         }....................
-RERAISE_EXCEPTION_CACHED_FORMAT_VAR = '{reraise_exception_format_var}'
+CACHED_FORMAT_VAR = '{reraise_exception_format_var}'
 '''
 ``{``- and ``}``-delimited format variable substring to be replaced by default
 by the :func:`reraise_exception` function.
@@ -77,10 +77,10 @@ streamlining the implementations of all callables involved. Phew!
 
 
 RERAISE_EXCEPTION_CACHED_FORMAT_VAR_REGEX = re.compile(re.escape(
-    RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
+    CACHED_FORMAT_VAR))
 '''
 Compiled regular expression safely matching the magic
-:data:`RERAISE_EXCEPTION_CACHED_FORMAT_VAR` substring.
+:data:`CACHED_FORMAT_VAR` substring.
 
 This expression is intended to be used by external callers (e.g., unit tests
 validating that raised exception messages contain this substring).
@@ -93,7 +93,7 @@ def reraise_exception_cached(
     format_str: str,
 
     # Optional parameters.
-    format_var: str = RERAISE_EXCEPTION_CACHED_FORMAT_VAR,
+    format_var: str = CACHED_FORMAT_VAR,
 ) -> None:
     '''
     Reraise the passed exception in a safe manner preserving both this
@@ -112,7 +112,7 @@ def reraise_exception_cached(
         Non-human-readable ``{``- and ``}``-delimited format variable substring
         previously hard-coded into this exception's message to be replaced by
         the passed format substring. Defaults to the
-        :data:`RERAISE_EXCEPTION_CACHED_FORMAT_VAR` magic substring.
+        :data:`CACHED_FORMAT_VAR` magic substring.
 
     Raises
     ----------
@@ -131,7 +131,7 @@ def reraise_exception_cached(
 
     See Also
     ----------
-    :data:`RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
+    :data:`CACHED_FORMAT_VAR`
         Further commentary on usage and motivation.
     https://stackoverflow.com/a/62662138/2809027
         StackOverflow answer mildly inspiring this implementation.
@@ -140,15 +140,15 @@ def reraise_exception_cached(
     ----------
         >>> from beartype.roar import BeartypeDecorHintPepException
         >>> from beartype._util.cache.utilcachecall import callable_cached
-        >>> from beartype._util.cache.utilcacheerror import (
-        ...     reraise_exception_cached, RERAISE_EXCEPTION_CACHED_FORMAT_VAR)
+        >>> from beartype._util.cache.utilcachetext import (
+        ...     reraise_exception_cached, CACHED_FORMAT_VAR)
         >>> from random import getrandbits
         >>> @callable_cached
         ... def portend_low_level_winter(is_winter_coming: bool) -> str:
         ...     if is_winter_coming:
         ...         raise BeartypeDecorHintPepException(
         ...             '{} intimates that winter is coming.'.format(
-        ...                 RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
+        ...                 CACHED_FORMAT_VAR))
         ...     else:
         ...         return 'PRAISE THE SUN'
         >>> def portend_high_level_winter() -> None:
@@ -169,7 +169,7 @@ def reraise_exception_cached(
             portend_high_level_winter()
           File "<input>", line 27, in portend_high_level_winter
             'Random "Dark Souls" plaintext meme'
-          File "/home/leycec/py/beartype/beartype/_util/cache/utilcacheerror.py", line 225, in reraise_exception_cached
+          File "/home/leycec/py/beartype/beartype/_util/cache/utilcachetext.py", line 225, in reraise_exception_cached
             raise exception.with_traceback(exception.__traceback__)
           File "<input>", line 20, in portend_high_level_winter
             print(portend_low_level_winter(is_winter_coming=True))
@@ -178,7 +178,7 @@ def reraise_exception_cached(
           File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
             *args, **kwargs)
           File "<input>", line 13, in portend_low_level_winter
-            RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
+            CACHED_FORMAT_VAR))
         beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     # Assert the types of the passed parameters here.

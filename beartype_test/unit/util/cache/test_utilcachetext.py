@@ -7,7 +7,7 @@
 **Beartype exception caching utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.utilcacheerror` submodule.
+:mod:`beartype._util.cache.utilcachetext` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -18,18 +18,28 @@ This submodule unit tests the public API of the private
 import pytest
 from random import getrandbits
 
+# ....................{ CLASSES                           }....................
+class CachedException(ValueError):
+    '''
+    Test-specific exception raised by unit tests exercising the
+    :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
+    function.
+    '''
+
+    pass
+
 # ....................{ TESTS                             }....................
 def test_reraise_exception_cached_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
     function.
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintPepException
+    # from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype._util.cache.utilcacheerror import reraise_exception_cached
+    from beartype._util.cache.utilcachetext import reraise_exception_cached
 
     # Format variable substring to be hard-coded into the messages of all
     # exceptions raised by this low-level memoized callable.
@@ -40,7 +50,7 @@ def test_reraise_exception_cached_pass() -> None:
     @callable_cached
     def portend_low_level_winter(is_winter_coming: bool) -> str:
         if is_winter_coming:
-            raise BeartypeDecorHintPepException(
+            raise CachedException(
                 '{} intimates that winter is coming.'.format(FORMAT_VAR))
         else:
             return 'PRAISE THE SUN'
@@ -55,7 +65,7 @@ def test_reraise_exception_cached_pass() -> None:
 
             # Call the low-level memoized callable with raising exceptions.
             print(portend_low_level_winter(is_winter_coming=True))
-        except BeartypeDecorHintPepException as exception:
+        except CachedException as exception:
             # print('exception.args: {!r} ({!r})'.format(exception.args, type(exception.args)))
             reraise_exception_cached(
                 exception=exception,
@@ -68,7 +78,7 @@ def test_reraise_exception_cached_pass() -> None:
 
     # Assert this high-level non-memoized callable raises the same type of
     # exception raised by this low-level memoized callable.
-    with pytest.raises(BeartypeDecorHintPepException) as exception_info:
+    with pytest.raises(CachedException) as exception_info:
         portend_high_level_winter()
 
     # Assert this exception's message does *NOT* contain the non-human-readable
@@ -80,13 +90,13 @@ def test_reraise_exception_cached_pass() -> None:
 def test_reraise_exception_cached_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
     function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeUtilCachedExceptionException
-    from beartype._util.cache.utilcacheerror import reraise_exception_cached
+    from beartype._util.cache.utilcachetext import reraise_exception_cached
 
     # Format variable substring to be hard-coded into the messages of all
     # exceptions raised by this low-level memoized callable.
@@ -94,7 +104,7 @@ def test_reraise_exception_cached_fail() -> None:
 
     # Assert that format variables must be "{"- and "}"-delimited.
     try:
-        raise ValueError(
+        raise CachedException(
             'Men are props on the stage of life, '
             'and no matter how tender, '
             'how exquisite... ' + FORMAT_VAR
@@ -115,7 +125,7 @@ def test_reraise_exception_cached_fail() -> None:
 
     # Assert that exceptions messages must contain format variables.
     try:
-        raise ValueError(
+        raise CachedException(
             "What's bravery without a dash of recklessness?")
     except Exception as exception:
         with pytest.raises(_BeartypeUtilCachedExceptionException):
@@ -127,7 +137,7 @@ def test_reraise_exception_cached_fail() -> None:
 
     # Assert that exception messages must be non-empty.
     try:
-        raise ValueError()
+        raise CachedException()
     except Exception as exception:
         with pytest.raises(_BeartypeUtilCachedExceptionException):
             reraise_exception_cached(
@@ -138,7 +148,7 @@ def test_reraise_exception_cached_fail() -> None:
 
     # Assert that exception messages must be strings.
     try:
-        raise ValueError(0xDEADBEEF)
+        raise CachedException(0xDEADBEEF)
     except Exception as exception:
         with pytest.raises(_BeartypeUtilCachedExceptionException):
             reraise_exception_cached(

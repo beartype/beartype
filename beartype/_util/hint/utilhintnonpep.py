@@ -17,13 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
+from beartype._util.hint.pep.utilhintpeptest import (
+    die_if_hint_pep, is_hint_pep)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-@callable_cached
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -38,7 +38,15 @@ def die_unless_hint_nonpep(
     hint** (i.e., :mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs).
 
-    This validator is memoized for efficiency.
+    This validator is effectively (but technically *not*) memoized. Since the
+    passed ``hint_label`` parameter is typically unique to each call to this
+    validator, memoizing this validator would uselessly consume excess space
+    *without* improving time efficiency. Instead, this validator first calls
+    the memoized :func:`is_hint_nonpep` tester. If that tester returns
+    ``True``, this validator immediately returns ``True`` and is thus
+    effectively memoized; else, this validator inefficiently raises a
+    human-readable exception without memoization. Since efficiency is largely
+    irrelevant in exception handling, this validator is effectively memoized.
 
     Parameters
     ----------
@@ -61,6 +69,8 @@ def die_unless_hint_nonpep(
 
     Raises
     ----------
+    TypeError
+        If this object is unhashable.
     exception_type
         If this object is neither:
 
@@ -73,12 +83,21 @@ def die_unless_hint_nonpep(
           * Types.
           * If ``is_str_valid``, strings.
     '''
+
+    # If this object is a PEP-noncompliant type hint, reduce to a noop.
+    #
+    # Note that this memoized call is intentionally passed positional rather
+    # than keyword parameters to maximize efficiency.
+    if is_hint_nonpep(hint, is_str_valid):
+        return True
+    # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
+    # subsequent logic raises an exception specific to the passed parameters.
+
+    # Note that the prior call has already validated "is_str_valid".
     assert isinstance(hint_label, str), (
         '{!r} not string.'.format(hint_label))
-    assert isinstance(is_str_valid, bool), (
-        '{!r} not a boolean.'.format(is_str_valid))
     assert isinstance(exception_cls, type), (
-        '{!r} not a type.'.format(exception_cls))
+        '{!r} not type.'.format(exception_cls))
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with tuple iteration performed below.
@@ -210,3 +229,112 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             '{} {!r} neither type nor tuple of types.'.format(
                 hint_label, hint))
+
+# ....................{ TESTERS                           }....................
+@callable_cached
+def is_hint_nonpep(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    is_str_valid: bool = True,
+) -> bool:
+    '''
+    ``True`` only if the passed object is a **PEP-noncompliant type hint**
+    (i.e., :mod:`beartype`-specific annotation *not* compliant with
+    annotation-centric PEPs).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+    is_str_valid : Optional[bool]
+        ``True`` only if this function permits this object to be a string.
+        Defaults to ``True``. If this boolean is:
+
+        * ``True``, this object is valid only if this object is either a class,
+          classname, or tuple of classes and/or classnames.
+        * ``False``, this object is valid only if this object is either a class
+          or tuple of classes.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is either:
+
+        * If ``is_str_valid``, a **string** (i.e., forward reference specified
+          as either a fully-qualified or unqualified classname).
+        * A **type** (i.e., class).
+        * A **non-empty tuple** (i.e., semantic union of types) containing one
+          or more:
+
+          * Types.
+          * If ``is_str_valid``, strings.
+
+    Raises
+    ----------
+    TypeError
+        If this object is unhashable.
+    '''
+    assert isinstance(is_str_valid, bool), (
+        '{!r} not boolean.'.format(is_str_valid))
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Return true only if either...
+    return (
+        # If this object is a forward reference (i.e., fully-qualified or
+        # unqualified classname), return true only if the caller permits such
+        # references. Note this string necessarily refers to either:
+        #
+        # * A PEP-noncompliant type hint and is thus valid.
+        # * A PEP 484 type hint and is thus invalid.
+        # * A missing attribute of a (possibly non-existent) module and is thus
+        #   invalid.
+        #
+        # However, forward references are only safely resolvable at call time.
+        # Attempting to resolve a forward reference at an earlier time usually
+        # induces a circular import dependency (i.e., edge-case in which two
+        # modules mutually import one other, usually transitively rather than
+        # directly). Circumventing these dependencies is the entire reason for
+        # using forward references in the first place.
+        #
+        # Validating this reference here would require importing the module
+        # defining this attribute. Since the @beartype decorator calling this
+        # function is typically invoked via the global scope of a source module,
+        # importing this target module here would be functionally equivalent to
+        # importing that target module from that source module -- triggering a
+        # circular import dependency in susceptible source modules.
+        #
+        # So, there exists no means of differentiating between these two cases
+        # at this early time. Instead, we silently accept this string as is for
+        # now and subsequently validate its type immediately after resolving
+        # this string to its referent at wrapper function call time.
+        is_str_valid          if isinstance(hint, str) else
+        # Else, this object is *NOT* a forward reference.
+        #
+        # If this object is a class, return true only if this is *NOT* a
+        # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
+        # class by definition.
+        not is_hint_pep(hint) if isinstance(hint, type) else
+        # Else, this object is neither a forward reference nor class.
+        #
+        # If this object is a non-empty tuple, return true only if each item of
+        # this tuple is either a caller-permitted forward reference *OR* a
+        # PEP-noncompliant class.
+        all(
+            is_str_valid               if isinstance(hint_item, str) else
+            not is_hint_pep(hint_item) if isinstance(hint_item, type) else
+            False
+            for hint_item in hint
+        )
+            if (isinstance(hint, tuple) and hint) else
+        # Else, this object is neither a forward reference, class, nor
+        # non-empty tuple. Return false, as this object is *NOT* a
+        # PEP-noncompliant type hint.
+        False
+    )

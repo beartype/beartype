@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    CALLER-SPECIFIC PARAMETERS THAT CALLABLE MIGHT STILL BE EXPECTING.*
 #  * In that callable's implementation, replace all prior uses of those
 #    parameters with a single hardcoded format string interpolation (e.g.,
-#      "beartype._util.cache.utilcacheerror").
+#      "beartype._util.cache.utilcachetext").
 #* Grep the codebase for all higher-level non-memoized callers of those
 #  lower-level memoized callables. Ideally, this should *ONLY* be these
 #  callables, which appear to be where the full human-readable description for
@@ -66,6 +66,23 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Note that both reduce to trivial string containment tests. Avoid adding such
 #validation here, as that logic is rather lower-level. *shrug*
+
+#FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
+#are called with purely positional rather than keyword arguments. Currently, we
+#suspect the inverse is the case. To do so, we'll probably want to augment the
+#wrapper closure returned by the @callable_cached decorator to emit non-fatal
+#warnings when called with non-empty keyword arguments.
+#
+#Alternately, we might simply want to prohibit keyword arguments altogether by
+#defining a new @callable_cached_positional decorator restricted to positional
+#arguments. Right... That probably makes more sense. Make it so, ensign!
+#
+#Then, for generality:
+#
+#* Preserve the existing @callable_cached decorator as is. We won't be using
+#  it, but there's little sense in destroying something beautiful.
+#* Globally replace all existing "@callable_cached" substrings with
+#  "@callable_cached_positional". Voila!
 
 #FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
 #passed "hint_label" parameter, required to raise human-readable exceptions

@@ -18,7 +18,7 @@ import collections, typing
 from beartype import cave
 from collections import namedtuple
 
-# ....................{ TYPE VARIABLES                    }....................
+# ....................{ PEP ~ typevars                    }....................
 S = typing.TypeVar('S')
 '''
 User-defined generic :mod:`typing` type variable.
@@ -30,53 +30,55 @@ T = typing.TypeVar('T')
 User-defined generic :mod:`typing` type variable.
 '''
 
-# ....................{ TYPE ALIASES                      }....................
+# ....................{ PEP ~ aliases                     }....................
 TypeAlias = typing.Iterable[typing.Tuple[T, T]]
 '''
 User-defined :mod:`typing` type alias.
 '''
 
-# ....................{ CLASSES ~ single                  }....................
-class CustomSingleTypevared(typing.Generic[S, T]):
+# ....................{ PEP ~ classes : single            }....................
+class PepCustomSingleTypevared(typing.Generic[S, T]):
     '''
-    User-defined class subclassing a single parametrized :mod:`typing` type.
-    '''
-
-    pass
-
-
-class CustomSingleUntypevared(typing.Dict[str, typing.List[str]]):
-    '''
-    User-defined class subclassing a single unparametrized :mod:`typing` type.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ multiple                }....................
-class CustomMultipleTypevaredShallow(typing.Iterable[T], typing.Container[T]):
-    '''
-    User-defined class subclassing multiple directly parametrized :mod:`typing`
-    types.
+    PEP-compliant user-defined class subclassing a single parametrized
+    :mod:`typing` type.
     '''
 
     pass
 
 
-class CustomMultipleTypevaredDeep(
+class PepCustomSingleUntypevared(typing.Dict[str, typing.List[str]]):
+    '''
+    PEP-compliant user-defined class subclassing a single unparametrized
+    :mod:`typing` type.
+    '''
+
+    pass
+
+# ....................{ PEP ~ classes : multiple          }....................
+class PepCustomMultipleTypevaredShallow(typing.Iterable[T], typing.Container[T]):
+    '''
+    PEP-compliant user-defined class subclassing multiple directly parametrized
+    :mod:`typing` types.
+    '''
+
+    pass
+
+
+class PepCustomMultipleTypevaredDeep(
     collections.abc.Sized,
     typing.Iterable[typing.Tuple[S, T]],
     typing.Container[typing.Tuple[S, T]],
 ):
     '''
-    User-defined generic :mod:`typing` subtype subclassing a heterogeneous
-    amalgam of non-:mod:`typing` and :mod:`typing` superclasses.
+    PEP-compliant user-defined generic :mod:`typing` subtype subclassing a
+    heterogeneous amalgam of non-:mod:`typing` and :mod:`typing` superclasses.
     User-defined class subclassing multiple indirectly parametrized
     :mod:`typing` types as well as a non-:mod:`typing` abstract base class
     '''
 
     pass
 
-# ....................{ MAPPINGS                          }....................
+# ....................{ PEP ~ mappings                    }....................
 PepHintMeta = namedtuple('PepHintMeta', (
     'is_supported',
     'is_typevared',
@@ -246,14 +248,14 @@ PEP_HINT_TO_META = {
     ),
 
     # User-defined.
-    CustomSingleTypevared: PepHintMeta(
+    PepCustomSingleTypevared: PepHintMeta(
         is_supported=False,
         is_typevared=True,
         superattrs=(typing.Generic[S, T],),
         superattrs_argless_to_args={typing.Generic: (S, T,)},
         attrs_argless_to_args     ={typing.Generic: (S, T,)},
     ),
-    CustomSingleUntypevared: PepHintMeta(
+    PepCustomSingleUntypevared: PepHintMeta(
         is_supported=False,
         is_typevared=False,
         superattrs=(typing.Dict[str, typing.List[str]],),
@@ -262,7 +264,7 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args={
             typing.Dict: (str, typing.List[str],)},
     ),
-    CustomMultipleTypevaredShallow: PepHintMeta(
+    PepCustomMultipleTypevaredShallow: PepHintMeta(
         is_supported=False,
         is_typevared=True,
         superattrs=(typing.Iterable[T], typing.Container[T],),
@@ -275,7 +277,7 @@ PEP_HINT_TO_META = {
             typing.Container: (T,),
         },
     ),
-    CustomMultipleTypevaredDeep: PepHintMeta(
+    PepCustomMultipleTypevaredDeep: PepHintMeta(
         is_supported=False,
         is_typevared=True,
         superattrs=(
@@ -297,20 +299,60 @@ Dictionary mapping various PEP-compliant type hints to :class:`PepHintMeta`
 instances detailing those hints with metadata applicable to testing scenarios.
 '''
 
-# ....................{ ITERABLES                         }....................
+# ....................{ PEP ~ iterables                   }....................
 PEP_HINTS = PEP_HINT_TO_META.keys()
 '''
 Iterable of various PEP-compliant type hints exercising well-known edge cases.
 '''
 
+# ....................{ NON-PEP ~ classes                 }....................
+class NonPepCustom(object):
+    '''
+    PEP-noncompliant user-defined class subclassing an arbitrary superclass.
+    '''
 
+    pass
+
+# ....................{ NON-PEP ~ iterables               }....................
 NONPEP_HINTS = (
+    # Builtin container type.
     list,
+    # Builtin scalar type.
     str,
-    cave.AnyType,
+    # User-defined type.
+    NonPepCustom,
+    # Beartype cave type.
     cave.NoneType,
+    # Unqualified forward reference.
+    'dict',
+    # Fully-qualified forward reference.
+    'beartype.cave.AnyType',
+    # Non-empty tuple containing two types.
     cave.NoneTypeOr[cave.AnyType],
+    # Non-empty tuple containing two types and a fully-qualified forward
+    # reference.
+    (int, 'beartype.cave.NoneType', set)
 )
 '''
 Tuple of various PEP-noncompliant type hints exercising well-known edge cases.
+'''
+
+
+NON_NONPEP_HINTS = (
+    # PEP-compliant type.
+    typing.Any,
+    # Object that is neither a PEP-noncompliant type hint nor a forward
+    # reference.
+    0.12345678910111213141516,
+    # Empty tuple.
+    (),
+    # Tuple containing a PEP-compliant type.
+    (set, 'set', typing.Any, cave.NoneType,),
+    # Tuple containing an object that is neither a PEP-noncompliant type hint
+    # nor a forward reference.
+    (list, 'list', 0xFEEDFACE, cave.NoneType,),
+)
+'''
+Tuple of various objects that are *not* PEP-noncompliant type hints exercising
+well-known edge cases.
 '''

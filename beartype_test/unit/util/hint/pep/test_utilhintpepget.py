@@ -32,13 +32,11 @@ def test_get_hint_typing_attrs_argless_to_args() -> None:
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        print('PEP hint: {!r}'.format(pep_hint))
         assert get_hint_typing_attrs_argless_to_args(pep_hint) == (
             pep_hint_meta.attrs_argless_to_args)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         assert get_hint_typing_attrs_argless_to_args(nonpep_hint) == {}
 
     # Assert that this getter returns the same non-empty dictionary for two
@@ -69,13 +67,11 @@ def test_get_hint_typing_superattrs() -> None:
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        print('PEP hint: {!r}'.format(pep_hint))
         assert _get_hint_typing_superattrs(pep_hint) == (
             pep_hint_meta.superattrs)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         assert _get_hint_typing_superattrs(nonpep_hint) == ()
 
 
@@ -94,12 +90,10 @@ def test_get_hint_typing_superattrs_argless_to_args() -> None:
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        print('PEP hint: {!r}'.format(pep_hint))
         assert _get_hint_typing_superattrs_argless_to_args(pep_hint) == (
             pep_hint_meta.superattrs_argless_to_args)
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         assert _get_hint_typing_superattrs_argless_to_args(
             nonpep_hint) == {}

@@ -37,7 +37,6 @@ def test_die_unless_hint_pep_supported() -> None:
 
     # For each PEP-compliant type hint and associated metadata...
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        print('PEP hint: {!r}'.format(pep_hint))
         # If this "typing" type is supported, assert that this validator does
         # *NOT* raise an exception.
         if pep_hint_meta.is_supported:
@@ -50,7 +49,6 @@ def test_die_unless_hint_pep_supported() -> None:
 
     # Assert that various non-"typing" types raise exceptions.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         with pytest.raises(BeartypeDecorHintPepException):
             die_unless_hint_pep_supported(nonpep_hint)
 
@@ -67,12 +65,10 @@ def test_is_hint_pep() -> None:
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint in PEP_HINTS:
-        print('PEP hint: {!r}'.format(pep_hint))
         assert is_hint_pep(pep_hint) is True
 
     # Assert that various non-"typing" types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         assert is_hint_pep(nonpep_hint) is False
 
 # ....................{ TESTS ~ typevar                   }....................
@@ -110,11 +106,9 @@ def test_is_hint_typing_typevared() -> None:
 
     # Assert that various "TypeVar"-centric types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        print('PEP hint: {!r}'.format(pep_hint))
         assert is_hint_typing_typevared(pep_hint) is (
             pep_hint_meta.is_typevared)
 
     # Assert that various "TypeVar"-agnostic types are correctly detected.
     for nonpep_hint in NONPEP_HINTS:
-        print('Non-PEP hint: {!r}'.format(nonpep_hint))
         assert is_hint_typing_typevared(nonpep_hint) is False

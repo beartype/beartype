@@ -26,9 +26,9 @@ def raises_cached(exception_cls: type) -> 'ExceptionInfo':
     Context manager validating that the block exercised by this manager raises
     a **cached exception** (i.e., whose message previously containing one or
     more instances of the magic
-    :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
+    :data:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR`
     substring since replaced by the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
     function) of the passed type.
 
     Parameters
@@ -49,8 +49,8 @@ def raises_cached(exception_cls: type) -> 'ExceptionInfo':
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcacheerror import (
-        RERAISE_EXCEPTION_CACHED_FORMAT_VAR)
+    from beartype._util.cache.utilcachetext import (
+        CACHED_FORMAT_VAR)
 
     # With a "pytest"-specific context manager validating this contextual block
     # to raise an exception of this type...
@@ -58,4 +58,4 @@ def raises_cached(exception_cls: type) -> 'ExceptionInfo':
         yield
 
     # Assert this exception message does *NOT* contain this magic substring.
-    assert RERAISE_EXCEPTION_CACHED_FORMAT_VAR not in str(exception_info.value)
+    assert CACHED_FORMAT_VAR not in str(exception_info.value)

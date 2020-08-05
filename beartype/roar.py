@@ -139,72 +139,7 @@ class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
     that decorator).
     '''
 
-    # ..................{ INITIALIZERS                      }..................
-    def __init__(self, message: str) -> None:
-        '''
-        Initialize this exception with the passed message.
-
-        Caveats
-        ----------
-        **This message must contain one or more instances of the magic**
-        :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
-        **substring.** If this is *not* the case, this exception raises a
-        :class:`_BeartypeUtilCachedExceptionException` on creation. Why?
-        Because this exception is intended to be raised *only* by lower-level
-        **memoized callables** (e.g., decorated by the
-        :func:`beartype._util.cache.utilcachecall.callable_cached` decorator),
-        which then memoize that exception along with this message. By
-        definition, this message *must* generically apply to each memoized call
-        to those callables passed the same parameters, which this message
-        ensures by containing one or more instances of this magic substring.
-
-        All higher-level non-memoized callables calling lower-level memoized
-        callables *must* (in order):
-
-        #. Catch exceptions raised by those lower-level memoized callables.
-        #. Call the
-           :func:`beartype._util.cache.utilcacheerror.reraise_exception`
-           function with those exceptions and the desired human-readable
-           substring fragments. That function then:
-
-           #. Replaces this magic substring hard-coded into those exception
-              messages with those human-readable substring fragments.
-           #. Reraises the original exceptions in a manner preserving their
-              original tracebacks.
-
-        Parameters
-        ----------
-        message : str
-            Human-readable message describing this exception.
-
-        Raises
-        ----------
-        _BeartypeUtilCachedExceptionException
-            If this message contains *no* magic
-            :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
-            substring(s).
-
-        See Also
-        ----------
-        :data:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_FORMAT_VAR`
-            Further details.
-        '''
-        assert isinstance(message, str), (
-            'Exception message {!r} not string.'.format(message))
-
-        # Avoid circular import dependencies.
-        from beartype._util.cache.utilcacheerror import (
-            RERAISE_EXCEPTION_CACHED_FORMAT_VAR)
-
-        # Validate this message *BEFORE* initializing our superclass.
-        if RERAISE_EXCEPTION_CACHED_FORMAT_VAR not in message:
-            raise _BeartypeUtilCachedExceptionException(
-                'Cached exception {!r} '
-                'format variable "{}" not found.'.format(
-                    self, RERAISE_EXCEPTION_CACHED_FORMAT_VAR))
-
-        # Initialize our superclass.
-        super().__init__(message)
+    pass
 
 # ....................{ EXCEPTIONS ~ decor : hint : value }....................
 class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
@@ -244,7 +179,72 @@ class BeartypeDecorHintPepException(
        https://www.python.org/dev/peps/pep-0484
     '''
 
-    pass
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, message: str) -> None:
+        '''
+        Initialize this exception with the passed message.
+
+        Caveats
+        ----------
+        **This message must contain one or more instances of the magic**
+        :data:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR`
+        **substring.** If this is *not* the case, this exception raises a
+        :class:`_BeartypeUtilCachedExceptionException` on creation. Why?
+        Because this exception is intended to be raised *only* by lower-level
+        **memoized callables** (e.g., decorated by the
+        :func:`beartype._util.cache.utilcachecall.callable_cached` decorator),
+        which then memoize that exception along with this message. By
+        definition, this message *must* generically apply to each memoized call
+        to those callables passed the same parameters, which this message
+        ensures by containing one or more instances of this magic substring.
+
+        All higher-level non-memoized callables calling lower-level memoized
+        callables *must* (in order):
+
+        #. Catch exceptions raised by those lower-level memoized callables.
+        #. Call the
+           :func:`beartype._util.cache.utilcachetext.reraise_exception`
+           function with those exceptions and the desired human-readable
+           substring fragments. That function then:
+
+           #. Replaces this magic substring hard-coded into those exception
+              messages with those human-readable substring fragments.
+           #. Reraises the original exceptions in a manner preserving their
+              original tracebacks.
+
+        Parameters
+        ----------
+        message : str
+            Human-readable message describing this exception.
+
+        Raises
+        ----------
+        _BeartypeUtilCachedExceptionException
+            If this message contains *no* magic
+            :data:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR`
+            substring(s).
+
+        See Also
+        ----------
+        :data:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR`
+            Further details.
+        '''
+        assert isinstance(message, str), (
+            'Exception message {!r} not string.'.format(message))
+
+        # Avoid circular import dependencies.
+        from beartype._util.cache.utilcachetext import (
+            CACHED_FORMAT_VAR)
+
+        # Validate this message *BEFORE* initializing our superclass.
+        if CACHED_FORMAT_VAR not in message:
+            raise _BeartypeUtilCachedExceptionException(
+                'Cached exception {!r} '
+                'format variable "{}" not found.'.format(
+                    self, CACHED_FORMAT_VAR))
+
+        # Initialize our superclass.
+        super().__init__(message)
 
 
 class BeartypeDecorHintPep560Exception(
@@ -508,7 +508,7 @@ class _BeartypeUtilCachedExceptionException(_BeartypeUtilCacheException):
     **Beartype memoization exception.**
 
     This exception is raised by the
-    :func:`beartype._util.utilcache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.utilcache.utilcachetext.reraise_exception_cached`
     function when one or more passed parameters are unsupported or invalid.
 
     This exception denotes a critical internal issue and should thus *never* be

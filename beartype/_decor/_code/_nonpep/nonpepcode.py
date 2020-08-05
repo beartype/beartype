@@ -47,6 +47,15 @@ def nonpep_code_check_param(
     (e.g.,:mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs) of the decorated callable.
 
+    This function is intentionally *not* memoized (e.g., with the
+    func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    this function has ``O(1)`` time complexity with negligible constants.
+    Moreover, memoizing this function would then require generalizing this
+    function to raise generically memoizable exceptions *and* return
+    generically memoizable code ala the comparable
+    :mod:`beartype._decor._code._pep` submodule, substantially increasing code
+    complexity for little to no benefit.
+
     Parameters
     ----------
     data : BeartypeData
@@ -118,6 +127,15 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
     Python code type-checking the return value annotated with a
     **PEP-noncompliant type hint** (e.g.,:mod:`beartype`-specific annotation
     *not* compliant with annotation-centric PEPs) of the decorated callable.
+
+    This function is intentionally *not* memoized (e.g., with the
+    func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    this function has ``O(1)`` time complexity with negligible constants.
+    Moreover, memoizing this function would then require generalizing this
+    function to raise generically memoizable exceptions *and* return
+    generically memoizable code ala the comparable
+    :mod:`beartype._decor._code._pep` submodule, substantially increasing code
+    complexity for little to no benefit.
 
     Parameters
     ----------
