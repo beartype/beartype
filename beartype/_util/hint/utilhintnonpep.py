@@ -38,15 +38,8 @@ def die_unless_hint_nonpep(
     hint** (i.e., :mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs).
 
-    This validator is effectively (but technically *not*) memoized. Since the
-    passed ``hint_label`` parameter is typically unique to each call to this
-    validator, memoizing this validator would uselessly consume excess space
-    *without* improving time efficiency. Instead, this validator first calls
-    the memoized :func:`is_hint_nonpep` tester. If that tester returns
-    ``True``, this validator immediately returns ``True`` and is thus
-    effectively memoized; else, this validator inefficiently raises a
-    human-readable exception without memoization. Since efficiency is largely
-    irrelevant in exception handling, this validator is effectively memoized.
+    This validator is effectively (but technically *not*) memoized. See the
+    :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
 
     Parameters
     ----------
@@ -70,7 +63,9 @@ def die_unless_hint_nonpep(
     Raises
     ----------
     TypeError
-        If this object is unhashable.
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
     exception_type
         If this object is neither:
 
@@ -89,10 +84,10 @@ def die_unless_hint_nonpep(
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
     if is_hint_nonpep(hint, is_str_valid):
-        return True
+        return
     # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
-
+    #
     # Note that the prior call has already validated "is_str_valid".
     assert isinstance(hint_label, str), (
         '{!r} not string.'.format(hint_label))
@@ -100,7 +95,9 @@ def die_unless_hint_nonpep(
         '{!r} not type.'.format(exception_cls))
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with tuple iteration performed below.
+    # BEGIN: Synchronize changes here with both:
+    # * The is_hint_nonpep() tester defined below.
+    # * Tuple iteration performed below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is a forward reference (i.e., fully-qualified or
@@ -197,18 +194,12 @@ def die_unless_hint_nonpep(
             # Else, this item is neither a forward reference nor class. Ergo,
             # this item is *NOT* a PEP-noncompliant type hint.
             #
-            # If forward references are supported, raise an exception noting
-            # that.
-            if is_str_valid:
-                raise exception_cls(
-                    '{} {!r} item {!r} neither type nor string.'.format(
-                        hint_label, hint, hint_item))
-            # Else, forward references are unsupported. In this case, raise an
-            # exception noting that.
-            else:
-                raise exception_cls(
-                    '{} {!r} item {!r} not type.'.format(
-                        hint_label, hint, hint_item))
+            # Raise an exception whose message contextually depends on whether
+            # forward references are permitted or not.
+            raise exception_cls(
+                ('{} {!r} item {!r} neither type nor string.' if is_str_valid else
+                 '{} {!r} item {!r} not type.'.format(
+                    hint_label, hint, hint_item)))
 
         # Since the prior iteration failed to raise an exception, this tuple
         # contains only forward references and/or PEP-noncompliant classes.
@@ -229,6 +220,13 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             '{} {!r} neither type nor tuple of types.'.format(
                 hint_label, hint))
+
+    # Raise an exception whose message contextually depends on whether
+    # forward references are permitted or not.
+    raise exception_cls(
+        ('{} {!r} item {!r} neither type nor string.' if is_str_valid else
+            '{} {!r} item {!r} not type.'.format(
+            hint_label, hint, hint_item)))
 
 # ....................{ TESTERS                           }....................
 @callable_cached
@@ -276,7 +274,9 @@ def is_hint_nonpep(
     Raises
     ----------
     TypeError
-        If this object is unhashable.
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
     '''
     assert isinstance(is_str_valid, bool), (
         '{!r} not boolean.'.format(is_str_valid))

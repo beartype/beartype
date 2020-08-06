@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest, typing
+import pytest
 
 # ....................{ TESTS                             }....................
 def test_utilhint_die_unless_hint() -> None:
@@ -25,62 +25,81 @@ def test_utilhint_die_unless_hint() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype import cave
-    from beartype.roar import BeartypeDecorHintNonPepException
+    from beartype.roar import (
+        BeartypeDecorHintNonPepException,
+        BeartypeDecorHintPepUnsupportedException,
+    )
     from beartype._util.hint.utilhint import die_unless_hint
-
-    #FIXME: Add PEP-compliant objects *AFTER* supported by this function.
-    # Tuple of PEP-compliant and -noncompliant objects accepted by this
-    # function.
-    HINTS_VALID = (
-        # PEP-compliant types.
-        #typing.Any,
-        # PEP-noncompliant type *NOT* defined by the stdlib "typing" module.
-        dict,
-        # PEP-noncompliant forward reference.
-        'dict',
-        # PEP-noncompliant tuple containing only PEP-noncompliant types and
-        # forward references.
-        (str, 'str', cave.AnyType, cave.NoneType,),
-    )
-
-    # Tuple of unhashable objects rejected by this function.
-    HINTS_INVALID_UNHASHABLE = (
-        # Dictionary.
-        {'For all things turn to barrenness': 'In the dim glass the demons hold,',},
-        # List.
-        ['The glass of outer weariness,', 'Made when God slept in times of old.',],
-        # Set.
-        {'There, through the broken branches, go', 'The ravens of unresting thought;',},
-    )
-
-    # Tuple of hashable non-PEP-noncompliant objects rejected by this function.
-    HINTS_INVALID_NONPEP = (
-        # Number.
-        0xDEADBEEF,
-        # Empty tuple.
-        (),
-        # Tuple containing a type defined by the stdlib "typing" module.
-        (set, 'set', typing.Any, cave.NoneType,),
-        # Tuple containing an object neither a type nor forward reference.
-        (list, 'list', 0, cave.NoneType,),
+    from beartype_test.unit.data.data_hint import (
+        NOT_HINTS_UNHASHABLE,
+        NOT_HINTS_HASHABLE,
+        NONPEP_HINTS,
+        PEP_HINT_TO_META,
     )
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for hint_valid in HINTS_VALID:
-        die_unless_hint(hint_valid)
+    for nonpep_hint in NONPEP_HINTS:
+        die_unless_hint(nonpep_hint)
 
-    # Assert this function rejects unhashable objects.
-    for hint_invalid_unhashable in HINTS_INVALID_UNHASHABLE:
-        with pytest.raises(TypeError):
-            die_unless_hint(hint_invalid_unhashable)
+    # Assert this function...
+    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+        # Accepts supported PEP-compliant type hints.
+        if pep_hint_meta.is_supported:
+            die_unless_hint(pep_hint)
+        # Rejects unsupported PEP-compliant type hints.
+        else:
+            with pytest.raises(BeartypeDecorHintPepUnsupportedException):
+                die_unless_hint(pep_hint)
 
-    # Assert this function rejects non-PEP-noncompliant objects.
-    for hint_invalid_nonpep in HINTS_INVALID_NONPEP:
+    # Assert this function rejects objects that are neither PEP-noncompliant
+    # type hints nor supported PEP-compliant type hints.
+    for non_hint_hashable in NOT_HINTS_HASHABLE:
         with pytest.raises(BeartypeDecorHintNonPepException):
-            print('Non-PEP-noncompliant hint: {!r}'.format(hint_invalid_nonpep))
-            die_unless_hint(hint_invalid_nonpep)
+            die_unless_hint(non_hint_hashable)
 
     # Assert this function rejects forward references when instructed to do so.
     with pytest.raises(BeartypeDecorHintNonPepException):
         die_unless_hint(hint='dict', is_str_valid=False)
+
+    # Assert this function rejects unhashable objects.
+    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            die_unless_hint(non_hint_unhashable)
+
+
+def test_utilhint_is_hint() -> None:
+    '''
+    Test the :func:`beartype._util.hint.utilhint.is_hint` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.utilhint import is_hint
+    from beartype_test.unit.data.data_hint import (
+        NOT_HINTS_UNHASHABLE,
+        NOT_HINTS_HASHABLE,
+        NONPEP_HINTS,
+        PEP_HINT_TO_META,
+    )
+
+    # Assert this function accepts PEP-noncompliant type hints.
+    for nonpep_hint in NONPEP_HINTS:
+        assert is_hint(nonpep_hint) is True
+
+    # Assert this function:
+    # * Accepts supported PEP-compliant type hints.
+    # * Rejects unsupported PEP-compliant type hints.
+    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+        assert is_hint(pep_hint) is pep_hint_meta.is_supported
+
+    # Assert this function rejects objects that are neither PEP-noncompliant
+    # type hints *NOR* supported PEP-compliant type hints.
+    for non_hint_hashable in NOT_HINTS_HASHABLE:
+        assert is_hint(non_hint_hashable) is False
+
+    # Assert this function rejects forward references when instructed to do so.
+    assert is_hint(hint='dict', is_str_valid=False) is False
+
+    # Assert this function rejects unhashable objects.
+    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            is_hint(non_hint_unhashable)

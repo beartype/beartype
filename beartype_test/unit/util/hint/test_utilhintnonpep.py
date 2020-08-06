@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest, typing
+import pytest
 
 # ....................{ TESTS                             }....................
 def test_utilhint_die_unless_hint_nonpep() -> None:
@@ -28,20 +28,21 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
     from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
     from beartype_test.unit.data.data_hint import (
-        NONPEP_HINTS, NON_NONPEP_HINTS,)
+        NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonpep_hint in NONPEP_HINTS:
         die_unless_hint_nonpep(nonpep_hint)
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NON_NONPEP_HINTS:
+    for non_nonpep_hint in NOT_NONPEP_HINTS:
         with pytest.raises(BeartypeDecorHintNonPepException):
             die_unless_hint_nonpep(non_nonpep_hint)
 
     # Assert this function rejects unhashable objects.
-    with pytest.raises(TypeError):
-        die_unless_hint_nonpep({dict, 'dict',})
+    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            die_unless_hint_nonpep(non_hint_unhashable)
 
 
 def test_utilhint_is_hint_nonpep() -> None:
@@ -52,16 +53,17 @@ def test_utilhint_is_hint_nonpep() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.utilhintnonpep import is_hint_nonpep
     from beartype_test.unit.data.data_hint import (
-        NONPEP_HINTS, NON_NONPEP_HINTS,)
+        NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonpep_hint in NONPEP_HINTS:
         assert is_hint_nonpep(nonpep_hint) is True
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NON_NONPEP_HINTS:
+    for non_nonpep_hint in NOT_NONPEP_HINTS:
         assert is_hint_nonpep(non_nonpep_hint) is False
 
     # Assert this function rejects unhashable objects.
-    with pytest.raises(TypeError):
-        is_hint_nonpep({dict, 'dict',})
+    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            is_hint_nonpep(non_hint_unhashable)

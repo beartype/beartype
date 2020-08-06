@@ -193,6 +193,11 @@ def get_hint_typing_typevars(hint: object) -> tuple:
     return getattr(hint, '__parameters__', ())
 
 # ....................{ GETTERS ~ attrs                   }....................
+#FIXME: Render this safely memoizable by:
+#* Eliminating the passed "hint_label" parameter.
+#* Generalizing all exception messages raised by this function. These
+#  exceptions are only sanity checks *NEVER* intended to be seen by users;
+#  ergo, human-readability is a secondary concern here.
 @callable_cached
 def get_hint_typing_attrs_argless_to_args(
     # Mandatory parameters.
@@ -350,8 +355,7 @@ def get_hint_typing_attrs_argless_to_args(
     # subclass if any to the tuple of arguments specified on that attribute
     # *OR* the empty dictionary otherwise.
     hint_typing_superattrs_untypevared = (
-        _get_hint_typing_superattrs_argless_to_args(
-            hint=hint, hint_label=hint_label))
+        _get_hint_typing_superattrs_argless_to_args(hint))
 
     # If this subclass failed to preserve its original tuple of "typing"
     # superclasses against "type erasure," raise an exception.
@@ -365,6 +369,7 @@ def get_hint_typing_attrs_argless_to_args(
     return hint_typing_superattrs_untypevared
 
 # ....................{ PRIVATE ~ getters : attr          }....................
+#FIXME: Rename to _get_hint_typing_bare_attr_argless()... just 'cause.
 def _get_hint_direct_typing_attr_argless(
     # Mandatory parameters.
     hint: object,
@@ -416,6 +421,7 @@ def _get_hint_direct_typing_attr_argless(
             hint_label, hint))
 
 
+#FIXME: Rename to _get_hint_typing_bare_attr_argless_or_none()... just 'cause.
 @callable_cached
 def _get_hint_direct_typing_attr_argless_or_none(
     hint: object) -> 'NoneTypeOr[object]':
@@ -501,13 +507,59 @@ def _get_hint_direct_typing_attr_argless_or_none(
 
 # ....................{ PRIVATE ~ getters : super         }....................
 @callable_cached
-def _get_hint_typing_superattrs(
-    # Mandatory parameters.
-    hint: object,
+def _get_hint_typing_superattrs_argless_to_args(hint: object) -> dict:
+    '''
+    Dictionary mapping each **argumentless typing super attribute** (i.e.,
+    public attribute of the :mod:`typing` module originally listed as a
+    superclass of the class of the passed PEP-compliant type hint *sans*
+    arguments) of this hint if any to the tuple of those arguments *or* the
+    empty dictionary otherwise.
 
-    # Optional parameters.
-    hint_label: str = 'Annotation',
-) -> tuple:
+    This getter function is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    dict
+        Either:
+
+        * If the type of this object subclasses one or more superclasses
+          uniquely identified by public attributes of the :mod:`typing` module,
+          a dictionary mapping these attributes sans arguments to the tuple of
+          those arguments (in method resolution order).
+        * Else, the empty dictionary.
+
+    See Also
+    ----------
+    :func:`_get_hint_typing_superattrs`
+        Further details.
+    '''
+
+    # Tuple of all possibly parametrized typing super attributes of this object
+    # if any *OR* the empty tuple otherwise.
+    hint_typing_superattrs = _get_hint_typing_superattrs(hint)
+
+    # Return either...
+    return (
+        # If this object has *NO* such attributes, the empty dictionary;
+        {} if not hint_typing_superattrs else
+        # Else, the non-empty dictionary mapping...
+        {
+            # Each such attribute sans arguments to...
+            _get_hint_direct_typing_attr_argless(hint_typing_superattr): (
+                # The tuple of those arguments.
+                get_hint_typing_args(hint_typing_superattr))
+            for hint_typing_superattr in hint_typing_superattrs
+        }
+    )
+
+
+@callable_cached
+def _get_hint_typing_superattrs(hint: object) -> tuple:
     '''
     Tuple of all **typing super attributes** (i.e., public attributes of the
     :mod:`typing` module originally listed as superclasses of the class of the
@@ -615,9 +667,6 @@ def _get_hint_typing_superattrs(
     ----------
     hint : object
         Object to be inspected.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
 
     Returns
     ----------
@@ -647,11 +696,9 @@ def _get_hint_typing_superattrs(
     .. _PEP 560:
        https://www.python.org/dev/peps/pep-0560
     '''
-    assert isinstance(hint_label, str), (
-        '{!r} not string.'.format(hint_label))
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_typing
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
@@ -710,7 +757,7 @@ def _get_hint_typing_superattrs(
     #        hint_base = hint_orig_mro[hint_orig_mro_index_curr]
     #
     #        # If this superclass is a typing attribute...
-    #        if is_hint_typing(hint_base):
+    #        if is_hint_pep_typing(hint_base):
     #            # Avoid inserting this attribute into the "hint_orig_mro" list.
     #            # Most typing attributes are *NOT* actual classes and those that
     #            # are have no meaningful public superclass. Ergo, iteration
@@ -790,67 +837,6 @@ def _get_hint_typing_superattrs(
         tuple(
             hint_base
             for hint_base in hint_bases
-            if is_hint_typing(hint_base)
+            if is_hint_pep_typing(hint_base)
         )
-    )
-
-
-@callable_cached
-def _get_hint_typing_superattrs_argless_to_args(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    hint_label: str = 'Annotation',
-) -> dict:
-    '''
-    Dictionary mapping each **argumentless typing super attribute** (i.e.,
-    public attribute of the :mod:`typing` module originally listed as a
-    superclass of the class of the passed PEP-compliant type hint *sans*
-    arguments) of this hint if any to the tuple of those arguments *or* the
-    empty dictionary otherwise.
-
-    This getter function is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
-
-    Returns
-    ----------
-    dict
-        Either:
-
-        * If the type of this object subclasses one or more superclasses
-          uniquely identified by public attributes of the :mod:`typing` module,
-          a dictionary mapping these attributes sans arguments to the tuple of
-          those arguments (in method resolution order).
-        * Else, the empty dictionary.
-
-    See Also
-    ----------
-    :func:`_get_hint_typing_superattrs`
-        Further details.
-    '''
-
-    # Tuple of all possibly parametrized typing super attributes of this object
-    # if any *OR* the empty tuple otherwise.
-    hint_typing_superattrs = _get_hint_typing_superattrs(hint)
-
-    # Return either...
-    return (
-        # If this object has *NO* such attributes, the empty dictionary;
-        {} if not hint_typing_superattrs else
-        # Else, the non-empty dictionary mapping...
-        {
-            # Each such attribute sans arguments to...
-            _get_hint_direct_typing_attr_argless(hint_typing_superattr): (
-                # The tuple of those arguments.
-                get_hint_typing_args(hint_typing_superattr))
-            for hint_typing_superattr in hint_typing_superattrs
-        }
     )

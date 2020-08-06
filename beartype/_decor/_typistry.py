@@ -73,7 +73,7 @@ def register_typistry_type(cls: type) -> str:
     if not isinstance(cls, type):
         raise _BeartypeDecorBeartypistryException(
             'Non-class {!r} unsupported by "bear_typistry".'.format(cls))
-    # If this type is defined by the "typing" module, raise an exception.
+    # Else if this type is a PEP-compliant type hint, raise an exception.
     elif is_hint_pep(cls):
         raise _BeartypeDecorBeartypistryException(
             '"Typing" type {!r} unsupported by "bear_typistry".'.format(cls))

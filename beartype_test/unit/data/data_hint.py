@@ -18,6 +18,81 @@ import collections, typing
 from beartype import cave
 from collections import namedtuple
 
+# ....................{ NON-HINTS ~ iterables             }....................
+NOT_HINTS_UNHASHABLE = (
+    # Dictionary.
+    {'For all things turn to barrenness':
+     'In the dim glass the demons hold,',},
+    # List.
+    ['The glass of outer weariness,',
+     'Made when God slept in times of old.',],
+    # Set.
+    {'There, through the broken branches, go',
+     'The ravens of unresting thought;',},
+)
+'''
+Tuple of various objects that are unhashable and thus unsupported by the
+:func:`beartype.beartype` decorator as valid type hints.
+'''
+
+
+NOT_HINTS_HASHABLE = (
+    # Scalar that is neither a type nor string (i.e., forward reference).
+    0.12345678910111213141516,
+    # Empty tuple.
+    (),
+    # Tuple containing an scalar that is neither a type nor string.
+    (list, 'list', 0xFEEDFACE, cave.NoneType,),
+)
+'''
+Tuple of various objects that are hashable but nonetheless unsupported by the
+:func:`beartype.beartype` decorator as valid type hints.
+'''
+
+# ....................{ NON-PEP ~ classes                 }....................
+class NonPepCustom(object):
+    '''
+    PEP-noncompliant user-defined class subclassing an arbitrary superclass.
+    '''
+
+    pass
+
+# ....................{ NON-PEP ~ iterables               }....................
+NONPEP_HINTS = (
+    # Builtin container type.
+    list,
+    # Builtin scalar type.
+    str,
+    # User-defined type.
+    NonPepCustom,
+    # Beartype cave type.
+    cave.NoneType,
+    # Unqualified forward reference.
+    'dict',
+    # Fully-qualified forward reference.
+    'beartype.cave.AnyType',
+    # Non-empty tuple containing two types.
+    cave.NoneTypeOr[cave.AnyType],
+    # Non-empty tuple containing two types and a fully-qualified forward
+    # reference.
+    (int, 'beartype.cave.NoneType', set)
+)
+'''
+Tuple of various PEP-noncompliant type hints exercising well-known edge cases.
+'''
+
+
+NOT_NONPEP_HINTS = (
+    # PEP-compliant type.
+    typing.Any,
+    # Tuple containing a PEP-compliant type.
+    (set, 'set', typing.Any, cave.NoneType,),
+) + NOT_HINTS_HASHABLE
+'''
+Tuple of various objects that are *not* PEP-noncompliant type hints exercising
+well-known edge cases.
+'''
+
 # ....................{ PEP ~ typevars                    }....................
 S = typing.TypeVar('S')
 '''
@@ -305,54 +380,9 @@ PEP_HINTS = PEP_HINT_TO_META.keys()
 Iterable of various PEP-compliant type hints exercising well-known edge cases.
 '''
 
-# ....................{ NON-PEP ~ classes                 }....................
-class NonPepCustom(object):
-    '''
-    PEP-noncompliant user-defined class subclassing an arbitrary superclass.
-    '''
 
-    pass
-
-# ....................{ NON-PEP ~ iterables               }....................
-NONPEP_HINTS = (
-    # Builtin container type.
-    list,
-    # Builtin scalar type.
-    str,
-    # User-defined type.
-    NonPepCustom,
-    # Beartype cave type.
-    cave.NoneType,
-    # Unqualified forward reference.
-    'dict',
-    # Fully-qualified forward reference.
-    'beartype.cave.AnyType',
-    # Non-empty tuple containing two types.
-    cave.NoneTypeOr[cave.AnyType],
-    # Non-empty tuple containing two types and a fully-qualified forward
-    # reference.
-    (int, 'beartype.cave.NoneType', set)
-)
+NOT_PEP_HINTS = NONPEP_HINTS + NOT_HINTS_HASHABLE
 '''
-Tuple of various PEP-noncompliant type hints exercising well-known edge cases.
-'''
-
-
-NON_NONPEP_HINTS = (
-    # PEP-compliant type.
-    typing.Any,
-    # Object that is neither a PEP-noncompliant type hint nor a forward
-    # reference.
-    0.12345678910111213141516,
-    # Empty tuple.
-    (),
-    # Tuple containing a PEP-compliant type.
-    (set, 'set', typing.Any, cave.NoneType,),
-    # Tuple containing an object that is neither a PEP-noncompliant type hint
-    # nor a forward reference.
-    (list, 'list', 0xFEEDFACE, cave.NoneType,),
-)
-'''
-Tuple of various objects that are *not* PEP-noncompliant type hints exercising
+Tuple of various objects that are *not* PEP-compliant type hints exercising
 well-known edge cases.
 '''
