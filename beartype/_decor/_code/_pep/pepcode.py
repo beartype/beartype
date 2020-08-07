@@ -39,7 +39,9 @@ from beartype._decor._code._pep._pepsnip import (
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import register_typistry_type
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_typing_attrs_argless_to_args)
+    get_hint_pep_typing_attrs_argless_to_args)
+from beartype._util.hint.pep.utilhintpeptest import (
+    die_unless_hint_pep_supported)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.list.utillistfixed import FixedList
 from beartype._util.cache.list.utillistfixedpool import (
@@ -144,12 +146,8 @@ def pep_code_check_param(
     #FIXME: Generalize this label to embed the kind of parameter as well (e.g.,
     #"positional-only", "keyword-only", "variadic positional").
     # Human-readable label describing this parameter.
-    hint_label = (
-        '{} parameter "{}" PEP type hint'.format(
-            data.func_name, func_arg.name))
-
-    # If this hint is currently unsupported, raise an exception.
-    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
+    hint_label = '{} parameter "{}" PEP type hint'.format(
+        data.func_name, func_arg.name)
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
@@ -200,9 +198,6 @@ def pep_code_check_return(data: BeartypeData) -> str:
     # Human-readable label describing this hint.
     hint_label = '{} return PEP type hint'.format(data.func_name)
 
-    # If this hint is currently unsupported, raise an exception.
-    die_unless_hint_pep_supported(hint=hint, hint_label=hint_label)
-
     # Return Python code to...
     return (
         # Call the decorated callable and localizing its return value *AND*...
@@ -224,6 +219,7 @@ def pep_code_check_return(data: BeartypeData) -> str:
 #non-human-readable exceptions that the caller is then required to explicitly
 #catch and raise non-generic public human-readable exceptions from. Somewhat
 #clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
+
 # @callable_cached
 def _pep_code_check(
     hint: object,
@@ -380,7 +376,7 @@ def _pep_code_check(
             # Dictionary mapping each argumentless typing attribute of this
             # hint to the tuple of those arguments.
             hint_curr_typing_attrs_argless_to_args = (
-                get_hint_typing_attrs_argless_to_args(hint_curr))
+                get_hint_pep_typing_attrs_argless_to_args(hint_curr))
 
             # If this hint has *NO* such attributes, raise an exception. By the
             # design of that getter function, this should *NEVER* occur;

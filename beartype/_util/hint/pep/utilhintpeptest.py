@@ -27,10 +27,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    False
 #
 #To implement this sanely, we'll probably want to define a new higher-level
-#get_hint_typing_deep_attrs_argless_to_args() getter calling the lower-level
-#get_hint_typing_attrs_argless_to_args() getter via a breadth-first traversal.
+#get_hint_pep_typing_deep_attrs_argless_to_args() getter calling the lower-level
+#get_hint_pep_typing_attrs_argless_to_args() getter via a breadth-first traversal.
 #For disambiguity, the latter getter should be renamed to
-#get_hint_typing_flat_attrs_argless_to_args().
+#get_hint_pep_typing_flat_attrs_argless_to_args().
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
@@ -58,7 +58,7 @@ of the :mod:`typing` module uniquely identifying PEP-compliant type hints
 sans arguments) supported by the :func:`beartype.beartype` decorator.
 
 This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_typing_attrs_argless_to_args` getter function.
+:func:`get_hint_pep_typing_attrs_argless_to_args` getter function.
 '''
 
 # ....................{ EXCEPTIONS                        }....................
@@ -160,6 +160,17 @@ def die_unless_hint_pep_supported(
     This validator is effectively (but technically *not*) memoized. See the
     :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
 
+    Caveats
+    ----------
+    **This validator only shallowly validates this object.** If this object is
+    a subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``),
+    this validator ignores all subscripted arguments (e.g., ``List[int]``) on
+    this hint and may thus return false positives for hints that are directly
+    supported but whose subscripted arguments are not.
+
+    To deeply validate this object, iteratively call this validator during a
+    recursive traversal over each subscripted argument of this object.
+
     Parameters
     ----------
     hint : object
@@ -195,7 +206,7 @@ def die_unless_hint_pep_supported(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_attrs_argless_to_args)
+        get_hint_pep_typing_attrs_argless_to_args)
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
@@ -217,8 +228,8 @@ def die_unless_hint_pep_supported(
     # Dictionary mapping each argumentless public attribute of the "typing"
     # module uniquely identifying this hint if any to the tuple of those
     # arguments *OR* "None" otherwise.
-    hint_typing_attrs_argless_to_args = get_hint_typing_attrs_argless_to_args(
-        hint)
+    hint_typing_attrs_argless_to_args = (
+        get_hint_pep_typing_attrs_argless_to_args(hint))
 
     # If no such attributes exists, raise an exception.
     #
@@ -296,17 +307,17 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Note that this implementation could probably be reduced to simply calling
-    # the get_hint_typing_attrs_argless_to_args() function and testing
+    # the get_hint_pep_typing_attrs_argless_to_args() function and testing
     # whether the return value is "None" or not. While certainly more compact
     # and convenient than the current approach, that refactored approach would
     # also be considerably more fragile, failure-prone, and subject to
     # whimsical "improvements" in the already overly hostile "typing" API. Why?
-    # Because the get_hint_typing_attrs_argless_to_args() function:
+    # Because the get_hint_pep_typing_attrs_argless_to_args() function:
     #
     # * Parses the machine-readable string returned by the __repr__() dunder
-    #   method of "typing" types. Since this string is *NOT* standardized by
+    #   method of "typing" types. Since that string is *NOT* standardized by
     #   PEP 484 or any other PEP, "typing" authors remain free to violate this
-    #   method in any manner of their choosing.
+    #   pseudo-standard in any manner and at any time of their choosing.
     # * Suffers common edge cases for "typing" types whose __repr__() dunder
     #   methods fail to comply with the non-standard implemented by their
     #   sibling types. This includes the common "TypeVar" type.
@@ -399,6 +410,17 @@ def is_hint_pep_supported(hint: object) -> bool:
 
     This tester is memoized for efficiency.
 
+    Caveats
+    ----------
+    **This tester only shallowly inspects this object.** If this object is a
+    subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``), this
+    tester ignores all subscripted arguments (e.g., ``List[int]``) on this hint
+    and may thus return false positives for hints that are directly supported
+    but whose subscripted arguments are not.
+
+    To deeply inspect this object, iteratively call this tester during a
+    recursive traversal over each subscripted argument of this object.
+
     Parameters
     ----------
     hint : object
@@ -433,13 +455,13 @@ def is_hint_pep_supported(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_typing_attrs_argless_to_args)
+        get_hint_pep_typing_attrs_argless_to_args)
 
     # Dictionary mapping each argumentless public attribute of the "typing"
     # module uniquely identifying this hint if any to the tuple of those
     # arguments *OR* "None" otherwise.
-    hint_typing_attrs_argless_to_args = get_hint_typing_attrs_argless_to_args(
-        hint)
+    hint_typing_attrs_argless_to_args = (
+        get_hint_pep_typing_attrs_argless_to_args(hint))
 
     # Return true only if...
     return all(
@@ -581,10 +603,10 @@ def is_hint_pep_typevared(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_typing_typevars
+    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
 
     #FIXME: Consider replacing with this more exacting test:
-    #return is_hint_pep(hint) and bool(get_hint_typing_typevars)
+    #return is_hint_pep(hint) and bool(get_hint_pep_typevars)
 
     # Return true only if this is a "typing" type parametrized by one or more
     # type variables, trivially detected by testing whether the tuple of all
@@ -601,4 +623,4 @@ def is_hint_pep_typevared(hint: object) -> bool:
     #   Thankfully, the "typing" module percolates the "__parameters__" dunder
     #   attribute from "typing" pseudo-superclasses to user-defined subclasses
     #   during PEP 560-style type erasure. Finally: they did something right.
-    return bool(get_hint_typing_typevars(hint))
+    return bool(get_hint_pep_typevars(hint))
