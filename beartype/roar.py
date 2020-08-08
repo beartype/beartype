@@ -438,7 +438,7 @@ class _BeartypeUtilCachedCallableException(_BeartypeUtilCacheException):
     pass
 
 
-class _BeartypeUtilCachedExceptionException(_BeartypeUtilCacheException):
+class _BeartypeUtilCachedTextException(_BeartypeUtilCacheException):
     '''
     **Beartype memoization exception.**
 

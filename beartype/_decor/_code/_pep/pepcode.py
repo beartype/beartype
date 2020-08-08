@@ -46,6 +46,11 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.list.utillistfixed import FixedList
 from beartype._util.cache.list.utillistfixedpool import (
     SIZE_BIG, acquire_fixed_list, release_fixed_list)
+from beartype._util.cache.utilcachetext import (
+    format_text_cached,
+    reraise_exception_cached,
+    CACHED_FORMAT_VAR,
+)
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
     is_hint_pep,
@@ -162,14 +167,31 @@ def pep_code_check_param(
             '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
+    # Attempt to...
+    try:
+        # Unmemoized parameter-specific Python code type-checking this
+        # parameter, formatted from...
+        param_code_check = format_text_cached(
+            # Memoized parameter-agnostic code type-checking this parameter.
+            text=_pep_code_check(func_arg.annotation),
+            format_str=hint_label,
+        )
+    # If the prior call to the memoized _pep_code_check() function raises a
+    # cached exception, reraise this exception's memoized parameter-agnostic
+    # message into an unmemoized parameter-specific message.
+    except BeartypeDecorHintPepException as exception:
+        reraise_exception_cached(exception=exception, format_str=hint_label)
+
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+    #which are the optimal means of performing string formatting.
+
     # Return Python code to...
     return (
         # Localize this parameter *AND*...
         get_arg_code_template.format(
             arg_name=func_arg.name, arg_index=func_arg_index) +
-
         # Type-check this parameter.
-        _pep_code_check(hint=func_arg.annotation, hint_label=hint_label)
+        param_code_check
     )
 
 
@@ -198,33 +220,38 @@ def pep_code_check_return(data: BeartypeData) -> str:
     # Human-readable label describing this hint.
     hint_label = '{} return PEP type hint'.format(data.func_name)
 
+    # Attempt to...
+    try:
+        # Unmemoized return value-specific Python code type-checking this
+        # return value, formatted from...
+        return_code_check = format_text_cached(
+            # Memoized return value-agnostic code type-checking this parameter.
+            text=_pep_code_check(data.func_sig.return_annotation),
+            format_str=hint_label,
+        )
+    # If the prior call to the memoized _pep_code_check() function raises a
+    # cached exception, reraise this exception's memoized return value-agnostic
+    # message into an unmemoized return value-specific message.
+    except BeartypeDecorHintPepException as exception:
+        reraise_exception_cached(exception=exception, format_str=hint_label)
+
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+    #which are the optimal means of performing string formatting.
+
     # Return Python code to...
     return (
-        # Call the decorated callable and localizing its return value *AND*...
+        # Call the decorated callable and localize its return value *AND*...
         PEP_CODE_GET_RETURN +
-
         # Type-check this return value *AND*...
-        _pep_code_check(
-            hint=data.func_sig.return_annotation, hint_label=hint_label) +
-
+        return_code_check +
         # Return this value from this wrapper function.
         PEP_CODE_RETURN_CHECKED
     )
 
 # ....................{ CODERS ~ check                    }....................
-#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
-#passed "hint_label" parameter, required to raise human-readable exceptions
-#but sadly callable-specific. As we see it, the only sane solution is to
-#*IMMEDIATELY* refactor this function to raise generic private
-#non-human-readable exceptions that the caller is then required to explicitly
-#catch and raise non-generic public human-readable exceptions from. Somewhat
-#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
-
-# @callable_cached
-def _pep_code_check(
-    hint: object,
-    hint_label: str,
-) -> str:
+#FIXME: Shift this function into a new "pepcodebfs" submodule.
+@callable_cached
+def _pep_code_check(hint: object) -> str:
     '''
     Python code type-checking the previously localized parameter or return
     value annotated by the passed PEP-compliant type hint against this hint of
@@ -234,21 +261,28 @@ def _pep_code_check(
 
     Caveats
     ----------
-    **This function intentionally accepts to** ``hint_label`` **parameter.**
+    **This function intentionally accepts no** ``hint_label`` **parameter.**
     Why? Since that parameter is typically specific to the caller, accepting
     that parameter would effectively prevent this code generator from memoizing
     the passed hint with the returned code, which would rather defeat the
-    point. Instead, this function only raises private generic
-    non-human-readable exceptions that the caller is required to explicitly
-    catch and raise non-generic public human-readable exceptions from.
+    point. Instead, this function only:
+
+    * Returns generic non-working code containing the
+      :attr:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR` format
+      variable that the caller is required to explicitly format with
+      non-generic working code by calling the
+      :func:`beartype._util.cache.utilcachetext.format_text_cached` function.
+    * Raises generic non-human-readable exceptions containing the
+      :attr:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR` format
+      variable that the caller is required to explicitly catch and raise
+      non-generic human-readable exceptions from by calling the
+      :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
+      function.
 
     Parameters
     ----------
     hint : object
         PEP-compliant type hint to be type-checked.
-    hint_label : str
-        Human-readable label prefixing this type hint's representation in
-        exception messages raised by this function.
 
     Returns
     ----------
@@ -264,12 +298,10 @@ def _pep_code_check(
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
     '''
-    assert isinstance(hint_label, str), (
-        '"{!r}" not string.'.format(hint_label))
 
     #FIXME: Remove these two statements after implementing this function.
     from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
-    die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
+    die_unless_hint_nonpep(hint)
 
     # Python code snippet to be returned.
     func_code = ''
@@ -283,12 +315,12 @@ def _pep_code_check(
     # Currently visited hint.
     hint_curr = None
 
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+    #which are the optimal means of performing string formatting.
+
     # Human-readable label prefixing the representations of child type hints of
     # this top-level hint in raised exception messages.
-    hint_curr_label = '{} {!r} child '.format(hint_label, hint)
-
-    #FIXME: Consider uncommenting this here:
-    #del hint_Label
+    hint_curr_label = '{} {!r} child '.format(CACHED_FORMAT_VAR, hint)
 
     # Hint metadata (i.e., fixed list efficiently masquerading as a tuple of
     # metadata describing the currently visited hint, defined by the previously
@@ -378,13 +410,15 @@ def _pep_code_check(
             hint_curr_typing_attrs_argless_to_args = (
                 get_hint_pep_typing_attrs_argless_to_args(hint_curr))
 
-            # If this hint has *NO* such attributes, raise an exception. By the
-            # design of that getter function, this should *NEVER* occur;
-            # nonetheless, this test is minimally expensive and th
+            # If this hint has *NO* such attributes, raise an exception.
+            #
+            # Note that this should *NEVER* happen, as that getter function
+            # should always return a non-empty dictionary when passed a
+            # PEP-compliant type hint. Yet, sanity checks preserve sanity.
             if not hint_curr_typing_attrs_argless_to_args:
                 raise BeartypeDecorHintPepException(
-                    '{} PEP type {!r} "typing" superclasses erased.'.format(
-                        hint_label, hint))
+                    '{} {!r} "typing" superclasses erased.'.format(
+                        hint_curr_label, hint))
 
             #FIXME: Implement PEP-compliant type checking here.
             # For each argumentless typing attribute of this hint...

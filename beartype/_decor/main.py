@@ -84,21 +84,22 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Globally replace all existing "@callable_cached" substrings with
 #  "@callable_cached_positional". Voila!
 
-#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
-#passed "hint_label" parameter, required to raise human-readable exceptions
-#but sadly callable-specific. As we see it, the only sane solution is to
-#*IMMEDIATELY* refactor this function to raise generic private
-#non-human-readable exceptions that the caller is then required to explicitly
-#catch and raise non-generic public human-readable exceptions from. Somewhat
-#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
-
-#FIXME: *MEMOIZE THIS.* Sadly, we have no idea how to sanely do so. Why? The
-#passed "hint_label" parameter, required to raise human-readable exceptions
-#but sadly callable-specific. As we see it, the only sane solution is to
-#*IMMEDIATELY* refactor this function to raise generic private
-#non-human-readable exceptions that the caller is then required to explicitly
-#catch and raise non-generic public human-readable exceptions from. Somewhat
-#clumsy, but *ABSOLUTELY* required. The current approach does not scale at all.
+#FIXME: Refactor all calls the outrageously slow str.format() method embedded
+#throughout the codebase with outrageously fast Python >= 3.6-specific
+#f-strings: e.g.,
+#    # Rather than this...
+#    "{}/{}".format(root, output)
+#    # ...do this everywhere.
+#    f"{root}/{output}".
+#
+#Note that the f-string approach requires format variables and external
+#variables to share the same names. Ergo, as a necessary precondition to making
+#this happen, we'll need to grep through the codebase and ensure this is the
+#case for all existing str.format() calls.
+#
+#Since Python 3.5 hits EOL on 2020-09-13, do this concurrent with dropping
+#Python 3.5 support. For now, the current approach is fine albeit slower than
+#ideal, which will be resolved shortly. *shrug*
 
 #FIXME: Avoid naively passing globals() to the exec() call below. Instead, we
 #should pass a new global constant containing all "__beartype_" global imports:

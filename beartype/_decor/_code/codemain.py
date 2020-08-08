@@ -184,6 +184,9 @@ def code(data: BeartypeData) -> None:
     # callable if any *or* the empty string otherwise.
     code_return = _code_check_return(data)
 
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+    #which are the optimal means of performing string formatting.
+
     # Python code defining the wrapper type-checking this callable.
     #
     # While there exist numerous alternatives to string formatting (e.g.,
@@ -196,7 +199,7 @@ def code(data: BeartypeData) -> None:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal.
-    func_code = '{}{}{}'.format(code_sig, code_params, code_return)
+    func_code = code_sig + code_params + code_return
 
     # True only if this code proxies this callable *WITHOUT* type checking.
     is_func_code_noop = (func_code == code_sig + CODE_RETURN_UNCHECKED)
