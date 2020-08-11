@@ -16,6 +16,102 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Raising human readable exceptions from the decorated wrapper explicitly
+#describing why a given parameter or return value fails to satisfy a given type
+#hint will prove non-trivial. Fortunately, that's also the least of our worries
+#at the moment. Let's leave this one for a subsequent stable release, shall we?
+#FIXME: *EURAKA!* We just realized how to do this sanely. As with all things
+#"beartype", the correct solution is to separate efficient type-testing from
+#inefficient type-testing *EXCEPTION HANDLING.* The pep_code_check() implements
+#the former by dynamically generating efficient type-testing code. If you
+#consider, however, there's no reason whatsoever to do the same for
+#type-testing exception handling, as efficiency is utterly no concern there.
+#Instead, do the follow:
+#
+#* Define a new quasi-public "beartype._util.hint.pep.utilhintpeperror"
+#  submodule.
+#* In this submodule:
+#  * Define a new raise_pep_call_exception() function with signature:
+#      def raise_pep_call_exception(
+#          func: 'CallableTypes',
+#          param_or_return: object,
+#          param_or_return_name: str,
+#      ) -> None:
+#          '''
+#          Raise a human-readable exception detailing the failure of the
+#          parameter with the passed name *or* return value if this name is the
+#          magic string ``return`` of the passed decorated function fails to
+#          satisfy the PEP-compliant type hint annotated on this parameter or
+#          return value.
+#
+#          Parameters
+#          ----------
+#          func : CallableTypes
+#              Decorated callable to raise this exception from.
+#          param_or_return : object
+#              Parameter or return value failing to satisfy this hint.
+#          param_or_return_name : str
+#              Either:
+#
+#              * If the object failing to satisfy this hint is a parameter, the
+#                name of this parameter.
+#              * Else, the magic string ``return`` implying this object to be a
+#                return value.
+#
+#          Raises
+#          ----------
+#          BeartypeCallTypePepParamException
+#              If the object failing to satisfy this hint is a parameter.
+#          BeartypeCallTypePepReturnException
+#              If the object failing to satisfy this hint is a return value.
+#          '''
+#          pass
+#     Those should be the only parameters required by this function to raise
+#     human-readable exceptions. Given the passed "func", we can obtain both
+#     the (qualified or unqualified) name of that function as well as the
+#     dunder "__annotations__" dictionary of all annotations on that function.
+#     Likewise, given the passed "param_or_return_name" parameter, we can
+#     obtain the annotation corresponding to this parameter or return value.
+#
+#     Note that we can substantially improve this implementation later. That
+#     said, the initial implementation should at least contain
+#     dictionary-driven logic recursively (like, actually, recursively, because
+#     efficiency doesn't matter here and there's absolutely no way we'll blow
+#     through the stack with shallow-nested PEP type hints) calling private
+#     exception handlers probably defined in the same module unique to each
+#     "typing" type: e.g.,
+#     def _raise_pep_call_exception_union(
+#         pith: object, hint: object, exception_cls: type) -> None:
+#         raise
+#
+#     Note the different signature, as the raise_pep_call_exception() caller is
+#     tasked with obtaining the relevant PEP type hint and type of exception to
+#     be raised from its passed parameters and passing those objects to these
+#     private exception handlers. For dictionary-driven logic switching on
+#     "typing" types, see the relevant "_peptreecode" FIXME comment below.
+#* Add a new import to "beartype._decor.main" resembling:
+#    from beartype._util.hint.pep.utilhintpeperror import (
+#        raise_pep_call_exception as __beartype_raise_pep_call_exception)
+#* Probably remove the existing "__beartype_pep_nonpep_exception" import, which
+#  should no longer be required.
+#* In the "_pepsnip" submodule, refactor all existing attempts to directly
+#  raise exceptions to instead call the __beartype_raise_pep_call_exception()
+#  validator. For example:
+#      PEP_CODE_CHECK_NONPEP_TYPE = '''
+#      {indent_curr}if not isinstance({pith_curr_expr}, {hint_curr_expr}):
+#      {indent_curr}    raise __beartype_raise_pep_call_exception(
+#      {indent_curr}        func=__beartype_func,
+#      {indent_curr}        param_or_return={pith_root_expr},
+#      {indent_curr}        param_or_return_name=CACHED_FORMAT_VAR_PROTECTED,
+#      {indent_curr})
+#      '''
+#  Note the additional need to interpolate the root "{pith_root_expr}" into
+#  that snippet (which promotes human-readability) as well as the completely
+#  different usage of "CACHED_FORMAT_VAR_PROTECTED", which should now expand to
+#  a Python string object rather than a substring embedded in string objects.
+#* Refactor the caller to replace "CACHED_FORMAT_VAR" instances with either the
+#  parameter name or "return" for a return value.
+
 #FIXME: Localize all calls to bound methods (e.g.,
 #"muh_dict_get = muh_dict.get") for efficiency.
 
@@ -62,12 +158,21 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #    import random as __beartype_random
 #* Obtain random indices from the current pith with code snippets resembling:
 #'''
-#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(len({pith_root_name}).bit_length()) % len({pith_root_name})
+#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(len({pith_curr_name}).bit_length()) % len({pith_curr_name})
 #'''
 #
 #Of course, we probably don't want to even bother localizing
 #"__beartype_got_index". Instead, just look up that index directly in the
 #current pith.
+#FIXME: Note that we should optimize away redundant len() calls by localizing a
+#variable to length: e.g.,
+#'''
+#{indent_curr}__beartype_got_len = len({pith_curr_name}
+#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(__beartype_got_len).bit_length()) % len(__beartype_got_len)
+#'''
+#
+#See also:
+#    https://stackoverflow.com/questions/31559933/perfomance-of-lenlist-vs-reading-a-variable
 #FIXME: We should ultimately make this user-configurable (e.g., as a global
 #configuration setting). Some users might simply prefer to *ALWAYS* look up a
 #fixed 0-based index (e.g., "0", "-1"). For the moment, however, the above
@@ -178,6 +283,22 @@ def pep_code_check(hint: object) -> str:
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
+    #FIXME: Actually, we need to protect "CACHED_FORMAT_VAR" against
+    #replacement from within this function. To do so:
+    #* Define a new
+    #  "beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR_PROTECTED" string
+    #  global resembling:
+    #     CACHED_FORMAT_VAR_PROTECTED = '{' + CACHED_FORMAT_VAR + '}'
+    #* Import both that and "CACHED_FORMAT_VAR" above in this submodule.
+    #* At the very end of this function:
+    #     # Replace this...
+    #     return func_code
+    #     # ...with this.
+    #     return func_code.replace(CACHED_FORMAT_VAR_PROTECTED, CACHED_FORMAT_VAR)
+    #
+    #Note that *NO* changes should be required in our callers. Nice, eh?
+    #Naturally, we'll want to extensively comment this up here.
+
     # Human-readable label prefixing the representations of child type hints of
     # this top-level hint in raised exception messages.
     hint_curr_label = '{} {!r} child '.format(CACHED_FORMAT_VAR, hint)
@@ -253,7 +374,7 @@ def pep_code_check(hint: object) -> str:
                 assert hint_curr is hint_root_meta, (
                     'Currently visited object {!r} not '
                     'root hint metadata {!r}'.format(
-                        hint_curr is hint_root_meta))
+                        hint_curr, hint_root_meta))
 
                 # Release the fixed list of hint metadata describing the prior
                 # parent hint *BEFORE* updating this variable below to this
@@ -320,7 +441,6 @@ def pep_code_check(hint: object) -> str:
                     '{} {!r} associated with no "typing" types.'.format(
                         hint_curr_label, hint))
 
-            #FIXME: Implement PEP-compliant type checking here.
             # For each argumentless typing attribute of this hint...
             for (hint_curr_typing_attr_argless,
                  hint_curr_typing_attr_args) in (
@@ -383,16 +503,49 @@ def pep_code_check(hint: object) -> str:
                     for hint_curr_typing_attr_arg in (
                         hint_curr_typing_attr_args):
 
+                        #FIXME: Append to "hint_curr_label" to reflect the
+                        #human-readable fact that these arguments are nested in
+                        #a union. Note this implies that we want to:
+                        #* Define a new global "_HINT_META_INDEX_LABEL = 2".
+                        #* Assign far above:
+                        #  hint_root_meta[_HINT_META_INDEX_LABEL] = (
+                        #      CACHED_FORMAT_VAR)
+                        #  hint_curr_label = None
+                        #* Assign in the parent loop above:
+                        #  hint_next_meta[_HINT_META_INDEX_LABEL] = (
+                        #      '{} {!r} child'.format(hint_curr_label, hint))
+                        #FIXME: Actually, "hint_curr_label" appears to both be
+                        #overkill and promote non-human-readable exceptions. We
+                        #neither need nor want to embed the full PEP type hint
+                        #stack in exception messages. Instead, we only want to
+                        #embed the "first" (i.e., root type hint) and "last"
+                        #(i.e., child type hint) as strings resembling:
+                        #     @beartyped muh_func() parameter "muh_param"
+                        #     PEP type hint List[int, Dict[str, float]] child
+                        #     Dict[str, float] currently unsupported by
+                        #     @beartype.
+                        #
+                        #Right? That's it. So, the new approach outlined above
+                        #is balls. Thankfully, the current approach is already
+                        #mostly what we want. Let's just document this a bit
+                        #more strenuously above so we don't fall into the same
+                        #pit of depravity again in the future.
+
+                        #FIXME: Append "hint_curr_typing_attr_arg" to "hints".
                         #FIXME: Append a code snippet to "func_code"
                         #resembling:
                         #    func_code += (
-                        #    '''
-                        #    {indent_curr}if not (
-                        #    {indent_next}{arg_id_1} or ...
-                        #    {indent_next}{arg_id_N}
-                        #    {indent_curr}):
-                        #       raise SomeException('Ugh! Bad union!')
-                        #    '''
+                        #        '''
+                        #        {indent_curr}if not (
+                        #        {indent_next}{arg_id_1} or ...
+                        #        {indent_next}{arg_id_N}
+                        #        {indent_curr}):
+                        #           raise SomeException('Ugh! Bad union!')
+                        #        '''.format(
+                        #            indent_curr=indent_curr,
+                        #            hint_curr_typing_attr_arg_id=id(
+                        #                hint_curr_typing_attr_arg),
+                        #        )
                         #...where "arg_id_1" is the ID of the first
                         #"hint_curr_typing_attr_arg" and so on. Then define
                         #somewhere above:
@@ -402,38 +555,168 @@ def pep_code_check(hint: object) -> str:
                         #argument or not. That's trivial, of course, as
                         #"hint_curr_typing_attr_args" is a tuple. Something
                         #like the following should suffice:
+                        #
+                        #    # Note that the "typing" module guarantees all
+                        #    # "typing.Union" objects to be subscripted by at
+                        #    # least one argument. Ergo, this is always safe.
                         #    hint_curr_typing_attr_arg_last = (
                         #        hint_curr_typing_attr_args[-1])
+                        #
                         #    for hint_curr_typing_attr_arg in (
                         #        hint_curr_typing_attr_args):
                         #        if hint_curr_typing_attr_arg is not (
                         #            hint_curr_typing_attr_arg_last):
                         #            func_code += ' or\n'
-                        #FIXME: Actually, we might not need to do any of the
-                        #above. In fact, we might not need to do *ANYTHING*
-                        #other than just:
-                        #* Append "hint_curr_typing_attr_arg" to "hints".
-                        #* Append the following to "func_code":
-                        #    func_code +=
+                        #FIXME: [REDACTED] This "FIXME" is relevant, but not
+                        #entirely useful. See below for further generalization.
+                        #Nonetheless, let's preserve this commentary for the
+                        #sake of momentary continuity and sanity.
+                        #
+                        #We're almost there. Note, however, that for any
+                        #given "hint_curr" object iterated over by this
+                        #traversal, sometimes we want to generate code that
+                        #merely *TESTS* a condition without raising an
+                        #exception if the test fails; in other cases, we want
+                        #to generate code that both tests that condition and
+                        #raises an exception if the test fails. We can
+                        #understand these two cases as the classic "OR" versus
+                        #"AND" dichotomy; the former implements an "OR" while
+                        #the latter implements an "AND".
+                        #
+                        #Clearly, this case requires the former (i.e., merely
+                        #testing a condition without raising an exception if
+                        #that test fails). To implement these two cases cleanly
+                        #across this traversal, consider refactoring as so:
+                        #
+                        #* Define a new "_HINT_META_INDEX_IS_RAISE = 3"
+                        #  global, which is ``True`` only if code generated for
+                        #  the currently visited hint should raise an
+                        #  exception if the corresponding pith fails to satisfy
+                        #  that hint.
+                        #
+                        #  If ``False``, then code generated for this hint will
+                        #  merely test whether the corresponding pith fails to
+                        #  satisfy that hint *without* raising an exception.
+                        #* Since code generated for the root hint should raise
+                        #  exceptions, assign far above:
+                        #     hint_root_meta[_HINT_META_INDEX_IS_RAISE] = True
+                        #* Since code generated for union arguments should
+                        #  *NOT* raise exceptions, assign just above:
+                        #     hint_next_meta[_HINT_META_INDEX_IS_RAISE] = False
+                        #* Refactor the existing
+                        #  "elif isinstance(hint_curr, type):" case below to
+                        #  explicitly test
+                        #  "hint_curr_meta[_HINT_META_INDEX_IS_RAISE]" and
+                        #  generate appropriate code for both cases.
+                        #FIXME: O.K., so everything above gets us pretty close
+                        #to where we want to be... with one exception: nesting
+                        #PEP hint tests in generated code. Since these tests
+                        #are non-trivial and typically require localizing one
+                        #or more test-specific variables in generated code,
+                        #nesting these tests is *SUBSTANTIALLY* simpler with
+                        #Python >=3.8-style walrus ":=" assignment
+                        #expressions. But we need to support Python 3.5 through
+                        #3.7 as well, so we're going to have to do this the
+                        #hard way for now.
+                        #
+                        #Firstly, note that:
+                        #* Simple non-PEP type tests are safely embeddable
+                        #  directly in the "if not (...):" test driving this
+                        #  union. That's nice.
+                        #* Non-simple PEP type tests are *NOT* safely
+                        #  embeddable directly in that test without leveraging
+                        #  ":=". Instead, these tests need to be separated out
+                        #  into a deeper-indented code block whose logic is
+                        #  performed only if all simple non-PEP type tests
+                        #  fail. That's not so nice.
+                        #
+                        #This observation then generates code resembling:
+                        #    func_code += (
                         #        '''
-                        #        {indent_curr}{hint_curr_typing_attr_arg_id}
+                        #        {indent_curr}if (
+                        #        {indent_next}{nonpep_arg_id_1} or ...
+                        #        {indent_next}{nonpep_arg_id_N}
+                        #        {indent_curr}):
+                        #           {pep_arg_id_1}
+                        #           ...
+                        #           # Uhm, we have no idea how to do this.
+                        #           raise SomeException('Ugh! Bad union!')
                         #        '''.format(
                         #            indent_curr=indent_curr,
                         #            hint_curr_typing_attr_arg_id=id(
                         #                hint_curr_typing_attr_arg),
                         #        )
-                        #* Append to "hint_curr_label" to reflect the
-                        #  human-readable fact that these arguments are nested
-                        #  in a union. Note this implies, of course, that we
-                        #  want to:
-                        #  * Define a new global "_HINT_META_INDEX_LABEL = 2".
-                        #  * Assign far above:
-                        #    hint_root_meta[_HINT_META_INDEX_LABEL] = (
-                        #        CACHED_FORMAT_VAR)
-                        #    hint_curr_label = None
-                        #  * Assign in the parent loop above:
-                        #    hint_next_meta[_HINT_META_INDEX_LABEL] = (
-                        #        '{} {!r} child'.format(hint_curr_label, hint))
+                        #
+                        #O.K.; given the above, we can clearly see that even if
+                        #we do pre-filter "hint_curr_typing_attr_args" into
+                        #these two sets:
+                        #* The set of all non-PEP types in this tuple.
+                        #* The set of all PEP types in this tuple.
+                        #...that we still have no idea how to sanely implement
+                        #the PEP case. Ultimately, regardless of whether Python
+                        #3.8 is available or not, we absolutely *NEED* to
+                        #compact each PEP type test (regardless of how complex
+                        #that test is) into a single expression embeddable in a
+                        #single "if" condition. There's really no way around
+                        #that. Why? Because of combinatorial explosion.
+                        #
+                        #Consider unionized PEP container types like:
+                        #    Union[
+                        #        int,
+                        #        List[Dict[str, Tuple[int, ....]]],
+                        #        Iterable[str],
+                        #    ]
+                        #Merely testing whether the outer pith is a "list"
+                        #whose randomly sampled item is a "dict" clearly
+                        #requires at least two tests. We only want to test
+                        #whether the outer pith satisfies "Iterable[str]" if
+                        #any of those prior tests fail. But a core premise of
+                        #our traversal algorithm is that child hints at the
+                        #same level of nesting do *NOT* need to know about one
+                        #another. But efficiently implementing the above
+                        #example under Python < 3.8 would require, in fact,
+                        #that child hints at the same level of nesting would
+                        #need to know about one another. In short, things
+                        #rapidly get cray-cray.
+                        #
+                        #So what we do? We accept the following premises:
+                        #* You know the aforementioned
+                        #  "_HINT_META_INDEX_IS_RAISE" boolean metadata? Right.
+                        #  We need to make that considerably more specific.
+                        #  Replace that boolean entirely with the comparable
+                        #  "_HINT_META_INDEX_IS_TEST_EXPR" boolean metadata,
+                        #  ``True`` only if the code generated for the
+                        #  currently visited hint is required to be a single
+                        #  compact test expression rather than an elongated
+                        #  series of statements culminating in a raised
+                        #  exception. Naturally, this boolean will probably be
+                        #  entirely specific to unions, which isn't the best,
+                        #  but is hardly the worst thing to ever happen here.
+                        #* Import far above:
+                        #    from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
+                        #* We then require two codepaths elsewhere when we
+                        #  begin generating code type-checking container types.
+                        #  Specifically, if
+                        #  "hint_curr_meta[_HINT_META_INDEX_IS_TEST_EXPR]" is
+                        #  true, then:
+                        #  * If "IS_PYTHON_AT_LEAST_3_8", generate optimal code
+                        #    leveraging ":=" to localize lengths, indices, and
+                        #    piths to both avoid recomputing the same data over
+                        #    and over again *AND* enable us to raise
+                        #    human-readable exceptions from type failures.
+                        #  * Else, generate suboptimal code recomputing the
+                        #    same data over and over again and raise less
+                        #    human-readable exceptions from type failures that
+                        #    only generically reference the expected types
+                        #    rather than explicitly referencing the exact
+                        #    indices and piths that failed.
+                        #
+                        #Ergo, under Python <3.8, the code generated to test
+                        #unions is going to be suboptimally inefficient.
+                        #There's no sane way around that. Fortunately, Python
+                        #>=3.8 is the inevitable future, so this issue will
+                        #naturally resolve itself over time. *shrug*
+
                         pass
 
             #FIXME: Implement breadth-first traversal here.

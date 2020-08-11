@@ -23,7 +23,13 @@ IS_PYTHON_AT_LEAST_4_0 = sys.version_info >= (4, 0)
 '''
 
 
-IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 7)
+IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 8)
+'''
+``True`` only if the active Python interpreter targets at least Python 3.8.0.
+'''
+
+
+IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_3_8 or sys.version_info >= (3, 7)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.7.0.
 '''

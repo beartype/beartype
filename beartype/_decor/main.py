@@ -265,6 +265,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # Yup. Really.
 #    isinstance(a, B)
 
+#FIXME: [FEATURE] Define the following supplementary decorators:
+#* @beartype.beartype_O1(), identical to the current @beartype.beartype()
+#  decorator but provided for disambiguity. This decorator only type-checks
+#  exactly one item from each container for each call rather than all items.
+#* @beartype.beartype_On(), type-checking all items from each container for
+#  each call. We have various ideas littered about GitHub on how to optimize
+#  this for various conditions, but this is never going to be ideal and should
+#  thus never be the default.
+
 #FIXME: Cray-cray optimization: don't crucify us here, folks, but eliminating
 #the innermost call to the original callable in the generated wrapper may be
 #technically feasible. It's probably a BadIdea™, but the idea goes like this:

@@ -100,8 +100,8 @@ import __future__, sys
 from beartype.roar import BeartypeDecorPep563Exception
 from beartype._decor._data import BeartypeData
 from beartype._util.utilpy import (
-    IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_4_0,
+    IS_PYTHON_AT_LEAST_3_7,
 )
 
 # See the "beartype.__init__" submodule for further commentary.
