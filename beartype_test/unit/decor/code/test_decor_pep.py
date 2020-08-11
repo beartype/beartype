@@ -22,8 +22,19 @@ from pytest import raises
 from random import Random
 
 # ....................{ TODO                              }....................
+#FIXME: Append each unit test with validation asserting that all fixed lists
+#have been released. This will probably necessitate adding a new public
+#die_if_fixed_list_acquired() validator raising an exception if this is the
+#case to the "beartype._util.cache.list.utillistfixedpool" submodule.
+#
+#Note this assumes no use of "xdist", of course. Urgh! Ignore this distinction
+#for now. If "xdist" is enabled, the most we can validate is that all fixed
+#lists have been released immediately *BEFORE* testing completes (e.g., with a
+#"conftest" hook of some sort). Not a terribly bad idea, actually.
+
 #FIXME: Leverage Thomas Ligotti's infamous "I Have A Special Plan For This
 #World" in unit tests below.
+
 #FIXME: Define a new test_decor_pep_pass_param_kind_variadic()
 #exercising a successful call of a variadic type-hinted parameter.
 

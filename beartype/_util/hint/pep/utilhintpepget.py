@@ -116,7 +116,6 @@ def get_hint_pep_args(hint: object) -> tuple:
 
     Examples
     ----------
-
         >>> import typing
         >>> from beartype._util.hint.pep.utilhintpepget import (
         ...     get_hint_pep_args)
@@ -173,7 +172,6 @@ def get_hint_pep_typevars(hint: object) -> tuple:
 
     Examples
     ----------
-
         >>> import typing
         >>> from beartype._util.hint.pep.utilhintpepget import (
         ...     get_hint_pep_typevars)
@@ -359,7 +357,7 @@ def get_hint_pep_typing_attrs_argless_to_args(hint: object) -> dict:
 def _get_hint_pep_typing_bare_attr_argless(hint: object) -> (
     'NoneTypeOr[object]'):
     '''
-    **Argumentless direct typing attribute** (i.e., public attribute of the
+    **Argumentless bare typing attribute** (i.e., public attribute of the
     :mod:`typing` module directly identifying the passed PEP-compliant type
     hint whose type is defined by that module without arguments and ignoring
     any superclasses of this object's class) associated with this hint if any
@@ -376,7 +374,8 @@ def _get_hint_pep_typing_bare_attr_argless(hint: object) -> (
 
     Returns
     ----------
-    Argumentless direct typing attribute associated with this object.
+    Public attribute of the :mod:`typing` module directly identifying this
+    object.
 
     Raises
     ----------
@@ -404,7 +403,7 @@ def _get_hint_pep_typing_bare_attr_argless(hint: object) -> (
 def _get_hint_pep_typing_bare_attr_argless_or_none(hint: object) -> (
     'NoneTypeOr[object]'):
     '''
-    **Argumentless direct typing attribute** (i.e., public attribute of the
+    **Argumentless bare typing attribute** (i.e., public attribute of the
     :mod:`typing` module directly identifying the passed PEP-compliant type
     hint whose type is defined by that module without arguments and ignoring
     any superclasses of this object's class) associated with this hint if any
