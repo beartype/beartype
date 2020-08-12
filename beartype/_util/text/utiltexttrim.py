@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype string utilities.**
+**Beartype string removal utilities** (i.e., callables truncating, trimming, or
+otherwise removing substrings from passed strings).
 
 This private submodule implements supplementary string-handling utility
 functions required by various :mod:`beartype` facilities, including callables

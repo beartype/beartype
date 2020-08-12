@@ -60,9 +60,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #          Raises
 #          ----------
-#          BeartypeCallTypePepParamException
+#          BeartypeCallCheckPepParamException
 #              If the object failing to satisfy this hint is a parameter.
-#          BeartypeCallTypePepReturnException
+#          BeartypeCallCheckPepReturnException
 #              If the object failing to satisfy this hint is a return value.
 #          '''
 #          pass
@@ -73,22 +73,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #     Likewise, given the passed "param_or_return_name" parameter, we can
 #     obtain the annotation corresponding to this parameter or return value.
 #
-#     Note that we can substantially improve this implementation later. That
-#     said, the initial implementation should at least contain
-#     dictionary-driven logic recursively (like, actually, recursively, because
-#     efficiency doesn't matter here and there's absolutely no way we'll blow
-#     through the stack with shallow-nested PEP type hints) calling private
-#     exception handlers probably defined in the same module unique to each
-#     "typing" type: e.g.,
-#     def _raise_pep_call_exception_union(
-#         pith: object, hint: object, exception_cls: type) -> None:
-#         raise
-#
-#     Note the different signature, as the raise_pep_call_exception() caller is
-#     tasked with obtaining the relevant PEP type hint and type of exception to
-#     be raised from its passed parameters and passing those objects to these
-#     private exception handlers. For dictionary-driven logic switching on
-#     "typing" types, see the relevant "_peptreecode" FIXME comment below.
 #* Add a new import to "beartype._decor.main" resembling:
 #    from beartype._util.hint.pep.utilhintpeperror import (
 #        raise_pep_call_exception as __beartype_raise_pep_call_exception)

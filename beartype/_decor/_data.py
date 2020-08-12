@@ -11,6 +11,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Consider removing the following parameters:
+#
+#* "func_wrapper_name", which should be shifted back into the
+#  "beartype._decor.main" submodule, the only submodule requiring this string.
+#* "func_name", possibly. Do we actually use this in a sufficient number of
+#  exception messages, anymore?
+#* "func_hints", which we don't meaningfully use at the moment.
+#
+#This dataclass will then only contain the "func" and "func_sig" instance
+#variables. While this would typically mean this dataclass isn't far from the
+#axe, we'll probably refactor this dataclass to introspect the signature of the
+#decorated callable. Ergo, let's preserve this for a bit longer, eh?
+
 #FIXME: Optimize away the call to the inspect.signature() function by
 #reimplementing this function to assign to instance variables of the current
 #"BeartypeData" object rather than instantiating a new "Signature" object and
@@ -35,6 +48,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import inspect
 from beartype.cave import CallableTypes
+from beartype._util.text.utiltextlabel import label_callable_decorated
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -149,7 +163,7 @@ class BeartypeData(object):
         self.func = func
 
         # Human-readable name of this function for use in exceptions.
-        self.func_name = '@beartyped {}()'.format(func.__name__)
+        self.func_name = label_callable_decorated(func)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = '__{}_beartyped__'.format(func.__name__)

@@ -105,9 +105,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #should pass a new global constant containing all "__beartype_" global imports:
 #     _GLOBAL_ATTRS = {
 #         '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
-#         '__beartype_nonpep_param_exception': BeartypeCallTypeNonPepParamException,
-#         '__beartype_nonpep_return_exception': BeartypeCallTypeNonPepReturnException,
-#         '__beartype_pep_nonpep_exception': BeartypeCallTypePepNonPepException,
+#         '__beartype_nonpep_param_exception': BeartypeCallCheckNonPepParamException,
+#         '__beartype_nonpep_return_exception': BeartypeCallCheckNonPepReturnException,
+#         '__beartype_pep_nonpep_exception': BeartypeCallCheckPepNonPepException,
 #         '__beartype_trim': trim_object_repr,
 #     }
 #Then refactor that exec() call to resemble:
@@ -370,14 +370,14 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # callables. Since doing so would uselessly incur a runtime performance penalty
 # for no tangible gain, the current approach is preferable.
 from beartype.roar import (
-    BeartypeCallTypeNonPepParamException  as __beartype_nonpep_param_exception,
-    BeartypeCallTypeNonPepReturnException as __beartype_nonpep_return_exception,
-    BeartypeCallTypePepException          as __beartype_pep_exception,
+    BeartypeCallCheckNonPepParamException  as __beartype_nonpep_param_exception,
+    BeartypeCallCheckNonPepReturnException as __beartype_nonpep_return_exception,
+    BeartypeCallCheckPepException          as __beartype_pep_exception,
 )
 from beartype._util.hint.utilhintnonpep import (
     die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,
 )
-from beartype._util.utilstr import (
+from beartype._util.text.utiltexttrim import (
     trim_object_repr as __beartype_trim,
 )
 
@@ -461,7 +461,10 @@ def beartype(func: CallableTypes) -> CallableTypes:
         raise BeartypeDecorWrappeeException('{!r} not callable.'.format(func))
     # Else if this object is a class, raise an exception.
     elif isinstance(func, ClassType):
-        raise BeartypeDecorWrappeeException('{!r} is a class.'.format(func))
+        raise BeartypeDecorWrappeeException((
+            '{!r} is a class, '
+            'which is currently unsupported by @beartype.'
+        ).format(func))
     # Else, this object is a non-class callable. Let's do this, folks.
 
     # If either...

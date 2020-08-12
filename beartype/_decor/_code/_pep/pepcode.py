@@ -37,6 +37,10 @@ from beartype._decor._code._pep._peptree import pep_code_check
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.utilcachetext import (
     format_text_cached, reraise_exception_cached)
+from beartype._util.text.utiltextlabel import (
+    label_callable_decorated_param,
+    label_callable_decorated_return,
+)
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -78,21 +82,23 @@ def pep_code_check_param(
     assert isinstance(func_arg_index, int), (
         '{!r} not parameter index.'.format(func_arg_index))
 
-    #FIXME: Generalize this label to embed the kind of parameter as well (e.g.,
-    #"positional-only", "keyword-only", "variadic positional").
-    # Human-readable label describing this parameter.
-    hint_label = '{} parameter "{}" PEP type hint'.format(
-        data.func_name, func_arg.name)
-
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_arg.kind, None)
 
-    # If this kind of parameter is unsupported, raise an exception.
+    # If this kind of parameter is unsupported...
     #
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
     if get_arg_code_template is None:
+        #FIXME: Generalize this label to embed the kind of parameter as well
+        #(e.g., "positional-only", "keyword-only", "variadic positional").
+
+        # Human-readable label describing this parameter.
+        hint_label = label_callable_decorated_param(
+            func=data.func, param_name=func_arg.name)
+
+        # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
             '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
@@ -104,12 +110,20 @@ def pep_code_check_param(
         param_code_check = format_text_cached(
             # Memoized parameter-agnostic code type-checking this parameter.
             text=pep_code_check(func_arg.annotation),
-            format_str=hint_label,
+            # Object representation of this parameter's name, as documented by
+            # the pep_code_check() docstring.
+            format_str=repr(func_arg.name),
         )
     # If the prior call to the memoized _pep_code_check() function raises a
-    # cached exception, reraise this exception's memoized parameter-agnostic
-    # message into an unmemoized parameter-specific message.
+    # cached exception...
     except BeartypeDecorHintPepException as exception:
+        # Human-readable label describing this parameter.
+        hint_label = (
+            label_callable_decorated_param(
+                func=data.func, param_name=func_arg.name) + ' PEP type hint')
+
+        # Reraise this cached exception's memoized parameter-agnostic message
+        # into an unmemoized parameter-specific message.
         reraise_exception_cached(exception=exception, format_str=hint_label)
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
@@ -147,9 +161,6 @@ def pep_code_check_return(data: BeartypeData) -> str:
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
 
-    # Human-readable label describing this hint.
-    hint_label = '{} return PEP type hint'.format(data.func_name)
-
     # Attempt to...
     try:
         # Unmemoized return value-specific Python code type-checking this
@@ -157,12 +168,19 @@ def pep_code_check_return(data: BeartypeData) -> str:
         return_code_check = format_text_cached(
             # Memoized return value-agnostic code type-checking this parameter.
             text=pep_code_check(data.func_sig.return_annotation),
-            format_str=hint_label,
+            # Object representation of the magic string implying this return
+            # value, as documented by the pep_code_check() docstring.
+            format_str=repr('return'),
         )
     # If the prior call to the memoized _pep_code_check() function raises a
-    # cached exception, reraise this exception's memoized return value-agnostic
-    # message into an unmemoized return value-specific message.
+    # cached exception...
     except BeartypeDecorHintPepException as exception:
+        # Human-readable label describing this return.
+        hint_label = (
+            label_callable_decorated_return(data.func) + ' PEP type hint')
+
+        # Reraise this cached exception's memoized return value-agnostic
+        # message into an unmemoized return value-specific message.
         reraise_exception_cached(exception=exception, format_str=hint_label)
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,

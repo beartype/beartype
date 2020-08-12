@@ -282,7 +282,7 @@ class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 # ....................{ EXCEPTIONS ~ call : type          }....................
-class BeartypeCallTypeException(BeartypeCallException, metaclass=_ABCMeta):
+class BeartypeCallCheckException(BeartypeCallException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable type exceptions.**
 
@@ -295,8 +295,8 @@ class BeartypeCallTypeException(BeartypeCallException, metaclass=_ABCMeta):
     pass
 
 # ....................{ EXCEPTIONS ~ call : type : pep    }....................
-class BeartypeCallTypePepException(
-    BeartypeCallTypeException, metaclass=_ABCMeta):
+class BeartypeCallCheckPepException(
+    BeartypeCallCheckException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable PEP-compliant type
     exceptions.**
@@ -311,8 +311,8 @@ class BeartypeCallTypePepException(
     pass
 
 # ....................{ EXCEPTIONS ~ call : type : nonpep }....................
-class BeartypeCallTypeNonPepException(
-    BeartypeCallTypeException, metaclass=_ABCMeta):
+class BeartypeCallCheckNonPepException(
+    BeartypeCallCheckException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable PEP-noncompliant type
     exceptions.**
@@ -327,7 +327,7 @@ class BeartypeCallTypeNonPepException(
     pass
 
 
-class BeartypeCallTypeNonPepParamException(BeartypeCallTypeNonPepException):
+class BeartypeCallCheckNonPepParamException(BeartypeCallCheckNonPepException):
     '''
     **Beartyped callable parameter PEP-noncompliant type exception.**
 
@@ -339,7 +339,7 @@ class BeartypeCallTypeNonPepParamException(BeartypeCallTypeNonPepException):
     pass
 
 
-class BeartypeCallTypeNonPepReturnException(BeartypeCallTypeNonPepException):
+class BeartypeCallCheckNonPepReturnException(BeartypeCallCheckNonPepException):
     '''
     **Beartyped callable return PEP-noncompliant type exception.**
 
@@ -403,19 +403,34 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
 
     Instances of subclasses of this exception are raised by *most* (but *not*
     all) private submodules of the private :mod:`beartype._util` subpackage.
-    Such exceptions denote critical internal issues and should thus *never* be
+    These exceptions denote critical internal issues and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilRaisePepException(_BeartypeUtilException):
+    '''
+    **Beartype memoization exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilhint.pep.utilhintpepcall.raise_pep_call_exception`
+    function when one or more passed parameters are unsupported or invalid.
+
+    This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
     pass
 
 # ....................{ PRIVATE ~ exceptions : util : cache }..................
-class _BeartypeUtilCacheException(_BeartypeUtilException, metaclass=_ABCMeta):
+class _BeartypeUtilCachedException(_BeartypeUtilException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype caching utility exceptions.**
 
     Instances of subclasses of this exception are raised by private submodules
-    of the private :mod:`beartype._util.cache` subpackage. Such exceptions
+    of the private :mod:`beartype._util.cache` subpackage. These exceptions
     denote critical internal issues and should thus *never* be raised -- let
     alone allowed to percolate up the call stack to end users.
     '''
@@ -423,7 +438,7 @@ class _BeartypeUtilCacheException(_BeartypeUtilException, metaclass=_ABCMeta):
     pass
 
 
-class _BeartypeUtilCachedCallableException(_BeartypeUtilCacheException):
+class _BeartypeUtilCachedCallableException(_BeartypeUtilCachedException):
     '''
     **Beartype memoization exception.**
 
@@ -438,7 +453,7 @@ class _BeartypeUtilCachedCallableException(_BeartypeUtilCacheException):
     pass
 
 
-class _BeartypeUtilCachedTextException(_BeartypeUtilCacheException):
+class _BeartypeUtilCachedTextException(_BeartypeUtilCachedException):
     '''
     **Beartype memoization exception.**
 
@@ -453,7 +468,7 @@ class _BeartypeUtilCachedTextException(_BeartypeUtilCacheException):
     pass
 
 
-class _BeartypeUtilCachedFixedListException(_BeartypeUtilCacheException):
+class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
     '''
     **Beartype decorator fixed list exception.**
 

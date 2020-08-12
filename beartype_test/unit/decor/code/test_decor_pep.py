@@ -166,7 +166,7 @@ from random import Random
 #
 #     # Import this decorator.
 #     from beartype import beartype
-#     from beartype.roar import BeartypeCallTypeNonPepParamException
+#     from beartype.roar import BeartypeCallCheckNonPepParamException
 #
 #     # Annotated function to be type-checked.
 #     @beartype
@@ -176,7 +176,7 @@ from random import Random
 #
 #     # Call this function with an invalid type and assert the expected
 #     # exception.
-#     with raises(BeartypeCallTypeNonPepParamException):
+#     with raises(BeartypeCallCheckNonPepParamException):
 #         imperium_of_man(
 #             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 #
@@ -190,7 +190,7 @@ from random import Random
 #
 #     # Import this decorator.
 #     from beartype import beartype
-#     from beartype.roar import BeartypeCallTypeNonPepParamException
+#     from beartype.roar import BeartypeCallCheckNonPepParamException
 #
 #     # Dates between which the Black Legion must have been established.
 #     ESTABLISHMENT_DATE_MIN = 30000
@@ -204,7 +204,7 @@ from random import Random
 #
 #     # Call this function with an invalid type and assert the expected
 #     # exception.
-#     with raises(BeartypeCallTypeNonPepParamException):
+#     with raises(BeartypeCallCheckNonPepParamException):
 #         black_legion('Horus', 'Abaddon the Despoiler')
 #
 #
@@ -216,7 +216,7 @@ from random import Random
 #
 #     # Import this decorator.
 #     from beartype import beartype
-#     from beartype.roar import BeartypeCallTypeNonPepParamException
+#     from beartype.roar import BeartypeCallCheckNonPepParamException
 #
 #     # Annotated function to be type-checked.
 #     @beartype
@@ -225,7 +225,7 @@ from random import Random
 #
 #     # Call this function with an invalid type and assert the expected
 #     # exception.
-#     with raises(BeartypeCallTypeNonPepParamException):
+#     with raises(BeartypeCallCheckNonPepParamException):
 #         eldar('Mother of the Eldar', 100.100)
 #
 # # ....................{ TESTS ~ fail : param : hint       }....................
@@ -301,7 +301,7 @@ from random import Random
 #
 #     # Import this decorator.
 #     from beartype import beartype
-#     from beartype.roar import BeartypeCallTypeNonPepReturnException
+#     from beartype.roar import BeartypeCallCheckNonPepReturnException
 #
 #     # Annotated function to be type-checked.
 #     @beartype
@@ -309,7 +309,7 @@ from random import Random
 #         return 60e6
 #
 #     # Call this function and assert the expected exception.
-#     with raises(BeartypeCallTypeNonPepReturnException):
+#     with raises(BeartypeCallCheckNonPepReturnException):
 #         necron("C'tan", 'Elder Thing')
 #
 #
