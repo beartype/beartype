@@ -7,7 +7,7 @@
 **Beartype PEP-agnostic type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.utilhint` submodule.
+:mod:`beartype._util.hint.utilhinttest` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,7 +20,7 @@ import pytest
 # ....................{ TESTS                             }....................
 def test_utilhint_die_unless_hint() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhint.die_unless_hint`
+    Test the :func:`beartype._util.hint.utilhinttest.die_unless_hint`
     validator.
     '''
 
@@ -29,7 +29,7 @@ def test_utilhint_die_unless_hint() -> None:
         BeartypeDecorHintNonPepException,
         BeartypeDecorHintPepUnsupportedException,
     )
-    from beartype._util.hint.utilhint import die_unless_hint
+    from beartype._util.hint.utilhinttest import die_unless_hint
     from beartype_test.unit.data.data_hint import (
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,
@@ -69,11 +69,11 @@ def test_utilhint_die_unless_hint() -> None:
 
 def test_utilhint_is_hint() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhint.is_hint` tester.
+    Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhint import is_hint
+    from beartype._util.hint.utilhinttest import is_hint
     from beartype_test.unit.data.data_hint import (
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,

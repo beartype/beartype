@@ -28,56 +28,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #type-testing exception handling, as efficiency is utterly no concern there.
 #Instead, do the follow:
 #
-#* Define a new quasi-public "beartype._util.hint.pep.utilhintpeperror"
-#  submodule.
-#* In this submodule:
-#  * Define a new raise_pep_call_exception() function with signature:
-#      def raise_pep_call_exception(
-#          func: 'CallableTypes',
-#          param_or_return: object,
-#          param_or_return_name: str,
-#      ) -> None:
-#          '''
-#          Raise a human-readable exception detailing the failure of the
-#          parameter with the passed name *or* return value if this name is the
-#          magic string ``return`` of the passed decorated function fails to
-#          satisfy the PEP-compliant type hint annotated on this parameter or
-#          return value.
-#
-#          Parameters
-#          ----------
-#          func : CallableTypes
-#              Decorated callable to raise this exception from.
-#          param_or_return : object
-#              Parameter or return value failing to satisfy this hint.
-#          param_or_return_name : str
-#              Either:
-#
-#              * If the object failing to satisfy this hint is a parameter, the
-#                name of this parameter.
-#              * Else, the magic string ``return`` implying this object to be a
-#                return value.
-#
-#          Raises
-#          ----------
-#          BeartypeCallCheckPepParamException
-#              If the object failing to satisfy this hint is a parameter.
-#          BeartypeCallCheckPepReturnException
-#              If the object failing to satisfy this hint is a return value.
-#          '''
-#          pass
-#     Those should be the only parameters required by this function to raise
-#     human-readable exceptions. Given the passed "func", we can obtain both
-#     the (qualified or unqualified) name of that function as well as the
-#     dunder "__annotations__" dictionary of all annotations on that function.
-#     Likewise, given the passed "param_or_return_name" parameter, we can
-#     obtain the annotation corresponding to this parameter or return value.
-#
-#* Add a new import to "beartype._decor.main" resembling:
-#    from beartype._util.hint.pep.utilhintpeperror import (
-#        raise_pep_call_exception as __beartype_raise_pep_call_exception)
-#* Probably remove the existing "__beartype_pep_nonpep_exception" import, which
-#  should no longer be required.
 #* In the "_pepsnip" submodule, refactor all existing attempts to directly
 #  raise exceptions to instead call the __beartype_raise_pep_call_exception()
 #  validator. For example:
@@ -86,7 +36,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      {indent_curr}    raise __beartype_raise_pep_call_exception(
 #      {indent_curr}        func=__beartype_func,
 #      {indent_curr}        param_or_return={pith_root_expr},
-#      {indent_curr}        param_or_return_name=CACHED_FORMAT_VAR_PROTECTED,
+#      {indent_curr}        param_or_return_name=CACHED_FORMAT_VAR,
 #      {indent_curr})
 #      '''
 #  Note the additional need to interpolate the root "{pith_root_expr}" into
@@ -243,7 +193,7 @@ def pep_code_check(hint: object) -> str:
     '''
 
     #FIXME: Remove these two statements after implementing this function.
-    from beartype._util.hint.utilhintnonpep import die_unless_hint_nonpep
+    from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
     die_unless_hint_nonpep(hint)
 
     # Python code snippet to be returned.
@@ -266,22 +216,6 @@ def pep_code_check(hint: object) -> str:
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
-
-    #FIXME: Actually, we need to protect "CACHED_FORMAT_VAR" against
-    #replacement from within this function. To do so:
-    #* Define a new
-    #  "beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR_PROTECTED" string
-    #  global resembling:
-    #     CACHED_FORMAT_VAR_PROTECTED = '{' + CACHED_FORMAT_VAR + '}'
-    #* Import both that and "CACHED_FORMAT_VAR" above in this submodule.
-    #* At the very end of this function:
-    #     # Replace this...
-    #     return func_code
-    #     # ...with this.
-    #     return func_code.replace(CACHED_FORMAT_VAR_PROTECTED, CACHED_FORMAT_VAR)
-    #
-    #Note that *NO* changes should be required in our callers. Nice, eh?
-    #Naturally, we'll want to extensively comment this up here.
 
     # Human-readable label prefixing the representations of child type hints of
     # this top-level hint in raised exception messages.
@@ -403,6 +337,9 @@ def pep_code_check(hint: object) -> str:
 
             #FIXME: Is continuing the correct thing to do here? Exercise this
             #edge case with unit tests, please.
+            #FIXME: *NOPE.* Raise an exception if this is an ignorable hint
+            #above. Ignorable hints have to be handled in nested handlers.
+
             # If this hint is the catch-all type, ignore this hint. Since all
             # objects are instances of the catch-all type (by definition), all
             # objects are guaranteed to satisfy this hint, which thus uselessly
@@ -482,7 +419,17 @@ def pep_code_check(hint: object) -> str:
                     #FIXME: Append "hint_next_meta" to "hints" here.
 
                     #FIXME: Do we need to special case a union of one argument?
-                    #Does "typing" even permit that?
+                    #Does "typing" even permit that? The sane way to handle a
+                    #union of one argument would probably be to "flatten" the
+                    #argument by replacing this "Union" object with that
+                    #argument in the "hints" list. Although, that seems as if
+                    #it would disrupt logic flow. Alternately, a simpler
+                    #approach might be to:
+                    #* Append both "hint_curr_meta" and that argument to
+                    #  "hints".
+                    #* Silently skip the current hint.
+                    #FIXME: Unit test this special case.
+
                     # For each subscripted argument of this union...
                     for hint_curr_typing_attr_arg in (
                         hint_curr_typing_attr_args):
@@ -700,6 +647,18 @@ def pep_code_check(hint: object) -> str:
                         #There's no sane way around that. Fortunately, Python
                         #>=3.8 is the inevitable future, so this issue will
                         #naturally resolve itself over time. *shrug*
+
+                        #FIXME: Handle ignorable hints here. To do so sanely:
+                        #* Skip the current argument if ignorable.
+                        #* Define a new local "func_curr_code" variable above.
+                        #* Nullify that variable before beginning argument
+                        #  iteration.
+                        #* Append generated code to that variable here rather
+                        #  than appending to "func_code".
+                        #* After argument iteration completes:
+                        #  if func_curr_code:
+                        #    func_code += func_curr_code + ''' or (
+                        #    {indent_curr}raise_pep_call_exception(...))'''
 
                         pass
 

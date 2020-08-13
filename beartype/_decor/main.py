@@ -103,11 +103,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 #FIXME: Avoid naively passing globals() to the exec() call below. Instead, we
 #should pass a new global constant containing all "__beartype_" global imports:
+#     #FIXME: Note that this definition is no longer definitive and will
+#     #probably require trivial revision to comply with modern imports above.
 #     _GLOBAL_ATTRS = {
 #         '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
 #         '__beartype_nonpep_param_exception': BeartypeCallCheckNonPepParamException,
 #         '__beartype_nonpep_return_exception': BeartypeCallCheckNonPepReturnException,
-#         '__beartype_pep_nonpep_exception': BeartypeCallCheckPepNonPepException,
 #         '__beartype_trim': trim_object_repr,
 #     }
 #Then refactor that exec() call to resemble:
@@ -374,7 +375,10 @@ from beartype.roar import (
     BeartypeCallCheckNonPepReturnException as __beartype_nonpep_return_exception,
     BeartypeCallCheckPepException          as __beartype_pep_exception,
 )
-from beartype._util.hint.utilhintnonpep import (
+from beartype._util.hint.pep.utilhintpepcall import (
+    raise_pep_call_exception as __beartype_raise_pep_call_exception,
+)
+from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,
 )
 from beartype._util.text.utiltexttrim import (

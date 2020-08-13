@@ -100,11 +100,25 @@ Note that this snippet intentionally terminates on a line containing only the
 # ....................{ CODE ~ check                      }....................
 PEP_CODE_CHECK_NONPEP_TYPE = '''
 {indent_curr}if not isinstance({pith_curr_expr}, {hint_curr_expr}):
-{indent_curr}    raise __beartype_pep_nonpep_exception(
-{indent_curr}        '{hint_curr_label} {{}} not a {{!r}}.'.format(
-{indent_curr}        __beartype_trim({pith_curr_expr}), {hint_curr_expr}))
+{indent_curr}    raise __beartype_raise_pep_call_exception(
+{indent_curr}        func=__beartype_func,
+{indent_curr}        param_or_return={pith_root_expr},
+{indent_curr}        param_or_return_name=CACHED_FORMAT_VAR,
+{indent_curr})
 '''
 '''
 PEP-compliant code snippet type-checking a simple non-:mod:`typing` type (e.g.,
 :class:`dict`, :class:`list`).
+
+Design
+----------
+Note that this snippet intentionally contains the magic unformattable substring
+``CACHED_FORMAT_VAR`` protected against erroneous formatting by the frequently
+called :moth:`str.format` method, which the
+:mod:`beartype._decor._code._pep._peptree` submodule then replaces with the
+magic formattable substring ``{CACHED_FORMAT_VAR}``, which the
+:mod:`beartype._decor._code._pep.pepcode` submodule then replaces with either
+the name of the current parameter or ``return`` for return values by calling
+the :func:`beartype._util.cache.utilcachetext.format_text_cached` function.
+(Yes, this is excruciatingly obtuse. Yes, this is :mod:`beartype`.)
 '''

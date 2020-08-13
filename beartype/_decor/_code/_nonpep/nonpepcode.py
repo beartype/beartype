@@ -30,6 +30,10 @@ from beartype._decor._code._nonpep._nonpepsnip import (
     PARAM_KIND_TO_NONPEP_CODE,
 )
 from beartype._decor._data import BeartypeData
+from beartype._util.text.utiltextlabel import (
+    label_callable_decorated_param,
+    label_callable_decorated_return,
+)
 from inspect import Parameter
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -80,27 +84,36 @@ def nonpep_code_check_param(
     assert isinstance(func_arg_index, int), (
         '{!r} not parameter index.'.format(func_arg_index))
 
-    # Human-readable label describing this hint.
-    hint_label = (
-        '{} parameter "{}" non-PEP type hint'.format(
-            data.func_name, func_arg.name))
-
     # Python code template type-checking this parameter if this kind of
     # parameter is supported *OR* "None" otherwise.
     check_arg_code_template = PARAM_KIND_TO_NONPEP_CODE.get(
         func_arg.kind, None)
 
-    # If this kind of parameter is unsupported, raise an exception.
+    # If this kind of parameter is unsupported...
     #
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
     if check_arg_code_template is None:
+        #FIXME: Generalize this label to embed the kind of parameter as well
+        #(e.g., "positional-only", "keyword-only", "variadic positional"),
+        #probably by defining a new label_callable_decorated_param_kind().
+
+        # Human-readable label describing this parameter.
+        hint_label = label_callable_decorated_param(
+            func=data.func, param_name=func_arg.name)
+
+        # Raise an exception embedding this label.
         raise BeartypeDecorHintNonPepException(
             '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Python code evaluating to this hint.
     hint_expr = NONPEP_CODE_PARAM_HINT.format(func_arg.name)
+
+    # Human-readable label describing this hint.
+    hint_label = (
+        label_callable_decorated_param(
+            func=data.func, param_name=func_arg.name) + ' non-PEP type hint')
 
     # Return Python code...
     return (
@@ -153,12 +166,13 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
     assert isinstance(data, BeartypeData), (
         '{!r} not @beartype data.'.format(data))
 
-    # Human-readable label describing this annotation.
-    hint_label = '{} return non-PEP type hint'.format(data.func_name)
-
     # String evaluating to this return value's annotated type.
     hint_expr = NONPEP_CODE_RETURN_HINT
     #print('Return annotation: {{}}'.format({hint_expr}))
+
+    # Human-readable label describing this annotation.
+    hint_label = (
+        label_callable_decorated_return(data.func) + ' non-PEP type hint')
 
     # Return Python code...
     return (

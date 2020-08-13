@@ -92,7 +92,8 @@ def pep_code_check_param(
     # have simply ignored this parameter.
     if get_arg_code_template is None:
         #FIXME: Generalize this label to embed the kind of parameter as well
-        #(e.g., "positional-only", "keyword-only", "variadic positional").
+        #(e.g., "positional-only", "keyword-only", "variadic positional"),
+        #probably by defining a new label_callable_decorated_param_kind().
 
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(

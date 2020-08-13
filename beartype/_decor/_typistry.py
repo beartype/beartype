@@ -17,7 +17,7 @@ from beartype.roar import (
     _BeartypeCallBeartypistryException,
 )
 from beartype._util.utilobject import get_object_name_qualified
-from beartype._util.hint.utilhint import die_unless_hint
+from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 
 # See the "beartype.__init__" submodule for further commentary.

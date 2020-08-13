@@ -76,7 +76,7 @@ def die_if_hint_pep(
     annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
-    :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
     ----------
@@ -119,7 +119,7 @@ def die_unless_hint_pep(
     annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
-    :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
     ----------
@@ -158,7 +158,7 @@ def die_unless_hint_pep_supported(
     :func:`beartype.beartype` decorator).
 
     This validator is effectively (but technically *not*) memoized. See the
-    :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Caveats
     ----------

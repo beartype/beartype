@@ -20,7 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import AnyType
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codesnip import (
     CODE_RETURN_UNCHECKED, CODE_SIGNATURE)
@@ -29,10 +28,10 @@ from beartype._decor._code._nonpep.nonpepcode import (
 from beartype._decor._code._pep.pepcode import (
     pep_code_check_param, pep_code_check_return)
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.utilhint import die_unless_hint
+from beartype._util.hint.utilhinttest import (
+    HINTS_IGNORABLE, die_unless_hint)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from inspect import Parameter, Signature
-from typing import Any
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -53,31 +52,7 @@ This includes:
   provide no syntactic means for specifying positional-only parameters.
 '''
 
-# ....................{ CONSTANTS ~ hint                  }....................
-_HINTS_IGNORABLE = {AnyType, Any,}
-'''
-Set of all annotation objects to be unconditionally ignored during
-annotation-based type checking in the :func:`beartype` decorator regardless of
-callable context (e.g., parameter, return value).
-
-This includes:
-
-* The :class:`AnyType` type, synonymous with the builtin :class:`object` type.
-  Since :class:`object` is the transitive superclass of all classes, parameters
-  annotated as :class:`object` unconditionally match *all* objects under
-  :func:`isinstance`-based type covariance and are thus equivalent to
-  unannotated parameters.
-* The `PEP 484`_-specific :class:`Any` type, functionally synonymous with the
-  :class:`AnyType` and hence :class:`object` classes. Although `PEP
-  484`_-specific logic should typically be isolated to the private
-  :mod:`beartype._decor.pep484` subpackage for maintainability, listing this
-  type here *improves* maintainability by centralizing similar logic.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-'''
-
-
+# ....................{ CONSTANTS                         }....................
 _PARAM_HINT_EMPTY = Parameter.empty
 '''
 :mod:`inspect`-specific sentinel value indicating an **unannotated parameter**
@@ -282,7 +257,7 @@ def _code_check_params(data: BeartypeData) -> str:
         #   call to the die_unless_hint() validator.
         # * "func_arg_kind" derives from the stdlib "inspect" module, this
         #   should *ALWAYS* be the case for that object.
-        if (func_arg.annotation in _HINTS_IGNORABLE or
+        if (func_arg.annotation in HINTS_IGNORABLE or
             func_arg.kind in _PARAM_KINDS_IGNORABLE):
             continue
 
@@ -343,7 +318,7 @@ def _code_check_return(data: BeartypeData) -> str:
 
     # If this hint is silently ignorable, return code calling this callable
     # unchecked and returning this value from this wrapper.
-    if func_return_hint in _HINTS_IGNORABLE:
+    if func_return_hint in HINTS_IGNORABLE:
         return CODE_RETURN_UNCHECKED
 
     # If this is a PEP-compliant hint, return Python code type-checking this

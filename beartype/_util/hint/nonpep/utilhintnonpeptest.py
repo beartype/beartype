@@ -39,7 +39,7 @@ def die_unless_hint_nonpep(
     annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
-    :func:`beartype._util.hint.utilhint.die_unless_hint` validator.
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
     ----------
@@ -220,13 +220,6 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             '{} {!r} neither type nor tuple of types.'.format(
                 hint_label, hint))
-
-    # Raise an exception whose message contextually depends on whether
-    # forward references are permitted or not.
-    raise exception_cls(
-        ('{} {!r} item {!r} neither type nor string.' if is_str_valid else
-            '{} {!r} item {!r} not type.'.format(
-            hint_label, hint, hint_item)))
 
 # ....................{ TESTERS                           }....................
 @callable_cached

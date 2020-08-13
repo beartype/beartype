@@ -10,14 +10,83 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from typing import Any, Union
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.utilhintnonpep import (
+from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep, is_hint_nonpep)
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported, is_hint_pep, is_hint_pep_supported)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS                         }....................
+HINTS_IGNORABLE = {
+    # Ignorable non-"typing" types.
+    object,
+
+    # Ignorable "typing" types.
+    Any,
+    Union,
+    Union[Any],
+}
+'''
+Set of all annotation objects to be unconditionally ignored during
+annotation-based type checking in the :func:`beartype` decorator regardless of
+callable context (e.g., parameter, return value).
+
+This includes:
+
+* The PEP-noncompliant builtin :class:`object` type, syntactically synonymous
+  with the :class:`beartype.cave.AnyType` type. Since :class:`object` is the
+  transitive superclass of all classes, parameters and return values annotated
+  as :class:`object` unconditionally match *all* objects under
+  :func:`isinstance`-based type covariance and thus semantically reduce to
+  unannotated parameters and return values.
+* The PEP-compliant:
+
+  * :data:`Any` singleton object, semantically synonymous with the
+    :class:`AnyType` and hence :class:`object` types.
+  * :data:`Union[Any]` singleton object. Since `PEP 484`_ stipulates that a
+    union of one type semantically reduces to merely that type,
+    :data:`Union[Any]` semantically reduces to merely :data:`Any`.
+  * :data:`Union` singleton object. Since `PEP 484`_ stipulates that an
+    unsubscripted subscriptable PEP-compliant object (e.g., ``Generic``,
+    ``Iterable``) semantically expands to that object subscripted by an
+    implicit :data:`Any` argument, :data:`Union` semantically expands to an
+    implicit :data:`Union[Any]` singleton object. Despite their semantic
+    equivalency, however, note that these objects remain syntactically distinct
+    with respect to object identification (i.e., ``Union is not Union[Any]``).
+    Ergo, this set necessarily lists both distinct singleton objects.
+
+Although PEP-specific logic should typically be isolated to private
+PEP-specific submodules for maintainability, listing this type here *improves*
+maintainability by centralizing similar logic.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+
+Examples
+----------
+The :mod:`typing` module aggressively caches subscripted objects produced by
+that module. Conveniently, this guarantees that subscripting the same objects
+declared by that module by the same arguments again produces the same objects,
+which also guarantees that external set membership tests against this set with
+subscripted objects produced by that module behave as expected: e.g.,
+
+    >>> from typing import Any, Union
+    >>> Union is Union
+    True
+    >>> Union is Union[Any]
+    False
+    >>> Union[Any] is Union[Any]
+    True
+    >>> Union in HINTS_IGNORABLE
+    True
+    >>> Union[Any] in HINTS_IGNORABLE
+    True
+'''
+
 
 # ....................{ EXCEPTIONS                        }....................
 def die_unless_hint(
