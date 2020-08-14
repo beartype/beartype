@@ -33,7 +33,7 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_GET_RETURN,
     PEP_CODE_RETURN_CHECKED,
 )
-from beartype._decor._code._pep._peptree import pep_code_check
+from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.utilcachetext import (
     format_text_cached, reraise_exception_cached)
@@ -110,9 +110,9 @@ def pep_code_check_param(
         # parameter, formatted from...
         param_code_check = format_text_cached(
             # Memoized parameter-agnostic code type-checking this parameter.
-            text=pep_code_check(func_arg.annotation),
+            text=pep_code_check_hint(func_arg.annotation),
             # Object representation of this parameter's name, as documented by
-            # the pep_code_check() docstring.
+            # the pep_code_check_hint() docstring.
             format_str=repr(func_arg.name),
         )
     # If the prior call to the memoized _pep_code_check() function raises a
@@ -168,9 +168,9 @@ def pep_code_check_return(data: BeartypeData) -> str:
         # return value, formatted from...
         return_code_check = format_text_cached(
             # Memoized return value-agnostic code type-checking this parameter.
-            text=pep_code_check(data.func_sig.return_annotation),
+            text=pep_code_check_hint(data.func_sig.return_annotation),
             # Object representation of the magic string implying this return
-            # value, as documented by the pep_code_check() docstring.
+            # value, as documented by the pep_code_check_hint() docstring.
             format_str=repr('return'),
         )
     # If the prior call to the memoized _pep_code_check() function raises a

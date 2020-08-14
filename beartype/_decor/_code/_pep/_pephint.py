@@ -16,36 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Raising human readable exceptions from the decorated wrapper explicitly
-#describing why a given parameter or return value fails to satisfy a given type
-#hint will prove non-trivial. Fortunately, that's also the least of our worries
-#at the moment. Let's leave this one for a subsequent stable release, shall we?
-#FIXME: *EURAKA!* We just realized how to do this sanely. As with all things
-#"beartype", the correct solution is to separate efficient type-testing from
-#inefficient type-testing *EXCEPTION HANDLING.* The pep_code_check() implements
-#the former by dynamically generating efficient type-testing code. If you
-#consider, however, there's no reason whatsoever to do the same for
-#type-testing exception handling, as efficiency is utterly no concern there.
-#Instead, do the follow:
-#
-#* In the "_pepsnip" submodule, refactor all existing attempts to directly
-#  raise exceptions to instead call the __beartype_raise_pep_call_exception()
-#  validator. For example:
-#      PEP_CODE_CHECK_NONPEP_TYPE = '''
-#      {indent_curr}if not isinstance({pith_curr_expr}, {hint_curr_expr}):
-#      {indent_curr}    raise __beartype_raise_pep_call_exception(
-#      {indent_curr}        func=__beartype_func,
-#      {indent_curr}        param_or_return={pith_root_expr},
-#      {indent_curr}        param_or_return_name=CACHED_FORMAT_VAR,
-#      {indent_curr})
-#      '''
-#  Note the additional need to interpolate the root "{pith_root_expr}" into
-#  that snippet (which promotes human-readability) as well as the completely
-#  different usage of "CACHED_FORMAT_VAR_PROTECTED", which should now expand to
-#  a Python string object rather than a substring embedded in string objects.
-#* Refactor the caller to replace "CACHED_FORMAT_VAR" instances with either the
-#  parameter name or "return" for a return value.
-
 #FIXME: Localize all calls to bound methods (e.g.,
 #"muh_dict_get = muh_dict.get") for efficiency.
 
@@ -58,7 +28,8 @@ from beartype.roar import BeartypeDecorHintPepException
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_NONPEP_TYPE,
-    PEP_CODE_PITH_ROOT_NAME,
+    PEP_CODE_PITH_ROOT_EXPR,
+    PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
 )
 from beartype._decor._typistry import register_typistry_type
 from beartype._util.hint.pep.utilhintpepget import (
@@ -70,6 +41,7 @@ from beartype._util.cache.list.utillistfixed import FixedList
 from beartype._util.cache.list.utillistfixedpool import (
     SIZE_BIG, acquire_fixed_list, release_fixed_list)
 from beartype._util.cache.utilcachetext import CACHED_FORMAT_VAR
+from itertools import count
 from typing import (
     Any,
     Union,
@@ -113,28 +85,12 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #probably makes the most sense as a reasonably general-purpose default.
 
 # ....................{ CONSTANTS ~ hint : meta           }....................
-#FIXME: Is this actually the correct final size? Reduce if needed.
-_HINT_META_SIZE = 4
-'''
-Length to constrain **hint metadata** (i.e., fixed lists efficiently
-masquerading as tuples of metadata describing the currently visited hint,
-defined by the previously visited parent hint as a means of efficiently sharing
-metadata common to all children of that hint) to.
-'''
+# Iterator yielding the next integer incrementation starting at 0, to be safely
+# deleted *AFTER* defining the following 0-based indices via this iterator.
+__hint_meta_index_counter = count(start=0, step=1)
 
 
-#FIXME: For safety, define these with a global private:
-#    _HINT_META_INDEX_COUNTER = Counter()
-#Doesn't "collections" provide that sort of thing?
-_HINT_META_INDEX_INDENT = 0
-'''
-0-based index of all hint metadata fixed lists providing **current
-indentation** (i.e., Python code snippet expanding to the current level of
-indentation appropriate for the currently visited hint).
-'''
-
-
-_HINT_META_INDEX_PITH_EXPR = 1
+_HINT_META_INDEX_PITH_EXPR = next(__hint_meta_index_counter)
 '''
 0-based index of all hint metadata fixed lists providing the **current pith
 expression** (i.e., Python code snippet evaluating to the current possibly
@@ -142,9 +98,29 @@ nested object of the passed parameter or return value to be type-checked
 against the currently visited hint).
 '''
 
+
+_HINT_META_INDEX_INDENT = next(__hint_meta_index_counter)
+'''
+0-based index of all hint metadata fixed lists providing **current
+indentation** (i.e., Python code snippet expanding to the current level of
+indentation appropriate for the currently visited hint).
+'''
+
+
+_HINT_META_SIZE = next(__hint_meta_index_counter)
+'''
+Length to constrain **hint metadata** (i.e., fixed lists efficiently
+masquerading as tuples of metadata describing the currently visited hint,
+defined by the previously visited parent hint as a means of efficiently sharing
+metadata common to all children of that hint) to.
+'''
+
+# Delete the above counter for safety and sanity in equal measure.
+del __hint_meta_index_counter
+
 # ....................{ CODERS                            }....................
 @callable_cached
-def pep_code_check(hint: object) -> str:
+def pep_code_check_hint(hint: object) -> str:
     '''
     Python code type-checking the previously localized parameter or return
     value annotated by the passed PEP-compliant type hint against this hint of
@@ -209,7 +185,7 @@ def pep_code_check(hint: object) -> str:
     # of metadata describing the top-level hint).
     hint_root_meta = acquire_fixed_list(_HINT_META_SIZE)
     hint_root_meta[_HINT_META_INDEX_INDENT   ] = CODE_INDENT_2
-    hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_NAME
+    hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_EXPR
 
     # Currently visited hint.
     hint_curr = None
@@ -699,17 +675,13 @@ def pep_code_check(hint: object) -> str:
             # superattrs = None
         # Else, this hint is *NOT* PEP-compliant.
         #
-        # If this hint is a class...
+        # If this hint is a class, note this hint is guaranteed to be a
+        # subscripted argument of a PEP-compliant type hint (e.g., the "int" in
+        # "Union[Dict[str, str], int]") rather than the root type hint. Why?
+        # Because if this hint were the root type hint, then this hint would
+        # have been passed to the faster PEP-noncompliant code generation
+        # codepath instead. In this case...
         elif isinstance(hint_curr, type):
-            #FIXME: Is continuing the correct thing to do here? Exercise this
-            #edge case with unit tests, please.
-            # If this hint is the root superclass, ignore this hint. Since all
-            # objects are instances of the root superclass (by definition), all
-            # objects are guaranteed to satisfy this hint, which thus uselessly
-            # reduces to an inefficient noop.
-            if hint_curr is object:
-                continue
-
             #FIXME: Refactor to leverage f-strings after dropping Python 3.5
             #support, which are the optimal means of performing string
             #formatting.
@@ -761,5 +733,15 @@ def pep_code_check(hint: object) -> str:
     # Release the fixed list of all transitive PEP-compliant type hints.
     release_fixed_list(hints)
 
-    # Return this snippet.
-    return func_code
+    # Return this snippet, globally replacing all unformattable placeholder
+    # substrings matching "PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER" protected
+    # against erroneous formatting by the frequently called str.format() method
+    # above with a formattable placeholder substring, which the "pepcode"
+    # submodule then replaces with either the name of the current parameter or
+    # "return" for return values.
+    #
+    # See the "PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER" docstring for details.
+    return func_code.replace(
+        PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
+        CACHED_FORMAT_VAR,
+    )
