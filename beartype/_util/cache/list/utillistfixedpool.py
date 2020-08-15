@@ -30,9 +30,9 @@ are both subjective but *should* cover 99.9999% of use cases in this codebase.
 '''
 
 # ....................{ SINGLETONS ~ private              }....................
-_fixed_list_pool = KeyPool(pool_item_maker=FixedList)
+_fixed_list_pool = KeyPool(item_maker=FixedList)
 '''
-Non-thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching
+Thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching
 previously instantiated :class:`FixedList` instances of various lengths).
 
 Caveats
@@ -76,7 +76,7 @@ def acquire_fixed_list(size: int) -> FixedList:
         **non-positive** (i.e., is less than or equal to 0).
     '''
 
-    # Acquire a fixed list of this length in a thread-safe manner.
+    # Thread-safely acquire a fixed list of this length.
     fixed_list = _fixed_list_pool.acquire(size)
     assert isinstance(fixed_list, FixedList), (
         '{!r} not a fixed list.'.format(fixed_list))
@@ -88,7 +88,7 @@ def acquire_fixed_list(size: int) -> FixedList:
 def release_fixed_list(fixed_list: FixedList) -> None:
     '''
     Release the passed fixed list acquired by a prior call to the
-    :meth:`acquire` method.
+    :func:`acquire_fixed_list` function.
 
     Caveats
     ----------
@@ -110,11 +110,11 @@ def release_fixed_list(fixed_list: FixedList) -> None:
 
     Parameters
     ----------
-    fixed_lists : FixedList
+    fixed_list : FixedList
         Fixed list to be released.
     '''
     assert isinstance(fixed_list, FixedList), (
         '{!r} not a fixed list.'.format(fixed_list))
 
-    # Release this fixed list in a thread-safe manner.
-    _fixed_list_pool.release(len(fixed_list), fixed_list)
+    # Thread-safely release this fixed list.
+    _fixed_list_pool.release(key=len(fixed_list), item=fixed_list)

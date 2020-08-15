@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    CALLER-SPECIFIC PARAMETERS THAT CALLABLE MIGHT STILL BE EXPECTING.*
 #  * In that callable's implementation, replace all prior uses of those
 #    parameters with a single hardcoded format string interpolation (e.g.,
-#      "beartype._util.cache.utilcachetext").
+#      "beartype._util.cache.utilcacheerror").
 #* Grep the codebase for all higher-level non-memoized callers of those
 #  lower-level memoized callables. Ideally, this should *ONLY* be these
 #  callables, which appear to be where the full human-readable description for

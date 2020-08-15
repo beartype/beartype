@@ -25,10 +25,15 @@ HINTS_IGNORABLE = {
     # Ignorable non-"typing" types.
     object,
 
-    # Ignorable "typing" types.
+    # Ignorable "typing" objects.
     Any,
+
+    # Ignorable "typing" unions.
     Union,
     Union[Any],
+    Union[object],
+    Union[Any, object],
+    Union[object, Any],
 }
 '''
 Set of all annotation objects to be unconditionally ignored during
@@ -47,9 +52,6 @@ This includes:
 
   * :data:`Any` singleton object, semantically synonymous with the
     :class:`AnyType` and hence :class:`object` types.
-  * :data:`Union[Any]` singleton object. Since `PEP 484`_ stipulates that a
-    union of one type semantically reduces to merely that type,
-    :data:`Union[Any]` semantically reduces to merely :data:`Any`.
   * :data:`Union` singleton object. Since `PEP 484`_ stipulates that an
     unsubscripted subscriptable PEP-compliant object (e.g., ``Generic``,
     ``Iterable``) semantically expands to that object subscripted by an
@@ -58,13 +60,28 @@ This includes:
     equivalency, however, note that these objects remain syntactically distinct
     with respect to object identification (i.e., ``Union is not Union[Any]``).
     Ergo, this set necessarily lists both distinct singleton objects.
+  * :data:`Union[Any]` and :data:`Union[object]` singleton objects. Since `PEP
+    484`_ stipulates that a union of one type semantically reduces to merely
+    that type, :data:`Union[Any]` semantically reduces to merely :data:`Any`
+    and :data:`Union[object]` semantically reduces to merely :data:`object`.
+  * :data:`Union[Any, object]` and :data:`Union[object, Any]` singleton
+    objects. Since both :data:`Union[Any]` and :data:`Union[object]`
+    semantically reduce to a noop, so too do all permutations of those unions.
+    Ideally, :data:`Union[Any, object]` and :data:`Union[object, Any]` would be
+    cached as the same singleton object. For unknown reasons (presumably,
+    unintentional bugs), they currently are *not* under *all* current revisions
+    of the :mod:`typing` module (namely, Python 3.5 through 3.8). Why? Because
+    order is significant rather than insignificant in :data:`Union` arguments.
+    Naturally, this is ludicrous -- but so is most of both `PEP 484`_ and its
+    implementation in the :mod:`typing` module. A :data:`Union` is merely a set
+    of PEP-compliant objects; sets are unordered; ergo, so should
+    :data:`Union`. Since we have no say in the matter, we strenuously object in
+    the only meaningful way we can: with a docstring rant no one will ever
+    read. (This is that docstring rant, by the way.)
 
 Although PEP-specific logic should typically be isolated to private
-PEP-specific submodules for maintainability, listing this type here *improves*
-maintainability by centralizing similar logic.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
+PEP-specific submodules for maintainability, defining this set here *improves*
+maintainability by centralizing similar logic across the codebase.
 
 Examples
 ----------
@@ -85,6 +102,9 @@ subscripted objects produced by that module behave as expected: e.g.,
     True
     >>> Union[Any] in HINTS_IGNORABLE
     True
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
 '''
 
 

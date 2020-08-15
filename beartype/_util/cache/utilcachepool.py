@@ -84,13 +84,13 @@ class KeyPool(object):
     __slots__ = ('_key_to_pool', '_pool_item_maker', '_thread_lock')
 
     # ..................{ INITIALIZER                       }..................
-    def __init__(self, pool_item_maker: 'CallableTypes') -> None:
+    def __init__(self, item_maker: 'CallableTypes') -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
         Parameters
         ----------
-        pool_item_maker : CallableTypes
+        item_maker : CallableTypes
             Caller-defined factory callable internally called by the
             :meth:`acquire` method on attempting to acquire a non-existent
             object from an **empty pool** (i.e., either a missing key *or* an
@@ -104,13 +104,13 @@ class KeyPool(object):
             .. code-block:: python
 
                from beartype.cave import HashableType
-               def pool_item_maker(key: HashableType) -> object: ...
+               def item_maker(key: HashableType) -> object: ...
         '''
-        assert callable(pool_item_maker), (
-            '{!r} not callable.'.format(pool_item_maker))
+        assert callable(item_maker), (
+            '{!r} not callable.'.format(item_maker))
 
         # Classify these parameters as instance variables.
-        self._pool_item_maker = pool_item_maker
+        self._pool_item_maker = item_maker
 
         # Initialize all remaining instance variables.
         #
@@ -126,7 +126,7 @@ class KeyPool(object):
         self._thread_lock = Lock()
 
     # ..................{ METHODS                           }..................
-    def acquire(self, key: 'HashableType') -> object:
+    def acquire(self, key: 'HashableType' = None) -> object:
         '''
         Acquire an arbitrary object associated with the passed **arbitrary
         key** (i.e., hashable object).
@@ -146,8 +146,9 @@ class KeyPool(object):
 
         Parameters
         ----------
-        key : HashableType
+        key : Optional[HashableType]
             Hashable object associated with the pool item to be acquired.
+            Defaults to ``None``.
 
         Returns
         ----------
@@ -189,7 +190,7 @@ class KeyPool(object):
             )
 
 
-    def release(self, key: 'HashableType', pool_item: object) -> None:
+    def release(self, item: object, key: 'HashableType' = None) -> None:
         '''
         Release the passed object acquired by a prior call to the
         :meth:`acquire` method passed the same passed **arbitrary key** (i.e.,
@@ -202,10 +203,11 @@ class KeyPool(object):
 
         Parameters
         ----------
-        key : HashableType
-            Hashable object previously associated with this pool item.
-        pool_item : object
+        item : object
             Arbitrary object previously associated with this key.
+        key : Optional[HashableType]
+            Hashable object previously associated with this pool item. Defaults
+            to ``None``.
 
         Raises
         ----------
@@ -218,4 +220,4 @@ class KeyPool(object):
         # The best things in life are free or two-liners. This is the latter.
         with self._thread_lock:
             # Append this object to the list associated with this key.
-            self._key_to_pool[key].append(pool_item)
+            self._key_to_pool[key].append(item)

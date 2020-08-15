@@ -26,6 +26,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
+from beartype._decor._code._pep._pephintchildstr import (
+    acquire_hint_child_stringifier,
+    release_hint_child_stringifier,
+)
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_NONPEP_TYPE,
     PEP_CODE_PITH_ROOT_EXPR,
@@ -40,7 +44,8 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.list.utillistfixed import FixedList
 from beartype._util.cache.list.utillistfixedpool import (
     SIZE_BIG, acquire_fixed_list, release_fixed_list)
-from beartype._util.cache.utilcachetext import CACHED_FORMAT_VAR
+from beartype._util.cache.utilcacheerror import (
+    RERAISE_EXCEPTION_CACHED_SOURCE_STR)
 from itertools import count
 from typing import (
     Any,
@@ -90,9 +95,54 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 __hint_meta_index_counter = count(start=0, step=1)
 
 
+_HINT_META_INDEX_SOURCE_STR = next(__hint_meta_index_counter)
+'''
+0-based index into any hint metadata fixed list of the **current source
+type-checking substring** (i.e., placeholder to be globally replaced by a
+Python code snippet type-checking the current pith expression against the hint
+described by this metadata on visiting that hint).
+
+This substring provides indirection enabling the currently visited parent hint
+to defer and delegate the generation of code type-checking each child argument
+of that hint to the later time at which that child argument is visited.
+
+Example
+----------
+For example, the :func:`pep_code_check_hint` function might generate
+intermediary code resembling the following on visiting the :data:`Union` parent
+of a ``Union[int, str]`` object *before* visiting either the :class:`int` or
+:class:`str` children of that object:
+
+    if not (
+        @{0}! or
+        @{1}!
+    ):
+        raise __beartype_raise_pep_call_exception(
+            func=__beartype_func,
+            param_or_return_name=$%PITH_ROOT_NAME/~,
+            param_or_return_value=__beartype_pith_root,
+        )
+
+Note the unique source substrings "@{0}!" and "@{1}!" in that code, which
+that function will iteratively replace with code type-checking each of the
+child arguments of that :data:`Union` parent (i.e., :class:`int`,
+:class:`str`). The final code memoized by that function might then resemble:
+
+    if not (
+        isinstance(__beartype_pith_root, int) or
+        isinstance(__beartype_pith_root, str)
+    ):
+        raise __beartype_raise_pep_call_exception(
+            func=__beartype_func,
+            param_or_return_name=$%PITH_ROOT_NAME/~,
+            param_or_return_value=__beartype_pith_root,
+        )
+'''
+
+
 _HINT_META_INDEX_PITH_EXPR = next(__hint_meta_index_counter)
 '''
-0-based index of all hint metadata fixed lists providing the **current pith
+0-based index into any hint metadata fixed list of the **current pith
 expression** (i.e., Python code snippet evaluating to the current possibly
 nested object of the passed parameter or return value to be type-checked
 against the currently visited hint).
@@ -101,9 +151,9 @@ against the currently visited hint).
 
 _HINT_META_INDEX_INDENT = next(__hint_meta_index_counter)
 '''
-0-based index of all hint metadata fixed lists providing **current
-indentation** (i.e., Python code snippet expanding to the current level of
-indentation appropriate for the currently visited hint).
+0-based index into any hint metadata fixed list of **current indentation**
+(i.e., Python code snippet expanding to the current level of indentation
+appropriate for the currently visited hint).
 '''
 
 
@@ -136,16 +186,17 @@ def pep_code_check_hint(hint: object) -> str:
     the passed hint with the returned code, which would rather defeat the
     point. Instead, this function only:
 
-    * Returns generic non-working code containing the
-      :attr:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR` format
-      variable that the caller is required to explicitly format with
-      non-generic working code by calling the
-      :func:`beartype._util.cache.utilcachetext.format_text_cached` function.
-    * Raises generic non-human-readable exceptions containing the
-      :attr:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR` format
-      variable that the caller is required to explicitly catch and raise
+    * Returns generic non-working code containing the placeholder
+      :attr:`beartype._decor._code._pep.pepcode.PITH_ROOT_NAME_SOURCE_STR`
+      substring that the caller is required to globally replace by the name of
+      the current parameter *or* ``return`` for return values (e.g., by calling
+      the builtin :meth:`str.replace` method) to generate the desired
+      non-generic working code type-checking that parameter or return value.
+    * Raises generic non-human-readable exceptions containing the placeholder
+      :attr:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_SOURCE_STR`
+      substring that the caller is required to explicitly catch and raise
       non-generic human-readable exceptions from by calling the
-      :func:`beartype._util.cache.utilcachetext.reraise_exception_cached`
+      :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
       function.
 
     Parameters
@@ -172,6 +223,26 @@ def pep_code_check_hint(hint: object) -> str:
     from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
     die_unless_hint_nonpep(hint)
 
+    #FIXME: Call:
+    #* acquire_hint_child_stringifier() at the beginning of this function.
+    #* release_hint_child_stringifier() at the end of this function.
+    #FIXME: Actually, the entire "_pephintchildstr" submodule is obvious
+    #overkill. What we instead want to do is this:
+    #* Refactor that submodule into the existing "beartype._decor._data"
+    #  submodule. Notably, shift *ALL* attributes and methods from
+    #  "_HintChildStringifier" into "BeartypeData".
+    #* For disambiguity, rename:
+    #  * "BeartypeData._id" to "BeartypeData._pep_hint_child_id".
+    #  * BeartypeData.get_next_str() to BeartypeData.get_pep_hint_child_str().
+    #* Refactor this function to accept a "data" parameter.
+    #* Localize the BeartypeData.get_pep_hint_child_str() method here for
+    #  efficiency.
+    #* Refactor the "beartype._decor.main" submodule to acquire and release
+    #  cached instances of "BeartypeData" rather than reinstantiating those
+    #  objects with each decoration.
+    #
+    #The above approach nails several birds with one overkill stone. Yes! Yes!
+
     # Python code snippet to be returned.
     func_code = ''
 
@@ -184,6 +255,11 @@ def pep_code_check_hint(hint: object) -> str:
     # Root hint metadata (i.e., fixed list efficiently masquerading as a tuple
     # of metadata describing the top-level hint).
     hint_root_meta = acquire_fixed_list(_HINT_META_SIZE)
+    hint_root_meta[_HINT_META_INDEX_SOURCE_STR] = (
+        _HINT_SOURCE_STR_PREFIX +
+        str(_HINT_META_INDEX_SOURCE_ID) +
+        _HINT_SOURCE_STR_SUFFIX
+    )
     hint_root_meta[_HINT_META_INDEX_INDENT   ] = CODE_INDENT_2
     hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_EXPR
 
@@ -195,7 +271,7 @@ def pep_code_check_hint(hint: object) -> str:
 
     # Human-readable label prefixing the representations of child type hints of
     # this top-level hint in raised exception messages.
-    hint_curr_label = '{} {!r} child '.format(CACHED_FORMAT_VAR, hint)
+    hint_curr_label = '{} {!r} child '.format(RERAISE_EXCEPTION_CACHED_SOURCE_STR, hint)
 
     # Dictionary mapping each argumentless typing attribute (i.e., public
     # attribute of the "typing" module uniquely identifying the currently
@@ -416,7 +492,7 @@ def pep_code_check_hint(hint: object) -> str:
                         #* Define a new global "_HINT_META_INDEX_LABEL = 2".
                         #* Assign far above:
                         #  hint_root_meta[_HINT_META_INDEX_LABEL] = (
-                        #      CACHED_FORMAT_VAR)
+                        #      RERAISE_EXCEPTION_CACHED_SOURCE_STR)
                         #  hint_curr_label = None
                         #* Assign in the parent loop above:
                         #  hint_next_meta[_HINT_META_INDEX_LABEL] = (
@@ -743,5 +819,5 @@ def pep_code_check_hint(hint: object) -> str:
     # See the "PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER" docstring for details.
     return func_code.replace(
         PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
-        CACHED_FORMAT_VAR,
+        RERAISE_EXCEPTION_CACHED_SOURCE_STR,
     )

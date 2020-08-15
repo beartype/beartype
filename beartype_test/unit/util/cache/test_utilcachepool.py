@@ -32,7 +32,7 @@ def test_key_pool_pass() -> None:
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
     # instance initialized to that parameter.
     key_pool = KeyPool(
-        pool_item_maker=lambda newline: StringIO(
+        item_maker=lambda newline: StringIO(
             initial_value='', newline=newline))
 
     # Acquire a new "StringIO" buffer writing Windows-style newlines.
@@ -67,7 +67,7 @@ def test_key_pool_pass() -> None:
         windows_stringio.getvalue() == THE_DEAD_SHALL_BE_RAISED_INCORRUPTIBLE)
 
     # Release this buffer back to its parent pool.
-    key_pool.release(key='\r\n', pool_item=windows_stringio)
+    key_pool.release(key='\r\n', item=windows_stringio)
 
     # Reacquire the same buffer again.
     windows_stringio_too = key_pool.acquire(key='\r\n')
@@ -93,8 +93,8 @@ def test_key_pool_pass() -> None:
     assert windows_stringio_new.getvalue() == BOOK_OF_NIGHTMARES
 
     # Release these buffers back to their parent pools (in acquisition order).
-    key_pool.release(key='\r\n', pool_item=windows_stringio)
-    key_pool.release(key='\r\n', pool_item=windows_stringio_new)
+    key_pool.release(key='\r\n', item=windows_stringio)
+    key_pool.release(key='\r\n', item=windows_stringio_new)
 
 
 def test_key_pool_fail() -> None:
@@ -107,7 +107,7 @@ def test_key_pool_fail() -> None:
     from beartype._util.cache.utilcachepool import KeyPool
 
     # Key pool to be tested, seeding empty pools with the identity function.
-    key_pool = KeyPool(pool_item_maker=lambda key: key)
+    key_pool = KeyPool(item_maker=lambda key: key)
 
     # Assert that attempting to acquire a new object with an unhashable key
     # raises the expected exception.

@@ -476,21 +476,6 @@ class _BeartypeUtilCachedCallableException(_BeartypeUtilCachedException):
     pass
 
 
-class _BeartypeUtilCachedTextException(_BeartypeUtilCachedException):
-    '''
-    **Beartype memoization exception.**
-
-    This exception is raised by the
-    :func:`beartype._util.utilcache.utilcachetext.reraise_exception_cached`
-    function when one or more passed parameters are unsupported or invalid.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
 class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
     '''
     **Beartype decorator fixed list exception.**

@@ -45,10 +45,10 @@ unformattable bare identifier protected against erroneous formatting by the
 frequently called :moth:`str.format` method, which the
 :mod:`beartype._decor._code._pep._pephint` submodule then globally replaces
 before its evaluation as code with the magic formattable substring
-:attr:`beartype._util.cache.utilcachetext.CACHED_FORMAT_VAR`, which the
+:attr:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_SOURCE_STR`, which the
 :mod:`beartype._decor._code._pep.pepcode` submodule then replaces with either
 the name of the current parameter or ``return`` for return values by calling
-the :func:`beartype._util.cache.utilcachetext.format_text_cached` function.
+the :func:`beartype._util.cache.utilcacheerror.format_text_cached` function.
 
 Unmaintainability is the well-known to be the high price of ludicrous speed.
 '''
