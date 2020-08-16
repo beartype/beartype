@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.cache.utilcachepool import KeyPool
+from beartype._util.cache.pool.utilcachepool import KeyPool
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -29,7 +29,7 @@ class _HintChildStringifier(object):
 
     Attributes
     ----------
-    _id : int
+    _pep_hint_child_id : int
         Integer uniquely identifying the currently iterated child hint of the
         currently visited parent hint.
     '''
@@ -49,17 +49,17 @@ class _HintChildStringifier(object):
         Reinitialize this stringifier, typically after retrieval of
         previously cached instance of this class.
 
-        Specifically, this method resets the :attr:`_id` instance variable to
-        its initial value.
+        Specifically, this method resets the :attr:`_pep_hint_child_id`
+        instance variable to its initial value.
         '''
 
-        # Since the get_next_str() method increments this identifier *BEFORE*
+        # Since the get_next_pep_hint_child_str() method increments *BEFORE*
         # stringifying this identifier, initializing this identifier to -1
         # ensures that method returns a string containing "0" rather than "-1".
-        self._id = -1
+        self._pep_hint_child_id = -1
 
-    # ..................{ CALLERS                           }..................
-    def get_next_str(self) -> str:
+    # ..................{ GETTERS                           }..................
+    def get_next_pep_hint_child_str(self) -> str:
         '''
         Generate a **child hint type-checking substring** (i.e., placeholder
         to be globally replaced by a Python code snippet type-checking the
@@ -72,13 +72,13 @@ class _HintChildStringifier(object):
         '''
 
         # Increment the unique identifier of the currently iterated child hint.
-        self._id += 1
+        self._pep_hint_child_id += 1
 
         #FIXME: Refactor to leverage f-strings after dropping Python 3.5
         #support, which are the optimal means of performing string formatting.
 
         # Generate a unique source type-checking substring.
-        return '@[' + str(self._id) + '}!'
+        return '@[' + str(self._pep_hint_child_id) + '}!'
 
 # ....................{ SINGLETONS ~ private              }....................
 _hintchildstr_pool = KeyPool(item_maker=_HintChildStringifier)

@@ -26,10 +26,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
-from beartype._decor._code._pep._pephintchildstr import (
-    acquire_hint_child_stringifier,
-    release_hint_child_stringifier,
-)
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_NONPEP_TYPE,
     PEP_CODE_PITH_ROOT_EXPR,
@@ -41,9 +37,8 @@ from beartype._util.hint.pep.utilhintpepget import (
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported, is_hint_pep)
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cache.list.utillistfixed import FixedList
-from beartype._util.cache.list.utillistfixedpool import (
-    SIZE_BIG, acquire_fixed_list, release_fixed_list)
+from beartype._util.cache.pool.utilcachepoollistfixed import (
+    SIZE_BIG, FixedList, acquire_fixed_list, release_fixed_list)
 from beartype._util.cache.utilcacheerror import (
     RERAISE_EXCEPTION_CACHED_SOURCE_STR)
 from itertools import count

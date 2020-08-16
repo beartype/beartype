@@ -106,6 +106,15 @@ class BeartypeData(object):
     func_sig : inspect.Signature
         :class:`inspect.Signature` object describing this signature.
 
+    Attributes (Private: Integer)
+    ----------
+    _pep_hint_child_id : int
+        Integer uniquely identifying the currently iterated child PEP-compliant
+        type hint of the currently visited parent PEP-compliant type hint. This
+        integer is internally leveraged by the
+        :meth:`get_next_pep_hint_child_str` method, externally called when
+        generating code type-checking PEP-compliant type hints.
+
     .. _PEP 563:
         https://www.python.org/dev/peps/pep-0563
     '''
@@ -119,20 +128,32 @@ class BeartypeData(object):
         'func_name',
         'func_sig',
         'func_wrapper_name',
+        '_pep_hint_child_id',
     )
 
     # ..................{ INITIALIZERS                      }..................
     def __init__(self, func: CallableTypes) -> None:
         '''
-        Initialize this object with the passed callable.
+        Initialize this metadata from the passed callable.
 
-        Specifically, this method:
+        See Also
+        ----------
+        :meth:`reinit`
+            Further details.
 
-        * Sets the :attr:`func_sig` instance variable to the :class:`Signature`
-          instance encapsulating this callable's signature.
-        * Sets the :attr:`func_hints` instance variable to a shallow copy of
-          this callable's annotations with all postponed annotations resolved
-          to their referents.
+        Specifically, this method sets the:
+
+        * :attr:`func_sig` instance variable to the :class:`Signature` instance
+          encapsulating this callable's signature.
+        * :attr:`func_hints` instance variable to a shallow copy of this
+          callable's annotations with all postponed annotations resolved to
+          their referents.
+        * :attr:`_pep_hint_child_id` instance variable to -1. Since the
+          :meth:`get_next_pep_hint_child_str` method increments *before*
+          stringifying this identifier, initializing this identifier to -1
+          ensures that method returns a string containing only non-negative
+          substrings starting at ``0`` rather than both negative and positive
+          substrings starting at ``-1``.
 
         If `PEP 563`_ is conditionally active for this callable, this function
         additionally resolves all postponed annotations on this callable to
@@ -168,6 +189,10 @@ class BeartypeData(object):
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = '__{}_beartyped__'.format(func.__name__)
 
+        # Integer identifying the currently iterated child PEP-compliant type
+        # hint of the currently visited parent PEP-compliant type hint.
+        self._pep_hint_child_id = -1
+
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).
         self.func_hints = None
@@ -180,3 +205,41 @@ class BeartypeData(object):
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.
         self.func_sig = inspect.signature(func)
+
+
+    #FIXME: Refactor:
+    #* The current body of the init() method into this method.
+    #* The init() method to *NOT* accept a "func" parameter.
+    #* The new body of the init() method to simply nullify all instance
+    #  variables rather than perform any meaningful initialization.
+    #FIXME: Rename this class to "_BeartypeData".
+    def reinit(self, func: CallableTypes) -> None:
+        '''
+        Reinitialize this metadata from the passed callable, typically after
+        acquisition of a previously cached instance of this class from the
+        :mod:`beartype._util.cache.pool.utilcachepoolobject` submodule.
+        '''
+
+        pass
+
+    # ..................{ GETTERS                           }..................
+    def get_next_pep_hint_child_str(self) -> str:
+        '''
+        Generate a **child hint type-checking substring** (i.e., placeholder
+        to be globally replaced by a Python code snippet type-checking the
+        current pith expression against the currently iterated child hint of
+        the currently visited parent hint).
+
+        This method should only be called exactly once on each hint, typically
+        by the currently visited parent hint on iterating each child hint of
+        that parent hint.
+        '''
+
+        # Increment the unique identifier of the currently iterated child hint.
+        self._pep_hint_child_id += 1
+
+        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+        #support, which are the optimal means of performing string formatting.
+
+        # Generate a unique source type-checking substring.
+        return '@[' + str(self._pep_hint_child_id) + '}!'

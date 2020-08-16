@@ -7,7 +7,7 @@
 **Beartype key pool unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.utilcachepool` submodule.
+:mod:`beartype._util.cache.pool.utilcachepool` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,11 +22,11 @@ import pytest
 def test_key_pool_pass() -> None:
     '''
     Test successful usage of the
-    :class:`beartype._util.cache.utilcachepool.KeyPool` type.
+    :class:`beartype._util.cache.pool.utilcachepool.KeyPool` type.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcachepool import KeyPool
+    from beartype._util.cache.pool.utilcachepool import KeyPool
 
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
@@ -100,11 +100,11 @@ def test_key_pool_pass() -> None:
 def test_key_pool_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :class:`beartype._util.cache.utilcachepool.KeyPool` type.
+    :class:`beartype._util.cache.pool.utilcachepool.KeyPool` type.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcachepool import KeyPool
+    from beartype._util.cache.pool.utilcachepool import KeyPool
 
     # Key pool to be tested, seeding empty pools with the identity function.
     key_pool = KeyPool(item_maker=lambda key: key)

@@ -411,6 +411,15 @@ def _get_hint_pep_typing_bare_attr_argless_or_none(hint: object) -> (
 
     This getter function is memoized for efficiency.
 
+    Caveats
+    ----------
+    **Call substantially faster and simpler**
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing` **tester
+    function instead to simply decide whether an arbitrary object is defined by
+    the** :mod:`typing` **module.** While this getter function can be called to
+    decide that question as well, doing so would be gross overkill overly
+    subject to fragile implementation details of that module.
+
     Parameters
     ----------
     hint : object
@@ -540,8 +549,8 @@ def _get_hint_pep_typing_superattrs(hint: object) -> tuple:
     '''
     Tuple of all **typing super attributes** (i.e., public attributes of the
     :mod:`typing` module originally listed as superclasses of the class of the
-    passed PEP-compliant type hint) of this hint if any *or* the empty tuple
-    otherwise.
+    passed PEP-compliant type hint) of this hint if this hint is a user-defined
+    subclass *or* the empty tuple otherwise.
 
     This getter function is memoized for efficiency.
 
@@ -663,7 +672,8 @@ def _get_hint_pep_typing_superattrs(hint: object) -> tuple:
         ...     _get_hint_pep_typing_superattrs)
         >>> T = typing.TypeVar('T')
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-        >>> _get_hint_pep_typing_superattrs(typing.Union[str, typing.Sequence[int]])
+        >>> _get_hint_pep_typing_superattrs(
+        ...     typing.Union[str, typing.Sequence[int]])
         ()
         >>> _get_hint_pep_typing_superattrs(Duplicity)
         (typing.Iterable[~T], typing.Container[~T])
@@ -676,6 +686,12 @@ def _get_hint_pep_typing_superattrs(hint: object) -> tuple:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
+
+    # If this hint is defined by the "typing" module rather than a user-defined
+    # module, this hint is by definition *NOT* user-defined. In this case,
+    # immediately return the empty tuple.
+    if is_hint_pep_typing(hint):
+        return ()
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).

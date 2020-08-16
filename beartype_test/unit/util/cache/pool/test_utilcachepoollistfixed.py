@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype utility fixed list unit tests.**
+**Beartype utility fixed list pool unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.list.utillistfixed` submodule.
+:mod:`beartype._util.cache.pool.utilcachepoollistfixed` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -17,15 +17,79 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
 
-# ....................{ TESTS                             }....................
-def test_fixedlist_pass() -> None:
+# ....................{ TESTS ~ pool                      }....................
+def test_listfixed_pool_pass() -> None:
     '''
     Test successful usage of the
-    :mod:`beartype._util.cache.list.utillistfixed` class.
+    :mod:`beartype._util.cache.pool.utilcachepoollistfixed` submodule.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.list.utillistfixed import FixedList
+    from beartype._util.cache.pool.utilcachepoollistfixed import (
+        acquire_fixed_list, release_fixed_list)
+
+    # Acquire a fixed list of some length.
+    moloch_solitude_filth = acquire_fixed_list(size=3)
+
+    # Initialize this list.
+    moloch_solitude_filth[:] = (
+        'Moloch! Solitude! Filth! Ugliness! Ashcans and unobtainable dollars!',
+        'Children screaming under the stairways! Boys sobbing in armies! Old',
+        'men weeping in the parks!',
+    )
+
+    # Acquire another fixed list of the same length.
+    moloch_whose = acquire_fixed_list(size=3)
+
+    # Initialize this list.
+    moloch_whose[:] = (
+        'Moloch whose mind is pure machinery! Moloch whose blood is running',
+        'money! Moloch whose fingers are ten armies! Moloch whose breast is a',
+        'cannibal dynamo! Moloch whose ear is a smoking tomb!',
+    )
+
+    # Assert the contents of these lists to still be as expected.
+    assert moloch_solitude_filth[0] == (
+        'Moloch! Solitude! Filth! Ugliness! Ashcans and unobtainable dollars!')
+    assert moloch_whose[-1] == (
+        'cannibal dynamo! Moloch whose ear is a smoking tomb!')
+
+    # Release these lists.
+    release_fixed_list(moloch_solitude_filth)
+    release_fixed_list(moloch_whose)
+
+
+def test_listfixed_pool_fail() -> None:
+    '''
+    Test unsuccessful usage of the
+    :mod:`beartype._util.cache.pool.utilcachepoollistfixed` submodule.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.cache.pool.utilcachepoollistfixed import (
+        acquire_fixed_list)
+    from beartype.roar import _BeartypeUtilCachedFixedListException
+
+    # Assert that fixed lists may only be acquired with positive integers.
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
+        acquire_fixed_list((
+            'Moloch the incomprehensible prison! Moloch the crossbone soulless',
+            'jailhouse and Congress of sorrows! Moloch whose buildings are',
+            'judgment! Moloch the vast stone of war! Moloch the stunned',
+            'governments!',
+        ))
+    with pytest.raises(_BeartypeUtilCachedFixedListException):
+        acquire_fixed_list(-67)
+
+# ....................{ TESTS ~ type                      }....................
+def test_listfixed_type_pass() -> None:
+    '''
+    Test successful usage of the
+    :mod:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList` type.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.cache.pool.utilcachepoollistfixed import FixedList
 
     # Fixed list to be tested.
     fixed_list = FixedList(size=11)
@@ -56,14 +120,14 @@ def test_fixedlist_pass() -> None:
     assert fixed_list_copy == fixed_list
 
 
-def test_fixedlist_fail() -> None:
+def test_listfixed_type_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :mod:`beartype._util.cache.list.utillistfixed` class.
+    :mod:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList` type.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.list.utillistfixed import FixedList
+    from beartype._util.cache.pool.utilcachepoollistfixed import FixedList
     from beartype.roar import _BeartypeUtilCachedFixedListException
 
     # Fixed list to be tested.
