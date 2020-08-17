@@ -11,19 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Consider removing the following parameters:
-#
-#* "func_wrapper_name", which should be shifted back into the
-#  "beartype._decor.main" submodule, the only submodule requiring this string.
-#* "func_name", possibly. Do we actually use this in a sufficient number of
-#  exception messages, anymore?
-#* "func_hints", which we don't meaningfully use at the moment.
-#
-#This dataclass will then only contain the "func" and "func_sig" instance
-#variables. While this would typically mean this dataclass isn't far from the
-#axe, we'll probably refactor this dataclass to introspect the signature of the
-#decorated callable. Ergo, let's preserve this for a bit longer, eh?
-
 #FIXME: Optimize away the call to the inspect.signature() function by
 #reimplementing this function to assign to instance variables of the current
 #"BeartypeData" object rather than instantiating a new "Signature" object and
@@ -77,6 +64,20 @@ class BeartypeData(object):
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator).
 
+    Attributes (Set)
+    ----------
+    set_a : set
+        Thread-safe set of arbitrary items. Callers may use this set for any
+        purpose but should explicitly clear this set of all prior items by
+        calling the :meth:`set.clear` method *before* each such use. This and
+        the related :attr:`set_b` instance variable prevent callers from having
+        to repeatedly reinstantiate sets during performance-critical iteration,
+        a trivial but essential optimization.
+    set_b : set
+        Thread-safe set of arbitrary items distinct from :attr:`set_a` for
+        external filtering purposes (e.g., :mod:`typing` types from standard
+        types in PEP-compliant codepaths).
+
     Attributes (String)
     ----------
     func_wrapper_name : str
@@ -84,22 +85,6 @@ class BeartypeData(object):
         returned by this decorator. To efficiently (albeit imperfectly) avoid
         clashes with existing attributes of the module defining that function,
         this name is obfuscated while still preserving human-readability.
-    func_name : str
-        Human-readable name of this callable for use in exceptions.
-
-    Attributes (Container)
-    ----------
-    func_hints : dict
-        Dictionary mapping from the name of each annotated parameter accepted
-        by this callable (as well as the placeholder name ``return`` signifying
-        the value returned by this callable) to that annotation. If `PEP 563`_
-        is active for this callable, these annotations are resolved to their
-        referents and thus *not* **postponed** (i.e., strings dynamically
-        evaluating to Python expressions yielding the desired annotations). To
-        permit lower-level functions to safely modify this dictionary *without*
-        modifying the originating :attr:`func.__annotations__` dunder
-        dictionary, this dictionary is guaranteed to be a copy of that
-        dictionary.
 
     Attributes (Object)
     ----------
@@ -108,7 +93,7 @@ class BeartypeData(object):
 
     Attributes (Private: Integer)
     ----------
-    _pep_hint_child_id : int
+    _pep_hint_placeholder_id : int
         Integer uniquely identifying the currently iterated child PEP-compliant
         type hint of the currently visited parent PEP-compliant type hint. This
         integer is internally leveraged by the
@@ -124,36 +109,47 @@ class BeartypeData(object):
     # and time complexity across frequently called @beartype decorations.
     __slots__ = (
         'func',
-        'func_hints',
-        'func_name',
         'func_sig',
         'func_wrapper_name',
-        '_pep_hint_child_id',
+        'set_a',
+        'set_b',
+        '_pep_hint_placeholder_id',
     )
 
     # ..................{ INITIALIZERS                      }..................
-    def __init__(self, func: CallableTypes) -> None:
+    def __init__(self) -> None:
         '''
-        Initialize this metadata from the passed callable.
+        Initialize this metadata by nullifying all instance variables.
 
-        See Also
+        Caveats
         ----------
-        :meth:`reinit`
-            Further details.
+        **This class is not intended to be explicitly instantiated.** Instead,
+        callers are expected to (in order):
 
-        Specifically, this method sets the:
+        #. Acquire cached instances of this class via the
+           :mod:`beartype._util.cache.pool.utilcachepoolobjecttyped` submodule.
+        #. Call the :meth:`reinit` method on these instances to properly
+           initialize these instances.
+        '''
 
-        * :attr:`func_sig` instance variable to the :class:`Signature` instance
-          encapsulating this callable's signature.
-        * :attr:`func_hints` instance variable to a shallow copy of this
-          callable's annotations with all postponed annotations resolved to
-          their referents.
-        * :attr:`_pep_hint_child_id` instance variable to -1. Since the
-          :meth:`get_next_pep_hint_child_str` method increments *before*
-          stringifying this identifier, initializing this identifier to -1
-          ensures that method returns a string containing only non-negative
-          substrings starting at ``0`` rather than both negative and positive
-          substrings starting at ``-1``.
+        # Initialize these sets to the empty set. Since these sets are *ALWAYS*
+        # guaranteed to exist, instantiate them once here rather than
+        # repeatedly in the reinit() method.
+        self.set_a = set()
+        self.set_b = set()
+
+        # Nullify all remaining instance variables.
+        self.func = None
+        self.func_sig = None
+        self.func_wrapper_name = None
+        self._pep_hint_placeholder_id = None
+
+
+    def reinit(self, func: CallableTypes) -> None:
+        '''
+        Reinitialize this metadata from the passed callable, typically after
+        acquisition of a previously cached instance of this class from the
+        :mod:`beartype._util.cache.pool.utilcachepoolobject` submodule.
 
         If `PEP 563`_ is conditionally active for this callable, this function
         additionally resolves all postponed annotations on this callable to
@@ -183,19 +179,24 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        # Human-readable name of this function for use in exceptions.
-        self.func_name = label_callable_decorated(func)
+        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+        #support, which are the optimal means of performing string formatting.
 
         # Machine-readable name of the wrapper function to be generated.
-        self.func_wrapper_name = '__{}_beartyped__'.format(func.__name__)
+        self.func_wrapper_name = '__beartyped_' + func.__name__
 
         # Integer identifying the currently iterated child PEP-compliant type
         # hint of the currently visited parent PEP-compliant type hint.
-        self._pep_hint_child_id = -1
+        #
+        # Note this ID is intentionally initialized to -1 rather than 0. Since
+        # the get_next_pep_hint_child_str() method increments *BEFORE*
+        # stringifying this ID, initializing this ID to -1 ensures that method
+        # returns a string containing only non-negative substrings starting at
+        # 0 rather than both negative and positive substrings starting at -1.
+        self._pep_hint_placeholder_id = -1
 
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).
-        self.func_hints = None
         self.func_sig = None
 
         # Resolve all postponed annotations if any on this callable *BEFORE*
@@ -206,40 +207,54 @@ class BeartypeData(object):
         # dynamically parsed by the stdlib "inspect" module from this callable.
         self.func_sig = inspect.signature(func)
 
-
-    #FIXME: Refactor:
-    #* The current body of the init() method into this method.
-    #* The init() method to *NOT* accept a "func" parameter.
-    #* The new body of the init() method to simply nullify all instance
-    #  variables rather than perform any meaningful initialization.
-    #FIXME: Rename this class to "_BeartypeData".
-    def reinit(self, func: CallableTypes) -> None:
+    # ..................{ PROPERTIES ~ read-only            }..................
+    @property
+    def func_name(self) -> str:
         '''
-        Reinitialize this metadata from the passed callable, typically after
-        acquisition of a previously cached instance of this class from the
-        :mod:`beartype._util.cache.pool.utilcachepoolobject` submodule.
+        Human-readable name of this callable.
+
+        This attribute is only accessed when raising exceptions (where
+        efficiency is entirely ignorable) and thus intentionally declared as a
+        read-only property rather than an instance variable.
         '''
 
-        pass
+        return label_callable_decorated(self.func)
 
     # ..................{ GETTERS                           }..................
-    def get_next_pep_hint_child_str(self) -> str:
+    def get_next_pep_hint_placeholder_str(self) -> str:
         '''
-        Generate a **child hint type-checking substring** (i.e., placeholder
-        to be globally replaced by a Python code snippet type-checking the
-        current pith expression against the currently iterated child hint of
-        the currently visited parent hint).
+        **Next placeholder hint type-checking substring** (i.e., placeholder to
+        be globally replaced by a Python code snippet type-checking the current
+        pith expression against the currently iterated child hint of the
+        currently visited parent hint).
 
         This method should only be called exactly once on each hint, typically
         by the currently visited parent hint on iterating each child hint of
         that parent hint.
+
+        This method is intentionally declared as a getter method rather than
+        read-only property to emphasize that this method both returns a unique
+        string on each invocation *and* mutates internal object state.
         '''
 
         # Increment the unique identifier of the currently iterated child hint.
-        self._pep_hint_child_id += 1
+        self._pep_hint_placeholder_id += 1
 
         #FIXME: Refactor to leverage f-strings after dropping Python 3.5
         #support, which are the optimal means of performing string formatting.
 
-        # Generate a unique source type-checking substring.
-        return '@[' + str(self._pep_hint_child_id) + '}!'
+        # Generate a unique placeholder type-checking substring, intentionally
+        # prefixed and suffixed by characters that:
+        #
+        # * Are intentionally invalid as Python code, guaranteeing that the
+        #   top-level call to the exec() builtin performed by the @beartype
+        #   decorator will raise a "SyntaxError" exception if the caller fails
+        #   to replace all placeholder substrings generated by this method.
+        # * Protect the identifier embedded in this substring against ambiguous
+        #   global replacements of larger identifiers containing this
+        #   identifier. If this identifier were *NOT* protected in this manner,
+        #   then the first substring "0" generated by this method would
+        #   ambiguously overlap with the subsequent substring "10" generated by
+        #   this method, which would then produce catastrophically erroneous
+        #   and non-trivial to debug Python code.
+        return '@[' + str(self._pep_hint_placeholder_id) + '}!'

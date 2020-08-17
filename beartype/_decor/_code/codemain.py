@@ -19,6 +19,101 @@ This private submodule is *not* intended for importation by downstream callers.
    https://www.python.org/dev/peps/pep-0484
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
+#
+#    # This...
+#    @beartype
+#    def slowerfunc(dumbedgecase: (int, int, int, int, int, int, int, int))
+#
+#    # ...should be exactly as efficient as this.
+#    def fasterfunc(idealworld: int)
+#
+#Note that most types are *NOT* hashable and thus *NOT* addable to a set -- so,
+#the naive heuristic of "tuple(set(hint_tuple))" generally fails.
+#Instead, we'll need to implement some sort of manual pruning algorithm
+#optimized for the general case of a tuple containing *NO* duplicates.
+#FIXME: Ah! Actually, the following should mostly work (untested, of course):
+#   tuple_uniquified = tuple({id(item): item for item in tuple}.values()}
+#Mildly clever, though I'm sure I'm the one millionth coder to reinvent that
+#wheel. The core idea here is that object IDs are guaranteed to be hashable,
+#even if arbitrary objects aren't. Ergo, we dynamically construct a dictionary
+#mapping from object ID to object via a dictionary comprehension over possibly
+#duplicate tuple items and then construct a new tuple given the guaranteeably
+#unique values of that dictionary. Bam! Done.
+#FIXME: Actually, we have utterly no idea why we wrote "Note that most types
+#are *NOT* hashable and thus *NOT* addable to a set." Classes are obviously
+#hashable; ergo, "tuple(frozenset(hint_tuple))" would seem to suffice. Sets
+#are mutable and thus *NOT* hashable, of course. But "frozenset" objects
+#certainly are.
+#FIXME: Actually, just refactor tuple usage to access the beartypistry instead,
+#which now optimally supports tuples in a manner implicitly eliminating all
+#duplicates from tuples registered with that singleton. Sweetness!
+
+#FIXME: Cray-cray optimization: don't crucify us here, folks, but eliminating
+#the innermost call to the original callable in the generated wrapper may be
+#technically feasible. It's probably a BadIdea™, but the idea goes like this:
+#
+#    # Source code for this callable as a possibly multiline string,
+#    # dynamically parsed at runtime with hacky regular expressions from
+#    # the physical file declaring this callable if any *OR* "None" otherwise
+#    # (e.g., if this callable is defined dynamically or cannot be parsed from
+#    # that file).
+#    func_source = None
+#
+#    # Attempt to find the source code for this callable.
+#    try:
+#        func_source = inspect.getsource(func)
+#    # If the inspect.getsource() function fails to do so, shrug.
+#    except OSError:
+#        pass
+#
+#    # If the source code for this callable cannot be found, fallback to
+#    # simply calling this callable in the conventional way.
+#    if func_source is None:
+#       #FIXME: Do what we currently do here.
+#    # Else, the source code for this callable was found. In this case,
+#    # carefully embed this code into the code generated for this wrapper.
+#    else:
+#       #FIXME: Do something wild, crazy, and dangerous here.
+#
+#Extreme care will need to be taken, including:
+#
+#* Ensuring code is indented correctly.
+#* Preserving the signature (especially with respect to passed parameters) of
+#  the original callable in the wrapper. See the third-party "makefun" package,
+#  which purports to already do so. So, this is mostly a solved problem --
+#  albeit still non-trivial, as "beartype" will never have dependencies.
+#* Preventing local attributes defined by this wrapper as well as global
+#  attributes imported into this wrapper's namespace from polluting the
+#  namespace expected by the original callable. The former is trivial; simply
+#  explicitly "del {attr_name1},...,{attr_nameN}" immediately before embedding
+#  the source code for that callable. The latter is tricky; we'd probably want
+#  to stop passing "globals()" to exec() below and instead pass a much smaller
+#  list of attributes explicitly required by this wrapper. Even then, though,
+#  there's probably no means of perfectly insulating the original code from all
+#  wrapper-specific global attributes.
+#* Rewriting return values and yielded values. Oh, boy. That's the killer,
+#  honestly. Regular expression-based parsing only gets us so far. We could try
+#  analyzing the AST for that code, but... yikes. Each "return" and "yield"
+#  statement would need to be replaced by a beartype-specific "return" or
+#  "yield" statement checking the types of the values to be returned or
+#  yielded. We can guarantee that that rapidly gets cray-cray, especially when
+#  implementing non-trivial PEP 484-style type checking requiring multiple
+#  Python statements and local variables and... yeah. I suppose we could
+#  gradually roll out support by:
+#  * Initially only optimizing callables returning and yielding nothing by
+#    falling back to the unoptimized approach for callables that do so.
+#  * Then optimizing callables terminating in a single "return" or "yield"
+#    statement.
+#  * Then optimizing callables containing multiple such statements.
+#
+#Note lastly that the third-party "dill" package provides a
+#dill.source.getsource() function with the same API as the stdlib
+#inspect.getsource() function but augmented in various favourable ways. *shrug*
+#
+#Although this will probably never happen, it's still mildly fun to ponder.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codesnip import (

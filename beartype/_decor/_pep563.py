@@ -96,13 +96,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #Voila! Insta PEP-compliant forward reference resolution for (mostly) free.
 
 # ....................{ IMPORTS                           }....................
-import __future__, sys
+import __future__
 from beartype.roar import BeartypeDecorPep563Exception
 from beartype._decor._data import BeartypeData
 from beartype._util.utilpy import (
     IS_PYTHON_AT_LEAST_4_0,
     IS_PYTHON_AT_LEAST_3_7,
 )
+from sys import modules as sys_modules
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -161,12 +162,15 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     # annotations to their referents.
     if _is_hints_postponed(data):
         _resolve_hints_postponed(data)
+
+    #FIXME: We currently no longer require this, but nonetheless preserve this
+    #for both posterity and the unknowable future to come.
     # Else, this callable's annotations are *NOT* postponed under PEP 563. In
     # this case, shallowly copy the originating annotations dictionary to a
     # beartype-specific annotations dictionary to enable other functions
     # elsewhere to safely modify these annotations.
-    else:
-        data.func_hints = data.func.__annotations__.copy()
+    # else:
+    #     data.func_hints = data.func.__annotations__.copy()
 
 # ....................{ PRIVATE                           }....................
 def _is_hints_postponed(data: BeartypeData) -> bool:
@@ -200,7 +204,7 @@ def _is_hints_postponed(data: BeartypeData) -> bool:
     # is conditionally active only if...
     if not is_hints_postponed and IS_PYTHON_AT_LEAST_3_7:
         # Module declaring this callable.
-        func_module = sys.modules[data.func.__module__]
+        func_module = sys_modules[data.func.__module__]
 
         # "annotations" attribute declared by this module if any *OR* None.
         func_module_annotations_attr = getattr(
@@ -241,9 +245,13 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
         '{!r} not @beartype data.'.format(data))
     # print('annotations: {!r}'.format(func.__annotations__))
 
+    # Localize attributes of this metadata for negligible efficiency gains.
+    func = data.func
+    func_globals = func.__globals__
+
     # Dictionary mapping from parameter name to resolved annotation for each
     # annotated parameter and return value of this callable.
-    data.func_hints = {}
+    func_hints = {}
 
     # For the parameter name (or "return" for the return value) and
     # corresponding annotation of each of this callable's annotations...
@@ -254,7 +262,7 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
     # well as largely pointless (e.g., due to dictionary comprehensions being
     # either no faster or even slower than explicit iteration for small
     # dictionary sizes, as "func.__annotations__" usually is).
-    for param_name, param_hint in data.func.__annotations__.items():
+    for param_name, param_hint in func.__annotations__.items():
         # If this annotation is postponed (i.e., is a string), resolve this
         # annotation to its referent against the global variables (if any)
         # defined by the module defining this callable. Note that any local
@@ -275,8 +283,7 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
         if isinstance(param_hint, str):
             # Attempt to resolve this postponed annotation to its referent.
             try:
-                data.func_hints[param_name] = eval(
-                    param_hint, data.func.__globals__)
+                func_hints[param_name] = eval(param_hint, func_globals)
             # If this fails (as it commonly does), wrap the low-level (and
             # usually non-human-readable) exception raised by eval() with a
             # higher-level human-readable beartype-specific exception.
@@ -284,7 +291,10 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
                 raise BeartypeDecorPep563Exception(
                     '{} parameter "{}" postponed annotation "{}" '
                     'not evaluable.'.format(
-                        data.func_name, param_name, param_hint)
+                        data.func_name,
+                        param_name,
+                        param_hint,
+                    )
                 ) from exception
         # Else, this annotation is *NOT* postponed (i.e., *NOT* a string). In
         # this case, silently preserve this annotation as is. Since PEP
@@ -310,7 +320,7 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
         #
         # Because we should probably mention those complaints here.
         else:
-            data.func_hints[param_name] = param_hint
+            func_hints[param_name] = param_hint
 
     # Atomically (i.e., all-at-once) replace this callable's postponed
     # annotations with these resolved annotations for safety and efficiency.
@@ -321,4 +331,4 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
     # resolving postponed annotations for downstream third-party callers is
     # justified. Everyone benefits from replacing useless postponed annotations
     # with useful real annotations; so, we do.
-    data.func.__annotations__ = data.func_hints
+    func.__annotations__ = func_hints

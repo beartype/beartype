@@ -46,7 +46,7 @@ from inspect import Parameter
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-PITH_ROOT_NAME_SOURCE_STR = '?|PITH_ROOT_NAME`^'
+PITH_ROOT_NAME_PLACEHOLDER_STR = '?|PITH_ROOT_NAME`^'
 '''
 Placeholder source substring to be globally replaced by the **root pith name**
 (i.e., name of the current parameter if called by the
@@ -58,7 +58,7 @@ function.
 See Also
 ----------
 :attr:`beartype._decor._code._pep._pephint.pep_code_check_hint`
-:attr:`beartype._util.cache.utilcacheerror.RERAISE_EXCEPTION_CACHED_SOURCE_STR`
+:attr:`beartype._util.cache.utilcacheerror.EXCEPTION_CACHED_PLACEHOLDER_STR`
     Related commentary.
 '''
 
@@ -130,13 +130,16 @@ def pep_code_check_param(
 
     # Attempt to...
     try:
+        # Memoized parameter-agnostic code type-checking either a parameter or
+        # return value with arbitrary name.
+        param_code_check = pep_code_check_hint(
+            data=data, hint=func_arg.annotation)
+
         # Unmemoized parameter-specific Python code type-checking this exact
-        # parameter, formatted from memoized parameter-agnostic code
-        # type-checking either a parameter or return value with arbitrary name
-        # by globally replacing...
-        param_code_check = pep_code_check_hint(func_arg.annotation).replace(
+        # parameter, globally replacing...
+        param_code_check = param_code_check.replace(
             # This placeholder substring cached into this code with...
-            PITH_ROOT_NAME_SOURCE_STR,
+            PITH_ROOT_NAME_PLACEHOLDER_STR,
             # This object representation of this parameter's name.
             repr(func_arg.name),
         )
@@ -196,7 +199,7 @@ def pep_code_check_return(data: BeartypeData) -> str:
         return_code_check = pep_code_check_hint(
             data.func_sig.return_annotation).replace(
             # This placeholder substring cached into this code with...
-            PITH_ROOT_NAME_SOURCE_STR,
+            PITH_ROOT_NAME_PLACEHOLDER_STR,
             # This object representation of this return value.
             _RETURN_REPR,
         )

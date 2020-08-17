@@ -90,7 +90,7 @@ def acquire_object_typed(cls: type) -> object:
     return object_typed
 
 
-def release_object_typed(object_typed: object) -> None:
+def release_object_typed(obj: object) -> None:
     '''
     Release the passed object acquired by a prior call to the
     :func:`acquire_object_typed` function.
@@ -105,9 +105,9 @@ def release_object_typed(object_typed: object) -> None:
 
     Parameters
     ----------
-    object_typed : object
+    obj : object
         Previously acquired object to be released.
     '''
 
     # Thread-safely release this object.
-    _object_typed_pool.release(key=object_typed.__class__, item=object_typed)
+    _object_typed_pool.release(key=obj.__class__, item=obj)
