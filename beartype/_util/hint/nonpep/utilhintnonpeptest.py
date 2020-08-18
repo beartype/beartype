@@ -17,8 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilhintpeptest import (
-    die_if_hint_pep, is_hint_pep)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -69,13 +67,17 @@ def die_unless_hint_nonpep(
     exception_type
         If this object is neither:
 
-        * A **type** (i.e., class).
         * If ``is_str_valid``, a **string** (i.e., forward reference specified
           as either a fully-qualified or unqualified classname).
+        * A non-:mod:`typing` type (i.e., class *not* defined by the
+          :mod:`typing` module, whose public classes are used to instantiate
+          PEP-compliant type hints or objects satisfying such hints that
+          typically violate standard class semantics and thus require
+          PEP-specific handling).
         * A **non-empty tuple** (i.e., semantic union of types) containing one
           or more:
 
-          * Types.
+          * Non-:mod:`typing` types.
           * If ``is_str_valid``, strings.
     '''
 
@@ -99,6 +101,9 @@ def die_unless_hint_nonpep(
     # * The is_hint_nonpep() tester defined below.
     # * Tuple iteration performed below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
     # If this object is a forward reference (i.e., fully-qualified or
     # unqualified classname), this string refers to either:
@@ -257,11 +262,15 @@ def is_hint_nonpep(
 
         * If ``is_str_valid``, a **string** (i.e., forward reference specified
           as either a fully-qualified or unqualified classname).
-        * A **type** (i.e., class).
+        * A non-:mod:`typing` type (i.e., class *not* defined by the
+          :mod:`typing` module, whose public classes are used to instantiate
+          PEP-compliant type hints or objects satisfying such hints that
+          typically violate standard class semantics and thus require
+          PEP-specific handling).
         * A **non-empty tuple** (i.e., semantic union of types) containing one
           or more:
 
-          * Types.
+          * Non-:mod:`typing` types.
           * If ``is_str_valid``, strings.
 
     Raises
@@ -277,6 +286,9 @@ def is_hint_nonpep(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 
     # Return true only if either...
     return (
