@@ -37,6 +37,34 @@ def test_is_hint_pep() -> None:
         assert is_hint_pep(not_pep_hint) is False
 
 # ....................{ TESTS ~ supported                 }....................
+def test_is_hint_pep_supported() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_supported`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
+    from beartype_test.unit.data.data_hint import (
+        NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
+
+    # Assert this function:
+    # * Accepts supported PEP-compliant type hints.
+    # * Rejects unsupported PEP-compliant type hints.
+    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+        assert is_hint_pep_supported(pep_hint) is pep_hint_meta.is_supported
+
+    # Assert this function rejects objects that are *NOT* PEP-noncompliant.
+    for not_pep_hint in NOT_PEP_HINTS:
+        assert is_hint_pep_supported(not_pep_hint) is False
+
+    # Assert this function rejects unhashable objects.
+    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+        with pytest.raises(TypeError):
+            is_hint_pep_supported(non_hint_unhashable)
+
+
 def test_die_unless_hint_pep_supported() -> None:
     '''
     Test the
@@ -73,34 +101,6 @@ def test_die_unless_hint_pep_supported() -> None:
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with pytest.raises(TypeError):
             die_unless_hint_pep_supported(non_hint_unhashable)
-
-
-def test_is_hint_pep_supported() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_supported`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
-    from beartype_test.unit.data.data_hint import (
-        NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
-
-    # Assert this function:
-    # * Accepts supported PEP-compliant type hints.
-    # * Rejects unsupported PEP-compliant type hints.
-    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        assert is_hint_pep_supported(pep_hint) is pep_hint_meta.is_supported
-
-    # Assert this function rejects objects that are *NOT* PEP-noncompliant.
-    for not_pep_hint in NOT_PEP_HINTS:
-        assert is_hint_pep_supported(not_pep_hint) is False
-
-    # Assert this function rejects unhashable objects.
-    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with pytest.raises(TypeError):
-            is_hint_pep_supported(non_hint_unhashable)
 
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:

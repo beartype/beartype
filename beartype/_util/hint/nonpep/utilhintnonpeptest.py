@@ -105,41 +105,6 @@ def die_unless_hint_nonpep(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
-    # If this object is a forward reference (i.e., fully-qualified or
-    # unqualified classname), this string refers to either:
-    #
-    # * A PEP-noncompliant type hint and is thus valid.
-    # * A PEP 484 type hint and is thus invalid.
-    #
-    # However, forward references are only safely resolvable at call time.
-    # Attempting to resolve a forward reference at an earlier time usually
-    # induces a circular import dependency (i.e., edge-case in which two
-    # modules mutually import one other, usually transitively rather than
-    # directly). Circumventing these dependencies is the entire raison d'etre
-    # (i.e., reason for existence) of forward references in the first place.
-    #
-    # Validating this reference here would require importing the module
-    # defining this attribute. Since the @beartype decorator calling this
-    # function is typically invoked via the global scope of a source module,
-    # importing this target module here would be functionally equivalent to
-    # importing that target module from that source module -- triggering a
-    # circular import dependency in susceptible source modules.
-    #
-    # Ergo, there exists no means of differentiating between these two cases at
-    # this presumably early time. Instead, we silently accept this string as is
-    # for now and subsequently validate its type immediately after resolving
-    # this string to its referent at wrapper function call time.
-    if isinstance(hint, str):
-        # If forward references are unsupported, raise an exception.
-        if not is_str_valid:
-            raise exception_cls(
-                '{} forward reference {!r} unsupported.'.format(
-                    hint_label, hint))
-
-        # Else, silently accept this forward reference as is for now.
-        return
-    # Else, this object is *NOT* a forward reference.
-
     # If this object is a class...
     if isinstance(hint, type):
         # If this is a PEP-compliant class, raise an exception.
@@ -151,6 +116,21 @@ def die_unless_hint_nonpep(
 
         # Else, this is a PEP-noncompliant class. In this case, silently accept
         # this class as is.
+        return
+    # Else, this object is *NOT* a class.
+
+    # If this object is a forward reference (i.e., fully-qualified or
+    # unqualified classname)...
+    #
+    # See the is_hint_nonpep() tester body for detailed commentary.
+    if isinstance(hint, str):
+        # If forward references are unsupported, raise an exception.
+        if not is_str_valid:
+            raise exception_cls(
+                '{} forward reference {!r} unsupported.'.format(
+                    hint_label, hint))
+
+        # Else, silently accept this forward reference as is for now.
         return
     # Else, this object is neither a forward reference nor class.
 
@@ -171,45 +151,35 @@ def die_unless_hint_nonpep(
             # more importantly to avoid exhausting the stack), avoid calling
             # this function recursively to do so. *shrug*
 
-            # If this item is a forward reference,
-            if isinstance(hint_item, str):
-                # If forward references are unsupported, raise an exception.
-                if not is_str_valid:
-                    raise exception_cls(
-                        '{} {!r} forward reference {!r} unsupported.'.format(
-                            hint_label, hint, hint_item))
-
-                # Else, silently accept this item.
-                continue
-            # Else, this item is *NOT* a forward reference.
-
             # If this item is a class...
             if isinstance(hint_item, type):
                 # If this is a PEP-compliant class, raise an exception.
                 die_if_hint_pep(
-                    hint=hint,
+                    hint=hint_item,
                     hint_label=hint_label,
                     exception_cls=exception_cls,
                 )
-
                 # Else, this is a PEP-noncompliant class. In this case,
                 # silently accept this class as is.
-                continue
-
-            # Else, this item is neither a forward reference nor class. Ergo,
-            # this item is *NOT* a PEP-noncompliant type hint.
+            # Else, this item is *NOT* a class.
             #
-            # Raise an exception whose message contextually depends on whether
+            # If this item is a forward reference...
+            elif isinstance(hint_item, str):
+                # If forward references are unsupported, raise an exception.
+                if not is_str_valid:
+                    raise exception_cls(
+                        '{} {!r} forward reference "{}" unsupported.'.format(
+                            hint_label, hint, hint_item))
+                # Else, silently accept this item.
+            # Else, this item is neither a class nor forward reference. Ergo,
+            # this item is *NOT* a PEP-noncompliant type hint. In this case,
+            # raise an exception whose message contextually depends on whether
             # forward references are permitted or not.
-            raise exception_cls(
-                ('{} {!r} item {!r} neither type nor string.' if is_str_valid else
-                 '{} {!r} item {!r} not type.'.format(
-                    hint_label, hint, hint_item)))
-
-        # Since the prior iteration failed to raise an exception, this tuple
-        # contains only forward references and/or PEP-noncompliant classes.
-        # Ergo, this tuple is a PEP-noncompliant type hint. Accept this as is.
-        return
+            else:
+                raise exception_cls(
+                    ('{} {!r} item {!r} neither type nor string.' if is_str_valid else
+                     '{} {!r} item {!r} not type.').format(
+                        hint_label, hint, hint_item))
 
     # Else, this object is neither a forward reference, class, nor tuple. Ergo,
     # this object is *NOT* a PEP-noncompliant type hint.
@@ -280,7 +250,7 @@ def is_hint_nonpep(
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
     '''
-    assert isinstance(is_str_valid, bool), (
+    assert is_str_valid.__class__ is bool, (
         '{!r} not boolean.'.format(is_str_valid))
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -292,6 +262,12 @@ def is_hint_nonpep(
 
     # Return true only if either...
     return (
+        # If this object is a class, return true only if this is *NOT* a
+        # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
+        # class by definition.
+        not is_hint_pep(hint) if isinstance(hint, type) else
+        # Else, this object is *NOT* a class.
+        #
         # If this object is a forward reference (i.e., fully-qualified or
         # unqualified classname), return true only if the caller permits such
         # references. Note this string necessarily refers to either:
@@ -319,25 +295,18 @@ def is_hint_nonpep(
         # at this early time. Instead, we silently accept this string as is for
         # now and subsequently validate its type immediately after resolving
         # this string to its referent at wrapper function call time.
-        is_str_valid          if isinstance(hint, str) else
-        # Else, this object is *NOT* a forward reference.
-        #
-        # If this object is a class, return true only if this is *NOT* a
-        # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
-        # class by definition.
-        not is_hint_pep(hint) if isinstance(hint, type) else
-        # Else, this object is neither a forward reference nor class.
+        is_str_valid if isinstance(hint, str) else
+        # Else, this object is neither a class nor forward reference.
         #
         # If this object is a non-empty tuple, return true only if each item of
         # this tuple is either a caller-permitted forward reference *OR* a
         # PEP-noncompliant class.
         all(
-            is_str_valid               if isinstance(hint_item, str) else
             not is_hint_pep(hint_item) if isinstance(hint_item, type) else
+            is_str_valid               if isinstance(hint_item, str) else
             False
             for hint_item in hint
-        )
-            if (isinstance(hint, tuple) and hint) else
+        ) if (isinstance(hint, tuple) and hint) else
         # Else, this object is neither a forward reference, class, nor
         # non-empty tuple. Return false, as this object is *NOT* a
         # PEP-noncompliant type hint.

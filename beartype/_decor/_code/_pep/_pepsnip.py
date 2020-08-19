@@ -159,7 +159,7 @@ current child PEP-compliant type hint and are thus intended to be dynamically
 embedded
 '''
 
-
+# ....................{ CODE ~ hint : nonpep              }....................
 PEP_CODE_CHECK_HINT_NONPEP_TYPE = '''
 {indent_curr}isinstance({pith_curr_expr}, {hint_curr_expr})
 '''
@@ -178,6 +178,7 @@ PEP-compliant code snippet prefixing all code type-checking the current pith
 against each subscripted argument of a :class:`typing.Union` type.
 '''
 
+
 PEP_CODE_CHECK_HINT_UNION_SUFFIX = '''
 {indent_curr})
 '''
@@ -187,20 +188,17 @@ against each subscripted argument of a :class:`typing.Union` type.
 '''
 
 
-PEP_CODE_CHECK_HINT_UNION_ARG_NON_LAST = '''
+PEP_CODE_CHECK_HINT_UNION_ARG = '''
 {indent_curr}    {hint_curr_placeholder} or
 '''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
-subscripted argument of a :class:`typing.Union` type that is *not* the last.
-subscripted argument of that type.
-'''
-
-
-PEP_CODE_CHECK_HINT_UNION_ARG_LAST = '''
-{indent_curr}    {hint_curr_placeholder}
-'''
-'''
-PEP-compliant code snippet type-checking the current pith against the last
 subscripted argument of a :class:`typing.Union` type.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" or"`` after
+applying this snippet to the last subscripted argument of a
+:class:`typing.Union` type. While there exist alternate and more readable means
+of accomplishing this, this approach is the optimally efficient.
 '''

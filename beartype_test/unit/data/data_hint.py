@@ -18,7 +18,7 @@ import collections, typing
 from beartype import cave
 from collections import namedtuple
 
-# ....................{ NON-HINTS ~ iterables             }....................
+# ....................{ NON-HINTS ~ tuples                }....................
 NOT_HINTS_UNHASHABLE = (
     # Dictionary.
     {'For all things turn to barrenness':
@@ -57,7 +57,7 @@ class NonPepCustom(object):
 
     pass
 
-# ....................{ NON-PEP ~ iterables               }....................
+# ....................{ NON-PEP ~ tuples                  }....................
 NONPEP_HINTS = (
     # Builtin container type.
     list,
@@ -79,18 +79,6 @@ NONPEP_HINTS = (
 )
 '''
 Tuple of various PEP-noncompliant type hints exercising well-known edge cases.
-'''
-
-
-NOT_NONPEP_HINTS = (
-    # PEP-compliant type.
-    typing.Any,
-    # Tuple containing a PEP-compliant type.
-    (set, 'set', typing.Any, cave.NoneType,),
-) + NOT_HINTS_HASHABLE
-'''
-Tuple of various objects that are *not* PEP-noncompliant type hints exercising
-well-known edge cases.
 '''
 
 # ....................{ PEP ~ typevars                    }....................
@@ -375,15 +363,39 @@ Dictionary mapping various PEP-compliant type hints to :class:`PepHintMeta`
 instances detailing those hints with metadata applicable to testing scenarios.
 '''
 
-# ....................{ PEP ~ iterables                   }....................
-PEP_HINTS = PEP_HINT_TO_META.keys()
+# ....................{ PEP ~ tuples                      }....................
+PEP_HINTS = tuple(PEP_HINT_TO_META.keys())
 '''
-Iterable of various PEP-compliant type hints exercising well-known edge cases.
+Tuple of various PEP-compliant type hints exercising well-known edge cases.
 '''
 
 
-NOT_PEP_HINTS = NONPEP_HINTS + NOT_HINTS_HASHABLE
+NOT_PEP_HINTS = (
+    # PEP-noncompliant type hints.
+    NONPEP_HINTS +
+    # Hashable objects invalid as type hints (e.g., scalars).
+    NOT_HINTS_HASHABLE
+)
 '''
 Tuple of various objects that are *not* PEP-compliant type hints exercising
 well-known edge cases.
 '''
+
+# ....................{ NON-PEP ~ tuples (more)           }....................
+NOT_NONPEP_HINTS = (
+    # Tuple comprehension of tuples containing PEP-compliant type hints.
+    tuple(
+        # Tuple containing a PEP-compliant type hint.
+        (int, pep_hint, cave.NoneType,)
+        for pep_hint in PEP_HINTS
+    ) +
+    # PEP-compliant type hints.
+    PEP_HINTS +
+    # Hashable objects invalid as type hints (e.g., scalars).
+    NOT_HINTS_HASHABLE
+)
+'''
+Tuple of various objects that are *not* PEP-noncompliant type hints exercising
+well-known edge cases.
+'''
+

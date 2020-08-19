@@ -31,9 +31,14 @@ def test_key_pool_pass() -> None:
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
     # instance initialized to that parameter.
-    key_pool = KeyPool(
-        item_maker=lambda newline: StringIO(
-            initial_value='', newline=newline))
+    #
+    # Note that the "initial_value" parameter is currently unavailable under
+    # "pypy3" and *MUST* thus be omitted here:
+    #     $ pypy3
+    #     >>> from io import StringIO
+    #     >>> StringIO(initial_value='', newline=newline)
+    #     TypeError: __init__() got an unexpected keyword argument 'initial_value'
+    key_pool = KeyPool(item_maker=lambda newline: StringIO(newline=newline))
 
     # Acquire a new "StringIO" buffer writing Windows-style newlines.
     windows_stringio = key_pool.acquire(key='\r\n')

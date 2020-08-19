@@ -67,7 +67,7 @@ def die_if_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotation',
+    hint_label: str = 'Type hint',
     exception_cls: type = BeartypeDecorHintPepException,
 ) -> None:
     '''
@@ -111,7 +111,7 @@ def die_unless_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotation',
+    hint_label: str = 'Type hint',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant type
@@ -212,8 +212,8 @@ def die_unless_hint_pep_supported(
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
     # Else, this hint is PEP-compliant.
 
-    # Template for unsupported exception messages raised by this function.
-    EXCEPTION_MESSAGE_TEMPLATE = '{} currently unsupported by @beartype.'
+    # Substring suffixing exception messages raised by this function.
+    EXCEPTION_MESSAGE_SUFFIX = 'currently unsupported by @beartype.'
 
     #FIXME: Remove *AFTER* implementing support for type variables.
     # If this hint is parametrized by one or more type variables, raise an
@@ -221,9 +221,8 @@ def die_unless_hint_pep_supported(
     # yet to be fully implemented.
     if is_hint_pep_typevared(hint):
         raise BeartypeDecorHintPepUnsupportedException(
-            EXCEPTION_MESSAGE_TEMPLATE.format(
-                '{} "TypeVar"-parametrized generic PEP type {!r}'.format(
-                    hint_label, hint)))
+            '{} "TypeVar"-parametrized generic PEP type {!r} {}'.format(
+                hint_label, hint, EXCEPTION_MESSAGE_SUFFIX))
 
     # Dictionary mapping each argumentless public attribute of the "typing"
     # module uniquely identifying this hint if any to the tuple of those
@@ -247,42 +246,19 @@ def die_unless_hint_pep_supported(
         # If this attribute is unsupported, raise an exception.
         if hint_typing_attr_argless not in _TYPING_ATTRS_ARGLESS_SUPPORTED:
             raise BeartypeDecorHintPepUnsupportedException(
-                EXCEPTION_MESSAGE_TEMPLATE.format(
-                    '{} PEP type {!r} supertype {!r}'.format(
-                        hint_label, hint, hint_typing_attr_argless)))
+                '{} PEP type {!r} supertype {!r} {}'.format(
+                    hint_label,
+                    hint,
+                    hint_typing_attr_argless,
+                    EXCEPTION_MESSAGE_SUFFIX,
+                ))
 
     # Else something unknown has gone awfully awry. Raise a fallback exception!
     raise BeartypeDecorHintPepUnsupportedException(
-        EXCEPTION_MESSAGE_TEMPLATE.format(
-            '{} PEP type {!r} supertype {!r}'.format(
-                hint_label, hint, hint_typing_attr_argless)))
+        '{} PEP type {!r} {}'.format(
+            hint_label, hint, EXCEPTION_MESSAGE_SUFFIX))
 
 # ....................{ TESTERS                           }....................
-#FIXME: Detect functions created by "typing.NewType(subclass_name, superclass)"
-#somehow, either here or elsewhere. These functions are simply the identity
-#function at runtime and thus a complete farce. They're not actually types!
-#Ideally, we would replace each such function by the underlying "superclass"
-#type originally passed to that function, but we have no idea if that's even
-#feasible. Welcome to "typing", friends.
-#FIXME: It would appear these functions define a possibly unique
-#"__supertype__" dunder attribute whose value is a simple PEP-noncompliant
-#type. However, note that there appears to exist an even more reliable
-#approach:
-#    >>> import typing as t
-#    >>> ant = t.NewType('yum', int)
-#    >>> ant.__qualname__
-#    >>> 'NewType.<locals>.new_type'
-#    >>> ant.__module__
-#    >>> 'typing'
-#
-#Ergo, the following test should unambiguously suffice:
-#    @callable_cached
-#    def is_hint_newtype
-#        return (hint.__module__ + hint.__qualname__).startswith(
-#            'typing.NewType.')
-#
-#Note that "__qualname__" is safely available under Python >= 3.3.
-
 @callable_cached
 def is_hint_pep(hint: object) -> bool:
     '''

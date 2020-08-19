@@ -57,7 +57,7 @@ def test_typistry_register_tuple_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.cave import CallableTypes
+    from beartype.cave import CallableTypes, NoneTypeOr
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import (
         bear_typistry, register_typistry_tuple)
@@ -79,13 +79,28 @@ def test_typistry_register_tuple_pass() -> None:
     assert isinstance(hint_expr, str)
     assert bear_typistry.get(hint_name) == int
 
+    # Assert that tuples containing duplicate types are registrable via the
+    # same function, but reduce to registering only the non-duplicate types.
+    hint = (str, str, str,)
+    hint_expr, hint_name = register_typistry_tuple(hint)
+    assert isinstance(hint_expr, str)
+    assert bear_typistry.get(hint_name) == (str,)
+
+    # Assert that tuples guaranteed to contain *NO* duplicate types are
+    # registrable via the same function.
+    hint = NoneTypeOr[CallableTypes]
+    hint_expr, hint_name = register_typistry_tuple(
+        hint=hint, is_types_unique=True)
+    assert isinstance(hint_expr, str)
+    assert bear_typistry.get(hint_name) == hint
+
     # Assert that tuples of the same types but in different orders are
-    # registrable via the same function and reduce to the same objects.
+    # registrable via the same function but reduce to differing objects.
     hint_a = (int, str,)
     hint_b = (str, int,)
     _, hint_a_name = register_typistry_tuple(hint_a)
     _, hint_b_name = register_typistry_tuple(hint_b)
-    assert hint_a_name == hint_b_name
+    assert hint_a_name != hint_b_name
 
 
 def test_typistry_register_tuple_fail() -> None:
@@ -109,38 +124,9 @@ def test_typistry_register_tuple_fail() -> None:
             'And live alone in the bee-loud glade.',
         )))
 
-    # Assert that empty tuples are *NOT* registrable via this function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
-        register_typistry_tuple(())
-
-    #FIXME: Currently broken. Decipher why, please.
-    # # Assert that non-empty tuples containing one or more PEP-compliant types
-    # # are *NOT* registrable via this function.
-    # with pytest.raises(_BeartypeDecorBeartypistryException):
-    #     register_typistry_tuple((int, PepCustomSingleUntypevared, str,))
-
-# ....................{ TESTS ~ callable : frozenset      }....................
-def test_typistry_register_tuple_from_frozenset() -> None:
-    '''
-    Unit test the
-    :func:`beartype._decor._typistry.register_typistry_tuple_from_frozenset`
-    function.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import (
-        bear_typistry, register_typistry_tuple_from_frozenset)
-
-    # Assert that types are registrable via a trivial function call.
-    hint = frozenset((int, str))
-    hint_expr, hint_name = register_typistry_tuple_from_frozenset(hint)
-    assert isinstance(hint_expr, str)
-    assert set(bear_typistry.get(hint_name)) == hint
-
-    # Assert that unhashable objects are *NOT* registrable via this function.
+    # Assert that unhashable tuples are *NOT* registrable via this function.
     with pytest.raises(TypeError):
-        register_typistry_tuple_from_frozenset({
+        register_typistry_tuple((
             int,
             str,
             {
@@ -153,7 +139,19 @@ def test_typistry_register_tuple_from_frozenset() -> None:
                 'I have': 'spread my dreams under your feet;',
                 'Tread': 'softly because you tread on my dreams.',
             },
-        })
+        ))
+
+    # Assert that empty tuples are *NOT* registrable via this function.
+    with pytest.raises(_BeartypeDecorBeartypistryException):
+        register_typistry_tuple(())
+
+    #FIXME: Currently broken. Decipher why, please. It appears likely that the
+    #die_unless_hint_nonpep() validator is slightly broken. *sigh*
+
+    # Assert that non-empty tuples containing one or more PEP-compliant types
+    # are *NOT* registrable via this function.
+    with pytest.raises(_BeartypeDecorBeartypistryException):
+        register_typistry_tuple((int, PepCustomSingleUntypevared, str,))
 
 # ....................{ TESTS ~ singleton                 }....................
 def test_typistry_singleton_pass() -> None:

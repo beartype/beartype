@@ -65,6 +65,7 @@ from beartype._util.text.utiltextlabel import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
+#FIXME: Unit test us up.
 def raise_pep_call_exception(
     func: 'CallableTypes',
     param_or_return_name: str,
@@ -162,9 +163,9 @@ def raise_pep_call_exception(
     # If this parameter or return value is unannotated, raise an exception.
     #
     # Note that this should *NEVER* occur, as the caller guarantees this
-    # parameter or return value to be annotated. In theory, since external
-    # malicious code could deface the "__annotations__" dunder dictionary
-    # without our knowledge, precautions are warranted.
+    # parameter or return value to be annotated. Nonetheless, since callers
+    # could deface the "__annotations__" dunder dictionary without our
+    # knowledge or permission, precautions are warranted.
     if pith_hint is None:
         raise _BeartypeUtilRaisePepException(
             '{} unannotated.'.format(pith_label))
