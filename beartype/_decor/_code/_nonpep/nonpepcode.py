@@ -77,7 +77,7 @@ def nonpep_code_check_param(
     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
     # design, the caller already guarantees this to be the case.
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
     assert isinstance(func_arg, Parameter), (
         '{!r} not parameter metadata.'.format(func_arg))
@@ -163,7 +163,7 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
     # Note this hint need *NOT* be validated as a PEP-noncompliant type hint
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
     # design, the caller already guarantees this to be the case.
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # String evaluating to this return value's annotated type.

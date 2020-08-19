@@ -14,6 +14,10 @@ annotated by PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+#which are the optimal means of performing string formatting.
+
 # ....................{ PARAMETERS                        }....................
 from inspect import Parameter
 
@@ -128,11 +132,11 @@ Note that this snippet intentionally terminates on a line containing only the
 :data:`PEP_CODE_GET_RETURN` snippet.
 '''
 
-# ....................{ CODE ~ check                      }....................
-#FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-#which are the optimal means of performing string formatting.
-PEP_CODE_CHECK_NONPEP_TYPE = '''
-{{indent_curr}}if not isinstance({{pith_curr_expr}}, {{hint_curr_expr}}):
+# ....................{ CODE ~ hint                       }....................
+PEP_CODE_CHECK_HINT_ROOT = '''
+{{indent_curr}}if not (
+{{indent_curr}}    {{hint_curr_placeholder}}
+{{indent_curr}}):
 {{indent_curr}}    raise __beartype_raise_pep_call_exception(
 {{indent_curr}}        func=__beartype_func,
 {{indent_curr}}        param_or_return_name={pith_root_name},
@@ -143,6 +147,60 @@ PEP_CODE_CHECK_NONPEP_TYPE = '''
     pith_root_expr=PEP_CODE_PITH_ROOT_EXPR,
 )
 '''
-PEP-compliant code snippet type-checking a simple non-:mod:`typing` type (e.g.,
-:class:`dict`, :class:`list`).
+PEP-compliant code snippet type-checking the **root pith** (i.e., value of the
+current parameter or return value) against the root PEP-compliant type hint
+annotating that pith.
+
+Design
+----------
+**This string is the only code snippet defined by this submodule to raise an
+exception.** All other such snippets only test the current pith against the
+current child PEP-compliant type hint and are thus intended to be dynamically
+embedded
+'''
+
+
+PEP_CODE_CHECK_HINT_NONPEP_TYPE = '''
+{indent_curr}isinstance({pith_curr_expr}, {hint_curr_expr})
+'''
+'''
+PEP-compliant code snippet type-checking the current pith against the
+current child PEP-compliant type expected to be a trivial non-:mod:`typing`
+type (e.g., :class:`int`, :class:`str`).
+'''
+
+# ....................{ CODE ~ hint : union               }....................
+PEP_CODE_CHECK_HINT_UNION_PREFIX = '''
+{indent_curr}(
+'''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+against each subscripted argument of a :class:`typing.Union` type.
+'''
+
+PEP_CODE_CHECK_HINT_UNION_SUFFIX = '''
+{indent_curr})
+'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the current pith
+against each subscripted argument of a :class:`typing.Union` type.
+'''
+
+
+PEP_CODE_CHECK_HINT_UNION_ARG_NON_LAST = '''
+{indent_curr}    {hint_curr_placeholder} or
+'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+subscripted argument of a :class:`typing.Union` type that is *not* the last.
+subscripted argument of that type.
+'''
+
+
+PEP_CODE_CHECK_HINT_UNION_ARG_LAST = '''
+{indent_curr}    {hint_curr_placeholder}
+'''
+'''
+PEP-compliant code snippet type-checking the current pith against the last
+subscripted argument of a :class:`typing.Union` type.
 '''

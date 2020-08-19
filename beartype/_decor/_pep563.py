@@ -190,7 +190,7 @@ def _is_hints_postponed(data: BeartypeData) -> bool:
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # True only if PEP 563 is active for this callable.
@@ -241,7 +241,7 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
     # print('annotations: {!r}'.format(func.__annotations__))
 

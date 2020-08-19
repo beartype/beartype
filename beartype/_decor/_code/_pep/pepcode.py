@@ -78,7 +78,7 @@ def pep_code_check_param(
 ) -> str:
     '''
     Python code type-checking the parameter with the passed signature and index
-    annotated by a **PEP-compliant type hint** (e.g.,:mod:`beartype`-agnostic
+    annotated by a **PEP-compliant type hint** (e.g., :mod:`beartype`-agnostic
     annotation compliant with annotation-centric PEPs) of the decorated
     callable.
 
@@ -99,7 +99,7 @@ def pep_code_check_param(
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
     # function). By design, the caller already guarantees this to be the case.
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
     assert isinstance(func_arg, Parameter), (
         '{!r} not parameter metadata.'.format(func_arg))
@@ -130,22 +130,20 @@ def pep_code_check_param(
 
     # Attempt to...
     try:
-        # Memoized parameter-agnostic code type-checking either a parameter or
-        # return value with arbitrary name.
-        param_code_check = pep_code_check_hint(
-            data=data, hint=func_arg.annotation)
-
         # Unmemoized parameter-specific Python code type-checking this exact
         # parameter, globally replacing...
-        param_code_check = param_code_check.replace(
-            # This placeholder substring cached into this code with...
-            PITH_ROOT_NAME_PLACEHOLDER_STR,
-            # This object representation of this parameter's name.
-            repr(func_arg.name),
-        )
+        param_code_check = (
+            # In this memoized parameter-agnostic code type-checking either a
+            # parameter or return value with arbitrary name...
+            pep_code_check_hint(data=data, hint=func_arg.annotation).replace(
+                # This placeholder substring cached into this code with...
+                PITH_ROOT_NAME_PLACEHOLDER_STR,
+                # This object representation of this parameter's name.
+                repr(func_arg.name),
+            ))
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
-    except BeartypeDecorHintPepException as exception:
+    except Exception as exception:
         # Human-readable label describing this parameter.
         hint_label = (
             label_callable_decorated_param(
@@ -171,7 +169,7 @@ def pep_code_check_param(
 def pep_code_check_return(data: BeartypeData) -> str:
     '''
     Python code type-checking the return value annotated with a **PEP-compliant
-    type hint** (e.g.,:mod:`beartype`-agnostic annotation compliant with
+    type hint** (e.g., :mod:`beartype`-agnostic annotation compliant with
     annotation-centric PEPs) of the decorated callable.
 
     Parameters
@@ -187,25 +185,26 @@ def pep_code_check_return(data: BeartypeData) -> str:
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
     # function). By design, the caller already guarantees this to be the case.
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # Attempt to...
     try:
         # Unmemoized parameter-specific Python code type-checking this exact
-        # return value, formatted from memoized return-agnostic code
-        # type-checking either a parameter or return value with arbitrary name
-        # by globally replacing...
-        return_code_check = pep_code_check_hint(
-            data.func_sig.return_annotation).replace(
-            # This placeholder substring cached into this code with...
-            PITH_ROOT_NAME_PLACEHOLDER_STR,
-            # This object representation of this return value.
-            _RETURN_REPR,
-        )
+        # return value, globally replacing...
+        return_code_check = (
+            # In this memoized parameter-agnostic code type-checking either a
+            # parameter or return value with arbitrary name...
+            pep_code_check_hint(
+                data=data, hint=data.func_sig.return_annotation).replace(
+                # This placeholder substring cached into this code with...
+                PITH_ROOT_NAME_PLACEHOLDER_STR,
+                # This object representation of this return value,
+                _RETURN_REPR,
+            ))
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
-    except BeartypeDecorHintPepException as exception:
+    except Exception as exception:
         # Human-readable label describing this return.
         hint_label = (
             label_callable_decorated_return(data.func) + ' PEP type hint')

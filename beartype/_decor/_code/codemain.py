@@ -240,7 +240,7 @@ def code(data: BeartypeData) -> None:
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
     '''
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # Python code snippet declaring the signature of this wrapper.
@@ -312,7 +312,7 @@ def _code_check_params(data: BeartypeData) -> str:
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
     '''
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # Python code snippet to be returned.
@@ -394,7 +394,7 @@ def _code_check_return(data: BeartypeData) -> str:
         Python code snippet type-checking the annotated return value declared
          by this callable if any *or* the empty string otherwise.
     '''
-    assert isinstance(data, BeartypeData), (
+    assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
     # Type hint annotating this callable's return value if any *OR*

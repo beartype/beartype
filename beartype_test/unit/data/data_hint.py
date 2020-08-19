@@ -130,7 +130,8 @@ class PepCustomSingleUntypevared(typing.Dict[str, typing.List[str]]):
     pass
 
 # ....................{ PEP ~ classes : multiple          }....................
-class PepCustomMultipleTypevaredShallow(typing.Iterable[T], typing.Container[T]):
+class PepCustomMultipleTypevaredShallow(
+    typing.Iterable[T], typing.Container[T]):
     '''
     PEP-compliant user-defined class subclassing multiple directly parametrized
     :mod:`typing` types.
