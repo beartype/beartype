@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest
+from pytest import raises
 from random import getrandbits
 
 # ....................{ CLASSES                           }....................
@@ -78,7 +78,7 @@ def test_reraise_exception_cached() -> None:
     # Assert this high-level non-memoized callable raises the same type of
     # exception raised by this low-level memoized callable and preserve this
     # exception for subsequent assertion.
-    with pytest.raises(CachedException) as exception_info:
+    with raises(CachedException) as exception_info:
         portend_high_level_winter()
 
     # Assert this exception's message does *NOT* contain the non-human-readable
@@ -91,7 +91,7 @@ def test_reraise_exception_cached() -> None:
         raise CachedException(
             "What's bravery without a dash of recklessness?")
     except Exception as exception:
-        with pytest.raises(CachedException):
+        with raises(CachedException):
             reraise_exception_cached(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
@@ -102,7 +102,7 @@ def test_reraise_exception_cached() -> None:
     try:
         raise CachedException()
     except Exception as exception:
-        with pytest.raises(CachedException):
+        with raises(CachedException):
             reraise_exception_cached(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
@@ -113,7 +113,7 @@ def test_reraise_exception_cached() -> None:
     try:
         raise CachedException(0xDEADBEEF)
     except Exception as exception:
-        with pytest.raises(CachedException):
+        with raises(CachedException):
             reraise_exception_cached(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,

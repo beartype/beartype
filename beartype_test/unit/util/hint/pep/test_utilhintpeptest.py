@@ -15,7 +15,9 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest, typing
+import typing
+from beartype_test.util.pyterror import raises_uncached
+from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
@@ -61,7 +63,7 @@ def test_is_hint_pep_supported() -> None:
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with pytest.raises(TypeError):
+        with raises(TypeError):
             is_hint_pep_supported(non_hint_unhashable)
 
 
@@ -89,17 +91,17 @@ def test_die_unless_hint_pep_supported() -> None:
             die_unless_hint_pep_supported(pep_hint)
         # Rejects unsupported PEP-compliant type hints.
         else:
-            with pytest.raises(BeartypeDecorHintPepUnsupportedException):
+            with raises(BeartypeDecorHintPepUnsupportedException):
                 die_unless_hint_pep_supported(pep_hint)
 
     # Assert this function rejects objects that are *NOT* PEP-noncompliant.
     for not_pep_hint in NOT_PEP_HINTS:
-        with pytest.raises(BeartypeDecorHintPepException):
+        with raises(BeartypeDecorHintPepException):
             die_unless_hint_pep_supported(not_pep_hint)
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with pytest.raises(TypeError):
+        with raises(TypeError):
             die_unless_hint_pep_supported(non_hint_unhashable)
 
 # ....................{ TESTS ~ typevar                   }....................

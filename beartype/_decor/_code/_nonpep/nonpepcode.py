@@ -113,7 +113,7 @@ def nonpep_code_check_param(
     # Human-readable label describing this hint.
     hint_label = (
         label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name) + ' non-PEP type hint')
+            func=data.func, param_name=func_arg.name) + ' non-PEP hint')
 
     # Return Python code...
     return (
@@ -172,7 +172,7 @@ def nonpep_code_check_return(data: BeartypeData) -> str:
 
     # Human-readable label describing this annotation.
     hint_label = (
-        label_callable_decorated_return(data.func) + ' non-PEP type hint')
+        label_callable_decorated_return(data.func) + ' non-PEP hint')
 
     # Return Python code...
     return (

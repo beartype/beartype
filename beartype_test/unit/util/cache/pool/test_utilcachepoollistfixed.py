@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest
+from pytest import raises
 
 # ....................{ TESTS ~ pool                      }....................
 def test_listfixed_pool_pass() -> None:
@@ -71,14 +71,14 @@ def test_listfixed_pool_fail() -> None:
     from beartype.roar import _BeartypeUtilCachedFixedListException
 
     # Assert that fixed lists may only be acquired with positive integers.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         acquire_fixed_list((
             'Moloch the incomprehensible prison! Moloch the crossbone soulless',
             'jailhouse and Congress of sorrows! Moloch whose buildings are',
             'judgment! Moloch the vast stone of war! Moloch the stunned',
             'governments!',
         ))
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         acquire_fixed_list(-67)
 
 # ....................{ TESTS ~ type                      }....................
@@ -144,11 +144,11 @@ def test_listfixed_type_fail() -> None:
     )
 
     # Assert that fixed lists refuse to support item deletion.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         del fixed_list[0]
 
     # Assert that fixed lists refuse to support in-place addition.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list += (
             'Put your faith in the two inches of humus',
             'that will build under the trees',
@@ -162,12 +162,12 @@ def test_listfixed_type_fail() -> None:
         )
 
     # Assert that fixed lists refuse to support in-place multiplication.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list *= 0xDEADBEEF
 
     # Assert that fixed lists refuse to support slicing to an iterable of
     # differing length.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list[0:2] = (
             'Go with your love to the fields.',
             'Lie down in the shade. Rest your head',
@@ -184,24 +184,24 @@ def test_listfixed_type_fail() -> None:
         )
 
     # Assert that fixed lists refuse to support appending.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list.append('Love the world. Work for nothing.')
 
     # Assert that fixed lists refuse to support extending.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list.extend((
             'Take all that you have and be poor.',
             'Love someone who does not deserve it.',
         ))
 
     # Assert that fixed lists refuse to support clearing.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list.clear()
 
     # Assert that fixed lists refuse to support popping.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list.pop()
 
     # Assert that fixed lists refuse to support removal.
-    with pytest.raises(_BeartypeUtilCachedFixedListException):
+    with raises(_BeartypeUtilCachedFixedListException):
         fixed_list.remove('Invest in the millennium. Plant sequoias.')

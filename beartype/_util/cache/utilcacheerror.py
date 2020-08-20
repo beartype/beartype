@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CONSTANTS                         }....................
-EXCEPTION_CACHED_PLACEHOLDER_STR = '$%EXCEPTION_CACHED_PLACEHOLDER_STR/~'
+EXCEPTION_CACHED_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
 '''
 Default non-human-readable source substring to be globally replaced by the
 target substring in the generic messages of memoized exceptions passed to the
@@ -79,7 +79,7 @@ def reraise_exception_cached(
     target_str: str,
 
     # Optional parameters.
-    source_str: str = EXCEPTION_CACHED_PLACEHOLDER_STR,
+    source_str: str = EXCEPTION_CACHED_PLACEHOLDER,
 ) -> None:
     '''
     Reraise the passed exception in a safe manner preserving both this
@@ -98,7 +98,7 @@ def reraise_exception_cached(
     source_str : Optional[str]
         Source non-human-readable substring previously hard-coded into this
         exception's message to be replaced by the passed target substring.
-        Defaults to :data:`EXCEPTION_CACHED_PLACEHOLDER_STR`.
+        Defaults to :data:`EXCEPTION_CACHED_PLACEHOLDER`.
 
     Raises
     ----------
@@ -109,7 +109,7 @@ def reraise_exception_cached(
 
     See Also
     ----------
-    :data:`EXCEPTION_CACHED_PLACEHOLDER_STR`
+    :data:`EXCEPTION_CACHED_PLACEHOLDER`
         Further commentary on usage and motivation.
     https://stackoverflow.com/a/62662138/2809027
         StackOverflow answer mildly inspiring this implementation.
@@ -119,14 +119,14 @@ def reraise_exception_cached(
         >>> from beartype.roar import BeartypeDecorHintPepException
         >>> from beartype._util.cache.utilcachecall import callable_cached
         >>> from beartype._util.cache.utilcacheerror import (
-        ...     reraise_exception_cached, EXCEPTION_CACHED_PLACEHOLDER_STR)
+        ...     reraise_exception_cached, EXCEPTION_CACHED_PLACEHOLDER)
         >>> from random import getrandbits
         >>> @callable_cached
         ... def portend_low_level_winter(is_winter_coming: bool) -> str:
         ...     if is_winter_coming:
         ...         raise BeartypeDecorHintPepException(
         ...             '{} intimates that winter is coming.'.format(
-        ...                 EXCEPTION_CACHED_PLACEHOLDER_STR))
+        ...                 EXCEPTION_CACHED_PLACEHOLDER))
         ...     else:
         ...         return 'PRAISE THE SUN'
         >>> def portend_high_level_winter() -> None:
@@ -156,7 +156,7 @@ def reraise_exception_cached(
           File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
             *args, **kwargs)
           File "<input>", line 13, in portend_low_level_winter
-            EXCEPTION_CACHED_PLACEHOLDER_STR))
+            EXCEPTION_CACHED_PLACEHOLDER))
         beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (

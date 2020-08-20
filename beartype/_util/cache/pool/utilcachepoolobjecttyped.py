@@ -49,7 +49,7 @@ Caveats
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
-# ....................{ FUNCTIONS                         }....................
+# ....................{ (ACQUIRERS|RELEASERS)             }....................
 def acquire_object_typed(cls: type) -> object:
     '''
     Acquire an arbitrary object of the passed type.

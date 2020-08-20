@@ -14,8 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CODE                              }....................
-#FIXME: Add below if desired:
-#     __beartype_hints=__beartype_hints,
 CODE_SIGNATURE = '''
 def {func_wrapper_name}(
     *args,
@@ -23,6 +21,8 @@ def {func_wrapper_name}(
     __beartypistry=__beartypistry,
     **kwargs
 ):
+    # Localize the number of passed positional arguments for efficiency.
+    __beartype_args_len = len(args)
 '''
 '''
 PEP-agnostic code snippet declaring the signature of the wrapper function
@@ -31,8 +31,9 @@ type-checking the decorated callable.
 
 
 CODE_RETURN_UNCHECKED = '''
-    return __beartype_func(*args, **kwargs)
-'''
+    # Call this function with all passed parameters and return the value
+    # returned from this call.
+    return __beartype_func(*args, **kwargs)'''
 '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
@@ -48,4 +49,10 @@ PEP-agnostic code snippet expanding to a single level of indentation.
 CODE_INDENT_2 = CODE_INDENT_1*2
 '''
 PEP-agnostic code snippet expanding to two levels of indentation.
+'''
+
+
+CODE_INDENT_3 = CODE_INDENT_2 + CODE_INDENT_1
+'''
+PEP-agnostic code snippet expanding to three levels of indentation.
 '''

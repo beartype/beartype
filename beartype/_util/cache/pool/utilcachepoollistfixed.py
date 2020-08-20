@@ -282,7 +282,7 @@ Caveats
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
-# ....................{ FUNCTIONS                         }....................
+# ....................{ (ACQUIRERS|RELEASERS)             }....................
 def acquire_fixed_list(size: int) -> FixedList:
     '''
     Acquire an arbitrary **fixed list** (i.e., :class:`list` constrained to a

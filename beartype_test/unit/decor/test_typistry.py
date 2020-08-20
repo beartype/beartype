@@ -15,12 +15,12 @@ singleton.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest
+from pytest import raises
 
 # ....................{ TESTS ~ callable : type           }....................
 def test_typistry_register_type() -> None:
     '''
-    Unit test the
+    Test the
     :func:`beartype._decor._typistry.register_typistry_type` function.
     '''
 
@@ -37,7 +37,7 @@ def test_typistry_register_type() -> None:
     assert bear_typistry.get(hint_name) is hint
 
     # Assert that non-types are *NOT* registrable via the same function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         register_typistry_type((
             'The best lack all conviction,',
             'while the worst',
@@ -46,13 +46,13 @@ def test_typistry_register_type() -> None:
 
     # Assert that PEP-compliant types are *NOT* registrable via the same
     # function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         register_typistry_type(PepCustomSingleTypevared)
 
 # ....................{ TESTS ~ callable : tuple          }....................
 def test_typistry_register_tuple_pass() -> None:
     '''
-    Unit test successful usage of the
+    Test successful usage of the
     :func:`beartype._decor._typistry.register_typistry_tuple` function.
     '''
 
@@ -105,7 +105,7 @@ def test_typistry_register_tuple_pass() -> None:
 
 def test_typistry_register_tuple_fail() -> None:
     '''
-    Unit test unsuccessful usage of the
+    Test unsuccessful usage of the
     :func:`beartype._decor._typistry.register_typistry_tuple` function.
     '''
 
@@ -116,7 +116,7 @@ def test_typistry_register_tuple_fail() -> None:
 
     # Assert that hashable non-tuple objects are *NOT* registrable via this
     # function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         register_typistry_tuple('\n'.join((
             'I will arise and go now, and go to Innisfree,',
             'And a small cabin build there, of clay and wattles made;',
@@ -125,7 +125,7 @@ def test_typistry_register_tuple_fail() -> None:
         )))
 
     # Assert that unhashable tuples are *NOT* registrable via this function.
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         register_typistry_tuple((
             int,
             str,
@@ -142,7 +142,7 @@ def test_typistry_register_tuple_fail() -> None:
         ))
 
     # Assert that empty tuples are *NOT* registrable via this function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         register_typistry_tuple(())
 
     #FIXME: Currently broken. Decipher why, please. It appears likely that the
@@ -150,13 +150,13 @@ def test_typistry_register_tuple_fail() -> None:
 
     # Assert that non-empty tuples containing one or more PEP-compliant types
     # are *NOT* registrable via this function.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         register_typistry_tuple((int, PepCustomSingleUntypevared, str,))
 
 # ....................{ TESTS ~ singleton                 }....................
 def test_typistry_singleton_pass() -> None:
     '''
-    Unit test successful usage of the
+    Test successful usage of the
     :attr:`beartype._decor._typistry.bear_typistry` singleton.
     '''
 
@@ -182,7 +182,7 @@ def test_typistry_singleton_pass() -> None:
 
 def test_typistry_singleton_fail() -> None:
     '''
-    Unit test unsuccessful usage of the
+    Test unsuccessful usage of the
     :attr:`beartype._decor._typistry.bear_typistry` singleton.
     '''
 
@@ -191,23 +191,23 @@ def test_typistry_singleton_fail() -> None:
     from beartype._decor._typistry import bear_typistry
 
     # Assert that unhashable objects are *NOT* registrable.
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         bear_typistry['Turning.and.turning.in.the.widening.gyre'] = {
             'The falcon cannot hear the falconer;': (
                 'Things fall apart; the centre cannot hold;'),
         }
 
     # Assert that forward references are *NOT* registrable.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['Mere.anarchy.is.loosed.upon.the.world'] = (
             'The blood-dimmed tide is loosed, and everywhere')
 
     # Assert that arbitrary objects are also *NOT* registrable.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
 
     # Assert that beartypistry keys that are *NOT* strings are rejected.
-    with pytest.raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeDecorBeartypistryException):
         bear_typistry[(
             'And what rough beast, its hour come round at last,',)] = (
             'Slouches towards Bethlehem to be born?',)

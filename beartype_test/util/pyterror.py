@@ -21,12 +21,12 @@ from pytest import raises
 
 # ....................{ CONTEXTS                          }....................
 @contextmanager
-def raises_cached(exception_cls: type) -> 'ExceptionInfo':
+def raises_uncached(exception_cls: type) -> 'ExceptionInfo':
     '''
     Context manager validating that the block exercised by this manager raises
     a **cached exception** (i.e., whose message previously containing one or
     more instances of the magic
-    :data:`beartype._util.cache.utilcacheerror.EXCEPTION_CACHED_PLACEHOLDER_STR`
+    :data:`beartype._util.cache.utilcacheerror.EXCEPTION_CACHED_PLACEHOLDER`
     substring since replaced by the
     :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
     function) of the passed type.
@@ -50,7 +50,7 @@ def raises_cached(exception_cls: type) -> 'ExceptionInfo':
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcacheerror import (
-        EXCEPTION_CACHED_PLACEHOLDER_STR)
+        EXCEPTION_CACHED_PLACEHOLDER)
 
     # With a "pytest"-specific context manager validating this contextual block
     # to raise an exception of this type...
@@ -58,4 +58,4 @@ def raises_cached(exception_cls: type) -> 'ExceptionInfo':
         yield
 
     # Assert this exception message does *NOT* contain this magic substring.
-    assert EXCEPTION_CACHED_PLACEHOLDER_STR not in str(exception_info.value)
+    assert EXCEPTION_CACHED_PLACEHOLDER not in str(exception_info.value)

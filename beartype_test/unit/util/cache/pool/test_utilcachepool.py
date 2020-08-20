@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from io import StringIO
-import pytest
+from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_key_pool_pass() -> None:
@@ -116,5 +116,5 @@ def test_key_pool_fail() -> None:
 
     # Assert that attempting to acquire a new object with an unhashable key
     # raises the expected exception.
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         key_pool.acquire(['Lieutenant!', 'This corpse will not stop burning!'])

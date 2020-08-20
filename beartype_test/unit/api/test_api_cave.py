@@ -15,7 +15,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-import argparse, functools, pytest, re, sys, weakref
+import argparse, functools, re, sys, weakref
 from beartype_test.util.mark.pytskip import (
     skip_if_pypy,
     skip_if_python_version_less_than,
@@ -24,8 +24,9 @@ from beartype_test.util.mark.pytskip import (
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal
-from fractions import Fraction
 from enum import Enum
+from fractions import Fraction
+from pytest import raises
 
 # ....................{ TODO                              }....................
 #FIXME: Unit test the following types, which remain untested for the initial
@@ -690,7 +691,7 @@ def test_api_cave_tuple_nonetypeor() -> None:
     # unit test already exercises these edge cases.
     #
     # Assert this factory to *NOT* be explicitly settable.
-    with pytest.raises(BeartypeCaveNoneTypeOrMutabilityException):
+    with raises(BeartypeCaveNoneTypeOrMutabilityException):
         NoneTypeOr['If you can meet with'] = 'Triumph and Disaster'
 
     # Assert that indexing this factory with "NoneType" creates, caches, and

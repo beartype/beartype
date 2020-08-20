@@ -16,10 +16,7 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-from beartype_test.util.pyterror import raises_cached
 from pytest import raises
-from random import Random
 
 # ....................{ TODO                              }....................
 #FIXME: Validate that generator-based coroutines behave as expected, given the
@@ -76,97 +73,96 @@ from random import Random
 #Self-obviously, the latter is the way to go for us. A trivial five-line
 #fixture dominates a non-trivial third-party dependency any asynchronous day.
 
-# ....................{ TESTS ~ fail                      }....................
-def test_decor_fail_wrappee_type() -> None:
+# ....................{ TESTS                             }....................
+def test_decor_wrappee_type_fail() -> None:
     '''
-    Test type-checking for **invalid wrappees** (i.e., objects *not*
-    decoratable by the :func:`beartype.beartype` decorator).
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for an
+    **invalid wrappee** (i.e., object *not* decoratable by this decorator).
     '''
 
-    # Import this decorator.
+    # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorWrappeeException
 
-    EARLY_CODICES = ('Book of the Astronomican', 'Slaves to Darkness',)
-
-    # Assert that...
+    # Assert that decorating uncallable objects raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
-        # Uncallable objects cannot be wrapped by @beartype.
-        beartype(EARLY_CODICES)
+        beartype(('Book of the Astronomican', 'Slaves to Darkness',))
 
-        # Callable classes cannot be wrapped by @beartype.
+    # Assert that decorating callable classes raises the expected exception.
+    with raises(BeartypeDecorWrappeeException):
         @beartype
         class ImperiumNihilus(object):
             pass
 
 
-def test_decor_fail_hint_unhashable() -> None:
+def test_decor_hint_unhashable_fail() -> None:
     '''
-    Test type-checking for **unhashable annotations** (i.e., annotations that
-    are *not* hashable and thus neither classes, strings, tuples, nor tuples of
-    classes and/or strings).
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    callables with one or more parameters or return value annotated by an
+    unhashable object.
     '''
 
-    # Import this decorator.
+    # Defer heavyweight imports.
     from beartype import beartype
 
-    # Assert the expected exception from attempting to type-check a function
-    # with an unhashable parameter annotation.
+    # Assert that decorating a callable whose parameter is annotated by an
+    # unhashable object raises the expected exception.
     with raises(TypeError):
         @beartype
         def before_the_fall(
             craftworld: ['Alaitoc', 'Black Library', 'Biel-Tan',]) -> str:
             return craftworld[0]
 
-    # Assert the expected exception from attempting to type-check a function
-    # with an unhashable return value annotation.
+    # Assert that decorating a callable whose return value is annotated by an
+    # unhashable object raises the expected exception.
     with raises(TypeError):
         @beartype
         def after_the_fall(craftworld: str) -> [
             'Iyanden', 'Saim-Hann', 'Ulthwé',]:
             return [craftworld,]
 
-# ....................{ TESTS ~ fail : param              }....................
-def test_decor_fail_param_name() -> None:
+# ....................{ TESTS ~ param                     }....................
+def test_decor_param_name_fail() -> None:
     '''
-    Test type-checking for a function accepting a parameter name reserved for
-    internal use by the :func:`beartype.beartype` decorator.
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    callables accepting one or more **decorator-reserved parameters** (i.e.,
+    parameters whose names are reserved for internal use by this decorator).
     '''
 
-    # Import this decorator.
+    # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorParamNameException
 
-    # Define a function accepting a reserved parameter name and assert the
-    # expected exception.
+    # Assert that decorating a callable accepting a reserved parameter name
+    # raises the expected exception.
     with raises(BeartypeDecorParamNameException):
         @beartype
         def jokaero(weaponsmith: str, __beartype_func: str) -> str:
             return weaponsmith + __beartype_func
 
 # ....................{ TESTS ~ fail : param : call       }....................
-def test_decor_fail_param_call_keyword_unknown() -> None:
+def test_decor_param_call_keyword_unknown_fail() -> None:
     '''
-    Test type-checking for an annotated function call passed an unrecognized
-    keyword parameter.
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    wrapper functions passed unrecognized keyword parameters.
     '''
 
-    # Import this decorator.
+    # Defer heavyweight imports.
     from beartype import beartype
 
-    # Annotated function to be type-checked.
+    # Decorated callable to be exercised.
     @beartype
     def tau(kroot: str, vespid: str) -> str:
         return kroot + vespid
 
-    # Call this function with an unrecognized keyword parameter and assert the
-    # expected exception.
+    # Assert that calling this callable with an unrecognized keyword parameter
+    # raises the expected exception.
     with raises(TypeError) as exception:
         tau(kroot='Greater Good', nicassar='Dhow')
 
-    # Assert that the exception message is that raised by the Python
+    # Assert that this exception's message is that raised by the Python
     # interpreter on calling the decorated callable rather than that raised by
     # the wrapper function on type-checking that callable. This message is
-    # currently stable across Python versions and thus safely tested against.
+    # currently stable across Python versions and thus robustly testable.
     assert str(exception.value) == (
         "tau() got an unexpected keyword argument 'nicassar'")

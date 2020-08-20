@@ -15,12 +15,15 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest
+from beartype_test.util.pyterror import raises_uncached
+from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_utilhint_is_hint_nonpep() -> None:
     '''
-    Test the :func:`beartype._util.hint.nonpep.utilhintnonpeptest.is_hint_nonpep` tester.
+    Test the
+    :func:`beartype._util.hint.nonpep.utilhintnonpeptest.is_hint_nonpep`
+    tester.
     '''
 
     # Defer heavyweight imports.
@@ -38,13 +41,14 @@ def test_utilhint_is_hint_nonpep() -> None:
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with pytest.raises(TypeError):
+        with raises(TypeError):
             is_hint_nonpep(non_hint_unhashable)
 
 
 def test_utilhint_die_unless_hint_nonpep() -> None:
     '''
-    Test the :func:`beartype._util.hint.nonpep.utilhintnonpeptest.die_unless_hint_nonpep`
+    Test the
+    :func:`beartype._util.hint.nonpep.utilhintnonpeptest.die_unless_hint_nonpep`
     validator.
     '''
 
@@ -60,10 +64,10 @@ def test_utilhint_die_unless_hint_nonpep() -> None:
 
     # Assert this function rejects objects excepted to be rejected.
     for non_nonpep_hint in NOT_NONPEP_HINTS:
-        with pytest.raises(BeartypeDecorHintNonPepException):
+        with raises_uncached(BeartypeDecorHintNonPepException):
             die_unless_hint_nonpep(non_nonpep_hint)
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with pytest.raises(TypeError):
+        with raises(TypeError):
             die_unless_hint_nonpep(non_hint_unhashable)

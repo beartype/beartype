@@ -22,8 +22,8 @@ from inspect import Parameter
 #fully-qualified classnames on the "__beartypistry", as doing so is more
 #efficient and simpler than the existing forward reference resolution
 #mechanism. Moreover, doing so avoids implicit dictionary lookups on
-#"__beartype_func.__dict__" for standard types and is thus more efficient for
-#the common case as well.
+#"__beartype_func.__annotations__" for standard types and is thus more
+#efficient for the common case as well.
 #
 #That said, note that tuple annotations will probably continue to require
 #accessing this function-specific dictionary. So it goes. Ergo, we'll probably
@@ -36,7 +36,6 @@ from inspect import Parameter
 #  * "NONPEP_CODE_PARAM_HINT_NONTUPLE" global string constant.
 #  * "NONPEP_CODE_RETURN_HINT_NONTUPLE" global string constant.
 
-# NONPEP_CODE_PARAM_HINT = '__beartype_hints[{!r}]'
 NONPEP_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
 '''
 PEP-noncompliant code snippet accessing the annotation with an arbitrary name
@@ -44,7 +43,6 @@ formatted into this snippet by the caller.
 '''
 
 
-# NONPEP_CODE_RETURN_HINT = "__beartype_hints['return']"
 NONPEP_CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
 '''
 PEP-noncompliant code snippet accessing the **return annotation** (i.e.,
@@ -57,21 +55,28 @@ PARAM_KIND_TO_NONPEP_CODE = {
     # by lookup in the wrapper function's variadic "**kwargs" dictionary *AND*
     # by index into the wrapper function's variadic "*args" tuple.
     Parameter.POSITIONAL_OR_KEYWORD: '''
+    # If this positional or keyword parameter was passed, type-check this
+    # parameter against this PEP-noncompliant type hint.
     if not (
         isinstance(args[{arg_index}], {hint_expr})
-        if {arg_index} < len(args) else
+        if __beartype_args_len > {arg_index} else
         isinstance(kwargs[{arg_name!r}], {hint_expr})
         if {arg_name!r} in kwargs else True
     ):
-            raise __beartype_nonpep_param_exception(
-                '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
-                __beartype_trim(args[{arg_index}] if len(args) > {arg_index} else kwargs[{arg_name!r}]),
-                {hint_expr}))
+        raise __beartype_nonpep_param_exception(
+            '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
+            __beartype_trim(
+                args[{arg_index}] if __beartype_args_len > {arg_index} else
+                kwargs[{arg_name!r}]
+            ),
+            {hint_expr}))
 ''',
 
     # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper function's variadic "**kwargs" dictionary.
     Parameter.KEYWORD_ONLY: '''
+    # If this keyword-only parameter was passed, type-check this parameter
+    # against this PEP-noncompliant type hint.
     if {arg_name!r} in kwargs and not isinstance(
         kwargs[{arg_name!r}], {hint_expr}):
         raise __beartype_nonpep_param_exception(
@@ -83,6 +88,8 @@ PARAM_KIND_TO_NONPEP_CODE = {
     # Snippet type-checking any variadic positional pseudo-parameter (e.g.,
     # "*args") by iteratively checking all relevant parameters.
     Parameter.VAR_POSITIONAL: '''
+    # Type-check all passed positional variadic parameters against this
+    # PEP-noncompliant type hint.
     for __beartype_arg in args[{arg_index!r}:]:
         if not isinstance(__beartype_arg, {hint_expr}):
             raise __beartype_nonpep_param_exception(
@@ -99,13 +106,15 @@ type-checking that type.
 
 # ....................{ CODE ~ return                     }....................
 NONPEP_CODE_RETURN_CHECKED = '''
+    # Call this function with all passed parameters, type-check the value
+    # returned from this call against this PEP-noncompliant type hint, and
+    # return this value only if this check succeeds.
     __beartype_return_value = __beartype_func(*args, **kwargs)
     if not isinstance(__beartype_return_value, {hint_expr}):
         raise __beartype_nonpep_return_exception(
             '{func_name} return value {{}} not a {{!r}}.'.format(
                 __beartype_trim(__beartype_return_value), {hint_expr}))
-    return __beartype_return_value
-'''
+    return __beartype_return_value'''
 '''
 PEP-noncompliant code snippet type-checking the return value if any.
 

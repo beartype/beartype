@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from io import StringIO
-import pytest
+from pytest import raises
 
 # ....................{ TESTS ~ pool                      }....................
 def test_objecttyped_pool_pass() -> None:
@@ -109,11 +109,11 @@ def test_objecttyped_pool_fail() -> None:
     from beartype.roar import _BeartypeUtilCachedObjectTypedException
 
     # Assert that typed objects may only be acquired with types.
-    with pytest.raises(_BeartypeUtilCachedObjectTypedException):
+    with raises(_BeartypeUtilCachedObjectTypedException):
         acquire_object_typed((
             'You have the right to free speech',
             'As long as',
             "You're not dumb enough to actually try it.",
         ))
-    with pytest.raises(_BeartypeUtilCachedObjectTypedException):
+    with raises(_BeartypeUtilCachedObjectTypedException):
         acquire_object_typed(1977)

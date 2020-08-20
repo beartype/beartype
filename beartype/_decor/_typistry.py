@@ -276,6 +276,13 @@ def register_typistry_tuple(
     # String uniquely identifying this tuple as a beartypistry key.
     hint_name = _TYPISTRY_HINT_NAME_TUPLE_PREFIX + str(hash(hint))
 
+    #FIXME: Test whether this "hint_name" collides with an existing key of this
+    #singleton and, if so, iteratively append the '~' character onto that
+    #string until obtaining a non-colliding string. Note that if there *DOES*
+    #exist an existing key of this singleton, the value mapped to that key is
+    #guaranteed to be neither the passed tuple nor this duplicate-free tuple,
+    #due to memoization.
+
     # Register this tuple with the beartypistry singleton.
     bear_typistry[hint_name] = hint
 

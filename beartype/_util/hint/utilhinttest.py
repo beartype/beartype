@@ -107,7 +107,6 @@ subscripted objects produced by that module behave as expected: e.g.,
    https://www.python.org/dev/peps/pep-0484
 '''
 
-
 # ....................{ EXCEPTIONS                        }....................
 def die_unless_hint(
     # Mandatory parameters.

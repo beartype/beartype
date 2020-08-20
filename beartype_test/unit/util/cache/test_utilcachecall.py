@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import pytest
+from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_callable_cached_pass() -> None:
@@ -65,11 +65,11 @@ def test_callable_cached_pass() -> None:
         still_i_rise(bitter=bitter, twisted=twisted, lies=lies))
 
     # Assert that memoizing a call expected to raise an exception does so.
-    with pytest.raises(ValueError) as exception_first_info:
+    with raises(ValueError) as exception_first_info:
         still_i_rise(bitter, twisted, dust)
 
     # Assert that repeating that call reraises the same exception.
-    with pytest.raises(ValueError) as exception_next_info:
+    with raises(ValueError) as exception_next_info:
         still_i_rise(bitter, twisted, dust)
         assert exception_first_info is exception_next_info
 
@@ -100,7 +100,7 @@ def test_callable_cached_fail() -> None:
 
     # Assert that attempting to memoize one or more unhashable parameters
     # fails with the expected exception.
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         still_i_rise(
             frozenset('Just', 'like', 'moons',),
             frozenset('and', 'like', 'suns',),
@@ -109,14 +109,14 @@ def test_callable_cached_fail() -> None:
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic positional parameters fails with the expected exception.
-    with pytest.raises(_BeartypeUtilCachedCallableException):
+    with raises(_BeartypeUtilCachedCallableException):
         @callable_cached
         def see_me_broken(*args):
             return args
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic keyword parameters fails with the expected exception.
-    with pytest.raises(_BeartypeUtilCachedCallableException):
+    with raises(_BeartypeUtilCachedCallableException):
         @callable_cached
         def my_soulful_cries(**kwargs):
             return kwargs
