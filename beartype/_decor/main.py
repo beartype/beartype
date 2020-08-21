@@ -16,6 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Reduce @beartype to a noop if the passed callable was decorated by the
+#@typing.no_type_check decorator, which we can trivially detect at runtime via
+#the "__no_type_check__" dunder attribute set on that callable set to True.
+
 #FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
 #are called with purely positional rather than keyword arguments. Currently, we
 #suspect the inverse is the case. To do so, we'll probably want to augment the
@@ -432,12 +436,25 @@ def beartype(func):
     try:
         # print('@beartype {}() wrapper\n{}'.format(func_name, func_code))
         exec(func_code, globals(), local_attrs)
-    # If doing so fails for any reason, raise a decorator-specific exception
-    # embedding the entire body of this function for debugging purposes.
+    # If doing so fails for any reason...
     except Exception as exception:
+        # Debuggable wrapper code such that each line of this code is prefixed
+        # by that line's number, rendering "SyntaxError" exceptions referencing
+        # arbitrary line numbers human-readable: e.g.,
+        #       File "<string>", line 56
+        #         if not (
+        #          ^
+        #     SyntaxError: invalid syntax
+        func_code_line_numbered = '\n'.join(
+            '(line {:0>4d}) {}'.format(func_code_line_number, func_code_line)
+            for func_code_line_number, func_code_line in enumerate(
+                func_code.splitlines(), start=1)
+        )
+
+        # Raise an exception this code for debugging purposes.
         raise BeartypeDecorWrapperException(
-            '{} wrapper unparseable:\n{}'.format(
-                func_data.func_name, func_code)
+            '{} wrapper unparseable:\n\n{}'.format(
+                func_data.func_name, func_code_line_numbered)
         ) from exception
 
     # This wrapper.

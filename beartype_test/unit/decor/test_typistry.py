@@ -162,6 +162,7 @@ def test_typistry_singleton_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.cave import NoneType
+    from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import bear_typistry
     from beartype._util.utilobject import get_object_name_qualified
 
@@ -170,6 +171,10 @@ def test_typistry_singleton_pass() -> None:
     hint_name = get_object_name_qualified(hint)
     bear_typistry[hint_name] = hint
     assert bear_typistry.get(hint_name) is hint
+
+    # Assert that the same type is *NOT* re-registrable via dictionary syntax.
+    with raises(_BeartypeDecorBeartypistryException):
+        bear_typistry[hint_name] = hint
 
     # Avoid asserting tuples are also registrable via dictionary syntax. While
     # they technically are, asserting so would require declaring a new

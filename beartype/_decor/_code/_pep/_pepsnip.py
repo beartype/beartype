@@ -38,7 +38,7 @@ See Also
 '''
 
 
-PEP_CODE_PITH_ROOT_EXPR = '__beartype_pith_root'
+PEP_CODE_PITH_ROOT_EXPR = '__beartype_pith'
 '''
 Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
@@ -188,13 +188,11 @@ against each subscripted argument of a :class:`typing.Union` type.
 '''
 
 
-# Note that the "indent_curr" format variable is intentionally brace-protected
-# to enable a trivial optimization deferring its interpolation until finalized.
-PEP_CODE_CHECK_HINT_UNION_ARG = '''
+PEP_CODE_CHECK_HINT_UNION_ARG_PEP = '''
 {{indent_curr}}    {hint_child_placeholder} or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
-subscripted argument of a :class:`typing.Union` type.
+PEP-compliant child argument subscripting a parent :class:`typing.Union` type.
 
 Caveats
 ----------
@@ -202,4 +200,23 @@ The caller is required to manually slice the trailing suffix ``" or"`` after
 applying this snippet to the last subscripted argument of a
 :class:`typing.Union` type. While there exist alternate and more readable means
 of accomplishing this, this approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this :class:`typing.Union` type has been generated.
+'''
+
+
+PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP = '''
+{{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+PEP-noncompliant child argument subscripting a parent :class:`typing.Union`
+type.
+
+See Also
+----------
+:data:`PEP_CODE_CHECK_HINT_UNION_ARG_PEP`
+    Further details.
 '''

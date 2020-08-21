@@ -14,8 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CODE                              }....................
-CODE_SIGNATURE = '''
-def {func_wrapper_name}(
+CODE_SIGNATURE = '''def {func_wrapper_name}(
     *args,
     __beartype_func=__beartype_func,
     __beartypistry=__beartypistry,

@@ -461,7 +461,7 @@ def _get_hint_pep_typing_bare_attr_argless_or_none(hint: object) -> (
         # Strip the now-harmful "typing." prefix from this representation.
         # Preserving this prefix would raise an "AttributeError" exception from
         # the subsequent call to the getattr() builtin.
-        typing_attr_name = typing_attr_name[7:]  # hardcode us up the bomb
+        typing_attr_name = typing_attr_name[7:]  # Hardcode us up the bomb.
 
         # 0-based index of the first "[" delimiter in this representation if
         # any *OR* -1 otherwise.
