@@ -57,9 +57,9 @@ _TYPING_ATTRS_ARGLESS_TO_ARGS_EMPTY = {}
 '''
 Empty dictionary constant.
 
-The memoized :func:`get_hint_pep_typing_attrs_argless_to_args` function returns and
-thus internally caches this dictionary when passed any object that is *not* a
-PEP-compliant type hint. To reduce space consumption, this dictionary is
+The memoized :func:`get_hint_pep_typing_attrs_argless_to_args` function returns
+and thus internally caches this dictionary when passed any object that is *not*
+a PEP-compliant type hint. To reduce space consumption, this dictionary is
 efficiently reused rather than inefficiently recreated for each recall to that
 function passed such a hint.
 '''
@@ -70,9 +70,9 @@ _TYPING_ATTRS_ARGLESS_TO_ARGS_TYPEVAR = {TypeVar: ()}
 Dictionary constant mapping only from the :class:`TypeVar` class to the empty
 tuple.
 
-The memoized :func:`get_hint_pep_typing_attrs_argless_to_args` function returns and
-thus internally caches this dictionary when passed a type variable. To reduce
-space consumption, this dictionary is efficiently reused rather than
+The memoized :func:`get_hint_pep_typing_attrs_argless_to_args` function returns
+and thus internally caches this dictionary when passed a type variable. To
+reduce space consumption, this dictionary is efficiently reused rather than
 inefficiently recreated for each recall to that function passed a type
 variable.
 '''
@@ -413,7 +413,7 @@ def _get_hint_pep_typing_bare_attr_argless_or_none(hint: object) -> (
 
     Caveats
     ----------
-    **Call substantially faster and simpler**
+    **Call the substantially faster and simpler**
     :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing` **tester
     function instead to simply decide whether an arbitrary object is defined by
     the** :mod:`typing` **module.** While this getter function can be called to

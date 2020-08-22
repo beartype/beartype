@@ -123,8 +123,8 @@ from beartype._decor._code._nonpep.nonpepcode import (
 from beartype._decor._code._pep.pepcode import (
     pep_code_check_param, pep_code_check_return)
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.utilhinttest import (
-    HINTS_IGNORABLE, die_unless_hint)
+from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
+from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from inspect import Parameter, Signature
 

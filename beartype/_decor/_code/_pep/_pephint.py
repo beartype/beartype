@@ -30,6 +30,98 @@ This private submodule is *not* intended for importation by downstream callers.
 #Fortunately, Python >=3.8 is the inevitable future, so this issue will
 #naturally resolve itself over time. *shrug*
 
+#FIXME: Trivially type-check instances of types subclassing the
+#"typing.Protocol" superclass decorated by the @runtime_checkable decorator,
+#detectable at runtime by the existence of both "typing.Protocol" in their
+#"__mro__" dunder attribute *AND* the protocol-specific private
+#"_is_runtime_protocol" instance variable set to True.
+#
+#Specifically, refactor the codebase as follows to support protocols:
+#
+#* Define a new utilhintpeptest.is_hint_pep_protocol() tester returning True if
+#  the passed object is a @runtime_checkable-decorated Protocol. See below for
+#  the logic necessary to do so. This is non-trivial, as "Protocol" was only
+#  introduced under Python >= 3.8 *BUT* various "typing" subclasses of a
+#  private "_Protocol" superclass have been available since Python >= 3.5.
+#* Define a new utilhinttest.is_hint_isinstanceable() tester returning True if
+#  the passed object is a type that either:
+#  * Is a non-"typing" type.
+#  * Is a @runtime_checkable-decorated Protocol subclass.
+#* Call the is_hint_isinstanceable() tester *BEFORE* the is_hint_pep() tester
+#  everywhere in this codebase. Notably:
+#  * Revise:
+#    # ...this test...
+#    elif isinstance(hint_curr, type):
+#    # ...into this test.
+#    elif is_hint_isinstanceable(hint_curr):
+#  * Shift that test before the "if is_hint_pep(hint_curr):"
+#    test above.
+#  * Revise the above union-specific tests from:
+#    # ...this logic...
+#         # If this argument is PEP-compliant...
+#         if is_hint_pep(hint_child):
+#             # Filter this argument into the list of
+#             # PEP-compliant arguments.
+#             hint_childs_pep.append(hint_child)
+#
+#         # Else, this argument is PEP-noncompliant. In this
+#         # case, filter this argument into the list of
+#         # PEP-noncompliant arguments.
+#         else:
+#             hint_childs_nonpep.append(hint_child)
+#
+#    # ...into this logic.
+#         # If this argument is an isinstance()-compatible
+#         # type, filter this argument into the list of these
+#         # types.
+#         if is_hint_isinstanceable(hint_child):
+#             hint_childs_nonpep.append(hint_child)
+#         # Else, this argument is *NOT* an
+#         # isinstance()-compatible type. In this case...
+#         else:
+#             # If this argument is *NOT* a PEP-compliant
+#             # type hint, raise an exception.
+#             die_unless_hint_pep(
+#                 hint=hint_child, hint_label=???)
+#             # Else, this argument is a PEP-compliant
+#             # type hint.
+#
+#             # Filter this argument into the list of
+#             # PEP-compliant arguments.
+#             hint_childs_pep.append(hint_child)
+#
+#Note lastly that support for protocols conditionally depends on the current
+#Python version. Besically:
+#
+#* Under Python < 3.8, the following abstract base classes (ABCs) are standard
+#  ABCs and thus trivially support isinstance() as is:
+#  * typing.SupportsInt
+#  * typing.SupportsFloat
+#  * typing.SupportsComplex
+#  * typing.SupportsBytes
+#  * typing.SupportsAbs
+#  * typing.SupportsRound
+#  Note that "typing.Protocol" does *NOT* exist here. Ergo, the
+#  is_hint_pep_protocol() tester should return True under Python < 3.8 only if
+#  the passed hint is an instance of one of these six ABCs. This is essential,
+#  as these instances would otherwise be treated as PEP-compliant type hints --
+#  which they're not, really.
+#* Under Python >= 3.8, the "typing.Protocol" superclass appears and all of the
+#  above ABCs both subclass that *AND* are decorated by @runtime_checkable.
+#  Lastly, a new "typing.SupportsIndex" ABC is introduced as well. So, we need
+#  to check that the protocol-specific private "_is_runtime_protocol" instance
+#  variable is set to True
+#  for "Protocol" subclasses.
+#FIXME: Note that the ProtocolMeta.__subclasshook__() dunder method
+#implementation is insanely inefficient in a way that only "typing" authors
+#could have written. Ideally, rather than naively calling isinstance() on
+#instances of core "typing.Protocol" subclasses defined by the "typing" module
+#itself (e.g., "typing.SupportsInt"), we would instead generate efficient code
+#directly type-checking that those instances define the requisite attributes.
+#Note, however, that the typing.Protocol.__init_subclass__._proto_hook()
+#implementing structural subtyping checks is sufficiently non-trivial that we
+#*REALLY* don't want to get into that for now.
+
 #FIXME: Localize all calls to bound methods (e.g.,
 #"muh_dict_get = muh_dict.get") for efficiency.
 
@@ -54,7 +146,7 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_UNION_ARG_PEP,
     PEP_CODE_PITH_ROOT_EXPR,
 )
-from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
+# from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attrs_argless_to_args)
 from beartype._util.hint.pep.utilhintpeptest import (
@@ -64,7 +156,7 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
     SIZE_BIG, FixedList, acquire_fixed_list, release_fixed_list)
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
-from beartype._util.hint.utilhinttest import HINTS_IGNORABLE
+from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
 from itertools import count
 from typing import (
     Union,
@@ -799,6 +891,84 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 #  structural subtyping checks is sufficiently non-trivial that
                 #  we *REALLY* don't want to get into that now. (File this away
                 #  for another day, please.)
+                #  There are various ways to trivially enable this. For
+                #  example, we could:
+                #  * Define a new utilhintpeptest.is_hint_pep_protocol() tester
+                #    returning True if the passed object is a
+                #    @runtime_checkable-decorated Protocol. See below for the
+                #    logic necessary to do so. This is non-trivial, as
+                #    "Protocol" was only introduced under Python >= 3.8.
+                #  * Define a new utilhinttest.is_hint_isinstanceable() tester
+                #    returning True if the passed object is a type that either:
+                #    * Is a non-"typing" type.
+                #    * Is a @runtime_checkable-decorated Protocol subclass.
+                #  * Call the is_hint_isinstanceable() tester *BEFORE* the
+                #    is_hint_pep() tester everywhere in this codebase. Notably:
+                #    * Revise:
+                #      # ...this test...
+                #      elif isinstance(hint_curr, type):
+                #      # ...into this test.
+                #      elif is_hint_isinstanceable(hint_curr):
+                #    * Shift that test before the "if is_hint_pep(hint_curr):"
+                #      test above.
+                #    * Revise the above union-specific tests from:
+                #      # ...this logic...
+                #           # If this argument is PEP-compliant...
+                #           if is_hint_pep(hint_child):
+                #               # Filter this argument into the list of
+                #               # PEP-compliant arguments.
+                #               hint_childs_pep.append(hint_child)
+                #
+                #           # Else, this argument is PEP-noncompliant. In this
+                #           # case, filter this argument into the list of
+                #           # PEP-noncompliant arguments.
+                #           else:
+                #               hint_childs_nonpep.append(hint_child)
+                #
+                #      # ...into this logic.
+                #           # If this argument is an isinstance()-compatible
+                #           # type, filter this argument into the list of these
+                #           # types.
+                #           if is_hint_isinstanceable(hint_child):
+                #               hint_childs_nonpep.append(hint_child)
+                #           # Else, this argument is *NOT* an
+                #           # isinstance()-compatible type. In this case...
+                #           else:
+                #               # If this argument is *NOT* a PEP-compliant
+                #               # type hint, raise an exception.
+                #               die_unless_hint_pep(
+                #                   hint=hint_child, hint_label=???)
+                #               # Else, this argument is a PEP-compliant
+                #               # type hint.
+                #
+                #               # Filter this argument into the list of
+                #               # PEP-compliant arguments.
+                #               hint_childs_pep.append(hint_child)
+                #
+                #  Note lastly that support for protocols conditionally depends
+                #  on the current Python version. Besically:
+                #  * Under Python < 3.8, the following abstract base classes
+                #    (ABCs) are standard ABCs and thus trivially support
+                #    isinstance() as is:
+                #    * typing.SupportsInt
+                #    * typing.SupportsFloat
+                #    * typing.SupportsComplex
+                #    * typing.SupportsBytes
+                #    * typing.SupportsAbs
+                #    * typing.SupportsRound
+                #    Note that "typing.Protocol" does *NOT* exist here. Ergo,
+                #    the is_hint_pep_protocol() tester should return True
+                #    under Python < 3.8 only if the passed hint is an instance
+                #    of one of these six ABCs. This is essential, as these
+                #    instances would otherwise be treated as PEP-compliant
+                #    type hints -- which they're not, really.
+                #  * Under Python >= 3.8, the "typing.Protocol" superclass
+                #    appears and all of the above ABCs both subclass that *AND*
+                #    are decorated by @runtime_checkable. Lastly, a new
+                #    "typing.SupportsIndex" ABC is introduced as well. So, we
+                #    need to check that the protocol-specific private
+                #    "_is_runtime_protocol" instance variable is set to True
+                #    for "Protocol" subclasses.
                 #* "typing" objects whose argless "typing" attributes are
                 #  neither "Callable", "Union", "Literal", "Final", nor
                 #  "ClassVar" (and possibly more) but that also define an
@@ -882,6 +1052,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
         # int]") rather than the root type hint. Why? Because if this class
         # were the root type hint, it would have been passed to the faster
         # PEP-noncompliant code generation codepath instead.
+
+        #FIXME: Shift above and call get_hint_isinstanceable_type_or_none()
+        #instead to generically support *EVERYTHING.*
         elif isinstance(hint_curr, type):
             #FIXME: Refactor to leverage f-strings after dropping Python 3.5
             #support, which are the optimal means of performing string

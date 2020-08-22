@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-agnostic type hint utility unit tests.**
+**Beartype PEP-agnostic type hint tester utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.utilhinttest` submodule.
@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-def test_utilhint_die_unless_hint() -> None:
+def test_utilhinttest_die_unless_hint() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.die_unless_hint`
     validator.
@@ -67,7 +67,7 @@ def test_utilhint_die_unless_hint() -> None:
             die_unless_hint(non_hint_unhashable)
 
 
-def test_utilhint_is_hint() -> None:
+def test_utilhinttest_is_hint() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
     '''

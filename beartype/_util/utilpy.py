@@ -33,3 +33,12 @@ IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_3_8 or sys.version_info >= (3, 7)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.7.0.
 '''
+
+
+#FIXME: After dropping Python 3.5 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+IS_PYTHON_AT_LEAST_3_6 = IS_PYTHON_AT_LEAST_3_7 or sys.version_info >= (3, 6)
+'''
+``True`` only if the active Python interpreter targets at least Python 3.6.0.
+'''

@@ -38,28 +38,16 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.utilhintpepdata import (
+    TYPING_ATTRS_ARGLESS_SUPPORTED)
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
 )
-from typing import Any, TypeVar, Union
+from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS ~ supported             }....................
-_TYPING_ATTRS_ARGLESS_SUPPORTED = frozenset((
-    Any,
-    Union,
-))
-'''
-Frozen set of all **argumentless typing attributes** (i.e., public attributes
-of the :mod:`typing` module uniquely identifying PEP-compliant type hints
-sans arguments) supported by the :func:`beartype.beartype` decorator.
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_typing_attrs_argless_to_args` getter function.
-'''
 
 # ....................{ EXCEPTIONS                        }....................
 def die_if_hint_pep(
@@ -244,7 +232,7 @@ def die_unless_hint_pep_supported(
     # For each argumentless typing attribute associated with this hint...
     for hint_typing_attr_argless in hint_typing_attrs_argless_to_args.keys():
         # If this attribute is unsupported, raise an exception.
-        if hint_typing_attr_argless not in _TYPING_ATTRS_ARGLESS_SUPPORTED:
+        if hint_typing_attr_argless not in TYPING_ATTRS_ARGLESS_SUPPORTED:
             raise BeartypeDecorHintPepUnsupportedException(
                 '{} PEP type {!r} supertype {!r} {}'.format(
                     hint_label,
@@ -460,7 +448,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Return true only if...
     return all(
         # This attribute is supported...
-        hint_typing_attr_argless in _TYPING_ATTRS_ARGLESS_SUPPORTED
+        hint_typing_attr_argless in TYPING_ATTRS_ARGLESS_SUPPORTED
         # For each argumentless typing attribute associated with this hint.
         for hint_typing_attr_argless in (
             hint_typing_attrs_argless_to_args.keys())

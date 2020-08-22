@@ -51,7 +51,7 @@ def test_decor_noop_hint_ignorable() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.cave import AnyType
-    from beartype._util.hint.utilhinttest import HINTS_IGNORABLE
+    from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
     from typing import Any
 
     # Undecorated annotated function with ignorable type hints.
