@@ -17,24 +17,56 @@ singleton.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS ~ callable : type           }....................
-def test_typistry_register_type() -> None:
+# ....................{ UTILITIES                         }....................
+def _eval_registered_expr(hint_expr: str) -> (type, tuple):
     '''
-    Test the
+    Dynamically evaluate the passed Python expression (assumed to be
+    a string returned by either the
+    :func:`beartype._decor._typistry.register_typistry_type` or
+    :func:`beartype._decor._typistry.register_typistry_tuple` functions) *and*
+    return the resulting value (assumed to either be a type or tuple of types).
+    '''
+    assert isinstance(hint_expr, str), '{!r} not string.'.format(hint_expr)
+
+    # Defer heavyweight imports.
+    from beartype._decor._typistry import bear_typistry
+    from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
+
+    # Dictionary of all local variables required to evaluate this expression.
+    eval_locals = {PARAM_NAME_TYPISTRY: bear_typistry}
+
+    # Evaluate this expression under these local variables and return the
+    # resulting value.
+    return eval(hint_expr, {}, eval_locals)
+
+# ....................{ TESTS ~ callable : type           }....................
+def test_typistry_register_type_pass() -> None:
+    '''
+    Test successful usage of the
     :func:`beartype._decor._typistry.register_typistry_type` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.cave import AnyType
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import bear_typistry, register_typistry_type
-    from beartype_test.unit.data.data_hint import PepCustomSingleTypevared
+    from beartype._decor._typistry import register_typistry_type
 
     # Assert that types are registrable via a trivial function call.
     hint = AnyType
-    hint_expr, hint_name = register_typistry_type(hint)
-    assert isinstance(hint_expr, str)
-    assert bear_typistry.get(hint_name) is hint
+    hint_cached = _eval_registered_expr(register_typistry_type(hint))
+    assert hint is hint_cached
+
+
+def test_typistry_register_type_fail() -> None:
+    '''
+    Test unsuccessful usage of the
+    :func:`beartype._decor._typistry.register_typistry_type` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype._decor._typistry import register_typistry_type
+    from beartype_test.unit.data.data_hint import PepCustomSingleTypevared
 
     # Assert that non-types are *NOT* registrable via the same function.
     with raises(_BeartypeDecorBeartypistryException):
@@ -59,8 +91,7 @@ def test_typistry_register_tuple_pass() -> None:
     # Defer heavyweight imports.
     from beartype.cave import CallableTypes, NoneTypeOr
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import (
-        bear_typistry, register_typistry_tuple)
+    from beartype._decor._typistry import register_typistry_tuple
 
     # Assert that tuples are registrable via a trivial function call.
     #
@@ -68,39 +99,35 @@ def test_typistry_register_tuple_pass() -> None:
     # objects than their originals (e.g., to ignore both duplicates and
     # ordering) and *MUST* thus be tested by conversion to sets.
     hint = CallableTypes
-    hint_expr, hint_name = register_typistry_tuple(hint)
-    assert isinstance(hint_expr, str)
-    assert set(bear_typistry.get(hint_name)) == set(hint)
+    hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
+    assert set(hint) == set(hint_cached)
 
     # Assert that tuples of one type are registrable via the same function,
     # but reduce to registering merely that type rather than that tuple.
     hint = (int,)
-    hint_expr, hint_name = register_typistry_tuple(hint)
-    assert isinstance(hint_expr, str)
-    assert bear_typistry.get(hint_name) == int
+    hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
+    assert hint_cached == int
 
     # Assert that tuples containing duplicate types are registrable via the
     # same function, but reduce to registering only the non-duplicate types.
     hint = (str, str, str,)
-    hint_expr, hint_name = register_typistry_tuple(hint)
-    assert isinstance(hint_expr, str)
-    assert bear_typistry.get(hint_name) == (str,)
+    hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
+    assert hint_cached == (str,)
 
     # Assert that tuples guaranteed to contain *NO* duplicate types are
     # registrable via the same function.
     hint = NoneTypeOr[CallableTypes]
-    hint_expr, hint_name = register_typistry_tuple(
-        hint=hint, is_types_unique=True)
-    assert isinstance(hint_expr, str)
-    assert bear_typistry.get(hint_name) == hint
+    hint_cached = _eval_registered_expr(
+        register_typistry_tuple(hint=hint, is_types_unique=True))
+    assert hint == hint_cached
 
     # Assert that tuples of the same types but in different orders are
     # registrable via the same function but reduce to differing objects.
     hint_a = (int, str,)
     hint_b = (str, int,)
-    _, hint_a_name = register_typistry_tuple(hint_a)
-    _, hint_b_name = register_typistry_tuple(hint_b)
-    assert hint_a_name != hint_b_name
+    hint_cached_a = _eval_registered_expr(register_typistry_tuple(hint_a))
+    hint_cached_b = _eval_registered_expr(register_typistry_tuple(hint_b))
+    assert hint_cached_a != hint_cached_b
 
 
 def test_typistry_register_tuple_fail() -> None:

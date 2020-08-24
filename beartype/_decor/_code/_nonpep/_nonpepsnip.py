@@ -14,7 +14,11 @@ annotated by PEP-noncompliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ PARAMETERS                        }....................
+# ....................{ IMPORTS                           }....................
+from beartype._decor._code.codemain import (
+    PARAM_NAME_FUNC,
+    # PARAM_NAME_TYPISTRY,
+)
 from inspect import Parameter
 
 # ....................{ CODE ~ hint                       }....................
@@ -36,14 +40,14 @@ from inspect import Parameter
 #  * "NONPEP_CODE_PARAM_HINT_NONTUPLE" global string constant.
 #  * "NONPEP_CODE_RETURN_HINT_NONTUPLE" global string constant.
 
-NONPEP_CODE_PARAM_HINT = '__beartype_func.__annotations__[{!r}]'
+NONPEP_CODE_PARAM_HINT = PARAM_NAME_FUNC + '.__annotations__[{!r}]'
 '''
 PEP-noncompliant code snippet accessing the annotation with an arbitrary name
 formatted into this snippet by the caller.
 '''
 
 
-NONPEP_CODE_RETURN_HINT = "__beartype_func.__annotations__['return']"
+NONPEP_CODE_RETURN_HINT = PARAM_NAME_FUNC + ".__annotations__['return']"
 '''
 PEP-noncompliant code snippet accessing the **return annotation** (i.e.,
 annotation synopsizing the type hint for this callable's return value).
@@ -69,7 +73,8 @@ PARAM_KIND_TO_NONPEP_CODE = {
                 args[{arg_index}] if __beartype_args_len > {arg_index} else
                 kwargs[{arg_name!r}]
             ),
-            {hint_expr}))
+            {hint_expr})
+        )
 ''',
 
     # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
@@ -109,12 +114,13 @@ NONPEP_CODE_RETURN_CHECKED = '''
     # Call this function with all passed parameters, type-check the value
     # returned from this call against this PEP-noncompliant type hint, and
     # return this value only if this check succeeds.
-    __beartype_return_value = __beartype_func(*args, **kwargs)
-    if not isinstance(__beartype_return_value, {hint_expr}):
+    __beartype_return_value = {param_name_func}(*args, **kwargs)
+    if not isinstance(__beartype_return_value, {{hint_expr}}):
         raise __beartype_nonpep_return_exception(
-            '{func_name} return value {{}} not a {{!r}}.'.format(
-                __beartype_trim(__beartype_return_value), {hint_expr}))
-    return __beartype_return_value'''
+            '{{func_name}} return value {{{{}}}} not a {{{{!r}}}}.'.format(
+                __beartype_trim(__beartype_return_value), {{hint_expr}}))
+    return __beartype_return_value'''.format(
+        param_name_func=PARAM_NAME_FUNC)
 '''
 PEP-noncompliant code snippet type-checking the return value if any.
 

@@ -117,7 +117,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codesnip import (
-    CODE_RETURN_UNCHECKED, CODE_SIGNATURE)
+    CODE_RETURN_UNCHECKED,
+    CODE_SIGNATURE,
+
+    # Attributes imported purely for public usage outside this subpackage.
+    PARAM_NAME_FUNC,
+    PARAM_NAME_TYPISTRY,
+)
 from beartype._decor._code._nonpep.nonpepcode import (
     nonpep_code_check_param, nonpep_code_check_return)
 from beartype._decor._code._pep.pepcode import (
@@ -131,7 +137,7 @@ from inspect import Parameter, Signature
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS ~ private               }....................
 _PARAM_KINDS_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
 '''
 Set of all :attr:`Parameter.kind` constants to be ignored during
@@ -147,7 +153,7 @@ This includes:
   provide no syntactic means for specifying positional-only parameters.
 '''
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS ~ private : empty       }....................
 _PARAM_HINT_EMPTY = Parameter.empty
 '''
 :mod:`inspect`-specific sentinel value indicating an **unannotated parameter**
@@ -162,7 +168,7 @@ _RETURN_HINT_EMPTY = Signature.empty
 '''
 
 # ....................{ CODERS                            }....................
-def code(data: BeartypeData) -> None:
+def generate_code(data: BeartypeData) -> None:
     '''
     Set the :attr:`BeartypeData.func_code` instance variable of the passed data
     object to a raw string of Python statements implementing the wrapper

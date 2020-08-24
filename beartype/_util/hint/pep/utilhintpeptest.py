@@ -39,7 +39,7 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTRS_ARGLESS_SUPPORTED)
+    TYPING_ATTRS_SUPPORTED)
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
@@ -232,7 +232,7 @@ def die_unless_hint_pep_supported(
     # For each argumentless typing attribute associated with this hint...
     for hint_typing_attr_argless in hint_typing_attrs_argless_to_args.keys():
         # If this attribute is unsupported, raise an exception.
-        if hint_typing_attr_argless not in TYPING_ATTRS_ARGLESS_SUPPORTED:
+        if hint_typing_attr_argless not in TYPING_ATTRS_SUPPORTED:
             raise BeartypeDecorHintPepUnsupportedException(
                 '{} PEP type {!r} supertype {!r} {}'.format(
                     hint_label,
@@ -448,7 +448,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Return true only if...
     return all(
         # This attribute is supported...
-        hint_typing_attr_argless in TYPING_ATTRS_ARGLESS_SUPPORTED
+        hint_typing_attr_argless in TYPING_ATTRS_SUPPORTED
         # For each argumentless typing attribute associated with this hint.
         for hint_typing_attr_argless in (
             hint_typing_attrs_argless_to_args.keys())

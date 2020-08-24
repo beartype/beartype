@@ -86,15 +86,15 @@ class BeartypeData(object):
 
     Attributes (List)
     ----------
-    list_a : list
-        Thread-safe list of arbitrary items. Callers may use this list for any
-        purpose but should explicitly clear this list of all prior items by
-        calling the :meth:`list.clear` method *before* each such use. This and
-        the related :attr:`list_b` instance variable prevent callers from
+    set_a : set
+        Thread-safe set of arbitrary items. Callers may use this set for any
+        purpose but should explicitly clear this set of all prior items by
+        calling the :meth:`set.clear` method *before* each such use. This and
+        the related :attr:`set_b` instance variable prevent callers from
         having to repeatedly reinstantiate lists during performance-critical
         iteration, a trivial but essential optimization.
-    list_b : list
-        Thread-safe list of arbitrary items distinct from :attr:`list_a` for
+    set_b : set
+        Thread-safe set of arbitrary items distinct from :attr:`set_a` for
         external filtering purposes (e.g., :mod:`typing` types from standard
         types in PEP-compliant codepaths).
 
@@ -131,8 +131,8 @@ class BeartypeData(object):
         'func',
         'func_sig',
         'func_wrapper_name',
-        'list_a',
-        'list_b',
+        'set_a',
+        'set_b',
         '_pep_hint_placeholder_id',
     )
 
@@ -152,11 +152,11 @@ class BeartypeData(object):
            initialize these instances.
         '''
 
-        # Initialize these lists to the empty lists. Since we guarantee these
-        # lists to *ALWAYS* exist, instantiate them once here rather than
+        # Initialize these sets to the empty sets. Since we guarantee these
+        # sets to *ALWAYS* exist, instantiate them once here rather than
         # repeatedly in the reinit() method below.
-        self.list_a = list()
-        self.list_b = list()
+        self.set_a = set()
+        self.set_b = set()
 
         # Nullify all remaining instance variables.
         self.func = None

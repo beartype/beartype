@@ -198,7 +198,7 @@ PEP_HINT_TO_META = {
 
     # Builtin containers (dictionaries).
     typing.Dict[str, int]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
@@ -214,7 +214,7 @@ PEP_HINT_TO_META = {
 
     # Builtin containers (lists).
     typing.List[float]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
@@ -230,7 +230,7 @@ PEP_HINT_TO_META = {
 
     # Builtin containers (tuples).
     typing.Tuple[float, str, int]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
@@ -246,14 +246,14 @@ PEP_HINT_TO_META = {
 
     # Callables.
     typing.Callable[[], str]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
         attrs_argless_to_args={typing.Callable: (str,)},
     ),
     typing.Generator[int, float, str]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
@@ -262,7 +262,7 @@ PEP_HINT_TO_META = {
 
     # Classes.
     typing.Type[dict]: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(),
         superattrs_argless_to_args={},
@@ -320,7 +320,7 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args     ={typing.Generic: (S, T,)},
     ),
     PepCustomSingleUntypevared: PepHintMeta(
-        is_supported=False,
+        is_supported=True,
         is_typevared=False,
         superattrs=(typing.Dict[str, typing.List[str]],),
         superattrs_argless_to_args={

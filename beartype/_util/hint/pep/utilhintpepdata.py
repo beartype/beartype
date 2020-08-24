@@ -44,7 +44,8 @@ from collections import abc as collections_abc
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-TYPING_ATTR_ARGLESS_TO_TYPE = {
+#FIMXE: Rename to "TYPING_ATTR_TO_TYPE" for disambiguity.
+TYPING_ATTR_TO_TYPE = {
     typing.AbstractSet: collections_abc.Set,
     typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
     typing.AsyncIterable: collections_abc.AsyncIterable,
@@ -136,7 +137,7 @@ laughably critical oversight.
 # If the active Python interpreter targets Python >= 3.6, map
 # argumentless typing attributes first introduced in Python 3.6.
 if IS_PYTHON_AT_LEAST_3_6:
-    TYPING_ATTR_ARGLESS_TO_TYPE.update({
+    TYPING_ATTR_TO_TYPE.update({
         typing.AsyncGenerator: collections_abc.AsyncGenerator,
         typing.Collection: collections_abc.Collection,
     })
@@ -144,19 +145,19 @@ if IS_PYTHON_AT_LEAST_3_6:
 # If the active Python interpreter targets Python >= 3.7, map
 # argumentless typing attributes first introduced in Python 3.7.
 if IS_PYTHON_AT_LEAST_3_7:
-    TYPING_ATTR_ARGLESS_TO_TYPE.update({
+    TYPING_ATTR_TO_TYPE.update({
         typing.OrderedDict: collections.OrderedDict,
     })
 
 
-TYPING_ATTR_ARGLESS_TO_TYPE_GET = TYPING_ATTR_ARGLESS_TO_TYPE.get
+TYPING_ATTR_TO_TYPE_GET = TYPING_ATTR_TO_TYPE.get
 '''
-:meth:`dict.get` method of the :data:`TYPING_ATTR_ARGLESS_TO_TYPE` dictionary,
+:meth:`dict.get` method of the :data:`TYPING_ATTR_TO_TYPE` dictionary,
 globalized as a trivial optimization for efficient access elsewhere.
 '''
 
 # ....................{ CONSTANTS ~ supported             }....................
-TYPING_ATTRS_ARGLESS_SUPPORTED = frozenset(
+TYPING_ATTRS_SUPPORTED = frozenset(
     # Tuple of every "typing" object explicitly supported by a branch of the
     # pep_code_check_hint() function generating code unique to that object,
     # deeply type-checking the passed parameter or returned value against the
@@ -170,7 +171,7 @@ TYPING_ATTRS_ARGLESS_SUPPORTED = frozenset(
     # function generating code common to all such objects, only shallowly
     # type-checking the passed parameter or returned value against the
     # PEP-compliant type hint annotated by a subscription of that object.
-    tuple(TYPING_ATTR_ARGLESS_TO_TYPE.keys())
+    tuple(TYPING_ATTR_TO_TYPE.keys())
 )
 '''
 Frozen set of all **argumentless typing attributes** (i.e., public attributes

@@ -18,7 +18,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
 #which are the optimal means of performing string formatting.
 
-# ....................{ PARAMETERS                        }....................
+# ....................{ IMPORTS                           }....................
+from beartype._decor._code.codemain import (
+    PARAM_NAME_FUNC,
+    PARAM_NAME_TYPISTRY,
+)
 from inspect import Parameter
 
 # ....................{ CODE                              }....................
@@ -69,23 +73,27 @@ PARAM_KIND_TO_PEP_CODE_GET = {
     # sentinel value "__beartypistry" guaranteed to never be passed otherwise.
     {pith_root_name} = (
         args[{{arg_index}}] if __beartype_args_len > {{arg_index}} else
-        kwargs.get({{arg_name!r}}, __beartypistry)
+        kwargs.get({{arg_name!r}}, {param_name_typistry})
     )
 
     # If this parameter was passed...
-    if {pith_root_name} is not __beartypistry:'''.format(
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR),
+    if {pith_root_name} is not {param_name_typistry}:'''.format(
+        param_name_typistry=PARAM_NAME_TYPISTRY,
+        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+    ),
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     Parameter.KEYWORD_ONLY: '''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartypistry" guaranteed to never be passed otherwise.
-    {pith_root_name} = kwargs.get({{arg_name!r}}, __beartypistry)
+    {pith_root_name} = kwargs.get({{arg_name!r}}, {param_name_typistry})
 
     # If this parameter was passed...
-    if {pith_root_name} is not __beartypistry:'''.format(
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR),
+    if {pith_root_name} is not {param_name_typistry}:'''.format(
+        param_name_typistry=PARAM_NAME_TYPISTRY,
+        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+    ),
 
     # Snippet iteratively localizing all variadic positional parameters.
     Parameter.VAR_POSITIONAL: '''
@@ -100,11 +108,18 @@ that callable's next parameter to be type-checked.
 '''
 
 # ....................{ CODE ~ return                     }....................
-PEP_CODE_GET_RETURN = '''
+PEP_CODE_CHECK_RETURN_PREFIX = '''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {pith_root_name} = __beartype_func(*args, **kwargs)
-    ('''.format(pith_root_name=PEP_CODE_PITH_ROOT_EXPR)
+    {pith_root_name} = {param_name_func}(*args, **kwargs)
+
+    # Noop required to artifically increase indentation level. Note that
+    # CPython implicitly optimizes this conditional away - which is nice.
+    if True:
+    '''.format(
+        param_name_func=PARAM_NAME_FUNC,
+        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+    )
 '''
 PEP-compliant code snippet calling the decorated callable and localizing the
 value returned by that call.
@@ -116,11 +131,16 @@ indentation level and thus uniformly operate on both:
 * Parameters localized via values of the :data:`PARAM_KIND_TO_PEP_CODE_GET`
   dictionary.
 * Return values localized via this sippet.
+
+See Also
+----------
+https://stackoverflow.com/a/18124151/2809027
+    Bytecode disassembly demonstrating that CPython optimizes away the spurious
+   ``If True:`` conditional hardcoded into this snippet.
 '''
 
 
-PEP_CODE_RETURN_CHECKED = '''
-    )
+PEP_CODE_CHECK_RETURN_SUFFIX = '''
     return {pith_root_name}'''.format(pith_root_name=PEP_CODE_PITH_ROOT_EXPR)
 '''
 PEP-compliant code snippet returning from the wrapper function the successfully
@@ -135,13 +155,15 @@ Note that this snippet intentionally terminates on a line containing only the
 PEP_CODE_CHECK_HINT_ROOT = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
-        if not ({{hint_child_placeholder}}):
+        if not ({{hint_child_placeholder}}
+        ):
             raise __beartype_raise_pep_call_exception(
-                func=__beartype_func,
+                func={param_name_func},
                 param_or_return_name={pith_root_name},
                 param_or_return_value={pith_root_expr},
-        )
+            )
 '''.format(
+    param_name_func=PARAM_NAME_FUNC,
     pith_root_name=PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
     pith_root_expr=PEP_CODE_PITH_ROOT_EXPR,
 )

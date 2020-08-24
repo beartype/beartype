@@ -16,8 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXWE: We then require two codepaths in the breadth-first search implemented
-#by the pep_code_check_hint() function for each supported "typing" attribute,
+#FIXWE: We require two codepaths in the breadth-first search implemented by the
+#pep_code_check_hint() function for each supported "typing" attribute,
 #especially when we begin generating code type-checking container types:
 #* If "IS_PYTHON_AT_LEAST_3_8", generate optimal code leveraging ":=" to
 #  localize lengths, indices, and piths to avoid recomputing the same data over
@@ -30,11 +30,52 @@ This private submodule is *not* intended for importation by downstream callers.
 #Fortunately, Python >=3.8 is the inevitable future, so this issue will
 #naturally resolve itself over time. *shrug*
 
-#FIXME: Trivially type-check instances of types subclassing the
-#"typing.Protocol" superclass decorated by the @runtime_checkable decorator,
-#detectable at runtime by the existence of both "typing.Protocol" in their
-#"__mro__" dunder attribute *AND* the protocol-specific private
-#"_is_runtime_protocol" instance variable set to True.
+#FIXME: On second thought, we probably should randomly type-check a single
+#index of each nested containers. Why? Because doing so gives us statistical
+#coverage guarantees that simply type-checking a single static index fail to --
+#coverage guarantees that allow us to correctly claim that we do eventually
+#type-check all container items given a sufficient number of calls. To do so,
+#derived from this deeper analysis at:
+#    https://gist.github.com/terrdavis/1b23b7ff8023f55f627199b09cfa6b24#gistcomment-3237209
+#
+#To do so:
+#* Add a new import to "beartype._decor.main" resembling:
+#    import random as __beartype_random
+#* Obtain random indices from the current pith with code snippets resembling:
+#'''
+#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(len({pith_curr_name}).bit_length()) % len({pith_curr_name})
+#'''
+#
+#Of course, we probably don't want to even bother localizing
+#"__beartype_got_index". Instead, just look up that index directly in the
+#current pith.
+#FIXME: Note that we should optimize away redundant len() calls by localizing a
+#variable to length: e.g.,
+#'''
+#{indent_curr}__beartype_got_len = len({pith_curr_name}
+#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(__beartype_got_len).bit_length()) % __beartype_got_len
+#'''
+#
+#See also:
+#    https://stackoverflow.com/questions/31559933/perfomance-of-lenlist-vs-reading-a-variable
+#FIXME: We should ultimately make this user-configurable (e.g., as a global
+#configuration setting). Some users might simply prefer to *ALWAYS* look up a
+#fixed 0-based index (e.g., "0", "-1"). For the moment, however, the above
+#probably makes the most sense as a reasonably general-purpose default.
+
+#FIXME: Type-check instances of user-defined subclasses subclassing multiple
+#"typing" pseudo-superclasses. While we currently do iterate over these
+#superclasses properly in the breadth-first search implemented below, we
+#currently do *NOT* generate sane code type-checking such instances against
+#these superclasses and thus raise exceptions on detecting such subclasses.
+#See the related "FIXME:" comment preceding this test below.:
+#           elif len(hint_curr_attrs_to_args) > 2:
+
+#FIXME: Type-check instances of types subclassing the "typing.Protocol"
+#superclass decorated by the @runtime_checkable decorator, detectable at
+#runtime by the existence of both "typing.Protocol" in their "__mro__" dunder
+#attribute *AND* the protocol-specific private "_is_runtime_protocol" instance
+#variable set to True.
 #
 #Specifically, refactor the codebase as follows to support protocols:
 #
@@ -147,6 +188,7 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ROOT_EXPR,
 )
 # from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attrs_argless_to_args)
 from beartype._util.hint.pep.utilhintpeptest import (
@@ -164,40 +206,6 @@ from typing import (
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TODO                              }....................
-#FIXME: On second thought, we probably should randomly type-check a single
-#index of each nested containers. Why? Because doing so gives us statistical
-#coverage guarantees that simply type-checking a single static index fail to --
-#coverage guarantees that allow us to correctly claim that we do eventually
-#type-check all container items given a sufficient number of calls. To do so,
-#derived from this deeper analysis at:
-#    https://gist.github.com/terrdavis/1b23b7ff8023f55f627199b09cfa6b24#gistcomment-3237209
-#
-#To do so:
-#* Add a new import to "beartype._decor.main" resembling:
-#    import random as __beartype_random
-#* Obtain random indices from the current pith with code snippets resembling:
-#'''
-#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(len({pith_curr_name}).bit_length()) % len({pith_curr_name})
-#'''
-#
-#Of course, we probably don't want to even bother localizing
-#"__beartype_got_index". Instead, just look up that index directly in the
-#current pith.
-#FIXME: Note that we should optimize away redundant len() calls by localizing a
-#variable to length: e.g.,
-#'''
-#{indent_curr}__beartype_got_len = len({pith_curr_name}
-#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(__beartype_got_len).bit_length()) % __beartype_got_len
-#'''
-#
-#See also:
-#    https://stackoverflow.com/questions/31559933/perfomance-of-lenlist-vs-reading-a-variable
-#FIXME: We should ultimately make this user-configurable (e.g., as a global
-#configuration setting). Some users might simply prefer to *ALWAYS* look up a
-#fixed 0-based index (e.g., "0", "-1"). For the moment, however, the above
-#probably makes the most sense as a reasonably general-purpose default.
 
 # ....................{ CONSTANTS ~ hint : meta           }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely
@@ -343,24 +351,25 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
+    # Localize attributes of this dataclass for negligible efficiency gains.
+    # Notably, alias:
+    #
+    # * The generic "data.set_a" set as the readable "hint_childs_nonpep",
+    #   accessed below as the set of all PEP-noncompliant types listed by the
+    #   currently visited hint.
+    # * The generic "data.set_b" set as the readable "hint_childs_pep",
+    #   accessed below as the set of all PEP-compliant types listed by the
+    #   currently visited hint.
+    get_next_pep_hint_placeholder = data.get_next_pep_hint_placeholder
+    hint_childs_nonpep = data.set_a
+    hint_childs_pep    = data.set_b
+
+    # ..................{ HINT ~ root                       }..................
     # Top-level hint relocalized for disambiguity. For the same reason, delete
     # the passed parameter whose name is ambiguous within the context of this
     # code generator.
     hint_root = hint
     del hint
-
-    # Localize attributes of this dataclass for negligible efficiency gains.
-    # Notably, alias:
-    #
-    # * The generic "data.list_a" list as the readable "hint_childs_nonpep",
-    #   used below as the list of all PEP-noncompliant types listed by the
-    #   currently visited hint.
-    # * The generic "data.list_b" list as the readable "hint_childs_pep",
-    #   used below as the list of all PEP-compliant types listed by the
-    #   currently visited hint.
-    get_next_pep_hint_placeholder = data.get_next_pep_hint_placeholder
-    hint_childs_nonpep = data.list_a
-    hint_childs_pep    = data.list_b
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
@@ -368,17 +377,26 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # Human-readable label describing the root hint in exception messages.
     hint_root_label = EXCEPTION_CACHED_PLACEHOLDER + ' ' + repr(hint_root)
 
-    # Human-readable label prefixing the representations of child hints of this
-    # root hint in exception messages.
-    #
-    # Note that this label intentionally only describes the root and currently
-    # iterated child hints rather than the root hint, the currently iterated
-    # child hint, and all interim child hints leading from the former to the
-    # latter. The latter approach would be non-human-readable and insane.
-    hint_child_label = hint_root_label + ' child '
-
+    # ..................{ HINT ~ current                    }..................
     # Currently visited hint.
     hint_curr = None
+
+    # Origin type (i.e., non-"typing" superclass suitable for shallowly
+    # type-checking the current pith against the currently visited hint by
+    # passing both to the isinstance() builtin) of this hint if this hint
+    # originates from such a superclass *OR* "None" otherwise (i.e., if this
+    # hint originates from no such superclass).
+    hint_curr_type_origin = None
+
+    # Dictionary mapping each argumentless typing attribute (i.e., public
+    # attribute of the "typing" module uniquely identifying the currently
+    # visited PEP-compliant type hint sans arguments) associated with this hint
+    # to the tuple of those arguments.
+    hint_curr_attrs_to_args = None
+
+    # Current argumentless typing attribute associated with this hint (e.g.,
+    # "Union" if "hint_curr == Union[int, str]").
+    hint_curr_attr = None
 
     # Placeholder string to be globally replaced in the Python code snippet to
     # be returned (i.e., "func_code") by a Python code snippet type-checking
@@ -395,6 +413,23 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # appropriate for the currently visited hint.
     indent_curr = CODE_INDENT_3
 
+    # ..................{ HINT ~ child                      }..................
+    # Current tuple of all subscripted arguments defined on this hint (e.g.,
+    # "(int, str)" if "hint_curr == Union[int, str]").
+    hint_childs = None
+
+    # Currently iterated subscripted argument defined on this hint.
+    hint_child = None
+
+    # Human-readable label prefixing the representations of child hints of this
+    # root hint in exception messages.
+    #
+    # Note that this label intentionally only describes the root and currently
+    # iterated child hints rather than the root hint, the currently iterated
+    # child hint, and all interim child hints leading from the former to the
+    # latter. The latter approach would be non-human-readable and insane.
+    hint_child_label = hint_root_label + ' child '
+
     # Placeholder string to be globally replaced in the Python code snippet to
     # be returned (i.e., "func_code") by a Python code snippet type-checking
     # the child pith expression (i.e., "pith_child_expr") against the currently
@@ -405,6 +440,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # hint of the currently visited parent hint.
     hint_child_expr = None
 
+    # ..................{ METADATA                          }..................
     # Fixed list of metadata describing the root hint.
     hint_root_meta = acquire_fixed_list(_HINT_META_SIZE)
     hint_root_meta[_HINT_META_INDEX_HINT] = hint_root
@@ -437,23 +473,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # "hints_meta" list.
     hints_meta_index_last = 0
 
-    # Dictionary mapping each argumentless typing attribute (i.e., public
-    # attribute of the "typing" module uniquely identifying the currently
-    # visited PEP-compliant type hint sans arguments) associated with this hint
-    # to the tuple of those arguments.
-    hint_curr_typing_attrs_argless_to_args = None
-
-    # Current argumentless typing attribute associated with this hint (e.g.,
-    # "Union" if "hint_curr == Union[int, str]").
-    hint_curr_typing_attr_argless = None
-
-    # Current tuple of all subscripted arguments defined on this hint (e.g.,
-    # "(int, str)" if "hint_curr == Union[int, str]").
-    hint_childs = None
-
-    # Currently iterated subscripted argument defined on this hint.
-    hint_child = None
-
+    # ..................{ CODE                              }..................
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
@@ -473,6 +493,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # root hint.
     func_code = func_root_code
 
+    # ..................{ SEARCH                            }..................
     # While the 0-based index of metadata describing the next visited hint in
     # the "hints_meta" list does *NOT* exceed that describing the last
     # visitable hint in this list, there remains at least one hint to be
@@ -508,6 +529,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # *NEVER* raise an exception for that hint.
             die_unless_hint_pep_supported(
                 hint=hint_curr, hint_label=hint_child_label)
+            # Else, this hint is supported.
 
             # Assert that this hint is unignorable. Iteration below generating
             # code for child hints of the current parent hint is *REQUIRED* to
@@ -516,12 +538,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert hint_curr not in HINTS_IGNORABLE, (
-                '{} {} {!r} '.format(
-                    hint_child_label, hints_meta_index_curr, hint_curr))
+                '{} {!r} ignorable.'.format(hint_child_label, hint_curr))
 
             # Dictionary mapping each argumentless typing attribute of this
             # hint to the tuple of those arguments.
-            hint_curr_typing_attrs_argless_to_args = (
+            hint_curr_attrs_to_args = (
                 get_hint_pep_typing_attrs_argless_to_args(hint_curr))
 
             # If this hint has *NO* such attributes, raise an exception.
@@ -529,9 +550,105 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # Note that this should *NEVER* happen, as that getter function
             # should always return a non-empty dictionary when passed a
             # PEP-compliant type hint. Yet, sanity checks preserve sanity.
-            if not hint_curr_typing_attrs_argless_to_args:
+            if not hint_curr_attrs_to_args:
                 raise BeartypeDecorHintPepException(
                     '{} {!r} associated with no "typing" types.'.format(
+                        hint_child_label, hint))
+            #FIXME: Remove after implementing support for user-defined
+            #subclasses of multiple "typing" attributes, which will require
+            #generating different code for hints associated with multiple
+            #attributes and hints associated with only one attribute.
+            #
+            #Ideally, we should add new string global constants to "_pepsnip"
+            #modelled after the existing suite of "PEP_CODE_CHECK_HINT_UNION_*"
+            #constants -- except substituting " or'''" with " and'''".
+            #
+            #Given these, we can then conditionally generate code concatenating
+            #the "func_curr_code" produced by each iteration of this subloop
+            #into the final "func_curr_code" for this subloop, taking care to
+            #note that the " and" substring suffixing that code *MUST* be
+            #stripped (in the same way that we currently do for unions).
+            #
+            #Note that multiple inheritance is an uncommon edge case and that
+            #we should thus instead optimize for the common case in which the
+            #"hint_curr_attrs_to_args" dictionary contains only one item.
+            #FIXME: Indeed, it might be best to treat the multiple inheritance
+            #case as analogous to the "Union" case. If one considers it, there
+            #structure should be nearly identical -- the sole difference being
+            #the usage of " and " rather than " or " as the boolean operator
+            #connecting the code generated for each child. In this respect, we
+            #could then consider each superclass of a user-defined subclass to
+            #be a "child hint" of that subclass.
+            #
+            #To render the resulting logic fully orthogonal, we might then:
+            #refactor the get_hint_pep_typing_attrs_argless_to_args() getter
+            #into a get_hint_pep_typing_attr_argless_to_args() getter, which:
+            #
+            #* Detects whether the passed hint is a user-defined subclass
+            #  subclassing:
+            #  * One "typing" type, in which case that argumentless type and
+            #    its arguments would simply be returned as is.
+            #  * Two or more "typing" types, *THINGS GET TRICKY.* Basically,
+            #    we want to fabricate a fake argumentless "typing" attribute
+            #    called something like:
+            #        # In "beartype._util.hint.pep.utilhintpepdata":
+            #        UserSubclassMultiple = object()
+            #    Given that, we could then return the following:
+            #        # In get_hint_pep_typing_attr_argless_to_args():
+            #        return (
+            #            UserSubclassMultiple,
+            #            hint.__orig_bases__,
+            #        )
+            #* In all other cases, the passed "typing" type stripped of
+            #  arguments and those arguments would simply be returned.
+            #
+            #Then refactor the code below as follows:
+            #
+            #* Remove the following statement:
+            #      for hint_curr_attr, hint_childs in (
+            #          hint_curr_attrs_to_args.items()):
+            #* Deindent off of the code formerly indented under that.
+            #* Add a new "elif hint_curr_attr is UserSubclassMultiple:" test
+            #  below, whose code would basically be identical to the existing
+            #  "if hint_curr_attr is Union:" test below. Indeed, we should
+            #  inspect that test and if, by inspection, we believe the two can
+            #  indeed be fully unified, we should do so as follows:
+            #  * Define above:
+            #      HINT_ATTR_BOOL_TO_OPERATOR = {
+            #          Union: 'or',
+            #          UserSubclassMultiple: 'and',
+            #      )
+            #  * Replace the hardcoded 'or' in both
+            #    "PEP_CODE_CHECK_HINT_UNION_ARG_PEP" and
+            #    "PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP" with a
+            #    "{hint_curr_attr_bool_operator}" format variable.
+            #  * Rename the "PEP_CODE_CHECK_HINT_UNION_*" suite of globals to
+            #    "PEP_CODE_CHECK_HINT_BOOL_*" instead.
+            #  * Refactor below:
+            #      # Refactor this...
+            #      if hint_curr_attr is Union:
+            #
+            #      # ...into this:
+            #      hint_curr_attr_bool_operator = HINT_ATTR_BOOL_TO_OPERATOR.get(
+            #          hint_curr_attr, None)
+            #      if hint_curr_attr_bool_operator is not None:
+            #
+            #Welp, that's pretty brilliant. Nearly instantaneous support for
+            #multiple inheritance as well as improving efficiency by
+            #eliminating the nested "hint_curr_attrs_to_args" iteration below.
+            #FIXME: We should implement at least the refactoring of
+            #get_hint_pep_typing_attrs_argless_to_args() into
+            #get_hint_pep_typing_attr_argless_to_args() outlined above, as the
+            #latter will dramatically improve efficiency for us.
+
+            # Else if this hint has multiple such attributes, this hint is a
+            # user-defined subclass subclassing multiple types -- which is
+            # currently unsupported, as we simply lack sufficient time.
+            elif len(hint_curr_attrs_to_args) > 2:
+                raise BeartypeDecorHintPepException(
+                    '{} {!r} user-defined subclass of '
+                    'multiple "typing" types '
+                    'currently unsupported by @beartype.'.format(
                         hint_child_label, hint))
 
             # For each argumentless typing attribute of this hint and
@@ -574,8 +691,45 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             #   the aforementioned locality issue via the "nonlocal" keyword at
             #   a substantial up-front performance cost of redeclaring these
             #   closures on each invocation of this function.
-            for hint_curr_typing_attr_argless, hint_childs in (
-                hint_curr_typing_attrs_argless_to_args.items()):
+            for hint_curr_attr, hint_childs in (
+                hint_curr_attrs_to_args.items()):
+
+                # If this attribute is currently unsupported, raise an
+                # exception.
+                #
+                # Note the human-readable label prefixing the representations
+                # of child PEP-compliant type hints is unconditionally passed.
+                # Since the root hint has already been validated to be
+                # supported by the above call to the same function, this call
+                # is guaranteed to *NEVER* raise an exception for that hint.
+                die_unless_hint_pep_supported(
+                    hint=hint_curr_attr, hint_label=hint_child_label)
+                # Else, this attribute is supported.
+
+                # Assert that this attribute is either unignorable or "Union",
+                # which is typically ignorable but *NOT* in this edge case.
+                # Specifically, the currently visited hint *MUST* be either:
+                # * A user-defined class subclassing one or more "typing"
+                #   pseudo-superclasses, in which case the "typing" module has
+                #   already guaranteed these pseudo-superclasses and thus this
+                #   attribute to be unignorable. Why? Because all ignorable
+                #   attributes *CANNOT* be subclassed: e.g.,
+                #       >>> import typing
+                #       >>> class UhOh(typing.Any): pass
+                #       TypeError: Cannot subclass <class 'typing._SpecialForm'>
+                #       >>> class UhOh(typing.Union[typing.Any]): pass
+                #       TypeError: Cannot subclass <class 'typing._SpecialForm'>
+                # * Any other PEP-compliant type hint, this attribute is that
+                #   hint stripped of arguments. However, by the above
+                #   assertion, this hint (and thus this hint stripped of
+                #   arguments) has already been guaranteed to be unignorable.
+                #   Regardless of whether this attribute is the otherwise
+                #   ignorable attribute "Union", this attribute is unignorable.
+                assert (
+                    hint_curr_attr is Union or
+                    hint_curr_attr not in HINTS_IGNORABLE
+                ), ('{} {!r} ignorable.'.format(
+                    hint_child_label, hint_curr_attr))
 
                 # ............{ UNIONS                            }............
                 # If this is a union...
@@ -587,9 +741,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # "List[int]", in which both the parent "List" and child "int"
                 # types represent physical types to be type-checked. Ergo,
                 # unions themselves impose no narrowing of the pith expression.
-                if hint_curr_typing_attr_argless is Union:
-                    # If this union is unsubscripted, raise an exception. Note
-                    # that this should *NEVER* happen, as:
+                if hint_curr_attr is Union:
+                    # If this union is unsubscripted, raise an exception.
+                    #
+                    # Note that this should *NEVER* happen, as:
                     #
                     # * The unsubscripted "typing.Union" object is explicitly
                     #   listed in the "HINTS_IGNORABLE" set and should thus
@@ -628,7 +783,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                             if is_hint_pep(hint_child):
                                 # Filter this argument into the list of
                                 # PEP-compliant arguments.
-                                hint_childs_pep.append(hint_child)
+                                hint_childs_pep.add(hint_child)
 
                                 #FIXME: Additionally, if this argument also
                                 #defines the "__origin__" dunder attribute with
@@ -645,7 +800,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                             # case, filter this argument into the list of
                             # PEP-noncompliant arguments.
                             else:
-                                hint_childs_nonpep.append(hint_child)
+                                hint_childs_nonpep.add(hint_child)
                         # Else, this argument is ignorable.
                     # All subscripted arguments of this union are now
                     # prefiltered into the list of either PEP-compliant or
@@ -827,251 +982,82 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                         # Format the "indent_curr" prefix into this code
                         # deferred above for efficiency.
                         ).format(indent_curr=indent_curr)
-
-                        # Inject this code into the body of this wrapper.
-                        func_code = func_code.replace(
-                            hint_curr_placeholder, func_curr_code)
                     # Else, this snippet is its initial value and thus
                     # ignorable.
 
-                #FIXME: Add provisional support for hints defining the
-                #"__origin__" dunder attribute with a value that is a
-                #non-"typing" type (which *SHOULD* always be the case, but
-                #let's be sure). Specifically:
-                #* Define a new "utilhintpepget.get_hint_pep_origin_or_none()
-                #  getter returning either this attribute if defined or "None".
-                #* Define an "else:" condition here passing this hint to that
-                #  getter to decide whether this hint even has an origin.
-                #* If so, type-check this hints with the existing
-                #  "PEP_CODE_CHECK_HINT_NONPEP_TYPE" attribute for now.
-                #* Add all such attributes to the
-                #  _TYPING_ATTRS_ARGLESS_SUPPORTED" set.
-                #FIXME: Woah, boy. As with all things, the "typing" module yet
-                #again screwed the irrational pooch by overloading the
-                #"__origin__" dunder attribute to mean different things in
-                #different contexts. Moreover, this attribute is only
-                #conditionally available under certain irrational contexts.
-                #Notably:
-                #    >>> import typing
-                #    >>> typing.Union.__origin__
-                #    AttributeError: '_SpecialForm' object has no attribute '__origin__'
-                #    >>> typing.Union[int].__origin__
-                #    AttributeError: type object 'int' has no attribute '__origin__'
-                #    >>> typing.Union[int,str,].__origin__
-                #    typing.Union    # <---- this is balls crazy, right here
-                #    >>> typing.List.__origin__
-                #    list
-                #    >>> typing.List[int].__origin__
-                #    list
+                # ............{ FALLBACK                          }............
+                # Else, fallback to generating trivial code shallowly
+                # type-checking the current pith as an instance of the
+                # PEP-noncompliant non-"typing" origin class originating this
+                # argumentless "typing" attribute (e.g., "list" for the
+                # attribute "List" associated with the hint "List[int]").
                 #
-                #So, we sadly can't rely on that attribute for detection of
-                #"typing" objects safely testable by passing the value of that
-                #attribute to isinstance(). Moreover, note that there are two
-                #edge cases here:
-                #
-                #* "typing.Protocol" subclasses decorated by the
-                #  @runtime_checkable decorator, detectable at runtime by the
-                #  existence of both "typing.Protocol" in their "__mro__"
-                #  dunder attribute *AND* the protocol-specific private
-                #  "_is_runtime_protocol" instance variable set to True. Yes,
-                #  this is balls crazy. Technically, *ALL* such subclasses are
-                #  safely testable via isinstance() -- but we absolutely don't
-                #  want to do that unless we have to, because their
-                #  __subclasshook__() dunder method implementation is insanely
-                #  inefficient in a way that only "typing" authors could have
-                #  written. That said, we simply don't have sufficient time to
-                #  do this right way; so let's just shrug our shoulders for now
-                #  and test these objects with isinstance(). (Ideally, we'd at
-                #  least hardcode type-checks for core "typing.Protocol"
-                #  subclasses defined by the "typing" module itself, such as
-                #  "typing.SupportsInt" and so on) *WITHOUT* calling
-                #  isinstance() on those subclasses by generating optimal code
-                #  ourselves. However, the
-                #  typing.Protocol.__init_subclass__._proto_hook() implementing
-                #  structural subtyping checks is sufficiently non-trivial that
-                #  we *REALLY* don't want to get into that now. (File this away
-                #  for another day, please.)
-                #  There are various ways to trivially enable this. For
-                #  example, we could:
-                #  * Define a new utilhintpeptest.is_hint_pep_protocol() tester
-                #    returning True if the passed object is a
-                #    @runtime_checkable-decorated Protocol. See below for the
-                #    logic necessary to do so. This is non-trivial, as
-                #    "Protocol" was only introduced under Python >= 3.8.
-                #  * Define a new utilhinttest.is_hint_isinstanceable() tester
-                #    returning True if the passed object is a type that either:
-                #    * Is a non-"typing" type.
-                #    * Is a @runtime_checkable-decorated Protocol subclass.
-                #  * Call the is_hint_isinstanceable() tester *BEFORE* the
-                #    is_hint_pep() tester everywhere in this codebase. Notably:
-                #    * Revise:
-                #      # ...this test...
-                #      elif isinstance(hint_curr, type):
-                #      # ...into this test.
-                #      elif is_hint_isinstanceable(hint_curr):
-                #    * Shift that test before the "if is_hint_pep(hint_curr):"
-                #      test above.
-                #    * Revise the above union-specific tests from:
-                #      # ...this logic...
-                #           # If this argument is PEP-compliant...
-                #           if is_hint_pep(hint_child):
-                #               # Filter this argument into the list of
-                #               # PEP-compliant arguments.
-                #               hint_childs_pep.append(hint_child)
-                #
-                #           # Else, this argument is PEP-noncompliant. In this
-                #           # case, filter this argument into the list of
-                #           # PEP-noncompliant arguments.
-                #           else:
-                #               hint_childs_nonpep.append(hint_child)
-                #
-                #      # ...into this logic.
-                #           # If this argument is an isinstance()-compatible
-                #           # type, filter this argument into the list of these
-                #           # types.
-                #           if is_hint_isinstanceable(hint_child):
-                #               hint_childs_nonpep.append(hint_child)
-                #           # Else, this argument is *NOT* an
-                #           # isinstance()-compatible type. In this case...
-                #           else:
-                #               # If this argument is *NOT* a PEP-compliant
-                #               # type hint, raise an exception.
-                #               die_unless_hint_pep(
-                #                   hint=hint_child, hint_label=???)
-                #               # Else, this argument is a PEP-compliant
-                #               # type hint.
-                #
-                #               # Filter this argument into the list of
-                #               # PEP-compliant arguments.
-                #               hint_childs_pep.append(hint_child)
-                #
-                #  Note lastly that support for protocols conditionally depends
-                #  on the current Python version. Besically:
-                #  * Under Python < 3.8, the following abstract base classes
-                #    (ABCs) are standard ABCs and thus trivially support
-                #    isinstance() as is:
-                #    * typing.SupportsInt
-                #    * typing.SupportsFloat
-                #    * typing.SupportsComplex
-                #    * typing.SupportsBytes
-                #    * typing.SupportsAbs
-                #    * typing.SupportsRound
-                #    Note that "typing.Protocol" does *NOT* exist here. Ergo,
-                #    the is_hint_pep_protocol() tester should return True
-                #    under Python < 3.8 only if the passed hint is an instance
-                #    of one of these six ABCs. This is essential, as these
-                #    instances would otherwise be treated as PEP-compliant
-                #    type hints -- which they're not, really.
-                #  * Under Python >= 3.8, the "typing.Protocol" superclass
-                #    appears and all of the above ABCs both subclass that *AND*
-                #    are decorated by @runtime_checkable. Lastly, a new
-                #    "typing.SupportsIndex" ABC is introduced as well. So, we
-                #    need to check that the protocol-specific private
-                #    "_is_runtime_protocol" instance variable is set to True
-                #    for "Protocol" subclasses.
-                #* "typing" objects whose argless "typing" attributes are
-                #  neither "Callable", "Union", "Literal", "Final", nor
-                #  "ClassVar" (and possibly more) but that also define an
-                #  "__origin__" attribute. We'll want to manually define a
-                #  public global frozenset constant of these objects somewhere.
-                #  Note, however, that this is complicated by the fact that
-                #  newer Python versions probably define a larger number of
-                #  these objects. The Python 3.8 version of this set (which is
-                #  probably the most complete, albeit also the least
-                #  backward-compatible) would appear to be:
-                #      Hashable = _alias(collections.abc.Hashable, ())  # Not generic.
-                #      Awaitable = _alias(collections.abc.Awaitable, T_co)
-                #      Coroutine = _alias(collections.abc.Coroutine, (T_co, T_contra, V_co))
-                #      AsyncIterable = _alias(collections.abc.AsyncIterable, T_co)
-                #      AsyncIterator = _alias(collections.abc.AsyncIterator, T_co)
-                #      Iterable = _alias(collections.abc.Iterable, T_co)
-                #      Iterator = _alias(collections.abc.Iterator, T_co)
-                #      Reversible = _alias(collections.abc.Reversible, T_co)
-                #      Sized = _alias(collections.abc.Sized, ())  # Not generic.
-                #      Container = _alias(collections.abc.Container, T_co)
-                #      Collection = _alias(collections.abc.Collection, T_co)
-                #      Callable = _VariadicGenericAlias(collections.abc.Callable, (), special=True)
-                #      AbstractSet = _alias(collections.abc.Set, T_co)
-                #      MutableSet = _alias(collections.abc.MutableSet, T)
-                #      Mapping = _alias(collections.abc.Mapping, (KT, VT_co))
-                #      MutableMapping = _alias(collections.abc.MutableMapping, (KT, VT))
-                #      Sequence = _alias(collections.abc.Sequence, T_co)
-                #      MutableSequence = _alias(collections.abc.MutableSequence, T)
-                #      ByteString = _alias(collections.abc.ByteString, ())  # Not generic
-                #      Tuple = _VariadicGenericAlias(tuple, (), inst=False, special=True)
-                #      List = _alias(list, T, inst=False)
-                #      Deque = _alias(collections.deque, T)
-                #      Set = _alias(set, T, inst=False)
-                #      FrozenSet = _alias(frozenset, T_co, inst=False)
-                #      MappingView = _alias(collections.abc.MappingView, T_co)
-                #      KeysView = _alias(collections.abc.KeysView, KT)
-                #      ItemsView = _alias(collections.abc.ItemsView, (KT, VT_co))
-                #      ValuesView = _alias(collections.abc.ValuesView, VT_co)
-                #      ContextManager = _alias(contextlib.AbstractContextManager, T_co)
-                #      AsyncContextManager = _alias(contextlib.AbstractAsyncContextManager, T_co)
-                #      Dict = _alias(dict, (KT, VT), inst=False)
-                #      DefaultDict = _alias(collections.defaultdict, (KT, VT))
-                #      OrderedDict = _alias(collections.OrderedDict, (KT, VT))
-                #      Counter = _alias(collections.Counter, T)
-                #      ChainMap = _alias(collections.ChainMap, (KT, VT))
-                #      Generator = _alias(collections.abc.Generator, (T_co, T_contra, V_co))
-                #      AsyncGenerator = _alias(collections.abc.AsyncGenerator, (T_co, T_contra))
-                #      Type = _alias(type, CT_co, inst=False)
-                #  Yes, we'll need to bloody manually list them all. *shrug*
-                #
-                #Note lastly that there's really no tangible benefit to relying
-                #on the "__origin__" attribute anywhere. It's unreliable, so
-                #we'd might as well dispense entirely with that attribute by
-                #defining a public global *DICTIONARY* constant mapping each
-                #such object to its well-known origin type: e.g.,
-                #
-                #    TYPING_ATTR_ARGLESS_TO_TYPE = {
-                #        ...
-                #        # This is *DEFINITELY* specific to either Python 3.7
-                #        # or Python 3.8. Research us up, please.
-                #        typing.AsyncGenerator = collections.abc.AsyncGenerator,
-                #        typing.Type: type,
-                #    }
-                #
-                #Note that that dictionary will be grotesquely large and should
-                #thus be stuffed away into its own discrete utility submodule
-                #-- say, a new "beartype._util.hint.pep.utilhintpepmap"
-                #submodule. (Yay for awfulness!)
-                #
-                #Let's not use the term "origin" anywhere either, as that term
-                #is sufficiently ambiguous that it means nothing. Christ on a
-                #ruptured pogo stick!
+                # This fallback implements nominal implicit support for
+                # argumentless "typing" attributes currently *NOT* explicitly
+                # supported above.
+                else:
+                    # Origin type of this attribute if any *OR* raise an
+                    # exception otherwise -- which should *NEVER* happen, as
+                    # this attribute was validated above to be supported.
+                    hint_curr_type_origin = get_hint_type_origin(hint_curr)
 
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # CAVEATS: Synchronize changes here with logic below.
+                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    #FIXME: Refactor to leverage f-strings after dropping
+                    #Python 3.5 support, which are the optimal means of
+                    #performing string formatting.
+
+                    # Code type-checking the current pith against this class.
+                    func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE.format(
+                        indent_curr=indent_curr,
+                        pith_curr_expr=pith_curr_expr,
+                        # Python expression evaluating to this class when
+                        # accessed via the private "__beartypistry" parameter.
+                        hint_curr_expr=register_typistry_type(
+                            hint_curr),
+                    )
         # Else, this hint is *NOT* PEP-compliant.
 
         # ................{ CLASSES                           }................
-        # If this hint is a class...
+        # If this hint is a non-"typing" class...
         #
-        # Note this class is guaranteed to be a subscripted argument of a
-        # PEP-compliant type hint (e.g., the "int" in "Union[Dict[str, str],
-        # int]") rather than the root type hint. Why? Because if this class
-        # were the root type hint, it would have been passed to the faster
-        # PEP-noncompliant code generation codepath instead.
-
-        #FIXME: Shift above and call get_hint_isinstanceable_type_or_none()
-        #instead to generically support *EVERYTHING.*
+        # Note that:
+        #
+        # * This test is intentionally performed *AFTER* that testing whether
+        #   this hint is PEP-compliant, thus guaranteeing this hint to be a
+        #   PEP-noncompliant non-"typing" class rather than a PEP-compliant
+        #   type hint originating from such a class. Since many hints are both
+        #   PEP-compliant *AND* originate from such a class (e.g., the "List"
+        #   in "List[int]", PEP-compliant but originating from the
+        #   PEP-noncompliant builtin class "list"), testing these hints first
+        #   for PEP-compliance ensures we generate non-trivial code deeply
+        #   type-checking these hints instead of trivial code only shallowly
+        #   type-checking the non-"typing" classes from which they originate.
+        # * This class is guaranteed to be a subscripted argument of a
+        #   PEP-compliant type hint (e.g., the "int" in "Union[Dict[str, str],
+        #   int]") rather than the root type hint. Why? Because if this class
+        #   were the root type hint, it would have already been passed into a
+        #   faster submodule generating PEP-noncompliant code instead.
         elif isinstance(hint_curr, type):
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAVEATS: Synchronize changes here with similar logic above.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             #FIXME: Refactor to leverage f-strings after dropping Python 3.5
             #support, which are the optimal means of performing string
             #formatting.
 
-            # Inject this code into the body of this wrapper function.
-            func_code = func_code.replace(
-                hint_curr_placeholder,
-                # Code type-checking the current pith against this class.
-                PEP_CODE_CHECK_HINT_NONPEP_TYPE.format(
-                    indent_curr=indent_curr,
-                    pith_curr_expr=pith_curr_expr,
-                    # Python expression evaluating to this class when accessed
-                    # via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_type(hint_curr),
-                )
+            # Code type-checking the current pith against this class.
+            func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE.format(
+                indent_curr=indent_curr,
+                pith_curr_expr=pith_curr_expr,
+                # Python expression evaluating to this class when accessed via
+                # the private "__beartypistry" parameter.
+                hint_curr_expr=register_typistry_type(hint_curr),
             )
+
         # Else, this hint is neither PEP-compliant *NOR* a class. In this
         # case, raise an exception. Note that:
         #
@@ -1090,6 +1076,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 'neither "typing" object nor non-"typing" class).'.format(
                     hint_child_label, hint_curr))
 
+        # ................{ CLEANUP                           }................
+        # Inject this code into the body of this wrapper.
+        func_code = func_code.replace(
+            hint_curr_placeholder, func_curr_code)
+
         # Release the metadata describing the previously visited hint and
         # nullify this metadata in its list for safety.
         release_fixed_list(hint_curr_meta)
@@ -1101,6 +1092,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
         # this should be the last statement of this iteration.
         hints_meta_index_curr += 1
 
+    # ..................{ CLEANUP                           }..................
     # Release the fixed list of all such metadata.
     release_fixed_list(hints_meta)
 

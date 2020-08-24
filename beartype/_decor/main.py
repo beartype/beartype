@@ -208,7 +208,11 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
-from beartype._decor._code import codemain
+from beartype._decor._code.codemain import (
+    generate_code,
+    PARAM_NAME_FUNC,
+    PARAM_NAME_TYPISTRY,
+)
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import bear_typistry
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
@@ -359,7 +363,7 @@ def beartype(func):
     func_data.reinit(func)
 
     # Generate the raw string of Python statements implementing this wrapper.
-    func_code, is_func_code_noop = codemain.code(func_data)
+    func_code, is_func_code_noop = generate_code(func_data)
 
     # If this wrapper proxies this callable *WITHOUT* type-checking,
     # efficiently reduce to a noop (i.e., the identity decorator) by returning
@@ -382,8 +386,8 @@ def beartype(func):
     # For the above reasons, the *ONLY* attribute that should be passed is the
     # wrapper-specific "__beartype_func" attribute.
     local_attrs = {
-        '__beartype_func': func,
-        '__beartypistry': bear_typistry,
+        PARAM_NAME_FUNC: func,
+        PARAM_NAME_TYPISTRY: bear_typistry,
     }
 
     #FIXME: Actually, we absolutely *DO* want to leverage the example

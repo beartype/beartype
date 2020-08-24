@@ -30,8 +30,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
-    PEP_CODE_GET_RETURN,
-    PEP_CODE_RETURN_CHECKED,
+    PEP_CODE_CHECK_RETURN_PREFIX,
+    PEP_CODE_CHECK_RETURN_SUFFIX,
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
@@ -204,9 +204,9 @@ def pep_code_check_return(data: BeartypeData) -> str:
     # Return Python code to...
     return (
         # Call the decorated callable and localize its return value *AND*...
-        PEP_CODE_GET_RETURN +
+        PEP_CODE_CHECK_RETURN_PREFIX +
         # Type-check this return value *AND*...
         return_code_check +
         # Return this value from this wrapper function.
-        PEP_CODE_RETURN_CHECKED
+        PEP_CODE_CHECK_RETURN_SUFFIX
     )
