@@ -47,7 +47,6 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #FIMXE: Rename to "TYPING_ATTR_TO_TYPE" for disambiguity.
 TYPING_ATTR_TO_TYPE = {
     typing.AbstractSet: collections_abc.Set,
-    typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
     typing.AsyncIterable: collections_abc.AsyncIterable,
     typing.AsyncIterator: collections_abc.AsyncIterator,
     typing.Awaitable: collections_abc.Awaitable,
@@ -55,7 +54,6 @@ TYPING_ATTR_TO_TYPE = {
     typing.Callable: collections_abc.Callable,
     typing.ChainMap: collections.ChainMap,
     typing.Container: collections_abc.Container,
-    typing.ContextManager: contextlib.AbstractContextManager,
     typing.Coroutine: collections_abc.Coroutine,
     typing.Counter: collections.Counter,
     typing.DefaultDict: collections.defaultdict,
@@ -138,6 +136,7 @@ laughably critical oversight.
 # argumentless typing attributes first introduced in Python 3.6.
 if IS_PYTHON_AT_LEAST_3_6:
     TYPING_ATTR_TO_TYPE.update({
+        typing.ContextManager: contextlib.AbstractContextManager,
         typing.AsyncGenerator: collections_abc.AsyncGenerator,
         typing.Collection: collections_abc.Collection,
     })
@@ -146,6 +145,7 @@ if IS_PYTHON_AT_LEAST_3_6:
 # argumentless typing attributes first introduced in Python 3.7.
 if IS_PYTHON_AT_LEAST_3_7:
     TYPING_ATTR_TO_TYPE.update({
+        typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
         typing.OrderedDict: collections.OrderedDict,
     })
 
