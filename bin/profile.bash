@@ -62,7 +62,7 @@ for _ in range(100):
     echo -e "function to be decorated with type-checking:\n${code_func}\n"
 
     # Print the function calls to be performed.
-    echo -e "function calls to be type-checked:\n${code_call_repeat}\n"
+    echo -e "function calls to be type-checked:${code_call_repeat}\n"
 
     # Python code snippet importing the "beartype" decorator.
     local CODE_SETUP_BEARTYPE='from beartype import beartype

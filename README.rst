@@ -97,7 +97,6 @@ Let's show ``beartype`` type-checking like `greased lightning`_:
        return quick_foot
    
    function calls to be type-checked:
-   
    for _ in range(100):
        panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")
    
