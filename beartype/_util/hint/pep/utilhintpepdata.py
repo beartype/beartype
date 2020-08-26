@@ -75,7 +75,6 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     typing.MutableMapping: collections_abc.MutableMapping,
     typing.MutableSequence: collections_abc.MutableSequence,
     typing.MutableSet: collections_abc.MutableSet,
-    typing.Reversible: collections_abc.Reversible,
     typing.Sequence: collections_abc.Sequence,
     typing.Sized: collections_abc.Sized,
     typing.ValuesView: collections_abc.ValuesView,
@@ -152,9 +151,10 @@ laughably critical oversight.
 # map argumentless typing attributes first introduced in all those versions.
 if IS_PYTHON_AT_LEAST_3_6:
     TYPING_ATTR_TO_TYPE_ORIGIN.update({
-        typing.ContextManager: contextlib.AbstractContextManager,
         typing.AsyncGenerator: collections_abc.AsyncGenerator,
         typing.Collection: collections_abc.Collection,
+        typing.ContextManager: contextlib.AbstractContextManager,
+        typing.Reversible: collections_abc.Reversible,
     })
 
     if IS_PYTHON_AT_LEAST_3_7:

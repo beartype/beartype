@@ -91,7 +91,7 @@ Let's show ``beartype`` type-checking like `greased lightning`_:
    beartype  [version]: 0.2.0
    typeguard [version]: 2.9.1
    
-   ============================================================ UNION ============================================================
+   ==================================== UNION ====================================
    function to be decorated with type-checking:
    def panther_canter(quick_foot: Union[int, str]) -> Union[int, str]:
        return quick_foot
@@ -107,11 +107,11 @@ Let's show ``beartype`` type-checking like `greased lightning`_:
    decoration + calls [beartype ]: 100 loops, best of 3: 548 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 11.3 msec per loop
 
+ELI5
+-------------
 ``beartype`` is approximately **twenty times faster** (i.e., 20,000%) than
 typeguard_, previously regarded as the fastest Python runtime type-checker.
 
-ELI5
--------------
 As expected, ``beartype`` performs most of its work at decoration time. The
 ``@beartype`` decorator consumes *over half* of the time needed to first
 decorate and then repeatedly call a decorated function one hundred times.
