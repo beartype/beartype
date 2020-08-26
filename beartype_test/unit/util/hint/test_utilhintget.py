@@ -29,7 +29,7 @@ def test_utilhintget_get_hint_isinstanceable_type_or_none() -> None:
     from beartype._util.hint.utilhintget import (
         get_hint_type_origin_or_none)
     from beartype._util.hint.pep.utilhintpepdata import (
-        TYPING_ATTR_TO_TYPE)
+        TYPING_ATTR_TO_TYPE_ORIGIN)
     from beartype_test.unit.data.data_hint import NOT_HINTS_UNHASHABLE
 
     # Assert this function accepts non-"typing" types.
@@ -37,7 +37,7 @@ def test_utilhintget_get_hint_isinstanceable_type_or_none() -> None:
 
     # Assert this function accepts all instanceable argumentless "typing"
     # attributes.
-    for typing_attr_argless, supercls in TYPING_ATTR_TO_TYPE.items():
+    for typing_attr_argless, supercls in TYPING_ATTR_TO_TYPE_ORIGIN.items():
         assert get_hint_type_origin_or_none(typing_attr_argless) is (
             supercls)
 

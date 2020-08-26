@@ -24,10 +24,10 @@ methods via the standard decorator design pattern. This renders beartype
 natively compatible with *all* interpreters and compilers targeting the Python
 language – including CPython_, PyPy_, Numba_, and Nuitka_.
 
-Unlike comparable runtime type checkers (e.g., pytypes_, typeguard_), beartype
-wraps each decorated callable with a dynamically generated wrapper efficiently
-type-checking that specific callable. Since "performance by default" is our
-first-class concern, *all* wrappers are guaranteed to:
+Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
+beartype wraps each decorated callable with a dynamically generated wrapper
+efficiently type-checking that specific callable. Since "performance by
+default" is our first-class concern, *all* wrappers are guaranteed to:
 
 * Exhibit ``O(1)`` time complexity with negligible constant factors.
 * Be either more efficient (in the common case) or exactly as efficient minus
@@ -81,27 +81,55 @@ sometimes good, too:
 Timings
 ==========
 
-Let's prove that ``beartype`` type-checks like greased lightning:
+Let's show ``beartype`` type-checking like `greased lightning`_:
 
 .. code-block:: shell-session
 
    $ bin/profile.bash
-   We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.
-                                  -- The Jungle Book.
+   beartype profiler [version]: 0.0.1
    
    beartype  [version]: 0.2.0
    typeguard [version]: 2.9.1
    
-   beartype  [Union]: 100 loops, best of 3: 544 usec per loop
-   typeguard [Union]: 100 loops, best of 3: 11.1 msec per loop
+   ============================================================ UNION ============================================================
+   function to be decorated with type-checking:
+   def panther_canter(quick_foot: Union[int, str]) -> Union[int, str]:
+       return quick_foot
+   
+   function calls to be type-checked:
+   
+   for _ in range(100):
+       panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")
+   
+   decoration         [none     ]: 100 loops, best of 3: 2.68 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 370 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.4 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 18.4 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 548 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 11.3 msec per loop
 
-``beartype`` is approximately **twenty times faster** than typeguard_ under
-this simplistic profiling suite.
+``beartype`` is approximately **twenty times faster** (i.e., 20,000%) than
+typeguard_, previously regarded as the fastest Python runtime type-checker.
+
+ELI5
+-------------
+As expected, ``beartype`` performs most of its work at decoration time. The
+``@beartype`` decorator consumes *over half* of the time needed to first
+decorate and then repeatedly call a decorated function one hundred times.
+``beartype`` is thus front-loaded. After paying the initial cost of decoration,
+each type-checked call thereafter incurs comparatively little overhead.
+
+By compare, typeguard_ performs most of its work at call time. The
+``@typeguard.typechecked`` decorator consumes a fraction of the time needed to
+first decorate and then repeatedly call a decorated function one hundred times.
+typeguard_ is thus back-loaded. Although the initial cost of decoration is
+essentially free, each type-checked call thereafter incurs significant
+overhead.
 
 Cheatsheet
 ==========
 
-Let's type-check like greased lightning:
+Let's type-check like `greased lightning`_:
 
 .. code-block:: python
 
@@ -688,6 +716,8 @@ Let's chart current and prospective new features for future generations:
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Pattern``                         | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
+|            | ``Protocol``                        | *none*                  |      |
++------------+-------------------------------------+-------------------------+------+
 |            | ``Reversible``                      | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Sequence``                        | **0.2.0**\ —\ *current* |      |
@@ -696,19 +726,19 @@ Let's chart current and prospective new features for future generations:
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Sized``                           | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsAbs``                     | *none*                  |      |
+|            | ``SupportsAbs``                     | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsBytes``                   | *none*                  |      |
+|            | ``SupportsBytes``                   | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsComplex``                 | *none*                  |      |
+|            | ``SupportsComplex``                 | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsFloat``                   | *none*                  |      |
+|            | ``SupportsFloat``                   | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsIndex``                   | *none*                  |      |
+|            | ``SupportsIndex``                   | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsInt``                     | *none*                  |      |
+|            | ``SupportsInt``                     | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsRound``                   | *none*                  |      |
+|            | ``SupportsRound``                   | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Text``                            | **0.1.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
@@ -893,6 +923,7 @@ decorators, explicit function calls, and import hooks) include:
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
 * beartype. :sup:`...'sup.`
+* enforce_.
 * pytypes_.
 * typeguard_.
 
@@ -955,6 +986,10 @@ application stack at tool rather than Python runtime) include:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
 .. _Shere Khan:
    https://en.wikipedia.org/wiki/Shere_Khan
+
+.. # ------------------( LINKS ~ meme                       )------------------
+.. _greased lightning:
+   https://www.youtube.com/watch?v=H-kL8A4RNQ8
 
 .. # ------------------( LINKS ~ non-py                     )------------------
 .. _C++:
@@ -1035,6 +1070,8 @@ application stack at tool rather than Python runtime) include:
    https://tox.readthedocs.io
 
 .. # ------------------( LINKS ~ py : type : runtime        )------------------
+.. _enforce:
+   https://github.com/RussBaz/enforce
 .. _pytypes:
    https://github.com/Stewori/pytypes
 .. _typeguard:
