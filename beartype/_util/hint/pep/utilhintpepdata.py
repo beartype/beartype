@@ -28,7 +28,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #To implement this sanely, we'll probably want to define a new higher-level
 #get_hint_pep_typing_deep_attrs_argless_to_args() getter calling the lower-level
-#get_hint_pep_typing_attrs_argless_to_args() getter via a breadth-first traversal.
+#get_hint_pep_typing_attr_to_args() getter via a breadth-first traversal.
 #For disambiguity, the latter getter should be renamed to
 #get_hint_pep_typing_flat_attrs_argless_to_args().
 
@@ -198,5 +198,5 @@ of the :mod:`typing` module uniquely identifying PEP-compliant type hints
 sans arguments) supported by the :func:`beartype.beartype` decorator.
 
 This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_typing_attrs_argless_to_args` getter function.
+:func:`get_hint_pep_typing_attr_to_args` getter function.
 '''

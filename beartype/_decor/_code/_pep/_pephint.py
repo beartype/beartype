@@ -16,7 +16,71 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXWE: We require two codepaths in the breadth-first search implemented by the
+#FIXME: Significant optimizations still remain... when we have sufficient time.
+#Notably, we can replace most existing usage of a generic private
+#"__beartypistry" parameter unconditionally passed to all wrapper functions
+#with specific private "__beartype_hint_{beartypistry_key}" parameters
+#conditionally passed to each individual wrapper function, where:
+#* "{beartypistry_key}" signifies an existing string key of the "bear_typistry"
+#  singleton dictionary munged so as to produce a valid Python identifier.
+#  Notably:
+#  * Rather than use the fully-qualified names of types as we currently do,
+#    we'll instead need to use their hashes. Why? Because Python identifiers
+#    accept a sufficiently small set of permissible characters that there is
+#    *NO* character we could possibly globally replace all "." characters in a
+#    fully-qualified classname with to produce a disambiguous Python
+#    identifier. Consider, for example, the two distinct classnames
+#    "muh_package.muh_module.MuhClass" and
+#    "muh_package_muh_module.MuhClass". Replacing "." characters with "_"
+#    characters in both would produce the same munged Python identifier
+#    "muh_package_muh_module_MuhClass" -- an ambiguous collision. Ergo, hashes.
+#  * Hashes appear to be both negative and positive. So, we'll probably need to
+#    replace "-" substrings prefixing "str(hash(hint))" output with something
+#    sane complying with Python identifiers -- say, the "n" character. *shrug*
+#* "__beartype_hint_{beartypistry_key}" signifies a parameter name whose value
+#  defaults to either a type or tuple of types required by this wrapper
+#  function.
+#
+#For example, if a function internally requires a "muh_package.MuhClass" class,
+#we would then generate wrapper functions resembling:
+#
+#    def muh_wrapper(
+#        *args,
+#        __beartype_func=__beartype_func,
+#        __beartype_hint_24234234240=__beartype_hint_24234234240,
+#    )
+#
+#...where "__beartype_hint_24234234240" would need to be defined within the
+#locals() dictionary passed to the exec() builtin by the "beartype._decor.main"
+#submodule to refer to the "muh_package.MuhClass" class: e.g.,
+#
+#    # In "beartype._decor.main":
+#    local_vars = {
+#        __beartype_hint_24234234240: muh_package.MuhClass,
+#    }
+#
+#Why is this so much more efficient than the current approach? Because lookups
+#into large dictionaries inevitably have non-negligible constants, whereas
+#exploiting default function parameters *IS LITERALLY INSTANTEOUS.* Why?
+#Because Python actually stores function defaults in a tuple at function
+#declaration time, thus minimizing both space and time costs: e.g.,
+#    # It doesn't get faster than this, folks.
+#    >>> def defjam(hmm, yum='Yum!', oko='Kek!'): pass
+#    >>> defjam.__defaults__
+#    ('Yum!', 'Kek!')
+#
+#Clearly, we'll need to carefully consider how we might efficiently percolate
+#that metadata up from this breadth-first traversal to that top-level module.
+#Presumably, we'll want to add a new data structure to the "BeartypeData"
+#object -- say, a new "BeartypeData.param_name_to_value" dictionary mapping
+#private parameter names to values to be passed to the current wrapper.
+#
+#Note that we should still cache at least tuples in the "bear_typistry"
+#singleton dictionary to reduce space consumption for different tuple objects
+#containing the same types, but that we should no longer look those tuples up
+#in that dictionary at runtime from within wrapper functions.
+
+#FIXME: We require two codepaths in the breadth-first search implemented by the
 #pep_code_check_hint() function for each supported "typing" attribute,
 #especially when we begin generating code type-checking container types:
 #* If "IS_PYTHON_AT_LEAST_3_8", generate optimal code leveraging ":=" to
@@ -188,11 +252,15 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ROOT_EXPR,
 )
 # from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
-from beartype._util.hint.utilhintget import get_hint_type_origin
+from beartype._util.hint.utilhintget import (
+    get_hint_type_origin, get_hint_type_origin_or_none)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_typing_attrs_argless_to_args)
+    get_hint_pep_typing_attr_to_args)
 from beartype._util.hint.pep.utilhintpeptest import (
-    die_unless_hint_pep_supported, is_hint_pep)
+    die_unless_hint_pep_supported,
+    die_unless_hint_pep_typing_attr_supported,
+    is_hint_pep,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     SIZE_BIG, FixedList, acquire_fixed_list, release_fixed_list)
@@ -428,7 +496,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # iterated child hints rather than the root hint, the currently iterated
     # child hint, and all interim child hints leading from the former to the
     # latter. The latter approach would be non-human-readable and insane.
-    hint_child_label = hint_root_label + ' child '
+    hint_child_label = hint_root_label + ' child'
 
     # Placeholder string to be globally replaced in the Python code snippet to
     # be returned (i.e., "func_code") by a Python code snippet type-checking
@@ -438,7 +506,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
     # Python expression evaluating to the value of the currently iterated child
     # hint of the currently visited parent hint.
-    hint_child_expr = None
+    # hint_child_expr = None
+
+    # Origin type (i.e., non-"typing" superclass suitable for shallowly
+    # type-checking the current pith against the currently visited hint by
+    # passing both to the isinstance() builtin) of the currently iterated child
+    # hint of the currently visited parent hint.
+    hint_child_type_origin = None
 
     # ..................{ METADATA                          }..................
     # Fixed list of metadata describing the root hint.
@@ -514,9 +588,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
         #requires a linear search over the entire code and is thus costly.
-        assert hint_curr_placeholder in func_code, (
-            '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
-                hint_child_label, hint, hint_curr_placeholder, func_code))
+        # assert hint_curr_placeholder in func_code, (
+        #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
+        #         hint_child_label, hint, hint_curr_placeholder, func_code))
 
         # If this hint is PEP-compliant...
         if is_hint_pep(hint_curr):
@@ -543,7 +617,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # Dictionary mapping each argumentless typing attribute of this
             # hint to the tuple of those arguments.
             hint_curr_attrs_to_args = (
-                get_hint_pep_typing_attrs_argless_to_args(hint_curr))
+                get_hint_pep_typing_attr_to_args(hint_curr))
 
             # If this hint has *NO* such attributes, raise an exception.
             #
@@ -581,7 +655,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             #be a "child hint" of that subclass.
             #
             #To render the resulting logic fully orthogonal, we might then:
-            #refactor the get_hint_pep_typing_attrs_argless_to_args() getter
+            #refactor the get_hint_pep_typing_attr_to_args() getter
             #into a get_hint_pep_typing_attr_argless_to_args() getter, which:
             #
             #* Detects whether the passed hint is a user-defined subclass
@@ -637,9 +711,99 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             #multiple inheritance as well as improving efficiency by
             #eliminating the nested "hint_curr_attrs_to_args" iteration below.
             #FIXME: We should implement at least the refactoring of
-            #get_hint_pep_typing_attrs_argless_to_args() into
+            #get_hint_pep_typing_attr_to_args() into
             #get_hint_pep_typing_attr_argless_to_args() outlined above, as the
             #latter will dramatically improve efficiency for us.
+            #FIXME: *WAIT.* That doesn't quite work either, as user-defined
+            #subclasses that are subscripted define "__args__" to the tuple of
+            #those subscripted arguments. We can't conflict with that by
+            #attempting to redefine "__args__" for such subclasses to something
+            #else entirely (namely, "__orig_bases"). What we could instead do
+            #is:
+            #* Monkey-patch the "typing" module by defining a new
+            #  "typing._beartype_Subclass" singleton object (after raising
+            #  an exception if that attribute already exists but is *NOT* the
+            #  object we define, of course): e.g.,
+            #    # In "utilpephintdata":
+            #    _Subclass = object()
+            #    '''
+            #    Note that we probably need to continue accessing
+            #    :attr:`typing._beartype_Subclass` from other submodules to
+            #    ensure correct detection as a :mod:`typing` attribute.
+            #    '''
+            #
+            #    def patch_typing() -> None:
+            #        '''
+            #        Call this from "beartype.__init__". *sigh*
+            #        '''
+            #
+            #        typing__beartype_Subclass = getattr(
+            #            typing, '_beartype_Subclass', None)
+            #        if   typing__beartype_Subclass is None:
+            #            typing._beartype_Subclass = _Subclass
+            #        elif typing__beartype_Subclass is not _Subclass:
+            #            raise MuhException('Ugh!')
+            #FIXME: *WAIT*. There's actually a far simpler way. Rather than
+            #monkey-patch "typing" (which is balls risky), just replace the
+            #"__module__" dunder attribute of "_Subclass" with our own: e.g.,
+            #    # In "utilpephintdata":
+            #    >>> Subclass = object()
+            #    >>> Subclass.__module__ = 'typing'  # suck it, typing!
+            #    AttributeError: 'object' object has no attribute '__module__'
+            #
+            #Okay, so that didn't work so well. Let's try instead:
+            #    # In "utilpephintdata":
+            #    >>> class BeartypeCustomSubclass(object): pass
+            #    >>> BeartypeCustomSubclass.__module__ = 'typing'  # suck it, typing!
+            #    >>> get_object_name_qualified(BeartypeCustomSubclass)
+            #    typing.BeartypeCustomSubclass
+            #
+            #*OH, YEAH.* Thar she blows! Given that, we then:
+            #
+            #* Define a new get_hint_pep_custom_bases() getter resembling:
+            #    def get_hint_pep_custom_bases(hint: object) -> bool:
+            #        return getattr(hint, '__orig_bases__', ())
+            #* Define a new is_hint_pep_custom() tester resembling:
+            #    def is_hint_pep_custom(hint: object) -> bool:
+            #        return len(get_hint_pep_custom_bases(hint)) > 0
+            #* Rename get_hint_pep_typing_attr_to_args() to simply
+            #  get_hint_pep_typing_attr(). Callers requiring the tuple of all
+            #  subscripted arguments should simply call the existing
+            #  get_hint_pep_args() getter as well. Note that:
+            #  * Alternately,
+            #* Refactor get_hint_pep_typing_attr() to return either:
+            #  * If passed a type variable detected by calling
+            #    "is_hint_pep_typevar(hint)", "typing.TypeVar".
+            #  * If passed a user-defined subclass detected by calling
+            #    "is_hint_pep_custom(hint)", "BeartypeCustomSubclass".
+            #  * Else, return the value returned by
+            #    _get_hint_pep_typing_attr_bare_or_none(). Of course, this
+            #    directly implies we should:
+            #    * Inline the implementation of
+            #      _get_hint_pep_typing_attr_bare_or_none() directly into
+            #      get_hint_pep_typing_attr().
+            #    * Remove both _get_hint_pep_typing_attr_bare_or_none() and
+            #      _get_hint_pep_typing_attr_bare().
+            #* Consider removing the existing
+            #  _get_hint_pep_typing_superattrs_to_args() and
+            #  _get_hint_pep_typing_superobjects() getters, which should no
+            #  longer be required. Fortunately, those were privatized. *phew*
+            #* Refactor code below to handle "BeartypeCustomSubclass" similarly
+            #  to how we currently handle "Union". To do so, we'll want to
+            #  call:
+            #  * The newly defined get_hint_pep_custom_bases() getter to form
+            #    the set of all base classes to generate code intersected with
+            #    " and ", much like "Union" hints united with " or ". When
+            #    doing so, we'll want to assert that the returned tuple is
+            #    non-empty. This doesn't warrant an exception, as the
+            #    is_hint_pep_custom() tester will have already ensured this
+            #    tuple to be non-empty.
+            #  * The existing get_hint_pep_args() getter to iterate the set of
+            #    all concrete arguments parametrizing superclass type
+            #    variables. This doesn't apply to us at the moment, of course,
+            #    but we'll still want to note this somewhere.
+            #  See above for further logic.
+            #* Refactor tests accordingly.
 
             # Else if this hint has multiple such attributes, this hint is a
             # user-defined subclass subclassing multiple types -- which is
@@ -702,7 +866,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # Since the root hint has already been validated to be
                 # supported by the above call to the same function, this call
                 # is guaranteed to *NEVER* raise an exception for that hint.
-                die_unless_hint_pep_supported(
+                die_unless_hint_pep_typing_attr_supported(
                     hint=hint_curr_attr, hint_label=hint_child_label)
                 # Else, this attribute is supported.
 
@@ -785,17 +949,28 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                                 # PEP-compliant arguments.
                                 hint_childs_pep.add(hint_child)
 
-                                #FIXME: Additionally, if this argument also
-                                #defines the "__origin__" dunder attribute with
-                                #a value that is non-"typing" type (which
-                                #*SHOULD* always be the case, but let's be
-                                #sure), append that type to the
-                                #"hint_childs_nonpep" list. This improves
-                                #efficiency by enabling most union
-                                #type-checking to be front-loaded into a tuple.
-                                #FIXME: Woah, boy. Since "__origin__" is
-                                #functionally broken, we'll need to defer doing
-                                #this until we implement commentary below.
+                                # Origin type of this argument if any *OR*
+                                # "None" otherwise.
+                                hint_child_type_origin = (
+                                    get_hint_type_origin_or_none(hint_child))
+
+                                # If this argument originates from such a type,
+                                # filter this argument into the list of
+                                # PEP-noncompliant arguments as well.
+                                #
+                                # Note that this is purely optional, but
+                                # optimizes the common case of unions of
+                                # containers. For example, given a
+                                # PEP-compliant hint "Union[int, List[str]]",
+                                # this case generates code initially testing
+                                # whether the current pith satisfies
+                                # "isinstance(int, list)" *BEFORE* subsequently
+                                # testing whether this pith deeply satisfies
+                                # the nested hint "List[str]" when this pith is
+                                # a list. In other words, this is good.
+                                if hint_child_type_origin is not None:
+                                    hint_childs_nonpep.add(
+                                        hint_child_type_origin)
                             # Else, this argument is PEP-noncompliant. In this
                             # case, filter this argument into the list of
                             # PEP-noncompliant arguments.
@@ -817,50 +992,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     # type-checking any PEP-compliant arguments subscripting
                     # this union.
                     if hint_childs_nonpep:
-                        #FIXME: *URGH.* The register_typistry_type() and
-                        #register_typistry_tuple() functions currently return
-                        #two values, which is silly. We need to refactor away
-                        #the second returned value, which is only ever required
-                        #for testing anyway. After doing so, refactor
-                        #"test_typistry" tests to explicitly evaluate the
-                        #returned Python expression by passing a locals()
-                        #dictionary resembling:
-                        #    {TYPISTRY_PARAM_NAME: bear_typistry}
-                        #To do so, we'll almost certainly want to define a
-                        #private utility function in the "test_typistry"
-                        #submodule resembling:
-                        #    def _get_beartypistry_value_from_expr(hint_expr: str) -> object:
-                        #        from beartype._decor._typistry import bear_typistry
-                        #
-                        #        locals = {TYPISTRY_PARAM_NAME: bear_typistry}
-                        #        return eval(hint_expr, {}, locals)
-                        #Given that, we can then refactor tests to test against
-                        #the values returned by that function instead. (Obvious
-                        #in hindsight. So it goes.)
-
-                        # Python expression evaluating to either...
-                        hint_child_expr = (
-                            # If this union is subscripted by exactly one
-                            # PEP-noncompliant argument, that argument when
-                            # accessed via the private "__beartypistry"
-                            # parameter. While minor, this optimization avoids
-                            # unnecessarily instantiating a new tuple below.
-                            register_typistry_type(hint_childs_nonpep[0])
-                            if len(hint_childs_nonpep) == 1 else
-                            # Else, this union is subscripted by two or more
-                            # PEP-noncompliant arguments. In this case, a tuple
-                            # of these arguments when accessed via the private
-                            # "__beartypistry" parameter.
-                            register_typistry_tuple(
-                                hint=tuple(hint_childs_nonpep),
-                                # Inform this function that it needn't attempt
-                                # to uselessly omit duplicates, since the
-                                # "typing" module already does so for all
-                                # "Union" arguments. Well, that's nice.
-                                is_types_unique=True,
-                            )
-                        )
-
                         #FIXME: Refactor to leverage f-strings after dropping
                         #Python 3.5 support, which are the optimal means of
                         #performing string formatting.
@@ -872,7 +1003,37 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                         func_curr_code += (
                             PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP.format(
                                 pith_curr_expr=pith_curr_expr,
-                                hint_curr_expr=hint_child_expr,
+                                # Python expression evaluating to a tuple of
+                                # these arguments when accessed via the private
+                                # "__beartypistry" parameter.
+                                #
+                                # Note that we would ideally avoid coercing
+                                # this set into a tuple when this set only
+                                # contains one type by passing that type
+                                # directly to the register_typistry_type()
+                                # function. Sadly, the "set" class defines no
+                                # convenient or efficient means of retrieving
+                                # the only item of a 1-set. Indeed, the most
+                                # efficient means of doing so is to iterate
+                                # over that set and immediately break: e.g.,
+                                #     for first_item in muh_set: break
+                                #
+                                # While we *COULD* technically leverage that
+                                # approach here, doing so would also mandate
+                                # adding a number of intermediate tests, which
+                                # would certainly reduce any performance gains.
+                                # Ultimately, we avoid doing so by falling back
+                                # to the standard approach. See also this
+                                # relevant self-StackOverflow post:
+                                #     https://stackoverflow.com/a/40054478/2809027
+                                hint_curr_expr=register_typistry_tuple(
+                                    hint=tuple(hint_childs_nonpep),
+                                    # Inform this function it needn't attempt
+                                    # to uselessly omit duplicates, since the
+                                    # "typing" module already does so for all
+                                    # "Union" arguments. Well, that's nice.
+                                    is_types_unique=True,
+                                )
                             ))
 
                     # If this union is also subscripted by one or more

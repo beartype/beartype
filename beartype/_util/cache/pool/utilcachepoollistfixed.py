@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
-from beartype._util.text.utiltexttrim import trim_object_repr
+from beartype._util.text.utiltextmunge import trim_object_repr
 from beartype.roar import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
 

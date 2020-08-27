@@ -93,12 +93,6 @@ T = typing.TypeVar('T')
 User-defined generic :mod:`typing` type variable.
 '''
 
-# ....................{ PEP ~ aliases                     }....................
-TypeAlias = typing.Iterable[typing.Tuple[T, T]]
-'''
-User-defined :mod:`typing` type alias.
-'''
-
 # ....................{ PEP ~ classes : single            }....................
 class PepCustomSingleTypevared(typing.Generic[S, T]):
     '''
@@ -180,7 +174,7 @@ attrs_argless_to_args : tuple
 
 
 PEP_HINT_TO_META = {
-    # Singleton objects.
+    # ..................{ SINGLETONS                        }..................
     typing.Any: PepHintMeta(
         is_supported=True,
         is_typevared=False,
@@ -196,55 +190,7 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args={typing.NoReturn: ()},
     ),
 
-    # Builtin containers (dictionaries).
-    typing.Dict[str, int]: PepHintMeta(
-        is_supported=True,
-        is_typevared=False,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.Dict: (str, int)},
-    ),
-    typing.Dict[S, T]: PepHintMeta(
-        is_supported=False,
-        is_typevared=True,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.Dict: (S, T,)},
-    ),
-
-    # Builtin containers (lists).
-    typing.List[float]: PepHintMeta(
-        is_supported=True,
-        is_typevared=False,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.List: (float,)},
-    ),
-    typing.List[T]: PepHintMeta(
-        is_supported=False,
-        is_typevared=True,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.List: (T,)},
-    ),
-
-    # Builtin containers (tuples).
-    typing.Tuple[float, str, int]: PepHintMeta(
-        is_supported=True,
-        is_typevared=False,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.Tuple: (float, str, int)},
-    ),
-    typing.Tuple[T, ...]: PepHintMeta(
-        is_supported=False,
-        is_typevared=True,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.Tuple: (T, ...)},
-    ),
-
-    # Callables.
+    # ..................{ CALLABLES                         }..................
     typing.Callable[[], str]: PepHintMeta(
         is_supported=True,
         is_typevared=False,
@@ -260,7 +206,83 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args={typing.Generator: (int, float, str)},
     ),
 
-    # Classes.
+    # ..................{ DICTS                             }..................
+    #FIXME: Uncomment after we stop remove "attrs_argless_to_args", which
+    #currently complicates things. *sigh*
+    # typing.Dict: PepHintMeta(
+    #     is_supported=False,
+    #     is_typevared=True,
+    #     superattrs=(),
+    #     superattrs_argless_to_args={},
+    #     attrs_argless_to_args={typing.Dict: ()},
+    # ),
+    typing.Dict[str, int]: PepHintMeta(
+        is_supported=True,
+        is_typevared=False,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.Dict: (str, int)},
+    ),
+    typing.Dict[S, T]: PepHintMeta(
+        is_supported=False,
+        is_typevared=True,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.Dict: (S, T,)},
+    ),
+
+    # ..................{ LISTS                             }..................
+    #FIXME: Uncomment after we stop remove "attrs_argless_to_args", which
+    #currently complicates things. *sigh*
+    # typing.List: PepHintMeta(
+    #     is_supported=False,
+    #     is_typevared=True,
+    #     superattrs=(),
+    #     superattrs_argless_to_args={},
+    #     attrs_argless_to_args={typing.List: ()},
+    # ),
+    typing.List[float]: PepHintMeta(
+        is_supported=True,
+        is_typevared=False,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.List: (float,)},
+    ),
+    typing.List[T]: PepHintMeta(
+        is_supported=False,
+        is_typevared=True,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.List: (T,)},
+    ),
+
+    # ..................{ TUPLES                            }..................
+    # Note that argumentless "typing.Tuple" attributes are *NOT* parametrized
+    # by one or more type variables, unlike most other argumentless "typing"
+    # attributes originating from container types. *sigh*
+    typing.Tuple: PepHintMeta(
+        is_supported=True,
+        is_typevared=False,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.Tuple: ()},
+    ),
+    typing.Tuple[float, str, int]: PepHintMeta(
+        is_supported=True,
+        is_typevared=False,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.Tuple: (float, str, int)},
+    ),
+    typing.Tuple[T, ...]: PepHintMeta(
+        is_supported=False,
+        is_typevared=True,
+        superattrs=(),
+        superattrs_argless_to_args={},
+        attrs_argless_to_args={typing.Tuple: (T, ...)},
+    ),
+
+    # ..................{ TYPE ALIASES                      }..................
     typing.Type[dict]: PepHintMeta(
         is_supported=True,
         is_typevared=False,
@@ -276,15 +298,7 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args={typing.Type: (T,)},
     ),
 
-    # Type aliases.
-    TypeAlias: PepHintMeta(
-        is_supported=False,
-        is_typevared=True,
-        superattrs=(),
-        superattrs_argless_to_args={},
-        attrs_argless_to_args={typing.Iterable: (typing.Tuple[T, T],)},
-    ),
-
+    # ..................{ TYPE VARIABLES                    }..................
     # Type variables.
     T: PepHintMeta(
         is_supported=False,
@@ -294,7 +308,13 @@ PEP_HINT_TO_META = {
         attrs_argless_to_args={typing.TypeVar: ()},
     ),
 
-    # Unions.
+    # ..................{ UNIONS                            }..................
+    # Note that unions of one arguments (e.g., "typing.Union[str]") *CANNOT* be
+    # listed here, as the "typing" module implicitly reduces these unions to
+    # only that argument (e.g., "str") on our behalf. Thanks. Thanks alot.
+
+    # Union of one non-"typing" type and an isinstance()-able "typing" type,
+    # exercising an edge case.
     typing.Union[str, typing.Sequence[int]]: PepHintMeta(
         is_supported=True,
         is_typevared=False,
@@ -302,6 +322,7 @@ PEP_HINT_TO_META = {
         superattrs_argless_to_args={},
         attrs_argless_to_args={typing.Union: (str, typing.Sequence[int])},
     ),
+    # Union of one non-"typing" type and one concrete generic.
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: PepHintMeta(
         is_supported=False,
         is_typevared=True,
@@ -311,7 +332,7 @@ PEP_HINT_TO_META = {
             typing.Union: (str, typing.Iterable[typing.Tuple[S, T]])},
     ),
 
-    # User-defined.
+    # ..................{ CUSTOM                            }..................
     PepCustomSingleTypevared: PepHintMeta(
         is_supported=False,
         is_typevared=True,

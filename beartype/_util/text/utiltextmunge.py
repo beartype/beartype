@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype string removal utilities** (i.e., callables truncating, trimming, or
-otherwise removing substrings from passed strings).
+**Beartype string munging utilities** (i.e., callables transforming passed
+strings into new strings with generic string operations).
 
 This private submodule implements supplementary string-handling utility
 functions required by various :mod:`beartype` facilities, including callables
@@ -16,6 +16,30 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import re
+
+# ....................{ NUMBERERS                         }....................
+def number_lines(text: str) -> str:
+    '''
+    Passed string munged to prefix each line of this string with the 1-based
+    number of that line padded by zeroes out to four digits for alignment.
+
+    Parameters
+    ----------
+    text: str
+        String whose lines are to be numbered.
+
+    Returns
+    ----------
+    str
+        This string with all lines numbered.
+    '''
+
+    # Let's do this!
+    return '\n'.join(
+        '(line {:0>4d}) {}'.format(text_line_number, text_line)
+        for text_line_number, text_line in enumerate(
+            text.splitlines(), start=1)
+    )
 
 # ....................{ TRIMMERS                          }....................
 def trim_object_repr(obj: object, max_len: int = 76) -> str:

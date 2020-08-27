@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import typing
-from beartype_test.util.pyterror import raises_uncached
+# from beartype_test.util.pyterror import raises_uncached
 from pytest import raises
 
 # ....................{ TESTS                             }....................
@@ -103,6 +103,41 @@ def test_die_unless_hint_pep_supported() -> None:
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(TypeError):
             die_unless_hint_pep_supported(non_hint_unhashable)
+
+
+def test_die_unless_hint_pep_typing_attr_supported() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.die_unless_hint_pep_typing_attr_supported`
+    validator.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar import (
+        BeartypeDecorHintPepException,
+        BeartypeDecorHintPepUnsupportedException,
+    )
+    from beartype._util.hint.pep.utilhintpeptest import (
+        die_unless_hint_pep_typing_attr_supported)
+    from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
+    from beartype_test.unit.data.data_hint import NOT_PEP_HINTS, PEP_HINTS
+
+    # Assert this function accepts all supported argumentless "typing"
+    # attributes.
+    for typing_attrs_supported in TYPING_ATTRS_SUPPORTED:
+        die_unless_hint_pep_typing_attr_supported(typing_attrs_supported)
+
+    # Assert this function rejects PEP-compliant type hints that are *NOT*
+    # supported argumentless "typing" attributes.
+    for pep_hint in PEP_HINTS:
+        if pep_hint not in TYPING_ATTRS_SUPPORTED:
+            with raises(BeartypeDecorHintPepUnsupportedException):
+                die_unless_hint_pep_typing_attr_supported(pep_hint)
+
+    # Assert this function rejects objects that are *NOT* PEP-noncompliant.
+    for not_pep_hint in NOT_PEP_HINTS:
+        with raises(BeartypeDecorHintPepException):
+            die_unless_hint_pep_typing_attr_supported(not_pep_hint)
 
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:

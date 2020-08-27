@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-def test_utilhinttest_die_unless_hint() -> None:
+def test_die_unless_hint() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.die_unless_hint`
     validator.
@@ -67,7 +67,7 @@ def test_utilhinttest_die_unless_hint() -> None:
             die_unless_hint(non_hint_unhashable)
 
 
-def test_utilhinttest_is_hint() -> None:
+def test_is_hint() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
     '''

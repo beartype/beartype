@@ -6,14 +6,26 @@
 # --------------------( SYNOPSIS                          )--------------------
 # Bash shell script profiling this project against comparable competitors under
 # a battery of simple (albeit instructive and hopefully unbiased) tests.
+#
+# --------------------( DEPENDENCIES                      )--------------------
+# This script requires as mandatory dependencies these Python 3.x packages:
+#
+# * "beartype".
+# * "typeguard".
+#
+# These packages are trivially installable via this CLI one-liner:
+#    $ sudo -H pip3 install beartype typeguard
 
 # ....................{ TODO                              }....................
-#FIXME: Add support for profiling "enforce", which provides a
-#@runtime_validation decorator and supports Python 3.5 through Python 3.8:
-#    https://pypi.org/project/enforce
+#FIXME: Add support for profiling "enforce" *AFTER* "enforce" finally supports
+#Python >= 3.7, which it currently does *NOT*:
+#    https://github.com/RussBaz/enforce/issues/71
 #FIXME: Add support for profiling "pytypes" *AFTER* "pytypes" finally supports
-#Python 3.7 through Python 3.8, which it currently does *NOT*:
+#Python >= 3.7, which it currently does *NOT*:
 #    https://github.com/Stewori/pytypes/issues/40
+
+#FIXME: Augment the profile_snippet() function to conditionally profile under
+#"pypy3" as well if that command as available.
 
 # ....................{ PREAMBLE                          }....................
 # Enable strictness for sanity.
@@ -24,6 +36,7 @@ VERSION='0.0.1'
 
 # Print a greeting preamble.
 echo "beartype profiler [version]: ${VERSION}"
+echo
 
 # ....................{ FUNCTIONS ~ profilers             }....................
 # profile_func(
@@ -48,13 +61,18 @@ function profile_callable() {
         label="${1}" \
         code_setup="${2}" \
         code_func="${3}" \
-        code_call="${4}"
+        code_call="${4}" \
+        code_call_repeat \
+        CODE_SETUP_BEARTYPE \
+        CODE_SETUP_TYPEGUARD \
+        CODE_DECOR_BEARTYPE \
+        CODE_DECOR_TYPEGUARD
 
     # Print the passed label as a banner.
     print_banner "${label}"
 
     # Python code snippet repeatedly performing the passed function call.
-    local code_call_repeat="
+    code_call_repeat="
 for _ in range(100):
     ${code_call}"
 
@@ -65,19 +83,19 @@ for _ in range(100):
     echo -e "function calls to be type-checked:${code_call_repeat}\n"
 
     # Python code snippet importing the "beartype" decorator.
-    local CODE_SETUP_BEARTYPE='from beartype import beartype
+    CODE_SETUP_BEARTYPE='from beartype import beartype
 '
 
     # Python code snippet importing the "typeguard" decorator.
-    local CODE_SETUP_TYPEGUARD='from typeguard import typechecked
+    CODE_SETUP_TYPEGUARD='from typeguard import typechecked
 '
 
     # Python code snippet decorating the passed function with "beartype".
-    local CODE_DECOR_BEARTYPE='@beartype
+    CODE_DECOR_BEARTYPE='@beartype
 '
 
     # Python code snippet decorating the passed function with "typeguard".
-    local CODE_DECOR_TYPEGUARD='@typechecked
+    CODE_DECOR_TYPEGUARD='@typechecked
 '
 
     # Profile this undecorated definition of this function as a baseline.
@@ -148,7 +166,7 @@ function print_banner() {
         echo 'Expected one argument.' 1>&2
         return 1
     }
-    local label="${1}"
+    local label="${1}" label_len terminal_len padding_len padding
 
     # If either:
     #
@@ -165,16 +183,17 @@ function print_banner() {
     # command is in the current ${PATH}.
 
     # Number of characters in this label.
-    local label_len="${#label}"
+    label_len="${#label}"
 
     # Number of characters comprising each line of this terminal.
-    local terminal_len="$(tput cols)"
+    # terminal_len="$(tput cols)"
+    terminal_len=80
 
     # Number of characters comprising both the prefixing and suffixing padding.
-    local padding_len="$(((terminal_len - label_len - 2)/2))"
+    padding_len="$(((terminal_len - label_len - 2)/2))"
 
     # "=" character repeated 500 times, to be truncated below.
-    local padding="$(printf '%0.1s' ={1..500})"
+    padding="$(printf '%0.1s' ={1..500})"
 
     # Magically print this label as a banner.
     printf '\n%*.*s %s %*.*s\n'\
@@ -206,10 +225,13 @@ function is_command() {
 }
 
 # ....................{ VERSIONS                          }....................
+# Print the current version of Python 3.x.
+echo -n 'python    [version]: '
+command python3 --version
+
 # Print project versions *BEFORE* profiling for disambiguity. Note that:
 # * The "typeguard" package fails to explicitly publish its version, so we
 #   fallback to the setuptools-based Hard Way.
-echo
 command python3 -c '
 import beartype
 print("beartype  [version]: " + beartype.__version__)'
@@ -218,8 +240,20 @@ import pkg_resources
 print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
 
 # ....................{ PROFILE ~ union                   }....................
+profile_callable 'SCALAR' '' \
+    'def monkey_people(tree_land: str) -> str:
+    return tree_land' \
+    'monkey_people("Then they began their flight; and the flight of the Monkey-People through tree-land is one of the things nobody can describe.")'
+
 profile_callable 'UNION' \
     'from typing import Union' \
-    'def panther_canter(quick_foot: Union[int, str]) -> Union[int, str]:
+    'def panther_canter(
+    quick_foot: Union[int, str]) -> Union[int, str]:
     return quick_foot' \
     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'
+# profile_callable 'UNION' \
+#     'from typing import Any, List, Union' \
+#     'def panther_canter(
+#     quick_foot: Union[int, List[Any], str]) -> Union[int, List[Any], str]:
+#     return quick_foot' \
+#     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'

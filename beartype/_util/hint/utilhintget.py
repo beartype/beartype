@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintException
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN_GET)
+from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -52,22 +53,18 @@ def get_hint_type_origin(hint: object) -> type:
     Returns
     ----------
     type
-        If this object is:
+        If this object is either:
 
         * A non-:mod:`typing` class (e.g., :class:`str`), this object as is.
-        * An argumentless :mod:`typing` object originating from a
-          non-:mod:`typing` superclass (e.g., :attr:`typing.Dict`, associated
-          with :class:`dict`), that superclass.
+        * An argumentless :mod:`typing` object originating from an
+          :func:`isinstance`-able class (e.g., :attr:`typing.Dict`, originating
+          from the builtin :class:`dict` class), that class.
 
     Raises
     ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
-    BeartypeDecorHintPepException
-        If this object does *not* originate from a non-:mod:`typing`
-        superclass.
+    BeartypeDecorHintException
+        If this object does *not* originate from an :func:`isinstance`-able
+        class.
     '''
 
     # Non-"typing" superclass from which this object originates if any *OR*
@@ -81,7 +78,9 @@ def get_hint_type_origin(hint: object) -> type:
     # Else, no such superclass exists. In this case, raise an exception.
     raise BeartypeDecorHintException(
         'PEP-agnostic type hint {!r} '
-        'originates from no non-"typing" type.'.format(hint))
+        'originates from no non-"typing" type (i.e., due to being neither '
+        'an argumentless "typing" attribute nor '
+        'a non-"typing" type).'.format(hint))
 
 
 def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
@@ -110,18 +109,11 @@ def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
         * If this object is:
 
           * A non-:mod:`typing` class (e.g., :class:`str`), this object as is.
-          * An argumentless :mod:`typing` object originating from a
-            non-:mod:`typing` superclass (e.g., :attr:`typing.Dict`, associated
-            with :class:`dict`), that superclass.
+          * An argumentless :mod:`typing` object originating from an
+            :func:`isinstance`-able class (e.g., :attr:`typing.Dict`, originating
+            from the builtin :class:`dict` class), that class.
 
         * Else, ``None``.
-
-    Raises
-    ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
 
     See Also
     ----------
@@ -131,13 +123,16 @@ def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
 
     # Return either...
     return (
-        # If this hint is a non-"typing" class, this class as is;
+        # If this object is a "typing" attribute, the
+        # isinstance()-able class originating this attribute if any or "None".
+        # Note this condition is intentionally tested *BEFORE* testing whether
+        # this object is a type, as most "typing" attributes that are types
+        # also define __subclasscheck__() dunder methods that unconditionally
+        # raise exceptions and are thus *NOT* isinstance()-able.
+        TYPING_ATTR_TO_TYPE_ORIGIN_GET(hint, None)
+        if is_hint_pep_typing(hint) else
+        # Else if this object is a non-"typing" class, this class as is.
         hint if isinstance(hint, type) else
-        TYPING_ATTR_TO_TYPE_ORIGIN_GET(
-            # Else if this hint is an argumentless "typing" attribute
-            # originating from a non-"typing" superclass, that superclass;
-            hint,
-            # Else, "None".
-            None
-        )
+        # Else, "None".
+        None
     )

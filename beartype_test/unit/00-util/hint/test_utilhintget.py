@@ -15,10 +15,10 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+# from pytest import raises
 
 # ....................{ TESTS                             }....................
-def test_utilhintget_get_hint_isinstanceable_type_or_none() -> None:
+def test_get_hint_type_origin_or_none() -> None:
     '''
     Test the
     :func:`beartype._util.hint.utilhintget.get_hint_type_origin_or_none`
@@ -30,7 +30,6 @@ def test_utilhintget_get_hint_isinstanceable_type_or_none() -> None:
         get_hint_type_origin_or_none)
     from beartype._util.hint.pep.utilhintpepdata import (
         TYPING_ATTR_TO_TYPE_ORIGIN)
-    from beartype_test.unit.data.data_hint import NOT_HINTS_UNHASHABLE
 
     # Assert this function accepts non-"typing" types.
     assert get_hint_type_origin_or_none(str) is str
@@ -45,8 +44,3 @@ def test_utilhintget_get_hint_isinstanceable_type_or_none() -> None:
     assert get_hint_type_origin_or_none(
         'Growth for the sake of growth '
         'is the ideology of the cancer cell.') is None
-
-    # Assert this function rejects unhashable objects.
-    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(TypeError):
-            get_hint_type_origin_or_none(non_hint_unhashable)

@@ -246,8 +246,9 @@ from beartype._util.hint.pep.utilhintpepcall import (
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep as __beartype_die_unless_hint_nonpep,
 )
-from beartype._util.text.utiltexttrim import (
+from beartype._util.text.utiltextmunge import (
     trim_object_repr as __beartype_trim,
+    number_lines,
 )
 
 # ....................{ DECORATORS                        }....................
@@ -449,11 +450,7 @@ def beartype(func):
         #         if not (
         #          ^
         #     SyntaxError: invalid syntax
-        func_code_line_numbered = '\n'.join(
-            '(line {:0>4d}) {}'.format(func_code_line_number, func_code_line)
-            for func_code_line_number, func_code_line in enumerate(
-                func_code.splitlines(), start=1)
-        )
+        func_code_line_numbered = number_lines(func_code)
 
         # Raise an exception this code for debugging purposes.
         raise BeartypeDecorWrapperException(

@@ -1,7 +1,7 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
 =====================================================
-beartype ———[ …the barely there type checker ]———
+beartype ————[ …the bare-metal type checker ]————
 =====================================================
 
 |GitHub Actions badge|
@@ -85,45 +85,67 @@ Let's show ``beartype`` type-checking like `greased lightning`_:
 
 .. code-block:: shell-session
 
-   $ bin/profile.bash
    beartype profiler [version]: 0.0.1
    
+   python    [version]: Python 3.7.8
    beartype  [version]: 0.2.0
    typeguard [version]: 2.9.1
    
+   ==================================== SCALAR ====================================
+   function to be decorated with type-checking:
+   def monkey_people(tree_land: str) -> str:
+       return tree_land
+   
+   function calls to be type-checked:
+   for _ in range(100):
+       monkey_people("Then they began their flight; and the flight of the Monkey-People through tree-land is one of the things nobody can describe.")
+   
+   decoration         [none     ]: 100 loops, best of 3: 354 nsec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 347 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 13.1 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 15.4 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 478 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 6.97 msec per loop
+   
    ==================================== UNION ====================================
    function to be decorated with type-checking:
-   def panther_canter(quick_foot: Union[int, str]) -> Union[int, str]:
+   def panther_canter(
+       quick_foot: Union[int, str]) -> Union[int, str]:
        return quick_foot
    
    function calls to be type-checked:
    for _ in range(100):
        panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")
    
-   decoration         [none     ]: 100 loops, best of 3: 2.68 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 370 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.4 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 18.4 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 548 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 11.3 msec per loop
+   decoration         [none     ]: 100 loops, best of 3: 2.84 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 369 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 18.9 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 549 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 11.1 msec per loop
+
+.. note::
+   ``msec`` = milliseconds = 10^-3 seconds
+   ``usec`` = microseconds = 10^-6 seconds
+   ``nsec`` = nanoseconds = 10^-9 seconds
 
 ELI5
 -------------
 ``beartype`` is approximately **twenty times faster** (i.e., 20,000%) than
-typeguard_, previously regarded as the fastest Python runtime type-checker.
+typeguard_, the only comparable Python runtime type-checker also compatible
+with all modern versions of Python.
 
 As expected, ``beartype`` performs most of its work at decoration time. The
-``@beartype`` decorator consumes *over half* of the time needed to first
-decorate and then repeatedly call a decorated function one hundred times.
-``beartype`` is thus front-loaded. After paying the initial cost of decoration,
-each type-checked call thereafter incurs comparatively little overhead.
+``@beartype`` decorator consumes the overwhelming majority of the time needed
+to first decorate and then repeatedly call a decorated function. ``beartype``
+is thus front-loaded. After paying the initial cost of decoration, each
+type-checked call thereafter incurs comparatively little overhead.
 
 By compare, typeguard_ performs most of its work at call time. The
 ``@typeguard.typechecked`` decorator consumes a fraction of the time needed to
-first decorate and then repeatedly call a decorated function one hundred times.
-typeguard_ is thus back-loaded. Although the initial cost of decoration is
-essentially free, each type-checked call thereafter incurs significant
-overhead.
+first decorate and then repeatedly call a decorated function. typeguard_ is
+thus back-loaded. Although the initial cost of decoration is essentially free,
+each type-checked call thereafter incurs significant overhead.
 
 Cheatsheet
 ==========
