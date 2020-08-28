@@ -182,26 +182,6 @@ class BeartypeDecorHintPepException(
     pass
 
 
-class BeartypeDecorHintPep560Exception(
-    BeartypeDecorHintPepException):
-    '''
-    **Beartype decorator PEP-compliant type hint** `PEP 560_` **exception.**
-
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    annotated with one or more PEP-compliant type hints (e.g., instances or
-    classes declared by the :mod:`typing` module) either violating `PEP 560`_
-    *or* this decorator's implementation of `PEP 560`_.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 560:
-       https://www.python.org/dev/peps/pep-0560
-    '''
-
-    pass
-
-
 class BeartypeDecorHintPepUnsupportedException(
     BeartypeDecorHintPepException):
     '''

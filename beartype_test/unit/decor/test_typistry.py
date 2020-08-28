@@ -66,7 +66,7 @@ def test_typistry_register_type_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
-    from beartype_test.unit.data.data_hint import PepCustomSingleTypevared
+    from beartype_test.unit.data.data_hint import PepGenericTypevaredSingle
 
     # Assert that non-types are *NOT* registrable via the same function.
     with raises(_BeartypeDecorBeartypistryException):
@@ -79,7 +79,7 @@ def test_typistry_register_type_fail() -> None:
     # Assert that PEP-compliant types are *NOT* registrable via the same
     # function.
     with raises(_BeartypeDecorBeartypistryException):
-        register_typistry_type(PepCustomSingleTypevared)
+        register_typistry_type(PepGenericTypevaredSingle)
 
 # ....................{ TESTS ~ callable : tuple          }....................
 def test_typistry_register_tuple_pass() -> None:
@@ -141,7 +141,7 @@ def test_typistry_register_tuple_fail() -> None:
     # Defer heavyweight imports
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_tuple
-    from beartype_test.unit.data.data_hint import PepCustomSingleUntypevared
+    from beartype_test.unit.data.data_hint import PepGenericTypevaredSingle
 
     # Assert that hashable non-tuple objects are *NOT* registrable via this
     # function.
@@ -180,7 +180,7 @@ def test_typistry_register_tuple_fail() -> None:
     # Assert that non-empty tuples containing one or more PEP-compliant types
     # are *NOT* registrable via this function.
     with raises(_BeartypeDecorBeartypistryException):
-        register_typistry_tuple((int, PepCustomSingleUntypevared, str,))
+        register_typistry_tuple((int, PepGenericTypevaredSingle, str,))
 
 # ....................{ TESTS ~ singleton                 }....................
 def test_typistry_singleton_pass() -> None:

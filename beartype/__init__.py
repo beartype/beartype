@@ -72,7 +72,7 @@ The definition of this global effectively prohibits star imports from this
 submodule into downstream modules by raising an :class:`AttributeError`
 exception on the first attempt to do so: e.g.,
 
-.. code::
+.. code-block:: shell-session
 
    >>> from beartype import *
    AttributeError: module 'beartype' has no attribute 'STAR_IMPORTS_CONSIDERED_HARMFUL'

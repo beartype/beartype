@@ -10,28 +10,6 @@ concerning PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Generalize the die_unless_hint_pep_supported() and
-#is_hint_pep_supported() functions to perform a genuine breadth-first traversal
-#over all transitive arguments of the passed hint. Currently, these functions
-#only shallowly inspect the first level of arguments of this hint. For
-#example, if the "typing.Iterable" type is currently unsupported, then:
-#    import typing
-#    >>> hint_pep_unsupported = typing.Union[
-#    ...     int, typing.Dict[str, typing.Iterable[str]]]
-#    # This is what currently happens.
-#    >>> is_hint_pep_supported(hint_pep_unsupported)
-#    True
-#    # This is what should happen instead.
-#    >>> is_hint_pep_supported(hint_pep_unsupported)
-#    False
-#
-#To implement this sanely, we'll probably want to define a new higher-level
-#get_hint_pep_typing_deep_attrs_argless_to_args() getter calling the lower-level
-#get_hint_pep_typing_attr_to_args() getter via a breadth-first traversal.
-#For disambiguity, the latter getter should be renamed to
-#get_hint_pep_typing_flat_attrs_argless_to_args().
-
 # ....................{ IMPORTS                           }....................
 import collections, contextlib, typing
 from beartype._util.utilpy import (
