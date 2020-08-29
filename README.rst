@@ -1,7 +1,7 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
 =====================================================
-beartype ————[ …the bare-metal type checker ]————
+beartype ———[ …the bare-metal type checker ]———
 =====================================================
 
 |GitHub Actions badge|
@@ -81,10 +81,13 @@ sometimes good, too:
 Timings
 ==========
 
-Let's show ``beartype`` type-checking like `greased lightning`_:
+Let's run our `profiler suite`_, quantitatively timing ``beartype`` and
+comparable runtime type-checkers against a battery of fair and unbiased tests:
+:superscript:`*cue mirthless chuckles*`
 
 .. code-block:: shell-session
 
+   $ bin/profile.bash
    beartype profiler [version]: 0.0.1
    
    python    [version]: Python 3.7.8
@@ -92,58 +95,60 @@ Let's show ``beartype`` type-checking like `greased lightning`_:
    typeguard [version]: 2.9.1
    
    ==================================== SCALAR ====================================
-   function to be decorated with type-checking:
-   def monkey_people(tree_land: str) -> str:
-       return tree_land
-   
-   function calls to be type-checked:
-   for _ in range(100):
-       monkey_people("Then they began their flight; and the flight of the Monkey-People through tree-land is one of the things nobody can describe.")
-   
-   decoration         [none     ]: 100 loops, best of 3: 354 nsec per loop
+   decoration         [none     ]: 100 loops, best of 3: 363 nsec per loop
    decoration         [beartype ]: 100 loops, best of 3: 347 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 13.1 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 15.4 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 13.2 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 15.6 usec per loop
    decoration + calls [beartype ]: 100 loops, best of 3: 478 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 6.97 msec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 6.88 msec per loop
    
    ==================================== UNION ====================================
-   function to be decorated with type-checking:
-   def panther_canter(
-       quick_foot: Union[int, str]) -> Union[int, str]:
-       return quick_foot
-   
-   function calls to be type-checked:
-   for _ in range(100):
-       panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")
-   
-   decoration         [none     ]: 100 loops, best of 3: 2.84 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 369 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 18.9 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 549 usec per loop
+   decoration         [none     ]: 100 loops, best of 3: 2.93 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 372 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.7 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 18 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 546 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 11.1 msec per loop
 
 .. note::
-   ``msec`` = milliseconds = 10^-3 seconds
-   ``usec`` = microseconds = 10^-6 seconds
-   ``nsec`` = nanoseconds = 10^-9 seconds
+   * ``msec`` = milliseconds = 10^-3 seconds.
+   * ``usec`` = microseconds = 10^-6 seconds.
+   * ``nsec`` = nanoseconds = 10^-9 seconds.
 
 ELI5
 -------------
-``beartype`` is approximately **twenty times faster** (i.e., 20,000%) than
-typeguard_, the only comparable Python runtime type-checker also compatible
-with all modern versions of Python.
 
-As expected, ``beartype`` performs most of its work at decoration time. The
-``@beartype`` decorator consumes the overwhelming majority of the time needed
-to first decorate and then repeatedly call a decorated function. ``beartype``
-is thus front-loaded. After paying the initial cost of decoration, each
-type-checked call thereafter incurs comparatively little overhead.
+On the one hand, ``beartype`` is approximately **twenty times faster** (i.e.,
+20,000%) than typeguard_ – the only comparable runtime type-checker also
+compatible with all modern versions of Python. :superscript:`so, that's good`
 
-By compare, typeguard_ performs most of its work at call time. The
-``@typeguard.typechecked`` decorator consumes a fraction of the time needed to
-first decorate and then repeatedly call a decorated function. typeguard_ is
+On the other hand, ``beartype`` is only partially compliant with
+annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
+484 -- Type Hints <PEP 484_>`__ and `PEP 563 -- Postponed Evaluation of
+Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
+these PEPs. :superscript:`so, that's bad`
+
+On the `gripping hand`_, ``beartype`` intends to be (mostly) fully compliant
+with these PEPs as well by either **[**\ *insert hand-waved date here*\ **]**
+*or* the catastrophic implosion of reductive normalcy induced by collective
+first contact with a hyperchromatic condensation of self-transforming machine
+elves cum self-dribbling jeweled basketballs (whichever comes first).
+:superscript:`so, that's... good?`
+
+.. image:: https://memegenerator.net/img/instances/400x/65500747/not-sure-if-machine-elves-or-self-dribbling-jeweled-basketballs.jpg
+
+But... how?
+-----------
+
+``beartype`` performs most of its work at decoration time. The ``@beartype``
+decorator consumes the overwhelming majority of the time needed to first
+decorate and then repeatedly call a decorated function. ``beartype`` is thus
+front-loaded. After paying the initial cost of decoration, each type-checked
+call thereafter incurs comparatively little overhead.
+
+typeguard_ (and comparable runtime type checkers) perform most of their work
+at call time. ``@typeguard`` decorators consume very little of the time needed
+to first decorate and then repeatedly call a decorated function. typeguard_ is
 thus back-loaded. Although the initial cost of decoration is essentially free,
 each type-checked call thereafter incurs significant overhead.
 
@@ -157,7 +162,10 @@ Let's type-check like `greased lightning`_:
    # Import the core @beartype decorator.
    from beartype import beartype
 
-   # Import generic types for use with @beartype.
+   # Import PEP-compliant types for use with @beartype.
+   from typing import List, Optional, Union
+
+   # Import beartype-specific types for use with @beartype, too.
    from beartype.cave import (
        AnyType,
        BoolType,
@@ -178,57 +186,65 @@ Let's type-check like `greased lightning`_:
        VersionTypes,
    )
 
-   # Import user-defined classes for use with @beartype, too.
+   # Import user-defined types for use with @beartype, three.
    from my_package.my_module import MyClass
 
    # Decorate functions with @beartype and...
    @beartype
    def bare_necessities(
-       # Annotate builtin types as is, delimited by a colon (":" character).
-       param1_must_be_of_builtin_type: str,
+       # Annotate builtin types as is.
+       param_must_satisfy_builtin_type: str,
 
-       # Annotate user-defined classes as is, too.
-       param2_must_be_of_user_type: MyClass,
+       # Annotate user-defined types as is, too.
+       param_must_satisfy_user_type: MyClass,
 
-       # Annotate generic types predefined by the beartype cave.
-       param3_must_be_of_generic_type: NumberType,
+       # Annotate PEP-compliant types predefined by the "typing" module.
+       param_must_satisfy_pep_type: List[int],
 
-       # Annotate forward references dynamically resolved (and cached) at first
-       # call time as fully-qualified "."-delimited classnames.
-       param4_must_be_of_forward_type: 'my_package.my_module.MyClass',
+       # Annotate beartypes-specific types predefined by the beartype cave.
+       param_must_satisfy_beartype_type_from_cave: NumberType,
 
-       # Annotate unions of types as tuples. In PEP 484, this is:
-       # param5_may_be_any_of_several_types: typing.Union[dict, MyClass, int,],
-       param5_may_be_any_of_several_types: (dict, MyClass, int,),
+       # Annotate PEP-compliant unions of types.
+       param_must_satisfy_pep_union: Union[dict, MyClass, int,],
 
-       # Annotate generic unions of types predefined by the beartype cave.
-       param6_may_be_any_of_several_generic_types: CallableTypes,
+       # Annotate beartype-specific unions of types as tuples, too.
+       param_must_satisfy_beartype_union: (dict, MyClass, int,),
 
-       # Annotate forward references in unions of types, too.
-       param7_may_be_any_of_several_forward_types: (
+       # Annotate beartype-specific unions predefined by the beartype cave.
+       param_must_satisfy_beartype_union_from_cave: CallableTypes,
+
+       # Annotate beartype-specific unions concatenated together.
+       param_must_satisfy_beartype_union_concatenated: (
+           IteratorType,) + ScalarTypes,
+
+       # Annotate beartype-specific forward references dynamically resolved 
+       # at first call time as fully-qualified "."-delimited classnames.
+       param_must_satisfy_beartype_forward_ref: 'my_package.my_module.MyClass',
+
+       # Annotate beartype-specific forward references in unions of types, too.
+       param_must_satisfy_beartype_union_with_forward_ref: (
            IterableType, 'my_package.my_module.MyOtherClass', NoneType,),
 
-       # Annotate unions of types as tuples concatenated together.
-       param8_may_be_any_of_several_concatenated_types: (IteratorType,) + ScalarTypes,
+       # Annotate PEP-compliant optional types.
+       param_must_satisfy_pep_type_optional: Optional[float] = None,
 
-       # Annotate optional types by indexing "NoneTypeOr" with those types. In
-       # PEP 484, this is:
-       # param9_must_be_of_type_if_passed: typing.Optional[float] = None,
-       param9_must_be_of_type_if_passed: NoneTypeOr[float] = None,
+       # Annotate beartype-specific optional types.
+       param_must_satisfy_beartype_type_optional: NoneTypeOr[float] = None,
 
-       # Annotate optional unions of types by indexing "NoneTypeOr" with tuples
-       # of those types. In PEP 484, this is:
-       # param10_may_be_of_several_types_if_passed: typing.Optional[float, int] = None,
-       param10_may_be_of_several_types_if_passed: NoneTypeOr[(float, int)] = None,
+       # Annotate PEP-compliant optional unions of types.
+       param_must_satisfy_pep_tuple_optional: Optional[Union[float, int]]) = None,
+
+       # Annotate beartype-specific optional unions of types.
+       param_must_satisfy_beartype_tuple_optional: NoneTypeOr[float, int] = None,
 
        # Annotate variadic positional arguments as above, too.
-       *args: VersionTypes + (
-           IntOrFloatType, 'my_package.my_module.MyVersionType',),
+       *args: VersionTypes + (IntOrFloatType, 'my_package.my_module.MyVersionType',),
 
        # Annotate keyword-only arguments as above, too.
-       paramN_must_be_passed_by_keyword_only: SequenceType,
-   # Annotate return types as above, delimited by an arrow ("->" string).
-   ) -> (IntType, 'my_package.my_module.MyOtherClass', BoolType):
+       param_must_be_passed_by_keyword_only: SequenceType,
+
+   # Annotate return types as above, too.
+   ) -> (IntType, 'my_package.my_module.MyOtherOtherClass', BoolType):
        return 0xDEADBEEF
 
 
@@ -274,9 +290,45 @@ Usage
 =====
 
 The ``@beartype`` decorator published by the ``beartype`` package transparently
-supports various types of type-checking, each declared with a different type of
-**type hint** (i.e., annotation applied to a parameter or return value of a
-callable).
+supports two different types of **type hints** (i.e., annotations applied to
+parameters and return values of user-defined functions and methods), each with
+its own tradeoffs, tribal dogmas, religious icons, and overzealous inquisitors:
+
+* `Beartype-specific type hints <Beartype-specific Type Hints_>`__, which:
+
+  * Are highly performant in both space and time. :superscript:`which is good`
+    Efficiency is our raison d'être, after all. If your use case doesn't need
+    efficiency, however, consider adopting an alternate runtime type-checker
+    more compatible with Python's type-checking landscape (like typeguard_).
+  * Are incapable of deeply type-checking the contents, elements, items,
+    metadata, structure, or other attributes of passed parameters and returned
+    values. :superscript:`which is bad`
+  * Are fully supported by ``beartype``. :superscript:`which is good`
+  * Do *not* comply with existing `Python Enhancement Proposals (PEPs) <PEP
+    0_>`__. :superscript:`which is bad, arguably`
+
+* `PEP-compliant type hints <PEP-compliant Type Hints_>`__, which:
+  
+  * Are highly inefficient in both space and time. :superscript:`which is bad`
+  * Are capable of deeply type-checking the contents, elements, items,
+    metadata, structure, and other attributes of passed parameters and returned
+    values. :superscript:`which is good`
+  * Are only partially supported by ``beartype``. :superscript:`which is bad`
+  * Comply with existing PEPs. :superscript:`which is good, arguably`
+
+Callers may freely intermingle these two types and thus obtain "the best of
+both worlds" when annotating parameters and return values. All else being
+equal, your maxim to type by should be:
+
+.. parsed-literal::
+
+     Use `beartype-specific type hints <Beartype-specific Type Hints_>`__
+       where sufficient.
+     Use `PEP-compliant type hints <PEP-compliant Type Hints_>`__
+       everywhere else.
+
+Beartype-specific Type Hints
+----------------------------
 
 This is simpler than it sounds. Would we lie? Instead of answering that, let's
 begin with the simplest type of type-checking supported by ``@beartype``.
@@ -617,6 +669,31 @@ Let's call that function with good types:
 Behold! The terrifying power of the ``NoneTypeOr`` tuple factory, resplendent
 in its highly over-optimized cache utilization.
 
+PEP-compliant Type Hints
+------------------------
+
+Beartype is fully compliant with these `Python Enhancement Proposals (PEPs)
+<PEP 0_>`__:
+
+* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
+
+Beartype is partially compliant with these PEPs:
+
+* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
+* `PEP 484 -- Type Hints <PEP 484_>`__.
+
+Beartype is currently *not* compliant whatsoever with these PEPs:
+
+* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
+* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
+  544_>`_.
+* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
+* `PEP 586 -- Literal Types <PEP 586_>`__.
+* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
+  <PEP 589_>`__.
+
+See the "PEP" category of the following table for further details.
+
 Features
 ========
 
@@ -801,120 +878,6 @@ Let's chart current and prospective new features for future generations:
 |            | 3.8                                 | **0.1.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 
-PEP 484 & Friends
-=================
-
-Beartype does *not* currently support the following type-checking-centric
-**Python Enhancement Proposals (PEPs)**:
-
-.. # Note: intentionally sorted in numeric order for collective sanity.
-
-* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
-* `PEP 484 -- Type Hints <PEP 484_>`__.
-* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
-  544_>`_.
-* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
-* `PEP 586 -- Literal Types <PEP 586_>`__.
-* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
-  <PEP 589_>`__.
-
-Efficiency Concerns
--------------------
-
-Why? Because implementing even the core `PEP 484`_ standard in pure Python
-while preserving beartype's ``O(1)`` time complexity guarantee is infeasible.
-
-Consider a hypothetical `PEP 484`_-compliant ``@slothtype`` decorator
-decorating a hypothetical callable accepting a list of strings and returning
-anything:
-
-.. code-block:: python
-
-   from slothtype import slothtype
-   from typing import Any, List
-
-   @slothtype
-   def slothful(sluggard: List[str]) -> Any:
-       ...
-
-This is hardly the worst-case usage scenario. By compare to some of the more
-grotesque outliers enabled by the ``typing`` API (e.g., infinitely recursive
-types), a non-nested iterable of scalars is rather tame. Sadly, ``slothful``
-still exhibits ``Ω(n)`` time complexity for length ``n`` of the passed list,
-where ``Ω`` may be read as "at least as asymptotically complex as" under the
-standard Knuth definition.
-
-**That's bad.** Each call to ``slothful`` now type-checks each item of a list
-of arbitrary size *before* performing any meaningful work. Python prohibits
-monkey-patching builtin types, so this up-front cost *cannot* be amortized
-across all calls to ``slothful`` (e.g., by monkey-patching the builtin ``list``
-type to cache the result of prior type-checks of lists previously passed to
-``slothful`` and invalidating these caches on external changes to these lists)
-but *must* instead be paid on each call to ``slothful``. Ergo, ``Ω(n)``.
-
-Safety Concerns
----------------
-
-**That's not all,** though. `PEP 484`_ itself violates prior PEPs, including:
-
-* `PEP 3141 -- A Type Hierarchy for Numbers <PEP 3141_>`__, which `PEP 484`_
-  authors `subjectively deride without evidence or explanation as suffering
-  "some issues" <PEP 484 numbers_>`__ despite offering only a substantially
-  *worse* solution – seemingly just to promote the type hierarchy defined by
-  the `"typing" module`_ over those defined by other (presumably lesser)
-  modules. Rather than reuse the `existing numeric tower used by all
-  third-party numeric frameworks <"numbers" module>`_ (e.g., `NumPy`_,
-  `SymPy`_), `PEP 484`_-compliant type checkers instead silently coerce
-  ``float`` types into ``Union[float, int]`` types and ``complex`` types into
-  ``Union[complex, float, int]`` types. This is blatantly bad. A function
-  internally guaranteed to return a floating-point number *never* returns an
-  integer. Integers, floating point numbers, and complex numbers exhibit
-  markedly different usage, safety, and performance characteristics. Under `PEP
-  484`_, preserving these distinctions is infeasible.
-* `PEP 570 -- Python Positional-Only Parameters <PEP 570_>`__, which `PEP 484`_
-  violates by mandating that type checkers interpret parameters whose names are
-  prefixed but *not* suffixed by ``__`` to be positional-only parameters
-  regardless of whether those parameters actually are positional-only
-  parameters or not.
-* The entirety of `PEP 20 -- The Zen of Python <PEP 20_>`__, especially the
-  sanity-preserving and safety-enhancing "Explicit is better than implicit"
-  maxim, which `PEP 484`_ repeatedly violates by implicitly coercing:
-
-    * The non-type ``None`` singleton to ``type(None)``.
-    * The ``complex`` type to ``Union[complex, float, int]``.
-    * The ``float`` type to ``Union[float, int]``.
-
-Optimistic Hand-waving
-----------------------
-
-Beartype does intend to support the proper subset of `PEP 484`_ (and its
-vituperative band of ne'er-do-wells) that both complies with prior PEPs *and*
-is efficiently implementable in pure Python – whatever that may be. Full
-compliance may be off the map, but at least partial compliance with the
-portions of these standards that average users care about is well within the
-realm of "...maybe?"
-
-Preserving beartype's ``O(1)`` time complexity guarantee is the ultimate
-barometer for what will be and will not be implemented. That and @leycec's
-declining sanity. Our bumpy roadmap to a better-typed future now resembles:
-
-+------------------+--------------------------------+
-| beartype version | partial PEP compliance planned |
-+==================+================================+
-| **0.2.0**        | `PEP 484`_                     |
-+------------------+--------------------------------+
-| **0.3.0**        | `PEP 544`_                     |
-+------------------+--------------------------------+
-| **0.4.0**        | `PEP 585`_                     |
-+------------------+--------------------------------+
-| **0.5.0**        | `PEP 586`_                     |
-+------------------+--------------------------------+
-| **0.6.0**        | `PEP 589`_                     |
-+------------------+--------------------------------+
-
-If we wish upon a GitHub star, even the improbable is possible.
-
 License
 =======
 
@@ -954,10 +917,10 @@ application stack at tool rather than Python runtime) include:
 
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
-* `Pyre from FaceBook <Pyre_>`__.
 * mypy_.
-* `pyright from Microsoft <pyright_>`__.
-* `pytype from Google <pytype_>`__.
+* Pyre_, published by FaceBook. :sup:`...yah.`
+* pyright_, published by Microsoft.
+* pytype_, published by Google.
 
 .. # ------------------( IMAGES                             )------------------
 .. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
@@ -977,6 +940,8 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ beartype : remote          )------------------
 .. _codebase:
    https://github.com/beartype/beartype/tree/master/beartype
+.. _profiler suite:
+   https://github.com/beartype/beartype/blob/master/bin/profile.bash
 .. _tests:
    https://github.com/beartype/beartype/actions?workflow=tests
 
@@ -1011,6 +976,8 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ meme                       )------------------
 .. _greased lightning:
    https://www.youtube.com/watch?v=H-kL8A4RNQ8
+.. _gripping hand:
+   http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
 .. # ------------------( LINKS ~ non-py                     )------------------
 .. _C++:
@@ -1031,12 +998,12 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : implementation        )------------------
 .. _CPython:
    https://github.com/python/cpython
-.. _PyPy:
-   https://www.pypy.org
 .. _Nuitka:
    https://nuitka.net
 .. _Numba:
    https://numba.pydata.org
+.. _PyPy:
+   https://www.pypy.org
 
 .. # ------------------( LINKS ~ py : package               )------------------
 .. _NumPy:
@@ -1045,10 +1012,14 @@ application stack at tool rather than Python runtime) include:
    https://www.sympy.org
 
 .. # ------------------( LINKS ~ py : pep                   )------------------
+.. _PEP 0:
+   https://www.python.org/dev/peps
 .. _PEP 20:
    https://www.python.org/dev/peps/pep-0020
 .. _PEP 483:
    https://www.python.org/dev/peps/pep-0483
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
 .. _PEP 526:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
@@ -1065,12 +1036,6 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0589
 .. _PEP 3141:
    https://www.python.org/dev/peps/pep-3141
-
-.. # ------------------( LINKS ~ py : pep : 484             )------------------
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-.. _PEP 484 numbers:
-   https://www.python.org/dev/peps/pep-0484/#id27
 
 .. # ------------------( LINKS ~ py : service               )------------------
 .. _Anaconda:

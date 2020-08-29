@@ -76,11 +76,14 @@ function profile_callable() {
 for _ in range(100):
     ${code_call}"
 
-    # Print the function to be called.
-    echo -e "function to be decorated with type-checking:\n${code_func}\n"
-
-    # Print the function calls to be performed.
-    echo -e "function calls to be type-checked:${code_call_repeat}\n"
+    #FIXME: Conditionally print these strings *ONLY* if the caller explicitly
+    #requests verbosity (e.g., by passing an option "-v" or "--verbose"),
+    #presumably by leveraging the getopt() Bash builtin.
+    # # Print the function to be called.
+    # echo -e "function to be decorated with type-checking:\n${code_func}\n"
+    #
+    # # Print the function calls to be performed.
+    # echo -e "function calls to be type-checked:${code_call_repeat}\n"
 
     # Python code snippet importing the "beartype" decorator.
     CODE_SETUP_BEARTYPE='from beartype import beartype
