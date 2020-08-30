@@ -16,6 +16,7 @@ This submodule defines various types (including both `PEP 484`_-compliant and
 # ....................{ IMPORTS                           }....................
 import collections, typing
 from beartype import cave
+from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_7
 from collections import namedtuple
 
 # ....................{ NON-HINTS ~ tuples                }....................
@@ -157,7 +158,7 @@ class PepGenericTypevaredDeepMultiple(
 # ....................{ PEP ~ mappings                    }....................
 PepHintMeta = namedtuple('PepHintMeta', (
     'is_supported',
-    'is_generic',
+    'is_generic_user',
     'is_typevared',
     'typing_attr',
 ))
@@ -170,10 +171,11 @@ Attributes
 is_supported : bool
     ``True`` only if this PEP-compliant type hint is currently supported by the
     :func:`beartype.beartype` decorator.
-is_generic : bool
-    ``True`` only if this PEP-compliant type hint is a **generic** (i.e.,
-    PEP-compliant type hint whose class subclasses one or more public
-    :mod:`typing` pseudo-superclasses).
+is_generic_user : bool
+    ``True`` only if this PEP-compliant type hint is a **user-defined generic**
+    (i.e., PEP-compliant type hint whose class subclasses one or more public
+    :mod:`typing` pseudo-superclasses but *not* itself defined by the
+    :mod:`typing` module).
 is_typevared : bool
     ``True`` only if this PEP-compliant type hint is parametrized by one or
     more **type variables** (i.e., :class:`typing.TypeVar` instances).
@@ -188,7 +190,7 @@ PEP_HINT_TO_META = {
     # ..................{ CALLABLES                         }..................
     typing.Callable[[], str]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Callable,
     ),
@@ -196,7 +198,7 @@ PEP_HINT_TO_META = {
     # ..................{ CALLABLES ~ generator             }..................
     typing.Generator[int, float, str]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Generator,
     ),
@@ -204,19 +206,19 @@ PEP_HINT_TO_META = {
     # ..................{ COLLECTIONS ~ dict                }..................
     typing.Dict: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Dict,
     ),
     typing.Dict[str, int]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Dict,
     ),
     typing.Dict[S, T]: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Dict,
     ),
@@ -224,19 +226,19 @@ PEP_HINT_TO_META = {
     # ..................{ COLLECTIONS ~ list                }..................
     typing.List: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.List,
     ),
     typing.List[float]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.List,
     ),
     typing.List[T]: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.List,
     ),
@@ -247,19 +249,19 @@ PEP_HINT_TO_META = {
     # attributes originating from container types. *sigh*
     typing.Tuple: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Tuple,
     ),
     typing.Tuple[float, str, int]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Tuple,
     ),
     typing.Tuple[T, ...]: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Tuple,
     ),
@@ -267,13 +269,13 @@ PEP_HINT_TO_META = {
     # ..................{ SINGLETONS                        }..................
     typing.Any: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Any,
     ),
     typing.NoReturn: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.NoReturn,
     ),
@@ -281,19 +283,19 @@ PEP_HINT_TO_META = {
     # ..................{ TYPE ALIASES                      }..................
     typing.Type: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Type,
     ),
     typing.Type[dict]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Type,
     ),
     typing.Type[T]: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Type,
     ),
@@ -302,7 +304,7 @@ PEP_HINT_TO_META = {
     # Type variables.
     T: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.TypeVar,
     ),
@@ -316,14 +318,14 @@ PEP_HINT_TO_META = {
     # exercising an edge case.
     typing.Union[str, typing.Sequence[int]]: PepHintMeta(
         is_supported=True,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=False,
         typing_attr=typing.Union,
     ),
     # Union of one non-"typing" type and one concrete generic.
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: PepHintMeta(
         is_supported=False,
-        is_generic=False,
+        is_generic_user=False,
         is_typevared=True,
         typing_attr=typing.Union,
     ),
@@ -331,25 +333,25 @@ PEP_HINT_TO_META = {
     # ..................{ CUSTOM                            }..................
     PepGenericTypevaredSingle: PepHintMeta(
         is_supported=False,
-        is_generic=True,
+        is_generic_user=True,
         is_typevared=True,
         typing_attr=typing.Generic,
     ),
     PepGenericUntypevaredSingle: PepHintMeta(
         is_supported=False,
-        is_generic=True,
+        is_generic_user=True,
         is_typevared=False,
         typing_attr=typing.Generic,
     ),
     PepGenericTypevaredShallowMultiple: PepHintMeta(
         is_supported=False,
-        is_generic=True,
+        is_generic_user=True,
         is_typevared=True,
         typing_attr=typing.Generic,
     ),
     PepGenericTypevaredDeepMultiple: PepHintMeta(
         is_supported=False,
-        is_generic=True,
+        is_generic_user=True,
         is_typevared=True,
         typing_attr=typing.Generic,
     ),

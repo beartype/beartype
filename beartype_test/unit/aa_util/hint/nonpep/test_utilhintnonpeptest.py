@@ -19,7 +19,7 @@ from beartype_test.util.pyterror import raises_uncached
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-def test_utilhint_is_hint_nonpep() -> None:
+def test_is_hint_nonpep() -> None:
     '''
     Test the
     :func:`beartype._util.hint.nonpep.utilhintnonpeptest.is_hint_nonpep`
@@ -45,7 +45,7 @@ def test_utilhint_is_hint_nonpep() -> None:
             is_hint_nonpep(non_hint_unhashable)
 
 
-def test_utilhint_die_unless_hint_nonpep() -> None:
+def test_die_unless_hint_nonpep() -> None:
     '''
     Test the
     :func:`beartype._util.hint.nonpep.utilhintnonpeptest.die_unless_hint_nonpep`

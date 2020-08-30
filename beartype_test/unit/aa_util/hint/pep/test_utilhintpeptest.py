@@ -42,11 +42,11 @@ def test_is_hint_pep() -> None:
 def test_is_hint_pep_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic` tester.
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic_user` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic_user
     from beartype_test.unit.data.data_hint import (
         NOT_PEP_HINTS, PEP_HINT_TO_META)
 
@@ -54,11 +54,11 @@ def test_is_hint_pep_generic() -> None:
     # * Accepts generic PEP-compliant type hints.
     # * Rejects concrete PEP-compliant type hints.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        assert is_hint_pep_generic(pep_hint) is pep_hint_meta.is_generic
+        assert is_hint_pep_generic_user(pep_hint) is pep_hint_meta.is_generic_user
 
     # Assert this tester rejects non-"typing" types.
     for not_pep_hint in NOT_PEP_HINTS:
-        assert is_hint_pep_generic(not_pep_hint) is False
+        assert is_hint_pep_generic_user(not_pep_hint) is False
 
 
 def test_is_hint_pep_typing() -> None:
@@ -80,7 +80,7 @@ def test_is_hint_pep_typing() -> None:
     # stdlib classes defined in the "typing" module (e.g., "typing.IO"). Let's
     # avoid rendering this any more fragile than we have.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        if not pep_hint_meta.is_generic:
+        if not pep_hint_meta.is_generic_user:
             assert is_hint_pep_typing(pep_hint) is True
 
     # Assert this tester rejects non-"typing" types.

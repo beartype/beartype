@@ -81,9 +81,9 @@ sometimes good, too:
 Timings
 ==========
 
-Let's run our `profiler suite`_, quantitatively timing ``beartype`` and
-comparable runtime type-checkers against a battery of fair and unbiased tests:
-:superscript:`*cue mirthless chuckles*`
+Let's run `our profiler suite quantitatively timing <profiler suite_>`__
+``beartype`` and fellow runtime type-checkers against a battery of fair,
+impartial, and unbiased tests: :superscript:`*mirthless chuckling*`
 
 .. code-block:: shell-session
 
@@ -120,37 +120,40 @@ ELI5
 
 On the one hand, ``beartype`` is approximately **twenty times faster** (i.e.,
 20,000%) than typeguard_ – the only comparable runtime type-checker also
-compatible with all modern versions of Python. :superscript:`so, that's good`
+compatible with all modern versions of Python. :superscript:`so that's good`
 
 On the other hand, ``beartype`` is only partially compliant with
 annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
 484 -- Type Hints <PEP 484_>`__ and `PEP 563 -- Postponed Evaluation of
 Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
-these PEPs. :superscript:`so, that's bad`
+these PEPs. :superscript:`so that's bad`
 
-On the `gripping hand`_, ``beartype`` intends to be (mostly) fully compliant
-with these PEPs as well by either **[**\ *insert hand-waved date here*\ **]**
-*or* the catastrophic implosion of reductive normalcy induced by collective
-first contact with a hyperchromatic condensation of self-transforming machine
-elves cum self-dribbling jeweled basketballs (whichever comes first).
-:superscript:`so, that's... good?`
+On `the gripping hand`_, ``beartype`` intends to be (mostly) fully compliant
+with these PEPs as well by either the heat death of the known universe *or*
+the catastrophic implosion in reductive normalcy induced by collective first
+contact with a hyperchromatic condensation of self-transforming machine elves
+cum self-dribbling jeweled basketballs (whichever comes first).
+:superscript:`so that's... good?`
+
+.. # FIXME: Replace with a raiagent-hosted URL for robustness. This will fail.
 
 .. image:: https://memegenerator.net/img/instances/400x/65500747/not-sure-if-machine-elves-or-self-dribbling-jeweled-basketballs.jpg
 
 But... how?
 -----------
 
-``beartype`` performs most of its work at decoration time. The ``@beartype``
-decorator consumes the overwhelming majority of the time needed to first
-decorate and then repeatedly call a decorated function. ``beartype`` is thus
-front-loaded. After paying the initial cost of decoration, each type-checked
-call thereafter incurs comparatively little overhead.
+``beartype`` performs the lion's share of its work at decoration time. The
+``@beartype`` decorator consumes most of the time needed to first decorate and
+then repeatedly call a decorated function. ``beartype`` is thus front-loaded.
+After paying the initial cost of decoration, each type-checked call thereafter
+incurs comparatively little overhead.
 
-typeguard_ (and comparable runtime type checkers) perform most of their work
-at call time. ``@typeguard`` decorators consume very little of the time needed
-to first decorate and then repeatedly call a decorated function. typeguard_ is
-thus back-loaded. Although the initial cost of decoration is essentially free,
-each type-checked call thereafter incurs significant overhead.
+All other runtime type checkers perform the lion's share of their work at call
+time. The ``@typeguard.typechecked`` and similar decorators consume almost none
+of the time needed to first decorate and then repeatedly call a decorated
+function. They're thus back-loaded. Although the initial cost of decoration is
+essentially free, each type-checked call thereafter incurs significant
+overhead.
 
 Cheatsheet
 ==========
@@ -290,31 +293,30 @@ Usage
 =====
 
 The ``@beartype`` decorator published by the ``beartype`` package transparently
-supports two different types of **type hints** (i.e., annotations applied to
-parameters and return values of user-defined functions and methods), each with
+supports two fundamentally different types of callable type hints, each with
 its own tradeoffs, tribal dogmas, religious icons, and overzealous inquisitors:
 
 * `Beartype-specific type hints <Beartype-specific Type Hints_>`__, which:
 
-  * Are highly performant in both space and time. :superscript:`which is good`
+  * Are highly performant in both space and time. :superscript:`That's good.`
     Efficiency is our raison d'être, after all. If your use case doesn't need
     efficiency, however, consider adopting an alternate runtime type-checker
-    more compatible with Python's type-checking landscape (like typeguard_).
+    more compatible with Python's type-checking landscape – like typeguard_.
   * Are incapable of deeply type-checking the contents, elements, items,
     metadata, structure, or other attributes of passed parameters and returned
-    values. :superscript:`which is bad`
-  * Are fully supported by ``beartype``. :superscript:`which is good`
+    values. :superscript:`That's bad.`
+  * Are fully supported by ``beartype``. :superscript:`That's good.`
   * Do *not* comply with existing `Python Enhancement Proposals (PEPs) <PEP
-    0_>`__. :superscript:`which is bad, arguably`
+    0_>`__. :superscript:`That's bad, arguably.`
 
 * `PEP-compliant type hints <PEP-compliant Type Hints_>`__, which:
   
-  * Are highly inefficient in both space and time. :superscript:`which is bad`
+  * Are highly inefficient in both space and time. :superscript:`That's bad.`
   * Are capable of deeply type-checking the contents, elements, items,
     metadata, structure, and other attributes of passed parameters and returned
-    values. :superscript:`which is good`
-  * Are only partially supported by ``beartype``. :superscript:`which is bad`
-  * Comply with existing PEPs. :superscript:`which is good, arguably`
+    values. :superscript:`That's good.`
+  * Are only partially supported by ``beartype``. :superscript:`That's bad.`
+  * Comply with existing PEPs. :superscript:`That's good, arguably.`
 
 Callers may freely intermingle these two types and thus obtain "the best of
 both worlds" when annotating parameters and return values. All else being
@@ -334,7 +336,7 @@ This is simpler than it sounds. Would we lie? Instead of answering that, let's
 begin with the simplest type of type-checking supported by ``@beartype``.
 
 Builtin Types
--------------
+~~~~~~~~~~~~~
 
 **Builtin types** like ``dict``, ``int``, ``list``, ``set``, and ``str`` are
 trivially type-checked by annotating parameters and return values with those
@@ -424,7 +426,7 @@ Good function! The type hints applied to this function now accurately document
 this function's API. All's well that ends typed well. Suck it, `Shere Khan`_.
 
 Arbitrary Types
----------------
+~~~~~~~~~~~~~~~
 
 Everything above also extends to:
 
@@ -500,7 +502,7 @@ document their respective APIs. Thanks to the pernicious magic of beartype, all
 ends typed well... *yet again.*
 
 Unions of Types
----------------
+~~~~~~~~~~~~~~~
 
 That's all typed well, but everything above only applies to parameters and
 return values constrained to *singular* types. In practice, parameters and
@@ -563,7 +565,7 @@ Good function! The type hints applied to this callable now accurately documents
 its API. All ends typed well... *still again and again.*
 
 Optional Types
-~~~~~~~~~~~~~~
+++++++++++++++
 
 That's also all typed well, but everything above only applies to *mandatory*
 parameters and return values whose types are never ``NoneType``. In practice,
@@ -692,12 +694,14 @@ Beartype is currently *not* compliant whatsoever with these PEPs:
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 
-See the "PEP" category of the following table for further details.
+See the **PEP** and **typing** categories of the following table for further
+details.
 
 Features
 ========
 
-Let's chart current and prospective new features for future generations:
+Let's chart current and prospective new features for the good of future
+generations:
 
 .. # FIXME: Span category cells across multiple rows.
 
@@ -976,7 +980,7 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ meme                       )------------------
 .. _greased lightning:
    https://www.youtube.com/watch?v=H-kL8A4RNQ8
-.. _gripping hand:
+.. _the gripping hand:
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
 .. # ------------------( LINKS ~ non-py                     )------------------

@@ -401,9 +401,8 @@ def get_hint_pep_typevars(hint: object) -> tuple:
     #FIXME: Consider replacing with this more exacting test:
     #return getattr(hint, '__parameters__', ())) if is_hint_pep(hint) else ()
 
-    # Return the value of the "__parameters__" dunder attribute on this object
-    # if this object defines this attribute *OR* the empty tuple otherwise.
-    # Note that:
+    # Value of the "__parameters__" dunder attribute on this object if this
+    # object defines this attribute *OR* the empty tuple otherwise. Note that:
     #
     # * The "typing._GenericAlias.__parameters__" dunder attribute tested here
     #   is defined by the typing._collect_type_vars() function at subscription
@@ -412,7 +411,13 @@ def get_hint_pep_typevars(hint: object) -> tuple:
     #   Thankfully, the "typing" module percolates the "__parameters__" dunder
     #   attribute from "typing" pseudo-superclasses to user-defined subclasses
     #   during PEP 560-style type erasure. Finally: they did something right.
-    return getattr(hint, '__parameters__', ())
+    # * The trailing "or ()" test is required to handle edge cases under the
+    #   Python < 3.7.0 implementation of the "typing" module. Notably, under
+    #   Python 3.6.11:
+    #       >>> import typing as t
+    #       >>> t.Union.__parameters__   # yes, this is total bullocks
+    #       None
+    return getattr(hint, '__parameters__', ()) or ()
 
 # ....................{ GETTERS ~ attrs                   }....................
 #FIXME: Does this getter *REALLY* need to detect type variables? We suspect the
@@ -508,7 +513,7 @@ def get_hint_pep_typing_attr(hint: object) -> dict:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep,
-        is_hint_pep_generic,
+        is_hint_pep_generic_user,
         is_hint_pep_typevar,
     )
 
@@ -536,7 +541,7 @@ def get_hint_pep_typing_attr(hint: object) -> dict:
     # Note that generics *CANNOT* be detected by the general-purpose logic
     # performed below, as the "typing.Generic" ABC does *NOT* define a
     # __repr__() dunder method returning a string prefixed by "typing.".
-    if is_hint_pep_generic(hint):
+    if is_hint_pep_generic_user(hint):
         return Generic
     # Else, this hint is PEP-compliant but *NOT* a generic.
     #
