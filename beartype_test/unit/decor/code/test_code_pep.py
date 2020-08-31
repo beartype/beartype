@@ -78,7 +78,7 @@ def test_pep_param_kind_variadic_and_keyword_only_pass() -> None:
     def shining_brainless_beacon(
         a_time_obscured: Union[bool, str],
         *all_of_your_nightmares: Union[float, str],
-        your_special_plan: Union[int, str],
+        your_special_plan: Union[int, str]
     ) -> Union[list, str]:
         return (
             a_time_obscured + '\n' +
@@ -123,7 +123,7 @@ def test_pep_param_kind_variadic_fail() -> None:
     def tongue_tasting_its_savour(
         turned_away_into_the_shadows: Union[dict, str],
         *all_the_flesh_that_is_eaten: Union[frozenset, str],
-        teeth_tearing_into_it: Union[set, str],
+        teeth_tearing_into_it: Union[set, str]
     ) -> Union[tuple, str]:
         return (
             turned_away_into_the_shadows + '\n' +
