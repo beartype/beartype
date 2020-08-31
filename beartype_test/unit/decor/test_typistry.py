@@ -47,13 +47,25 @@ def test_typistry_register_type_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.cave import AnyType
+    from beartype.cave import RegexCompiledType
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
+    from beartype._util.utilobject import get_object_name_unqualified
 
-    # Assert that types are registrable via a trivial function call.
-    hint = AnyType
-    hint_cached = _eval_registered_expr(register_typistry_type(hint))
+    # Assert that non-builtin types are registrable via a trivial call under
+    # the beartypistry singleton rather than their unqualified basenames.
+    hint = RegexCompiledType
+    hint_name_cached = register_typistry_type(hint)
+    assert hint_name_cached != get_object_name_unqualified(hint)
+    hint_cached = _eval_registered_expr(hint_name_cached)
+    assert hint is hint_cached
+
+    # Assert that builtin types are registrable via the same call under their
+    # unqualified basenames rather than the beartypistry singleton.
+    hint = list
+    hint_name_cached = register_typistry_type(hint)
+    assert hint_name_cached == get_object_name_unqualified(hint)
+    hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
 

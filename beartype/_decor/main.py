@@ -439,7 +439,7 @@ def beartype(func):
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print('@beartype {}() wrapper\n{}'.format(func_name, func_code))
+        # print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
         exec(func_code, globals(), local_attrs)
     # If doing so fails for any reason...
     except Exception as exception:
@@ -454,7 +454,7 @@ def beartype(func):
 
         # Raise an exception this code for debugging purposes.
         raise BeartypeDecorWrapperException(
-            '{} wrapper unparseable:\n\n{}'.format(
+            '@beartyped {} wrapper unparseable:\n\n{}'.format(
                 func_data.func_name, func_code_line_numbered)
         ) from exception
 

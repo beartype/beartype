@@ -14,6 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CONSTANTS                          }....................
+MODULE_NAME_BUILTINS = 'builtins'
+'''
+Fully-qualified name of the module declaring all **builtins** (i.e., objects
+defined by the standard :mod:`builtins` module and thus globally available by
+default *without* requiring explicit importation).
+'''
+
+
 SENTINEL = object()
 '''
 Sentinel object of arbitrary value.
@@ -124,9 +132,12 @@ def get_object_name_qualified(obj: object) -> str:
 
     # Return either...
     return (
+        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+        #support, which are the optimal means of performing string formatting.
+
         # The "."-delimited concatenation of this class basename and module
         # name if this module name exists.
-        '{}.{}'.format(cls_module_name, cls_basename)
+        cls_module_name + '.' + cls_basename
         if cls_module_name is not None else
         # This class basename as is otherwise.
         cls_basename

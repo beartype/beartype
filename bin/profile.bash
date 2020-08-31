@@ -242,21 +242,30 @@ command python3 -c '
 import pkg_resources
 print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
 
-# ....................{ PROFILE ~ union                   }....................
-profile_callable 'SCALAR' '' \
+# ....................{ PROFILE                           }....................
+profile_callable 'str' '' \
     'def monkey_people(tree_land: str) -> str:
     return tree_land' \
     'monkey_people("Then they began their flight; and the flight of the Monkey-People through tree-land is one of the things nobody can describe.")'
 
-profile_callable 'UNION' \
+profile_callable 'List[Any]' \
+    'from typing import Any, List' \
+    'def cavalry_canter(bonnie_dundee: List[Any]) -> List[Any]:
+    return bonnie_dundee' \
+    'cavalry_canter([
+        "By the brand on my shoulder, the finest of tunes",
+        "Is played by the Lancers, Hussars, and Dragoons,",
+        "And it is sweeter than Stables or Water to me--",
+        "The Cavalry Canter of Bonnie Dundee!",
+        "Then feed us and break us and handle and groom,",
+        "And give us good riders and plenty of room,",
+        "And launch us in column of squadron and see",
+        "The way of the war-horse to Bonnie Dundee!",
+    ])'
+
+profile_callable 'Union[int, str]' \
     'from typing import Union' \
     'def panther_canter(
     quick_foot: Union[int, str]) -> Union[int, str]:
     return quick_foot' \
     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'
-# profile_callable 'UNION' \
-#     'from typing import Any, List, Union' \
-#     'def panther_canter(
-#     quick_foot: Union[int, List[Any], str]) -> Union[int, List[Any], str]:
-#     return quick_foot' \
-#     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'

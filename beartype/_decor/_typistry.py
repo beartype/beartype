@@ -17,7 +17,12 @@ from beartype.roar import (
     _BeartypeDecorBeartypistryException,
 )
 from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
-from beartype._util.utilobject import get_object_name_qualified
+from beartype._util.utilobject import (
+    MODULE_NAME_BUILTINS,
+    get_object_module_name_or_none,
+    get_object_name_qualified,
+    get_object_name_unqualified,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
@@ -106,8 +111,26 @@ def register_typistry_type(hint: type) -> str:
     # Beartypistry.__setitem__() method, implicitly invoked on subsequently
     # assigning a "bear_typistry" key-value pair.
 
+    # Unqualified name of this type.
+    hint_basename = get_object_name_unqualified(hint)
+
+    # Fully-qualified name of the module defining this class if this class is
+    # defined by a module *OR* "None" otherwise.
+    hint_module_name = get_object_module_name_or_none(hint)
+
+    # If this type is a builtin (i.e., is defined by the pseudo "builtins"
+    # module whose attributes are globally available by default), this type
+    # does *NOT* require registration. In this case, return the unqualified
+    # name of this type as is.
+    if hint_module_name == MODULE_NAME_BUILTINS:
+        return hint_basename
+    # Else, this type is *NOT* a builtin and thus requires registration.
+
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+    #support, which are the optimal means of performing string formatting.
+
     # Fully-qualified name of this type.
-    hint_name = get_object_name_qualified(hint)
+    hint_name = hint_module_name + '.' + hint_basename
 
     # Register this type with the beartypistry singleton.
     bear_typistry[hint_name] = hint
@@ -423,11 +446,22 @@ class Beartypistry(dict):
 
         # If this hint is a type...
         if isinstance(hint, type):
-            # Fully-qualified name of this type as declared by this type.
+            # Fully-qualified classname of this type as declared by this type.
             hint_clsname = get_object_name_qualified(hint)
 
-            # If the passed name is *NOT* this name, raise an exception.
-            if hint_name != hint_clsname:
+            # If...
+            if (
+                # The passed name is not this classname *AND*...
+                hint_name != hint_clsname and
+                # This classname does not imply this type to be a builtin...
+                #
+                # Note that builtin types are registered under their
+                # unqualified basenames (e.g., "list" rather than
+                # "builtins.list") for runtime efficiency, a core optimization
+                # requiring manual whitelisting here.
+                not hint_clsname.startswith(MODULE_NAME_BUILTINS + '.')
+            # Then raise an exception.
+            ):
                 raise _BeartypeDecorBeartypistryException(
                     'Beartypistry key "{}" not '
                     'fully-qualified classname "{}" of type {!r}.'.format(

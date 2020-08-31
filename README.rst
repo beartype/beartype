@@ -87,28 +87,35 @@ impartial, and unbiased tests: :superscript:`*mirthless chuckling*`
 
 .. code-block:: shell-session
 
-   $ bin/profile.bash
    beartype profiler [version]: 0.0.1
    
    python    [version]: Python 3.7.8
    beartype  [version]: 0.2.0
    typeguard [version]: 2.9.1
    
-   ==================================== SCALAR ====================================
-   decoration         [none     ]: 100 loops, best of 3: 363 nsec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 347 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 13.2 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 15.6 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 478 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 6.88 msec per loop
+   ===================================== str =====================================
+   decoration         [none     ]: 100 loops, best of 3: 383 nsec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 349 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 13.3 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 15.7 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 490 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 6.94 msec per loop
    
-   ==================================== UNION ====================================
-   decoration         [none     ]: 100 loops, best of 3: 2.93 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 372 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.7 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 18 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 546 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 11.1 msec per loop
+   ================================== List[Any] ==================================
+   decoration         [none     ]: 100 loops, best of 3: 4.35 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 353 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 18.8 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 35.2 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 501 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 6.11 msec per loop
+   
+   =============================== Union[int, str] ===============================
+   decoration         [none     ]: 100 loops, best of 3: 2.95 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 373 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 18.9 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 566 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 11.2 msec per loop
 
 .. note::
    * ``msec`` = milliseconds = 10^-3 seconds.
@@ -119,8 +126,9 @@ ELI5
 -------------
 
 On the one hand, ``beartype`` is approximately **twenty times faster** (i.e.,
-20,000%) than typeguard_ – the only comparable runtime type-checker also
-compatible with all modern versions of Python. :superscript:`so that's good`
+20,000% or roughly one order of magnitude) than typeguard_ – the only
+comparable runtime type-checker also compatible with all modern versions of
+Python. :superscript:`so that's good`
 
 On the other hand, ``beartype`` is only partially compliant with
 annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
@@ -128,16 +136,16 @@ annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
 Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
 these PEPs. :superscript:`so that's bad`
 
-On `the gripping hand`_, ``beartype`` intends to be (mostly) fully compliant
-with these PEPs as well by either the heat death of the known universe *or*
+On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
+compliant with these PEPs by either the heat death of the known universe *or*
 the catastrophic implosion in reductive normalcy induced by collective first
 contact with a hyperchromatic condensation of self-transforming machine elves
 cum self-dribbling jeweled basketballs (whichever comes first).
 :superscript:`so that's... good?`
 
-.. # FIXME: Replace with a raiagent-hosted URL for robustness. This will fail.
-
-.. image:: https://memegenerator.net/img/instances/400x/65500747/not-sure-if-machine-elves-or-self-dribbling-jeweled-basketballs.jpg
+.. # This image is reliably hosted with GitHub via this placeholder issue:
+.. #     https://github.com/leycec/raiagent/issues/36
+.. image:: https://user-images.githubusercontent.com/217028/91650639-92018a80-ea71-11ea-872e-10c1d296ed3d.png
 
 But... how?
 -----------
@@ -148,9 +156,9 @@ then repeatedly call a decorated function. ``beartype`` is thus front-loaded.
 After paying the initial cost of decoration, each type-checked call thereafter
 incurs comparatively little overhead.
 
-All other runtime type checkers perform the lion's share of their work at call
-time. The ``@typeguard.typechecked`` and similar decorators consume almost none
-of the time needed to first decorate and then repeatedly call a decorated
+All other runtime type checkers perform the lion's share of *their* work at
+call time. ``@typeguard.typechecked`` and similar decorators consume almost
+none of the time needed to first decorate and then repeatedly call a decorated
 function. They're thus back-loaded. Although the initial cost of decoration is
 essentially free, each type-checked call thereafter incurs significant
 overhead.
@@ -293,15 +301,17 @@ Usage
 =====
 
 The ``@beartype`` decorator published by the ``beartype`` package transparently
-supports two fundamentally different types of callable type hints, each with
-its own tradeoffs, tribal dogmas, religious icons, and overzealous inquisitors:
+supports two fundamentally different types of callable type hints – each with
+its own tradeoffs, tribal dogmas, religious icons, and zealous code
+inquisitors:
 
 * `Beartype-specific type hints <Beartype-specific Type Hints_>`__, which:
 
   * Are highly performant in both space and time. :superscript:`That's good.`
-    Efficiency is our raison d'être, after all. If your use case doesn't need
-    efficiency, however, consider adopting an alternate runtime type-checker
-    more compatible with Python's type-checking landscape – like typeguard_.
+    Efficiency is our raison d'être. If your use case doesn't need efficiency,
+    however, consider adopting an alternate runtime type-checker more
+    compatible with Python's existing type-checking landscape – like
+    typeguard_.
   * Are incapable of deeply type-checking the contents, elements, items,
     metadata, structure, or other attributes of passed parameters and returned
     values. :superscript:`That's bad.`
@@ -320,7 +330,7 @@ its own tradeoffs, tribal dogmas, religious icons, and overzealous inquisitors:
 
 Callers may freely intermingle these two types and thus obtain "the best of
 both worlds" when annotating parameters and return values. All else being
-equal, your maxim to type by should be:
+equal, your maxim to type by ``beartype`` should be:
 
 .. parsed-literal::
 

@@ -22,8 +22,17 @@
 
 # List of all Python packages required to build (i.e., install) this project
 # from both codebase tarballs and binary wheels.
+#
+# Note that:
+#
+# * Setuptools 50.0 is fundamentally broken in numerous ways (including ways
+#   that both break and do not break installation of this project) and *MUST*
+#   thus be blacklisted. See also:
+#   https://github.com/pypa/setuptools/issues/2350
+#   https://github.com/pypa/setuptools/issues/2352
+#   https://github.com/pypa/setuptools/issues/2353
 requires = [
-    'setuptools',
+    'setuptools!=50.0',
     'wheel',
 ]
 
