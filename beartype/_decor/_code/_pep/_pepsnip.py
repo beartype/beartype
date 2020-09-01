@@ -115,8 +115,7 @@ PEP_CODE_CHECK_RETURN_PREFIX = '''
 
     # Noop required to artifically increase indentation level. Note that
     # CPython implicitly optimizes this conditional away - which is nice.
-    if True:
-    '''.format(
+    if True:'''.format(
         param_name_func=PARAM_NAME_FUNC,
         pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
     )
@@ -155,9 +154,8 @@ Note that this snippet intentionally terminates on a line containing only the
 PEP_CODE_CHECK_HINT_ROOT = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
-        if not ({{hint_child_placeholder}}
-        ):
-            raise __beartype_raise_pep_call_exception(
+        if not {{hint_child_placeholder}}:
+            __beartype_raise_pep_call_exception(
                 func={param_name_func},
                 param_or_return_name={pith_root_name},
                 param_or_return_value={pith_root_expr},
@@ -181,10 +179,8 @@ embedded
 '''
 
 # ....................{ CODE ~ hint : nonpep              }....................
-PEP_CODE_CHECK_HINT_NONPEP_TYPE = '''
-{indent_curr}# Type-check this passed parameter or return value against this
-{indent_curr}# non-"typing" type.
-{indent_curr}isinstance({pith_curr_expr}, {hint_curr_expr})'''
+PEP_CODE_CHECK_HINT_NONPEP_TYPE = (
+    '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
 PEP-compliant code snippet type-checking the current pith against the
 current child PEP-compliant type expected to be a trivial non-:mod:`typing`
@@ -192,10 +188,7 @@ type (e.g., :class:`int`, :class:`str`).
 '''
 
 # ....................{ CODE ~ hint : union               }....................
-PEP_CODE_CHECK_HINT_UNION_PREFIX = '''
-{indent_curr}# Type-check this (possibly nested object of this) passed
-{indent_curr}# parameter or return value against this "typing.Union" hint.
-{indent_curr}('''
+PEP_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against each subscripted argument of a :class:`typing.Union` type.

@@ -241,7 +241,8 @@ from beartype._decor._typistry import (
     register_typistry_type,
     register_typistry_tuple,
 )
-from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_3
+from beartype._decor._code._codesnip import (
+    CODE_INDENT_1, CODE_INDENT_2, CODE_INDENT_3)
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_ROOT,
     PEP_CODE_CHECK_HINT_NONPEP_TYPE,
@@ -479,7 +480,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
     # Python code snippet expanding to the current level of indentation
     # appropriate for the currently visited hint.
-    indent_curr = CODE_INDENT_3
+    indent_curr = CODE_INDENT_2
 
     # ..................{ HINT ~ child                      }..................
     # Current tuple of all subscripted arguments defined on this hint (e.g.,
@@ -488,6 +489,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
     # Currently iterated subscripted argument defined on this hint.
     hint_child = None
+
+    # Current argumentless typing attribute associated with this hint (e.g.,
+    # "Union" if "hint_child == Union[int, str]").
+    hint_child_attr = None
 
     # Human-readable label prefixing the representations of child hints of this
     # root hint in exception messages.
@@ -754,10 +759,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                             # PEP-compliant arguments.
                             hint_childs_pep.add(hint_child)
 
-                            # Origin type of this argument if any *OR*
-                            # "None" otherwise.
+                            # Origin type of the argumentless "typing"
+                            # attribute associated with this argument if any
+                            # *OR* "None" otherwise.
                             hint_child_type_origin = (
-                                get_hint_type_origin_or_none(hint_child))
+                                get_hint_type_origin_or_none(
+                                    get_hint_pep_typing_attr(
+                                        hint_child)))
 
                             # If this argument originates from such a type,
                             # filter this argument into the list of
@@ -771,7 +779,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                             # *BEFORE* subsequently testing whether this pith
                             # deeply satisfies the nested hint "List[str]" when
                             # this pith is a list. This is good, eh?
+                            # print('Testing union PEP hint_child: {!r}'.format(hint_child))
                             if hint_child_type_origin is not None:
+                                # print('Adding union hint_child_type_origin: {!r}'.format(hint_child_type_origin))
                                 hint_childs_nonpep.add(
                                     hint_child_type_origin)
                         # Else, this argument is PEP-noncompliant. In this

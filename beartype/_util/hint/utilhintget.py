@@ -83,6 +83,41 @@ def get_hint_type_origin(hint: object) -> type:
         'a non-"typing" type).'.format(hint))
 
 
+#FIXME: Actually, it technically *IS* feasible to define a new
+#beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing_attr() tester
+#distinguishing argumentless "typing" attributes from standard "typing" objects
+#in robust space- and time-efficient manner. First, note that the set of all
+#argumentless "typing" attributes is finite (and actually quite small). Given
+#that, we can then define a new global frozenset of these attributes:
+#    # In "beartype._util.hint.pep.utilhintpepdata"
+#    TYPING_ATTRS = frozenset(TYPING_ATTR_TO_TYPE_ORIGIN.keys())
+#So, that's trivial. Given that, we then define:
+#    # In "beartype._util.hint.pep.utilhintpeptest"
+#    def is_hint_pep_typing_attr(hint: object) -> bool:
+#         return hint in TYPING_ATTRS
+#
+#So, that's trivial, too. Given that, we then define the corresponding
+#die_unless_hint_pep_typing_attr() validator, called below like so:
+#   # If this object is a "typing" attribute, return the
+#   # isinstance()-able class originating this attribute if any or "None".
+#   # Note this condition is intentionally tested *BEFORE* testing whether
+#   # this object is a type, as most "typing" attributes that are types
+#   # also define __subclasscheck__() dunder methods that unconditionally
+#   # raise exceptions and are thus *NOT* isinstance()-able.
+#   if is_hint_pep_typing(hint):
+#        die_unless_hint_pep_typing_attr(hint)
+#        return TYPING_ATTR_TO_TYPE_ORIGIN_GET(hint, None)
+#
+#   return (
+#       # Else if this object is a non-"typing" class, this class as is.
+#       hint if isinstance(hint, type) else
+#       # Else, "None".
+#       None
+#   )
+#
+#So, that's trivial, too. We just lack sufficient interest at the moment, as
+#this will require testing and gains us little except a bit of safety during
+#development time. *shrug*
 def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
     '''
     **Origin type** (i.e., :func:`isinstance`-able class suitable for shallowly
@@ -95,6 +130,18 @@ def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient series of simple tests.
+
+    Caveats
+    ----------
+    **This function assumes the caller to have already reduced the passed type
+    hint if PEP-compliant to its argumentless** :mod:`typing` **attribute**
+    (e.g., from ``typing.Union[int, str]`` to merely ``typing.Union``),
+    typically by externally calling the
+    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_typing_attr`
+    function beforehand. Since there exists no robust space- and time-efficient
+    means of distinguishing argumentless :mod:`typing` attributes from standard
+    :mod:`typing` objects, this function does *not* validate this to be the
+    case on your behalf.
 
     Parameters
     ----------

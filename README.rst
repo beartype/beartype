@@ -1,7 +1,7 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
 =====================================================
-beartype ———[ …the bare-metal type checker ]———
+beartype ——[ …the bare-metal type checker ]——
 =====================================================
 
 |GitHub Actions badge|
@@ -128,7 +128,12 @@ ELI5
 On the one hand, ``beartype`` is approximately **twenty times faster** (i.e.,
 20,000% or roughly one order of magnitude) than typeguard_ – the only
 comparable runtime type-checker also compatible with all modern versions of
-Python. :superscript:`so that's good`
+Python. ``beartype`` is also surprisingly robust across different test cases,
+taking roughly the same amount of time to type-check parameters hinted by the
+builtin type ``str`` as it does to type-check those hinted by the synthetic
+type ``Union[int, str]``; typeguard_ is more variable, taking roughly twice the
+time to type-check the latter as it does to type-check the former.
+:superscript:`so that's good`
 
 On the other hand, ``beartype`` is only partially compliant with
 annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
