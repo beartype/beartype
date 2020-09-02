@@ -17,6 +17,15 @@
 #   "Clarifying PEP 518 (a.k.a. pyproject.toml)", a human-readable article from
 #   one of the principal authors of the "pyproject.toml" standard.
 
+# ....................{ TODO                              }....................
+#FIXME: Despite behaving as expceted for several years, this file *MUST* now be
+#temporarily disabled by renaming it away from "pyproject.toml". Why? Because
+#both "pip" and "setuptools" have no idea how to implement support for this
+#file properly. Both increasingly break projects defining this file (including
+#this one), effectively rendering this file malicious. See also:
+#    https://github.com/pypa/setuptools/issues/2353
+#    https://github.com/pypa/pip/issues/6264
+
 # ....................{ BUILDING                          }....................
 [build-system]
 

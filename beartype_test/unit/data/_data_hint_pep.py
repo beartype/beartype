@@ -12,7 +12,8 @@ unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
-import collections, re, typing
+import collections, typing
+from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_7
 from collections import namedtuple
 
 # ....................{ PEP ~ typevars                    }....................
@@ -379,24 +380,34 @@ PEP_HINT_TO_META = {
     ),
 
     # ..................{ SINGLETONS ~ regex                }..................
-    typing.Match: _PepHintMetadata(
-        typing_attr=typing.Match,
-        is_supported=False,
-        is_generic_user=False,
-        is_typevared=True,
-        piths_satisfied=(
-            #FIXME: Uncomment after supporting "typing.Match".
-            # # C-based container of one or more regular expression matches.
-            # re.match(
-            #     r'\b[a-z]+ance[a-z]+\b',
-            #     'æriferous Elements’ dance, entranced',
-            # ),
-        ),
-        piths_unsatisfied=(
-            # String constant.
-            'Formless, demiurgic offerings, preliminarily,',
-        ),
-    ),
+    #FIXME: Uncomment after supporting "typing.Match". Doing so will prove
+    #non-trivial for a number of reasons, including the obvious fact that
+    #"typing.Match" is parametrized by the constrained concrete type variable
+    #"typing.AnyStr", whose implementation wildly varies across Python
+    #versions. Moreover, "repr(typing.Match) == 'Match[~AnyStr]'" is the case
+    #under Python < 3.7.0 -- significantly complicating detection. In short,
+    #let's leave this until we drop support for Python 3.6, at which point
+    #supporting this sanely will become *MUCH* simpler.
+    # typing.Match: _PepHintMetadata(
+    #     typing_attr=typing.Match,
+    #     is_supported=False,
+    #     is_generic_user=False,
+    #     # "typing.AnyStr" and hence "typing.Match" (which is coercively
+    #     # parametrized by "typing.AnyStr") is only a type variable proper under
+    #     # Python >= 3.7.0, which is frankly insane. Welcome to "typing".
+    #     is_typevared=IS_PYTHON_AT_LEAST_3_7,
+    #     piths_satisfied=(
+    #         # C-based container of one or more regular expression matches.
+    #         re.match(
+    #             r'\b[a-z]+ance[a-z]+\b',
+    #             'æriferous Elements’ dance, entranced',
+    #         ),
+    #     ),
+    #     piths_unsatisfied=(
+    #         # String constant.
+    #         'Formless, demiurgic offerings, preliminarily,',
+    #     ),
+    # ),
 
     # ..................{ TYPE ALIASES                      }..................
     typing.Type: _PepHintMetadata(

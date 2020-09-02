@@ -36,7 +36,7 @@ default" is our first-class concern, *all* wrappers are guaranteed to:
   type-checking implemented by hand, *which no one should ever do.*
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
-<zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
+<zero-cost abstraction_>`__ into the lawless world of pure Python.
 
 Beartype is `portably implemented <codebase_>`__ in `pure Python 3
 <Python_>`__, `continuously stress-tested <tests_>`__ with `GitHub Actions`_
@@ -44,8 +44,6 @@ Beartype is `portably implemented <codebase_>`__ in `pure Python 3
 `MIT license`_. Beartype has no runtime dependencies, `only one test-time
 dependency <pytest_>`__, and supports `all Python 3.x releases still in active
 development <Python status_>`__.
-
-See our `installation instructions <BETSE install_>`__ for details.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -218,9 +216,9 @@ Let's type-check like `greased lightning`_:
 Timings
 ==========
 
-Let's run `our profiler suite quantitatively timing <profiler suite_>`__
+Let's run our `profiler suite quantitatively timing <profiler suite_>`__
 ``beartype`` and fellow runtime type-checkers against a battery of surely fair,
-impartial, and unbiased use cases: :superscript:`*mirthless chuckling*`
+impartial, and unbiased use cases:
 
 .. code-block:: shell-session
 
@@ -256,9 +254,9 @@ impartial, and unbiased use cases: :superscript:`*mirthless chuckling*`
 
 .. note::
    * ``sec`` = seconds.
-   * ``msec`` = milliseconds = 10^-3 seconds.
-   * ``usec`` = microseconds = 10^-6 seconds.
-   * ``nsec`` = nanoseconds = 10^-9 seconds.
+   * ``msec`` = milliseconds = 10\ :sup:`-3` seconds.
+   * ``usec`` = microseconds = 10\ :sup:`-6` seconds.
+   * ``nsec`` = nanoseconds = 10\ :sup:`-9` seconds.
 
 ELI5
 -------------
@@ -272,32 +270,33 @@ On the one hand, ``beartype`` is:
 * Infinitely faster in the best case than typeguard_, which is sufficiently
   slow as to raise genuine usability and security concerns (e.g.,
   `application-layer Denial-of-Service (DoS) attacks <Denial-of-Service_>`__).
-* Robust across type hints, taking roughly the same time to check parameters
-  hinted by the builtin type ``str`` as it does to check those hinted by the
-  synthetic type ``Union[int, str]`` as it does to check those hinted by the
-  container type ``List[object]``; typeguard_ is much more variable, taking
-  infinitely longer to check ``List[object]`` as checking ``Union[int, str]``,
-  taking roughly twice the time as checking ``str``.
+* Constant across type hints, taking roughly the same time to check parameters
+  and return values hinted by the builtin type ``str`` as it does to check
+  those hinted by the synthetic type ``Union[int, str]`` as it does to check
+  those hinted by the container type ``List[object]``. typeguard_ is
+  variable across type hints, taking infinitely longer to check
+  ``List[object]`` as ``Union[int, str]``, taking roughly twice the time as
+  ``str``.
 
-:superscript:`so that's good`
+:sup:`so that's good`
 
 On the other hand, ``beartype`` is only partially compliant with
 annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
 484`_, whereas typeguard_ is (mostly) fully compliant with these PEPs.
-:superscript:`so that's bad`
+:sup:`so that's bad`
 
 On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
 compliant with these PEPs by either the heat death of the known universe *or*
 the catastrophic implosion in reductive normalcy induced by collective first
 contact with a hyperchromatic condensation of self-transforming machine elves
-cum self-dribbling jeweled basketballs (whichever comes first).
-:superscript:`so that's... good?`
+from self-dribbling jeweled basketballs (whichever comes first).
+:sup:`so that's... good?`
 
 .. # This image is reliably hosted with GitHub via this placeholder issue:
 .. #     https://github.com/leycec/raiagent/issues/36
 .. image:: https://user-images.githubusercontent.com/217028/91650639-92018a80-ea71-11ea-872e-10c1d296ed3d.png
 
-But... how?
+But... How?
 -----------
 
 ``beartype`` performs the lion's share of its work at decoration time. The
@@ -316,7 +315,7 @@ overhead.
 Nobody Believes You
 -------------------
 
-Math time, people. *it's happening*
+Math time, people. :sup:`it's happening`
 
 Most runtime type-checkers exhibit ``O(n)`` time complexity (where ``n`` is the
 total number of items recursively contained in a container to be checked) by
@@ -329,7 +328,7 @@ containers passed to or returned from *all* calls of decorated callables, thus
 amortizing the cost of checking items across calls.
 
 Formally, ``beartype`` exploits the well-known `coupon collector's problem`_
-applied to abstract trees of nested type hints. Let:
+as applied to abstract trees of nested type hints. Let:
 
 * ``E(T)`` be the expected number of calls needed to check all items of a
   container containing only non-container items (i.e., containing *no* nested
@@ -361,8 +360,8 @@ Then:
 .. # negligible. While non-negligible, the term :math:`\gamma n` grows significantly
 .. # slower than the term :math:`n \log n`. So this reduces to:
 The summation ``½ + O(1/n)`` is strictly less than 1 and thus negligible. While
-non-negligible, the term ``γ n`` grows significantly slower than the term
-``n log n``. So this reduces to:
+non-negligible, the term ``γn`` grows significantly slower than the term
+``nlogn``. So this reduces to:
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # .. math:: E(T) = O(n \log n)
@@ -392,9 +391,9 @@ above by at least the same upper bounds – but probably tighter: e.g.,
 .. # .. math:: E(S) = O(E(T)) = O(n \log n)
 .. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28S%29+%3D+O%28E%28T%29%29+%3D+O%28n+%5Clog+n%29%0A
 
-In all cases, ``beartype`` requires somewhat more calls than the total number
-of items in a container to check those items. For example, checking all **50
-integers** of a list of integers is expected to take **225 calls** on average.
+Fully checking a container takes no more calls than that container's size times
+the logarithm of that size on average. For example, fully checking a **list of
+50 integers** is expected to take **225 calls** on average.
 
 Usage
 =====
@@ -406,26 +405,26 @@ inquisitors:
 
 * `Beartype-specific type hints <Beartype-specific Type Hints_>`__, which:
 
-  * Are highly performant in both space and time. :superscript:`That's good.`
-    Efficiency is our raison d'être. If your use case doesn't need efficiency,
-    however, consider adopting an alternate runtime type-checker more
+  * Are highly performant in both space and time. (\ *That's good.*\ )
+    Efficiency is our raison d'être, after all. If your use case doesn't need
+    efficiency, consider adopting an alternate runtime type-checker more
     compatible with Python's existing type-checking landscape – like
     typeguard_.
   * Are incapable of deeply type-checking the contents, elements, items,
     metadata, structure, or other attributes of passed parameters and returned
-    values. :superscript:`That's bad.`
-  * Are fully supported by ``beartype``. :superscript:`That's good.`
+    values. (\ *That's bad.*\ )
+  * Are fully supported by ``beartype``. (\ *That's good.*\ )
   * Do *not* comply with existing `Python Enhancement Proposals (PEPs) <PEP
-    0_>`__. :superscript:`That's bad, arguably.`
+    0_>`__. (\ *That's bad, arguably.*\ )
 
 * `PEP-compliant type hints <PEP-compliant Type Hints_>`__, which:
   
-  * Are highly inefficient in both space and time. :superscript:`That's bad.`
+  * Are highly inefficient in both space and time. (\ *That's bad.*\ )
   * Are capable of deeply type-checking the contents, elements, items,
     metadata, structure, and other attributes of passed parameters and returned
-    values. :superscript:`That's good.`
-  * Are only partially supported by ``beartype``. :superscript:`That's bad.`
-  * Comply with existing PEPs. :superscript:`That's good, arguably.`
+    values. (\ *That's good.*\ )
+  * Are only partially supported by ``beartype``. (\ *That's bad.*\ )
+  * Comply with existing PEPs. (\ *That's good, arguably.*\ )
 
 Callers may freely intermingle these two types and thus obtain "the best of
 both worlds" when annotating parameters and return values. All else being
@@ -616,8 +615,8 @@ Unions of Types
 That's all typed well, but everything above only applies to parameters and
 return values constrained to *singular* types. In practice, parameters and
 return values are often relaxed to any of *multiple* types referred to as
-**unions of types.** :superscript:`You can thank set theory for the jargon...
-unless you hate set theory. Then it's just our fault.`
+**unions of types.** :sup:`You can thank set theory for the jargon... unless
+you hate set theory. Then it's just our fault.`
 
 Unions of types are trivially type-checked by annotating parameters and return
 values with tuples containing those types. Let's declare another beartyped
@@ -783,19 +782,19 @@ in its highly over-optimized cache utilization.
 PEP-compliant Type Hints
 ------------------------
 
-Beartype is fully compliant with these `Python Enhancement Proposals (PEPs)
+``beartype`` is fully compliant with these `Python Enhancement Proposals (PEPs)
 <PEP 0_>`__:
 
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 
-Beartype is partially compliant with these PEPs:
+``beartype`` is partially compliant with these PEPs:
 
 * `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
   detailed below <PEP 484 Compliance_>`__
 * `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
   <PEP 484 Compliance_>`__.
 
-Beartype is currently *not* compliant whatsoever with these PEPs:
+``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
@@ -811,15 +810,15 @@ See also the **PEP** and **typing** categories of our `features matrix
 PEP 484 Compliance
 ~~~~~~~~~~~~~~~~~~
 
-Beartype is only partially compliant with `PEP 483`_ and `484 <PEP 484_>`__.
-Let's see what that means in practice.
+``beartype`` is only partially compliant with `PEP 483`_ and `484 <PEP
+484_>`__. Let's see what that means in practice.
 
 Deep (Full) Compliance
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Beartype **deeply type-checks** (i.e., both directly checks the types of *and*
-recursively checks the types of items contained in) callable parameters and
-return values annotated by these typing_ types:
+``beartype`` **deeply type-checks** (i.e., both directly checks the types of
+*and* recursively checks the types of items contained in) callable parameters
+and return values annotated by these typing_ types:
 
 * ``typing.Any``.
 * ``typing.Optional``.
@@ -828,9 +827,9 @@ return values annotated by these typing_ types:
 Shallow (Partial) Compliance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Beartype currently only **shallowly type-checks** (i.e., only directly checks
-the types of) callable parameters and return values annotated by these typing_
-types:
+``beartype`` currently only **shallowly type-checks** (i.e., only directly
+checks the types of) callable parameters and return values annotated by these
+typing_ types:
 
 * ``typing.AbstractSet``.
 * ``typing.AsyncIterable``.
@@ -873,14 +872,14 @@ types:
 * ``typing.SupportsFloat``.
 * ``typing.SupportsRound``.
 
-Subsequent beartype versions will deeply type-check these typing_ types while
-preserving our `O(1) time complexity (with negligible constant factors)
+Subsequent ``beartype`` versions will deeply type-check these typing_ types
+while preserving our `O(1) time complexity (with negligible constant factors)
 guarantee <Nobody Believes You_>`__.
 
 No Compliance
 ~~~~~~~~~~~~~
 
-Beartype currently raises exceptions at decoration time when passed these
+``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
 * Forward references (i.e., unqualified relative string classnames internally
@@ -904,213 +903,214 @@ typing_ types:
 * ``typing.Pattern``.
 * ``typing.TextIO``.
 
-Subsequent beartype versions will first shallowly and then deeply type-check
-these typing_ types while preserving `O(1) time complexity (with negligible
-constant factors) guarantee <Nobody Believes You_>`__.
+Subsequent ``beartype`` versions will first shallowly and then deeply
+type-check these typing_ types while preserving our `O(1) time complexity (with
+negligible constant factors) guarantee <Nobody Believes You_>`__.
 
 Features
 ========
 
-Let's chart current and prospective new features for the good of future
-generations:
+Let's chart current and prospective new features for future generations:
 
 .. # FIXME: Span category cells across multiple rows.
 
-+------------+-------------------------------------+-------------------------+------+
-| category   | feature                             | versions                | note |
-+============+=====================================+=========================+======+
-| callables  | classes                             | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | coroutines                          | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | functions                           | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | generators                          | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | methods                             | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-| parameters | optional                            | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | keyword-only                        | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | positional-only                     | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | variadic keyword                    | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | variadic positional                 | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-| types      | `covariant classes <covariance_>`__ | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | absolute forward references         | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | relative forward references         | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | tuple unions                        | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-| typing_    | ``AbstractSet``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Any``                             | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``AnyStr``                          | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``AsyncContextManager``             | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``AsyncGenerator``                  | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``AsyncIterable``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``AsyncIterator``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Awaitable``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``BinaryIO``                        | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ByteString``                      | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ChainMap``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Collection``                      | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Container``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ContextManager``                  | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Coroutine``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Counter``                         | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``DefaultDict``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Deque``                           | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Dict``                            | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Callable``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ForwardRef``                      | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``FrozenSet``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Generator``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Generic``                         | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Hashable``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``IO``                              | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ItemsView``                       | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Iterable``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Iterator``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``KeysView``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``List``                            | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Mapping``                         | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``MappingView``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Match``                           | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``MutableMapping``                  | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``MutableSequence``                 | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``MutableSet``                      | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``NamedTuple``                      | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``NewType``                         | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``NoReturn``                        | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Optional``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``OrderedDict``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Pattern``                         | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Protocol``                        | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Reversible``                      | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Sequence``                        | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Set``                             | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Sized``                           | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsAbs``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsBytes``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsComplex``                 | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsFloat``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsIndex``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsInt``                     | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``SupportsRound``                   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Text``                            | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``TextIO``                          | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Tuple``                           | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Type``                            | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``TypedDict``                       | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``TypeVar``                         | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``ValuesView``                      | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``Union``                           | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | ``final``                           | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-| PEP        | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current* |      |
-|            |                                     |                         |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `544 <PEP 544_>`__                  | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `563 <PEP 563_>`__                  | **0.1.1**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `585 <PEP 585_>`__                  | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `586 <PEP 586_>`__                  | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `589 <PEP 589_>`__                  | *none*                  |      |
-+------------+-------------------------------------+-------------------------+------+
-| packages   | `PyPI <beartype PyPI_>`__           | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | `Anaconda <beartype Anaconda_>`__   | **0.2.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-| Python     | 3.5                                 | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | 3.6                                 | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | 3.7                                 | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
-|            | 3.8                                 | **0.1.0**\ —\ *current* |      |
-+------------+-------------------------------------+-------------------------+------+
++-------------+-----------------------------------+-------------------------+------+
+| category    | feature                           | versions                | note |
++=============+===================================+=========================+======+
+| decoratable | classes                           | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | coroutines                        | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | functions                         | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | generators                        | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | methods                           | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+| parameters  | optional                          | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | keyword-only                      | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | positional-only                   | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | variadic keyword                  | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | variadic positional               | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+| hints       | `covariant <covariance_>`__       | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `contravariant <covariance_>`__   | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | absolute forward references       | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | relative forward references       | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | tuple unions                      | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+| typing_     | ``AbstractSet``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Any``                           | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``AnyStr``                        | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``AsyncContextManager``           | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``AsyncGenerator``                | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``AsyncIterable``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``AsyncIterator``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Awaitable``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``BinaryIO``                      | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ByteString``                    | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ChainMap``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Collection``                    | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Container``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ContextManager``                | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Coroutine``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Counter``                       | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``DefaultDict``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Deque``                         | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Dict``                          | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Callable``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ForwardRef``                    | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``FrozenSet``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Generator``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Generic``                       | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Hashable``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``IO``                            | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ItemsView``                     | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Iterable``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Iterator``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``KeysView``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``List``                          | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Mapping``                       | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``MappingView``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Match``                         | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``MutableMapping``                | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``MutableSequence``               | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``MutableSet``                    | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``NamedTuple``                    | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``NewType``                       | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``NoReturn``                      | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Optional``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``OrderedDict``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Pattern``                       | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Protocol``                      | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Reversible``                    | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Sequence``                      | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Set``                           | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Sized``                         | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsAbs``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsBytes``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsComplex``               | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsFloat``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsIndex``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsInt``                   | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``SupportsRound``                 | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Text``                          | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``TextIO``                        | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Tuple``                         | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Type``                          | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``TypedDict``                     | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``TypeVar``                       | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``ValuesView``                    | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``Union``                         | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | ``final``                         | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+| PEP         | `484 <PEP 484_>`__                | **0.2.0**\ —\ *current* |      |
+|             |                                   |                         |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `544 <PEP 544_>`__                | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `563 <PEP 563_>`__                | **0.1.1**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `585 <PEP 585_>`__                | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `586 <PEP 586_>`__                | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `589 <PEP 589_>`__                | *none*                  |      |
++-------------+-----------------------------------+-------------------------+------+
+| packages    | `PyPI <beartype PyPI_>`__         | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | `Anaconda <beartype Anaconda_>`__ | **0.2.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+| Python      | 3.5                               | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | 3.6                               | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | 3.7                               | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
+|             | 3.8                               | **0.1.0**\ —\ *current* |      |
++-------------+-----------------------------------+-------------------------+------+
 
 License
 =======
 
-Beartype is `open-source software released <license_>`__ under the
+``beartype`` is `open-source software released <license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
 Funding
 =======
 
-Beartype is currently financed as a purely volunteer open-source project –
+``beartype`` is currently financed as a purely volunteer open-source project –
 which is to say, it's unfinanced. Prior funding sources (*yes, they once
 existed*) include:
 
@@ -1129,7 +1129,7 @@ decorators, explicit function calls, and import hooks) include:
 
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
-* beartype. :sup:`...'sup.`
+* ``beartype``. :sup:`...sup.`
 * enforce_.
 * pytypes_.
 * typeguard_.
@@ -1184,12 +1184,6 @@ application stack at tool rather than Python runtime) include:
 .. _Tufts University:
    https://www.tufts.edu
 
-.. # ------------------( LINKS ~ beartype : issues          )------------------
-
-.. # ------------------( LINKS ~ compsci                    )------------------
-.. _covariance:
-   https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
-
 .. # ------------------( LINKS ~ kipling                    )------------------
 .. _The Jungle Book:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
@@ -1201,6 +1195,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 .. _coupon collector's problem:
    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
+.. _covariance:
+   https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
 .. # ------------------( LINKS ~ meme                       )------------------
 .. _greased lightning:
