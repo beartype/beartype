@@ -12,7 +12,7 @@ unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
-import collections, typing
+import collections, re, typing
 from collections import namedtuple
 
 # ....................{ PEP ~ typevars                    }....................
@@ -376,6 +376,26 @@ PEP_HINT_TO_META = {
         is_typevared=False,
         piths_satisfied=(),
         piths_unsatisfied=(),
+    ),
+
+    # ..................{ SINGLETONS ~ regex                }..................
+    typing.Match: _PepHintMetadata(
+        typing_attr=typing.Match,
+        is_supported=False,
+        is_generic_user=False,
+        is_typevared=True,
+        piths_satisfied=(
+            #FIXME: Uncomment after supporting "typing.Match".
+            # # C-based container of one or more regular expression matches.
+            # re.match(
+            #     r'\b[a-z]+ance[a-z]+\b',
+            #     'æriferous Elements’ dance, entranced',
+            # ),
+        ),
+        piths_unsatisfied=(
+            # String constant.
+            'Formless, demiurgic offerings, preliminarily,',
+        ),
     ),
 
     # ..................{ TYPE ALIASES                      }..................

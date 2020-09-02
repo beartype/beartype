@@ -1103,6 +1103,9 @@ parsers parsing either top-level commands *or* subcommands of those commands.
 # Regular expression types are also sufficiently obscure to warrant
 # formalization here.
 
+#FIXME: Once Python 3.6 support is dropped, this can be safely reduced to:
+#     RegexCompiledType = re.Pattern
+
 # Yes, this is the only reliable means of obtaining the type of compiled
 # regular expressions. For unknown reasons presumably concerning the archaic
 # nature of Python's regular expression support, this type is *NOT* publicly
@@ -1114,6 +1117,9 @@ Type of all **compiled regular expressions** (i.e., objects created and
 returned by the stdlib :func:`re.compile` function).
 '''
 
+
+#FIXME: Once Python 3.6 support is dropped, this can be safely reduced to:
+#     RegexCompiledType = re.Match
 
 # Yes, this type is required for type validation at module scope elsewhere.
 # Yes, this is the most time-efficient means of obtaining this type. No, this

@@ -1,8 +1,8 @@
 .. # ------------------( SYNOPSIS                           )------------------
 
-=====================================================
-beartype ——[ …the bare-metal type checker ]——
-=====================================================
+===========================================
+beartype —[ …the bare-metal type checker ]—
+===========================================
 
 |GitHub Actions badge|
 
@@ -255,6 +255,7 @@ impartial, and unbiased use cases: :superscript:`*mirthless chuckling*`
    decoration + calls [typeguard]: 100 loops, best of 1: 2.13 sec per loop
 
 .. note::
+   * ``sec`` = seconds.
    * ``msec`` = milliseconds = 10^-3 seconds.
    * ``usec`` = microseconds = 10^-6 seconds.
    * ``nsec`` = nanoseconds = 10^-9 seconds.
@@ -271,20 +272,19 @@ On the one hand, ``beartype`` is:
 * Infinitely faster in the best case than typeguard_, which is sufficiently
   slow as to raise genuine usability and security concerns (e.g.,
   `application-layer Denial-of-Service (DoS) attacks <Denial-of-Service_>`__).
-  Containers of more than 1,000 items appear to be particularly problematic.
 * Robust across type hints, taking roughly the same time to check parameters
   hinted by the builtin type ``str`` as it does to check those hinted by the
   synthetic type ``Union[int, str]`` as it does to check those hinted by the
   container type ``List[object]``; typeguard_ is much more variable, taking
-  infinitely longer to check ``List[object]`` than to check ``Union[int,
-  str]``, taking roughly twice the time to check than to check ``str``.
-  :superscript:`so that's good`
+  infinitely longer to check ``List[object]`` as checking ``Union[int, str]``,
+  taking roughly twice the time as checking ``str``.
+
+:superscript:`so that's good`
 
 On the other hand, ``beartype`` is only partially compliant with
 annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
-484 -- Type Hints <PEP 484_>`__ and `PEP 563 -- Postponed Evaluation of
-Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
-these PEPs. :superscript:`so that's bad`
+484`_, whereas typeguard_ is (mostly) fully compliant with these PEPs.
+:superscript:`so that's bad`
 
 On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
 compliant with these PEPs by either the heat death of the known universe *or*
@@ -339,17 +339,34 @@ applied to abstract trees of nested type hints. Let:
 
 Then:
 
-.. math::
+.. #FIXME: GitHub currently renders LaTeX-based "math" directives in
+.. # reStructuredText as monospaced literals, which is hot garbage. Until
+.. # resolved, do the following:
+.. # * Preserve *ALL* such directives as comments, enabling us to trivially 
+.. #   revert to the default approach after GitHub resolves this.
+.. # * Convert *ALL* such directives into GitHub-hosted URLs via any of the
+.. #   following third-party webapps:
+.. #     https://tex-image-link-generator.herokuapp.com
+.. #     https://jsfiddle.net/8ndx694g
+.. #     https://marketplace.visualstudio.com/items?itemName=MeowTeam.vscode-math-to-image
+.. # See also this long-standing GitHub issue:
+.. #     https://github.com/github/markup/issues/83
 
-   \operatorname{E}(T) = n \log n + \gamma n + \frac{1}{2} + O(1/n)
+.. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
+.. # .. math:: E(T) = n \log n + \gamma n + \frac{1}{2} + O\left(\frac{1}{n}\right)
+.. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28T%29+%3D+n+%5Clog+n+%2B+%5Cgamma+n+%2B+%5Cfrac%7B1%7D%7B2%7D+%2B+O%5Cleft%28%5Cfrac%7B1%7D%7Bn%7D%5Cright%29
 
-The summation :math:`\frac{1}{2} + O(1/n) \le 1` is negligible. While
-non-negligible, the term :math:`\gamma n` grows significantly slower than the
-term :math:`n \log n`. So this reduces to:
+.. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
+.. # The summation :math:`\frac{1}{2} + O\left(\frac{1}{n}\right) \le 1` is
+.. # negligible. While non-negligible, the term :math:`\gamma n` grows significantly
+.. # slower than the term :math:`n \log n`. So this reduces to:
+The summation ``½ + O(1/n)`` is strictly less than 1 and thus negligible. While
+non-negligible, the term ``γ n`` grows significantly slower than the term
+``n log n``. So this reduces to:
 
-.. math::
-
-   \operatorname{E}(T) = O(n \log n)
+.. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
+.. # .. math:: E(T) = O(n \log n)
+.. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28T%29+%3D+O%28n+%5Clog+n%29
 
 We now generalize this bound to the general case. When checking a container
 containing *no* subcontainers, ``beartype`` only randomly samples one item from
@@ -357,13 +374,13 @@ that container on each call. When checking a container containing arbitrarily
 many nested subcontainers, however, ``beartype`` randomly samples one random
 item from each nesting level of that container on each call.
 
-``beartype`` thus samples ``h`` random items from a container on each call,
-where ``h`` is that container's height (i.e., maximum number of edges on the
-longest path from that container to a non-container leaf item reachable from
-items directly contained in that container). Since ``h >= 1``, ``beartype``
-samples at least as many items each call as assumed in the usual `coupon
-collector's problem`_ and thus paradoxically takes a fewer number of calls on
-average to check all items of a container containing arbitrarily many
+In general, ``beartype`` thus samples ``h`` random items from a container on
+each call, where ``h`` is that container's height (i.e., maximum number of
+edges on the longest path from that container to a non-container leaf item
+reachable from items directly contained in that container). Since ``h ≥ 1``,
+``beartype`` samples at least as many items each call as assumed in the usual
+`coupon collector's problem`_ and thus paradoxically takes a fewer number of
+calls on average to check all items of a container containing arbitrarily many
 subcontainers as it does to check all items of a container containing *no*
 subcontainers.
 
@@ -371,9 +388,9 @@ Ergo, the expected number of calls ``E(S)`` needed to check all items of an
 arbitrary container exhibits the same or better growth rate and remains bound
 above by at least the same upper bounds – but probably tighter: e.g.,
 
-.. math::
-
-   \operatorname{E}(S) = O(\operatorname{E}(T)) = O(n \log n)
+.. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
+.. # .. math:: E(S) = O(E(T)) = O(n \log n)
+.. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28S%29+%3D+O%28E%28T%29%29+%3D+O%28n+%5Clog+n%29%0A
 
 In all cases, ``beartype`` requires somewhat more calls than the total number
 of items in a container to check those items. For example, checking all **50
@@ -797,29 +814,19 @@ PEP 484 Compliance
 Beartype is only partially compliant with `PEP 483`_ and `484 <PEP 484_>`__.
 Let's see what that means in practice.
 
-Deep Compliance
-~~~~~~~~~~~~~~~
+Deep (Full) Compliance
+~~~~~~~~~~~~~~~~~~~~~~
 
 Beartype **deeply type-checks** (i.e., both directly checks the types of *and*
 recursively checks the types of items contained in) callable parameters and
 return values annotated by these typing_ types:
 
+* ``typing.Any``.
 * ``typing.Optional``.
 * ``typing.Union``.
 
-For example, let's declare a simple beartyped function accepting either a
-string and returning either an integer or string:
-
-.. code-block:: python
-
-   from beartype import beartype
-
-   @beartype
-   def law_of_the_jungle(wolf: str, pack: dict) -> tuple:
-       return (wolf, pack[wolf]) if wolf in pack else None
-
-Shallow Compliance
-~~~~~~~~~~~~~~~~~~
+Shallow (Partial) Compliance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Beartype currently only **shallowly type-checks** (i.e., only directly checks
 the types of) callable parameters and return values annotated by these typing_
@@ -866,11 +873,9 @@ types:
 * ``typing.SupportsFloat``.
 * ``typing.SupportsRound``.
 
-For example...
-
 Subsequent beartype versions will deeply type-check these typing_ types while
-preserving our ``O(1)`` time complexity (with negligible constant factors)
-guarantee.
+preserving our `O(1) time complexity (with negligible constant factors)
+guarantee <Nobody Believes You_>`__.
 
 No Compliance
 ~~~~~~~~~~~~~
@@ -890,18 +895,18 @@ typing_ types:
   typing_ non-classes).
 * User-defined protocols (i.e., user-defined classes transitively subclassing
   the ``typing.Protocol`` abstract base class (ABC)).
+* ``typing.AnyStr``.
 * ``typing.BinaryIO``.
 * ``typing.IO``.
 * ``typing.Match``.
-* ``typing.NamedTuple``.
 * ``typing.NewType``.
 * ``typing.NoReturn``.
 * ``typing.Pattern``.
 * ``typing.TextIO``.
 
 Subsequent beartype versions will first shallowly and then deeply type-check
-these typing_ types while preserving our ``O(1)`` time complexity (with
-negligible constant factors) guarantee.
+these typing_ types while preserving `O(1) time complexity (with negligible
+constant factors) guarantee <Nobody Believes You_>`__.
 
 Features
 ========
@@ -945,6 +950,8 @@ generations:
 | typing_    | ``AbstractSet``                     | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Any``                             | **0.2.0**\ —\ *current* |      |
++------------+-------------------------------------+-------------------------+------+
+|            | ``AnyStr``                          | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``AsyncContextManager``             | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+

@@ -12,6 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import collections, contextlib, typing
+from beartype.cave import (
+    RegexCompiledType,
+    RegexMatchType,
+)
 from beartype._util.utilpy import (
     IS_PYTHON_AT_LEAST_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -31,6 +35,10 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     typing.Set: set,
     typing.Tuple: tuple,
     typing.Type: type,
+
+    # "typing" attributes originating from stdlib types.
+    typing.Match: RegexMatchType,
+    typing.Pattern: RegexCompiledType,
 
     # "typing" attributes originating from abstract base classes (ABCs)
     # declared by the "collections.abc" submodule.
