@@ -44,6 +44,9 @@ echo
 #     code_setup: str,
 #     code_func: str,
 #     code_call: str,
+#     num_best: int = 3,
+#     num_loop: int = 100,
+#     num_loop_calls: int = 100,
 # ) -> None
 #
 # Profile the passed snippet of Python code defining a function to be
@@ -51,10 +54,32 @@ echo
 # (i.e., "beartype", "pytypes", "typeguard") and then repeatedly called by
 # the passed snippet of arbitrary Python code after first running the passed
 # snippet of arbitrary Python code exactly once.
+#
+# Arguments
+# ----------
+# label : str
+#   Human-readable phrase describing this snippet (e.g., "List[object]").
+# code_setup : str
+#   Python code snippet to be run exactly once *BEFORE* repeatedly running the
+#   Python code snippet to be profiled.
+# code_func : str
+#   Python code snippet defining the undecorated function to be type-checked.
+#   This snippet *MUST* be prefixed by "def ".
+# code_call : str
+#   Python code snippet calling this function.
+# num_loop_calls : int = 100
+#   Number of times to repeatedly call this function. Defaults to 100.
+# num_loop : int = 100
+#   Number of times to rerun the complete Python code snippet to be profiled
+#   (i.e., concatenation of the snippets defining and calling this function).
+#   Defaults to 100.
+# num_best : int = 3
+#   Number of times to reperform this entire profiling and then take the best
+#   (i.e., minimum) timing of as the "final" profiling timing. Defaults to 3.
 function profile_callable() {
     # Validate and localize all passed arguments.
-    (( $# == 4 )) || {
-        echo 'Expected four arguments.' 1>&2
+    (( $# >= 4 )) || {
+        echo 'Expected at least four arguments.' 1>&2
         return 1
     }
     local \
@@ -62,18 +87,21 @@ function profile_callable() {
         code_setup="${2}" \
         code_func="${3}" \
         code_call="${4}" \
+        num_loop_calls="${5:-100}" \
+        num_loop="${6:-100}" \
+        num_best="${7:-3}" \
         code_call_repeat \
         CODE_SETUP_BEARTYPE \
         CODE_SETUP_TYPEGUARD \
         CODE_DECOR_BEARTYPE \
         CODE_DECOR_TYPEGUARD
 
-    # Print the passed label as a banner.
-    print_banner "${label}"
+    # Print the passed label and number of calls as a banner.
+    print_banner "${label} (${num_loop_calls} calls each loop)"
 
     # Python code snippet repeatedly performing the passed function call.
     code_call_repeat="
-for _ in range(100):
+for _ in range(${num_loop_calls}):
     ${code_call}"
 
     #FIXME: Conditionally print these strings *ONLY* if the caller explicitly
@@ -103,55 +131,95 @@ for _ in range(100):
 
     # Profile this undecorated definition of this function as a baseline.
     profile_snippet 'decoration         [none     ]: ' \
-        "${code_setup}" "${code_func}"
+        "${code_setup}" \
+        "${code_func}" \
+        "${num_loop}" "${num_best}"
 
     # Profile the "beartype"-decorated definition of this function.
     profile_snippet 'decoration         [beartype ]: ' \
         "${CODE_SETUP_BEARTYPE}${code_setup}" \
-        "${CODE_DECOR_BEARTYPE}${code_func}"
+        "${CODE_DECOR_BEARTYPE}${code_func}" \
+        "${num_loop}" "${num_best}"
 
     # Profile the "typeguard"-decorated definition of this function.
     profile_snippet 'decoration         [typeguard]: ' \
         "${CODE_SETUP_TYPEGUARD}${code_setup}" \
-        "${CODE_DECOR_TYPEGUARD}${code_func}"
+        "${CODE_DECOR_TYPEGUARD}${code_func}" \
+        "${num_loop}" "${num_best}"
 
     # Profile this undecorated definition and repeated calling of this function
     # as a baseline.
     profile_snippet 'decoration + calls [none     ]: ' \
-        "${code_setup}" "${code_func}${code_call_repeat}"
+        "${code_setup}" \
+        "${code_func}${code_call_repeat}" \
+        "${num_loop}" "${num_best}"
 
     # Profile the "beartype"-decorated definition and repeated calling of this
     # function.
     profile_snippet 'decoration + calls [beartype ]: ' \
         "${CODE_SETUP_BEARTYPE}${code_setup}" \
-        "${CODE_DECOR_BEARTYPE}${code_func}${code_call_repeat}"
+        "${CODE_DECOR_BEARTYPE}${code_func}${code_call_repeat}" \
+        "${num_loop}" "${num_best}"
 
     # Profile the "beartype"-decorated definition and repeated calling of this
     # function.
     profile_snippet 'decoration + calls [typeguard]: ' \
         "${CODE_SETUP_TYPEGUARD}${code_setup}" \
-        "${CODE_DECOR_TYPEGUARD}${code_func}${code_call_repeat}"
+        "${CODE_DECOR_TYPEGUARD}${code_func}${code_call_repeat}" \
+        "${num_loop}" "${num_best}"
 }
 
 
-# profile_snippet(label: str, code_setup: str, code_profile: str) -> None
+# profile_snippet(
+#     label: str,
+#     code_setup: str,
+#     code_profile: str,
+#     num_loop: int = 100,
+#     num_best: int = 3,
+# ) -> None
 #
 # Profile the passed snippet of arbitrary Python code to be timed after first
 # running the passed snippet of arbitrary Python code exactly once.
+#
+# Arguments
+# ----------
+# label : str
+#   Human-readable phrase describing this code (e.g., "decoration [none]: ").
+# code_setup : str
+#   Python code snippet to be run exactly once *BEFORE* repeatedly running the
+#   Python code snippet to be profiled.
+# code_profile : str
+#   Python code snippet to be profiled.
+# num_loop : int = 100
+#   Number of times to rerun the complete Python code snippet to be profiled
+#   (i.e., concatenation of the snippets defining and calling this function).
+#   Defaults to 100.
+# num_best : int
+#   Number of times to reperform this entire profiling and then take the best
+#   (i.e., minimum) timing of as the "final" profiling timing. Defaults to 3.
 function profile_snippet() {
     # Validate and localize all passed arguments.
-    (( $# == 3 )) || {
-        echo 'Expected three arguments.' 1>&2
+    (( $# >= 3 )) || {
+        echo 'Expected at least three arguments.' 1>&2
         return 1
     }
-    local label="${1}" code_setup="${2}" code_profile="${3}"
+    local \
+        label="${1}" \
+        code_setup="${2}" \
+        code_profile="${3}" \
+        num_loop="${4:-100}" \
+        num_best="${5:-3}"
 
     # Print the passed label *BEFORE* profiling, which (thankfully) implicitly
     # prints succinct timings after completion.
     echo -n "${label}"
 
     # Profile these snippets.
-    command python3 -m timeit -n 100 -r 3 -s "${code_setup}" "${code_profile}"
+    command python3 -m timeit \
+        -n "${num_loop}" \
+        -r "${num_best}" \
+        -s "${code_setup}" \
+        "${code_profile}"
 }
 
 # ....................{ FUNCTIONS ~ printers              }....................
@@ -242,30 +310,42 @@ command python3 -c '
 import pkg_resources
 print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
 
-# ....................{ PROFILE                           }....................
+# ....................{ PROFILE ~ scalar                  }....................
 profile_callable 'str' '' \
     'def monkey_people(tree_land: str) -> str:
     return tree_land' \
     'monkey_people("Then they began their flight; and the flight of the Monkey-People through tree-land is one of the things nobody can describe.")'
 
-profile_callable 'List[Any]' \
-    'from typing import Any, List' \
-    'def cavalry_canter(bonnie_dundee: List[Any]) -> List[Any]:
-    return bonnie_dundee' \
-    'cavalry_canter([
-        "By the brand on my shoulder, the finest of tunes",
-        "Is played by the Lancers, Hussars, and Dragoons,",
-        "And it is sweeter than Stables or Water to me--",
-        "The Cavalry Canter of Bonnie Dundee!",
-        "Then feed us and break us and handle and groom,",
-        "And give us good riders and plenty of room,",
-        "And launch us in column of squadron and see",
-        "The way of the war-horse to Bonnie Dundee!",
-    ])'
-
+# ....................{ PROFILE ~ union                   }....................
 profile_callable 'Union[int, str]' \
     'from typing import Union' \
     'def panther_canter(
     quick_foot: Union[int, str]) -> Union[int, str]:
     return quick_foot' \
     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'
+
+# ....................{ PROFILE ~ container               }....................
+# To ensure fairness in comparing beartype's non-naive random sampling of
+# container items against runtime type-checkers naive brute-forcing of *ALL*
+# container items, set the "num_loop_calls" argument to be the expected number
+# of calls needed to recursively check all items of a container containing
+# only non-container items (as formalized by our front-facing "README.fst"). To
+# do so, interactively run the following from within a Python REPL:
+#
+#     >>> import math
+#     >>> get_num_loop = lambda n: round(math.log(n)*n+1/2+0.5772156649*n+1/n)
+#     # Pass this lambda the total number of container items. The result is
+#     # the "num_loop_calls" argument to be passed.
+#     >>> get_num_loop(100)
+#     519
+#
+# When profiling naive runtime type-checkers under large containers, reduce
+# both the number of iterations and iterations of iterations (i.e., "best of")
+# to avoid infinitely halting the active process.
+NUM_LIST_ITEMS=150
+profile_callable "List[object] of ${NUM_LIST_ITEMS} items" "
+from typing import List
+THOUSANDS_OF_TIRED_VOICES = list(range(${NUM_LIST_ITEMS}))" \
+    'def parade_song(camp_animals: List[object]) -> List[object]:
+    return camp_animals' \
+    'parade_song(THOUSANDS_OF_TIRED_VOICES)' 839 100 1

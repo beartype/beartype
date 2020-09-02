@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                              }....................
 #FIXME: Significant optimizations still remain... when we have sufficient time.
-#Notably, we can replace most existing usage of a generic private
+#Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
 #with specific private "__beartype_hint_{beartypistry_key}" parameters
 #conditionally passed to each individual wrapper function, where:
@@ -227,9 +227,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #implementing structural subtyping checks is sufficiently non-trivial that we
 #*REALLY* don't want to get into that for now.
 
-#FIXME: Localize all calls to bound methods (e.g.,
-#"muh_dict_get = muh_dict.get") for efficiency.
-
 #FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
 #highly non-trivial -- sufficiently so, in fact, that we probably want to do so
 #elsewhere as cleverly documented in the "_pep563" submodule.
@@ -255,6 +252,7 @@ from beartype._decor._code._pep._pepsnip import (
 # from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.hint.utilhintget import (
     get_hint_type_origin, get_hint_type_origin_or_none)
+from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTR_TO_TYPE_ORIGIN
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attr)
 from beartype._util.hint.pep.utilhintpeptest import (
@@ -432,6 +430,16 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     get_next_pep_hint_placeholder = data.get_next_pep_hint_placeholder
     hint_childs_nonpep = data.set_a
     hint_childs_pep    = data.set_b
+    hint_childs_nonpep_add = hint_childs_nonpep.add
+    hint_childs_pep_add    = hint_childs_pep.add
+
+    # Localize attributes of the "_pepsnip" submodule for similar gains.
+    PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
+        PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
+    PEP_CODE_CHECK_HINT_UNION_ARG_PEP_format = (
+        PEP_CODE_CHECK_HINT_UNION_ARG_PEP.format)
+    PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP_format = (
+        PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP.format)
 
     # ..................{ HINT ~ root                       }..................
     # Top-level hint relocalized for disambiguity. For the same reason, delete
@@ -633,31 +641,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 hint=hint_curr_attr, hint_label=hint_child_label)
             # Else, this attribute is supported.
 
-            # Assert that this attribute is either unignorable or "Union",
-            # which is typically ignorable but *NOT* in this edge case.
-            # Specifically, the currently visited hint *MUST* be either:
-            #
-            # * A generic PEP-compliant type hint (i.e., user-defined class
-            #   subclassing one or more "typing" pseudo-superclasses), in which
-            #   case the "typing" module has already guaranteed these
-            #   pseudo-superclasses and thus this attribute to be unignorable.
-            #   Why? Because all ignorable attributes *CANNOT* be subclassed:
-            #       >>> import typing
-            #       >>> class UhOh(typing.Any): pass
-            #       TypeError: Cannot subclass <class 'typing._SpecialForm'>
-            #       >>> class UhOh(typing.Union[typing.Any]): pass
-            #       TypeError: Cannot subclass <class 'typing._SpecialForm'>
-            # * A concrete PEP-compliant type hint, in which case this
-            #   attribute is that hint stripped of arguments. However, by the
-            #   above assertion, this hint (and thus this hint stripped of
-            #   arguments) has already been guaranteed to be unignorable.
-            #   Regardless of whether this attribute is the otherwise
-            #   ignorable attribute "Union", this attribute is unignorable.
-            assert (
-                hint_curr_attr is Union or
-                hint_curr_attr not in HINTS_IGNORABLE
-            ), ('{} {!r} ignorable.'.format(hint_child_label, hint_curr_attr))
-
             # Switch on (as in, pretend Python provides a "switch" statement)
             # this attribute to decide which type of code to generate to
             # type-check the current pith against the current hint.
@@ -757,7 +740,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                         if is_hint_pep(hint_child):
                             # Filter this argument into the list of
                             # PEP-compliant arguments.
-                            hint_childs_pep.add(hint_child)
+                            hint_childs_pep_add(hint_child)
 
                             # Origin type of the argumentless "typing"
                             # attribute associated with this argument if any
@@ -782,13 +765,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                             # print('Testing union PEP hint_child: {!r}'.format(hint_child))
                             if hint_child_type_origin is not None:
                                 # print('Adding union hint_child_type_origin: {!r}'.format(hint_child_type_origin))
-                                hint_childs_nonpep.add(
+                                hint_childs_nonpep_add(
                                     hint_child_type_origin)
                         # Else, this argument is PEP-noncompliant. In this
                         # case, filter this argument into the list of
                         # PEP-noncompliant arguments.
                         else:
-                            hint_childs_nonpep.add(hint_child)
+                            hint_childs_nonpep_add(hint_child)
                     # Else, this argument is ignorable.
                 # All subscripted arguments of this union are now prefiltered
                 # into the list of PEP-compliant or -noncompliant arguments.
@@ -811,7 +794,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     # Defer formatting the "indent_curr" prefix into this code
                     # until below for efficiency.
                     func_curr_code += (
-                        PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP.format(
+                        PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP_format(
                             pith_curr_expr=pith_curr_expr,
                             # Python expression evaluating to a tuple of these
                             # arguments when accessed via the private
@@ -930,7 +913,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                         # Defer formatting the "indent_curr" prefix into this
                         # code until below for efficiency.
                         func_curr_code += (
-                            PEP_CODE_CHECK_HINT_UNION_ARG_PEP.format(
+                            PEP_CODE_CHECK_HINT_UNION_ARG_PEP_format(
                                 hint_child_placeholder=(
                                     hint_child_placeholder)))
 
@@ -1018,6 +1001,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # argumentless "typing" attributes currently *NOT* explicitly
             # supported above.
             else:
+                # Assert that this attribute is isinstance()-able.
+                assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
+                    '{} {!r} not isinstance()-able argumentless "typing" '
+                    'attribute.'.format(hint_child_label, hint_curr_attr))
+
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAVEATS: Synchronize changes here with logic below.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1027,7 +1015,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 #performing string formatting.
 
                 # Code type-checking the current pith against this class.
-                func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE.format(
+                func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                     indent_curr=indent_curr,
                     pith_curr_expr=pith_curr_expr,
                     # Python expression evaluating to this class when accessed
@@ -1071,7 +1059,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             #formatting.
 
             # Code type-checking the current pith against this class.
-            func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE.format(
+            func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                 indent_curr=indent_curr,
                 pith_curr_expr=pith_curr_expr,
                 # Python expression evaluating to this class when accessed via

@@ -29,10 +29,11 @@ beartype wraps each decorated callable with a dynamically generated wrapper
 efficiently type-checking that specific callable. Since "performance by
 default" is our first-class concern, *all* wrappers are guaranteed to:
 
-* Exhibit ``O(1)`` time complexity with negligible constant factors.
+* Exhibit `O(1) time complexity with negligible constant factors <Nobody
+  Believes You_>`__.
 * Be either more efficient (in the common case) or exactly as efficient minus
   the cost of an additional stack frame (in the worst case) as equivalent
-  type-checking implemented by hand.
+  type-checking implemented by hand, *which no one should ever do.*
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the deliciously lawless world of pure Python.
@@ -43,6 +44,8 @@ Beartype is `portably implemented <codebase_>`__ in `pure Python 3
 `MIT license`_. Beartype has no runtime dependencies, `only one test-time
 dependency <pytest_>`__, and supports `all Python 3.x releases still in active
 development <Python status_>`__.
+
+See our `installation instructions <BETSE install_>`__ for details.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -77,96 +80,6 @@ sometimes good, too:
 
    conda config --add channels conda-forge
    conda install beartype
-
-Timings
-==========
-
-Let's run `our profiler suite quantitatively timing <profiler suite_>`__
-``beartype`` and fellow runtime type-checkers against a battery of fair,
-impartial, and unbiased tests: :superscript:`*mirthless chuckling*`
-
-.. code-block:: shell-session
-
-   beartype profiler [version]: 0.0.1
-   
-   python    [version]: Python 3.7.8
-   beartype  [version]: 0.2.0
-   typeguard [version]: 2.9.1
-   
-   ===================================== str =====================================
-   decoration         [none     ]: 100 loops, best of 3: 383 nsec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 349 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 13.3 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 15.7 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 490 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 6.94 msec per loop
-   
-   ================================== List[Any] ==================================
-   decoration         [none     ]: 100 loops, best of 3: 4.35 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 353 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 18.8 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 35.2 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 501 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 6.11 msec per loop
-   
-   =============================== Union[int, str] ===============================
-   decoration         [none     ]: 100 loops, best of 3: 2.95 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 373 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 18.9 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 566 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 11.2 msec per loop
-
-.. note::
-   * ``msec`` = milliseconds = 10^-3 seconds.
-   * ``usec`` = microseconds = 10^-6 seconds.
-   * ``nsec`` = nanoseconds = 10^-9 seconds.
-
-ELI5
--------------
-
-On the one hand, ``beartype`` is approximately **twenty times faster** (i.e.,
-20,000% or roughly one order of magnitude) than typeguard_ – the only
-comparable runtime type-checker also compatible with all modern versions of
-Python. ``beartype`` is also surprisingly robust across different test cases,
-taking roughly the same amount of time to type-check parameters hinted by the
-builtin type ``str`` as it does to type-check those hinted by the synthetic
-type ``Union[int, str]``; typeguard_ is more variable, taking roughly twice the
-time to type-check the latter as it does to type-check the former.
-:superscript:`so that's good`
-
-On the other hand, ``beartype`` is only partially compliant with
-annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
-484 -- Type Hints <PEP 484_>`__ and `PEP 563 -- Postponed Evaluation of
-Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
-these PEPs. :superscript:`so that's bad`
-
-On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
-compliant with these PEPs by either the heat death of the known universe *or*
-the catastrophic implosion in reductive normalcy induced by collective first
-contact with a hyperchromatic condensation of self-transforming machine elves
-cum self-dribbling jeweled basketballs (whichever comes first).
-:superscript:`so that's... good?`
-
-.. # This image is reliably hosted with GitHub via this placeholder issue:
-.. #     https://github.com/leycec/raiagent/issues/36
-.. image:: https://user-images.githubusercontent.com/217028/91650639-92018a80-ea71-11ea-872e-10c1d296ed3d.png
-
-But... how?
------------
-
-``beartype`` performs the lion's share of its work at decoration time. The
-``@beartype`` decorator consumes most of the time needed to first decorate and
-then repeatedly call a decorated function. ``beartype`` is thus front-loaded.
-After paying the initial cost of decoration, each type-checked call thereafter
-incurs comparatively little overhead.
-
-All other runtime type checkers perform the lion's share of *their* work at
-call time. ``@typeguard.typechecked`` and similar decorators consume almost
-none of the time needed to first decorate and then repeatedly call a decorated
-function. They're thus back-loaded. Although the initial cost of decoration is
-essentially free, each type-checked call thereafter incurs significant
-overhead.
 
 Cheatsheet
 ==========
@@ -301,6 +214,170 @@ Let's type-check like `greased lightning`_:
        @beartype
        def bare_settermethod(self, bad: IntType = 0xBAAAAAAD) -> NoneType:
            self._scalar = bad if bad else 0xBADDCAFE
+
+Timings
+==========
+
+Let's run `our profiler suite quantitatively timing <profiler suite_>`__
+``beartype`` and fellow runtime type-checkers against a battery of surely fair,
+impartial, and unbiased use cases: :superscript:`*mirthless chuckling*`
+
+.. code-block:: shell-session
+
+   beartype profiler [version]: 0.0.1
+   
+   python    [version]: Python 3.7.8
+   beartype  [version]: 0.2.0
+   typeguard [version]: 2.9.1
+   
+   ========================== str (100 calls each loop) ==========================
+   decoration         [none     ]: 100 loops, best of 3: 351 nsec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 351 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 12.9 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 15.6 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 486 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 7.03 msec per loop
+   
+   ==================== Union[int, str] (100 calls each loop) ====================
+   decoration         [none     ]: 100 loops, best of 3: 2.9 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 358 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 18.5 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 551 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 11.3 msec per loop
+   
+   =============== List[object] of 150 items (839 calls each loop) ===============
+   decoration         [none     ]: 100 loops, best of 1: 3.79 usec per loop
+   decoration         [beartype ]: 100 loops, best of 1: 341 usec per loop
+   decoration         [typeguard]: 100 loops, best of 1: 18.9 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 1: 140 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 1: 1.4 msec per loop
+   decoration + calls [typeguard]: 100 loops, best of 1: 2.13 sec per loop
+
+.. note::
+   * ``msec`` = milliseconds = 10^-3 seconds.
+   * ``usec`` = microseconds = 10^-6 seconds.
+   * ``nsec`` = nanoseconds = 10^-9 seconds.
+
+ELI5
+-------------
+
+On the one hand, ``beartype`` is:
+
+* At least **twenty times faster** (i.e., 20,000%) and consumes **three orders
+  of magnitude less time** in the worst case than typeguard_ – the only
+  comparable runtime type-checker also compatible with all modern versions of
+  Python.
+* Infinitely faster in the best case than typeguard_, which is sufficiently
+  slow as to raise genuine usability and security concerns (e.g.,
+  `application-layer Denial-of-Service (DoS) attacks <Denial-of-Service_>`__).
+  Containers of more than 1,000 items appear to be particularly problematic.
+* Robust across type hints, taking roughly the same time to check parameters
+  hinted by the builtin type ``str`` as it does to check those hinted by the
+  synthetic type ``Union[int, str]`` as it does to check those hinted by the
+  container type ``List[object]``; typeguard_ is much more variable, taking
+  infinitely longer to check ``List[object]`` than to check ``Union[int,
+  str]``, taking roughly twice the time to check than to check ``str``.
+  :superscript:`so that's good`
+
+On the other hand, ``beartype`` is only partially compliant with
+annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
+484 -- Type Hints <PEP 484_>`__ and `PEP 563 -- Postponed Evaluation of
+Annotations <PEP 563_>`__, whereas typeguard_ is (mostly) fully compliant with
+these PEPs. :superscript:`so that's bad`
+
+On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
+compliant with these PEPs by either the heat death of the known universe *or*
+the catastrophic implosion in reductive normalcy induced by collective first
+contact with a hyperchromatic condensation of self-transforming machine elves
+cum self-dribbling jeweled basketballs (whichever comes first).
+:superscript:`so that's... good?`
+
+.. # This image is reliably hosted with GitHub via this placeholder issue:
+.. #     https://github.com/leycec/raiagent/issues/36
+.. image:: https://user-images.githubusercontent.com/217028/91650639-92018a80-ea71-11ea-872e-10c1d296ed3d.png
+
+But... how?
+-----------
+
+``beartype`` performs the lion's share of its work at decoration time. The
+``@beartype`` decorator consumes most of the time needed to first decorate and
+then repeatedly call a decorated function. ``beartype`` is thus front-loaded.
+After paying the initial cost of decoration, each type-checked call thereafter
+incurs comparatively little overhead.
+
+All other runtime type checkers perform the lion's share of *their* work at
+call time. ``@typeguard.typechecked`` and similar decorators consume almost
+none of the time needed to first decorate and then repeatedly call a decorated
+function. They're thus back-loaded. Although the initial cost of decoration is
+essentially free, each type-checked call thereafter incurs significant
+overhead.
+
+Nobody Believes You
+-------------------
+
+Math time, people. *it's happening*
+
+Most runtime type-checkers exhibit ``O(n)`` time complexity (where ``n`` is the
+total number of items recursively contained in a container to be checked) by
+recursively and repeatedly checking *all* items of *all* containers passed to
+or returned from *all* calls of decorated callables.
+
+``beartype`` guarantees ``O(1)`` time complexity by non-recursively but
+repeatedly checking *one* random item from *each* nesting level of *all*
+containers passed to or returned from *all* calls of decorated callables, thus
+amortizing the cost of checking items across calls.
+
+Formally, ``beartype`` exploits the well-known `coupon collector's problem`_
+applied to abstract trees of nested type hints. Let:
+
+* ``E(T)`` be the expected number of calls needed to check all items of a
+  container containing only non-container items (i.e., containing *no* nested
+  subcontainers) either passed to or returned from a ``@beartype``\ -decorated
+  callable.
+* ``γ ≈ 0.5772156649`` be the `Euler–Mascheroni constant`_.
+
+Then:
+
+.. math::
+
+   \operatorname{E}(T) = n \log n + \gamma n + \frac{1}{2} + O(1/n)
+
+The summation :math:`\frac{1}{2} + O(1/n) \le 1` is negligible. While
+non-negligible, the term :math:`\gamma n` grows significantly slower than the
+term :math:`n \log n`. So this reduces to:
+
+.. math::
+
+   \operatorname{E}(T) = O(n \log n)
+
+We now generalize this bound to the general case. When checking a container
+containing *no* subcontainers, ``beartype`` only randomly samples one item from
+that container on each call. When checking a container containing arbitrarily
+many nested subcontainers, however, ``beartype`` randomly samples one random
+item from each nesting level of that container on each call.
+
+``beartype`` thus samples ``h`` random items from a container on each call,
+where ``h`` is that container's height (i.e., maximum number of edges on the
+longest path from that container to a non-container leaf item reachable from
+items directly contained in that container). Since ``h >= 1``, ``beartype``
+samples at least as many items each call as assumed in the usual `coupon
+collector's problem`_ and thus paradoxically takes a fewer number of calls on
+average to check all items of a container containing arbitrarily many
+subcontainers as it does to check all items of a container containing *no*
+subcontainers.
+
+Ergo, the expected number of calls ``E(S)`` needed to check all items of an
+arbitrary container exhibits the same or better growth rate and remains bound
+above by at least the same upper bounds – but probably tighter: e.g.,
+
+.. math::
+
+   \operatorname{E}(S) = O(\operatorname{E}(T)) = O(n \log n)
+
+In all cases, ``beartype`` requires somewhat more calls than the total number
+of items in a container to check those items. For example, checking all **50
+integers** of a list of integers is expected to take **225 calls** on average.
 
 Usage
 =====
@@ -696,8 +773,10 @@ Beartype is fully compliant with these `Python Enhancement Proposals (PEPs)
 
 Beartype is partially compliant with these PEPs:
 
-* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__.
-* `PEP 484 -- Type Hints <PEP 484_>`__.
+* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
+  detailed below <PEP 484 Compliance_>`__
+* `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
+  <PEP 484 Compliance_>`__.
 
 Beartype is currently *not* compliant whatsoever with these PEPs:
 
@@ -709,8 +788,120 @@ Beartype is currently *not* compliant whatsoever with these PEPs:
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 
-See the **PEP** and **typing** categories of the following table for further
-details.
+See also the **PEP** and **typing** categories of our `features matrix
+<Features_>`__ for further details.
+
+PEP 484 Compliance
+~~~~~~~~~~~~~~~~~~
+
+Beartype is only partially compliant with `PEP 483`_ and `484 <PEP 484_>`__.
+Let's see what that means in practice.
+
+Deep Compliance
+~~~~~~~~~~~~~~~
+
+Beartype **deeply type-checks** (i.e., both directly checks the types of *and*
+recursively checks the types of items contained in) callable parameters and
+return values annotated by these typing_ types:
+
+* ``typing.Optional``.
+* ``typing.Union``.
+
+For example, let's declare a simple beartyped function accepting either a
+string and returning either an integer or string:
+
+.. code-block:: python
+
+   from beartype import beartype
+
+   @beartype
+   def law_of_the_jungle(wolf: str, pack: dict) -> tuple:
+       return (wolf, pack[wolf]) if wolf in pack else None
+
+Shallow Compliance
+~~~~~~~~~~~~~~~~~~
+
+Beartype currently only **shallowly type-checks** (i.e., only directly checks
+the types of) callable parameters and return values annotated by these typing_
+types:
+
+* ``typing.AbstractSet``.
+* ``typing.AsyncIterable``.
+* ``typing.AsyncIterator``.
+* ``typing.Awaitable``.
+* ``typing.ByteString``.
+* ``typing.Callable``.
+* ``typing.ChainMap``.
+* ``typing.Container``.
+* ``typing.Coroutine``.
+* ``typing.Counter``.
+* ``typing.DefaultDict``.
+* ``typing.Deque``.
+* ``typing.Dict``.
+* ``typing.FrozenSet``.
+* ``typing.Generator``.
+* ``typing.Hashable``.
+* ``typing.ItemsView``.
+* ``typing.Iterable``.
+* ``typing.Iterator``.
+* ``typing.KeysView``.
+* ``typing.List``.
+* ``typing.MappingView``.
+* ``typing.Mapping``.
+* ``typing.MutableMapping``.
+* ``typing.MutableSequence``.
+* ``typing.MutableSet``.
+* ``typing.NamedTuple``.
+* ``typing.Sequence``.
+* ``typing.Set``.
+* ``typing.Sized``.
+* ``typing.Tuple``.
+* ``typing.Type``.
+* ``typing.TypedDict``.
+* ``typing.ValuesView``.
+* ``typing.SupportsAbs``.
+* ``typing.SupportsBytes``.
+* ``typing.SupportsComplex``.
+* ``typing.SupportsInt``.
+* ``typing.SupportsFloat``.
+* ``typing.SupportsRound``.
+
+For example...
+
+Subsequent beartype versions will deeply type-check these typing_ types while
+preserving our ``O(1)`` time complexity (with negligible constant factors)
+guarantee.
+
+No Compliance
+~~~~~~~~~~~~~
+
+Beartype currently raises exceptions at decoration time when passed these
+typing_ types:
+
+* Forward references (i.e., unqualified relative string classnames internally
+  coerced by typing_ into ``typing.ForwardRef`` instances).
+* Forward reference-subscripted types (i.e., typing_ objects subscripted by one
+  or more type forward references).
+* Type variables (i.e., ``typing.TypeVar`` instances enabling general-purpose
+  type-checking of generically substitutable types).
+* Type variable-parametrized types (i.e., typing_ objects subscripted by one or
+  more type variables).
+* User-defined generics (i.e., user-defined classes subclassing one or more
+  typing_ non-classes).
+* User-defined protocols (i.e., user-defined classes transitively subclassing
+  the ``typing.Protocol`` abstract base class (ABC)).
+* ``typing.BinaryIO``.
+* ``typing.IO``.
+* ``typing.Match``.
+* ``typing.NamedTuple``.
+* ``typing.NewType``.
+* ``typing.NoReturn``.
+* ``typing.Pattern``.
+* ``typing.TextIO``.
+
+Subsequent beartype versions will first shallowly and then deeply type-check
+these typing_ types while preserving our ``O(1)`` time complexity (with
+negligible constant factors) guarantee.
 
 Features
 ========
@@ -723,7 +914,9 @@ generations:
 +------------+-------------------------------------+-------------------------+------+
 | category   | feature                             | versions                | note |
 +============+=====================================+=========================+======+
-| callables  | coroutines                          | *none*                  |      |
+| callables  | classes                             | *none*                  |      |
++------------+-------------------------------------+-------------------------+------+
+|            | coroutines                          | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | functions                           | **0.1.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
@@ -749,7 +942,7 @@ generations:
 +------------+-------------------------------------+-------------------------+------+
 |            | tuple unions                        | **0.1.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-| ``typing`` | ``AbstractSet``                     | **0.2.0**\ —\ *current* |      |
+| typing_    | ``AbstractSet``                     | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Any``                             | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
@@ -821,7 +1014,7 @@ generations:
 +------------+-------------------------------------+-------------------------+------+
 |            | ``MutableSet``                      | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
-|            | ``NamedTuple``                      | *none*                  |      |
+|            | ``NamedTuple``                      | **0.1.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``NewType``                         | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
@@ -865,11 +1058,15 @@ generations:
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Type``                            | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
+|            | ``TypedDict``                       | **0.1.0**\ —\ *current* |      |
++------------+-------------------------------------+-------------------------+------+
 |            | ``TypeVar``                         | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``ValuesView``                      | **0.2.0**\ —\ *current* |      |
 +------------+-------------------------------------+-------------------------+------+
 |            | ``Union``                           | **0.2.0**\ —\ *current* |      |
++------------+-------------------------------------+-------------------------+------+
+|            | ``final``                           | *none*                  |      |
 +------------+-------------------------------------+-------------------------+------+
 | PEP        | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current* |      |
 |            |                                     |                         |      |
@@ -992,6 +1189,12 @@ application stack at tool rather than Python runtime) include:
 .. _Shere Khan:
    https://en.wikipedia.org/wiki/Shere_Khan
 
+.. # ------------------( LINKS ~ math                       )------------------
+.. _Euler–Mascheroni constant:
+   https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
+.. _coupon collector's problem:
+   https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
+
 .. # ------------------( LINKS ~ meme                       )------------------
 .. _greased lightning:
    https://www.youtube.com/watch?v=H-kL8A4RNQ8
@@ -999,12 +1202,16 @@ application stack at tool rather than Python runtime) include:
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
 .. # ------------------( LINKS ~ non-py                     )------------------
+.. _Denial-of-Service:
+   https://en.wikipedia.org/wiki/Denial-of-service_attack
+.. _zero-cost abstraction:
+   https://boats.gitlab.io/blog/post/zero-cost-abstractions
+
+.. # ------------------( LINKS ~ non-py : lang              )------------------
 .. _C++:
    https://en.wikipedia.org/wiki/C%2B%2B
 .. _Rust:
    https://www.rust-lang.org
-.. _zero-cost abstraction:
-   https://boats.gitlab.io/blog/post/zero-cost-abstractions
 
 .. # ------------------( LINKS ~ py                         )------------------
 .. _Python:
@@ -1063,9 +1270,7 @@ application stack at tool rather than Python runtime) include:
    https://pypi.org
 
 .. # ------------------( LINKS ~ py : stdlib                )------------------
-.. _"numbers" module:
-   https://docs.python.org/3/library/numbers.html
-.. _"typing" module:
+.. _typing:
    https://docs.python.org/3/library/typing.html
 
 .. # ------------------( LINKS ~ py : test                  )------------------

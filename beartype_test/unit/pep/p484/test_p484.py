@@ -25,6 +25,7 @@ See Also
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pyterror import raises_uncached
+from collections import ChainMap
 
 # ....................{ TODO                              }....................
 
@@ -41,11 +42,21 @@ def test_p484() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckPepException
-    from beartype_test.unit.data.data_hint import PEP_HINT_TO_META
+    from beartype.roar import (
+        BeartypeCallCheckPepException,
+        BeartypeCallCheckNonPepException,
+    )
+    from beartype_test.unit.data.data_hint import (
+        PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
+
+    # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
+    # instances detailing those hints with metadata applicable to testing
+    # scenarios -- regardless of whether those hints are uniquely identified by
+    # argumentless "typing" attributes or not.
+    PEP_HINT_ALL_TO_META = ChainMap(PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
 
     # For each predefined PEP-compliant type hint and associated metadata...
-    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+    for pep_hint, pep_hint_meta in PEP_HINT_ALL_TO_META.items():
         # If this hint is currently unsupported, continue to the next.
         if not pep_hint_meta.is_supported:
             continue
@@ -58,6 +69,20 @@ def test_p484() -> None:
         def pep_hinted(pep_hinted_param: pep_hint) -> pep_hint:
             return pep_hinted_param
 
+        # Type of exception raised by this wrapper on type-check failures.; else, this
+        # wrapper
+        # Note that these hints all .
+        exception_cls = (
+            # If this hint is uniquely identified by an argumentless "typing"
+            # attribute, this wrapper raises PEP-compliant exceptions.
+            BeartypeCallCheckPepException
+            if pep_hint_meta.typing_attr is not None else
+            # Else, this hint reduces to a builtin type and is thus detected as
+            # a PEP-noncompliant type hint. In this case, this wrapper raises
+            # PEP-noncompliant exceptions.
+            BeartypeCallCheckNonPepException
+        )
+
         # For each object satisfying this hint...
         for pith_satisfied in pep_hint_meta.piths_satisfied:
             # Assert this wrapper function successfully type-checks this
@@ -69,7 +94,7 @@ def test_p484() -> None:
         for pith_unsatisfied in pep_hint_meta.piths_unsatisfied:
             # Assert this wrapper function raises the expected exception when
             # type-checking this object against this hint.
-            with raises_uncached(BeartypeCallCheckPepException):
+            with raises_uncached(exception_cls):
                 pep_hinted(pith_unsatisfied)
 
         # assert False is True

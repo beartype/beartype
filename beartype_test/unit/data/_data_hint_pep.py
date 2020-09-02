@@ -70,7 +70,7 @@ class PepGenericTypevaredDeepMultiple(
 
     pass
 
-# ....................{ PEP ~ mappings                    }....................
+# ....................{ PEP ~ callables                   }....................
 def _make_generator_yield_int_send_float_return_str() -> (
     typing.Generator[int, float, str]):
     '''
@@ -96,12 +96,20 @@ def _make_generator_yield_int_send_float_return_str() -> (
     # Return a string constant.
     return 'Unmarred, scarred revanent remnants'
 
+# ....................{ PEP ~ containers                  }....................
+NamedTupleType = typing.NamedTuple(
+    'Formful', [('fumarole', str), ('enrolled', int)])
+'''
+PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
+PEP-compliant annotations.
+'''
+
 # ....................{ PEP ~ mappings                    }....................
 _PepHintMetadata = namedtuple('_PepHintMetadata', (
+    'typing_attr',
     'is_supported',
     'is_generic_user',
     'is_typevared',
-    'typing_attr',
     'piths_satisfied',
     'piths_unsatisfied',
 ))
@@ -111,6 +119,17 @@ a PEP-compliant type hint with metadata applicable to testing scenarios).
 
 Attributes
 ----------
+typing_attr : object
+    **Argumentless** :mod:`typing` **attribute** (i.e., public attribute of the
+    :mod:`typing` module uniquely identifying this PEP-compliant type hint,
+    stripped of all subscripted arguments but *not* default type variables) if
+    this hint is uniquely identified by such an attribute *or* ``None``
+    otherwise. Examples of PEP-compliant type hints *not* uniquely identified
+    by such attributes include those reducing to standard builtins on
+    instantiation such as:
+
+    * :class:`typing.NamedTuple` reducing to :class:`tuple`.
+    * :class:`typing.TypedDict` reducing to :class:`dict`.
 is_supported : bool
     ``True`` only if this PEP-compliant type hint is currently supported by the
     :func:`beartype.beartype` decorator.
@@ -122,10 +141,6 @@ is_generic_user : bool
 is_typevared : bool
     ``True`` only if this PEP-compliant type hint is parametrized by one or
     more **type variables** (i.e., :class:`typing.TypeVar` instances).
-typing_attr : object
-    **Argumentless** :mod:`typing` **attribute** (i.e., public attribute of the
-    :mod:`typing` module uniquely identifying this PEP-compliant type hint,
-    stripped of all subscripted arguments but *not* default type variables).
 piths_satisfied : tuple
     Tuple of various objects satisfying this hint when either passed as a
     parameter *or* returned as a value annotated by this hint.
@@ -135,6 +150,10 @@ piths_unsatisfied : tuple
 '''
 
 
+#FIXME: Explicitly list all other types thought not to be supported currently
+#(e.g., "typing.IO").
+#FIXME: Explicitly list all other types thought to be supported currently
+#(e.g., "typing.AbstractSet").
 PEP_HINT_TO_META = {
     # ..................{ CALLABLES                         }..................
     typing.Callable[[], str]: _PepHintMetadata(
@@ -235,6 +254,24 @@ PEP_HINT_TO_META = {
                 'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
                 '3. And Utter‐most, gutterly gut‐rending posts, glutton',
             ],
+        ),
+    ),
+    typing.List[object]: _PepHintMetadata(
+        typing_attr=typing.List,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Listing containing arbitrary items.
+            [
+                'Of philomathematically bliss‐postulating Seas',
+                'Of actuarial postponement',
+                23.75,
+            ],
+        ),
+        piths_unsatisfied=(
+            # String constant.
+            'Of actual change elevating alleviation — that',
         ),
     ),
     typing.List[str]: _PepHintMetadata(
@@ -464,8 +501,42 @@ PEP_HINT_TO_META = {
 }
 '''
 Dictionary mapping various PEP-compliant type hints to
-:class:`_PepHintMetadata` instances detailing those hints with metadata
+:class:`_PepHintMetadata` instances describing those hints with metadata
 applicable to testing scenarios.
+'''
+
+# ....................{ PEP ~ mappings :                  }....................
+PEP_HINT_NONATTR_TO_META = {
+    # ..................{ COLLECTIONS ~ namedtuple          }..................
+    # "typing.NamedTuple" instances transparently reduce to tuples.
+    NamedTupleType: _PepHintMetadata(
+        typing_attr=None,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Named tuple containing correctly typed items.
+            NamedTupleType(fumarole='Leviathan', enrolled=37),
+        ),
+        piths_unsatisfied=(
+            # String constant.
+            'Of ͼarthen concordance that',
+        ),
+    ),
+
+    # ..................{ COLLECTIONS ~ typeddict          }..................
+    # "typing.TypedDict" instances transparently reduce to dicts.
+    #FIXME: Implement us up, but note when doing so that "TypeDict" was first
+    #introduced with Python 3.8.
+}
+'''
+Dictionary mapping various PEP-compliant type hints *not* uniquely identified
+by argumentless :mod:`typing` attributes to :class:`_PepHintMetadata` instances
+describing those hints with metadata applicable to testing scenarios.
+
+These hints do *not* conform to standard expectations for PEP-compliant type
+hints and must thus be segregated from those that do conform (which is most of
+them) to avoid spurious issues throughout downstream unit tests.
 '''
 
 # ....................{ PEP ~ tuples                      }....................

@@ -17,22 +17,20 @@ from typing import Any, Union
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-HINTS_IGNORABLE = {
+HINTS_IGNORABLE = frozenset((
     # Ignorable non-"typing" types.
     object,
 
-    # Ignorable "typing" objects.
+    # Ignorable "typing" singletons.
     Any,
 
     # Ignorable "typing" unions.
     Union,
-    Union[Any],
-    Union[object],
     Union[Any, object],
     Union[object, Any],
-}
+))
 '''
-Set of all annotation objects to be unconditionally ignored during
+Frozen set of all annotation objects to be unconditionally ignored during
 annotation-based type checking in the :func:`beartype` decorator regardless of
 callable context (e.g., parameter, return value).
 
@@ -51,15 +49,16 @@ This includes:
   * :data:`Union` singleton object. Since `PEP 484`_ stipulates that an
     unsubscripted subscriptable PEP-compliant object (e.g., ``Generic``,
     ``Iterable``) semantically expands to that object subscripted by an
-    implicit :data:`Any` argument, :data:`Union` semantically expands to an
-    implicit :data:`Union[Any]` singleton object. Despite their semantic
-    equivalency, however, note that these objects remain syntactically distinct
-    with respect to object identification (i.e., ``Union is not Union[Any]``).
-    Ergo, this set necessarily lists both distinct singleton objects.
-  * :data:`Union[Any]` and :data:`Union[object]` singleton objects. Since `PEP
-    484`_ stipulates that a union of one type semantically reduces to merely
-    that type, :data:`Union[Any]` semantically reduces to merely :data:`Any`
-    and :data:`Union[object]` semantically reduces to merely :data:`object`.
+    implicit :data:`Any` argument, :data:`Union` semantically expands to the
+    implicit :data:`Union[Any]` singleton object. Since `PEP 484`_ also
+    stipulates that a union of one type semantically reduces to merely that
+    type, :data:`Union[Any]` semantically reduces to merely :data:`Any`.
+    Despite their semantic equivalency, however, note that these objects remain
+    syntactically distinct with respect to object identification. Notably:
+
+    * ``Union is not Union[Any]``.
+    * ``Union is not Any``.
+
   * :data:`Union[Any, object]` and :data:`Union[object, Any]` singleton
     objects. Since both :data:`Union[Any]` and :data:`Union[object]`
     semantically reduce to a noop, so too do all permutations of those unions.
@@ -74,6 +73,18 @@ This includes:
     :data:`Union`. Since we have no say in the matter, we strenuously object in
     the only meaningful way we can: with a docstring rant no one will ever
     read. (This is that docstring rant, by the way.)
+
+This intentionally does *not* include:
+
+* The PEP-compliant:
+
+  * :data:`Union[Any]` and :data:`Union[object]` singleton objects, since the
+    :mod:`typing` module physically reduces:
+
+    * :data:`Union[Any]` to merely :data:`Any` (i.e., ``Union[Any] is Any``),
+      which this frozen set already contains.
+    * :data:`Union[object]` to merely :data:`object` (i.e., ``Union[object] is
+      object``), which this frozen set already contains.
 
 Although PEP-specific logic should typically be isolated to private
 PEP-specific submodules for maintainability, defining this set here *improves*
@@ -90,13 +101,15 @@ subscripted objects produced by that module behave as expected: e.g.,
     >>> from typing import Any, Union
     >>> Union is Union
     True
-    >>> Union is Union[Any]
+    >>> Union is Union[Any, object]
     False
-    >>> Union[Any] is Union[Any]
+    >>> Union[Any, object] is Union[Any, object]
     True
+    >>> Union[Any, object] is Union[object, Any]
+    False
     >>> Union in HINTS_IGNORABLE
     True
-    >>> Union[Any] in HINTS_IGNORABLE
+    >>> Union[Any, object] in HINTS_IGNORABLE
     True
 
 .. _PEP 484:

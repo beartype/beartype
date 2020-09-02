@@ -18,6 +18,7 @@ from beartype import cave
 # for use by higher-level unit test submodules elsewhere.
 from beartype_test.unit.data._data_hint_pep import (
     PEP_HINT_TO_META,
+    PEP_HINT_NONATTR_TO_META,
     PEP_HINTS,
     S,
     T,

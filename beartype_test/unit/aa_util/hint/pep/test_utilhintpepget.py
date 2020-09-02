@@ -100,7 +100,7 @@ def test_get_hint_pep_typing_attr_pass() -> None:
     from beartype_test.unit.data.data_hint import PEP_HINT_TO_META
 
     # Assert this getter returns the expected argumentless "typing" attribute
-    # for PEP-compliant type hints.
+    # for all PEP-compliant type hints associated with such an attribute.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
         assert get_hint_pep_typing_attr(pep_hint) == pep_hint_meta.typing_attr
 
