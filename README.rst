@@ -225,32 +225,32 @@ impartial, and unbiased use cases:
    beartype profiler [version]: 0.0.1
    
    python    [version]: Python 3.7.8
-   beartype  [version]: 0.2.0
+   beartype  [version]: 0.2.1
    typeguard [version]: 2.9.1
    
    ========================== str (100 calls each loop) ==========================
-   decoration         [none     ]: 100 loops, best of 3: 351 nsec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 351 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 12.9 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 15.6 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 486 usec per loop
+   decoration         [none     ]: 100 loops, best of 3: 365 nsec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 355 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 13.5 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 15.3 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 483 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 7.03 msec per loop
    
    ==================== Union[int, str] (100 calls each loop) ====================
-   decoration         [none     ]: 100 loops, best of 3: 2.9 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 358 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.9 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 18.5 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 551 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 11.3 msec per loop
+   decoration         [none     ]: 100 loops, best of 3: 2.92 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 361 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 16.2 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 19.9 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 541 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 11.4 msec per loop
    
-   =============== List[object] of 150 items (839 calls each loop) ===============
-   decoration         [none     ]: 100 loops, best of 1: 3.79 usec per loop
-   decoration         [beartype ]: 100 loops, best of 1: 341 usec per loop
-   decoration         [typeguard]: 100 loops, best of 1: 18.9 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 1: 140 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 1: 1.4 msec per loop
-   decoration + calls [typeguard]: 100 loops, best of 1: 2.13 sec per loop
+   ============== List[object] of 1000 items (7485 calls each loop) ==============
+   decoration         [none     ]: 1 loop, best of 1: 41.8 usec per loop
+   decoration         [beartype ]: 1 loop, best of 1: 1.11 msec per loop
+   decoration         [typeguard]: 1 loop, best of 1: 81.5 usec per loop
+   decoration + calls [none     ]: 1 loop, best of 1: 1.29 msec per loop
+   decoration + calls [beartype ]: 1 loop, best of 1: 10.2 msec per loop
+   decoration + calls [typeguard]: 1 loop, best of 1: 121 sec per loop
 
 .. note::
    * ``sec`` = seconds.

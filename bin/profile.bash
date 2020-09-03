@@ -342,10 +342,10 @@ profile_callable 'Union[int, str]' \
 # When profiling naive runtime type-checkers under large containers, reduce
 # both the number of iterations and iterations of iterations (i.e., "best of")
 # to avoid infinitely halting the active process.
-NUM_LIST_ITEMS=150
+NUM_LIST_ITEMS=1000
 profile_callable "List[object] of ${NUM_LIST_ITEMS} items" "
 from typing import List
 THOUSANDS_OF_TIRED_VOICES = list(range(${NUM_LIST_ITEMS}))" \
     'def parade_song(camp_animals: List[object]) -> List[object]:
     return camp_animals' \
-    'parade_song(THOUSANDS_OF_TIRED_VOICES)' 839 100 1
+    'parade_song(THOUSANDS_OF_TIRED_VOICES)' 7485 1 1
