@@ -227,6 +227,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #implementing structural subtyping checks is sufficiently non-trivial that we
 #*REALLY* don't want to get into that for now.
 
+#FIXME: Type-check "typing.NoReturn", too. Note that whether a callable returns
+#"None" or not is *NOT* a sufficient condition to positively declare a function
+#to return no value for hopefully obvious reasons. Rather, we instead need to
+#validate this condition entirely at decoration time by either:
+#* Disassembling the decorated callable with the "dis" module and parsing the
+#  returned bytecode assembly for the first "return" statement if any.
+#* Constructing the abstract syntax tree (AST) for the decorated callable with
+#  the "ast" module and parsing the returned AST for the first node marked as a
+#  "return" statement if any.
+
 #FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
 #highly non-trivial -- sufficiently so, in fact, that we probably want to do so
 #elsewhere as cleverly documented in the "_pep563" submodule.

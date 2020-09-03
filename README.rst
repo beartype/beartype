@@ -825,6 +825,13 @@ and return values annotated by these typing_ types:
 
 * ``typing.Any``.
 * ``typing.Optional``.
+* ``typing.SupportsAbs``.
+* ``typing.SupportsBytes``.
+* ``typing.SupportsComplex``.
+* ``typing.SupportsInt``.
+* ``typing.SupportsFloat``.
+* ``typing.SupportsRound``.
+* ``typing.Text``.
 * ``typing.Union``.
 
 Shallow (Partial) Compliance
@@ -868,12 +875,6 @@ typing_ types:
 * ``typing.Type``.
 * ``typing.TypedDict``.
 * ``typing.ValuesView``.
-* ``typing.SupportsAbs``.
-* ``typing.SupportsBytes``.
-* ``typing.SupportsComplex``.
-* ``typing.SupportsInt``.
-* ``typing.SupportsFloat``.
-* ``typing.SupportsRound``.
 
 Subsequent ``beartype`` versions will deeply type-check these typing_ types
 while preserving our `O(1) time complexity (with negligible constant factors)
@@ -897,6 +898,7 @@ typing_ types:
   typing_ non-classes).
 * User-defined protocols (i.e., user-defined classes transitively subclassing
   the ``typing.Protocol`` abstract base class (ABC)).
+* ``typing.final``.
 * ``typing.AnyStr``.
 * ``typing.BinaryIO``.
 * ``typing.IO``.
