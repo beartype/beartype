@@ -214,7 +214,7 @@ Let's type-check like `greased lightning`_:
            self._scalar = bad if bad else 0xBADDCAFE
 
 Timings
-==========
+=======
 
 Let's run our `profiler suite quantitatively timing <profiler suite_>`__
 ``beartype`` and fellow runtime type-checkers against a battery of surely fair,
@@ -259,7 +259,7 @@ impartial, and unbiased use cases:
    * ``nsec`` = nanoseconds = 10\ :sup:`-9` seconds.
 
 ELI5
--------------
+----
 
 On the one hand, ``beartype`` is:
 
@@ -275,8 +275,8 @@ On the one hand, ``beartype`` is:
   those hinted by the synthetic type ``Union[int, str]`` as it does to check
   those hinted by the container type ``List[object]``. typeguard_ is
   variable across type hints, taking infinitely longer to check
-  ``List[object]`` as ``Union[int, str]``, taking roughly twice the time as
-  ``str``.
+  ``List[object]`` as as it does to check ``Union[int, str]``, taking roughly
+  twice the time as it does to check ``str``.
 
 :sup:`so that's good`
 
@@ -305,9 +305,9 @@ then repeatedly call a decorated function. ``beartype`` is thus front-loaded.
 After paying the initial cost of decoration, each type-checked call thereafter
 incurs comparatively little overhead.
 
-All other runtime type checkers perform the lion's share of *their* work at
-call time. ``@typeguard.typechecked`` and similar decorators consume almost
-none of the time needed to first decorate and then repeatedly call a decorated
+All other runtime type checkers perform the lion's share of their work at call
+time. ``@typeguard.typechecked`` and similar decorators consume almost none of
+the time needed to first decorate and then repeatedly call a decorated
 function. They're thus back-loaded. Although the initial cost of decoration is
 essentially free, each type-checked call thereafter incurs significant
 overhead.
@@ -353,18 +353,21 @@ Then:
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # .. math:: E(T) = n \log n + \gamma n + \frac{1}{2} + O\left(\frac{1}{n}\right)
+
 .. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28T%29+%3D+n+%5Clog+n+%2B+%5Cgamma+n+%2B+%5Cfrac%7B1%7D%7B2%7D+%2B+O%5Cleft%28%5Cfrac%7B1%7D%7Bn%7D%5Cright%29
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # The summation :math:`\frac{1}{2} + O\left(\frac{1}{n}\right) \le 1` is
 .. # negligible. While non-negligible, the term :math:`\gamma n` grows significantly
 .. # slower than the term :math:`n \log n`. So this reduces to:
+
 The summation ``½ + O(1/n)`` is strictly less than 1 and thus negligible. While
 non-negligible, the term ``γn`` grows significantly slower than the term
 ``nlogn``. So this reduces to:
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # .. math:: E(T) = O(n \log n)
+
 .. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28T%29+%3D+O%28n+%5Clog+n%29
 
 We now generalize this bound to the general case. When checking a container
@@ -389,6 +392,7 @@ above by at least the same upper bounds – but probably tighter: e.g.,
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # .. math:: E(S) = O(E(T)) = O(n \log n)
+
 .. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28S%29+%3D+O%28E%28T%29%29+%3D+O%28n+%5Clog+n%29%0A
 
 Fully checking a container takes no more calls than that container's size times
