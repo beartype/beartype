@@ -270,6 +270,7 @@ On the one hand, ``beartype`` is:
 * Infinitely faster in the best case than typeguard_, which is sufficiently
   slow as to raise genuine usability and security concerns (e.g.,
   `application-layer Denial-of-Service (DoS) attacks <Denial-of-Service_>`__).
+  Don't get us wrong. We love typeguard_, but caution might still be warranted.
 * Constant across type hints, taking roughly the same time to check parameters
   and return values hinted by the builtin type ``str`` as it does to check
   those hinted by the synthetic type ``Union[int, str]`` as it does to check
@@ -818,7 +819,7 @@ PEP 484 Compliance
 484_>`__. Let's see what that means in practice.
 
 Deep (Full) Compliance
-~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++
 
 ``beartype`` **deeply type-checks** (i.e., both directly checks the types of
 *and* recursively checks the types of items contained in) callable parameters
@@ -829,7 +830,7 @@ and return values annotated by these typing_ types:
 * ``typing.Union``.
 
 Shallow (Partial) Compliance
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++
 
 ``beartype`` currently only **shallowly type-checks** (i.e., only directly
 checks the types of) callable parameters and return values annotated by these
@@ -881,7 +882,7 @@ while preserving our `O(1) time complexity (with negligible constant factors)
 guarantee <Nobody Believes You_>`__.
 
 No Compliance
-~~~~~~~~~~~~~
++++++++++++++
 
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
@@ -889,7 +890,7 @@ typing_ types:
 * Forward references (i.e., unqualified relative string classnames internally
   coerced by typing_ into ``typing.ForwardRef`` instances).
 * Forward reference-subscripted types (i.e., typing_ objects subscripted by one
-  or more type forward references).
+  or more forward references).
 * Type variables (i.e., ``typing.TypeVar`` instances enabling general-purpose
   type-checking of generically substitutable types).
 * Type variable-parametrized types (i.e., typing_ objects subscripted by one or
