@@ -267,10 +267,8 @@ On the one hand, ``beartype`` is:
   of magnitude less time** in the worst case than typeguard_ – the only
   comparable runtime type-checker also compatible with all modern versions of
   Python.
-* Infinitely faster in the best case than typeguard_, which is sufficiently
-  slow as to raise genuine usability and security concerns (e.g.,
-  `application-layer Denial-of-Service (DoS) attacks <Denial-of-Service_>`__).
-  Don't get us wrong. We love typeguard_, but caution might still be warranted.
+* **Asymptotically faster** in the best case than typeguard_, which scales
+  linearly (rather than not at all) with the size of checked containers.
 * Constant across type hints, taking roughly the same time to check parameters
   and return values hinted by the builtin type ``str`` as it does to check
   those hinted by the synthetic type ``Union[int, str]`` as it does to check
