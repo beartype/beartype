@@ -284,17 +284,6 @@ annotation-centric `Python Enhancement Proposals (PEPs) <PEP 0_>`__ like `PEP
 484`_, whereas typeguard_ is (mostly) fully compliant with these PEPs.
 :sup:`so that's bad`
 
-On `the gripping hand`_, ``beartype`` also intends to be (mostly) fully
-compliant with these PEPs by either the heat death of the known universe *or*
-the catastrophic implosion in reductive normalcy induced by collective first
-contact with a hyperchromatic condensation of self-transforming machine elves
-from self-dribbling jeweled basketballs (whichever comes first).
-:sup:`so that's... good?`
-
-.. # This image is reliably hosted with GitHub via this placeholder issue:
-.. #     https://github.com/leycec/raiagent/issues/36
-.. image:: https://user-images.githubusercontent.com/217028/91650639-92018a80-ea71-11ea-872e-10c1d296ed3d.png
-
 But... How?
 -----------
 
