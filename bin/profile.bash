@@ -32,7 +32,7 @@
 set -e
 
 # Human-readable version of this profiling suite.
-VERSION='0.0.1'
+VERSION='0.0.2'
 
 # Print a greeting preamble.
 echo "beartype profiler [version]: ${VERSION}"

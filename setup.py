@@ -89,7 +89,7 @@ engine optimization (SEO). In actuality, they do absolutely nothing.
 _CLASSIFIERS = [
     # PyPI-specific version type. The number specified here is a magic constant
     # with no relation to this package's version numbering scheme. *sigh*
-    'Development Status :: 1 - Planning',
+    'Development Status :: 5 - Production/Stable',
 
     # Miscellaneous metadata.
     'Intended Audience :: Developers',
