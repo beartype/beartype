@@ -822,8 +822,8 @@ Full Compliance
 +++++++++++++++
 
 ``beartype`` **deeply type-checks** (i.e., directly checks the types of *and*
-recursively checks the types of items contained in) callable parameters and
-return values annotated by these typing_ types:
+recursively checks the types of items contained in) parameters and return
+values annotated with these typing_ types:
 
 * typing.Any_.
 * typing.Optional_.
@@ -840,8 +840,8 @@ Partial Compliance
 ++++++++++++++++++
 
 ``beartype`` currently only **shallowly type-checks** (i.e., only directly
-checks the types of) callable parameters and return values annotated by these
-typing_ types:
+checks the types of) parameters and return values annotated with these typing_
+types:
 
 * typing.AbstractSet_.
 * typing.AsyncIterable_.

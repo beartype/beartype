@@ -20,6 +20,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Major optimization: duplicate the signature of the decorated callable
+#as the signature of our wrapper function. Why? Because doing so obviates the
+#need to explicitly test whether each possible parameter was passed and how
+#that parameter was passed (e.g., positional, keyword) as well as the need to
+#localize "__beartype_args_len" and so on. In short, this is a massive win.
+
 #FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
 #
 #    # This...
@@ -117,6 +123,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codesnip import (
+    CODE_PARAMS_POSITIONAL_INIT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
 
@@ -324,6 +331,9 @@ def _code_check_params(data: BeartypeData) -> str:
     # Python code snippet to be returned.
     func_code = ''
 
+    # True only if this callable accepts one or more positional parameters.
+    is_params_positional = False
+
     # For the name of each parameter accepted by this callable and the
     # "Parameter" instance encapsulating this parameter (in declaration
     # order)...
@@ -361,6 +371,12 @@ def _code_check_params(data: BeartypeData) -> str:
         if (func_arg.annotation in HINTS_IGNORABLE or
             func_arg.kind in _PARAM_KINDS_IGNORABLE):
             continue
+        # Else, this parameter is non-ignorable.
+        #
+        # If this non-ignorable parameter either may or must be passed
+        # positionally, note this fact.
+        elif func_arg.kind is Parameter.POSITIONAL_OR_KEYWORD:
+            is_params_positional = True
 
         # If this is a PEP-compliant hint, append Python code type-checking
         # this parameter against this hint.
@@ -379,8 +395,16 @@ def _code_check_params(data: BeartypeData) -> str:
                 func_arg_index=func_arg_index,
             )
 
-    # Return this snippet.
-    return func_code
+    # Return either...
+    return (
+        # If this callable accepts one or more positional parameters, this
+        # snippet preceded by code localizing the number of such parameters.
+        CODE_PARAMS_POSITIONAL_INIT + func_code
+        if is_params_positional else
+        # Else, this callable accepts *NO* positional parameters. In this case,
+        # this snippet as is.
+        func_code
+    )
 
 # ....................{ CODERS                            }....................
 def _code_check_return(data: BeartypeData) -> str:

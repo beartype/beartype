@@ -13,7 +13,7 @@ functions implementing type-checking for decorated callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS ~ param                 }....................
 PARAM_NAME_FUNC = '__beartype_func'
 '''
 Name of the **private decorated callable parameter** (i.e.,
@@ -36,10 +36,7 @@ CODE_SIGNATURE = '''def {{func_wrapper_name}}(
     {param_name_func}={param_name_func},
     {param_name_typistry}={param_name_typistry},
     **kwargs
-):
-    # Localize the number of passed positional arguments for efficiency.
-    __beartype_args_len = len(args)
-'''.format(
+):'''.format(
     param_name_func=PARAM_NAME_FUNC,
     param_name_typistry=PARAM_NAME_TYPISTRY,
 )
@@ -57,6 +54,15 @@ CODE_RETURN_UNCHECKED = '''
 '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
+'''
+
+# ....................{ CODE ~ param                      }....................
+CODE_PARAMS_POSITIONAL_INIT = '''
+    # Localize the number of passed positional arguments for efficiency.
+    __beartype_args_len = len(args)'''
+'''
+PEP-agnostic code snippet localizing the number of passed positional arguments
+for callables accepting one or more such arguments.
 '''
 
 # ....................{ CODE ~ indent                     }....................
