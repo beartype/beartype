@@ -94,39 +94,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #Fortunately, Python >=3.8 is the inevitable future, so this issue will
 #naturally resolve itself over time. *shrug*
 
-#FIXME: On second thought, we probably should randomly type-check a single
-#index of each nested containers. Why? Because doing so gives us statistical
-#coverage guarantees that simply type-checking a single static index fail to --
-#coverage guarantees that allow us to correctly claim that we do eventually
-#type-check all container items given a sufficient number of calls. To do so,
-#derived from this deeper analysis at:
-#    https://gist.github.com/terrdavis/1b23b7ff8023f55f627199b09cfa6b24#gistcomment-3237209
-#
-#To do so:
-#* Add a new import to "beartype._decor.main" resembling:
-#    import random as __beartype_random
-#* Obtain random indices from the current pith with code snippets resembling:
-#'''
-#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(len({pith_curr_name}).bit_length()) % len({pith_curr_name})
-#'''
-#
-#Of course, we probably don't want to even bother localizing
-#"__beartype_got_index". Instead, just look up that index directly in the
-#current pith.
-#FIXME: Note that we should optimize away redundant len() calls by localizing a
-#variable to length: e.g.,
-#'''
-#{indent_curr}__beartype_got_len = len({pith_curr_name}
-#{indent_curr}__beartype_got_index = __beartype_random.getrandbits(__beartype_got_len).bit_length()) % __beartype_got_len
-#'''
-#
-#See also:
-#    https://stackoverflow.com/questions/31559933/perfomance-of-lenlist-vs-reading-a-variable
-#FIXME: Note that numpy also provides a C-based numpy.random.randint() function
-#that appears to be dramatically faster than the stdlib random.randint()
-#function, despite having the exact same API. Of course, the former might still
-#be slower than the above random.getrandbits()-based approach. Only timings and
-#online research will tell.
 #FIXME: Note that there exist four possible approaches to random item selection
 #for arbitrary containers depending on container type. Either the actual pith
 #object (in descending order of desirability):
@@ -368,6 +335,7 @@ from beartype._decor._typistry import (
 from beartype._decor._code._codesnip import (
     CODE_INDENT_1, CODE_INDENT_2, CODE_INDENT_3)
 from beartype._decor._code._pep._pepsnip import (
+    PEP_CODE_RANDOM_INT_INIT,
     PEP_CODE_CHECK_HINT_ROOT,
     PEP_CODE_CHECK_HINT_NONPEP_TYPE,
     PEP_CODE_CHECK_HINT_UNION_PREFIX,
@@ -545,6 +513,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
 
+    # ..................{ ATTRIBUTES                        }..................
     # Localize attributes of this dataclass for negligible efficiency gains.
     # Notably, alias:
     #
@@ -706,6 +675,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # performed below with a snippet type-checking the root pith against the
     # root hint.
     func_code = func_root_code
+
+    # True only if one or more piths type-checked within this snippet require a
+    # pseudo-random integer. If true, the end of this function prefixes this
+    # snippet by code generating such an integer before returning this snippet.
+    is_random_int = False
 
     # ..................{ SEARCH                            }..................
     # While the 0-based index of metadata describing the next visited hint in
@@ -1070,6 +1044,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     ).format(indent_curr=indent_curr)
                 # Else, this snippet is its initial value and thus ignorable.
 
+            # ..............{ SEQUENCES                         }..............
+            #FIXME: Implement support for sequences here by leveraging
+            #"TYPING_ATTRS_SEQUENCE_STANDARD", "is_random_int", and
+            #"__beartype_random_int".
+
             # ..............{ GENERICS                          }..............
             #FIXME: Implement support for generics (i.e., user-defined
             #subclasses) here similarly to how we currently handle "Union".
@@ -1253,5 +1232,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             '{} not type-checked.'.format(hint_root_label))
     # Else, the breadth-first search above successfully generated code.
 
-    # Return this code.
-    return func_code
+    # Return either...
+    return (
+        PEP_CODE_RANDOM_INT_INIT + func_code
+        # If this snippet requires a pseudo-random integer, this snippet
+        # preceded by code generating and localizing such an integer.
+        if is_random_int else
+        # Else, this snippet requires *NO* such integer. In this case, this
+        # snippet as is.
+        func_code
+    )

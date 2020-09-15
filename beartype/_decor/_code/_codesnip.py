@@ -45,7 +45,16 @@ PEP-agnostic code snippet declaring the signature of the wrapper function
 type-checking the decorated callable.
 '''
 
+# ....................{ CODE ~ init                       }....................
+CODE_PARAMS_POSITIONAL_INIT = '''
+    # Localize the number of passed positional arguments for efficiency.
+    __beartype_args_len = len(args)'''
+'''
+PEP-agnostic code snippet localizing the number of passed positional arguments
+for callables accepting one or more such arguments.
+'''
 
+# ....................{ CODE ~ return                     }....................
 CODE_RETURN_UNCHECKED = '''
     # Call this function with all passed parameters and return the value
     # returned from this call.
@@ -54,15 +63,6 @@ CODE_RETURN_UNCHECKED = '''
 '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
-'''
-
-# ....................{ CODE ~ param                      }....................
-CODE_PARAMS_POSITIONAL_INIT = '''
-    # Localize the number of passed positional arguments for efficiency.
-    __beartype_args_len = len(args)'''
-'''
-PEP-agnostic code snippet localizing the number of passed positional arguments
-for callables accepting one or more such arguments.
 '''
 
 # ....................{ CODE ~ indent                     }....................
