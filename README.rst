@@ -826,6 +826,7 @@ recursively checks the types of items contained in) parameters and return
 values annotated with these typing_ types:
 
 * typing.Any_.
+* typing.ByteString_.
 * typing.Optional_.
 * typing.SupportsAbs_.
 * typing.SupportsBytes_.
@@ -847,7 +848,6 @@ types:
 * typing.AsyncIterable_.
 * typing.AsyncIterator_.
 * typing.Awaitable_.
-* typing.ByteString_.
 * typing.Callable_.
 * typing.ChainMap_.
 * typing.Container_.

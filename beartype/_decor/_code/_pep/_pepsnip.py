@@ -265,6 +265,31 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
+# ....................{ CODE ~ hint : sequence            }....................
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
+{indent_curr}    isinstance({pith_curr_expr}, {hint_curr_expr}) and
+{indent_curr}    {hint_child_placeholder}
+{indent_curr})'''
+'''
+PEP-compliant code snippet type-checking the current pith against a parent
+**standard sequence type** (i.e., PEP-compliant type hint accepting exactly one
+subscripted type hint unconditionally constraining *all* items of this pith,
+which necessarily satisfies the :class:`collections.abc.Sequence` protocol with
+guaranteed ``O(1)`` indexation across all sequence items).
+'''
+
+
+#FIXME: Under Python >= 3.8, optimize with assignment expressions to avoid
+#reindexation of this item for nested type-checks. For now, this suffices.
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
+    '''{pith_curr_expr}[__beartype_random_int]''')
+'''
+PEP-compliant code snippet Python code snippet evaluating to a randomly indexed
+item of the current pith (which, by definition, *must* be a standard sequence)
+against the current child hint (e.g., ``int``) of the currently visited
+PEP-compliant standard sequence type hint (e.g., ``typing.List[int]``).
+'''
+
 # ....................{ CODE ~ hint : union               }....................
 PEP_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''

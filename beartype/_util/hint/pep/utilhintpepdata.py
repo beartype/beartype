@@ -163,7 +163,6 @@ globalized as a trivial optimization for efficient access elsewhere.
 
 # ....................{ CONSTANTS ~ supported             }....................
 TYPING_ATTRS_SEQUENCE_STANDARD = frozenset((
-    typing.ByteString,
     typing.List,
     typing.MutableSequence,
     typing.Sequence,
@@ -179,12 +178,13 @@ guaranteed ``O(1)`` indexation across all sequence items).
 This set intentionally excludes the argumentless:
 
 * :attr:`typing.AnyStr` attribute, which accepts only the :class:`str` and
-  :class:`bytes` types as its sole subscripted type hint, which does *not*
+  :class:`bytes` types as its sole subscripted argument, which does *not*
   unconditionally constrain *all* items (i.e., unencoded and encoded characters
   respectively) of compliant sequences but instead parametrizes this attribute.
-  Note that the argumentless :attr:`typing.ByteString` attribute is simply an
-  alias for the :class:`collections.abc.ByteString` abstract base class (ABC)
-  and thus requires no special handling.
+* :attr:`typing.ByteString` attribute, which accepts *no* subscripted
+  arguments. :attr:`typing.ByteString` is simply an alias for the
+  :class:`collections.abc.ByteString` abstract base class (ABC) and thus
+  already handled by our fallback logic for supported PEP-compliant type hints.
 * :attr:`typing.Deque` attribute, whose compliant objects (i.e.,
   :class:`collections.deque` instances) only `guarantee O(n) indexation
   across all sequence items <collections.deque_>`__:
@@ -195,8 +195,8 @@ This set intentionally excludes the argumentless:
 * :attr:`typing.NamedTuple` attribute, which embeds a variadic number of
   PEP-compliant field type hints and thus requires special-cased handling.
 * :attr:`typing.Text` attribute, which accepts *no* subscripted arguments.
-  :attr:`typing.Text` is simply an alias for :class:`str` and thus handled
-  elsewhere as a PEP-noncompliant type hint.
+  :attr:`typing.Text` is simply an alias for the builtin :class:`str` type and
+  thus handled elsewhere as a PEP-noncompliant type hint.
 * :attr:`typing.Tuple` attribute, which accepts a variadic number of
   subscripted arguments and thus requires special-cased handling.
 

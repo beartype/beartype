@@ -445,10 +445,18 @@ def get_hint_pep_typing_attr(hint: object) -> dict:
 
     Specifically, this function returns either:
 
-    * If this hint is a *generic** (i.e., instance of the :mod:`typing.Generic`
-      abstract base class (ABC)), :mod:`typing.Generic`.
-    * Else if this hint is a *type variable** (i.e., instance of the concrete
-      :mod:`typing.TypeVar` class), :mod:`typing.TypeVar`.
+    * If this hint is a **generic** (i.e., instance of the
+      :class:`typing.Generic` abstract base class (ABC)),
+      :class:`typing.Generic`.
+    * Else if this hint is a **type variable** (i.e., instance of the concrete
+      :class:`typing.TypeVar` class), :class:`typing.TypeVar`.
+    * Else if this hint is **optional** (i.e., subscription of the
+      :attr:`typing.Optional` attribute), :attr:`typing.Union`. The
+      :mod:`typing` module implicitly reduces *all* subscriptions of the
+      :attr:`typing.Optional` singleton by the corresponding
+      :attr:`typing.Union` singleton subscripted by both that argument and
+      ``type(None)``. Ergo, there effectively exists *no*
+      :attr:`typing.Optional` attribute with respect to categorization.
     * Else, the argumentless :mod:`typing` attribute dynamically retrieved by
       inspecting this hint's **object representation** (i.e., the
       non-human-readable string returned by the :func:`repr` builtin).

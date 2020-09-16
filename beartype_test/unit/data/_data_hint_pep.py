@@ -247,6 +247,7 @@ PEP_HINT_TO_META = {
             [
                 'Of an Autos‐respirating, ăutonomies‐gnashing machineries‐',
                 'Laxity, and taxonomic attainment',
+                3,
             ],
         ),
         piths_unsatisfied=(
@@ -254,6 +255,7 @@ PEP_HINT_TO_META = {
             [
                 'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
                 '3. And Utter‐most, gutterly gut‐rending posts, glutton',
+                3.1415,
             ],
         ),
     ),
@@ -290,6 +292,10 @@ PEP_HINT_TO_META = {
         piths_unsatisfied=(
             # String constant.
             'Devilet‐Sublet cities waxing',
+            # Listing containing exactly one non-string item. Since list items
+            # are only randomly type-checked, only a list of exactly one item
+            # avoids generating false positives here.
+            [3.7,],
         ),
     ),
     typing.List[T]: _PepHintMetadata(
@@ -368,7 +374,22 @@ PEP_HINT_TO_META = {
                 'Of that numeral addicts’ “—Additive game,” self‐',
             )
         ),
+        # By definition, *ALL* objects satisfy this singleton.
         piths_unsatisfied=(),
+    ),
+    typing.ByteString: _PepHintMetadata(
+        typing_attr=typing.ByteString,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Byte string constant.
+            b'By nautical/particle consciousness',
+        ),
+        piths_unsatisfied=(
+            # String constant.
+            'At that atom-nestled canticle',
+        ),
     ),
     typing.NoReturn: _PepHintMetadata(
         typing_attr=typing.NoReturn,
@@ -482,8 +503,12 @@ PEP_HINT_TO_META = {
             ),
         ),
         piths_unsatisfied=(
-            # Floating-point number constant.
-            52.11,
+            # Floating-point constant.
+            #
+            # Note that a string constant is intentionally *NOT* listed here,
+            # as strings are technically sequences of strings of length one
+            # commonly referred to as Unicode code points or simply characters.
+            802.11,
         ),
     ),
     # Union of one non-"typing" type and one concrete generic.
@@ -494,6 +519,35 @@ PEP_HINT_TO_META = {
         is_typevared=True,
         piths_satisfied=(),
         piths_unsatisfied=(),
+    ),
+
+    # ..................{ UNIONS ~ optional                 }..................
+    # Optional isinstance()-able "typing" type.
+    typing.Optional[typing.Sequence[str]]: _PepHintMetadata(
+        # The "typing" module implicitly reduces *ALL* subscriptions of the
+        # "typing.Optional" attribute by the corresponding "typing.Union"
+        # attribute subscripted by both that argument and "type(None)". Ergo,
+        # there effectively exists *NO* "typing.Optional" attribute.
+        typing_attr=typing.Union,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Sequence of string items.
+            (
+                'Of cuticular currents (...wide, wildly articulate,',
+                'And canting free, physico-stipulatingly) -',
+            ),
+        ),
+        piths_unsatisfied=(
+            # Floating-point constant.
+            #
+            # Note that a string constant is intentionally *NOT* listed here,
+            # as strings are technically sequences of strings of length one
+            # commonly referred to as Unicode code points or simply characters.
+            # String constant.
+            802.2,
+        ),
     ),
 
     # ..................{ CUSTOM                            }..................
