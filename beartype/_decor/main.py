@@ -213,6 +213,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
 from beartype._util.hint.pep.utilhintpepcall import raise_pep_call_exception
 from beartype._util.text.utiltextmunge import number_lines, trim_object_repr
+from types import FunctionType
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -389,6 +390,36 @@ def beartype(func):
         PARAM_NAME_TYPISTRY: bear_typistry,
     }
 
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
+    #which are the optimal means of performing string formatting.
+
+    #FIXME: Uncomment after unit testing
+    #utilcallable.get_callable_filename_or_placeholder() up.
+    #FIXME: Once this is working, use the commented code example starting with
+    #"func_code_compiled = compile" given below to associate this filename with
+    #this wrapper function.
+
+    # Fake filename of the in-memory fake file masquerading as declaring this
+    # wrapper function. This filename guarantees the uniqueness of the 3-tuple
+    # ``({func_filename}, {func_file_line_number}, {func_name})`` containing
+    # this filenames commonly leveraged by profilers (e.g., "cProfile") to
+    # identify arbitrary callables, where:
+    # * `{func_filename}` is this filename (e.g.,
+    #   `"</home/leycec/py/betse/betse/lib/libs.py:beartype({func_name})>"`).
+    # * `{func_file_line_number}`, is *ALWAYS* 0 and thus *NEVER* unique.
+    # * `{func_name}`, is identical to that of the decorated callable and also
+    #   thus *NEVER* unique.
+    #
+    # Ergo, uniquifying this filename is the *ONLY* means of uniquifying
+    # metadata identifying this wrapper function via runtime inspection.
+    #func_wrapper_filename = (
+    #    '<' +
+    #    get_callable_filename_or_placeholder(func) +
+    #    ':beartype(' +
+    #    func_data.func_name +
+    #    ')>'
+    #)
+
     #FIXME: Actually, we absolutely *DO* want to leverage the example
     #documented below of leveraging the compile() builtin. We want to do so
     #explicitly to pass something other than "<string>" here -- ideally,
@@ -417,6 +448,8 @@ def beartype(func):
     #preserving metadata on the original callable into our wrapper callable.
     #While we absolutely should *NOT* depend on that or any other third-party
     #package, that package's implementation should lend us useful insight.
+    #Indeed, see the _make() function of the "makefun.main" submodule:
+    #    https://github.com/smarie/python-makefun/blob/master/makefun/main.py
 
     # Attempt to define this wrapper as a closure of this decorator. For
     # obscure and presumably uninteresting reasons, Python fails to locally
@@ -439,6 +472,19 @@ def beartype(func):
     try:
         # print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
         exec(func_code, _GLOBAL_ATTRS, local_attrs)
+
+        #FIXME: See above.
+        #FIXME: Should "exec" be "single" instead? Does it matter? Is there any
+        #performance gap between the two?
+        # func_code_compiled = compile(
+        #     func_code, func_wrapper_filename, "exec").co_consts[0]
+        # return FunctionType(
+        #     code=func_code_compiled,
+        #     globals=_GLOBAL_ATTRS,
+        #
+        #     #FIXME: This really doesn't seem right, but... *shrug*
+        #     argdefs=tuple(local_attrs.values()),
+        # )
     # If doing so fails for any reason...
     except Exception as exception:
         # Debuggable wrapper code such that each line of this code is prefixed

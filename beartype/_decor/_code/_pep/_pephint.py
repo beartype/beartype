@@ -335,7 +335,6 @@ from beartype._decor._typistry import (
 from beartype._decor._code._codesnip import (
     CODE_INDENT_1, CODE_INDENT_2, CODE_INDENT_3)
 from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_RANDOM_INT_INIT,
     PEP_CODE_CHECK_HINT_ROOT,
     PEP_CODE_CHECK_HINT_NONPEP_TYPE,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD,
@@ -694,17 +693,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # performed below with a snippet type-checking the root pith against the
     # root hint.
     func_code = func_root_code
-
-    #FIXME: Refactor as follows:
-    #* Shift this into "BeartypeData" as a new instance variable.
-    #* Shift "PEP_CODE_RANDOM_INT_INIT" into "_codesnip.CODE_RANDOM_INT_INIT".
-    #* Shift the logic below leveraging "PEP_CODE_RANDOM_INT_INIT" into the
-    #  codemain.generate_code() function.
-
-    # True only if one or more piths type-checked within this snippet require a
-    # pseudo-random integer. If true, the end of this function prefixes this
-    # snippet by code generating such an integer before returning this snippet.
-    is_random_int = False
 
     # ..................{ SEARCH                            }..................
     # While the 0-based index of metadata describing the next visited hint in
@@ -1104,10 +1092,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # Else, this snippet is its initial value and thus ignorable.
 
             # ..............{ SEQUENCES                         }..............
-            #FIXME: Implement support for sequences here by leveraging
-            #"TYPING_ATTRS_SEQUENCE_STANDARD", "is_random_int", and
-            #"__beartype_random_int".
-
             # If this hint is a standard sequence (e.g., "typing.List",
             # "typing.Sequence")...
             elif hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD:
@@ -1155,10 +1139,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
                 # If this child hint is *NOT* ignorable, deeply type-check both
                 # the type of the current pith *AND* a randomly indexed item of
-                # this pith.
+                # this pith. Specifically...
                 if hint_child not in HINTS_IGNORABLE:
                     # Record that a pseudo-random integer is now required.
-                    is_random_int = True
+                    data.is_func_wrapper_needs_random_int = True
 
                     #FIXME: Optimize away. See above.
 
@@ -1413,19 +1397,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # Note that this test is inexpensive, as the third character of the
     # "func_root_code" code snippet is guaranteed to differ from that of
     # "func_code" code snippet if this function behaved as expected, which it
-    # absolutely should have...but may not have.
+    # absolutely should have... but may not have, which is why we're testing.
     if func_code == func_root_code:
         raise BeartypeDecorHintPepException(
             '{} not type-checked.'.format(hint_root_label))
     # Else, the breadth-first search above successfully generated code.
 
-    # Return either...
-    return (
-        PEP_CODE_RANDOM_INT_INIT + func_code
-        # If this snippet requires a pseudo-random integer, this snippet
-        # preceded by code generating and localizing such an integer.
-        if is_random_int else
-        # Else, this snippet requires *NO* such integer. In this case, this
-        # snippet as is.
-        func_code
-    )
+    # Return this snippet.
+    return func_code

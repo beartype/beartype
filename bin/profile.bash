@@ -324,7 +324,7 @@ profile_callable 'Union[int, str]' \
     return quick_foot' \
     'panther_canter("We dare not wait for thee. Follow, Baloo. We must go on the quick-foot -- Kaa and I.")'
 
-# ....................{ PROFILE ~ container               }....................
+# ....................{ PROFILE ~ container : list        }....................
 # To ensure fairness in comparing beartype's non-naive random sampling of
 # container items against runtime type-checkers naive brute-forcing of *ALL*
 # container items, set the "num_loop_calls" argument to be the expected number
@@ -342,10 +342,22 @@ profile_callable 'Union[int, str]' \
 # When profiling naive runtime type-checkers under large containers, reduce
 # both the number of iterations and iterations of iterations (i.e., "best of")
 # to avoid infinitely halting the active process.
+
+#FIXME: Temporarily commented out, as the following test is more specific and
+#thus (probably) more instructive.
+# NUM_LIST_ITEMS=1000
+# profile_callable "List[object] of ${NUM_LIST_ITEMS} items" "
+# from typing import List
+# THOUSANDS_OF_TIRED_VOICES = list(range(${NUM_LIST_ITEMS}))" \
+#     'def parade_song(camp_animals: List[object]) -> List[object]:
+#     return camp_animals' \
+#     'parade_song(THOUSANDS_OF_TIRED_VOICES)' 7485 1 1
+
+
 NUM_LIST_ITEMS=1000
-profile_callable "List[object] of ${NUM_LIST_ITEMS} items" "
+profile_callable "List[int] of ${NUM_LIST_ITEMS} items" "
 from typing import List
-THOUSANDS_OF_TIRED_VOICES = list(range(${NUM_LIST_ITEMS}))" \
-    'def parade_song(camp_animals: List[object]) -> List[object]:
-    return camp_animals' \
-    'parade_song(THOUSANDS_OF_TIRED_VOICES)' 7485 1 1
+TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN = list(range(${NUM_LIST_ITEMS}))" \
+    'def gun_teams(elephants: List[int]) -> List[int]:
+    return elephants' \
+    'gun_teams(TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN)' 7485 1 1

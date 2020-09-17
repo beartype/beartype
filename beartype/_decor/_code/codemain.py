@@ -25,6 +25,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #need to explicitly test whether each possible parameter was passed and how
 #that parameter was passed (e.g., positional, keyword) as well as the need to
 #localize "__beartype_args_len" and so on. In short, this is a massive win.
+#Again, see the third-party "makefun" package, which purports to already do so.
 
 #FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
 #
@@ -123,7 +124,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code._codesnip import (
-    CODE_PARAMS_POSITIONAL_INIT,
+    CODE_INIT_PARAMS_POSITIONAL_LEN,
+    CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
 
@@ -267,6 +269,20 @@ def generate_code(data: BeartypeData) -> None:
     # callable if any *or* the empty string otherwise.
     code_return = _code_check_return(data)
 
+    # Python code snippet declaring the signature of this wrapper followed by
+    # preliminary statements (e.g., assignment initializations) if desired
+    # *AFTER* generating snippets type-checking parameters and return values,
+    # both of which modify instance variables of the dataclass tested below.
+    code_init = (
+        # If the body of this wrapper requires a pseudo-random integer, append
+        # code generating and localizing such an integer to this signature.
+        code_sig + CODE_INIT_RANDOM_INT
+        if data.is_func_wrapper_needs_random_int else
+        # Else, this body requires *NO* such integer. In this case, preserve
+        # this signature as is.
+        code_sig
+    )
+
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
@@ -282,7 +298,7 @@ def generate_code(data: BeartypeData) -> None:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal.
-    func_code = code_sig + code_params + code_return
+    func_code = code_init + code_params + code_return
 
     # True only if this code proxies this callable *WITHOUT* type checking.
     is_func_code_noop = (func_code == code_sig + CODE_RETURN_UNCHECKED)
@@ -399,7 +415,7 @@ def _code_check_params(data: BeartypeData) -> str:
     return (
         # If this callable accepts one or more positional parameters, this
         # snippet preceded by code localizing the number of such parameters.
-        CODE_PARAMS_POSITIONAL_INIT + func_code
+        CODE_INIT_PARAMS_POSITIONAL_LEN + func_code
         if is_params_positional else
         # Else, this callable accepts *NO* positional parameters. In this case,
         # this snippet as is.

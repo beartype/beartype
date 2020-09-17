@@ -48,84 +48,6 @@ Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
 '''
 
-# ....................{ CODE ~ init                       }....................
-#FIXME: Note that NumPy provides an efficient means of generating a large
-#number of pseudo-random integers all-at-once. The core issue there, of
-#course, is that we then need to optionally depend upon and detect NumPy,
-#which then requires us to split our random integer generation logic into two
-#parallel code paths that we'll then have to maintain -- and the two will be
-#rather different. In any case, here's how one generates a NumPy array
-#containing 100 pseudo-random integers in the range [0, 127]:
-#    random_ints = numpy.random.randint(128, size=100)
-#To leverage that sanely, we'd need to:
-#* Globally cache that array somewhere.
-#* Globally cache the current index into that array.
-#* When NumPy is unimportable, fallback to generating a Python list containing
-#  the same number of pseudo-random integers in the same range.
-#* In either case, we'd probably want to wrap that logic in a globally
-#  accessible infinite generator singleton that returns another pseudo-random
-#  integer every time you iterate it. This assumes, of course, that iterating
-#  generators is reasonably fast in Python. (If not, just make that a getter
-#  method of a standard singleton object.)
-#* Replace the code snippet below with something resembling:
-#      '''
-#      __beartype_random_int = next(__beartype_random_int_generator)
-#      '''
-#Note that thread concurrency issues are probable ignorable here, but that
-#there's still a great deal of maintenance and refactoring that would need to
-#happen to sanely support this. In other words, ain't happenin' anytime soon.
-
-PEP_CODE_RANDOM_INT_INIT = '''
-    # Generate and localize a sufficiently large pseudo-random integer for
-    # subsequent indexation in type-checking randomly selected container items.
-    __beartype_random_int = __beartype_getrandbits(32)'''
-'''
-PEP-specific code snippet generating and localizing a pseudo-random integer for
-subsequent reference when type-checking randomly selected container items.
-
-This integer is guaranteed to be in the range of **standard non-big integers**
-(i.e., representable as type :class:`int`  rather :class:`BigNum`), which is
-to say 0–``2**32 - 1``. Since the cost of generating integers to this maximum
-bit length is *approximately* the same as generating integers of much smaller
-bit lengths, this maximum is preferred. Although big integers transparently
-support the same operations as non-big integers, the latter are dramatically
-more efficient with respect to both space and time consumption and thus
-preferred. Lastly, standard integers are portably representable in C with at
-least 32 but *not* necessarily more bits across all sane architectures.
-
-Usage
------
-Since *most* containers are likely to contain substantially fewer items than
-the maximum integer in this range, pseudo-random container indices are
-efficiently selectable by simply taking the modulo of this local variable with
-the lengths of those containers.
-
-Any container containing more than this maximum number of items is typically
-defined as a disk-backed data structure (e.g., Pandas dataframe) rather than an
-in-memory standard object (e.g., :class:`list`). Since :mod:`beartype`
-currently ignores the former with respect to deep type-checking, this local
-typically suffices for real-world in-memory containers. For edge-case
-containers containing more than this maximum number of items, :mod:`beartype`
-will only deeply type-check items with indices in this range; all trailing
-items will *not* be deeply type-checked, which we consider an acceptable
-tradeoff, given the infeasibility of even storing such objects in memory.
-
-Caveats
--------
-**The only safely callable function declared by the stdlib** :mod:`random`
-**module is** :func:`random.getrandbits`. While that function is efficiently
-implemented in C, all other functions declared by that module are inefficiently
-implemented in Python. In fact, their implementations are sufficiently
-inefficient that there exist numerous online articles lamenting the fact.
-
-See Also
---------
-https://gist.github.com/terrdavis/1b23b7ff8023f55f627199b09cfa6b24#gistcomment-3237209
-    Self GitHub comment introducing the core concepts embodied by this snippet.
-https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-integers-in-python
-    Authoritative article profiling various :mod:`random` callables.
-'''
-
 # ....................{ CODE ~ param                      }....................
 #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
 #which are the optimal means of performing string formatting.
@@ -282,7 +204,7 @@ guaranteed ``O(1)`` indexation across all sequence items).
 #FIXME: Under Python >= 3.8, optimize with assignment expressions to avoid
 #reindexation of this item for nested type-checks. For now, this suffices.
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
-    '''{pith_curr_expr}[__beartype_random_int]''')
+    '''{pith_curr_expr}[__beartype_random_int % len({pith_curr_expr})]''')
 '''
 PEP-compliant code snippet Python code snippet evaluating to a randomly indexed
 item of the current pith (which, by definition, *must* be a standard sequence)
