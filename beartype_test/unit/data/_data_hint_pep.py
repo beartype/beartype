@@ -245,6 +245,8 @@ PEP_HINT_TO_META = {
         is_generic_user=False,
         is_typevared=True,
         piths_satisfied=(
+            # Empty list, which satisfies all hint arguments by definition.
+            [],
             # Listing containing arbitrary items.
             [
                 'Of an Autos‐respirating, ăutonomies‐gnashing machineries‐',
@@ -267,6 +269,8 @@ PEP_HINT_TO_META = {
         is_generic_user=False,
         is_typevared=False,
         piths_satisfied=(
+            # Empty list, which satisfies all hint arguments by definition.
+            [],
             # Listing containing arbitrary items.
             [
                 'Of philomathematically bliss‐postulating Seas',
@@ -285,6 +289,8 @@ PEP_HINT_TO_META = {
         is_generic_user=False,
         is_typevared=False,
         piths_satisfied=(
+            # Empty list, which satisfies all hint arguments by definition.
+            [],
             # Listing containing string items.
             [
                 'Ously overmoist, ov‐ertly',

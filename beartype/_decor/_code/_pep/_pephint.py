@@ -767,9 +767,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
-            # for that attribute *MUST* also be added to the parallel
-            # "beartype._util.hint.pep.utilhintpepcall" submodule (i.e.,
-            # raising exceptions when the current pith fails this type-check).
+            # for that attribute *MUST* also be added to the parallel:
+            # * "beartype._util.hint.pep.utilhintpepcall" submodule (i.e.,
+            #   raising exceptions when the current pith fails this check).
+            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED"
+            #   frozen set of all supported argumentless "typing" attributes.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             # Switch on (as in, pretend Python provides a "switch" statement)

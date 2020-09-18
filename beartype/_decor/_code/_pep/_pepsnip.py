@@ -190,7 +190,7 @@ type (e.g., :class:`int`, :class:`str`).
 # ....................{ CODE ~ hint : sequence            }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
 {indent_curr}    isinstance({pith_curr_expr}, {hint_curr_expr}) and
-{indent_curr}    {hint_child_placeholder}
+{indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
 {indent_curr})'''
 '''
 PEP-compliant code snippet type-checking the current pith against a parent

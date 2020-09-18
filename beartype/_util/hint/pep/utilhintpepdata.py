@@ -85,7 +85,7 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
 '''
 Dictionary mapping each **argumentless typing attribute** (i.e., public
 attribute of the :mod:`typing` module uniquely identifying a PEP-compliant type
-hints sans arguments) originating from an **origin type** (i.e.,
+hints without arguments) originating from an **origin type** (i.e.,
 :func:`isinstance`-able class suitable for shallowly type-checking *all*
 parameters and return values annotated with a PEP-compliant type hint
 subscripting that attribute) to that type.
@@ -212,6 +212,9 @@ TYPING_ATTRS_SUPPORTED = frozenset(
     # PEP-compliant type hint annotated by a subscription of that object.
     (
         typing.Any,
+
+        # Note this implicitly subsumes "typing.Optional", which the "typing"
+        # module transparently reduces at runtime to "typing.Union". *sigh*
         typing.Union,
     ) +
 

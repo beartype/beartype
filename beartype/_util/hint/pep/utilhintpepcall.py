@@ -51,10 +51,18 @@ This private submodule is *not* intended for importation by downstream callers.
 #      func_code += hint_curr_typing_attr_coder(hint_curr)
 
 # ....................{ IMPORTS                           }....................
+import typing
 from beartype.roar import (
     BeartypeCallCheckPepParamException,
     BeartypeCallCheckPepReturnException,
     _BeartypeUtilRaisePepException,
+)
+from beartype._util.hint.pep.utilhintpepdata import (
+    TYPING_ATTR_TO_TYPE_ORIGIN,
+    TYPING_ATTRS_SEQUENCE_STANDARD,
+)
+from beartype._util.hint.pep.utilhintpeptest import (
+    die_unless_hint_pep,
 )
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
@@ -64,8 +72,20 @@ from beartype._util.text.utiltextlabel import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ EXCEPTIONS                        }....................
-#FIXME: Unit test us up.
+# ....................{ CONSTANTS                         }....................
+# Note this dictionary is initialized by the _init() method defined and
+# unconditionally called below at module scope.
+_TYPING_ATTR_TO_GETTER = {}
+'''
+Dictionary mapping each **argumentless typing attribute** (i.e., public
+attribute of the :mod:`typing` module uniquely identifying a PEP-compliant type
+hints without arguments) to a private getter function defined by this submodule
+whose signature matches that of the :func:`_get_cause_or_none` function and
+which is dynamically dispatched by that function to describe type-checking
+failures specific to that argumentless :mod:`typing` attribute.,
+'''
+
+# ....................{ RAISERS                           }....................
 def raise_pep_call_exception(
     func: 'CallableTypes',
     param_or_return_name: str,
@@ -124,6 +144,9 @@ def raise_pep_call_exception(
         If the object failing to satisfy this hint is a parameter.
     BeartypeCallCheckPepReturnException
         If the object failing to satisfy this hint is a return value.
+    BeartypeDecorHintPepException
+        If this object is annotated by an object that is *not* a PEP-compliant
+        type hint.
     _BeartypeUtilRaisePepException
         If one or more passed parameters are invalid, including if either:
 
@@ -158,7 +181,7 @@ def raise_pep_call_exception(
     # PEP-compliant type hint annotating this parameter or return value if any
     # *OR* "None" otherwise (i.e., if this parameter or return value is
     # unannotated).
-    pith_hint = func.__annotations__.get(param_or_return_name, None)
+    hint = func.__annotations__.get(param_or_return_name, None)
 
     # If this parameter or return value is unannotated, raise an exception.
     #
@@ -166,9 +189,18 @@ def raise_pep_call_exception(
     # parameter or return value to be annotated. Nonetheless, since callers
     # could deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
-    if pith_hint is None:
+    if hint is None:
         raise _BeartypeUtilRaisePepException(
             '{} unannotated.'.format(pith_label))
+    # Else, this parameter or return value is annotated.
+
+    # If type hint is *NOT* PEP-compliant, raise an exception.
+    die_unless_hint_pep(
+        hint=hint,
+        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+        #support, which are the optimal means of performing string formatting.
+        hint_label='{} PEP type hint {!r}'.format(pith_label, hint))
+    # Else, this type hint is PEP-compliant.
 
     #FIXME: Substantially improve this by detailing the exact type-checking
     #complaint -- probably by implementing a naive, inefficient, and robust
@@ -177,4 +209,70 @@ def raise_pep_call_exception(
 
     # Raise a placeholder exception conserving sanity.
     raise exception_cls(
-        '{} violates PEP type hint {!r}.'.format(pith_label, pith_hint))
+        '{} violates PEP type hint {!r}.'.format(pith_label, hint))
+
+# ....................{ GETTERS                           }....................
+def _get_cause_or_none(
+    pith: object, pith_label: str, hint: object) -> 'Optional[str]':
+    '''
+    Human-readable string describing the failure of the passed arbitrary object
+    to satisfy the passed PEP-compliant type hint if this object actually fails
+    to satisfy this hint *or* ``None`` otherwise (i.e., if this object
+    satisfies this hint).
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object to be inspected.
+    pith_label : str
+        Human-readable label describing the parameter or return value from
+        which this object originates, typically embedded in exceptions raised
+        from this getter in the event of unexpected runtime failure.
+    hint : object
+        PEP-compliant type hint to validate this object against.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * If this object fails to satisfy this hint, human-readable string
+          describing the failure of this object to do so.
+        * Else, ``None``.
+    '''
+
+    pass
+
+
+#FIXME: Implement us up.
+def _get_cause_or_none_union(
+    pith: object, pith_label: str, hint: object) -> 'Optional[str]':
+    pass
+
+# ....................{ INITIALIZERS                      }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Map each "typing" attribute validated by a unique getter specific to that
+    # attribute to that getter.
+    _TYPING_ATTR_TO_GETTER.update({
+        typing.Union: _get_cause_or_none_union,
+    })
+
+    #FIXME: Uncomment after some of the below actually works.
+    # # Map each standard sequence "typing" attribute to the appropriate getter.
+    # for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:
+    #     _TYPING_ATTR_TO_GETTER[typing_attr_sequence_standard] = (
+    #         _get_cause_or_none_sequence_standard)
+    #
+    # # Map each isinstance()-able "typing" attribute to the appropriate getter.
+    # for typing_attr_isinstanceable in TYPING_ATTR_TO_TYPE_ORIGIN.keys():
+    #     _TYPING_ATTR_TO_GETTER[typing_attr_isinstanceable] = (
+    #         _get_cause_or_none_isinstanceable)
+
+
+#FIXME: Uncomment after at least unions actually work.
+# Initialize this submodule.
+# _init()
