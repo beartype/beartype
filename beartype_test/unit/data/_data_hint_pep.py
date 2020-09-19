@@ -238,7 +238,7 @@ PEP_HINT_TO_META = {
 
     # ..................{ COLLECTIONS ~ list                }..................
     #FIXME: Test a list of lists as well, as this exercises Python 3.8-specific
-    #arithmetic expression support.
+    #assignment expression support.
     typing.List: _PepHintMetadata(
         typing_attr=typing.List,
         is_supported=False,

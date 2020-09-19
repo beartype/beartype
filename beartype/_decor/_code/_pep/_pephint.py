@@ -16,6 +16,113 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: We require two codepaths in the breadth-first search implemented by the
+#pep_code_check_hint() function for each supported "typing" attribute,
+#especially when we begin generating code type-checking container types:
+#* If "IS_PYTHON_AT_LEAST_3_8", generate optimal code leveraging ":=" to
+#  localize lengths, indices, and piths to avoid recomputing the same data over
+#  and over again.
+#* Else, generate suboptimal code sadly recomputing the same data over and over
+#  again.
+#
+#Ergo, under Python <3.8, the code generated to test containers in particular
+#is going to be suboptimally inefficient. There's no sane way around that.
+#Fortunately, Python >=3.8 is the inevitable future, so this issue will
+#naturally resolve itself over time. *shrug*
+#FIXME: This would seem to be substantially easier than previously expected.
+#For standard sequences, for example, we want to conditionally redefine in the
+#body of the "if hint_child not in HINTS_IGNORABLE:" block the local
+#"pith_curr_expr" variable prefixed by a dynamically uniquified string
+#resembling "__beartype_pith_{N} := " (where "N" is a strictly positive integer
+#trivially generated with a simple local integer counter variable initialized
+#to 1 rather than a slower thread-safe "itertools.counter" object) if and only
+#if all of the following constraints hold:
+#* Python >= 3.8.
+#* "hints_meta_index_curr != 0" (i.e., this is *NOT* the root hint and thus the
+#  root pith). We want to exclude the root pith, which is already
+#  unconditionally localized to "__beartype_pith_0" and thus does *NOT* require
+#  re-localization with assignment expressions.
+#* One or more subscripted arguments (i.e., child hints) of the currently
+#  visited parent hint are PEP-compliant type hints. If all child hints of this
+#  parent hint are simple types (e.g., "int", "str"), then this parent hint is
+#  a leaf node. The whole point of using assignment expressions here is to
+#  eliminate repeated computations in complex child hints. Ergo, a parent hint
+#  with no complex child hints that would otherwise compute something does
+#  *NOT* require localization of the current pith with assignment expressions.
+#
+#  This is the only non-trivial constraint to decide -- but it's still not
+#  terribly arduous, especially for "typing" attributes constrained to single
+#  arguments like "typing.List". "typing.Union" will require a bit of thought.
+#
+#If these constraints hold, we want to do something resembling:
+#    pith_counter += 1
+#    pith_curr_expr = (
+#        '__beartype_pith_' + pith_counter + ' := ' + pith_curr_expr)
+#FIXME: Right. So, the constraints given above absolutely apply, but the code
+#really doesn't. The core issue is that we need to separate the LHS from the
+#RHS of the assignment expression. Basically:
+#* "pith_curr_expr" *MUST* be the LHS of the assignment expression, which
+#  means that "pith_curr_expr" should be assigned *BEFORE* being passed to
+#  child hints via "hint_child_meta" as follows:
+#    pith_counter += 1
+#    pith_curr_full_expr = pith_curr_expr
+#    pith_curr_expr = '__beartype_pith_' + pith_counter
+#  Note that we preserve the full current pith expression to a new
+#  "pith_curr_full_expr" local variable, enabling us to subsequently format
+#  that variable into snippets to assign that to "pith_curr_expr" via an
+#  assignment expression.
+#* The type-checking snippet for this "typing" attribute should conditionally
+#  embed an assignment expression as a unique test guaranteed to *ALWAYS*
+#  succeed whose sole purpose is to perform that assignment: e.g.,
+#      PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_ASSIGN_EXPR = '''(
+#      {indent_curr}    ({pith_curr_expr} := {pith_curr_full_expr}) is not __beartypistry and
+#      {indent_curr}    isinstance({pith_curr_expr}, {hint_curr_expr}) and
+#      {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+#      {indent_curr})'''
+#  Since *NO* passed parameter or return value will ever be the private
+#  "bear_typistry" singleton, the above assignment expression necessarily both
+#  performs its assignment *AND* succeeds. So, that's nice.
+#  Alternately, we could compact that into a single statement and thus avoid
+#  the somewhat shady test against "bear_typistry" as follows:
+#      PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_ASSIGN_EXPR = '''(
+#      {indent_curr}    isinstance({pith_curr_expr} := {pith_curr_full_expr}, {hint_curr_expr}) and
+#      {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+#      {indent_curr})'''
+#  Note that we probably do require a separate assignment-specific snippet
+#  entirely rather than somehow dynamically reformatting a single uniform
+#  snippet based on the current constraints to embed an assignment expression,
+#  due to divergent differences between the assigning and non-assigning
+#  variants of each snippet. Note also that we will *ALWAYS* need to maintain
+#  these two variants (even when dropping Python < 3.8 support), as the
+#  non-assigning variant will still be required for both the root hint and all
+#  leaf hints.
+#  For that reason, it might be more disambiguous to name the above variants:
+#  * "PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_LEVEL_MIDDLE", containing an
+#    assignment expression.
+#  * "PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_LEVEL_ROOT_OR_LEAF", containing no
+#    assignment expression.
+#  Actually, that's *NOT* necessarily the case. If we instead replace *ONLY*
+#  the first instance of "{pith_curr_expr}" with "{pith_curr_first_expr}" in
+#  any type-checking snippet, we can then conditionally replace
+#  "{pith_curr_first_expr}" with either:
+#  * If performing an assignment expression, then:
+#      pith_curr_first_expr=pith_curr_expr + ':=' + pith_curr_full_expr
+#  * Else:
+#      pith_curr_first_expr=pith_curr_expr
+#  Right. That clearly seems like the sane approach here. For example, the
+#  standard sequence would then resemble:
+#      PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
+#      {indent_curr}    isinstance({pith_curr_first_expr}, {hint_curr_expr}) and
+#      {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+#      {indent_curr})'''
+#  Sweetly succinct, eh?
+#
+#And... that's it, actually. This appears to be surprisingly trivial and
+#efficient to generate code for, which is quite nice. Yay!
+#FIXME: Note that "typing.Union" should require *NO* changes whatsoever, as
+#unions unconditionally preserve the current pith -- unlike, say,
+#"typing.List", which unconditionally changes the current pith. Also nice!
+
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
@@ -79,20 +186,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #singleton dictionary to reduce space consumption for different tuple objects
 #containing the same types, but that we should no longer look those tuples up
 #in that dictionary at runtime from within wrapper functions.
-
-#FIXME: We require two codepaths in the breadth-first search implemented by the
-#pep_code_check_hint() function for each supported "typing" attribute,
-#especially when we begin generating code type-checking container types:
-#* If "IS_PYTHON_AT_LEAST_3_8", generate optimal code leveraging ":=" to
-#  localize lengths, indices, and piths to avoid recomputing the same data over
-#  and over again.
-#* Else, generate suboptimal code sadly recomputing the same data over and over
-#  again.
-#
-#Ergo, under Python <3.8, the code generated to test containers in particular
-#is going to be suboptimally inefficient. There's no sane way around that.
-#Fortunately, Python >=3.8 is the inevitable future, so this issue will
-#naturally resolve itself over time. *shrug*
 
 #FIXME: Note that there exist four possible approaches to random item selection
 #for arbitrary containers depending on container type. Either the actual pith
@@ -179,7 +272,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #by preventing "dict" objects cached in that LRU from being garbage collected.
 #
 #Note that we basically can't do this under Python < 3.8, due to the lack of
-#arithmetic expressions there. Since _get_dict_nonempty_random_key() returns a
+#assignment expressions there. Since _get_dict_nonempty_random_key() returns a
 #new random key each call, we can't repeatedly call that for each child pith
 #and expect the same random key to be returned. So, Python >= 3.8 only. *shrug*
 #
@@ -837,8 +930,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # here. Ergo, this attribute is guaranteed to exist here.
                 hint_childs = hint_curr.__args__
 
-                # If this union is unsubscripted, raise an exception. Note this
-                # should *NEVER* happen, as:
+                # Assert this union is unsubscripted. Note this should *NEVER*
+                # happen, as:
                 #
                 # * The unsubscripted "typing.Union" object is explicitly
                 #   listed in the "HINTS_IGNORABLE" set and should thus have
@@ -849,10 +942,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 #       SyntaxError: invalid syntax
                 #       >>> typing.Union[()]
                 #       TypeError: Cannot take a Union of no types.
-                if not hint_childs:
-                    raise BeartypeDecorHintPepException(
-                        '{} {!r} unsubscripted.'.format(
-                            hint_child_label, hint))
+                assert hint_childs, (
+                    '{} {!r} unsubscripted.'.format(hint_child_label, hint))
                 # Else, this union is subscripted by two or more arguments. Why
                 # two rather than one? Because the "typing" module reduces
                 # unions of one argument to that argument: e.g.,
@@ -860,10 +951,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 #     >>> typing.Union[int]
                 #     int
 
-                # Clear the lists of all PEP-compliant and -noncompliant types
+                # Clear the sets of all PEP-compliant and -noncompliant types
                 # listed as subscripted arguments of this union. Since these
                 # types require fundamentally different forms of type-checking,
-                # prefiltering arguments into these lists *BEFORE* generating
+                # prefiltering arguments into these sets *BEFORE* generating
                 # code type-checking these arguments improves both efficiency
                 # and maintainability below.
                 hint_childs_nonpep.clear()
@@ -875,7 +966,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     if hint_child not in HINTS_IGNORABLE:
                         # If this argument is PEP-compliant...
                         if is_hint_pep(hint_child):
-                            # Filter this argument into the list of
+                            # Filter this argument into the set of
                             # PEP-compliant arguments.
                             hint_childs_pep_add(hint_child)
 
@@ -888,7 +979,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                                         hint_child)))
 
                             # If this argument originates from such a type,
-                            # filter this argument into the list of
+                            # filter this argument into the set of
                             # PEP-noncompliant arguments as well.
                             #
                             # Note that this is purely optional, but optimizes
@@ -1124,7 +1215,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     '{} sequence {!r} subscripted by '
                     'multiple arguments.'.format(hint_child_label, hint_curr))
 
-                # This child hint.
+                # Lone child hint of this parent hint.
                 hint_child = hint_childs[0]
 
                 # Python expression evaluating to this origin type when

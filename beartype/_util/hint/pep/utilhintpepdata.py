@@ -26,7 +26,7 @@ from collections import abc as collections_abc
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ MAPPINGS ~ origin                 }....................
 TYPING_ATTR_TO_TYPE_ORIGIN = {
     # "typing" attributes originating from builtin types.
     typing.Dict: dict,
@@ -133,6 +133,14 @@ Thus this dictionary, which "fills in the gaps" by implementing this
 laughably critical oversight.
 '''
 
+
+TYPING_ATTR_TO_TYPE_ORIGIN_GET = TYPING_ATTR_TO_TYPE_ORIGIN.get
+'''
+:meth:`dict.get` method of the :data:`TYPING_ATTR_TO_TYPE_ORIGIN` dictionary,
+globalized as a trivial optimization for efficient access elsewhere.
+'''
+
+# ....................{ MAPPINGS ~ update                 }....................
 # If the active Python interpreter targets at least various Python versions,
 # map argumentless typing attributes first introduced in all those versions.
 if IS_PYTHON_AT_LEAST_3_6:
@@ -154,14 +162,7 @@ if IS_PYTHON_AT_LEAST_3_6:
                 typing.SupportsIndex: typing.SupportsIndex,
             })
 
-
-TYPING_ATTR_TO_TYPE_ORIGIN_GET = TYPING_ATTR_TO_TYPE_ORIGIN.get
-'''
-:meth:`dict.get` method of the :data:`TYPING_ATTR_TO_TYPE_ORIGIN` dictionary,
-globalized as a trivial optimization for efficient access elsewhere.
-'''
-
-# ....................{ CONSTANTS ~ supported             }....................
+# ....................{ SETS                              }....................
 TYPING_ATTRS_SEQUENCE_STANDARD = frozenset((
     typing.List,
     typing.MutableSequence,
@@ -170,10 +171,10 @@ TYPING_ATTRS_SEQUENCE_STANDARD = frozenset((
 '''
 Frozen set of all **argumentless standard sequence typing attributes** (i.e.,
 public attributes of the :mod:`typing` module uniquely identifying
-PEP-compliant type hints accepting exactly one subscripted type hint
-unconditionally constraining *all* items of compliant sequences, which
-necessarily satisfy the :class:`collections.abc.Sequence` protocol with
-guaranteed ``O(1)`` indexation across all sequence items).
+PEP-compliant type hints accepting exactly one subscripted type hint argument
+constraining *all* items of compliant sequences, which necessarily satisfy the
+:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
+across all sequence items).
 
 This set intentionally excludes the argumentless:
 

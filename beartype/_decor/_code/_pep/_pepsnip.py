@@ -42,7 +42,7 @@ See Also
 '''
 
 
-PEP_CODE_PITH_ROOT_EXPR = '__beartype_pith'
+PEP_CODE_PITH_ROOT_EXPR = '__beartype_pith_0'
 '''
 Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
