@@ -66,8 +66,8 @@ def test_raise_pep_call_exception() -> None:
     with raises(BeartypeCallCheckPepParamException):
         raise_pep_call_exception(
             func=forest_unknown,
-            param_or_return_name='secret_orchard',
-            param_or_return_value=(
+            pith_name='secret_orchard',
+            pith_value=(
                 'You are in a forest unknown:',
                 'The secret orchard.',
             ),
@@ -79,8 +79,8 @@ def test_raise_pep_call_exception() -> None:
     with raises(BeartypeCallCheckPepReturnException):
         raise_pep_call_exception(
             func=forest_unknown,
-            param_or_return_name='return',
-            param_or_return_value=(
+            pith_name='return',
+            pith_value=(
                 'Sunbirds leave their dark recesses.',
                 'Shadows glide the archways.',
             ),
@@ -91,8 +91,8 @@ def test_raise_pep_call_exception() -> None:
     with raises(_BeartypeUtilRaisePepException):
         raise_pep_call_exception(
             func=forest_unknown,
-            param_or_return_name='achromatic_voice',
-            param_or_return_value=(
+            pith_name='achromatic_voice',
+            pith_value=(
                 'And your voice is vast and achromatic,'
                 'But still so precious.'
             ),
@@ -103,8 +103,8 @@ def test_raise_pep_call_exception() -> None:
     with raises(BeartypeDecorHintPepException):
         raise_pep_call_exception(
             func=forest_unknown,
-            param_or_return_name='amaranth_symbol',
-            param_or_return_value=(
+            pith_name='amaranth_symbol',
+            pith_value=(
                 'I have kept it,'
                 'The Amaranth symbol,',
                 'Hidden inside the golden shrine'

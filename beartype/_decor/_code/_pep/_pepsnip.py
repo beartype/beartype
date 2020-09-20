@@ -157,8 +157,8 @@ PEP_CODE_CHECK_HINT_ROOT = '''
         if not {{hint_child_placeholder}}:
             __beartype_raise_pep_call_exception(
                 func={param_name_func},
-                param_or_return_name={pith_root_name},
-                param_or_return_value={pith_root_expr},
+                pith_name={pith_root_name},
+                pith_value={pith_root_expr},
             )
 '''.format(
     param_name_func=PARAM_NAME_FUNC,

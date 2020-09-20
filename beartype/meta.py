@@ -241,6 +241,12 @@ have yet to be stabilized and hence tagged. Hence, this URL is typically valid
 *only* for previously released (rather than live) versions of this package.
 '''
 
+
+URL_ISSUES = 'https://github.com/beartype/beartype/issues'
+'''
+URL of this package's issue tracker.
+'''
+
 # ....................{ METADATA ~ libs                   }....................
 LIBS_RUNTIME_OPTIONAL = ()
 '''

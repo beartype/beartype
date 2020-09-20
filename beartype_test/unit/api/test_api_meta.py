@@ -38,5 +38,6 @@ def test_api_meta() -> None:
     assert isinstance(meta.AUTHOR_EMAIL, str)
     assert isinstance(meta.URL_HOMEPAGE, str)
     assert isinstance(meta.URL_DOWNLOAD, str)
+    assert isinstance(meta.URL_ISSUES, str)
     assert isinstance(meta.LIBS_RUNTIME_OPTIONAL, tuple)
     assert isinstance(meta.LIBS_TESTTIME_MANDATORY, tuple)

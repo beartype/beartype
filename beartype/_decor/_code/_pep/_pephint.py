@@ -58,6 +58,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #    pith_counter += 1
 #    pith_curr_expr = (
 #        '__beartype_pith_' + pith_counter + ' := ' + pith_curr_expr)
+#
+#Note that the first two constraints uniformly apply to *ALL* "typing"
+#attributes and should thus be localized after deciding the currently visited
+#hint to be PEP-compliant via a new "is_hint_curr_not_root_3_8" local variable:
+#    is_hint_curr_not_root_3_8 = (
+#        IS_PYTHON_AT_LEAST_3_8 and hints_meta_index_curr != 0)
 #FIXME: Right. So, the constraints given above absolutely apply, but the code
 #really doesn't. The core issue is that we need to separate the LHS from the
 #RHS of the assignment expression. Basically:
@@ -503,8 +509,8 @@ of a ``Union[int, str]`` object *before* visiting either the :class:`int` or
     ):
         raise __beartype_raise_pep_call_exception(
             func=__beartype_func,
-            param_or_return_name=$%PITH_ROOT_NAME/~,
-            param_or_return_value=__beartype_pith_root,
+            pith_name=$%PITH_ROOT_NAME/~,
+            pith_value=__beartype_pith_root,
         )
 
 Note the unique substrings "@{0}!" and "@{1}!" in that code, which that
@@ -518,8 +524,8 @@ final code memoized by that function might then resemble:
     ):
         raise __beartype_raise_pep_call_exception(
             func=__beartype_func,
-            param_or_return_name=$%PITH_ROOT_NAME/~,
-            param_or_return_value=__beartype_pith_root,
+            pith_name=$%PITH_ROOT_NAME/~,
+            pith_value=__beartype_pith_root,
         )
 '''
 
@@ -962,45 +968,47 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
                 # For each subscripted argument of this union...
                 for hint_child in hint_childs:
-                    # If this argument is unignorable...
-                    if hint_child not in HINTS_IGNORABLE:
-                        # If this argument is PEP-compliant...
-                        if is_hint_pep(hint_child):
-                            # Filter this argument into the set of
-                            # PEP-compliant arguments.
-                            hint_childs_pep_add(hint_child)
+                    # If this child hint is ignorable, continue to the next.
+                    if hint_child in HINTS_IGNORABLE:
+                        continue
+                    # Else, this child hint is unignorable.
 
-                            # Origin type of the argumentless "typing"
-                            # attribute associated with this argument if any
-                            # *OR* "None" otherwise.
-                            hint_child_type_origin = (
-                                get_hint_type_origin_or_none(
-                                    get_hint_pep_typing_attr(
-                                        hint_child)))
+                    # If this child hint is PEP-compliant...
+                    if is_hint_pep(hint_child):
+                        # Filter this child hint into the set of PEP-compliant
+                        # arguments.
+                        hint_childs_pep_add(hint_child)
 
-                            # If this argument originates from such a type,
-                            # filter this argument into the set of
-                            # PEP-noncompliant arguments as well.
-                            #
-                            # Note that this is purely optional, but optimizes
-                            # the common case of unions of containers. Given a
-                            # PEP-compliant hint "Union[int, List[str]]", this
-                            # case generates code initially testing whether the
-                            # current pith satisfies "isinstance(int, list)"
-                            # *BEFORE* subsequently testing whether this pith
-                            # deeply satisfies the nested hint "List[str]" when
-                            # this pith is a list. This is good, eh?
-                            # print('Testing union PEP hint_child: {!r}'.format(hint_child))
-                            if hint_child_type_origin is not None:
-                                # print('Adding union hint_child_type_origin: {!r}'.format(hint_child_type_origin))
-                                hint_childs_nonpep_add(
-                                    hint_child_type_origin)
-                        # Else, this argument is PEP-noncompliant. In this
-                        # case, filter this argument into the list of
-                        # PEP-noncompliant arguments.
-                        else:
-                            hint_childs_nonpep_add(hint_child)
-                    # Else, this argument is ignorable.
+                        # Origin type of the argumentless "typing" attribute
+                        # associated with this child hint if any *OR* "None"
+                        # otherwise.
+                        hint_child_type_origin = (
+                            get_hint_type_origin_or_none(
+                                get_hint_pep_typing_attr(
+                                    hint_child)))
+
+                        # If this child hint originates from such a type,
+                        # filter this child hint into the set of
+                        # PEP-noncompliant arguments as well.
+                        #
+                        # Note that this is purely optional, but optimizes the
+                        # common case of unions of containers. Given a
+                        # PEP-compliant hint "Union[int, List[str]]", this case
+                        # generates code initially testing whether the current
+                        # pith satisfies "isinstance(int, list)" *BEFORE*
+                        # subsequently testing whether this pith deeply
+                        # satisfies the nested hint "List[str]" when this pith
+                        # is a list. This is good, eh?
+                        # print('Testing union PEP hint_child: {!r}'.format(hint_child))
+                        if hint_child_type_origin is not None:
+                            # print('Adding union hint_child_type_origin: {!r}'.format(hint_child_type_origin))
+                            hint_childs_nonpep_add(
+                                hint_child_type_origin)
+                    # Else, this child hint is PEP-noncompliant. In this case,
+                    # filter this child hint into the list of PEP-noncompliant
+                    # arguments.
+                    else:
+                        hint_childs_nonpep_add(hint_child)
                 # All subscripted arguments of this union are now prefiltered
                 # into the list of PEP-compliant or -noncompliant arguments.
 

@@ -23,7 +23,7 @@ from abc import ABCMeta as _ABCMeta
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ EXCEPTIONS                        }....................
+# ....................{ SUPERCLASS                        }....................
 class BeartypeException(Exception, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype exceptions.**
@@ -37,7 +37,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ cave                 }....................
+# ....................{ CAVE                              }....................
 class BeartypeCaveException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype cave exceptions.**
@@ -48,7 +48,7 @@ class BeartypeCaveException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ cave : nonetypeor    }....................
+# ....................{ CAVE ~ NoneTypeOr                 }....................
 class BeartypeCaveNoneTypeOrException(
     BeartypeCaveException, metaclass=_ABCMeta):
     '''
@@ -91,7 +91,7 @@ class BeartypeCaveNoneTypeOrMutabilityException(
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor                }....................
+# ....................{ DECORATOR                         }....................
 class BeartypeDecorException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype decorator exceptions.**
@@ -102,7 +102,7 @@ class BeartypeDecorException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ wrapp[ee|er]         }....................
+# ....................{ DECORATOR ~ wrapp[ee|er]          }....................
 class BeartypeDecorWrappeeException(BeartypeDecorException):
     '''
     **Beartype decorator wrappee exception.**
@@ -127,7 +127,7 @@ class BeartypeDecorWrapperException(BeartypeDecorException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : hint         }....................
+# ....................{ DECORATOR ~ hint                  }....................
 class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype decorator type hint exceptions.**
@@ -141,7 +141,7 @@ class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : hint : value }....................
+# ....................{ DECORATOR ~ hint : value          }....................
 class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     '''
     **Beartype decorator PEP-noncompliant type hint value exception.**
@@ -162,7 +162,7 @@ class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : hint : pep   }....................
+# ....................{ DECORATOR ~ hint : pep            }....................
 class BeartypeDecorHintPepException(
     BeartypeDecorHintException, metaclass=_ABCMeta):
     '''
@@ -196,7 +196,7 @@ class BeartypeDecorHintPepUnsupportedException(
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : param        }....................
+# ....................{ DECORATOR ~ param                 }....................
 class BeartypeDecorParamException(BeartypeDecorException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype decorator parameter exceptions.**
@@ -220,7 +220,7 @@ class BeartypeDecorParamNameException(BeartypeDecorParamException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ decor : pep          }....................
+# ....................{ DECORATOR ~ pep                   }....................
 class BeartypeDecorPepException(BeartypeDecorException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype decorator Python Enhancement Proposal
@@ -249,7 +249,7 @@ class BeartypeDecorPep563Exception(BeartypeDecorPepException):
 
     pass
 
-# ....................{ EXCEPTIONS ~ call                 }....................
+# ....................{ CALL                              }....................
 class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable exceptions.**
@@ -261,7 +261,7 @@ class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ call : type          }....................
+# ....................{ CALL ~ type                       }....................
 class BeartypeCallCheckException(BeartypeCallException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartyped callable type exceptions.**
@@ -274,7 +274,7 @@ class BeartypeCallCheckException(BeartypeCallException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ EXCEPTIONS ~ call : type : pep    }....................
+# ....................{ CALL ~ type : pep                 }....................
 class BeartypeCallCheckPepException(
     BeartypeCallCheckException, metaclass=_ABCMeta):
     '''
@@ -313,7 +313,8 @@ class BeartypeCallCheckPepReturnException(BeartypeCallCheckPepException):
     '''
 
     pass
-# ....................{ EXCEPTIONS ~ call : type : nonpep }....................
+
+# ....................{ CALL ~ type : nonpep              }....................
 class BeartypeCallCheckNonPepException(
     BeartypeCallCheckException, metaclass=_ABCMeta):
     '''
@@ -367,7 +368,7 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ PRIVATE ~ exceptions : decor      }....................
+# ....................{ PRIVATE ~ decorator               }....................
 class _BeartypeDecorBeartypistryException(BeartypeDecorException):
     '''
     **Beartype decorator beartypistry exception.**
@@ -383,7 +384,7 @@ class _BeartypeDecorBeartypistryException(BeartypeDecorException):
 
     pass
 
-# ....................{ PRIVATE ~ exceptions : call       }....................
+# ....................{ PRIVATE ~ call                    }....................
 class _BeartypeCallBeartypistryException(BeartypeCallException):
     '''
     **Beartyped callable beartypistry exception.**
@@ -399,7 +400,7 @@ class _BeartypeCallBeartypistryException(BeartypeCallException):
 
     pass
 
-# ....................{ PRIVATE ~ exceptions : util       }....................
+# ....................{ PRIVATE ~ util                    }....................
 class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype utility exceptions.**
@@ -412,14 +413,16 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-
+# ....................{ PRIVATE ~ util : raise            }....................
 class _BeartypeUtilRaisePepException(_BeartypeUtilException):
     '''
-    **Beartype memoization exception.**
+    **Beartype human-readable exception raiser exception.**
 
     This exception is raised by the
     :func:`beartype._util.utilhinttest.pep.utilhintpepcall.raise_pep_call_exception`
-    function when one or more passed parameters are unsupported or invalid.
+    (which raises human-readable exceptions from wrapper functions when a
+    passed parameter or returned value fails a type check) when an unexpected
+    failure occurs.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
@@ -427,7 +430,34 @@ class _BeartypeUtilRaisePepException(_BeartypeUtilException):
 
     pass
 
-# ....................{ PRIVATE ~ exceptions : util : cache }..................
+
+class _BeartypeUtilRaisePepDesynchronizationException(
+    _BeartypeUtilRaisePepException):
+    '''
+    **Beartype human-readable exception raiser desynchronization exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilhinttest.pep.utilhintpepcall.raise_pep_call_exception`
+    (which raises human-readable exceptions from wrapper functions when a
+    passed parameter or returned value referred to as the "pith" for brevity
+    fails a type check) when this pith actually appears to satisfy this type
+    check, implying either:
+
+    * The parent wrapper function generated by the :mod:`beartype.beartype`
+      decorator type-checking this pith triggered a false negative by
+      erroneously misdetecting this pith as failing this type check.
+    * The
+      :func:`beartype._util.utilhinttest.pep.utilhintpepcall.raise_pep_call_exception`
+      function re-type-checking this pith triggered a false positive by
+      erroneously misdetecting this pith as satisfying this type check when in
+      fact this pith fails to do so.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+# ....................{ PRIVATE ~ util : cache              }..................
 class _BeartypeUtilCachedException(_BeartypeUtilException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype caching utility exceptions.**
