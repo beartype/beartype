@@ -29,11 +29,13 @@ from beartype._util.hint.pep.utilhintpepdata import (
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep, is_hint_pep)
+from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
     label_callable_decorated_return_value,
 )
-from beartype._util.text.utiltextmunge import trim_object_repr
+from beartype._util.text.utiltextmunge import (
+    uppercase_char_first, trim_object_repr)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -189,8 +191,8 @@ def raise_pep_call_exception(
 
     #FIXME: Excise this after the following logic has been fully debugged.
     # Raise a placeholder exception conserving sanity.
-    raise exception_cls(
-        '{} violates PEP type hint {!r}.'.format(pith_label, hint))
+    # raise exception_cls(
+    #     '{} violates PEP type hint {!r}.'.format(pith_label, hint))
 
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
@@ -203,35 +205,41 @@ def raise_pep_call_exception(
     )
 
     # If this pith does *NOT* satisfy this hint, raise an exception of the
-    # desired class embedding this cause.
-    if exception_cause is not None:
+    # desired class embedding this cause
+    if exception_cause:
         raise exception_cls(
-            '{} violates PEP type hint {!r} as {}'.format(
-                pith_label, hint, exception_cause))
+            '{} violates PEP type hint {!r}, as {}{}'.format(
+                pith_label,
+                hint,
+                exception_cause,
+                # Either:
+                # * If this exception cause is *NOT* already suffixed by a
+                #   period, a period.
+                # * Else, the empty string.
+                # Note that this exception cause is guaranteed to be non-empty
+                # here and thus contain at least a trailing character.
+                '.' if exception_cause[-1] != '.' else ''
+            ))
+
     # Else, this pith satisfies this hint. In this (hopefully uncommon) edge
     # case, *SOMETHING HAS GONE TERRIBLY AWRY.* In theory, this should never
     # happen, as the parent wrapper function performing type checking should
     # *ONLY* call this child helper function when this pith does *NOT* satisfy
     # this hint. In this case, raise an exception encouraging the end user to
     # submit an upstream issue with us.
-    else:
-        raise _BeartypeUtilRaisePepDesynchronizationException(
-            '{} violates PEP type hint {!r}... according to the '
-            'high-level @beartype-decorated wrapper function '
-            'type-checking this object but *NOT* the '
-            'low-level raise_pep_call_exception() utility function '
-            'raising human-readable exceptions on type-checking failures. '
-            'Please report this desynchronization failure to '
-            'the beartype issue tracker ({}) with the '
-            'full representation of this object and '
-            'following exception traceback:\n'
-            '----------{ OBJECT REPRESENTATION }----------\n{}\n'
-            '----------{ EXCEPTION TRACEBACK   }----------\n'.format(
-                pith_label,
-                hint,
-                URL_ISSUES,
-                trim_object_repr(
-                    obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)))
+    raise _BeartypeUtilRaisePepDesynchronizationException(
+        '{} violates PEP type hint {!r}, '
+        'but utility function raise_pep_call_exception() '
+        'suggests this object satisfies this hint. '
+        'Please report this desynchronization failure to '
+        'the beartype issue tracker ({}) with '
+        "this object's representation and "
+        'accompanying exception traceback:\n{}'.format(
+            pith_label,
+            hint,
+            URL_ISSUES,
+            trim_object_repr(
+                obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)))
 
 # ....................{ GETTERS                           }....................
 def _get_cause_or_none(
@@ -446,19 +454,38 @@ def _get_cause_or_none_type(pith: object, hint: object) -> 'Optional[str]':
     '''
     assert isinstance(hint, type)
 
-    # Return either...
-    return (
+    # If this object is an instance of this type, return "None".
+    if isinstance(pith, hint):
+        return None
+    # Else, this object is *NOT* an instance of this type.
+
+    # Truncated representation of this object.
+    pith_repr = trim_object_repr(pith)
+
+    # If this representation implies this object to be a sufficiently small
+    # numeric (i.e., integer or floating point number) that was *NOT*
+    # truncated by the prior function call, double-quote this representation
+    # for disambiguity with prefixing sequence indices. Since representations
+    # typically follow sequence indices in exception messages, failing to
+    # disambiguate the two produces non-human-readable output. For example:
+    #     >>> def wat(mate: typing.List[str]) -> int: return len(mate)
+    #     >>> raise_pep_call_exception(
+    #     ...     func=muh_func, pith_name='mate', pith_value=[7,])
+    #     beartype.roar.BeartypeCallCheckPepParamException: @beartyped wat()
+    #     parameter mate=[7] violates PEP type hint typing.List[str], as list
+    #     item 0 7 not a <class 'str'>..
+    # Note the substring "item 0 7", which misreads like a blatant bug.
+    if pith_repr.isnumeric():
         #FIXME: Refactor to leverage f-strings after dropping Python 3.5
         #support, which are the optimal means of performing string formatting.
+        pith_repr = '"{}"'.format(pith_repr)
 
-        # If this object is *NOT* an instance of this type, return a substring
-        # describing this failure intended to be embedded in a longer string.
-        '{} not a {!r}'.format(trim_object_repr(pith), hint)
-        if not isinstance(pith, hint)
-        # Else, this object is an instance of this type. In this case, return
-        # "None".
-        else None
-    )
+    #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+    #support, which are the optimal means of performing string formatting.
+
+    # Return a substring describing this failure intended to be embedded in a
+    # longer string.
+    return '{} not a {!r}'.format(pith_repr, hint)
 
 
 def _get_cause_or_none_type_origin(
@@ -523,7 +550,7 @@ def _get_cause_or_none_union(
     # by being either these child hints in the case of non-"typing" classes
     # *OR* the classes originating these child hints in the case of
     # PEP-compliant type hints) that this pith does *NOT* shallowly satisfy.
-    hint_types_unsatisfied = {}
+    hint_types_unsatisfied = set()
 
     # List of all human-readable strings describing the failure of this pith to
     # satisfy each of these child hints.
@@ -549,10 +576,14 @@ def _get_cause_or_none_union(
             # Non-"typing" class originating this child attribute.
             hint_child_type_origin = get_hint_type_origin(hint_child_attr)
 
-            # If this pith is *NOT* an instance of this class, add this class
-            # to the subset of all classes this pith does *NOT* satisfy.
+            # If this pith is *NOT* an instance of this class...
             if not isinstance(pith, hint_child_type_origin):
-                hint_types_unsatisfied.add(hint_child)
+                # Add this class to the subset of all classes this pith does
+                # *NOT* satisfy.
+                hint_types_unsatisfied.add(hint_child_type_origin)
+
+                # Continue to the next child hint.
+                continue
             # Else, this pith is an instance of this class and thus shallowly
             # (but *NOT* necessarily deeply) satisfies this child hint.
 
@@ -569,15 +600,19 @@ def _get_cause_or_none_union(
             # If this pith deeply satisfies this child hint, return "None".
             if pith_cause_hint_child is None:
                 return None
-            # Else, this pith does *NOT* deeply satisfy this child hint. In
-            # this case, append a string describing this failure as a discrete
-            # bullet-prefixed line.
-            else:
-                #FIXME: Refactor to leverage f-strings after dropping Python
-                #3.5 support, which are the optimal means of performing string
-                #formatting.
-                causes_union.append(
-                    '{}* {}'.format(cause_indent, pith_cause_hint_child))
+            # Else, this pith does *NOT* deeply satisfy this child hint.
+
+            #FIXME: Refactor to leverage f-strings after dropping Python
+            #3.5 support, which are the optimal means of performing string
+            #  formatting.
+
+            # This human-readable string with the first character uppercased.
+            pith_cause_hint_child_capitalized = uppercase_char_first(
+                pith_cause_hint_child)
+
+            # Append a cause as a discrete bullet-prefixed line.
+            causes_union.append('{}* {}'.format(
+                cause_indent, pith_cause_hint_child_capitalized))
         # Else, this child hint is PEP-noncompliant. In this case...
         else:
             # Assert this child hint to be a non-"typing" class. Note that
@@ -594,11 +629,11 @@ def _get_cause_or_none_union(
             # this hint. In this case, return "None".
             if isinstance(pith, hint_child):
                 return None
+
             # Else, this pith is *NOT* an instance of this class, implying this
             # pith to *NOT* satisfy this hint. In this case, add this class to
             # the subset of all classes this pith does *NOT* satisfy.
-            else:
-                hint_types_unsatisfied.add(hint_child)
+            hint_types_unsatisfied.add(hint_child)
 
     # If this pith does *NOT* shallowly satisfy one or more classes,
     # concatenate these failures onto a single discrete bullet-prefixed line.
@@ -613,52 +648,61 @@ def _get_cause_or_none_union(
         # Else, this pith does *NOT* shallowly satisfy two or more classes. In
         # this case...
         else:
-            # 0-based index of the last class in this set.
-            HINT_TYPE_UNSATISFIED_INDEX_LAST = len(hint_types_unsatisfied) - 1
-
             # Human-readable comma-delimited disjunction of the names of these
-            # classes (e.g., "bool, float, int, or str"), synthesized by a
-            # generator comprehension iteratively concatenating on commas...
-            cause_types_unsatisfied = ','.join(
-                (
-                    # If this is *NOT* the last class in this set, the name of
-                    # this class.
-                    hint_type_unsatisfied.__name__
-                    if (
-                        hint_type_unsatisfied_index !=
-                        HINT_TYPE_UNSATISFIED_INDEX_LAST
-                    ) else
-                    # Else, this is the last class in this set. In this case,
-                    # the name of this class preceded by a disjunction.
-                    ' or ' + hint_type_unsatisfied.__name__
-                )
-                # For each 0-based index and class this pith does *NOT*
-                # shallowly satisfy...
-                for hint_type_unsatisfied_index, hint_type_unsatisfied in (
-                    enumerate(hint_types_unsatisfied))
-            )
+            # classes (e.g., "bool, float, int, or str").
+            cause_types_unsatisfied = join_delimited_disjunction(tuple(
+                hint_type_unsatisfied.__name__
+                for hint_type_unsatisfied in hint_types_unsatisfied
+            ))
 
         #FIXME: Refactor to leverage f-strings after dropping Python 3.5
         #support, which are the optimal means of performing string formatting.
 
-        # Append a string describing these failures as a discrete
-        # bullet-prefixed line.
-        causes_union.append(
-            '{}* not a {}.'.format(cause_indent, cause_types_unsatisfied))
+        # Append a cause as a discrete bullet-prefixed line.
+        causes_union.append('not {}.'.format(cause_types_unsatisfied))
 
-    #FIXME: Refactor to leverage f-strings after dropping Python
-    #3.5 support, which are the optimal means of performing string formatting.
+    # If prior logic appended *NO* causes, raise an exception.
+    if not causes_union:
+        raise _BeartypeUtilRaisePepException(
+            '{} PEP type hint {!r} failure causes unknown.'.format(
+                exception_label, hint))
+    # Else, prior logic appended one or more strings describing these failures.
 
-    # Return all human-readable strings describing the failure of this pith to
-    # satisfy each of these child hints, each prefixed by newline and thus
-    # comprising a multiline string.
-    return '{}:\n{}'.format(trim_object_repr(pith), '\n'.join(causes_union))
+    # Truncated object representation of this pith.
+    pith_repr = trim_object_repr(pith)
+
+    # If prior logic appended one cause, return this cause as a single-line
+    # substring intended to be embedded in a longer string.
+    if len(causes_union) == 1:
+        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
+        #support, which are the optimal means of performing string formatting.
+        return '{} {}'.format(pith_repr, causes_union[0])
+    # Else, prior logic appended two or more causes.
+
+    # Return a multiline string comprised of...
+    return '{}:\n{}'.format(
+        # This truncated object representation.
+        pith_repr,
+        # The newline-delimited concatenation of each cause as a discrete
+        # bullet-prefixed line whose first character is uppercased.
+        '\n'.join(
+            '{}* {}'.format(cause_indent, uppercase_char_first(cause_union))
+            for cause_union in causes_union
+        )
+    )
 
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
     '''
     Initialize this submodule.
     '''
+
+    # Map each originative "typing" attribute to the appropriate getter
+    # *BEFORE* mapping any other attributes. This is merely a generalized
+    # fallback subsequently replaced by attribute-specific getters.
+    for typing_attr_type_origin in TYPING_ATTR_TO_TYPE_ORIGIN:
+        _TYPING_ATTR_TO_GETTER[typing_attr_type_origin] = (
+            _get_cause_or_none_type_origin)
 
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
@@ -670,11 +714,6 @@ def _init() -> None:
     for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:
         _TYPING_ATTR_TO_GETTER[typing_attr_sequence_standard] = (
             _get_cause_or_none_sequence_standard)
-
-    # Map each isinstance()-able "typing" attribute to the appropriate getter.
-    for typing_attr_type_origin in TYPING_ATTR_TO_TYPE_ORIGIN:
-        _TYPING_ATTR_TO_GETTER[typing_attr_type_origin] = (
-            _get_cause_or_none_type_origin)
 
 
 # Initialize this submodule.

@@ -133,7 +133,7 @@ def label_callable_decorated_return(func: 'CallableTypes') -> None:
     '''
 
     # Create and return this label.
-    return label_callable_decorated(func) + ' return'
+    return label_callable_decorated(func) + ' return value'
 
 
 def label_callable_decorated_return_value(

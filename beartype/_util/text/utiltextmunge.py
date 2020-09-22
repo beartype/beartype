@@ -17,6 +17,31 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import re
 
+# ....................{ CASERS                            }....................
+def uppercase_char_first(text: str) -> str:
+    '''
+    Uppercase *only* the first character of the passed string.
+
+    Whereas the standard :meth:`str.capitalize` method both uppercases the
+    first character of this string *and* lowercases all remaining characters,
+    this function *only* uppercases the first character. All remaining
+    characters remain unmodified.
+
+    Parameters
+    ----------
+    text : str
+        String whose first character is to be uppercased.
+
+    Returns
+    ----------
+    str
+        This string with the first character uppercased.
+    '''
+    assert isinstance(text, str), '{!r} not string.'.format(text)
+
+    # For great justice!
+    return text[0].upper() + text[1:] if text else ''
+
 # ....................{ NUMBERERS                         }....................
 def number_lines(text: str) -> str:
     '''
@@ -25,7 +50,7 @@ def number_lines(text: str) -> str:
 
     Parameters
     ----------
-    text: str
+    text : str
         String whose lines are to be numbered.
 
     Returns
@@ -33,8 +58,9 @@ def number_lines(text: str) -> str:
     str
         This string with all lines numbered.
     '''
+    assert isinstance(text, str), '{!r} not string.'.format(text)
 
-    # Let's do this!
+    # For radical benevolence!
     return '\n'.join(
         '(line {:0>4d}) {}'.format(text_line_number, text_line)
         for text_line_number, text_line in enumerate(

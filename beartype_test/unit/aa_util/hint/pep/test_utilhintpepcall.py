@@ -80,10 +80,10 @@ def test_raise_pep_call_exception() -> None:
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='return',
-            pith_value=(
+            pith_value=[
                 'Sunbirds leave their dark recesses.',
                 'Shadows glide the archways.',
-            ),
+            ],
         )
 
     # Assert this function raises the expected exception when passed an
