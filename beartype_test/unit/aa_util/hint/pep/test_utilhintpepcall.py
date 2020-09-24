@@ -19,23 +19,6 @@ import typing
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-#FIXME: To validate exception messages, refactor as follows:
-#* In the ""beartype_test.unit.data._data_hint_pep" submodule:
-#  * Define a new "PepHintPithUnsatisfiedMetadata" named tuple type defining
-#    these fields:
-#    * "pith", the desired object *NOT* satisfying this type hint.
-#    * "exception_str_regexes", a possibly empty iterable of r''-style
-#      uncompiled regular expression strings, each of which matches a substring
-#      of the exception message expected to be raised by wrapper functions when
-#      passed this pith object.
-#  * Refactor the existing "_PepHintMetadata.piths_unsatisfied" field from an
-#    iterable of piths to an iterable of "PepHintPithUnsatisfiedMetadata"
-#    instances containing the same piths in their "pith" fields.
-#* Refactor existing tests in the "beartype_test.unit.pep.p484.test_p484"
-#  submodule to:
-#  * Capture exception messages raised by such unsatisfied pith objects.
-#  * For each regex in the "exception_str_regexes" iterable, validate that the
-#    currently captured message matches this regex.
 def test_raise_pep_call_exception() -> None:
     '''
     Test the

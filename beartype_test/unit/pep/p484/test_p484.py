@@ -26,6 +26,7 @@ See Also
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pyterror import raises_uncached
 from collections import ChainMap
+from re import match
 
 # ....................{ TODO                              }....................
 
@@ -90,11 +91,34 @@ def test_p484() -> None:
             # print('PEP-testing {!r} against {!r}...'.format(pep_hint, pith_satisfied))
             assert pep_hinted(pith_satisfied) is pith_satisfied
 
+        #FIXME: To validate exception messages, refactor as follows:
+        #* Capture exception messages raised by unsatisfied pith objects.
+        #* For each regex in the "exception_str_regexes" iterable, validate
+        #  that the currently captured message matches this regex.
+
         # For each object *NOT* satisfying this hint...
-        for pith_unsatisfied in pep_hint_meta.piths_unsatisfied:
+        for pith_unsatisfied_meta in pep_hint_meta.piths_unsatisfied_meta:
             # Assert this wrapper function raises the expected exception when
             # type-checking this object against this hint.
-            with raises_uncached(exception_cls):
-                pep_hinted(pith_unsatisfied)
+            with raises_uncached(exception_cls) as exception_info:
+                pep_hinted(pith_unsatisfied_meta.pith)
+
+            # Exception message raised by this wrapper function.
+            exception_str = str(exception_info.value)
+
+            # For each uncompiled regular expression expected to match this
+            # message, assert this expression actually does so.
+            for exception_str_match_regex in (
+                pith_unsatisfied_meta.exception_str_match_regexes):
+                #
+                assert match(
+                    exception_str_match_regex, exception_str) is not None
+
+            # For each uncompiled regular expression expected to *NOT* match
+            # this message, assert this expression actually does so.
+            for exception_str_not_match_regex in (
+                pith_unsatisfied_meta.exception_str_match_regexes):
+                assert match(
+                    exception_str_not_match_regex, exception_str) is None
 
         # assert False is True

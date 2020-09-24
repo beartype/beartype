@@ -55,7 +55,7 @@ def raises_uncached(exception_cls: type) -> 'ExceptionInfo':
     # With a "pytest"-specific context manager validating this contextual block
     # to raise an exception of this type...
     with raises(exception_cls) as exception_info:
-        yield
+        yield exception_info
 
     # Assert this exception message does *NOT* contain this magic substring.
     assert EXCEPTION_CACHED_PLACEHOLDER not in str(exception_info.value)
