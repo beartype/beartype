@@ -25,7 +25,7 @@ from beartype._decor._code.codemain import (
 )
 from inspect import Parameter
 
-# ....................{ CODE                              }....................
+# ....................{ PITH                              }....................
 PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER = '?|PITH_ROOT_NAME`^'
 '''
 Placeholder source substring to be globally replaced by the **root pith name**
@@ -48,7 +48,7 @@ Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
 '''
 
-# ....................{ CODE ~ param                      }....................
+# ....................{ PARAM                             }....................
 #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
 #which are the optimal means of performing string formatting.
 PARAM_KIND_TO_PEP_CODE_GET = {
@@ -107,7 +107,7 @@ Dictionary mapping from the type of each callable parameter supported by the
 that callable's next parameter to be type-checked.
 '''
 
-# ....................{ CODE ~ return                     }....................
+# ....................{ RETURN                            }....................
 PEP_CODE_CHECK_RETURN_PREFIX = '''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
@@ -150,7 +150,7 @@ Note that this snippet intentionally terminates on a line containing only the
 :data:`PEP_CODE_GET_RETURN` snippet.
 '''
 
-# ....................{ CODE ~ hint                       }....................
+# ....................{ HINT                              }....................
 PEP_CODE_CHECK_HINT_ROOT = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
@@ -178,7 +178,7 @@ current child PEP-compliant type hint and are thus intended to be dynamically
 embedded
 '''
 
-# ....................{ CODE ~ hint : nonpep              }....................
+# ....................{ HINT ~ nonpep                     }....................
 PEP_CODE_CHECK_HINT_NONPEP_TYPE = (
     '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
@@ -187,7 +187,7 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
-# ....................{ CODE ~ hint : sequence            }....................
+# ....................{ HINT ~ sequence                   }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
 {indent_curr}    isinstance({pith_curr_expr}, {hint_curr_expr}) and
 {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
@@ -212,7 +212,7 @@ against the current child hint (e.g., ``int``) of the currently visited
 PEP-compliant standard sequence type hint (e.g., ``typing.List[int]``).
 '''
 
-# ....................{ CODE ~ hint : union               }....................
+# ....................{ HINT ~ union                      }....................
 PEP_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith

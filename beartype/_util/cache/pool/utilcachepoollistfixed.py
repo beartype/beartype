@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
-from beartype._util.text.utiltextmunge import trim_object_repr
+from beartype._util.text.utiltextrepr import get_object_representation
 from beartype.roar import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
 
@@ -131,13 +131,13 @@ class FixedList(list):
     def __iadd__(self, value):
         raise _BeartypeUtilCachedFixedListException(
             '{} not addable by {}.'.format(
-                self._label, trim_object_repr(value)))
+                self._label, get_object_representation(value)))
 
 
     def __imul__(self, value):
         raise _BeartypeUtilCachedFixedListException(
             '{} not multipliable by {}.'.format(
-                self._label, trim_object_repr(value)))
+                self._label, get_object_representation(value)))
 
     # ..................{ BAD ~ dunders : setitem           }..................
     def __setitem__(self, index, value):
@@ -197,7 +197,7 @@ class FixedList(list):
         if not isinstance(value, Sized):
             raise _BeartypeUtilCachedFixedListException(
                 '{} slice {!r} not settable to unsized {}.'.format(
-                    self._label, index, trim_object_repr(value)))
+                    self._label, index, get_object_representation(value)))
         # Else, this value is a sized container.
 
         # 0-based first and one-past-the-last indices sliced by this slice.
@@ -218,7 +218,7 @@ class FixedList(list):
                     self._label,
                     index,
                     slice_len,
-                    trim_object_repr(value),
+                    get_object_representation(value),
                     value_len,
                 ))
 
@@ -229,7 +229,7 @@ class FixedList(list):
     def append(self, obj):
         raise _BeartypeUtilCachedFixedListException(
             '{} not appendable by {}.'.format(
-                self._label, trim_object_repr(obj)))
+                self._label, get_object_representation(obj)))
 
 
     def clear(self):
@@ -240,7 +240,7 @@ class FixedList(list):
     def extend(self, obj):
         raise _BeartypeUtilCachedFixedListException(
             '{} not extendable by {}.'.format(
-                self._label, trim_object_repr(obj)))
+                self._label, get_object_representation(obj)))
 
 
     def pop(self, *args):
@@ -267,7 +267,7 @@ class FixedList(list):
         '''
 
         # One-liners for magnanimous pusillanimousness.
-        return 'Fixed list ' + trim_object_repr(self)
+        return 'Fixed list ' + get_object_representation(self)
 
 # ....................{ SINGLETONS ~ private              }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)

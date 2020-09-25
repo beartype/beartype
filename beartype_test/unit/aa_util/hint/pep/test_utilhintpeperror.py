@@ -7,7 +7,7 @@
 **Beartype PEP-compliant type hint call-time utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.utilhintpepcall` submodule.
+:mod:`beartype._util.hint.pep.utilhintpeperror` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,7 +22,7 @@ from pytest import raises
 def test_raise_pep_call_exception() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepcall.raise_pep_call_exception`
+    :func:`beartype._util.hint.pep.error.error.utilhintpeperror.raise_pep_call_exception`
     function.
     '''
 
@@ -33,7 +33,7 @@ def test_raise_pep_call_exception() -> None:
         BeartypeDecorHintPepException,
         _BeartypeUtilRaisePepException,
     )
-    from beartype._util.hint.pep.utilhintpepcall import (
+    from beartype._util.hint.pep.error.utilhintpeperror import (
         raise_pep_call_exception)
 
     def forest_unknown(

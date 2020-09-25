@@ -52,16 +52,26 @@ def test_typistry_register_type_pass() -> None:
     from beartype._decor._typistry import register_typistry_type
     from beartype._util.utilobject import get_object_name_unqualified
 
-    # Assert that non-builtin types are registrable via a trivial call under
-    # the beartypistry singleton rather than their unqualified basenames.
-    hint = RegexCompiledType
+    # Assert this function registers a non-builtin type under the beartypistry
+    # and silently permits re-registration of the same type.
+    for hint in (RegexCompiledType,)*2:
+        hint_name_cached = register_typistry_type(hint)
+        assert hint_name_cached != get_object_name_unqualified(hint)
+        hint_cached = _eval_registered_expr(hint_name_cached)
+        assert hint is hint_cached
+
+    # Assert this function registers the type of the "None" singleton (despite
+    # technically being listed as belonging to the "builtin" module) under the
+    # beartypistry rather than its unqualified basename "NoneType" (which
+    # doesn't actually exist, which is inconsistent nonsense, but whatever).
+    hint = type(None)
     hint_name_cached = register_typistry_type(hint)
     assert hint_name_cached != get_object_name_unqualified(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
-    # Assert that builtin types are registrable via the same call under their
-    # unqualified basenames rather than the beartypistry singleton.
+    # Assert this function registers a builtin type under its unqualified
+    # basename.
     hint = list
     hint_name_cached = register_typistry_type(hint)
     assert hint_name_cached == get_object_name_unqualified(hint)
@@ -105,14 +115,19 @@ def test_typistry_register_tuple_pass() -> None:
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_tuple
 
-    # Assert that tuples are registrable via a trivial function call.
+    # Assert this function registers a tuple and silently permits
+    # re-registration of the same tuple.
     #
     # Note that, unlike types, tuples are internally registered under different
     # objects than their originals (e.g., to ignore both duplicates and
     # ordering) and *MUST* thus be tested by conversion to sets.
+    # Assert that tuples are registrable via a trivial function call.
     hint = CallableTypes
-    hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
+    hint_cached_expr_1 = register_typistry_tuple(hint)
+    hint_cached = _eval_registered_expr(hint_cached_expr_1)
     assert set(hint) == set(hint_cached)
+    hint_cached_expr_2 = register_typistry_tuple(hint)
+    assert hint_cached_expr_1 == hint_cached_expr_2
 
     # Assert that tuples of one type are registrable via the same function,
     # but reduce to registering merely that type rather than that tuple.
@@ -202,13 +217,15 @@ def test_typistry_singleton_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.cave import NoneType
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import bear_typistry
     from beartype._util.utilobject import get_object_name_qualified
 
-    # Assert that types are also registrable via dictionary syntax.
-    hint = NoneType
+    # Assert that dictionary syntax also implicitly registers a type. Since
+    # this approach explicitly prohibits re-registration for safety, we define
+    # a custom user-defined type guaranteed *NOT* to have been registered yet.
+    class TestTypistrySingletonPassType(object): pass
+    hint = TestTypistrySingletonPassType
     hint_name = get_object_name_qualified(hint)
     bear_typistry[hint_name] = hint
     assert bear_typistry.get(hint_name) is hint

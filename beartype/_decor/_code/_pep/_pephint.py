@@ -867,7 +867,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.utilhintpepcall" submodule (i.e.,
+            # * "beartype._util.hint.pep.utilhintpeperror" submodule (i.e.,
             #   raising exceptions when the current pith fails this check).
             # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED"
             #   frozen set of all supported argumentless "typing" attributes.
@@ -976,34 +976,17 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     # If this child hint is PEP-compliant...
                     if is_hint_pep(hint_child):
                         # Filter this child hint into the set of PEP-compliant
-                        # arguments.
-                        hint_childs_pep_add(hint_child)
-
-                        # Origin type of the argumentless "typing" attribute
-                        # associated with this child hint if any *OR* "None"
-                        # otherwise.
-                        hint_child_type_origin = (
-                            get_hint_type_origin_or_none(
-                                get_hint_pep_typing_attr(
-                                    hint_child)))
-
-                        # If this child hint originates from such a type,
-                        # filter this child hint into the set of
-                        # PEP-noncompliant arguments as well.
+                        # child hints.
                         #
-                        # Note that this is purely optional, but optimizes the
-                        # common case of unions of containers. Given a
-                        # PEP-compliant hint "Union[int, List[str]]", this case
-                        # generates code initially testing whether the current
-                        # pith satisfies "isinstance(int, list)" *BEFORE*
-                        # subsequently testing whether this pith deeply
-                        # satisfies the nested hint "List[str]" when this pith
-                        # is a list. This is good, eh?
-                        # print('Testing union PEP hint_child: {!r}'.format(hint_child))
-                        if hint_child_type_origin is not None:
-                            # print('Adding union hint_child_type_origin: {!r}'.format(hint_child_type_origin))
-                            hint_childs_nonpep_add(
-                                hint_child_type_origin)
+                        # Note that this PEP-compliant child hint *CANNOT* also
+                        # be filtered into the set of PEP-noncompliant child
+                        # hints, even if this child hint originates from a
+                        # non-"typing" type (e.g., "List[int]" from "list").
+                        # Why? Because that would then induce false positives
+                        # when the current pith shallowly satisfies this
+                        # non-"typing" type but does *NOT* deeply satisfy this
+                        # child hint.
+                        hint_childs_pep_add(hint_child)
                     # Else, this child hint is PEP-noncompliant. In this case,
                     # filter this child hint into the list of PEP-noncompliant
                     # arguments.
@@ -1181,8 +1164,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 if func_curr_code is not PEP_CODE_CHECK_HINT_UNION_PREFIX:
                     # Munge this code to...
                     func_curr_code = (
-                        # Strip the erroneous suffix " or" appended by the last
-                        # child hint from this code.
+                        # Strip the erroneous " or" suffix appended by the
+                        # last child hint from this code.
                         func_curr_code[:-3] +
                         # Suffix this code by the substring suffixing all such
                         # code.

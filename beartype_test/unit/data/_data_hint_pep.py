@@ -357,12 +357,18 @@ PEP_HINT_TO_META = {
                 exception_str_match_regexes=(),
                 exception_str_not_match_regexes=(),
             ),
-            # Listing containing exactly one non-string item. Since list items
-            # are only randomly type-checked, only a list of exactly one item
-            # avoids generating false positives here.
+            # List containing exactly one floating-point number. Since list
+            # items are only randomly type-checked, only a list of exactly one
+            # item enables us to match the explicit index at fault below.
             _PepHintPithUnsatisfiedMetadata(
                 pith=[3.7,],
-                exception_str_match_regexes=(),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Declares the index of this list's problematic item.
+                    r'\s[Ll]ist item 0\s',
+                    # Quotes the value of this item.
+                    r'\s"3.7"\s',
+                ),
                 exception_str_not_match_regexes=(),
             ),
         ),
@@ -599,7 +605,32 @@ PEP_HINT_TO_META = {
             # commonly referred to as Unicode code points or simply characters.
             _PepHintPithUnsatisfiedMetadata(
                 pith=802.11,
-                exception_str_match_regexes=(),
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bSequence\b',
+                    r'\bint\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
+            ),
+
+            # Tuple of integers.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains a bullet point declaring the non-"typing" type
+                    # *NOT* satisfied by this object.
+                    r'\n\*\s.*\bint\b',
+                    # Contains a bullet point declaring the index of this
+                    # list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 0\b',
+                ),
                 exception_str_not_match_regexes=(),
             ),
         ),
@@ -640,8 +671,18 @@ PEP_HINT_TO_META = {
             # commonly referred to as Unicode code points or simply characters.
             _PepHintPithUnsatisfiedMetadata(
                 pith=802.2,
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bNoneType\b',
+                    r'\bSequence\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
             ),
         ),
     ),

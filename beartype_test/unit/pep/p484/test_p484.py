@@ -26,9 +26,7 @@ See Also
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pyterror import raises_uncached
 from collections import ChainMap
-from re import match
-
-# ....................{ TODO                              }....................
+from re import search
 
 # ....................{ TESTS ~ pass : param : kind       }....................
 def test_p484() -> None:
@@ -91,13 +89,20 @@ def test_p484() -> None:
             # print('PEP-testing {!r} against {!r}...'.format(pep_hint, pith_satisfied))
             assert pep_hinted(pith_satisfied) is pith_satisfied
 
-        #FIXME: To validate exception messages, refactor as follows:
-        #* Capture exception messages raised by unsatisfied pith objects.
-        #* For each regex in the "exception_str_regexes" iterable, validate
-        #  that the currently captured message matches this regex.
-
         # For each object *NOT* satisfying this hint...
         for pith_unsatisfied_meta in pep_hint_meta.piths_unsatisfied_meta:
+            # Assert that iterables of uncompiled regular expression expected
+            # to match and *NOT* match this message are *NOT* strings, as
+            # commonly occurs when accidentally omitting a trailing comma in
+            # tuples containing only one string: e.g.,
+            # * "('This is a tuple, yo.',)" is a 1-tuple containing one string.
+            # * "('This is a string, bro.')" is a string *NOT* contained in a
+            #   1-tuple.
+            assert not isinstance(
+                pith_unsatisfied_meta.exception_str_match_regexes, str)
+            assert not isinstance(
+                pith_unsatisfied_meta.exception_str_not_match_regexes, str)
+
             # Assert this wrapper function raises the expected exception when
             # type-checking this object against this hint.
             with raises_uncached(exception_cls) as exception_info:
@@ -108,17 +113,21 @@ def test_p484() -> None:
 
             # For each uncompiled regular expression expected to match this
             # message, assert this expression actually does so.
+            #
+            # Note that the re.search() rather than re.match() function is
+            # called. The latter is rooted at the start of the string and thus
+            # *ONLY* matches prefixes, while the former is *NOT* rooted at any
+            # string position and thus matches arbitrary substrings as desired.
             for exception_str_match_regex in (
                 pith_unsatisfied_meta.exception_str_match_regexes):
-                #
-                assert match(
+                assert search(
                     exception_str_match_regex, exception_str) is not None
 
             # For each uncompiled regular expression expected to *NOT* match
             # this message, assert this expression actually does so.
             for exception_str_not_match_regex in (
-                pith_unsatisfied_meta.exception_str_match_regexes):
-                assert match(
+                pith_unsatisfied_meta.exception_str_not_match_regexes):
+                assert search(
                     exception_str_not_match_regex, exception_str) is None
 
         # assert False is True

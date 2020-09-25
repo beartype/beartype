@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.text.utiltextmunge import trim_object_repr
+from beartype._util.text.utiltextrepr import get_object_representation
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -111,7 +111,7 @@ def label_callable_decorated_param_value(
     return '{} parameter {}={}'.format(
         label_callable_decorated(func),
         param_name,
-        trim_object_repr(param_value),
+        get_object_representation(param_value),
     )
 
 # ....................{ LABELLERS ~ return                }....................
@@ -162,4 +162,4 @@ def label_callable_decorated_return_value(
 
     # Create and return this label.
     return '{} {}'.format(
-        label_callable_decorated_return(func), trim_object_repr(return_value))
+        label_callable_decorated_return(func), get_object_representation(return_value))

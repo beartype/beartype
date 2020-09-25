@@ -211,9 +211,11 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
-from beartype._util.hint.pep.utilhintpepcall import raise_pep_call_exception
-from beartype._util.text.utiltextmunge import number_lines, trim_object_repr
-from types import FunctionType
+from beartype._util.hint.pep.error.utilhintpeperror import (
+    raise_pep_call_exception)
+from beartype._util.text.utiltextmunge import number_lines
+from beartype._util.text.utiltextrepr import get_object_representation
+# from types import FunctionType
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -228,7 +230,7 @@ _GLOBAL_ATTRS = {
         BeartypeCallCheckNonPepReturnException),
     '__beartype_pep_exception': BeartypeCallCheckPepException,
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
-    '__beartype_trim': trim_object_repr,
+    '__beartype_trim': get_object_representation,
 }
 '''
 Dictionary mapping from the name to value of all attributes internally
@@ -470,7 +472,7 @@ def beartype(func):
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
+        print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
         exec(func_code, _GLOBAL_ATTRS, local_attrs)
 
         #FIXME: See above.

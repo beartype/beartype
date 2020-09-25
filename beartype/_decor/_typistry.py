@@ -11,6 +11,12 @@ classnames of all type hints annotating callables decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: For efficiency, register tuples under their numeric hashes rather than
+#strings embedding numeric hashes formatted as "+{numeric_hash}". Ergo:
+#* Tuples would be registered instead with numeric hashes.
+#* Types would continue to be registered with fully-qualified classnames.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     _BeartypeCallBeartypistryException,
@@ -118,13 +124,34 @@ def register_typistry_type(hint: type) -> str:
     # defined by a module *OR* "None" otherwise.
     hint_module_name = get_object_module_name_or_none(hint)
 
-    # If this type is a builtin (i.e., is defined by the pseudo "builtins"
-    # module whose attributes are globally available by default), this type
-    # does *NOT* require registration. In this case, return the unqualified
-    # name of this type as is.
-    if hint_module_name == MODULE_NAME_BUILTINS:
+    # If...
+    if (
+        # This type is a builtin (i.e., is defined by the pseudo "builtins"
+        # module whose attributes are globally available by default) *AND*...
+        hint_module_name == MODULE_NAME_BUILTINS and
+        # This type is *NOT* the type of the "None" singleton. Unlike all other
+        # builtin types, the type of the "None" singleton is *NOT* globally
+        # accessible despite being declared to be builtin.
+        #     >>> import builtins
+        #     >>> type(None).__name__
+        #     'NoneType'
+        #     >>> type(None).__module__
+        #     'builtins'
+        #     >>> NoneType
+        #     NameError: name 'NoneType' is not defined   <---- this is balls
+        #
+        # This inconsistency almost certainly constitutes a bug in the CPython
+        # interpreter, but it seems doubtful that anyone else would see it that
+        # way and almost certain that everyone else would attempt to defend
+        # this edge case. In short, we have no choice but to register this type
+        # as if it were a normal type. (Hardly the worst thing to happen.)
+        hint_basename != 'NoneType'
+    # ...then this type does *NOT* require registration. In this case, return
+    # the unqualified name of this type as is.
+    ):
         return hint_basename
     # Else, this type is *NOT* a builtin and thus requires registration.
+    # assert hint_basename != 'NoneType'
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5
     #support, which are the optimal means of performing string formatting.
@@ -132,7 +159,14 @@ def register_typistry_type(hint: type) -> str:
     # Fully-qualified name of this type.
     hint_name = hint_module_name + '.' + hint_basename
 
-    # Register this type with the beartypistry singleton.
+    # If this type has *NOT* yet been registered with the beartypistry
+    # singleton, do so.
+    #
+    # Note that the beartypistry singleton's __setitem__() dunder method
+    # intentionally raises exceptions on attempts to re-register the same
+    # object twice, as tuple re-registration requires special handling to avoid
+    # hash collisions. Nonetheless, this is a non-issue. Why? Since this
+    # function is memoized, re-registration should *NEVER* happen.
     bear_typistry[hint_name] = hint
 
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
@@ -409,7 +443,7 @@ class Beartypistry(dict):
         # If this name is *NOT* a string, raise an exception.
         if hint_name.__class__ is not str:
             raise _BeartypeDecorBeartypistryException(
-                'Beartypistry key {!r} not a string.'.format(hint_name))
+                'Beartypistry key {!r} not string.'.format(hint_name))
         # Else, this name is a string.
         #
         # If this name is an existing key of this dictionary, this name has
