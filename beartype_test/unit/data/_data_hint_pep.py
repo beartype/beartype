@@ -581,7 +581,7 @@ PEP_HINT_TO_META = {
     # listed here, as the "typing" module implicitly reduces these unions to
     # only that argument (e.g., "str") on our behalf. Thanks. Thanks alot.
 
-    # Union of one non-"typing" type and an isinstance()-able "typing" type,
+    # Union of one non-"typing" type and an originative "typing" type,
     # exercising an edge case.
     typing.Union[int, typing.Sequence[str]]: _PepHintMetadata(
         typing_attr=typing.Union,
@@ -635,6 +635,99 @@ PEP_HINT_TO_META = {
             ),
         ),
     ),
+
+    # Union of three non-"typing" types and an originative "typing" type of a
+    # union of three non-"typing" types and an originative "typing" type,
+    # exercising an edge case.
+    typing.Union[bool, float, int, typing.Sequence[
+        typing.Union[bool, float, int, typing.Sequence[
+        str]]]]: _PepHintMetadata(
+        typing_attr=typing.Union,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Boolean constant.
+            True,
+            # Floating-point number constant.
+            777.777,
+            # Integer constant.
+            777,
+            # Sequence of boolean, floating-point number, integer, and
+            # sequence of string constant items.
+            (
+                # Boolean constant.
+                True,
+                # Floating-point number constant.
+                666.666,
+                # Integer constant.
+                666,
+                # Sequence of string constants.
+                (
+                    'Ansuded scientifically pontifical grapheme‐',
+                    'Denuded hierography, professedly, to emulate ascen-',
+                ),
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # Complex number constant.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=356+260j,
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bSequence\b',
+                    r'\bbool\b',
+                    r'\bfloat\b',
+                    r'\bint\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
+            ),
+
+            # Sequence of lambda function items.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=(lambda:
+                      'May they rest their certainties’ Solicitousness to',),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains a bullet point declaring one of the non-"typing"
+                    # types *NOT* satisfied by this object.
+                    r'\n\*\s.*\bint\b',
+                    # Contains a bullet point declaring the index of this
+                    # list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 0\b',
+                ),
+                exception_str_not_match_regexes=(),
+            ),
+
+            # Sequence of sequence of lambda function items.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=((lambda: 'Untaint these ties',),),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains an unindented bullet point declaring one of the
+                    # non-"typing" types *NOT* satisfied by this object.
+                    r'\n\*\s.*\bfloat\b',
+                    # Contains an indented bullet point declaring one of the
+                    # non-"typing" types *NOT* satisfied by this object.
+                    r'\n\s+\*\s.*\bint\b',
+                    # Contains an unindented bullet point declaring the index
+                    # of this list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 0\b',
+                    # Contains an indented bullet point declaring the index
+                    # of this list's first item *NOT* satisfying this hint.
+                    r'\n\s+\*\s.*\b[Tt]uple item 0\b',
+                ),
+                exception_str_not_match_regexes=(),
+            ),
+        ),
+    ),
+
     # Union of one non-"typing" type and one concrete generic.
     typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: _PepHintMetadata(
         typing_attr=typing.Union,

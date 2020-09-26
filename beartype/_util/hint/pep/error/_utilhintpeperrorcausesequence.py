@@ -94,7 +94,8 @@ def get_cause_or_none_sequence_standard(
                     pith_item_index,
                     pith_item_cause,
                 )
-            # Else, this item is *NOT* the cause of this failure.
+            # Else, this item is *NOT* the cause of this failure. Silently
+            # continue to the next.
     # Else, this child hint is ignorable.
 
     # Return "None", as all items of this pith are valid, implying this pith to

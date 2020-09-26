@@ -472,7 +472,7 @@ def beartype(func):
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
+        # print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
         exec(func_code, _GLOBAL_ATTRS, local_attrs)
 
         #FIXME: See above.

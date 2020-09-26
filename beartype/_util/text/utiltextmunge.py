@@ -66,3 +66,32 @@ def number_lines(text: str) -> str:
         for text_line_number, text_line in enumerate(
             text.splitlines(), start=1)
     )
+
+# ....................{ SUFFIXERS                         }....................
+def suffix_unless_suffixed(text: str, suffix: str) -> str:
+    '''
+    Passed string either suffixed by the passed suffix if this string is not
+    yet suffixed by this suffix *or* this string as is otherwise (i.e., if this
+    string is already suffixed by this suffix).
+
+    Parameters
+    ----------
+    text : str
+        String to be conditionally suffixed.
+    suffix : str
+        Suffix to be conditionally appended to this string.
+
+    Returns
+    ----------
+    str
+        Either:
+
+        * If this string is *not* yet suffixed by this suffix, this string
+          suffixed by this suffix.
+        * Else, this string as is.
+    '''
+    assert isinstance(text, str), '{!r} not string.'.format(text)
+    assert isinstance(suffix, str), '{!r} not string.'.format(suffix)
+
+    # Suffix us up the redemption arc.
+    return text if text.endswith(suffix) else text + suffix

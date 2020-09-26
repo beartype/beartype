@@ -110,6 +110,7 @@ def test_p484() -> None:
 
             # Exception message raised by this wrapper function.
             exception_str = str(exception_info.value)
+            # print('exception message: {}'.format(exception_str))
 
             # For each uncompiled regular expression expected to match this
             # message, assert this expression actually does so.

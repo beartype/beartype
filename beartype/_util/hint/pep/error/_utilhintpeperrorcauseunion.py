@@ -21,7 +21,8 @@ from beartype._util.hint.pep.error._utilhintpeperrorcause import (
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from beartype._util.text.utiltextmunge import uppercase_char_first
+from beartype._util.text.utiltextmunge import (
+    suffix_unless_suffixed, uppercase_char_first)
 from beartype._util.text.utiltextrepr import get_object_representation
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -71,7 +72,7 @@ def get_cause_or_none_union(
     # Indentation preceding each line of the strings returned by child getter
     # functions called by this parent getter function, offset to visually
     # demarcate child from parent causes in multiline strings.
-    CAUSE_INDENT_CHILD = cause_indent + ' '
+    CAUSE_INDENT_CHILD = cause_indent + '  '
 
     # For each subscripted argument of this union...
     for hint_child in hint_childs:
@@ -111,7 +112,7 @@ def get_cause_or_none_union(
 
             # If this pith deeply satisfies this child hint, return "None".
             if pith_cause_hint_child is None:
-                print('Union child {!r} pith {!r} deeply satisfied!'.format(hint_child, pith))
+                # print('Union child {!r} pith {!r} deeply satisfied!'.format(hint_child, pith))
                 return None
             # Else, this pith does *NOT* deeply satisfy this child hint.
 
@@ -207,14 +208,24 @@ def get_cause_or_none_union(
         return '{} {}'.format(pith_repr, causes_union[0])
     # Else, prior logic appended two or more causes.
 
+    # return causes_union[-1]
     # Return a multiline string comprised of...
     return '{}:\n{}'.format(
         # This truncated object representation.
         pith_repr,
         # The newline-delimited concatenation of each cause as a discrete
-        # bullet-prefixed line whose first character is uppercased.
+        # bullet-prefixed line...
         '\n'.join(
-            '{}* {}.'.format(cause_indent, uppercase_char_first(cause_union))
+            '{}* {}'.format(
+                # Indented by the current indent.
+                cause_indent,
+                # Whose first character is uppercased.
+                uppercase_char_first(
+                    # Suffixed by a period if *NOT* yet suffixed by a period.
+                    suffix_unless_suffixed(text=cause_union, suffix='.')
+                )
+            )
+            # '{}* {}.'.format(cause_indent, uppercase_char_first(cause_union))
             for cause_union in causes_union
         )
     )

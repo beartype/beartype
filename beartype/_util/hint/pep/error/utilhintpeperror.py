@@ -28,6 +28,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
     label_callable_decorated_return_value,
 )
+from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -201,23 +202,16 @@ def raise_pep_call_exception(
         exception_label=pith_label,
     )
 
-    # If this pith does *NOT* satisfy this hint, raise an exception of the
-    # desired class embedding this cause
+    # If this pith does *NOT* satisfy this hint...
     if exception_cause:
+        # This failure suffixed by a period if *NOT* yet suffixed by a period.
+        exception_cause_suffixed = suffix_unless_suffixed(
+            text=exception_cause, suffix='.')
+
+        # Raise an exception of the desired class embedding this cause.
         raise exception_cls(
-            '{} violates PEP type hint {!r}, as {}{}'.format(
-                pith_label,
-                hint,
-                exception_cause,
-                # Either:
-                # * If this exception cause is *NOT* already suffixed by a
-                #   period, a period.
-                # * Else, the empty string.
-                # Note that this exception cause is guaranteed to be non-empty
-                # here and thus contain at least a trailing character.
-                '.' if exception_cause[-1] != '.' else ''
-            )
-        )
+            '{} violates PEP type hint {!r}, as {}'.format(
+                pith_label, hint, exception_cause_suffixed))
 
     # Else, this pith satisfies this hint. In this (hopefully uncommon) edge
     # case, *SOMETHING HAS GONE TERRIBLY AWRY.* In theory, this should never
