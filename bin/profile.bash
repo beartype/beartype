@@ -31,9 +31,15 @@
 # Enable strictness for sanity.
 set -e
 
+# ....................{ CONSTANTS                         }....................
 # Human-readable version of this profiling suite.
 VERSION='0.0.2'
 
+# Basename of the Python command to be invoked below.
+PYTHON_COMMAND_BASENAME='python3'
+# PYTHON_COMMAND_BASENAME='python3.8'
+
+# ....................{ GREETING                          }....................
 # Print a greeting preamble.
 echo "beartype profiler [version]: ${VERSION}"
 echo
@@ -96,8 +102,14 @@ function profile_callable() {
         CODE_DECOR_BEARTYPE \
         CODE_DECOR_TYPEGUARD
 
-    # Print the passed label and number of calls as a banner.
-    print_banner "${label} (${num_loop_calls} calls each loop)"
+    # Print the passed label as a banner.
+    print_banner "${label}"
+
+    # Print metadata describing the current profiling regime.
+    echo 'profiling regime:'
+    echo "   number of meta-loops:      ${num_best}"
+    echo "   number of loops:           ${num_loop}"
+    echo "   number of calls each loop: ${num_loop_calls}"
 
     # Python code snippet repeatedly performing the passed function call.
     code_call_repeat="
@@ -215,7 +227,7 @@ function profile_snippet() {
     echo -n "${label}"
 
     # Profile these snippets.
-    command python3 -m timeit \
+    command "${PYTHON_COMMAND_BASENAME}" -m timeit \
         -n "${num_loop}" \
         -r "${num_best}" \
         -s "${code_setup}" \
@@ -296,17 +308,18 @@ function is_command() {
 }
 
 # ....................{ VERSIONS                          }....................
-# Print the current version of Python 3.x.
+# Print the current basename and version of Python 3.x.
+echo    "python    [basename]: ${PYTHON_COMMAND_BASENAME}"
 echo -n 'python    [version]: '
-command python3 --version
+command "${PYTHON_COMMAND_BASENAME}" --version
 
 # Print project versions *BEFORE* profiling for disambiguity. Note that:
 # * The "typeguard" package fails to explicitly publish its version, so we
 #   fallback to the setuptools-based Hard Way.
-command python3 -c '
+command "${PYTHON_COMMAND_BASENAME}" -c '
 import beartype
 print("beartype  [version]: " + beartype.__version__)'
-command python3 -c '
+command "${PYTHON_COMMAND_BASENAME}" -c '
 import pkg_resources
 print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
 
@@ -343,8 +356,8 @@ profile_callable 'Union[int, str]' \
 # both the number of iterations and iterations of iterations (i.e., "best of")
 # to avoid infinitely halting the active process.
 
-#FIXME: Temporarily commented out, as the following test is more specific and
-#thus (probably) more instructive.
+#FIXME: Temporarily commented out, as the following tests are more specific and
+#thus more instructive.
 # NUM_LIST_ITEMS=1000
 # profile_callable "List[object] of ${NUM_LIST_ITEMS} items" "
 # from typing import List
@@ -353,7 +366,6 @@ profile_callable 'Union[int, str]' \
 #     return camp_animals' \
 #     'parade_song(THOUSANDS_OF_TIRED_VOICES)' 7485 1 1
 
-
 NUM_LIST_ITEMS=1000
 profile_callable "List[int] of ${NUM_LIST_ITEMS} items" "
 from typing import List
@@ -361,3 +373,19 @@ TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN = list(range(${NUM_LIST_ITEMS}))" \
     'def gun_teams(elephants: List[int]) -> List[int]:
     return elephants' \
     'gun_teams(TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN)' 7485 1 1
+
+NUM_SEQUENCE_ITEMS_EACH=10
+profile_callable "List[Sequence[MutableSequence[int]]] of ${NUM_SEQUENCE_ITEMS_EACH} items each" "
+from typing import List, MutableSequence, Sequence
+WAY_OF_THE_WAR_HORSE = list(
+    tuple(
+        list(range(${NUM_SEQUENCE_ITEMS_EACH}))
+        for _ in range(${NUM_SEQUENCE_ITEMS_EACH})
+    )
+    for _ in range(${NUM_SEQUENCE_ITEMS_EACH})
+)" \
+    'def lancers_hussars_and_dragoons(
+    cavalry_horses: List[Sequence[MutableSequence[int]]]) -> (
+    List[Sequence[MutableSequence[int]]]):
+    return cavalry_horses' \
+    'lancers_hussars_and_dragoons(WAY_OF_THE_WAR_HORSE)' 7485 1 1

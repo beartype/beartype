@@ -206,8 +206,11 @@ type (e.g., :class:`int`, :class:`str`).
 
 # ....................{ HINT ~ sequence                   }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
+{indent_curr}    # True only if this pith shallowly satisfies this hint.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+{indent_curr}    # True only if either this pith is empty *OR* this pith is
+{indent_curr}    # both non-empty and deeply satisfies this hint.
+{indent_curr}    (not {pith_curr_expr} or {hint_child_placeholder})
 {indent_curr})'''
 '''
 PEP-compliant code snippet type-checking the current pith against a parent
@@ -215,6 +218,33 @@ PEP-compliant code snippet type-checking the current pith against a parent
 subscripted type hint unconditionally constraining *all* items of this pith,
 which necessarily satisfies the :class:`collections.abc.Sequence` protocol with
 guaranteed ``O(1)`` indexation across all sequence items).
+
+Caveats
+----------
+**This snippet cannot contain ternary conditionals.** For unknown reasons
+suggesting a critical defect in the current implementation of Python 3.8's
+assignment expressions, this snippet raises :class:`UnboundLocalError`
+exceptions resembling the following when this snippet contains one or more
+ternary conditionals:
+
+    UnboundLocalError: local variable '__beartype_pith_1' referenced before assignment
+
+In particular, the initial draft of this snippet guarded against empty
+sequences with a seemingly reasonable ternary conditional:
+
+.. code-block:: python
+
+   PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = \'\'\'(
+   {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+   {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+   {indent_curr})\'\'\'
+
+That should behave as expected, but doesn't, presumably due to obscure scoping
+rules and a non-intuitive implementation of ternary conditionals in CPython.
+Ergo, the current version of this snippet guards against empty sequences with
+disjunctions and conjunctions (i.e., ``or`` and ``and`` operators) instead.
+Happily, the current version is more efficient than the equivalent approach
+based on ternary conditional (albeit slightly less intuitive).
 '''
 
 

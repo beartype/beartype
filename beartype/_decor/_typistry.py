@@ -531,68 +531,69 @@ class Beartypistry(dict):
         super().__setitem__(hint_name, hint)
 
 
-    def __missing__(self, hint_name: str) -> type:
-        '''
-        Dunder method explicitly called by the superclass
-        :meth:`dict.__getitem__` method implicitly called on getting the passed
-        missing key with ``[``- and ``]``-delimited syntax.
-
-        This method treats this attempt to get this missing key as the
-        intentional resolution of a forward reference whose fully-qualified
-        classname is this key. Specifically, this method:
-
-        #.
-
-        Parameters
-        ----------
-        hint_name : str
-            **Name** (i.e., fully-qualified name of the module attribute
-            declaring this hint) of this hint to be resolved as a forward
-            reference.
-
-        Returns
-        ----------
-        object
-            :mod:`beartype`-supported type hint whose fully-qualified module
-            attribute name is this missing key.
-
-        Raises
-        ----------
-        _BeartypeDecorBeartypistryException
-            If this name is either:
-
-            * *Not* a fully-qualified classname.
-            * A fully-qualified classname but the object to which this name
-              refers is *not* a **PEP-noncompliant class** (i.e., class neither
-              defined by the :mod:`typing` module *nor* subclassing a class
-              defined by the :mod:`typing` module).
-        '''
-
-        # If this name is *NOT* a string, raise an exception.
-        if not isinstance(hint_name, str):
-            raise _BeartypeDecorBeartypistryException(
-                'Beartypistry key {!r} not a '
-                'fully-qualified module attribute name.'.format(hint_name))
-
-        #FIXME: Dynamically import this object here.
-        # Type hint dynamically imported from this name.
-        hint = None
-
-        # If this hint is *NOT* a valid PEP-noncompliant type hint, raise an
-        # exception.
-        die_unless_hint_nonpep(
-            hint=hint,
-            hint_label='Beartypistry value {!r}'.format(hint),
-            is_str_valid=False,
-            exception_cls=_BeartypeCallBeartypistryException,
-        )
-
-        # Return this hint.
-        #
-        # The superclass dict.__getitem__() dunder method then implicitly maps
-        # the passed missing key to this class by effectively:
-        #     self[hint_name] = hint
-        return hint
+    #FIXME: Uncomment when implementing forward referencing support.
+    # def __missing__(self, hint_name: str) -> type:
+    #     '''
+    #     Dunder method explicitly called by the superclass
+    #     :meth:`dict.__getitem__` method implicitly called on getting the passed
+    #     missing key with ``[``- and ``]``-delimited syntax.
+    #
+    #     This method treats this attempt to get this missing key as the
+    #     intentional resolution of a forward reference whose fully-qualified
+    #     classname is this key. Specifically, this method:
+    #
+    #     #.
+    #
+    #     Parameters
+    #     ----------
+    #     hint_name : str
+    #         **Name** (i.e., fully-qualified name of the module attribute
+    #         declaring this hint) of this hint to be resolved as a forward
+    #         reference.
+    #
+    #     Returns
+    #     ----------
+    #     object
+    #         :mod:`beartype`-supported type hint whose fully-qualified module
+    #         attribute name is this missing key.
+    #
+    #     Raises
+    #     ----------
+    #     _BeartypeDecorBeartypistryException
+    #         If this name is either:
+    #
+    #         * *Not* a fully-qualified classname.
+    #         * A fully-qualified classname but the object to which this name
+    #           refers is *not* a **PEP-noncompliant class** (i.e., class neither
+    #           defined by the :mod:`typing` module *nor* subclassing a class
+    #           defined by the :mod:`typing` module).
+    #     '''
+    #
+    #     # If this name is *NOT* a string, raise an exception.
+    #     if not isinstance(hint_name, str):
+    #         raise _BeartypeDecorBeartypistryException(
+    #             'Beartypistry key {!r} not a '
+    #             'fully-qualified module attribute name.'.format(hint_name))
+    #
+    #     #FIXME: Dynamically import this object here.
+    #     # Type hint dynamically imported from this name.
+    #     hint = None
+    #
+    #     # If this hint is *NOT* a valid PEP-noncompliant type hint, raise an
+    #     # exception.
+    #     die_unless_hint_nonpep(
+    #         hint=hint,
+    #         hint_label='Beartypistry value {!r}'.format(hint),
+    #         is_str_valid=False,
+    #         exception_cls=_BeartypeCallBeartypistryException,
+    #     )
+    #
+    #     # Return this hint.
+    #     #
+    #     # The superclass dict.__getitem__() dunder method then implicitly maps
+    #     # the passed missing key to this class by effectively:
+    #     #     self[hint_name] = hint
+    #     return hint
 
 # ....................{ SINGLETONS                        }....................
 bear_typistry = Beartypistry()

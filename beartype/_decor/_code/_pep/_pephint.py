@@ -618,11 +618,16 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # ..................{ HINT ~ pep 572                    }..................
     # True only if:
     #
-    # * The active Python interpreter targets at least Python 3.8 and thus
-    #   supports "PEP 572 -- Assignment Expressions."
-    # * The currently visited hint is not the root hint (i.e., "hint_root").
+    # * The active Python interpreter targets at least Python 3.8, the first
+    #   major Python version to introduce support for "PEP 572 -- Assignment
+    #   Expressions."
+    # * The currently visited hint is *NOT* the root hint (i.e., "hint_root").
+    #   If the currently visited hint is the root hint, the current pith has
+    #   already been localized to a local variable whose name is the value of
+    #   the "PEP_CODE_PITH_ROOT_NAME" string global and thus need *NOT* be
+    #   relocalized to another local variable using an assignment expression.
     #
-    # This is a necessary but *NOT* sufficient condition for deciding whether a
+    # This is a necessary and sufficient condition for deciding whether a
     # Python >= 3.8-specific assignment expression localizing the current pith
     # should be embedded in the code generated to type-check this pith against
     # this hint. This is a non-trivial runtime optimization eliminating
@@ -645,31 +650,28 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     #     ):
     #
     #     # The same conditional under Python < 3.8.
+    #     if not (
+    #         isinstance(__beartype_pith_0, list) and
+    #         (
+    #             isinstance(__beartype_pith_1 := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
+    #             isinstance(__beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str) if __beartype_pith_1 else True
+    #         ) if __beartype_pith_0 else True
+    #     ):
     #
-    # Specifically, this optimization should be conditionally performed if and
-    # only if the following three conditions are satisfied:
+    # Note the localization of the random item selection from the root pith
+    # (i.e., "__beartype_pith_1 := __beartype_pith_0[__beartype_random_int %
+    # len(__beartype_pith_0)"), which only occurs once in the latter case
+    # rather than repeatedly as in the former case. In both cases, the same
+    # semantic type-checking is performed regardless of optimization.
     #
-    # * The active Python interpreter targets at least Python 3.8, the first
-    #   major Python version to introduce support for assignment expressions.
-    # * The currently visited hint is *NOT* the root hint. If the currently
-    #   visited hint is the root hint, the current pith has already been
-    #   localized to a local variable named "PEP_CODE_PITH_ROOT_NAME" and thus
-    #   need *NOT* be relocalized to a different local variable using an
-    #   assignment expression.
-    # * The currently visited hint is subscripted by one or more non-ignorable
-    #   PEP-compliant child hint arguments. If all child hints of this parent
-    #   hint are either ignorable (e.g., "object", "Any") *OR* are
-    #   non-ignorable non-"typing" types (e.g., "int", "str"), then this parent
-    #   hint has *NO* meaningful PEP-compliant child hints and is thus
-    #   effectively a leaf node with respect to performing this optimization.
-    #   A parent hint with *NO* such child hints has *NO* reason whatsoever to
-    #   localize this pith with an assignment expression.
-    #
-    # While this boolean universally encapsulates the former two conditions,
-    # the third condition is only decidable with hint-specific logic below.
-    # Why? Because there exists no universal interpretation of the "__args__"
-    # dunder attribute listing PEP-compliant child hints.
-    is_hint_curr_not_root_3_8 = None
+    # Note this optimization implicitly "bottoms out" when the currently
+    # visited hint is *NOT* subscripted by one or more non-ignorable
+    # PEP-compliant child hint arguments, as desired. If all child hints of the
+    # currently visited hint are either ignorable (e.g., "object", "Any") *OR*
+    # are non-ignorable non-"typing" types (e.g., "int", "str"), the currently
+    # visited hint has *NO* meaningful PEP-compliant child hints and is thus
+    # effectively a leaf node with respect to performing this optimization.
+    is_pith_curr_assign_expr = None
 
     # Integer suffixing the name of each local variable assigned the value of
     # the current pith in a Python >= 3.8-specific assignment expression, thus
@@ -817,7 +819,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
             # True only if the active Python interpreter targets at least
             # Python 3.8 *AND* the currently visited hint is not the root hint.
-            is_hint_curr_not_root_3_8 = (
+            is_pith_curr_assign_expr = (
                 IS_PYTHON_AT_LEAST_3_8 and hints_meta_index_curr != 0)
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1200,19 +1202,12 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                     # Record that a pseudo-random integer is now required.
                     data.is_func_wrapper_needs_random_int = True
 
-                    # If...
-                    if (
-                        # * The active Python interpreter targets at least
-                        #   Python 3.8 *AND*...
-                        # * This parent hint is not the root hint *AND*...
-                        is_hint_curr_not_root_3_8 and
-                        # * This child hint is PEP-compliant...
-                        is_hint_pep(hint_child)
-                    # Then all conditions required to assign the current pith
-                    # to a unique local variable with a Python >=3.8-specific
-                    # assignment expression have been satisfied. In this
-                    # case...
-                    ):
+                    # If the active Python interpreter targets at least Python
+                    # 3.8 *AND* this parent hint is not the root hint, then all
+                    #   conditions needed to assign the current pith to a
+                    #   unique local variable via a Python >= 3.8-specific
+                    #   assignment expression are satisfied. In this case...
+                    if is_pith_curr_assign_expr:
                         # Full Python expression yielding the value of the
                         # current pith *BEFORE* reducing the current pith
                         # expression to the name of this local variable.
@@ -1226,7 +1221,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                         # this local variable.
                         pith_curr_expr = (
                             PEP_CODE_PITH_NAME_PREFIX +
-                            pith_curr_assign_expr_name_counter)
+                            str(pith_curr_assign_expr_name_counter))
 
                         # Python >= 3.8-specific assignment expression
                         # assigning this full expression to this variable.
