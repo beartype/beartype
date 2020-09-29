@@ -649,6 +649,18 @@ PEP_HINT_TO_META = {
     # Note that unions of one arguments (e.g., "typing.Union[str]") *CANNOT* be
     # listed here, as the "typing" module implicitly reduces these unions to
     # only that argument (e.g., "str") on our behalf. Thanks. Thanks alot.
+    #
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: The Python < 3.7.0-specific implementations of "typing.Union"
+    # are defective, in that they silently filter out various subscripted
+    # arguments that they absolutely should *NOT*, including "bool": e.g.,
+    #     $ python3.6
+    #     >>> import typing
+    #     >>> typing.Union[bool, float, int, typing.Sequence[
+    #     ...     typing.Union[bool, float, int, typing.Sequence[str]]]]
+    #     typing.Union[float, int, typing.Sequence[typing.Union[float, int, typing.Sequence[str]]]]
+    # For this reason, these arguments *MUST* be omitted below.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Union of one non-"typing" type and an originative "typing" type,
     # exercising an edge case.
@@ -708,25 +720,28 @@ PEP_HINT_TO_META = {
     # Union of three non-"typing" types and an originative "typing" type of a
     # union of three non-"typing" types and an originative "typing" type,
     # exercising an edge case.
-    typing.Union[bool, float, int, typing.Sequence[
-        typing.Union[bool, float, int, typing.Sequence[
+    typing.Union[dict, float, int, typing.Sequence[
+        typing.Union[dict, float, int, typing.Sequence[
         str]]]]: _PepHintMetadata(
         typing_attr=typing.Union,
         is_supported=True,
         is_generic_user=False,
         is_typevared=False,
         piths_satisfied=(
-            # Boolean constant.
-            True,
+            # Empty dictionary.
+            {},
             # Floating-point number constant.
             777.777,
             # Integer constant.
             777,
-            # Sequence of boolean, floating-point number, integer, and
+            # Sequence of dictionary, floating-point number, integer, and
             # sequence of string constant items.
             (
-                # Boolean constant.
-                True,
+                # Non-empty dictionary.
+                {
+                    'Of': 'charnal memories,',
+                    'Or': 'coterminously chordant‐disarmed harmonies',
+                },
                 # Floating-point number constant.
                 666.666,
                 # Integer constant.
@@ -746,7 +761,7 @@ PEP_HINT_TO_META = {
                 # declares the types *NOT* satisfied by this object.
                 exception_str_match_regexes=(
                     r'\bSequence\b',
-                    r'\bbool\b',
+                    r'\bdict\b',
                     r'\bfloat\b',
                     r'\bint\b',
                 ),
