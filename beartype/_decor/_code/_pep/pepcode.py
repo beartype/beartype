@@ -35,7 +35,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER)
+    PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER)
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
 from beartype._util.text.utiltextlabel import (
@@ -122,7 +122,7 @@ def pep_code_check_param(
             # parameter or return value with arbitrary name...
             pep_code_check_hint(data=data, hint=func_arg.annotation).replace(
                 # This placeholder substring cached into this code with...
-                PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
+                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
                 # This object representation of this parameter's name.
                 repr(func_arg.name),
             ))
@@ -183,7 +183,7 @@ def pep_code_check_return(data: BeartypeData) -> str:
             pep_code_check_hint(
                 data=data, hint=data.func_sig.return_annotation).replace(
                 # This placeholder substring cached into this code with...
-                PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
+                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
                 # This object representation of this return value,
                 _RETURN_REPR,
             ))

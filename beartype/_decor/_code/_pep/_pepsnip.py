@@ -26,7 +26,31 @@ from beartype._decor._code.codemain import (
 from inspect import Parameter
 
 # ....................{ PITH                              }....................
-PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER = '?|PITH_ROOT_NAME`^'
+PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_expr} := {pith_curr_full_expr}'''
+'''
+Python >= 3.8-specific assignment expression assigning the full Python
+expression yielding the value of the current pith to a unique local variable,
+enabling PEP-compliant child hints to obtain this pith via this efficient
+variable rather than via this inefficient full Python expression.
+'''
+
+
+PEP_CODE_PITH_NAME_PREFIX = '__beartype_pith_'
+'''
+Substring prefixing all local variables providing a **pith** (i.e., either the
+current parameter or return value *or* item contained the current parameter or
+return value being type-checked by the current call).
+'''
+
+# ....................{ PITH ~ root                       }....................
+PEP_CODE_PITH_ROOT_NAME = PEP_CODE_PITH_NAME_PREFIX + '0'
+'''
+Name of the local variable providing the **root pith** (i.e., value of the
+current parameter or return value being type-checked by the current call).
+'''
+
+
+PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER = '?|PITH_ROOT_NAME`^'
 '''
 Placeholder source substring to be globally replaced by the **root pith name**
 (i.e., name of the current parameter if called by the
@@ -39,13 +63,6 @@ See Also
 :attr:`beartype._decor._code._pep._pephint.pep_code_check_hint`
 :attr:`beartype._util.cache.utilcacheerror.EXCEPTION_CACHED_PLACEHOLDER`
     Related commentary.
-'''
-
-
-PEP_CODE_PITH_ROOT_EXPR = '__beartype_pith_0'
-'''
-Name of the local variable providing the **root pith** (i.e., value of the
-current parameter or return value being type-checked by the current call).
 '''
 
 # ....................{ PARAM                             }....................
@@ -79,7 +96,7 @@ PARAM_KIND_TO_PEP_CODE_GET = {
     # If this parameter was passed...
     if {pith_root_name} is not {param_name_typistry}:'''.format(
         param_name_typistry=PARAM_NAME_TYPISTRY,
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+        pith_root_name=PEP_CODE_PITH_ROOT_NAME,
     ),
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
@@ -92,14 +109,14 @@ PARAM_KIND_TO_PEP_CODE_GET = {
     # If this parameter was passed...
     if {pith_root_name} is not {param_name_typistry}:'''.format(
         param_name_typistry=PARAM_NAME_TYPISTRY,
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+        pith_root_name=PEP_CODE_PITH_ROOT_NAME,
     ),
 
     # Snippet iteratively localizing all variadic positional parameters.
     Parameter.VAR_POSITIONAL: '''
     # For all passed positional variadic parameters...
     for {pith_root_name} in args[{{arg_index!r}}:]:'''.format(
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR),
+        pith_root_name=PEP_CODE_PITH_ROOT_NAME),
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the
@@ -117,7 +134,7 @@ PEP_CODE_CHECK_RETURN_PREFIX = '''
     # CPython implicitly optimizes this conditional away - which is nice.
     if True:'''.format(
         param_name_func=PARAM_NAME_FUNC,
-        pith_root_name=PEP_CODE_PITH_ROOT_EXPR,
+        pith_root_name=PEP_CODE_PITH_ROOT_NAME,
     )
 '''
 PEP-compliant code snippet calling the decorated callable and localizing the
@@ -140,7 +157,7 @@ https://stackoverflow.com/a/18124151/2809027
 
 
 PEP_CODE_CHECK_RETURN_SUFFIX = '''
-    return {pith_root_name}'''.format(pith_root_name=PEP_CODE_PITH_ROOT_EXPR)
+    return {pith_root_name}'''.format(pith_root_name=PEP_CODE_PITH_ROOT_NAME)
 '''
 PEP-compliant code snippet returning from the wrapper function the successfully
 type-checked value returned from the decorated callable.
@@ -162,8 +179,8 @@ PEP_CODE_CHECK_HINT_ROOT = '''
             )
 '''.format(
     param_name_func=PARAM_NAME_FUNC,
-    pith_root_name=PEP_CODE_PITH_ROOT_NAME_PLACEHOLDER,
-    pith_root_expr=PEP_CODE_PITH_ROOT_EXPR,
+    pith_root_name=PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+    pith_root_expr=PEP_CODE_PITH_ROOT_NAME,
 )
 '''
 PEP-compliant code snippet type-checking the **root pith** (i.e., value of the
@@ -189,7 +206,7 @@ type (e.g., :class:`int`, :class:`str`).
 
 # ....................{ HINT ~ sequence                   }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
-{indent_curr}    isinstance({pith_curr_expr}, {hint_curr_expr}) and
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
 {indent_curr})'''
 '''
@@ -201,8 +218,6 @@ guaranteed ``O(1)`` indexation across all sequence items).
 '''
 
 
-#FIXME: Under Python >= 3.8, optimize with assignment expressions to avoid
-#reindexation of this item for nested type-checks. For now, this suffices.
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
     '''{pith_curr_expr}[__beartype_random_int % len({pith_curr_expr})]''')
 '''
@@ -260,3 +275,19 @@ See Also
 :data:`PEP_CODE_CHECK_HINT_UNION_ARG_PEP`
     Further details.
 '''
+
+# ....................{ FORMATTERS                        }....................
+# Bound format methods of string globals defined above, preserved as discrete
+# global variables for efficient lookup elsewhere.
+
+PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
+    PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
+    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (
+    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format)
+PEP_CODE_CHECK_HINT_UNION_ARG_PEP_format = (
+    PEP_CODE_CHECK_HINT_UNION_ARG_PEP.format)
+PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP_format = (
+    PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP.format)
+PEP_CODE_PITH_ASSIGN_EXPR_format = PEP_CODE_PITH_ASSIGN_EXPR.format
