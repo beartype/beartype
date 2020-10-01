@@ -305,7 +305,7 @@ def beartype(func):
     BeartypeDecorParamNameException
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__beartype_``.
-    BeartypeDecorPep563Exception
+    BeartypeDecorHintPep563Exception
         If `PEP 563`_ is active for this callable and evaluating a **postponed
         annotation** (i.e., annotation whose value is a string) on this
         callable raises an exception (e.g., due to that annotation referring to

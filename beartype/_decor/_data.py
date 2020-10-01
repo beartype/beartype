@@ -203,7 +203,7 @@ class BeartypeData(object):
 
         Raises
         ----------
-        BeartypeDecorPep563Exception
+        BeartypeDecorHintPep563Exception
             If evaluating a postponed annotation on this callable raises an
             exception (e.g., due to that annotation referring to local state no
             longer accessible from this deferred evaluation).

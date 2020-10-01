@@ -124,3 +124,94 @@ def get_minecraft_end_txt_stanza(
 # callable to @beartype.
 def get_minecraft_end_txt(player_name: str) -> str:
     return ''.join(_MINECRAFT_END_TXT_STANZAS).format(player_name=player_name)
+
+# ....................{ CALLABLES ~ child limit           }....................
+#FIXME: Hilariously, we can't even unit test whether the
+#beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
+#behaves as expected. Why not? Because some combination of the "typing" module
+#and/or PEP 563 were implemented so space-inefficiently than even attempting to
+#instantiate a PEP-compliant type hint that would violate the child limit
+#(i.e., the maximum size for fixed lists used by the @beartype decorator to
+#implement its breadth-first search (BFS) across child hints) induces a memory
+#error from the CPython parser -- complete with non-human-readable debug
+#"stderr" output that I highly doubt CPython is even supposed to publicly emit:
+#
+#    beartype_test/unit/data/data_p563.py:180: MemoryError
+#    ---------------------------------------------------- Captured stderr call -----------------------------------------------------
+#    s_push: parser stack overflow
+#
+#"s_push: parser stack overflow"? Really? What the pablum is this nonsense?
+#
+#Naturally, this implies that end users are by definition prohibited from
+#violating our package-specific child limit without our ever needing to even
+#explicitly validate this limit. This is ridiculous, absurd, and yet another
+#proverbial nail in the coffin for annotation-centric PEPs. I don't know who
+#was tasked with implementing this API, but they clearly had little to no
+#coherent idea of what they were doing.
+
+# from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
+# from typing import List, Union
+#
+# # This global is defined below for sanity.
+# _HINT_BIG = None
+# '''
+# PEP-compliant type hint guaranteed to raise an exception from the private
+# :func:`beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit`
+# function, which imposes strict limits on the number of child hints permitted to
+# be transitively nested in any top-level PEP-compliant type hint.
+# '''
+#
+#
+# def _init() -> None:
+#     '''
+#     Define the :data:`_HINT_BIG` global declared above.
+#     '''
+#
+#     # Enable this global to be defined.
+#     global _HINT_BIG
+#
+#     # This fixed length subtracted by 1 divided by 3. Just 'cause.
+#     SIZE_LESS_BIG = (SIZE_BIG-1) / 3
+#
+#     # Assert the fixed length of the cached fixed lists constraining the number
+#     # of child hints permitted to be transitively nested in any top-level
+#     # PEP-compliant type hint is evenly divisible by 3 when subtracted by 1,
+#     # thus producing whole integers when subject to the above operation.
+#     #
+#     # Oddly, this condition applies to a surprising number of powers of two:
+#     #     >>> (1024 - 1) % 3
+#     #     341
+#     #     >>> (256 - 1) % 3
+#     #     85
+#     assert SIZE_LESS_BIG.is_integer(), (
+#         '{} not integer.'.format(SIZE_LESS_BIG))
+#
+#     # Constrain this length to an integer as expected by the range() builtin.
+#     SIZE_LESS_BIG = int(SIZE_LESS_BIG)
+#
+#     # Python expression used to dynamically define this global below.
+#     _HINT_BIG_EXPR = '{}{}{}'.format(
+#         # Substring prefixing this hint.
+#         ''.join('Union[int, List[' for _ in range(SIZE_LESS_BIG)),
+#         # Substring subscripting the last "List" child hint of this hint.
+#         'str',
+#         # Substring suffixing this hint.
+#         ''.join(']]' for _ in range(SIZE_LESS_BIG)),
+#     )
+#
+#     # Dynamically define this global, as "SIZE_BIG" is typically too large to
+#     # allow this global to be statically defined.
+#     _HINT_BIG = eval(_HINT_BIG_EXPR, globals())
+#
+#
+# # Define the "_HINT_BIG" global declared above.
+# _init()
+#
+#
+# # Callable annotated by this global *AFTER* defining this global above.
+# #
+# # Note that this callable is intentionally *NOT* decorated by @beartype here,
+# # as doing so would immediately raise an exception that we would rather
+# # explicitly test for elsewhere.
+# def player_was_love(player_was_the_universe: _HINT_BIG) -> _HINT_BIG:
+#     return player_was_the_universe

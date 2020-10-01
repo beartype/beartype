@@ -532,6 +532,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # Human-readable label describing the root hint in exception messages.
     hint_root_label = EXCEPTION_CACHED_PLACEHOLDER + ' ' + repr(hint_root)
 
+    # Python code snippet evaluating to the current passed parameter or return
+    # value to be type-checked against the root hint.
+    pith_root_expr = PEP_CODE_PITH_ROOT_NAME
+
     # ..................{ HINT ~ current                    }..................
     # Currently visited hint.
     hint_curr = None
@@ -699,7 +703,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     hint_root_meta = acquire_fixed_list(_HINT_META_SIZE)
     hint_root_meta[_HINT_META_INDEX_HINT] = hint_root
     hint_root_meta[_HINT_META_INDEX_PLACEHOLDER] = hint_child_placeholder
-    hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = PEP_CODE_PITH_ROOT_NAME
+    hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = pith_root_expr
     hint_root_meta[_HINT_META_INDEX_INDENT] = indent_curr
 
     # Fixed list of metadata describing the currently visited hint, appended by
@@ -711,12 +715,21 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     hint_child_meta = None
 
     # Fixed list of all metadata describing all visitable hints currently
-    # discovered by the breadth-first search below, seeded with metadata
-    # describing the root hint.
+    # discovered by the breadth-first search (BFS) below.
     #
-    # Since "SIZE_BIG" is guaranteed to be substantially larger than 1, this
-    # assignment is quite guaranteed to be safe. (Quite. Very. Mostly. Kinda.)
+    # Note that this list is guaranteed by the previously called
+    # _die_if_hint_repr_exceeds_child_limit() function to be larger than the
+    # number of hints transitively visitable from this root hint. Ergo, *ALL*
+    # indexation into this list performed by this BFS is guaranteed to be safe.
+    # Ergo, avoid explicitly testing below that the "hints_meta_index_last"
+    # integer maintained by this BFS is strictly less than "SIZE_BIG", as this
+    # constraint is already guaranteed to be the case.
     hints_meta = acquire_fixed_list(SIZE_BIG)
+
+    # Seed this list with metadata describing the root hint.
+    #
+    # Note that this assignment is guaranteed to be safe, as "SIZE_BIG" is
+    # guaranteed to be substantially larger than 1.
     hints_meta[0] = hint_root_meta
 
     # 0-based index of metadata describing the currently visited hint in the
@@ -817,10 +830,21 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             # this string here trivially optimizes the common case.
             indent_child = indent_curr + CODE_INDENT_1
 
-            # True only if the active Python interpreter targets at least
-            # Python 3.8 *AND* the currently visited hint is not the root hint.
+            # True only if...
             is_pith_curr_assign_expr = (
-                IS_PYTHON_AT_LEAST_3_8 and hints_meta_index_curr != 0)
+                # The active Python interpreter targets Python >= 3.8 *AND*...
+                IS_PYTHON_AT_LEAST_3_8 and
+                # The current pith is *NOT* the root pith.
+                #
+                # Note that we explicitly test against piths rather than
+                # seemingly equivalent metadata to account for edge cases.
+                # Notably, child hints of unions (and possibly other "typing"
+                # objects) do *NOT* narrow the current pith and are *NOT* the
+                # root hint; ergo, a seemingly equivalent test like
+                # "hints_meta_index_curr != 0" would generate false positives
+                # and thus unnecessarily inefficient code.
+                pith_curr_expr != pith_root_expr
+            )
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
@@ -1014,51 +1038,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # PEP-compliant arguments, generate less efficient code
                 # type-checking these arguments.
                 if hint_childs_pep:
-                    #FIXME: Actually, it might be possible to precompute
-                    #this validation at a much earlier time: namely, within
-                    #the "beartype._decor._pep563" submodule. How? By
-                    #totalizing the number of "[" and "," characters via
-                    #the str.count() method, we should be able to obtain an
-                    #efficient one-to-one relation between that number and
-                    #the total number of child hints in a PEP-compliant
-                    #type hint, which would then allow us to raise
-                    #exceptions from that early-time submodule before this
-                    #function is ever even called.
-                    #
-                    #This isn't terribly critical at the moment, but could
-                    #become useful down the road. *shrug*
-                    #FIXME: Inspection suggests the following trivial
-                    #one-liner should suffice to compute the number of
-                    #hints nested in any given hint (including that hint
-                    #itself as well):
-                    #    hint_repr = repr(hint)
-                    #    hints_num = (
-                    #        # Number of parent "typing" attributes nested
-                    #        # in this hint, including this hint itself.
-                    #        hint_repr.count('[') +
-                    #        # Number of child "typing" attributes and
-                    #        # non-"typing" types nested in this hint,
-                    #        # excluding the last child arguments of all
-                    #        # subscripted parent "typing" attributes.
-                    #        hint_repr.count(',') +
-                    #        # Number of child last arguments of all
-                    #        #  subscripted parent "typing" attributes.
-                    #        hint_repr.count(']')
-                    #    )
-                    #Sweet, eh?
-
-                    # If adding fixed lists of metadata describing these
-                    # arguments to the fixed list of such metadata would exceed
-                    # the length of the latter, raise an exception.
-                    if (
-                        hints_meta_index_last + len(hint_childs_pep) >=
-                        SIZE_BIG
-                    ):
-                        raise BeartypeDecorHintPepException(
-                            '{} contains more than '
-                            '{} "typing" types.'.format(
-                                hint_root_label, SIZE_BIG))
-
                     # For each PEP-compliant child hint listed as a subscripted
                     # argument of this union...
                     for hint_child in hint_childs_pep:
@@ -1188,17 +1167,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # the type of the current pith *AND* a randomly indexed item of
                 # this pith. Specifically...
                 if hint_child not in HINTS_IGNORABLE:
-                    #FIXME: Optimize away. See above.
-
-                    # If adding fixed lists of metadata describing this
-                    # argument to the fixed list of such metadata would exceed
-                    # the length of the latter, raise an exception.
-                    if hints_meta_index_last + 1 >= SIZE_BIG:
-                        raise BeartypeDecorHintPepException(
-                            '{} contains more than '
-                            '{} "typing" types.'.format(
-                                hint_root_label, SIZE_BIG))
-
                     # Record that a pseudo-random integer is now required.
                     data.is_func_wrapper_needs_random_int = True
 

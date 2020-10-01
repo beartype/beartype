@@ -234,7 +234,7 @@ class BeartypeDecorPepException(BeartypeDecorException, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeDecorPep563Exception(BeartypeDecorPepException):
+class BeartypeDecorHintPep563Exception(BeartypeDecorPepException):
     '''
     **Beartype decorator** `PEP 563`_ **evaluation exception.**
 
