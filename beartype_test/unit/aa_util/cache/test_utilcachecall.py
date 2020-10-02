@@ -73,14 +73,11 @@ def test_callable_cached_pass() -> None:
         still_i_rise(bitter, twisted, dust)
         assert exception_first_info is exception_next_info
 
-    #FIXME: Curiously, this assertion fails under only Python 3.5 for unknown
-    #reasons. Since Python 3.5 is on the cusp of hitting its EOL *AND* since
-    #this assertion is non-essential, disable this until we drop Python 3.5.
     # Assert that memoizing two calls passed the same keyword arguments in a
     # differing order cache and return differing values.
-    #assert (
-    #    still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is not
-    #    still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
+    assert (
+       still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is not
+       still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
 
 
 def test_callable_cached_fail() -> None:

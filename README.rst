@@ -328,8 +328,10 @@ repeatedly checking *one* random item from *each* nesting level of *all*
 containers passed to or returned from *all* calls of decorated callables, thus
 amortizing the cost of checking items across calls.
 
-Formally, ``beartype`` exploits the well-known `coupon collector's problem`_
-as applied to abstract trees of nested type hints. Let:
+``beartype`` exploits the `well-known coupon collector's problem <coupon
+collector's problem_>`__ applied to abstract trees of nested type hints,
+enabling us to statistically predict the number of calls required to fully
+type-check all items of an arbitrary container on average. Formally, let:
 
 * ``E(T)`` be the expected number of calls needed to check all items of a
   container containing only non-container items (i.e., containing *no* nested
@@ -829,6 +831,7 @@ values annotated with these typing_ types:
 * typing.ByteString_.
 * typing.List_.
 * typing.MutableSequence_.
+* typing.NamedTuple_.
 * typing.Optional_.
 * typing.Sequence_.
 * typing.SupportsAbs_.
@@ -838,6 +841,7 @@ values annotated with these typing_ types:
 * typing.SupportsFloat_.
 * typing.SupportsRound_.
 * typing.Text_.
+* typing.Tuple_.
 * typing.Union_.
 
 Partial Compliance
@@ -870,10 +874,8 @@ types:
 * typing.Mapping_.
 * typing.MutableMapping_.
 * typing.MutableSet_.
-* typing.NamedTuple_.
 * typing.Set_.
 * typing.Sized_.
-* typing.Tuple_.
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
@@ -1101,7 +1103,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `Gentoo <beartype Gentoo_>`__       | **0.2.0**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-| Python      | 3.5                                 | **0.1.0**\ —\ *current*       | —                         |
+| Python      | 3.5                                 | **0.1.0**\ —\ **0.3.0**       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | 3.6                                 | **0.1.0**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

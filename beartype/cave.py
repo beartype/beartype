@@ -93,6 +93,7 @@ from beartype._cave.abc import _BoolType
 from beartype._cave.mapping import _NoneTypeOrType
 from collections import deque as _deque
 from collections.abc import (
+    Collection as _Collection,
     Container as _Container,
     Generator as _Generator,
     Hashable as _Hashable,
@@ -130,7 +131,9 @@ from weakref import (
 #
 # These are the lesser of multiple evils.
 from types import (
+    AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
+    CoroutineType as _CoroutineType,
     FunctionType as _FunctionType,
     GeneratorType as _GeneratorType,
     MethodType as _MethodType,
@@ -141,26 +144,19 @@ from types import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ IMPORTS ~ conditional             }....................
-#FIXME: After dropping Python 3.5 support:
-#
-#* Unconditionally import these types with their brethren above.
-#* Reduce the definitions of "AsyncGeneratorCType" and "AsyncCoroutineCType"
-#  below to simply:
-#    AsyncGeneratorCType = _AsyncGeneratorType
-#    AsyncCoroutineCType = _CoroutineType
+#FIXME: Preserve for when we inevitably require similar logic in the future.
 
-# Attempt to import types unavailable under Python 3.5.
-try:
-    from collections.abc import Collection as _Collection
-    from types import (
-        AsyncGeneratorType as _AsyncGeneratorType,
-        CoroutineType as _CoroutineType,
-    )
-# If this is Python 3.5, define placeholder globals of the same name.
-except ImportError:
-    _AsyncGeneratorType = None
-    _Collection = None
-    _CoroutineType = None
+# # Attempt to import types unavailable under Python 3.5, all of which should
+# # be passed through the intermediary _get_type_or_unavailable() helper
+# # function first before being assigned to module globals below. The
+# # docstrings for such globals should contain a sentence resembling:
+# #     **This type is unavailable under Python 3.5,** where it defaults to
+# #     :class:`UnavailableType` for safety.
+# try:
+#     from collections.abc import Collection as _Collection
+# # If this is Python 3.5, define placeholder globals of the same name.
+# except ImportError:
+#     _Collection = None
 
 # ....................{ TYPES ~ unavailable               }....................
 # Unavailable types are defined *BEFORE* any subsequent types, as the latter
@@ -435,7 +431,7 @@ define the ``__call__`` dunder method.
 '''
 
 # ....................{ TYPES ~ call : return : async     }....................
-AsyncGeneratorCType = _get_type_or_unavailable(_AsyncGeneratorType)
+AsyncGeneratorCType = _AsyncGeneratorType
 '''
 C-based type returned by all **asynchronous pure-Python generators** (i.e.,
 callables implemented in pure Python containing one or more ``yield``
@@ -450,13 +446,10 @@ Caveats
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
-
-**This type is unavailable under Python 3.5,** where it defaults to
-:class:`UnavailableType` for safety.
 '''
 
 
-AsyncCoroutineCType = _get_type_or_unavailable(_CoroutineType)
+AsyncCoroutineCType = _CoroutineType
 '''
 C-based type returned by all **asynchronous coroutines** (i.e., callables
 implemented in pure Python *not* containing one or more ``yield`` statements
@@ -469,9 +462,6 @@ Caveats
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
-
-**This type is unavailable under Python 3.5,** where it defaults to
-:class:`UnavailableType` for safety.
 '''
 
 # ....................{ TYPES ~ call : return : generator }....................
@@ -647,7 +637,7 @@ See Also
 '''
 
 
-CollectionType = _get_type_or_unavailable(_Collection)
+CollectionType = _Collection
 '''
 Type of all **collections** (i.e., both concrete and structural instances of
 the abstract :class:`collections.abc.Collection` base class; sized iterable

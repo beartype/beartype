@@ -145,9 +145,9 @@ def _sanitize_classifiers(
         List of all sanitized PyPI-specific trove classifier strings.
     '''
     assert isinstance(python_version_min_parts, tuple), (
-        '"{}" not a tuple.'.format(python_version_min_parts))
+        '"{}" not tuple.'.format(python_version_min_parts))
     assert isinstance(python_version_minor_max, int), (
-        '"{}" not an integer.'.format(python_version_minor_max))
+        '"{}" not integer.'.format(python_version_minor_max))
 
     # Major version of Python required by this package.
     PYTHON_VERSION_MAJOR = python_version_min_parts[0]

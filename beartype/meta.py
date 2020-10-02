@@ -62,8 +62,9 @@ Human-readable name of the license this package is licensed under.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this section *MUST* be synchronized with:
 # * Continuous integration test matrices, including:
+#   * The top-level "tox.ini" file.
 #   * The "jobs/tests/strategy/matrix/python-version" subkey of the
-#     ".github/workflows/pythonpackage.yml" file.
+#     GitHub Actions-specific ".github/workflows/pythonpackage.yml" file.
 # * Front-facing documentation (e.g., "README.rst", "doc/md/INSTALL.md").
 #
 # On bumping the minimum required version of Python, consider also documenting
@@ -71,7 +72,7 @@ Human-readable name of the license this package is licensed under.
 # submodule's docstring above.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-PYTHON_VERSION_MIN = '3.5.0'
+PYTHON_VERSION_MIN = '3.6.0'
 '''
 Human-readable minimum version of Python required by this package as a
 ``.``-delimited string.

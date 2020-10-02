@@ -16,9 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Drop Python 3.5 support with the next minor beartype release (i.e.,
-#beartype 0.3.0), as Python 3.5 hit EOL on September 13th, 2020.
-
 #FIXME: Reduce @beartype to a noop if the passed callable was decorated by the
 #@typing.no_type_check decorator, which we can trivially detect at runtime via
 #the "__no_type_check__" dunder attribute set on that callable set to True.
