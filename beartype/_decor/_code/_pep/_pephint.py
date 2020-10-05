@@ -447,7 +447,8 @@ del __hint_meta_index_counter
 
 # ....................{ CODERS                            }....................
 @callable_cached
-def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
+def pep_code_check_hint(data: BeartypeData, hint: object) -> (
+    'Tuple[str, bool]'):
     '''
     Python code type-checking the previously localized parameter or return
     value annotated by the passed PEP-compliant type hint against this hint of
@@ -485,9 +486,18 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
 
     Returns
     ----------
-    str
-        Python code type-checking the previously localized parameter or return
-        value against this hint.
+    Tuple[str, bool]
+        2-tuple ``(func_code, is_func_code_needs_random_int)``, where:
+
+        * ``func_code`` is Python code type-checking the previously localized
+          parameter or return value against this hint.
+        * ``is_func_code_needs_random_int`` is a boolean that is ``True`` only
+          if one or more PEP-compliant type hints transitively visitable from
+          this root hint (including this root hint) require a pseudo-random
+          integer. If true, the higher-level
+          :func:`beartype._decor._code.codemain.generate_code` function
+          prefixes the body of this wrapper function with code generating such
+          an integer.
 
     Raises
     ----------
@@ -502,6 +512,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
+    # print('Type-checking hint {!r} for {}...'.format(hint, data.func_name))
 
     # ..................{ ATTRIBUTES                        }..................
     # Localize attributes of this dataclass for negligible efficiency gains.
@@ -740,7 +751,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # "hints_meta" list.
     hints_meta_index_last = 0
 
-    # ..................{ CODE                              }..................
+    # ..................{ FUNC ~ code                       }..................
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
@@ -759,6 +770,12 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
     # performed below with a snippet type-checking the root pith against the
     # root hint.
     func_code = func_root_code
+
+    # True only if one or more PEP-compliant type hints visitable from this
+    # root hint require a pseudo-random integer. If true, the higher-level
+    # beartype._decor._code.codemain.generate_code() function prefixes the body
+    # of this wrapper function with code generating such an integer.
+    is_func_code_needs_random_int = False
 
     # ..................{ SEARCH                            }..................
     # While the 0-based index of metadata describing the next visited hint in
@@ -1168,7 +1185,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
                 # this pith. Specifically...
                 if hint_child not in HINTS_IGNORABLE:
                     # Record that a pseudo-random integer is now required.
-                    data.is_func_wrapper_needs_random_int = True
+                    is_func_code_needs_random_int = True
 
                     # If the active Python interpreter targets at least Python
                     # 3.8 *AND* this parent hint is not the root hint, then all
@@ -1453,5 +1470,5 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> str:
             '{} not type-checked.'.format(hint_root_label))
     # Else, the breadth-first search above successfully generated code.
 
-    # Return this snippet.
-    return func_code
+    # Return all metadata required by higher-level callers.
+    return (func_code, is_func_code_needs_random_int)

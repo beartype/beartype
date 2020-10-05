@@ -263,11 +263,13 @@ def generate_code(data: BeartypeData) -> None:
 
     # Python code snippet type-checking all parameters annotated on this
     # callable if any *or* the empty string otherwise.
-    code_params = _code_check_params(data)
+    code_params, is_code_params_needs_random_int = _code_check_params(data)
 
     # Python code snippet type-checking the return value annotated on this
     # callable if any *or* the empty string otherwise.
-    code_return = _code_check_return(data)
+    code_check_return = _code_check_return(data)
+    code_return, is_code_return_needs_random_int = code_check_return
+    # code_return, is_code_return_needs_random_int = _code_check_return(data)
 
     # Python code snippet declaring the signature of this wrapper followed by
     # preliminary statements (e.g., assignment initializations) if desired
@@ -277,7 +279,8 @@ def generate_code(data: BeartypeData) -> None:
         # If the body of this wrapper requires a pseudo-random integer, append
         # code generating and localizing such an integer to this signature.
         code_sig + CODE_INIT_RANDOM_INT
-        if data.is_func_wrapper_needs_random_int else
+        if (is_code_params_needs_random_int or is_code_return_needs_random_int)
+        else
         # Else, this body requires *NO* such integer. In this case, preserve
         # this signature as is.
         code_sig
@@ -307,7 +310,7 @@ def generate_code(data: BeartypeData) -> None:
     return func_code, is_func_code_noop
 
 # ....................{ CODERS ~ private                  }....................
-def _code_check_params(data: BeartypeData) -> str:
+def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
     '''
     Python code type-checking all annotated parameters of the decorated
     callable if any *or* the empty string otherwise (i.e., if these parameters
@@ -320,9 +323,15 @@ def _code_check_params(data: BeartypeData) -> str:
 
     Returns
     ----------
-    str
-        Python code snippet type-checking all annotated parameters of the
-        decorated callable if any *or* the empty string otherwise.
+    Tuple[str, bool]
+        2-tuple ``(func_code, is_func_code_needs_random_int)``, where:
+
+        * ``func_code`` is Python code type-checking all annotated parameters
+          of the decorated callable if any *or* the empty string otherwise.
+        * ``is_func_code_needs_random_int`` is a boolean that is ``True`` only
+          if type-checking for these parameters requires a higher-level caller
+          to prefix the body of this wrapper function with code generating and
+          localizing a pseudo-random integer.
 
     Raises
     ----------
@@ -346,6 +355,19 @@ def _code_check_params(data: BeartypeData) -> str:
 
     # Python code snippet to be returned.
     func_code = ''
+
+    # Python code snippet type-checking the current parameter.
+    func_code_param = ''
+
+    # True only if type-checking for these parameters requires a higher-level
+    # caller to prefix the body of this wrapper function with code generating
+    # and localizing a pseudo-random integer.
+    is_func_code_needs_random_int = False
+
+    # True only if type-checking for the current parameter requires a
+    # higher-level caller to prefix the body of this wrapper function with code
+    # generating and localizing a pseudo-random integer.
+    is_func_code_param_needs_random_int = False
 
     # True only if this callable accepts one or more positional parameters.
     is_params_positional = False
@@ -394,13 +416,24 @@ def _code_check_params(data: BeartypeData) -> str:
         elif func_arg.kind is Parameter.POSITIONAL_OR_KEYWORD:
             is_params_positional = True
 
-        # If this is a PEP-compliant hint, append Python code type-checking
-        # this parameter against this hint.
+        # If this is a PEP-compliant hint...
         if is_hint_pep(func_arg.annotation):
-            func_code += pep_code_check_param(
-                data=data,
-                func_arg=func_arg,
-                func_arg_index=func_arg_index,
+            # Python code snippet type-checking the current parameter.
+            func_code_param, is_func_code_param_needs_random_int = (
+                pep_code_check_param(
+                    data=data,
+                    func_arg=func_arg,
+                    func_arg_index=func_arg_index,
+                ))
+
+            # Append code type-checking this parameter against this hint.
+            func_code += func_code_param
+
+            # If type-checking this parameter requires first localizing a
+            # pseudo-random integer, note that.
+            is_func_code_needs_random_int = (
+                is_func_code_needs_random_int or
+                is_func_code_param_needs_random_int
             )
         # Else, this is a PEP-noncompliant hint. In this case, append Python
         # code type-checking this parameter against this hint.
@@ -411,19 +444,25 @@ def _code_check_params(data: BeartypeData) -> str:
                 func_arg_index=func_arg_index,
             )
 
-    # Return either...
+    # Return all metadata required by higher-level callers, including...
     return (
-        # If this callable accepts one or more positional parameters, this
-        # snippet preceded by code localizing the number of such parameters.
-        CODE_INIT_PARAMS_POSITIONAL_LEN + func_code
-        if is_params_positional else
-        # Else, this callable accepts *NO* positional parameters. In this case,
-        # this snippet as is.
-        func_code
+        # Python code, defined as either...
+        (
+            # If this callable accepts one or more positional parameters, this
+            # snippet preceded by code localizing the number of these
+            # parameters.
+            CODE_INIT_PARAMS_POSITIONAL_LEN + func_code
+            if is_params_positional else
+            # Else, this callable accepts *NO* positional parameters. In this
+            # case, this snippet as is.
+            func_code
+        ),
+        # This boolean.
+        is_func_code_needs_random_int,
     )
 
 # ....................{ CODERS                            }....................
-def _code_check_return(data: BeartypeData) -> str:
+def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     '''
     Python code snippet type-checking the annotated return value declared by
     the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -436,37 +475,76 @@ def _code_check_return(data: BeartypeData) -> str:
 
     Returns
     ----------
-    str
-        Python code snippet type-checking the annotated return value declared
-         by this callable if any *or* the empty string otherwise.
+    Tuple[str, bool]
+        2-tuple ``(func_code, is_func_code_needs_random_int)``, where:
+
+        * ``func_code`` is Python code type-checking the annotated return value
+          declared by this callable if any *or* the empty string otherwise.
+        * ``is_func_code_needs_random_int`` is a boolean that is ``True`` only
+          if type-checking for this return value requires a higher-level caller
+          to prefix the body of this wrapper function with code generating and
+          localizing a pseudo-random integer.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonPepException
+        If the type hint annotating this return value (if any) of this callable
+        is neither:
+
+        * **PEP-compliant** (i.e., :mod:`beartype`-agnostic hint compliant with
+          annotation-centric PEPs).
+        * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
+          compliant with annotation-centric PEPs)).
+    TypeError
+        If that type hint is **unhashable** (i.e., *not* hashable by the
+        builtin :func:`hash` function and thus unusable in hash-based
+        containers like dictionaries).
     '''
     assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
+
+    # Python code snippet to be returned.
+    func_code = None
+
+    # True only if type-checking for this return value requires a higher-level
+    # caller to prefix the body of this wrapper function with code generating
+    # and localizing a pseudo-random integer.
+    is_func_code_needs_random_int = False
 
     # Type hint annotating this callable's return value if any *OR*
     # "Signature.Empty" otherwise.
     func_return_hint = data.func_sig.return_annotation
 
-    # If this return value is unannotated, return code calling this callable
+    # If this return value is unannotated, generate code calling this callable
     # unchecked and returning this value from this wrapper.
     if func_return_hint is _RETURN_HINT_EMPTY:
-        return CODE_RETURN_UNCHECKED
+        func_code = CODE_RETURN_UNCHECKED
     # Else, this return value is annotated.
-
-    # If this hint is unsupported, raise an exception.
-    die_unless_hint(func_return_hint)
-    # Else, this hint is guaranteed to be supported and thus hashable.
-
-    # If this hint is silently ignorable, return code calling this callable
-    # unchecked and returning this value from this wrapper.
-    if func_return_hint in HINTS_IGNORABLE:
-        return CODE_RETURN_UNCHECKED
-
-    # If this is a PEP-compliant hint, return Python code type-checking this
-    # return value against this hint.
-    if is_hint_pep(func_return_hint):
-        return pep_code_check_return(data)
-    # Else, this is a PEP-noncompliant hint. In this case, return Python code
-    # type-checking this return value against this hint.
     else:
-        return nonpep_code_check_return(data)
+        # If this hint is unsupported, raise an exception.
+        die_unless_hint(func_return_hint)
+        # Else, this hint is guaranteed to be supported and thus hashable.
+
+        # If this hint is silently ignorable, generate code calling this
+        # callable unchecked and returning this value from this wrapper.
+        if func_return_hint in HINTS_IGNORABLE:
+            func_code = CODE_RETURN_UNCHECKED
+        # Else, this hint is *NOT* ignorable.
+        #
+        # If this is a PEP-compliant hint, generate Python code type-checking
+        # this return value against this hint.
+        elif is_hint_pep(func_return_hint):
+            func_code, is_func_code_needs_random_int = (
+                pep_code_check_return(data))
+        # Else, this is a PEP-noncompliant hint. In this case, generate Python
+        # code type-checking this return value against this hint.
+        else:
+            func_code = nonpep_code_check_return(data)
+
+    # Return all metadata required by higher-level callers, including...
+    return (
+        # Python code type-checking this return value against this hint.
+        func_code,
+        # This boolean.
+        is_func_code_needs_random_int,
+    )

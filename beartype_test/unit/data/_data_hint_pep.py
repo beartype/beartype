@@ -13,7 +13,6 @@ unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import collections, typing
-# from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_7
 from collections import namedtuple
 
 # ....................{ TYPEVARS                          }....................
@@ -369,72 +368,8 @@ PEP_HINT_TO_META = {
                 exception_str_match_regexes=(
                     # Declares the index of this list's problematic item.
                     r'\s[Ll]ist item 0\s',
-                    # Quotes the value of this item.
+                    # Double-quotes the value of this item.
                     r'\s"73"\s',
-                ),
-                exception_str_not_match_regexes=(),
-            ),
-        ),
-    ),
-
-    # List of sequences of mutable sequences of non-"typing" objects,
-    # exercising support for Python >= 3.8-specific assignment expressions.
-    # Note that *THREE* rather than merely two nesting levels are required to
-    # exercise a critical edge case in CPython's fragile and seemingly
-    # defective implementation of assignment expressions. See also the
-    # "PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD" docstring.
-    typing.List[
-        typing.Sequence[typing.MutableSequence[str]]]: _PepHintMetadata(
-        typing_attr=typing.List,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # Empty list, which satisfies all hint arguments by definition.
-            [],
-            # List of tuples of lists of strings.
-            [
-                (
-                    [
-                        'Dent stimulant‐accelerating excelsior graphics, that',
-                        'May they rest their certainties’ Solicitousness to',
-                    ],
-                    [
-                        'Untaint these ties',
-                        'Of δtrange chaos, attractively,',
-                    ],
-                ),
-                (
-                    [
-                        'And crest a traction‐pull',
-                        'Of Life’s unpleasant limits',
-                    ],
-                    [
-                        'Besides a puling Peasantry’s lim’nal finality',
-                        'Of (anon) ͼssential Ðeath’s non‐presence,',
-                    ],
-                ),
-            ],
-        ),
-        piths_unsatisfied_meta=(
-            # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Sense‐enabling, measurable fidelity',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
-            # List of tuples of lists containing exactly one integer. Since
-            # list items are only randomly type-checked, only containers
-            # containing exactly one item at each nesting level enables us to
-            # match the explicit index at fault below.
-            _PepHintPithUnsatisfiedMetadata(
-                pith=[([37,],),],
-                # Match that the exception message raised for this object...
-                exception_str_match_regexes=(
-                    # Declares the index of this list's problematic item.
-                    r'\s[Ll]ist item 0 tuple item 0 list item 0\s',
-                    # Quotes the value of this item.
-                    r'\s"37"\s',
                 ),
                 exception_str_not_match_regexes=(),
             ),

@@ -27,8 +27,9 @@ See Also
 from beartype_test.util.pyterror import raises_uncached
 from collections import ChainMap
 from re import search
+from typing import List
 
-# ....................{ TESTS ~ pass : param : kind       }....................
+# ....................{ TESTS                             }....................
 def test_p484() -> None:
     '''
     Test usage of the :func:`beartype.beartype` decorator for a function call
@@ -132,3 +133,56 @@ def test_p484() -> None:
                     exception_str_not_match_regex, exception_str) is None
 
         # assert False is True
+
+# ....................{ TESTS ~ issue                     }....................
+def test_p484_sequence_standard_cached() -> None:
+    '''
+    Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
+    decorator with respect to metadata describing **PEP-compliant standard
+    sequence hints** (e.g., :attr:`typing.List`) cached via memoization across
+    calls to that decorator has been resolved and *not* regressed.
+
+    .. _issue #5:
+       https://github.com/beartype/beartype/issues/5
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+
+    # Callable annotated by an arbitrary PEP 484 standard sequence type hint.
+    @beartype
+    def fern_hill(prince_of_the_apple_towns: List[str]) -> str:
+        return prince_of_the_apple_towns[0]
+
+    # A different callable annotated by the same hint and another arbitrary
+    # non-"typing" type hint.
+    @beartype
+    def apple_boughs(
+        famous_among_the_barns: List[str], first_spinning_place: str) -> str:
+        return famous_among_the_barns[-1] + first_spinning_place
+
+    # Validate that these callables behave as expected.
+    assert fern_hill([
+        'Now as I was young and easy under the apple boughs',
+        'About the lilting house and happy as the grass was green,'
+        '  The night above the dingle starry,',
+        '    Time let me hail and climb',
+        '  Golden in the heydays of his eyes,',
+        'And honoured among wagons I was prince of the apple towns',
+        'And once below a time I lordly had the trees and leaves',
+        '    Trail with daisies and barley',
+        '  Down the rivers of the windfall light. ',
+    ]) == 'Now as I was young and easy under the apple boughs'
+    assert apple_boughs([
+        'And as I was green and carefree, famous among the barns',
+        'About the happy yard and singing as the farm was home,',
+        '  In the sun that is young once only,',
+        '    Time let me play and be',
+        '  Golden in the mercy of his means,',
+        'And green and golden I was huntsman and herdsman, the calves',
+        'Sang to my horn, the foxes on the hills barked clear and cold,',
+        '    And the sabbath rang slowly',
+        '  In the pebbles of the holy streams.',
+    ], 'All the sun long it was running, it was lovely, the hay') == (
+        '  In the pebbles of the holy streams.'
+        'All the sun long it was running, it was lovely, the hay')

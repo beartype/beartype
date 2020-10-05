@@ -60,7 +60,7 @@ def pep_code_check_param(
     data: BeartypeData,
     func_arg: Parameter,
     func_arg_index: int,
-) -> str:
+) -> 'Tuple[str, bool]':
     '''
     Python code type-checking the parameter with the passed signature and index
     annotated by a **PEP-compliant type hint** (e.g., :mod:`beartype`-agnostic
@@ -78,8 +78,15 @@ def pep_code_check_param(
 
     Returns
     ----------
-    str
-        Python code type-checking this parameter against this hint.
+    Tuple[str, bool]
+        2-tuple ``(func_code, is_func_code_needs_random_int)``, where:
+
+        * ``func_code`` is Python code type-checking this parameter against
+          this hint.
+        * ``is_func_code_needs_random_int`` is a boolean that is ``True`` only
+          if type-checking for this parameter requires a higher-level caller to
+          prefix the body of this wrapper function with code generating and
+          localizing a pseudo-random integer.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
@@ -88,7 +95,7 @@ def pep_code_check_param(
         '{!r} not @beartype data.'.format(data))
     assert isinstance(func_arg, Parameter), (
         '{!r} not parameter metadata.'.format(func_arg))
-    assert isinstance(func_arg_index, int), (
+    assert func_arg_index.__class__ is int, (
         '{!r} not parameter index.'.format(func_arg_index))
 
     # Python code template localizing this parameter if this kind of parameter
@@ -115,17 +122,20 @@ def pep_code_check_param(
 
     # Attempt to...
     try:
-        # Unmemoized parameter-specific Python code type-checking this exact
-        # parameter, globally replacing...
-        param_code_check = (
-            # In this memoized parameter-agnostic code type-checking either a
-            # parameter or return value with arbitrary name...
-            pep_code_check_hint(data=data, hint=func_arg.annotation).replace(
-                # This placeholder substring cached into this code with...
-                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
-                # This object representation of this parameter's name.
-                repr(func_arg.name),
-            ))
+        # Generate memoized parameter-agnostic Python code type-checking either
+        # a parameter or return value with an arbitrary name.
+        param_code_check, is_func_code_needs_random_int = pep_code_check_hint(
+            data=data, hint=func_arg.annotation)
+
+        # Generate unmemoized parameter-specific Python code type-checking this
+        # exact parameter by globally replacing in this parameter-agnostic
+        # code...
+        param_code_check = param_code_check.replace(
+            # This placeholder substring cached into this code with...
+            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+            # This object representation of this parameter's name.
+            repr(func_arg.name),
+        )
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
     except Exception as exception:
@@ -141,17 +151,23 @@ def pep_code_check_param(
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
-    # Return Python code to...
+    # Return all metadata required by higher-level callers, including...
     return (
-        # Localize this parameter *AND*...
-        get_arg_code_template.format(
-            arg_name=func_arg.name, arg_index=func_arg_index) +
-        # Type-check this parameter.
-        param_code_check
+        # Python code to....
+        (
+            # Localize this parameter *AND*...
+            get_arg_code_template.format(
+                arg_name=func_arg.name, arg_index=func_arg_index) +
+            # Type-check this parameter.
+            param_code_check
+        ),
+        # Boolean true only if type-checking this parameter requires first
+        # localizing a pseudo-random integer.
+        is_func_code_needs_random_int,
     )
 
 
-def pep_code_check_return(data: BeartypeData) -> str:
+def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     '''
     Python code type-checking the return value annotated with a **PEP-compliant
     type hint** (e.g., :mod:`beartype`-agnostic annotation compliant with
@@ -164,8 +180,15 @@ def pep_code_check_return(data: BeartypeData) -> str:
 
     Returns
     ----------
-    str
-        Python code type-checking this return value against this hint.
+    Tuple[str, bool]
+        2-tuple ``(func_code, is_func_code_needs_random_int)``, where:
+
+        * ``func_code`` is Python code type-checking this return value against
+          this hint.
+        * ``is_func_code_needs_random_int`` is a boolean that is ``True`` only
+          if type-checking for this return value requires a higher-level caller
+          to prefix the body of this wrapper function with code generating and
+          localizing a pseudo-random integer.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
@@ -175,18 +198,22 @@ def pep_code_check_return(data: BeartypeData) -> str:
 
     # Attempt to...
     try:
-        # Unmemoized parameter-specific Python code type-checking this exact
-        # return value, globally replacing...
-        return_code_check = (
+        # Generate memoized parameter-agnostic Python code type-checking either
+        # a parameter or return value with an arbitrary name.
+        return_code_check, is_func_code_needs_random_int = pep_code_check_hint(
             # In this memoized parameter-agnostic code type-checking either a
             # parameter or return value with arbitrary name...
-            pep_code_check_hint(
-                data=data, hint=data.func_sig.return_annotation).replace(
-                # This placeholder substring cached into this code with...
-                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
-                # This object representation of this return value,
-                _RETURN_REPR,
-            ))
+            data=data, hint=data.func_sig.return_annotation)
+
+        # Generate unmemoized parameter-specific Python code type-checking this
+        # exact return value by globally replacing in this parameter-agnostic
+        # code...
+        return_code_check = return_code_check.replace(
+            # This placeholder substring cached into this code with...
+            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+            # This object representation of this return value,
+            _RETURN_REPR,
+        )
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
     except Exception as exception:
@@ -201,12 +228,18 @@ def pep_code_check_return(data: BeartypeData) -> str:
     #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
     #which are the optimal means of performing string formatting.
 
-    # Return Python code to...
+    # Return all metadata required by higher-level callers, including...
     return (
-        # Call the decorated callable and localize its return value *AND*...
-        PEP_CODE_CHECK_RETURN_PREFIX +
-        # Type-check this return value *AND*...
-        return_code_check +
-        # Return this value from this wrapper function.
-        PEP_CODE_CHECK_RETURN_SUFFIX
+        # Python code to....
+        (
+            # Call the decorated callable and localize its return value *AND*...
+            PEP_CODE_CHECK_RETURN_PREFIX +
+            # Type-check this return value *AND*...
+            return_code_check +
+            # Return this value from this wrapper function.
+            PEP_CODE_CHECK_RETURN_SUFFIX
+        ),
+        # Boolean true only if type-checking this return value requires first
+        # localizing a pseudo-random integer.
+        is_func_code_needs_random_int,
     )
