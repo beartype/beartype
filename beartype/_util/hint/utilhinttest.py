@@ -26,7 +26,7 @@ def die_unless_hint(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     is_str_valid: bool = True,
 ) -> None:
     '''
@@ -60,7 +60,7 @@ def die_unless_hint(
         Object to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
+        exception message raised by this function. Defaults to ``"Annotated"``.
     is_str_valid : Optional[bool]
         ``True`` only if this function permits this object to be a string.
         Defaults to ``True``. If this boolean is:
@@ -106,7 +106,8 @@ def die_unless_hint(
         )
 
     # Else, this hint is *NOT* PEP-compliant. In this case, raise an exception
-    # only if this hint is also *NOT* PEP-noncompliant.
+    # only if this hint is also *NOT* PEP-noncompliant. By design, all
+    # PEP-noncompliant type hints are supported by @beartype.
     die_unless_hint_nonpep(
         hint=hint,
         hint_label=hint_label,

@@ -103,7 +103,7 @@ from beartype.roar import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
-from beartype._util.utilpy import (
+from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_4_0,
     IS_PYTHON_AT_LEAST_3_7,
 )

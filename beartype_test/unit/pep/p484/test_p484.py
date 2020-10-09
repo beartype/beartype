@@ -67,15 +67,15 @@ def test_p484() -> None:
 
     # For each predefined PEP-compliant type hint and associated metadata...
     for pep_hint, pep_hint_meta in PEP_HINT_ALL_TO_META.items():
+        # If this hint is currently unsupported, continue to the next.
+        if not pep_hint_meta.is_supported:
+            continue
+        # Else, this hint is currently supported.
+
         # Repeat the following logic twice. Why? To exercise memoization across
         # repeated @beartype decorations on different callables annotated by
         # the same PEP hints.
         for _ in RANGE_2:
-            # If this hint is currently unsupported, continue to the next.
-            if not pep_hint_meta.is_supported:
-                continue
-            # Else, this hint is currently supported.
-
             # Dynamically define a callable both accepting a single parameter
             # and returning a value annotated by this hint whose implementation
             # trivially reduces to the identity function.

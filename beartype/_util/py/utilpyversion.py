@@ -23,7 +23,19 @@ IS_PYTHON_AT_LEAST_4_0 = sys.version_info >= (4, 0)
 '''
 
 
-IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 8)
+#FIXME: After dropping Python 3.8 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+IS_PYTHON_AT_LEAST_3_9 = IS_PYTHON_AT_LEAST_4_0 or sys.version_info >= (3, 9)
+'''
+``True`` only if the active Python interpreter targets at least Python 3.8.0.
+'''
+
+
+#FIXME: After dropping Python 3.7 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or sys.version_info >= (3, 8)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.8.0.
 '''

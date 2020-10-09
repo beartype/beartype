@@ -350,7 +350,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
-from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
 from typing import (
     Union,
@@ -1135,6 +1135,19 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # Else, this snippet is its initial value and thus ignorable.
 
             # ..............{ SEQUENCES                         }..............
+            #FIXME: This requires additional sanity tests under Python >= 3.9.
+            #Basically, we *ONLY* want to enter this conditional branch if this
+            #attribute is *NOT* argumentless, which we can test as follows:
+            #    elif (
+            #        hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD and
+            #        not is_hint_pep_typing_attr(hint_curr_attr)
+            #    ):
+            #
+            #Note that this requires we implement a new
+            #is_hint_pep_typing_attr() tester, but that doing so is trivial.
+            #See the relevant "FIXME:" comment in the "utilhintget" submodule.
+            #FIXME: Unit test is_hint_pep_typing_attr(), please.
+
             # If this hint is a standard sequence (e.g., "typing.List",
             # "typing.Sequence")...
             elif hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD:
@@ -1349,10 +1362,14 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             #   "typing.ByteString" is simply an alias for the
             #   "collections.abc.ByteString" abstract base class (ABC) and thus
             #   already perfectly handled by this fallback logic.
+            # * "typing.Hashable", which accepts *NO* subscripted arguments.
+            #   "typing.Hashable" is simply an alias for the
+            #   "collections.abc.Hashable" abstract base class (ABC) and thus
+            #   already perfectly handled by this fallback logic.
             #
             # Ergo, this fallback *MUST* thus be preserved in perpetuity --
-            # even after we explicitly deeply type-check all other argumentless
-            # typing attributes originating from origin types above.
+            # even after deeply type-checking all other argumentless typing
+            # attributes originating from origin types above.
             else:
                 # Assert this attribute is isinstance()-able.
                 assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (

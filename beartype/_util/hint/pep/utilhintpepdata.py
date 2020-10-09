@@ -16,7 +16,7 @@ from beartype.cave import (
     RegexCompiledType,
     RegexMatchType,
 )
-from beartype._util.utilpy import (
+from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_6,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
@@ -213,9 +213,13 @@ TYPING_ATTRS_SUPPORTED = frozenset(
     # PEP-compliant type hint annotated by a subscription of that object.
     (
         typing.Any,
+        typing.Optional,
 
-        # Note this implicitly subsumes "typing.Optional", which the "typing"
-        # module transparently reduces at runtime to "typing.Union". *sigh*
+        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+        # under Python <= 3.9. The implementations of the "typing" module under
+        # those older Python versions transparently reduced "typing.Optional"
+        # to "typing.Union" at runtime. Since this reduction is no longer the
+        # case, both *MUST* now be explicitly listed here.
         typing.Union,
     ) +
 

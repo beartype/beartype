@@ -810,6 +810,8 @@ PEP-compliant Type Hints
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
+* `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
+* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 
 See also the **PEP** and **typing** categories of our `features matrix
 <Features_>`__ for further details.
@@ -903,14 +905,17 @@ typing_ types:
   typing_ non-classes).
 * User-defined protocols (i.e., user-defined classes transitively subclassing
   the typing.Protocol_ abstract base class (ABC)).
+* typing.Annotated_.
 * typing.AnyStr_.
 * typing.BinaryIO_.
+* typing.ClassVar_.
 * typing.IO_.
 * typing.Match_.
 * typing.NewType_.
 * typing.NoReturn_.
 * typing.Pattern_.
 * typing.TextIO_.
+* typing.Final_.
 * typing.final_.
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
@@ -959,6 +964,8 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | typing_     | typing.AbstractSet_                 | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | typing.Annotated_                   | *none*                        | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Any_                         | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.AnyStr_                      | *none*                        | *none*                    |
@@ -980,6 +987,8 @@ Let's chart current and prospective new features for future generations:
 |             | typing.Callable_                    | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ChainMap_                    | **0.2.0**\ —\ *current*       | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | typing.ClassVar_                    | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Collection_                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1097,6 +1106,10 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `589 <PEP 589_>`__                  | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `591 <PEP 591_>`__                  | *none*                        | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `593 <PEP 593_>`__                  | *none*                        | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
 | packages    | `PyPI <beartype PyPI_>`__           | **0.1.0**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `Anaconda <beartype Anaconda_>`__   | **0.1.0**\ —\ *current*       | —                         |
@@ -1111,7 +1124,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | 3.8                                 | **0.1.0**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | 3.9                                 | *none*                        | —                         |
+|             | 3.9                                 | **0.3.2**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 
 License
@@ -1290,6 +1303,10 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0586
 .. _PEP 589:
    https://www.python.org/dev/peps/pep-0589
+.. _PEP 591:
+   https://www.python.org/dev/peps/pep-0591
+.. _PEP 593:
+   https://www.python.org/dev/peps/pep-0593
 .. _PEP 3141:
    https://www.python.org/dev/peps/pep-3141
 
@@ -1332,6 +1349,8 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : typing : attribute    )------------------
 .. _typing.AbstractSet:
    https://docs.python.org/3/library/typing.html#typing.AbstractSet
+.. _typing.Annotated:
+   https://docs.python.org/3/library/typing.html#typing.Annotated
 .. _typing.Any:
    https://docs.python.org/3/library/typing.html#typing.Any
 .. _typing.AnyStr:
@@ -1354,6 +1373,8 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.Callable
 .. _typing.ChainMap:
    https://docs.python.org/3/library/typing.html#typing.ChainMap
+.. _typing.ClassVar:
+   https://docs.python.org/3/library/typing.html#typing.ClassVar
 .. _typing.Collection:
    https://docs.python.org/3/library/typing.html#typing.Collection
 .. _typing.Container:
@@ -1456,5 +1477,7 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.Union
 .. _typing.ValuesView:
    https://docs.python.org/3/library/typing.html#typing.ValuesView
+.. _typing.Final:
+   https://docs.python.org/3/library/typing.html#typing.Final
 .. _typing.final:
    https://docs.python.org/3/library/typing.html#typing.final

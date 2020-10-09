@@ -14,6 +14,7 @@ unit test submodules.
 # ....................{ IMPORTS                           }....................
 import collections, typing
 from collections import namedtuple
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ TYPEVARS                          }....................
 S = typing.TypeVar('S')
@@ -25,6 +26,19 @@ User-defined generic :mod:`typing` type variable.
 T = typing.TypeVar('T')
 '''
 User-defined generic :mod:`typing` type variable.
+'''
+
+
+_IS_TYPING_ATTR_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
+'''
+``True`` only if **argumentless typing attributes** (i.e., public attribute of
+the :mod:`typing` module without arguments) are parametrized by one or more
+type variables under the active Python interpreter.
+
+This boolean is ``True`` for *all* Python interpreters targeting less than
+Python 3.9.0. Prior to Python 3.9.0, the :mod:`typing` module parametrized most
+argumentless typing attributes by default. Python 3.9.0 halted this barbaric
+practice by leaving argumentless typing attributes unparametrized by default.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
@@ -228,9 +242,9 @@ PEP_HINT_TO_META = {
     # ..................{ COLLECTIONS ~ dict                }..................
     typing.Dict: _PepHintMetadata(
         typing_attr=typing.Dict,
-        is_supported=False,
+        is_supported=not _IS_TYPING_ATTR_TYPEVARED,
         is_generic_user=False,
-        is_typevared=True,
+        is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Dictionary containing arbitrary key-value pairs.
             {
@@ -284,9 +298,9 @@ PEP_HINT_TO_META = {
     # Bare "List" attribute.
     typing.List: _PepHintMetadata(
         typing_attr=typing.List,
-        is_supported=False,
+        is_supported=not _IS_TYPING_ATTR_TYPEVARED,
         is_generic_user=False,
-        is_typevared=True,
+        is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Empty list, which satisfies all hint arguments by definition.
             [],
@@ -298,13 +312,15 @@ PEP_HINT_TO_META = {
             ],
         ),
         piths_unsatisfied_meta=(
+            # String constant.
+            'Of acceptance.',
             # Tuple containing arbitrary items.
             _PepHintPithUnsatisfiedMetadata(
-                pith=[
+                pith=(
                     'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
                     '3. And Utter‐most, gutterly gut‐rending posts, glutton',
                     3.1415,
-                ],
+                ),
                 exception_str_match_regexes=(),
                 exception_str_not_match_regexes=(),
             ),
@@ -524,9 +540,9 @@ PEP_HINT_TO_META = {
     # ..................{ TYPE ALIASES                      }..................
     typing.Type: _PepHintMetadata(
         typing_attr=typing.Type,
-        is_supported=False,
+        is_supported=not _IS_TYPING_ATTR_TYPEVARED,
         is_generic_user=False,
-        is_typevared=True,
+        is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Transitive superclass of all superclasses.
             object,
@@ -760,11 +776,19 @@ PEP_HINT_TO_META = {
     # ..................{ UNIONS ~ optional                 }..................
     # Optional isinstance()-able "typing" type.
     typing.Optional[typing.Sequence[str]]: _PepHintMetadata(
-        # The "typing" module implicitly reduces *ALL* subscriptions of the
-        # "typing.Optional" attribute by the corresponding "typing.Union"
-        # attribute subscripted by both that argument and "type(None)". Ergo,
-        # there effectively exists *NO* "typing.Optional" attribute.
-        typing_attr=typing.Union,
+        # Subscriptions of the "typing.Optional" attribute reduce to
+        # fundamentally different argumentless typing attributes depending on
+        # Python version. Specifically, under:
+        # * Python >= 3.9.0, the "typing.Optional" and "typing.Union"
+        #   attributes are distinct.
+        # * Python < 3.9.0, the "typing.Optional" and "typing.Union"
+        #   attributes are *NOT* distinct. The "typing" module implicitly
+        #   reduces *ALL* subscriptions of the "typing.Optional" attribute by
+        #   the corresponding "typing.Union" attribute subscripted by both that
+        #   argument and "type(None)". Ergo, there effectively exists *NO*
+        #   "typing.Optional" attribute under older Python versions.
+        typing_attr=(
+            typing.Optional if IS_PYTHON_AT_LEAST_3_9 else typing.Union),
         is_supported=True,
         is_generic_user=False,
         is_typevared=False,

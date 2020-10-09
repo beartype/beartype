@@ -398,6 +398,7 @@ def get_hint_pep_typevars(hint: object) -> tuple:
         (T, S)
     '''
 
+    #FIXME: After dropping Python 3.6, drop the trailing "or ()". See below.
     #FIXME: Consider replacing with this more exacting test:
     #return getattr(hint, '__parameters__', ())) if is_hint_pep(hint) else ()
 

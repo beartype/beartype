@@ -21,7 +21,7 @@ from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
 )
-from beartype._util.utilpy import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -122,7 +122,7 @@ def die_unless_hint_pep_supported(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotation',
+    hint_label: str = 'Annotated',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant supported
@@ -148,10 +148,9 @@ def die_unless_hint_pep_supported(
     a subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``),
     this validator ignores all subscripted arguments (e.g., ``List[int]``) on
     this hint and may thus return false positives for hints that are directly
-    supported but whose subscripted arguments are not.
-
-    To deeply validate this object, iteratively call this validator during a
-    recursive traversal over each subscripted argument of this object.
+    supported but whose subscripted arguments are not. To deeply validate this
+    object, iteratively call this validator during a recursive traversal (such
+    as a breadth-first search) over each subscripted argument of this object.
 
     Parameters
     ----------
@@ -159,7 +158,7 @@ def die_unless_hint_pep_supported(
         Object to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
+        exception message raised by this function. Defaults to ``"Annotated"``.
 
     Raises
     ----------
@@ -179,8 +178,7 @@ def die_unless_hint_pep_supported(
     # Else, this object is *NOT* a supported PEP-compliant type hint. In this
     # case, subsequent logic raises an exception specific to the passed
     # parameters.
-    assert isinstance(hint_label, str), (
-        '{!r} not string.'.format(hint_label))
+    assert hint_label.__class__ is str, '{!r} not string.'.format(hint_label)
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with is_hint_pep_supported() below.
@@ -195,14 +193,14 @@ def die_unless_hint_pep_supported(
     # non-trivial decorator support that has yet to be implemented.
     if is_hint_pep_generic_user(hint):
         raise BeartypeDecorHintPepUnsupportedException(
-            '{} generic PEP type {!r} {}'.format(
+            '{} generic PEP hint {!r} {}'.format(
                 hint_label, hint, _EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX))
     #FIXME: Remove *AFTER* implementing support for type variables.
     # Else if this hint is typevared, raise an exception. Type variables
     # require non-trivial decorator support that has yet to be implemented.
     elif is_hint_pep_typevared(hint):
         raise BeartypeDecorHintPepUnsupportedException(
-            '{} "TypeVar"-parametrized PEP type {!r} {}'.format(
+            '{} "TypeVar"-parametrized PEP hint {!r} {}'.format(
                 hint_label, hint, _EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX))
 
     # Else, this hint is neither generic nor typevared. In this case, raise a
@@ -213,7 +211,7 @@ def die_unless_hint_pep_supported(
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating this expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
-        '{} PEP type {!r} {}'.format(
+        '{} PEP hint {!r} {}'.format(
             hint_label, hint, _EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX))
 
 
@@ -226,9 +224,10 @@ def die_unless_hint_pep_typing_attr_supported(
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant supported
-    argumentless** :mod:`typing` **attribute** (i.e., public attribute of the
-    :mod:`typing` module uniquely identifying a PEP-compliant type hint without
-    arguments currently supported by the :func:`beartype.beartype` decorator).
+    argumentless typing attribute** (i.e., public attribute of the
+    :mod:`typing` module without arguments uniquely identifying a category of
+    PEP-compliant type hints currently supported by the
+    :func:`beartype.beartype` decorator).
 
     This validator is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
