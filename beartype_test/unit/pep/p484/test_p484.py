@@ -55,6 +55,8 @@ def test_p484() -> None:
     )
     from beartype_test.unit.data.data_hint import (
         PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
+    from beartype_test.unit.data._data_hint_pep import (
+        _PepHintPithUnsatisfiedMetadata)
 
     # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
     # instances detailing those hints with metadata applicable to testing
@@ -105,6 +107,10 @@ def test_p484() -> None:
 
             # For each object *NOT* satisfying this hint...
             for pith_unsatisfied_meta in pep_hint_meta.piths_unsatisfied_meta:
+                # Assert this metadata is an instance of the desired dataclass.
+                assert isinstance(
+                    pith_unsatisfied_meta, _PepHintPithUnsatisfiedMetadata)
+
                 # Assert that iterables of uncompiled regular expression
                 # expected to match and *NOT* match this message are *NOT*
                 # strings, as commonly occurs when accidentally omitting a

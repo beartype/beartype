@@ -88,10 +88,22 @@ def get_hint_type_origin(hint: object) -> type:
 #distinguishing argumentless "typing" attributes from standard "typing" objects
 #in robust space- and time-efficient manner. First, note that the set of all
 #argumentless "typing" attributes is finite (and actually quite small). Given
-#that, we can then define a new global frozenset of these attributes:
+#that, we can then define a new global frozenset of these attributes based on a
+#superset of the keys of the current "TYPING_ATTR_TO_TYPE_ORIGIN". The
+#principal issue here is that this frozenset will first need to be defined as a
+#mutable set (probably in a module-scoped _init() function) iteratively
+#expended:with "typing" attributes that conditionally depend on various major
+#Python versions, which is then eventually coerced into a frozenset. Feasible,
+#but just *UGH.* Anyway, it would resemble something like:
 #    # In "beartype._util.hint.pep.utilhintpepdata"
-#    TYPING_ATTRS = frozenset(TYPING_ATTR_TO_TYPE_ORIGIN.keys())
-#So, that's trivial. Given that, we then define:
+#    TYPING_ATTRS = None
+#    def _init() -> None:
+#        global TYPING_ATTRS
+#        TYPING_ATTRS = set((...))
+#        TYPING_ATTRS.update()
+#        TYPING_ATTRS = frozenset(TYPING_ATTRS)
+#
+#So, that's feasible but non-trivial. Given that, we then define:
 #    # In "beartype._util.hint.pep.utilhintpeptest"
 #    def is_hint_pep_typing_attr(hint: object) -> bool:
 #         return hint in TYPING_ATTRS

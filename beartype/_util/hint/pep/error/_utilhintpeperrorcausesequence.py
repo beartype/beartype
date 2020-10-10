@@ -16,8 +16,8 @@ from beartype._util.hint.pep.error._utilhintpeperrorcause import (
     get_cause_or_none, get_cause_or_none_type)
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTRS_SEQUENCE_STANDARD)
-from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
 from beartype._util.hint.utilhintget import get_hint_type_origin
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -45,7 +45,9 @@ def get_cause_or_none_sequence_standard(
     :func:`_get_cause_or_none`
         Further details.
     '''
-    assert hint_attr in TYPING_ATTRS_SEQUENCE_STANDARD
+    assert hint_attr in TYPING_ATTRS_SEQUENCE_STANDARD, (
+        '{!r} not argumentless "typing" '
+        'standard sequence attribute.'.format(hint_attr))
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
     hint_type_origin = get_hint_type_origin(hint_attr)
@@ -69,7 +71,7 @@ def get_cause_or_none_sequence_standard(
     hint_child = hint_childs[0]
 
     # If this child hint is *NOT* ignorable...
-    if hint_child not in HINTS_IGNORABLE:
+    if not is_hint_ignorable(hint_child):
         # For each enumerated item of this pith...
         for pith_item_index, pith_item in enumerate(pith):
             # Human-readable string describing the failure of this item to

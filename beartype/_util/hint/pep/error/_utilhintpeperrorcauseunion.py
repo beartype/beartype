@@ -14,10 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype.roar import _BeartypeUtilRaisePepException
-from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
 from beartype._util.hint.utilhintget import get_hint_type_origin
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.error._utilhintpeperrorcause import (
     get_cause_or_none)
+from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_UNION
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
@@ -47,7 +48,8 @@ def get_cause_or_none_union(
     :func:`_get_cause_or_none`
         Further details.
     '''
-    assert hint_attr is typing.Union
+    assert hint_attr in TYPING_ATTRS_UNION, (
+        '{!r} not argumentless "typing" union attribute.'.format(hint_attr))
 
     # Tuple of all subscripted arguments defining this union, localized for
     # both minor efficiency and major readability.
@@ -77,7 +79,7 @@ def get_cause_or_none_union(
     # For each subscripted argument of this union...
     for hint_child in hint_childs:
         # If this child hint is ignorable, continue to the next.
-        if hint_child in HINTS_IGNORABLE:
+        if is_hint_ignorable(hint_child):
             continue
         # Else, this child hint is unignorable.
 

@@ -833,9 +833,9 @@ values annotated with these typing_ types:
 * typing.ByteString_.
 * typing.List_.
 * typing.MutableSequence_.
-* typing.NamedTuple_.
 * typing.Optional_.
 * typing.Sequence_.
+* typing.Sized_.
 * typing.SupportsAbs_.
 * typing.SupportsBytes_.
 * typing.SupportsComplex_.
@@ -843,7 +843,6 @@ values annotated with these typing_ types:
 * typing.SupportsFloat_.
 * typing.SupportsRound_.
 * typing.Text_.
-* typing.Tuple_.
 * typing.Union_.
 
 Partial Compliance
@@ -876,8 +875,9 @@ types:
 * typing.Mapping_.
 * typing.MutableMapping_.
 * typing.MutableSet_.
+* typing.NamedTuple_.
 * typing.Set_.
-* typing.Sized_.
+* typing.Tuple_.
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
@@ -1060,7 +1060,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Set_                         | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Sized_                       | **0.2.0**\ —\ *current*       | *none*                    |
+|             | typing.Sized_                       | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.SupportsAbs_                 | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

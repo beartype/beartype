@@ -337,24 +337,23 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
     SIZE_BIG, FixedList, acquire_fixed_list, release_fixed_list)
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
+from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
 from beartype._util.hint.utilhintget import get_hint_type_origin
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
     TYPING_ATTRS_SEQUENCE_STANDARD,
+    TYPING_ATTRS_UNION,
 )
-from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_typing_attr)
+from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
     die_unless_hint_pep_typing_attr_supported,
     is_hint_pep,
 )
-from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
-from typing import (
-    Union,
-)
+# from typing import
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -821,7 +820,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # explicitly ignored ignorable root hints, these two guarantees
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
-            assert hint_curr not in HINTS_IGNORABLE, (
+            assert not is_hint_ignorable(hint_curr), (
                 '{} {!r} ignorable.'.format(hint_child_label, hint_curr))
 
             # Argumentless "typing" attribute uniquely identifying this hint.
@@ -914,9 +913,10 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             #   closures on each invocation of this function.
 
             # ..............{ UNIONS                            }..............
-            # If this hint is a union...
+            # If this hint is a union (e.g., "typing.Union[bool, str]",
+            # typing.Optional[float]")...
             #
-            # Note that Unions are non-physical abstractions of physical types
+            # Note that unions are non-physical abstractions of physical types
             # and are thus *NOT* type-checked; only the subscripted arguments
             # of unions are type-checked. This differs from "typing"
             # pseudo-containers like "List[int]", in which both the parent
@@ -927,25 +927,24 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # standard sequences, for example, which typically narrow the
             # current pith expression and thus do benefit from these
             # expressions.
-            if hint_curr_attr is Union:
+            if hint_curr_attr in TYPING_ATTRS_UNION:
                 # Tuple of all subscripted arguments defining this union,
                 # localized for both minor efficiency and major readability.
                 #
                 # Note that the "__args__" dunder attribute is *NOT* generally
                 # guaranteed to exist for arbitrary PEP-compliant type hints
-                # but is specifically guaranteed to exist for all unions other
-                # than the argumentless "typing.Union" attribute, which
-                # semantically reduces to "typing.Union[typing.Any]", which is
-                # thus ignored above and thus guaranteed *NOT* to be visitable
-                # here. Ergo, this attribute is guaranteed to exist here.
+                # but is guaranteed to exist for all unions other than the
+                # shallowly ignorable argumentless "typing.Optional" and
+                # "typing.Union" attributes. Ergo, this attribute is guaranteed
+                # to exist here.
                 hint_childs = hint_curr.__args__
 
-                # Assert this union is unsubscripted. Note this should *NEVER*
-                # happen, as:
+                # Assert this union is subscripted by one or more child hints.
+                # Note this should *ALWAYS* be the case, as:
                 #
                 # * The unsubscripted "typing.Union" object is explicitly
-                #   listed in the "HINTS_IGNORABLE" set and should thus have
-                #   already been ignored when present.
+                #   listed in the "HINTS_SHALLOW_IGNORABLE" set and should thus
+                #   have already been ignored when present.
                 # * The "typing" module explicitly prohibits empty
                 #   subscription: e.g.,
                 #       >>> typing.Union[]
@@ -972,10 +971,15 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
 
                 # For each subscripted argument of this union...
                 for hint_child in hint_childs:
-                    # If this child hint is ignorable, continue to the next.
-                    if hint_child in HINTS_IGNORABLE:
-                        continue
-                    # Else, this child hint is unignorable.
+                    # Assert that this child hint is *NOT* shallowly ignorable.
+                    # Why? Because any union containing one or more shallowly
+                    # ignorable child hints is deeply ignorable and should thus
+                    # have already been ignored after a call to the
+                    # is_hint_ignorable() tester passed this union on handling
+                    # the parent hint of this union.
+                    assert hint_child not in HINTS_SHALLOW_IGNORABLE, (
+                        '{} ignorable PEP union {!r} not ignored.'.format(
+                            hint_child_label, hint_curr))
 
                     # If this child hint is PEP-compliant...
                     if is_hint_pep(hint_child):
@@ -1135,26 +1139,19 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # Else, this snippet is its initial value and thus ignorable.
 
             # ..............{ SEQUENCES                         }..............
-            #FIXME: This requires additional sanity tests under Python >= 3.9.
-            #Basically, we *ONLY* want to enter this conditional branch if this
-            #attribute is *NOT* argumentless, which we can test as follows:
-            #    elif (
-            #        hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD and
-            #        not is_hint_pep_typing_attr(hint_curr_attr)
-            #    ):
-            #
-            #Note that this requires we implement a new
-            #is_hint_pep_typing_attr() tester, but that doing so is trivial.
-            #See the relevant "FIXME:" comment in the "utilhintget" submodule.
-            #FIXME: Unit test is_hint_pep_typing_attr(), please.
-
-            # If this hint is a standard sequence (e.g., "typing.List",
-            # "typing.Sequence")...
-            elif hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD:
+            # If this hint...
+            elif (
+                # Is a standard sequence (e.g., "typing.List[int]") *AND*...
+                hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD and
+                # Is *NOT* its own argumentless "typing" attribute (e.g.,
+                # "typing.List")...
+                hint_curr is not hint_curr_attr
+            # Then this hint is subscripted by one or more arguments.
+            ):
                 # Assert this attribute is isinstance()-able.
                 assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-                    '{} argumentless "typing" attribute{!r} '
-                    'not isinstance()-able .'.format(
+                    '{} argumentless "typing" attribute {!r} '
+                    'not isinstance()-able.'.format(
                         hint_child_label, hint_curr_attr))
 
                 # Python expression evaluating to this origin type when
@@ -1196,7 +1193,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # If this child hint is *NOT* ignorable, deeply type-check both
                 # the type of the current pith *AND* a randomly indexed item of
                 # this pith. Specifically...
-                if hint_child not in HINTS_IGNORABLE:
+                if not is_hint_ignorable(hint_child):
                     # Record that a pseudo-random integer is now required.
                     is_func_code_needs_random_int = True
 
@@ -1373,8 +1370,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             else:
                 # Assert this attribute is isinstance()-able.
                 assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-                    '{} argumentless "typing" attribute{!r} '
-                    'not isinstance()-able .'.format(
+                    '{} argumentless "typing" attribute {!r} '
+                    'not isinstance()-able.'.format(
                         hint_child_label, hint_curr_attr))
 
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -138,8 +138,7 @@ from beartype._decor._code._nonpep.nonpepcode import (
 from beartype._decor._code._pep.pepcode import (
     pep_code_check_param, pep_code_check_return)
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.utilhintdata import HINTS_IGNORABLE
-from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.hint.utilhinttest import die_unless_hint, is_hint_ignorable
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from inspect import Parameter, Signature
 
@@ -406,8 +405,10 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         #   call to the die_unless_hint() validator.
         # * "func_arg_kind" derives from the stdlib "inspect" module, this
         #   should *ALWAYS* be the case for that object.
-        if (func_arg.annotation in HINTS_IGNORABLE or
-            func_arg.kind in _PARAM_KINDS_IGNORABLE):
+        if (
+            is_hint_ignorable(func_arg.annotation) or
+            func_arg.kind in _PARAM_KINDS_IGNORABLE
+        ):
             continue
         # Else, this parameter is non-ignorable.
         #
@@ -527,7 +528,7 @@ def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
 
         # If this hint is silently ignorable, generate code calling this
         # callable unchecked and returning this value from this wrapper.
-        if func_return_hint in HINTS_IGNORABLE:
+        if is_hint_ignorable(func_return_hint):
             func_code = CODE_RETURN_UNCHECKED
         # Else, this hint is *NOT* ignorable.
         #

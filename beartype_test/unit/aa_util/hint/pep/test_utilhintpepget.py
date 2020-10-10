@@ -78,7 +78,7 @@ def test_get_hint_pep_typevars() -> None:
         if pep_hint_meta.is_typevared:
             pep_hint_typevars = get_hint_pep_typevars(pep_hint)
             assert isinstance(pep_hint_typevars, tuple)
-            assert bool(pep_hint_typevars)
+            assert pep_hint_typevars
         # *NO* type variables for untypevared PEP-compliant type hints.
         else:
             assert get_hint_pep_typevars(pep_hint) == ()

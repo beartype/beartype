@@ -193,10 +193,7 @@ exception_str_not_match_regexes : tuple
 '''
 
 # ....................{ METADATA ~ dict : attr            }....................
-#FIXME: Explicitly list all other types thought not to be supported currently
-#(e.g., "typing.IO").
-#FIXME: Explicitly list all other types thought to be supported currently
-#(e.g., "typing.AbstractSet").
+#FIXME: Explicitly list all other "typing" types (e.g., "typing.IO").
 PEP_HINT_TO_META = {
     # ..................{ CALLABLES                         }..................
     typing.Callable[[], str]: _PepHintMetadata(
@@ -240,6 +237,7 @@ PEP_HINT_TO_META = {
     ),
 
     # ..................{ COLLECTIONS ~ dict                }..................
+    # Argumentless "Dict" attribute.
     typing.Dict: _PepHintMetadata(
         typing_attr=typing.Dict,
         is_supported=not _IS_TYPING_ATTR_TYPEVARED,
@@ -264,6 +262,7 @@ PEP_HINT_TO_META = {
             ),
         ),
     ),
+
     typing.Dict[int, str]: _PepHintMetadata(
         typing_attr=typing.Dict,
         is_supported=True,
@@ -295,7 +294,7 @@ PEP_HINT_TO_META = {
     ),
 
     # ..................{ COLLECTIONS ~ list                }..................
-    # Bare "List" attribute.
+    # Argumentless "List" attribute.
     typing.List: _PepHintMetadata(
         typing_attr=typing.List,
         is_supported=not _IS_TYPING_ATTR_TYPEVARED,
@@ -313,7 +312,11 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            'Of acceptance.',
+            _PepHintPithUnsatisfiedMetadata(
+                pith='Of acceptance.',
+                exception_str_match_regexes=(),
+                exception_str_not_match_regexes=(),
+            ),
             # Tuple containing arbitrary items.
             _PepHintPithUnsatisfiedMetadata(
                 pith=(
@@ -613,6 +616,25 @@ PEP_HINT_TO_META = {
     # For this reason, these arguments *MUST* be omitted below.
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    # Ignorable bare "Union" attribute.
+    typing.Union: _PepHintMetadata(
+        typing_attr=typing.Union,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Empty list, which satisfies all hint arguments by definition.
+            [],
+            # Set containing arbitrary items.
+            {
+                'We were mysteries, unwon',
+                'We donned apportionments',
+                37.73,
+            },
+        ),
+        piths_unsatisfied_meta=(),
+    ),
+
     # Union of one non-"typing" type and an originative "typing" type,
     # exercising an edge case.
     typing.Union[int, typing.Sequence[str]]: _PepHintMetadata(
@@ -774,6 +796,24 @@ PEP_HINT_TO_META = {
     ),
 
     # ..................{ UNIONS ~ optional                 }..................
+    # Ignorable bare "Optional" attribute.
+    typing.Optional: _PepHintMetadata(
+        typing_attr=typing.Optional,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # Empty tuple, which satisfies all hint arguments by definition.
+            (),
+            # Dictionary containing arbitrary key-value pairs.
+            {
+                'Of': 'dung and',
+                'Called': 'it dunne and',
+            },
+        ),
+        piths_unsatisfied_meta=(),
+    ),
+
     # Optional isinstance()-able "typing" type.
     typing.Optional[typing.Sequence[str]]: _PepHintMetadata(
         # Subscriptions of the "typing.Optional" attribute reduce to
@@ -901,8 +941,24 @@ hints and must thus be segregated from those that do conform (which is most of
 them) to avoid spurious issues throughout downstream unit tests.
 '''
 
-# ....................{ HINTS                             }....................
-PEP_HINTS = tuple(PEP_HINT_TO_META.keys())
+# ....................{ SETS                              }....................
+PEP_HINTS_DEEP_IGNORABLE = frozenset((
+    # Arbitrary unions containing the shallowly ignorable "typing.Any" and
+    # "object" type hints.
+    typing.Union[typing.Any, float, str,],
+    typing.Union[complex, int, object,],
+))
 '''
-Tuple of various PEP-compliant type hints exercising well-known edge cases.
+Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
+PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in
+the low-level :attr:`beartype._util.hint.utilhintdata.HINTS_SHALLOW_IGNORABLE`
+set, but which are nonetheless ignorable and thus require dynamic testing by
+the high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable`
+tester function to demonstrate this fact).
+'''
+
+# ....................{ TUPLES                            }....................
+PEP_HINTS = frozenset(PEP_HINT_TO_META.keys())
+'''
+Frozen set of PEP-compliant type hints exercising well-known edge cases.
 '''

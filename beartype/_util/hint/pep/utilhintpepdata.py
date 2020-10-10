@@ -163,6 +163,39 @@ if IS_PYTHON_AT_LEAST_3_6:
             })
 
 # ....................{ SETS                              }....................
+TYPING_ATTRS_SUPPORTED = frozenset(
+    # Tuple of every "typing" object explicitly supported by a branch of the
+    # pep_code_check_hint() function generating code unique to that object,
+    # deeply type-checking the passed parameter or returned value against the
+    # PEP-compliant type hint annotated by a subscription of that object.
+    (
+        typing.Any,
+        typing.Optional,
+
+        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+        # under Python <= 3.9. The implementations of the "typing" module under
+        # those older Python versions transparently reduced "typing.Optional"
+        # to "typing.Union" at runtime. Since this reduction is no longer the
+        # case, both *MUST* now be explicitly listed here.
+        typing.Union,
+    ) +
+
+    # Tuple of every "typing" object implicitly supported by a branch of that
+    # function generating code common to all such objects, only shallowly
+    # type-checking the passed parameter or returned value against the
+    # PEP-compliant type hint annotated by a subscription of that object.
+    tuple(TYPING_ATTR_TO_TYPE_ORIGIN.keys())
+)
+'''
+Frozen set of all **argumentless typing attributes** (i.e., public attributes
+of the :mod:`typing` module uniquely identifying PEP-compliant type hints
+sans arguments) supported by the :func:`beartype.beartype` decorator.
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_typing_attr_to_args` getter function.
+'''
+
+# ....................{ SETS ~ subtype                    }....................
 TYPING_ATTRS_SEQUENCE_STANDARD = frozenset((
     typing.List,
     typing.MutableSequence,
@@ -206,34 +239,21 @@ This set intentionally excludes the argumentless:
 '''
 
 
-TYPING_ATTRS_SUPPORTED = frozenset(
-    # Tuple of every "typing" object explicitly supported by a branch of the
-    # pep_code_check_hint() function generating code unique to that object,
-    # deeply type-checking the passed parameter or returned value against the
-    # PEP-compliant type hint annotated by a subscription of that object.
-    (
-        typing.Any,
-        typing.Optional,
-
-        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-        # under Python <= 3.9. The implementations of the "typing" module under
-        # those older Python versions transparently reduced "typing.Optional"
-        # to "typing.Union" at runtime. Since this reduction is no longer the
-        # case, both *MUST* now be explicitly listed here.
-        typing.Union,
-    ) +
-
-    # Tuple of every "typing" object implicitly supported by a branch of that
-    # function generating code common to all such objects, only shallowly
-    # type-checking the passed parameter or returned value against the
-    # PEP-compliant type hint annotated by a subscription of that object.
-    tuple(TYPING_ATTR_TO_TYPE_ORIGIN.keys())
-)
+TYPING_ATTRS_UNION = frozenset((typing.Optional, typing.Union,))
 '''
-Frozen set of all **argumentless typing attributes** (i.e., public attributes
-of the :mod:`typing` module uniquely identifying PEP-compliant type hints
-sans arguments) supported by the :func:`beartype.beartype` decorator.
+Frozen set of all **argumentless union typing attributes** (i.e.,
+public attributes of the :mod:`typing` module uniquely identifying
+PEP-compliant type hints unifying one or more subscripted type hint arguments
+into a disjunctive set union of these arguments).
 
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_typing_attr_to_args` getter function.
+If the active Python interpreter targets:
+
+* At least Python 3.9.0, the :attr:`typing.Optional` and
+  :attr:`typing.Union` attributes are distinct.
+* Less than Python 3.9.0, the :attr:`typing.Optional` attribute reduces to the
+  :attr:`typing.Union` attribute, in which case this set is technically
+  semantically redundant. Since tests of both object identity and set
+  membership are ``O(1)``, this set incurs no significant performance penalty
+  versus direct usage of the :attr:`typing.Union` attribute and is thus
+  unconditionally used as is irrespective of Python version.
 '''

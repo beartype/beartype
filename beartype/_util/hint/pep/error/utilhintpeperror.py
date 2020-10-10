@@ -22,6 +22,7 @@ from beartype.roar import (
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
     TYPING_ATTRS_SEQUENCE_STANDARD,
+    TYPING_ATTRS_UNION,
 )
 from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
 from beartype._util.text.utiltextlabel import (
@@ -240,7 +241,7 @@ def _init() -> None:
     '''
 
     # Defer heavyweight imports.
-    import typing
+    # from typing import Union
     from beartype._util.hint.pep.error._utilhintpeperrorcause import (
         get_cause_or_none_type_origin)
     from beartype._util.hint.pep.error._utilhintpeperrorcausesequence import (
@@ -255,11 +256,16 @@ def _init() -> None:
         _TYPING_ATTR_TO_GETTER[typing_attr_type_origin] = (
             get_cause_or_none_type_origin)
 
+    # Map each unifying "typing" attribute to the appropriate getter.
+    for typing_attr_type_union in TYPING_ATTRS_UNION:
+        _TYPING_ATTR_TO_GETTER[typing_attr_type_union] = (
+            get_cause_or_none_union)
+
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
-    _TYPING_ATTR_TO_GETTER.update({
-        typing.Union: get_cause_or_none_union,
-    })
+    #_TYPING_ATTR_TO_GETTER.update({
+    #    typing.Union: get_cause_or_none_union,
+    #})
 
     # Map each standard sequence "typing" attribute to the appropriate getter.
     for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:

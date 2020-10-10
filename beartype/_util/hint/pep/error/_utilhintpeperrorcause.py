@@ -19,7 +19,6 @@ from beartype._util.hint.pep.utilhintpepdata import (
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextrepr import get_object_representation
-from string import punctuation
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -160,7 +159,7 @@ def get_cause_or_none_type(pith: object, hint: object) -> 'Optional[str]':
     :func:`_get_cause_or_none`
         Further details.
     '''
-    assert isinstance(hint, type)
+    assert isinstance(hint, type), '{!r} not non-"typing" type.'.format(hint)
 
     # If this object is an instance of this type, return "None".
     if isinstance(pith, hint):
@@ -197,7 +196,9 @@ def get_cause_or_none_type_origin(
     :func:`_get_cause_or_none`
         Further details.
     '''
-    assert hint_attr in TYPING_ATTR_TO_TYPE_ORIGIN
+    assert hint_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
+        '{!r} not argumentless "typing" '
+        'originative attribute.'.format(hint_attr))
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
     hint_type_origin = get_hint_type_origin(hint_attr)

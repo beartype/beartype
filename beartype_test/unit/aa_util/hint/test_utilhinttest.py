@@ -103,3 +103,22 @@ def test_is_hint() -> None:
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(TypeError):
             is_hint(non_hint_unhashable)
+
+
+def test_is_hint_ignorable() -> None:
+    '''
+    Test the :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype_test.unit.data.data_hint import (
+        HINTS_IGNORABLE, HINTS_UNIGNORABLE)
+
+    # Assert this function accepts ignorable type hints.
+    for hint_ignorable in HINTS_IGNORABLE:
+        assert is_hint_ignorable(hint_ignorable) is True
+
+    # Assert this function rejects unignorable type hints.
+    for hint_unignorable in HINTS_UNIGNORABLE:
+        assert is_hint_ignorable(hint_unignorable) is False

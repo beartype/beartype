@@ -14,8 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep, is_hint_nonpep)
+from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported, is_hint_pep, is_hint_pep_supported)
+from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from typing import Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -177,3 +180,83 @@ def is_hint(
         # rather than keyword parameters to maximize efficiency.
         is_hint_nonpep(hint, is_str_valid)
     )
+
+
+@callable_cached
+def is_hint_ignorable(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **deeply ignorable type hint.**
+
+    Specifically, this tester function returns ``True`` only if this object is
+    either:
+
+    * In the finite set of shallowly ignorable type hints defined by the
+      low-level :data:`HINTS_SHALLOW_IGNORABLE` frozenset.
+    * The :data:`Union` singleton subscripted by one or more ignorable type
+      hints contained in that set (e.g., ``typing.Union[typing.Any, bool]``).
+      Why? Because unions are by definition only as narrow as their narrowest
+      child hint. However, shallowly ignorable type hints are ignorable
+      precisely because they are the widest possible hints (e.g.,
+      :class:`object`, :attr:`typing.Any`), which are so wide as to constrain
+      nothing and convey no meaningful semantics. Ergo, a union containing one
+      or more shallowly ignorable child hints is the widest possible union,
+      which again is so wide as to constrain nothing and convey no meaningful
+      semantics. Since there exist a countably infinite number of possible
+      :data:`Union` subscriptions by one or more shalowly ignorable type hints,
+      these subscriptions *cannot* be explicitly listed in that set. Instead,
+      these subscriptions are dynamically detected by this tester at runtime
+      and thus referred to as **deeply ignorable type hints.**
+
+    This tester function is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a deeply ignorable type hint.
+
+    Raises
+    ----------
+    TypeError
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
+    '''
+
+    # If this hint is shallowly ignorable, return true.
+    if hint in HINTS_SHALLOW_IGNORABLE:
+        return True
+    # Else, this hint is *NOT* shallowly ignorable.
+
+    # If this is a PEP-compliant type hint...
+    if is_hint_pep(hint):
+        # Argumentless typing attribute uniquely identifying this hint.
+        hint_attr = get_hint_pep_typing_attr(hint)
+
+        # If this hint is a union, return true only if...
+        if hint_attr is Union:
+            # Any...
+            return any(
+                # Child hint of this union is shallowly ignorable. See the
+                # function docstring for an explanatory justification.
+                #
+                # Note that the "__args__" dunder attribute is *NOT* generally
+                # guaranteed to exist for arbitrary PEP-compliant type hints
+                # but is guaranteed to exist for all unions other than the
+                # shallowly ignorable argumentless "typing.Optional" and
+                # "typing.Union" attributes, which are guaranteed to be
+                # shallowly ignorable and thus already handled above.
+                hint_child in HINTS_SHALLOW_IGNORABLE
+                for hint_child in hint.__args__
+            )
+        # Else, this hint is *NOT* a union and thus *NOT* deeply ignorable.
+    # Else, this is a PEP-noncompliant type hint and thus *NOT* deeply
+    # ignorable.
+
+    # Else, this hint is neither shallowly nor deeply ignorable. In this case,
+    # return false.
+    return False

@@ -252,7 +252,7 @@ def die_unless_hint_pep_typing_attr_supported(
 
     # If this hint is *NOT* a supported argumentless "typing" attribute, raise
     # an exception.
-    if hint not in TYPING_ATTRS_SUPPORTED:
+    if not is_hint_pep_typing_attr_supported(hint):
         assert isinstance(hint_label, str), (
             '{!r} not string.'.format(hint_label))
         raise BeartypeDecorHintPepUnsupportedException(
@@ -383,9 +383,9 @@ def is_hint_pep_supported(hint: object) -> bool:
     hint_typing_attr = get_hint_pep_typing_attr(hint)
 
     # Return true only if this attribute is supported.
-    return hint_typing_attr in TYPING_ATTRS_SUPPORTED
+    return is_hint_pep_typing_attr_supported(hint_typing_attr)
 
-
+# ....................{ TESTERS ~ typing                  }....................
 def is_hint_pep_typing(hint_type: type) -> bool:
     '''
     ``True`` only if the passed object is defined by the :mod:`typing` module.
@@ -453,6 +453,42 @@ def is_hint_pep_typing(hint_type: type) -> bool:
     #
     # In short, there is no general-purpose clever solution. *sigh*
     return get_object_module_name_or_none(hint_type) == 'typing'
+
+
+def is_hint_pep_typing_attr_supported(hint) -> bool:
+    '''
+    ``True`` only if the passed object is a **PEP-compliant supported
+    argumentless typing attribute** (i.e., public attribute of the
+    :mod:`typing` module without arguments uniquely identifying a category of
+    PEP-compliant type hints currently supported by the
+    :func:`beartype.beartype` decorator).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be tested.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a PEP-compliant supported argumentless
+        typing attribute.
+
+    Raises
+    ----------
+    TypeError
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
+    '''
+
+    # Return true only if this hint is a supported argumentless "typing"
+    # attribute.
+    return hint in TYPING_ATTRS_SUPPORTED
 
 # ....................{ TESTERS ~ generic                 }....................
 # If the active Python interpreter targets Python >= 3.7.0, define the
