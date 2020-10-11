@@ -190,6 +190,11 @@ beartype is releasable to all supported platforms as follows:
 
       Changes include:
 
+      ## Compatibility Improved
+
+      * **Python >= 3.9.0.** This release officially supports the first stable
+        release of the Python 3.9.x series (i.e., Python 3.9.0).
+
       ## Compatibility Broken
 
       * **None.** This release preserves backward compatibility with the prior

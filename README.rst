@@ -916,7 +916,7 @@ typing_ types:
 * typing.Pattern_.
 * typing.TextIO_.
 * typing.Final_.
-* typing.final_.
+* `@typing.final`_.
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
@@ -1006,6 +1006,8 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Dict_                        | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | typing.Final_                       | *none*                        | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ForwardRef_                  | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.FrozenSet_                   | **0.2.0**\ —\ *current*       | *none*                    |
@@ -1092,7 +1094,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ValuesView_                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.final_                       | *none*                        | *none*                    |
+|             | `@typing.final`_                    | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | PEP         | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1479,5 +1481,5 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.ValuesView
 .. _typing.Final:
    https://docs.python.org/3/library/typing.html#typing.Final
-.. _typing.final:
+.. _@typing.final:
    https://docs.python.org/3/library/typing.html#typing.final

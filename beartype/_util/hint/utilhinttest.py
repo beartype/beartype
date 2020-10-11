@@ -194,18 +194,19 @@ def is_hint_ignorable(hint: object) -> bool:
       low-level :data:`HINTS_SHALLOW_IGNORABLE` frozenset.
     * The :data:`Union` singleton subscripted by one or more ignorable type
       hints contained in that set (e.g., ``typing.Union[typing.Any, bool]``).
-      Why? Because unions are by definition only as narrow as their narrowest
+      Why? Because unions are by definition only as narrow as their widest
       child hint. However, shallowly ignorable type hints are ignorable
       precisely because they are the widest possible hints (e.g.,
       :class:`object`, :attr:`typing.Any`), which are so wide as to constrain
-      nothing and convey no meaningful semantics. Ergo, a union containing one
-      or more shallowly ignorable child hints is the widest possible union,
-      which again is so wide as to constrain nothing and convey no meaningful
-      semantics. Since there exist a countably infinite number of possible
-      :data:`Union` subscriptions by one or more shalowly ignorable type hints,
-      these subscriptions *cannot* be explicitly listed in that set. Instead,
-      these subscriptions are dynamically detected by this tester at runtime
-      and thus referred to as **deeply ignorable type hints.**
+      nothing and convey no meaningful semantics. A union of one or more
+      shallowly ignorable child hints is thus the widest possible union, which
+      is so wide as to constrain nothing and convey no meaningful semantics.
+      Since there exist a countably infinite number of possible :data:`Union`
+      subscriptions by one or more shallowly ignorable type hints, these
+      subscriptions *cannot* be explicitly listed in the
+      :data:`HINTS_SHALLOW_IGNORABLE` frozenset. Instead, these subscriptions
+      are dynamically detected by this tester at runtime and thus referred to
+      as **deeply ignorable type hints.**
 
     This tester function is memoized for efficiency.
 
