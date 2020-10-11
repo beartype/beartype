@@ -61,7 +61,7 @@ jobs:
       - name: "Checking out repository..."
         uses: 'actions/checkout@v2'
       - name: "Installing Python ${{ matrix.python-version }}..."
-        uses: 'actions/setup-python@v1'
+        uses: 'actions/setup-python@v2'
         with:
           python-version: '${{ matrix.python-version }}'
 
