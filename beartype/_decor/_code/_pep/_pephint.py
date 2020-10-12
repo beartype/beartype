@@ -432,15 +432,6 @@ indentation** (i.e., Python code snippet expanding to the current level of
 indentation appropriate for the currently visited hint).
 '''
 
-
-_HINT_META_SIZE = next(__hint_meta_index_counter)
-'''
-Length to constrain **hint metadata** (i.e., fixed lists efficiently
-masquerading as tuples of metadata describing the currently visited hint,
-defined by the previously visited parent hint as a means of efficiently sharing
-metadata common to all children of that hint) to.
-'''
-
 # Delete the above counter for safety and sanity in equal measure.
 del __hint_meta_index_counter
 
@@ -709,18 +700,50 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
     pith_curr_assign_expr = None
 
     # ..................{ METADATA                          }..................
-    # Fixed list of metadata describing the root hint.
-    hint_root_meta = acquire_fixed_list(_HINT_META_SIZE)
-    hint_root_meta[_HINT_META_INDEX_HINT] = hint_root
-    hint_root_meta[_HINT_META_INDEX_PLACEHOLDER] = hint_child_placeholder
-    hint_root_meta[_HINT_META_INDEX_PITH_EXPR] = pith_root_expr
-    hint_root_meta[_HINT_META_INDEX_INDENT] = indent_curr
+    # Tuple of metadata describing the root hint, whose items are ordered via
+    # the "_HINT_META_INDEX_"-prefixed integer globals.
+    #
+    # For both space and time efficiency, this metadata is intentionally stored
+    # as 0-based integer indices of an unnamed tuple rather than:
+    # * Human-readable fields of a named tuple, which incurs space and time
+    #   costs we would rather *NOT* pay.
+    # * 0-based integer indices of a tiny fixed list. Previously, this
+    #   metadata was actually stored as a fixed list. However, exhaustive
+    #   profiling demonstrated that reinitializing each such list by
+    #   slice-assigning that list's items from a tuple to be faster than
+    #   individually assigning these items:
+    #      $ echo 'Slice w/ tuple:' && command python3 -m timeit -s \
+    #           'muh_list = ["a", "b", "c", "d",]' \
+    #           'muh_list[:] = ("e", "f", "g", "h",)'
+    #      Slice w/ tuple:
+    #      2000000 loops, best of 5: 131 nsec per loop
+    #      $ echo 'Slice w/o tuple:' && command python3 -m timeit -s \
+    #           'muh_list = ["a", "b", "c", "d",]' \
+    #           'muh_list[:] = "e", "f", "g", "h"'
+    #      Slice w/o tuple:
+    #      2000000 loops, best of 5: 138 nsec per loop
+    #      $ echo 'Separate:' && command python3 -m timeit -s \
+    #           'muh_list = ["a", "b", "c", "d",]' \
+    #           'muh_list[0] = "e"
+    #      muh_list[1] = "f"
+    #      muh_list[2] = "g"
+    #      muh_list[3] = "h"'
+    #      Separate:
+    #      2000000 loops, best of 5: 199 nsec per loop
+    #   So, not only does there exist no performance benefit to smaller fixed
+    #   lists, there exists demonstrable performance costs.
+    hint_root_meta = (
+        hint_root,
+        hint_child_placeholder,
+        pith_root_expr,
+        indent_curr,
+    )
 
-    # Fixed list of metadata describing the currently visited hint, appended by
+    # Tuple of metadata describing the currently visited hint, appended by
     # the previously visited parent hint to the "hints_meta" stack.
     hint_curr_meta = None
 
-    # Fixed list of metadata describing a child hint to be subsequently
+    # Tuple of metadata describing a child hint to be subsequently
     # visited, appended by the currently visited parent hint to that stack.
     hint_child_meta = None
 
@@ -784,9 +807,14 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
     while hints_meta_index_curr <= hints_meta_index_last:
         # Metadata describing the currently visited hint.
         hint_curr_meta = hints_meta[hints_meta_index_curr]
-        assert hint_curr_meta.__class__ is FixedList, (
+
+        # Assert this metadata is a tuple as expected. This enables us to
+        # distinguish between proper access of used items and improper access
+        # of unused items of the parent fixed list containing this tuple, since
+        # an unused item of this list is initialized to "None" by default.
+        assert hint_curr_meta.__class__ is tuple, (
             'Current hint metadata {!r} at index {!r} '
-            'not a fixed list.'.format(hint_curr_meta, hints_meta_index_curr))
+            'not tuple.'.format(hint_curr_meta, hints_meta_index_curr))
 
         # Localize metadatum for both efficiency and f-string purposes.
         hint_curr             = hint_curr_meta[_HINT_META_INDEX_HINT]
@@ -1067,33 +1095,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                         hint_child_placeholder = (
                             get_next_pep_hint_placeholder())
 
-                        #FIXME: *WOOPS!* Premature optimization alert. Given
-                        #that the fastest way to initialize a small fixed list
-                        #is by slice-assigning from the equivalent tuple, we'd
-                        #might as well dispense entirely with this fixed list
-                        #and just use the tuple as is. Maybe? Let's profile.
-                        #
-                        #If faster, we can probably at least dispense with
-                        #"_HINT_META_SIZE" above.
-
-                        # List of metadata describing this child hint.
-                        #
-                        # Note that exhaustive profiling has demonstrated
-                        # slice-assigning this list's items to be mildly
-                        # faster than individually assigning these items:
-                        #      $ command python3 -m timeit -s \
-                        #      .     'muh_list = ["a", "b", "c", "d",]' \
-                        #      .     'muh_list[:] = "e", "f", "g", "h"'
-                        #      2000000 loops, best of 5: 131 nsec per loop
-                        #      $ command python3 -m timeit -s \
-                        #      .     'muh_list = ["a", "b", "c", "d",]' \
-                        #      .     'muh_list[0] = "e"
-                        #      . muh_list[1] = "f"
-                        #      . muh_list[2] = "g"
-                        #      . muh_list[3] = "h"'
-                        #      2000000 loops, best of 5: 199 nsec per loop
-                        hint_child_meta = acquire_fixed_list(_HINT_META_SIZE)
-                        hint_child_meta[:] = (
+                        # Tuple of metadata describing this child hint.
+                        hint_child_meta = (
                             hint_child,
                             hint_child_placeholder,
                             pith_curr_expr,
@@ -1235,9 +1238,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # type-checking the child pith against this child hint.
                     hint_child_placeholder = get_next_pep_hint_placeholder()
 
-                    # List of metadata describing this child hint. (See above.)
-                    hint_child_meta = acquire_fixed_list(_HINT_META_SIZE)
-                    hint_child_meta[:] = (
+                    # Tuple of metadata describing this child hint.
+                    hint_child_meta = (
                         hint_child,
                         hint_child_placeholder,
                         # Python code snippet evaluating to a randomly indexed
@@ -1456,9 +1458,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         func_code = func_code.replace(
             hint_curr_placeholder, func_curr_code)
 
-        # Release the metadata describing the previously visited hint and
-        # nullify this metadata in its list for safety.
-        release_fixed_list(hint_curr_meta)
+        # Nullify the metadata describing the previously visited hint in this
+        # list for safety.
         hints_meta[hints_meta_index_curr] = None
 
         # Increment the 0-based index of metadata describing the next visited

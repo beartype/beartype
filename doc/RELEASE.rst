@@ -186,7 +186,7 @@ beartype is releasable to all supported platforms as follows:
 
    .. code-block:: markdown
 
-      beartype 0.0.1 released.
+      **Beartype 0.0.1 released.**
 
       Changes include:
 
@@ -264,7 +264,7 @@ beartype is releasable to all supported platforms as follows:
    Since no changelog for this release yet exists, a single-line message
    suffices for this commit. For example::
 
-       beartype 0.4.1 started.
+       **Beartype 0.4.1 started.**
 
 #. **Push these commits and tags.** After doing so, GitHub will automatically
    publish source tarballs and binary wheels in various popular formats (e.g.,
