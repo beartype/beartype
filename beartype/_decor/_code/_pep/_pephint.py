@@ -345,7 +345,10 @@ from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTRS_SEQUENCE_STANDARD,
     TYPING_ATTRS_UNION,
 )
-from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
+from beartype._util.hint.pep.utilhintpepget import (
+    get_hint_pep_args,
+    get_hint_pep_typing_attr,
+)
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
     die_unless_hint_pep_typing_attr_supported,
@@ -353,7 +356,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
-# from typing import
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -865,6 +868,15 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 hint=hint_curr_attr, hint_label=hint_child_label)
             # Else, this attribute is supported.
 
+            # Tuple of all arguments subscripting this hint if any *OR* the
+            # empty tuple otherwise (e.g., if this hint is its own argumentless
+            # "typing" attribute).
+            #
+            # Note that the "__args__" dunder attribute is *NOT* guaranteed to
+            # exist for arbitrary PEP-compliant type hints. Ergo, we obtain
+            # this attribute via a higher-level utility getter instead.
+            hint_childs = get_hint_pep_args(hint_curr)
+
             # Python code snippet expanding to the current level of indentation
             # appropriate for the currently iterated child hint.
             #
@@ -894,8 +906,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.utilhintpeperror" submodule (i.e.,
-            #   raising exceptions when the current pith fails this check).
+            # * "beartype._util.hint.pep.utilhintpeperror" submodule, which
+            #   raises exceptions on the current pith failing this check.
             # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED"
             #   frozen set of all supported argumentless "typing" attributes.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -956,17 +968,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # current pith expression and thus do benefit from these
             # expressions.
             if hint_curr_attr in TYPING_ATTRS_UNION:
-                # Tuple of all subscripted arguments defining this union,
-                # localized for both minor efficiency and major readability.
-                #
-                # Note that the "__args__" dunder attribute is *NOT* generally
-                # guaranteed to exist for arbitrary PEP-compliant type hints
-                # but is guaranteed to exist for all unions other than the
-                # shallowly ignorable argumentless "typing.Optional" and
-                # "typing.Union" attributes. Ergo, this attribute is guaranteed
-                # to exist here.
-                hint_childs = hint_curr.__args__
-
                 # Assert this union is subscripted by one or more child hints.
                 # Note this should *ALWAYS* be the case, as:
                 #
@@ -979,8 +980,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 #       SyntaxError: invalid syntax
                 #       >>> typing.Union[()]
                 #       TypeError: Cannot take a Union of no types.
-                assert hint_childs, (
-                    '{} {!r} unsubscripted.'.format(hint_child_label, hint))
+                assert hint_childs, '{} PEP union {!r} unsubscripted.'.format(
+                    hint_child_label, hint)
                 # Else, this union is subscripted by two or more arguments. Why
                 # two rather than one? Because the "typing" module reduces
                 # unions of one argument to that argument: e.g.,
@@ -1141,16 +1142,37 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     ).format(indent_curr=indent_curr)
                 # Else, this snippet is its initial value and thus ignorable.
 
-            # ..............{ SEQUENCES                         }..............
+            # ..............{ SEQUENCES ~ standard              }..............
             # If this hint...
             elif (
-                # Is a standard sequence (e.g., "typing.List[int]") *AND*...
-                hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD and
-                # Is *NOT* its own argumentless "typing" attribute (e.g.,
+                # Is either...
+                (
+                    # A standard sequence (e.g., "typing.List[int]") *OR*...
+                    hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD or (
+                        # A tuple *AND*...
+                        hint_curr_attr is Tuple and
+                        # This tuple is subscripted by exactly two arguments
+                        # *AND*...
+                        len(hint_childs) == 2 and
+                        # The second argument is an unquoted ellipsis...
+                        hint_childs[1] is Ellipsis
+                    )
+                    # Then this hint is of the form "Tuple[{typename}, ...]",
+                    # typing a tuple whose items all satisfy the "{typename}"
+                    # child hint. This case is semantically equivalent to that
+                    # of standard sequences and thus handled here as well.
+                    #
+                    # See below for related logic handling the other
+                    # non-standard form of "Tuple" syntax.
+                ) and
+                # *AND* is not its own argumentless "typing" attribute (e.g.,
                 # "typing.List")...
                 hint_curr is not hint_curr_attr
-            # Then this hint is subscripted by one or more arguments.
             ):
+            # Then this hint is either a standard sequence *OR* a similar hint
+            # semantically resembling a standard sequence, subscripted by one
+            # or more arguments.
+
                 # Assert this attribute is isinstance()-able.
                 assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
                     '{} argumentless "typing" attribute {!r} '
@@ -1158,40 +1180,30 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                         hint_child_label, hint_curr_attr))
 
                 # Python expression evaluating to this origin type when
-                # accessed via the private "__beartypistry" parameter.
+                # accessed with the private "__beartypistry" parameter.
                 hint_curr_expr = register_typistry_type(
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
                     get_hint_type_origin(hint_curr_attr))
 
-                # Tuple of all subscripted arguments defining this sequence,
-                # localized for both minor efficiency and major readability.
-                #
-                # Note that the "__args__" dunder attribute is *NOT* generally
-                # guaranteed to exist for arbitrary PEP-compliant type hints
-                # but is specifically guaranteed to exist for all standard
-                # sequences including the argumentless "typing.List",
-                # "typing.MutableSequence", and "typing.Sequence" attributes.
-                # Ergo, this attribute is guaranteed to exist here.
-                hint_childs = hint_curr.__args__
-
-                # Assert this sequence was subscripted by exactly one argument.
+                # Assert this sequence is either subscripted by exactly one
+                # argument *OR* a non-standard sequence (e.g., "typing.Tuple").
                 # Note that the "typing" module should have already guaranteed
                 # this on our behalf. Still, we trust nothing and no one:
                 #     >>> import typing as t
                 #     >>> t.List[int, str]
                 #     TypeError: Too many parameters for typing.List; actual 2, expected 1
-                assert len(hint_childs) == 1, (
-                    '{} sequence {!r} subscripted by '
+                assert len(hint_childs) == 1 or hint_curr_attr is Tuple, (
+                    '{} PEP sequence {!r} subscripted by '
                     'multiple arguments.'.format(hint_child_label, hint_curr))
+
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # CAVEATS: Synchronize changes here with "Tuple" logic below.
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 # Lone child hint of this parent hint.
                 hint_child = hint_childs[0]
-
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAVEATS: Synchronize changes here with logic below.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 # If this child hint is *NOT* ignorable, deeply type-check both
                 # the type of the current pith *AND* a randomly indexed item of
@@ -1261,10 +1273,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # Inject this metadata at this index of this list.
                     hints_meta[hints_meta_index_last] = hint_child_meta
 
-                    #FIXME: Refactor to leverage f-strings after dropping
-                    #Python 3.5 support, which are the optimal means of
-                    #performing string formatting.
-
                     # Code type-checking the current pith against this type.
                     func_curr_code = (
                         PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format(
@@ -1278,15 +1286,69 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # generating trivial code shallowly type-checking the current
                 # pith as an instance of this origin type.
                 else:
-                    #FIXME: Refactor to leverage f-strings after dropping
-                    #Python 3.5 support, which are the optimal means of
-                    #performing string formatting.
-
                     # Code type-checking the current pith against this type.
                     func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                         pith_curr_expr=pith_curr_expr,
                         hint_curr_expr=hint_curr_expr,
                     )
+
+            # # ..............{ SEQUENCES ~ tuple                 }..............
+            # # Else if this hint...
+            # elif (
+            #     # Is a tuple *AND*...
+            #     hint_curr_attr is Tuple and
+            #     # Is *NOT* its own argumentless "typing" attribute...
+            #     hint_curr is not Tuple
+            # ):
+            # # Then this hint is a tuple subscripted by one or more arguments.
+            # #
+            # # While tuples *ARE* sequences, the "typing.Tuple" singleton that
+            # # types tuples violates the syntactic norms established for other
+            # # standard sequences by concurrently supporting two different
+            # # syntaxes with equally different semantics:
+            # # * "typing.Tuple[{typename}, ...]", typing a tuple whose items all
+            # #   satisfy the "{typename}" child hint. Note that the "..."
+            # #   substring here is a literal ellipses.
+            # # * "typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]",
+            # #   typing a tuple whose:
+            # #   * First item satisfies the "{typename1}" child hint.
+            # #   * Second item satisfies the "{typename2}" child hint.
+            # #   * Last item satisfies the "{typenameN}" child hint.
+            # #   Note that the "..." substring here is *NOT* a literal ellipses.
+            # #
+            # # This hint was *NOT* matched by the prior conditional handling
+            # # tuples of the former syntactic form and *MUST* thus be of the
+            # # latter syntactic form, which we now handle here.
+            #
+            #     # Python expression evaluating to the builtin "tuple" type when
+            #     # accessed with the private "__beartypistry" parameter.
+            #     hint_curr_expr = register_typistry_type(tuple)
+            #
+            #     # Assert this tuple was subscripted by at least one argument.
+            #     # Note that the "typing" module should have already guaranteed
+            #     # this on our behalf. Trust is for the weak.
+            #     assert hint_childs, '{} PEP tuple {!r} empty.'.format(
+            #         hint_child_label, hint_curr)
+            #
+            #     # Assert this tuple is *NOT* of the syntactic form
+            #     # "typing.Tuple[{typename}, ...]" handled by prior logic.
+            #     assert (
+            #         len(hint_childs) == 1 or
+            #         hint_childs[1] is not Ellipsis
+            #     ), '{} PEP tuple {!r} unhandled.'.format(
+            #         hint_child_label, hint_curr)
+            #
+            #     #FIXME: Generate code here. To do so, we'll want to leverage a
+            #     #subset of the logic and snippets used to handle unions above.
+            #     #Note, however, that we can't unify the two (...get it?), as
+            #     #unions flatten non-"typing" types into a single tuple for
+            #     #efficiency. We won't be doing that here, as each tuple item
+            #     #has a more narrow pith (e.g., "{pith_curr_expr[0]}") that
+            #     #requires type-checking code specific to that item.
+            #     #FIXME: Note that we also need to explicitly handle *AND UNIT
+            #     #TEST* the "typing.Tuple[()]" edge case matching only an empty
+            #     #tuple. I mean, no one ever is actually going to use that, but
+            #     #let's just support it anyway. *sigh*
 
             # ..............{ GENERICS                          }..............
             #FIXME: Implement support for generics (i.e., user-defined

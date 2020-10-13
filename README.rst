@@ -14,8 +14,9 @@ beartype —[ …the bare-metal type checker ]—
 
                            — `The Jungle Book`_.
 
-**Beartype** is an open-source pure-Python runtime type checker emphasizing
-efficiency, portability, and thrilling puns.
+**Beartype** is an open-source pure-Python `PEP-compliant <PEP-compliant Type
+Hints_>`__ runtime type checker emphasizing efficiency, portability, and
+thrilling puns.
 
 Unlike comparable static type checkers operating at the coarse-grained
 application level (e.g., Pyre_, mypy_, pyright_, pytype_), beartype operates

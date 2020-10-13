@@ -415,6 +415,19 @@ def _die_if_hint_repr_exceeds_child_limit(
     fixed list without having to explicitly test whether each index exceeds the
     fixed length of that list.
 
+    Caveats
+    ----------
+    **This function is currently irrelevant.** Why? Because all existing
+    implementations of the :mod:`typing` module are sufficiently
+    space-consumptive that they already implicitly prohibit deep nesting of
+    PEP-compliant type hints. See commentary in the
+    :mod:`beartype_test.unit.data.data_p563` submodule for appalling details.
+    Ergo, this validator could technically be disabled. Indeed, if this
+    validator actually incurred any measurable costs, it *would* be disabled.
+    Since it doesn't, this validator has preserved purely for forward
+    compatibility with some future revision of the :mod:`typing` module that
+    hopefully improves that module's horrid space consumption.
+
     Parameters
     ----------
     hint_repr : str
