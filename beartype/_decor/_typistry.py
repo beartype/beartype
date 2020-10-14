@@ -32,7 +32,6 @@ from beartype._util.utilobject import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -459,25 +458,20 @@ class Beartypistry(dict):
                 f'prior registered value {repr(self[hint_name])} and '
                 f'newly registered value {repr(hint)}).')
 
-        # If the active Python interpreter targets at least Python 3.7.0,
-        # validate this hint. For unknown reasons, "typing.Hashable" and
-        # "typing.Sized" replace their origin non-"typing" types with
-        # themselves under Python 3.6. *UGH!*
-        if IS_PYTHON_AT_LEAST_3_7:
-            # If this hint is *NOT* PEP-noncompliant, raise an exception.
-            die_unless_hint_nonpep(
-                hint=hint,
-                hint_label='Beartypistry value',
+        # If this hint is *NOT* PEP-noncompliant, raise an exception.
+        die_unless_hint_nonpep(
+            hint=hint,
+            hint_label='Beartypistry value',
 
-                #FIXME: Actually, we eventually want to permit this to enable
-                #trivial resolution of forward references. For now, this is fine.
-                is_str_valid=False,
+            #FIXME: Actually, we eventually want to permit this to enable
+            #trivial resolution of forward references. For now, this is fine.
+            is_str_valid=False,
 
-                # Raise a decoration- rather than call-specific exception, as this
-                # setter should *ONLY* be called at decoration time (e.g., by
-                # registration functions defined above).
-                exception_cls=_BeartypeDecorBeartypistryException,
-            )
+            # Raise a decoration- rather than call-specific exception, as this
+            # setter should *ONLY* be called at decoration time (e.g., by
+            # registration functions defined above).
+            exception_cls=_BeartypeDecorBeartypistryException,
+        )
 
         # If this hint is a type...
         if isinstance(hint, type):

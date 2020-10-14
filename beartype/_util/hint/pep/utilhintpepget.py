@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 import typing
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.py.utilpyversion import IS_PYTHON_3_6
 from typing import Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -588,17 +587,6 @@ def get_hint_pep_typing_attr(hint: object) -> dict:
     # Ergo, this string is effectively the *ONLY* sane means of deciding which
     # broad category of behaviour an arbitrary PEP 484 type hint conforms to.
     typing_attr_name = repr(hint)
-
-    # If the active Python interpreter targets exactly Python 3.6, circumvent
-    # the erroneous strings returned by some "typing" module attributes (e.g.,
-    # "typing.Hashable", "typing.Sized") from this dunder method. Specifically,
-    # strip the prefixing "<class '" and suffixing ">" from these strings.
-    if (
-        IS_PYTHON_3_6 and
-        typing_attr_name.startswith("<class 'typing.") and
-        typing_attr_name.endswith("'>")
-    ):
-        typing_attr_name = typing_attr_name[8:-2]  # Trust us on this one.
 
     # If this representation is *NOT* prefixed by "typing.", this hint does
     # *NOT* originate from the "typing" module and is thus *NOT* PEP-compliant.

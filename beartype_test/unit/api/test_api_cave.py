@@ -16,11 +16,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import argparse, functools, re, sys, weakref
-from beartype_test.util.mark.pytskip import (
-    skip_if_pypy,
-    skip_if_python_version_less_than,
-    skip_unless_module,
-)
+from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_module
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal
@@ -256,6 +252,9 @@ def test_api_cave_type_core() -> None:
     # Test "ClassType".
     _assert_type_objects(cave.ClassType, _WeHaveFedOurSeaForAThousandYears)
 
+    # Test "CollectionType".
+    _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
+
     # Test "FileType".
     with open(__file__, 'r') as (
         by_the_bones_about_the_wayside_ye_shall_come_to_your_own):
@@ -484,7 +483,6 @@ def test_api_cave_type_core() -> None:
         cave.RegexMatchType,
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
 
-
 # ....................{ TESTS ~ type : skip               }....................
 @skip_if_pypy()
 def test_api_cave_type_core_nonpypy() -> None:
@@ -502,21 +500,6 @@ def test_api_cave_type_core_nonpypy() -> None:
     _assert_type_objects(
         cave.FunctionOrMethodCType,
         _IN_THE_SAND_DRIFT_ON_THE_VELDT_SIDE_IN_THE_FERN_SCRUB_WE_LAY.sub)
-
-
-@skip_if_python_version_less_than('3.6.0')
-def test_api_cave_type_core_python_3_6_0_or_newer() -> None:
-    '''
-    Test all core simple types published by the :mod:`beartype.cave` submodule
-    requiring the active Python interpreter version to be at least 3.6.0 where
-    this is the case *or* reduce to a noop otherwise.
-    '''
-
-    # Import this submodule.
-    from beartype import cave
-
-    # Test "CollectionType".
-    _assert_type_objects(cave.CollectionType, _THE_SONG_OF_THE_DEAD)
 
 # ....................{ TESTS ~ tuple                     }....................
 def test_api_cave_tuple_core() -> None:

@@ -15,7 +15,6 @@ singleton.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 from pytest import raises
 
 # ....................{ UTILITIES                         }....................
@@ -80,8 +79,6 @@ def test_typistry_register_type_pass() -> None:
     assert hint is hint_cached
 
 
-# This unit test is known to misbehave under Python 3.6... and we don't care.
-@skip_if_python_version_less_than('3.7.0')
 def test_typistry_register_type_fail() -> None:
     '''
     Test unsuccessful usage of the
@@ -162,8 +159,6 @@ def test_typistry_register_tuple_pass() -> None:
     # assert hint_cached_a != hint_cached_b
 
 
-# This unit test is known to misbehave under Python 3.6... and we don't care.
-@skip_if_python_version_less_than('3.7.0')
 def test_typistry_register_tuple_fail() -> None:
     '''
     Test unsuccessful usage of the
@@ -248,8 +243,6 @@ def test_typistry_singleton_pass() -> None:
     # whether that refactoring would even be feasible.
 
 
-# This unit test is known to misbehave under Python 3.6... and we don't care.
-@skip_if_python_version_less_than('3.7.0')
 def test_typistry_singleton_fail() -> None:
     '''
     Test unsuccessful usage of the

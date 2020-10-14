@@ -49,10 +49,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #variables to share the same names. Ergo, as a necessary precondition to making
 #this happen, we'll need to grep through the codebase and ensure this is the
 #case for all existing str.format() calls.
-#
-#Since Python 3.5 hits EOL on 2020-09-13, do this concurrent with dropping
-#Python 3.5 support. For now, the current approach is fine albeit slower than
-#ideal, which will be resolved shortly. *shrug*
 
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely

@@ -53,7 +53,6 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     typing.ContextManager: contextlib.AbstractContextManager,
     typing.Coroutine: collections_abc.Coroutine,
     typing.Generator: collections_abc.Generator,
-    typing.Hashable: collections_abc.Hashable,
     typing.ItemsView: collections_abc.ItemsView,
     typing.Iterable: collections_abc.Iterable,
     typing.Iterator: collections_abc.Iterator,
@@ -65,7 +64,6 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     typing.MutableSet: collections_abc.MutableSet,
     typing.Reversible: collections_abc.Reversible,
     typing.Sequence: collections_abc.Sequence,
-    typing.Sized: collections_abc.Sized,
     typing.ValuesView: collections_abc.ValuesView,
 
     # "typing" attributes originating from concrete classes declared by the
@@ -145,11 +143,28 @@ globalized as a trivial optimization for efficient access elsewhere.
 
 # ....................{ MAPPINGS ~ update                 }....................
 # If the active Python interpreter targets at least various Python versions,
-# map argumentless typing attributes first introduced in all those versions.
+# map argumentless typing attributes first introduced in those versions.
 if IS_PYTHON_AT_LEAST_3_7:
     TYPING_ATTR_TO_TYPE_ORIGIN.update({
         typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
         typing.OrderedDict: collections.OrderedDict,
+
+        # Although the Python 3.6-specific implementation of the "typing"
+        # module *DOES* technically supply these attributes, it does so only
+        # non-deterministically. For unknown reasons (whose underlying cause
+        # appears to be unwise abuse of private fields of the critical stdlib
+        # "abc.ABCMeta" metaclass), the "typing.Hashable" and "typing.Sized"
+        # abstract base classes (ABCs) spontaneously interchange themselves
+        # with the corresponding "collections.abc.Hashable" and
+        # "collections.abc.Sized" ABCs after indeterminate importations and/or
+        # reference to these ABCs.
+        #
+        # This issue is significantly concerning that we would ideally simply
+        # drop Python 3.6 support. Unfortunately, that would also mean dropping
+        # PyPy3 support, which has yet to stabilize Python 3.7 support. Ergo,
+        # we reluctantly Python 3.6 and thus PyPy3 support for the interim.
+        typing.Hashable: collections_abc.Hashable,
+        typing.Sized: collections_abc.Sized,
     })
 
     if IS_PYTHON_AT_LEAST_3_8:
