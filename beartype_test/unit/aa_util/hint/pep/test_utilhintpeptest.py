@@ -68,6 +68,8 @@ def test_is_hint_pep_typing() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpepdata import (
+        TYPING_ATTR_TO_TYPE_ORIGIN)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
     from beartype_test.unit.data.data_hint import (
         NOT_PEP_HINTS, PEP_HINT_TO_META)
@@ -82,6 +84,10 @@ def test_is_hint_pep_typing() -> None:
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
         if not pep_hint_meta.is_generic_user:
             assert is_hint_pep_typing(pep_hint) is True
+
+    # Assert this tester accepts argumentless "typing" attributes.
+    for pep_hint_attr in TYPING_ATTR_TO_TYPE_ORIGIN.keys():
+        assert is_hint_pep_typing(pep_hint_attr) is True
 
     # Assert this tester rejects non-"typing" types.
     for not_pep_hint in NOT_PEP_HINTS:

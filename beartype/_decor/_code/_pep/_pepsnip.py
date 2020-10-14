@@ -26,7 +26,7 @@ from beartype._decor._code.codemain import (
 from inspect import Parameter
 
 # ....................{ PITH                              }....................
-PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_expr} := {pith_curr_full_expr}'''
+PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_assigned_expr} := {pith_curr_expr}'''
 '''
 Python >= 3.8-specific assignment expression assigning the full Python
 expression yielding the value of the current pith to a unique local variable,
@@ -204,13 +204,13 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
-# ....................{ HINT ~ sequence                   }....................
+# ....................{ HINT ~ sequence : standard        }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
 {indent_curr}    # True only if this pith shallowly satisfies this hint.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this pith is empty *OR* this pith is
 {indent_curr}    # both non-empty and deeply satisfies this hint.
-{indent_curr}    (not {pith_curr_expr} or {hint_child_placeholder})
+{indent_curr}    (not {pith_curr_assigned_expr} or {hint_child_placeholder})
 {indent_curr})'''
 '''
 PEP-compliant code snippet type-checking the current pith against a parent
@@ -236,7 +236,7 @@ sequences with a seemingly reasonable ternary conditional:
 
    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = \'\'\'(
    {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-   {indent_curr}    {hint_child_placeholder} if {pith_curr_expr} else True
+   {indent_curr}    {hint_child_placeholder} if {pith_curr_assigned_expr} else True
    {indent_curr})\'\'\'
 
 That should behave as expected, but doesn't, presumably due to obscure scoping
@@ -249,12 +249,50 @@ based on ternary conditional (albeit slightly less intuitive).
 
 
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
-    '''{pith_curr_expr}[__beartype_random_int % len({pith_curr_expr})]''')
+    '''{pith_curr_assigned_expr}[__beartype_random_int % len({pith_curr_assigned_expr})]''')
 '''
 PEP-compliant code snippet Python code snippet evaluating to a randomly indexed
 item of the current pith (which, by definition, *must* be a standard sequence)
 against the current child hint (e.g., ``int``) of the currently visited
 PEP-compliant standard sequence type hint (e.g., ``typing.List[int]``).
+'''
+
+# ....................{ HINT ~ sequence : tuple           }....................
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX = '''('''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+against each subscripted argument of an itemized :class:`typing.Tuple` type of
+the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+'''
+
+
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_SUFFIX = '''
+{indent_curr})'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the current pith
+against each subscripted argument of an itemized :class:`typing.Tuple` type of
+the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+'''
+
+
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_ITEM = '''
+{{indent_curr}}    {hint_child_placeholder} and'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+argument subscripting an itemized :class:`typing.Tuple` type of the form
+``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" and"`` after
+applying this snippet to the last subscripted argument of an itemized
+:class:`typing.Tuple` type. While there exist alternate and more readable means
+of accomplishing this, this approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent type has been generated.
 '''
 
 # ....................{ HINT ~ union                      }....................
@@ -289,7 +327,7 @@ of accomplishing this, this approach is the optimally efficient.
 The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
-this :class:`typing.Union` type has been generated.
+this parent type has been generated.
 '''
 
 
@@ -305,19 +343,3 @@ See Also
 :data:`PEP_CODE_CHECK_HINT_UNION_ARG_PEP`
     Further details.
 '''
-
-# ....................{ FORMATTERS                        }....................
-# Bound format methods of string globals defined above, preserved as discrete
-# global variables for efficient lookup elsewhere.
-
-PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
-    PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
-PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
-PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format)
-PEP_CODE_CHECK_HINT_UNION_ARG_PEP_format = (
-    PEP_CODE_CHECK_HINT_UNION_ARG_PEP.format)
-PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP_format = (
-    PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP.format)
-PEP_CODE_PITH_ASSIGN_EXPR_format = PEP_CODE_PITH_ASSIGN_EXPR.format

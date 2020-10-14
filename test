@@ -65,8 +65,8 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-command pytest --maxfail=1 "${@}" .
-# command python3.6 -m pytest --maxfail=1 "${@}" .
+# command pytest --maxfail=1 "${@}" .
+command python3.6 -m pytest --maxfail=1 "${@}" .
 # command python3.8 -m pytest --maxfail=1 "${@}" .
 # command python3.9 -m pytest --maxfail=1 "${@}" .
 

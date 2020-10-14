@@ -76,7 +76,49 @@ def is_object_hashable(obj: object) -> bool:
     # Else, this object is hashable. Return true.
     return True
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS ~ name                    }....................
+def get_object_name_qualified(obj: object) -> str:
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring module) of the passed object if this object defines the
+    ``__name__`` dunder attribute *or* raise an exception otherwise (i.e., if
+    this object defines *no* such attribute).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    str
+        Fully-qualified name of this object.
+
+    Raises
+    ----------
+    AttributeError
+        If this object defines *no* ``__name__`` dunder attribute.
+    '''
+
+    # Unqualified name of this object, implicitly raising an
+    # "AttributeError" if this object defines no such name.
+    object_basename = object.__name__
+
+    # Fully-qualified name of the module defining this object if this
+    # object is # defined by a module *OR* "None" otherwise.
+    object_module_name = get_object_module_name_or_none(object)
+
+    # Return either...
+    return (
+        # The "."-delimited concatenation of this basename and module
+        # name if this module name exists.
+        f'{object_module_name}.{object_basename}'
+        if object_module_name is not None else
+        # This basename as is otherwise.
+        object_basename
+    )
+
+# ....................{ GETTERS ~ type                    }....................
 def get_object_type(obj: object) -> type:
     '''
     Either the passed object if this object is a class *or* the class of this
@@ -102,8 +144,8 @@ def get_object_type(obj: object) -> type:
 
     return obj if isinstance(obj, type) else type(obj)
 
-# ....................{ GETTERS ~ name                    }....................
-def get_object_name_qualified(obj: object) -> str:
+# ....................{ GETTERS ~ type : name             }....................
+def get_object_type_name_qualified(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring module) of either passed object if this object is a class *or*
@@ -124,7 +166,7 @@ def get_object_name_qualified(obj: object) -> str:
     cls = get_object_type(obj)
 
     # Unqualified name of this type.
-    cls_basename = get_object_name_unqualified(cls)
+    cls_basename = get_object_type_name_unqualified(cls)
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
@@ -132,19 +174,16 @@ def get_object_name_qualified(obj: object) -> str:
 
     # Return either...
     return (
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-
         # The "."-delimited concatenation of this class basename and module
         # name if this module name exists.
-        cls_module_name + '.' + cls_basename
+        f'{cls_module_name}.{cls_basename}'
         if cls_module_name is not None else
         # This class basename as is otherwise.
         cls_basename
     )
 
 
-def get_object_name_unqualified(obj: object) -> str:
+def get_object_type_name_unqualified(obj: object) -> str:
     '''
     **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
     object if this object is a class *or* the class of this object otherwise

@@ -26,8 +26,7 @@ def test_get_hint_type_origin_or_none() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintget import (
-        get_hint_type_origin_or_none)
+    from beartype._util.hint.utilhintget import get_hint_type_origin_or_none
     from beartype._util.hint.pep.utilhintpepdata import (
         TYPING_ATTR_TO_TYPE_ORIGIN)
 
@@ -36,9 +35,16 @@ def test_get_hint_type_origin_or_none() -> None:
 
     # Assert this function accepts all instanceable argumentless "typing"
     # attributes.
-    for typing_attr_argless, supercls in TYPING_ATTR_TO_TYPE_ORIGIN.items():
-        assert get_hint_type_origin_or_none(typing_attr_argless) is (
-            supercls)
+    for hint_attr, supercls in TYPING_ATTR_TO_TYPE_ORIGIN.items():
+        # Non-"typing" type originating this attribute.
+        hint_type_origin = get_hint_type_origin_or_none(hint_attr)
+
+        # Assert this type to be the expected non-"typing" type.
+        #
+        # Note that we intentionally do *NOT* assert this type to actually be a
+        # non-"typing" type. Why? Because some origin types under some Python
+        # versions are actually standard types (e.g., "typing.SupportsRound").
+        assert hint_type_origin is supercls
 
     # Assert this function rejects objects that are *NOT* instanceable.
     assert get_hint_type_origin_or_none(

@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
-from typing import Generic, TypeVar
+# from typing import Generic, TypeVar
 
 # ....................{ TESTS ~ super                     }....................
 def test_get_hint_pep_generic_bases() -> None:

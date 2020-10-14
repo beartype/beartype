@@ -19,19 +19,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
-    _BeartypeCallBeartypistryException,
+    # _BeartypeCallBeartypistryException,
     _BeartypeDecorBeartypistryException,
 )
 from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
 from beartype._util.utilobject import (
     MODULE_NAME_BUILTINS,
     get_object_module_name_or_none,
-    get_object_name_qualified,
-    get_object_name_unqualified,
+    get_object_type_name_qualified,
+    get_object_type_name_unqualified,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -78,8 +79,8 @@ def register_typistry_type(hint: type) -> str:
     codebase, but is otherwise roughly equivalent to:
 
         >>> from beartype._decor._typistry import bear_typistry
-        >>> from beartype._util.utilobject import get_object_name_qualified
-        >>> bear_typistry[get_object_name_qualified(hint)] = hint
+        >>> from beartype._util.utilobject import get_object_type_name_qualified
+        >>> bear_typistry[get_object_type_name_qualified(hint)] = hint
 
     This function is memoized for efficiency.
 
@@ -118,7 +119,7 @@ def register_typistry_type(hint: type) -> str:
     # assigning a "bear_typistry" key-value pair.
 
     # Unqualified name of this type.
-    hint_basename = get_object_name_unqualified(hint)
+    hint_basename = get_object_type_name_unqualified(hint)
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
@@ -443,7 +444,7 @@ class Beartypistry(dict):
         # If this name is *NOT* a string, raise an exception.
         if hint_name.__class__ is not str:
             raise _BeartypeDecorBeartypistryException(
-                'Beartypistry key {!r} not string.'.format(hint_name))
+                f'Beartypistry key {repr(hint_name)} not string.')
         # Else, this name is a string.
         #
         # If this name is an existing key of this dictionary, this name has
@@ -453,35 +454,35 @@ class Beartypistry(dict):
         # exception.
         elif hint_name in self:
             raise _BeartypeDecorBeartypistryException(
-                'Beartypistry key "{}" already registered (i.e., '
-                'key collision between '
-                'prior registered value {!r} and '
-                'to-be registered value {!r}).'.format(
-                    hint_name, self[hint_name], hint))
+                f'Beartypistry key "{hint_name}" already registered '
+                f'(i.e., key collision between '
+                f'prior registered value {repr(self[hint_name])} and '
+                f'newly registered value {repr(hint)}).')
 
-        # If this hint is *NOT* PEP-noncompliant, raise an exception.
-        die_unless_hint_nonpep(
-            hint=hint,
+        # If the active Python interpreter targets at least Python 3.7.0,
+        # validate this hint. For unknown reasons, "typing.Hashable" and
+        # "typing.Sized" replace their origin non-"typing" types with
+        # themselves under Python 3.6. *UGH!*
+        if IS_PYTHON_AT_LEAST_3_7:
+            # If this hint is *NOT* PEP-noncompliant, raise an exception.
+            die_unless_hint_nonpep(
+                hint=hint,
+                hint_label='Beartypistry value',
 
-            #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-            #support, which are the optimal means of performing string
-            #formatting.
-            hint_label='Beartypistry value ' + repr(hint),
+                #FIXME: Actually, we eventually want to permit this to enable
+                #trivial resolution of forward references. For now, this is fine.
+                is_str_valid=False,
 
-            #FIXME: Actually, we eventually want to permit this to enable
-            #trivial resolution of forward references. For now, this is fine.
-            is_str_valid=False,
-
-            # Raise a decoration- rather than call-specific exception, as this
-            # setter should *ONLY* be called at decoration time (e.g., by
-            # registration functions defined above).
-            exception_cls=_BeartypeDecorBeartypistryException,
-        )
+                # Raise a decoration- rather than call-specific exception, as this
+                # setter should *ONLY* be called at decoration time (e.g., by
+                # registration functions defined above).
+                exception_cls=_BeartypeDecorBeartypistryException,
+            )
 
         # If this hint is a type...
         if isinstance(hint, type):
             # Fully-qualified classname of this type as declared by this type.
-            hint_clsname = get_object_name_qualified(hint)
+            hint_clsname = get_object_type_name_qualified(hint)
 
             # If...
             if (
@@ -497,9 +498,9 @@ class Beartypistry(dict):
             # Then raise an exception.
             ):
                 raise _BeartypeDecorBeartypistryException(
-                    'Beartypistry key "{}" not '
-                    'fully-qualified classname "{}" of type {!r}.'.format(
-                        hint_name, hint_clsname, hint))
+                    f'Beartypistry key "{hint_name}" not '
+                    f'fully-qualified classname "{hint_clsname}" of '
+                    f'type {repr(hint)}.')
         # Else if this hint is a tuple...
         elif hint.__class__ is tuple:
             # If this tuple's name is *NOT* prefixed by a magic substring
@@ -518,14 +519,14 @@ class Beartypistry(dict):
             # guarantees this constraint to be the case.
             if not hint_name.startswith(_TYPISTRY_HINT_NAME_TUPLE_PREFIX):
                 raise _BeartypeDecorBeartypistryException(
-                    'Beartypistry key "{}" not '
-                    'prefixed by "{}" for tuple {!r}.'.format(
-                        hint_name, _TYPISTRY_HINT_NAME_TUPLE_PREFIX, hint))
+                    f'Beartypistry key "{hint_name}" not '
+                    f'prefixed by "{_TYPISTRY_HINT_NAME_TUPLE_PREFIX}" for '
+                    f'tuple {repr(hint)}.')
         # Else, something has gone terribly awry. Raise us up the exception!
         else:
             raise _BeartypeDecorBeartypistryException(
-                'Beartypistry key "{}" value {!r} invalid '
-                '(i.e., neither type nor tuple).'.format(hint_name, hint))
+                f'Beartypistry key "{hint_name}" value {repr(hint)} invalid '
+                '(i.e., neither type nor tuple).')
 
         # Cache this object under this name.
         super().__setitem__(hint_name, hint)

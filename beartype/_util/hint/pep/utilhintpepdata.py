@@ -17,7 +17,6 @@ from beartype.cave import (
     RegexMatchType,
 )
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_6,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
 )
@@ -43,12 +42,15 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     # "typing" attributes originating from abstract base classes (ABCs)
     # declared by the "collections.abc" submodule.
     typing.AbstractSet: collections_abc.Set,
+    typing.AsyncGenerator: collections_abc.AsyncGenerator,
     typing.AsyncIterable: collections_abc.AsyncIterable,
     typing.AsyncIterator: collections_abc.AsyncIterator,
     typing.Awaitable: collections_abc.Awaitable,
     typing.ByteString: collections_abc.ByteString,
     typing.Callable: collections_abc.Callable,
+    typing.Collection: collections_abc.Collection,
     typing.Container: collections_abc.Container,
+    typing.ContextManager: contextlib.AbstractContextManager,
     typing.Coroutine: collections_abc.Coroutine,
     typing.Generator: collections_abc.Generator,
     typing.Hashable: collections_abc.Hashable,
@@ -61,6 +63,7 @@ TYPING_ATTR_TO_TYPE_ORIGIN = {
     typing.MutableMapping: collections_abc.MutableMapping,
     typing.MutableSequence: collections_abc.MutableSequence,
     typing.MutableSet: collections_abc.MutableSet,
+    typing.Reversible: collections_abc.Reversible,
     typing.Sequence: collections_abc.Sequence,
     typing.Sized: collections_abc.Sized,
     typing.ValuesView: collections_abc.ValuesView,
@@ -134,7 +137,7 @@ laughably critical oversight.
 '''
 
 
-TYPING_ATTR_TO_TYPE_ORIGIN_GET = TYPING_ATTR_TO_TYPE_ORIGIN.get
+TYPING_ATTR_TO_TYPE_ORIGIN_get = TYPING_ATTR_TO_TYPE_ORIGIN.get
 '''
 :meth:`dict.get` method of the :data:`TYPING_ATTR_TO_TYPE_ORIGIN` dictionary,
 globalized as a trivial optimization for efficient access elsewhere.
@@ -143,24 +146,16 @@ globalized as a trivial optimization for efficient access elsewhere.
 # ....................{ MAPPINGS ~ update                 }....................
 # If the active Python interpreter targets at least various Python versions,
 # map argumentless typing attributes first introduced in all those versions.
-if IS_PYTHON_AT_LEAST_3_6:
+if IS_PYTHON_AT_LEAST_3_7:
     TYPING_ATTR_TO_TYPE_ORIGIN.update({
-        typing.AsyncGenerator: collections_abc.AsyncGenerator,
-        typing.Collection: collections_abc.Collection,
-        typing.ContextManager: contextlib.AbstractContextManager,
-        typing.Reversible: collections_abc.Reversible,
+        typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
+        typing.OrderedDict: collections.OrderedDict,
     })
 
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_AT_LEAST_3_8:
         TYPING_ATTR_TO_TYPE_ORIGIN.update({
-            typing.AsyncContextManager: contextlib.AbstractAsyncContextManager,
-            typing.OrderedDict: collections.OrderedDict,
+            typing.SupportsIndex: typing.SupportsIndex,
         })
-
-        if IS_PYTHON_AT_LEAST_3_8:
-            TYPING_ATTR_TO_TYPE_ORIGIN.update({
-                typing.SupportsIndex: typing.SupportsIndex,
-            })
 
 # ....................{ SETS                              }....................
 TYPING_ATTRS_SUPPORTED = frozenset(

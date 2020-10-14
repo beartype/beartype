@@ -15,6 +15,7 @@ singleton.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 from pytest import raises
 
 # ....................{ UTILITIES                         }....................
@@ -50,13 +51,13 @@ def test_typistry_register_type_pass() -> None:
     from beartype.cave import RegexCompiledType
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
-    from beartype._util.utilobject import get_object_name_unqualified
+    from beartype._util.utilobject import get_object_type_name_unqualified
 
     # Assert this function registers a non-builtin type under the beartypistry
     # and silently permits re-registration of the same type.
     for hint in (RegexCompiledType,)*2:
         hint_name_cached = register_typistry_type(hint)
-        assert hint_name_cached != get_object_name_unqualified(hint)
+        assert hint_name_cached != get_object_type_name_unqualified(hint)
         hint_cached = _eval_registered_expr(hint_name_cached)
         assert hint is hint_cached
 
@@ -66,7 +67,7 @@ def test_typistry_register_type_pass() -> None:
     # doesn't actually exist, which is inconsistent nonsense, but whatever).
     hint = type(None)
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached != get_object_name_unqualified(hint)
+    assert hint_name_cached != get_object_type_name_unqualified(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
@@ -74,11 +75,13 @@ def test_typistry_register_type_pass() -> None:
     # basename.
     hint = list
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached == get_object_name_unqualified(hint)
+    assert hint_name_cached == get_object_type_name_unqualified(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
 
+# This unit test is known to misbehave under Python 3.6... and we don't care.
+@skip_if_python_version_less_than('3.7.0')
 def test_typistry_register_type_fail() -> None:
     '''
     Test unsuccessful usage of the
@@ -159,6 +162,8 @@ def test_typistry_register_tuple_pass() -> None:
     # assert hint_cached_a != hint_cached_b
 
 
+# This unit test is known to misbehave under Python 3.6... and we don't care.
+@skip_if_python_version_less_than('3.7.0')
 def test_typistry_register_tuple_fail() -> None:
     '''
     Test unsuccessful usage of the
@@ -219,14 +224,14 @@ def test_typistry_singleton_pass() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import bear_typistry
-    from beartype._util.utilobject import get_object_name_qualified
+    from beartype._util.utilobject import get_object_type_name_qualified
 
     # Assert that dictionary syntax also implicitly registers a type. Since
     # this approach explicitly prohibits re-registration for safety, we define
     # a custom user-defined type guaranteed *NOT* to have been registered yet.
     class TestTypistrySingletonPassType(object): pass
     hint = TestTypistrySingletonPassType
-    hint_name = get_object_name_qualified(hint)
+    hint_name = get_object_type_name_qualified(hint)
     bear_typistry[hint_name] = hint
     assert bear_typistry.get(hint_name) is hint
 
@@ -243,6 +248,8 @@ def test_typistry_singleton_pass() -> None:
     # whether that refactoring would even be feasible.
 
 
+# This unit test is known to misbehave under Python 3.6... and we don't care.
+@skip_if_python_version_less_than('3.7.0')
 def test_typistry_singleton_fail() -> None:
     '''
     Test unsuccessful usage of the

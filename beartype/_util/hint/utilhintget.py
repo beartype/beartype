@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintException
 from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTR_TO_TYPE_ORIGIN_GET)
+    TYPING_ATTR_TO_TYPE_ORIGIN_get)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -118,7 +118,7 @@ def get_hint_type_origin(hint: object) -> type:
 #   # raise exceptions and are thus *NOT* isinstance()-able.
 #   if is_hint_pep_typing(hint):
 #        die_unless_hint_pep_typing_attr(hint)
-#        return TYPING_ATTR_TO_TYPE_ORIGIN_GET(hint, None)
+#        return TYPING_ATTR_TO_TYPE_ORIGIN_get(hint, None)
 #
 #   return (
 #       # Else if this object is a non-"typing" class, this class as is.
@@ -130,6 +130,7 @@ def get_hint_type_origin(hint: object) -> type:
 #So, that's trivial, too. We just lack sufficient interest at the moment, as
 #this will require testing and gains us little except a bit of safety during
 #development time. *shrug*
+
 def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
     '''
     **Origin type** (i.e., :func:`isinstance`-able class suitable for shallowly
@@ -182,13 +183,14 @@ def get_hint_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
 
     # Return either...
     return (
-        # If this object is a "typing" attribute, the
-        # isinstance()-able class originating this attribute if any or "None".
+        # If this object is a "typing" attribute, the isinstance()-able class
+        # originating this attribute if any or "None".
+        #
         # Note this condition is intentionally tested *BEFORE* testing whether
         # this object is a type, as most "typing" attributes that are types
         # also define __subclasscheck__() dunder methods that unconditionally
         # raise exceptions and are thus *NOT* isinstance()-able.
-        TYPING_ATTR_TO_TYPE_ORIGIN_GET(hint, None)
+        TYPING_ATTR_TO_TYPE_ORIGIN_get(hint, None)
         if is_hint_pep_typing(hint) else
         # Else if this object is a non-"typing" class, this class as is.
         hint if isinstance(hint, type) else

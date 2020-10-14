@@ -13,7 +13,10 @@ unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import collections, typing
-from collections import namedtuple
+from collections import (
+    abc as collections_abc,
+    namedtuple,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ TYPEVARS                          }....................
@@ -71,7 +74,7 @@ class PepGenericTypevaredShallowMultiple(
 
 
 class PepGenericTypevaredDeepMultiple(
-    collections.abc.Sized,
+    collections_abc.Sized,
     typing.Iterable[typing.Tuple[S, T]],
     typing.Container[typing.Tuple[S, T]],
 ):
@@ -230,6 +233,60 @@ PEP_HINT_TO_META = {
             # Lambda function returning a string constant.
             _PepHintPithUnsatisfiedMetadata(
                 pith=lambda: 'Cessation',
+                exception_str_match_regexes=(),
+                exception_str_not_match_regexes=(),
+            ),
+        ),
+    ),
+
+    # ..................{ COLLECTIONS ~ abc                 }..................
+    # Argumentless "Hashable" attribute.
+    typing.Hashable: _PepHintMetadata(
+        typing_attr=typing.Hashable,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # String constant.
+            "Oh, importunate Θ Fortuna'd afforded",
+            # Tuple of string constants.
+            (
+                'Us vis‐a‐vis conduit fjords',
+                'Of weal‐th, and well‐heeled,',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # List of string constants.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=[
+                    'Unwholesome gentry ventings',
+                    'Of a scantly raptured Overture,',
+                ],
+                exception_str_match_regexes=(),
+                exception_str_not_match_regexes=(),
+            ),
+        ),
+    ),
+
+    # Argumentless "Sized" attribute.
+    typing.Sized: _PepHintMetadata(
+        typing_attr=typing.Sized,
+        is_supported=True,
+        is_generic_user=False,
+        is_typevared=False,
+        piths_satisfied=(
+            # String constant.
+            'Faire, a',
+            # Tuple of string constants.
+            (
+                'Farthing scrap',
+                'Of comfort’s ‘om’‐Enwrapped, rapt appeal — that',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # Boolean constant.
+            _PepHintPithUnsatisfiedMetadata(
+                pith=False,
                 exception_str_match_regexes=(),
                 exception_str_not_match_regexes=(),
             ),
