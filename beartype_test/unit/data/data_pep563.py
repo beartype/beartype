@@ -136,7 +136,7 @@ def get_minecraft_end_txt(player_name: str) -> str:
 #error from the CPython parser -- complete with non-human-readable debug
 #"stderr" output that I highly doubt CPython is even supposed to publicly emit:
 #
-#    beartype_test/unit/data/data_p563.py:180: MemoryError
+#    beartype_test/unit/data/data_pep563.py:180: MemoryError
 #    ---------------------------------------------------- Captured stderr call -----------------------------------------------------
 #    s_push: parser stack overflow
 #

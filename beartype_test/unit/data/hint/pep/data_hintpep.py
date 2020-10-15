@@ -125,6 +125,15 @@ PEP-compliant annotations.
 '''
 
 # ....................{ METADATA ~ tuple                  }....................
+#FIXME: Refactor as follows:
+#* Define a new "_data_hintpepmeta" submodule in this subpackage.
+#* Shift this and the following named tuple types into that submodule.
+#* Refactor these named tuple types into full-blown classes whose __init__()
+#  method *OPTIONALLY* accepts most of these fields, which should then default
+#  to sane values. The only truly mandatory field appears to be "typing_attr".
+#* Refactor all usage of these types below to leverage these defaults by
+#  removing all fields that currently default to these defaults.
+
 _PepHintMetadata = namedtuple('_PepHintMetadata', (
     'typing_attr',
     'is_supported',
@@ -912,9 +921,11 @@ applicable to testing scenarios.
 # ....................{ MAPPINGS ~ update                 }....................
 # If the active Python interpreter targets at least various Python versions,
 # map PEP-compliant type hints first introduced in those versions.
+
+# See the "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTR_TO_TYPE_ORIGIN"
+# dictionary for detailed discussion.
 if IS_PYTHON_AT_LEAST_3_7:
     PEP_HINT_TO_META.update({
-        # ................{ COLLECTIONS ~ abc                 }................
         # Argumentless "Hashable" attribute.
         typing.Hashable: _PepHintMetadata(
             typing_attr=typing.Hashable,

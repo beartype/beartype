@@ -28,7 +28,7 @@ def test_is_hint_nonpep() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.nonpep.utilhintnonpeptest import is_hint_nonpep
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
 
     # Assert this function accepts PEP-noncompliant type hints.
@@ -55,7 +55,7 @@ def test_die_unless_hint_nonpep() -> None:
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
 
     # Assert this function accepts PEP-noncompliant type hints.

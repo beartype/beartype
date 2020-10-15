@@ -794,6 +794,7 @@ PEP-compliant Type Hints
 <PEP 0_>`__:
 
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
+* `PEP 572 -- Assignment Expressions <PEP 572_>`__.
 
 ``beartype`` is partially compliant with these PEPs:
 
@@ -1103,6 +1104,8 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `563 <PEP 563_>`__                  | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `572 <PEP 572_>`__                  | **0.3.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
++-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `585 <PEP 585_>`__                  | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `586 <PEP 586_>`__                  | *none*                        | *none*                    |
@@ -1300,6 +1303,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0563
 .. _PEP 570:
    https://www.python.org/dev/peps/pep-0570
+.. _PEP 572:
+   https://www.python.org/dev/peps/pep-0572
 .. _PEP 585:
    https://www.python.org/dev/peps/pep-0585
 .. _PEP 586:

@@ -18,7 +18,7 @@ from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
 
 # Import all public attributes of this private data-driven testing submodule
 # for use by higher-level unit test submodules elsewhere.
-from beartype_test.unit.data._data_hint_pep import (
+from beartype_test.unit.data.hint.pep.data_hintpep import (
     PEP_HINT_TO_META,
     PEP_HINT_NONATTR_TO_META,
     PEP_HINTS,

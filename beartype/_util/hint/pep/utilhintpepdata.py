@@ -173,36 +173,54 @@ if IS_PYTHON_AT_LEAST_3_7:
         })
 
 # ....................{ SETS                              }....................
-TYPING_ATTRS_SUPPORTED = frozenset(
-    # Tuple of every "typing" object explicitly supported by a branch of the
-    # pep_code_check_hint() function generating code unique to that object,
-    # deeply type-checking the passed parameter or returned value against the
-    # PEP-compliant type hint annotated by a subscription of that object.
-    (
-        typing.Any,
-        typing.Optional,
+TYPING_ATTRS_SUPPORTED_DEEP = frozenset((
+    typing.List,
+    typing.MutableSequence,
+    typing.Optional,
+    typing.Sequence,
+    typing.Tuple,
 
-        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-        # under Python <= 3.9. The implementations of the "typing" module under
-        # those older Python versions transparently reduced "typing.Optional"
-        # to "typing.Union" at runtime. Since this reduction is no longer the
-        # case, both *MUST* now be explicitly listed here.
-        typing.Union,
-    ) +
-
-    # Tuple of every "typing" object implicitly supported by a branch of that
-    # function generating code common to all such objects, only shallowly
-    # type-checking the passed parameter or returned value against the
-    # PEP-compliant type hint annotated by a subscription of that object.
-    tuple(TYPING_ATTR_TO_TYPE_ORIGIN.keys())
-)
+    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+    # under Python <= 3.9. The implementations of the "typing" module under
+    # those older Python versions transparently reduced "typing.Optional"
+    # to "typing.Union" at runtime. Since this reduction is no longer the
+    # case, both *MUST* now be explicitly listed here.
+    typing.Union,
+))
 '''
-Frozen set of all **argumentless typing attributes** (i.e., public attributes
-of the :mod:`typing` module uniquely identifying PEP-compliant type hints
-sans arguments) supported by the :func:`beartype.beartype` decorator.
+Frozen set of all **deeply supported argumentless typing attributes** (i.e.,
+public attributes of the :mod:`typing` module uniquely identifying
+PEP-compliant type hints without arguments for which the
+:func:`beartype.beartype` decorator generates deeply type-checking code).
+
+This set contains *every* argumentless :mod:`typing` attribute explicitly
+supported by one or more conditional branches in the body of the
+:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` function
+generating code deeply type-checking the current pith against the PEP-compliant
+type hint annotated by a subscription of that attribute.
 
 This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_typing_attr_to_args` getter function.
+:func:`get_hint_pep_typing_attr` getter function.
+'''
+
+
+TYPING_ATTRS_SUPPORTED = frozenset(
+    # Set of all deeply supported argumentless "typing" attributes.
+    TYPING_ATTRS_SUPPORTED_DEEP |
+    # Set of all shallowly supported argumentless "typing" attributes
+    # originating from a non-"typing" origin type.
+    set(TYPING_ATTR_TO_TYPE_ORIGIN.keys()) |
+    # Set of all shallowly supported argumentless "typing" attributes *NOT*
+    # originating from a non-"typing" origin type.
+    set((typing.Any,))
+)
+'''
+Frozen set of all **supported argumentless typing attributes** (i.e., public
+attributes of the :mod:`typing` module uniquely identifying PEP-compliant type
+hints without arguments supported by the :func:`beartype.beartype` decorator).
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_typing_attr` getter function.
 '''
 
 # ....................{ SETS ~ subtype                    }....................

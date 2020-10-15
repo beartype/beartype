@@ -28,7 +28,7 @@ def test_is_hint_pep() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-    from beartype_test.unit.data.data_hint import NOT_PEP_HINTS, PEP_HINTS
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS, PEP_HINTS
 
     # Assert that various "typing" types are correctly detected.
     for pep_hint in PEP_HINTS:
@@ -47,7 +47,7 @@ def test_is_hint_pep_generic() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic_user
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_PEP_HINTS, PEP_HINT_TO_META)
 
     # Assert this tester:
@@ -71,7 +71,7 @@ def test_is_hint_pep_typing() -> None:
     from beartype._util.hint.pep.utilhintpepdata import (
         TYPING_ATTR_TO_TYPE_ORIGIN)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_PEP_HINTS, PEP_HINT_TO_META)
 
     # Assert this tester accepts concrete PEP-compliant type hints.
@@ -103,7 +103,7 @@ def test_is_hint_pep_supported() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
 
     # Assert this tester:
@@ -136,7 +136,7 @@ def test_die_unless_hint_pep_supported() -> None:
     )
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep_supported)
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
 
     # Assert this tester...
@@ -175,7 +175,7 @@ def test_die_unless_hint_pep_typing_attr_supported() -> None:
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep_typing_attr_supported)
     from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
-    from beartype_test.unit.data.data_hint import NOT_PEP_HINTS, PEP_HINTS
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS, PEP_HINTS
 
     # Assert this tester accepts all supported argumentless "typing"
     # attributes.
@@ -204,7 +204,7 @@ def test_is_hint_typing_typevar() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
-    from beartype_test.unit.data.data_hint import T
+    from beartype_test.unit.data.hint.data_hint import T
 
     # Assert that type variables are type variables.
     assert is_hint_pep_typevar(T) is True
@@ -224,7 +224,7 @@ def test_is_hint_typing_typevared() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import (
         is_hint_pep_typevared)
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         PEP_HINT_TO_META, NONPEP_HINTS,)
 
     # Assert that various "TypeVar"-centric types are correctly detected.

@@ -191,9 +191,10 @@ def die_unless_hint_pep_supported(
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
     # Else, this hint is PEP-compliant.
 
-    #FIXME: Remove *AFTER* implementing support for type variables.
-    # Else if this hint is a generic, raise an exception. Generics require
-    # non-trivial decorator support that has yet to be implemented.
+    #FIXME: Remove *AFTER* implementing support for user-defined generics.
+    # Else if this hint is a user-defined generic, raise an exception. These
+    # hints require non-trivial decorator support that has yet to be
+    # implemented.
     if is_hint_pep_generic_user(hint):
         raise BeartypeDecorHintPepUnsupportedException(
             f'{hint_label} generic PEP hint {repr(hint)} '

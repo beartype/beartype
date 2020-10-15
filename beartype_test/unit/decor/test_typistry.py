@@ -88,7 +88,7 @@ def test_typistry_register_type_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
-    from beartype_test.unit.data.data_hint import PepGenericTypevaredSingle
+    from beartype_test.unit.data.hint.data_hint import PepGenericTypevaredSingle
 
     # Assert that non-types are *NOT* registrable via the same function.
     with raises(_BeartypeDecorBeartypistryException):
@@ -168,7 +168,7 @@ def test_typistry_register_tuple_fail() -> None:
     # Defer heavyweight imports
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_tuple
-    from beartype_test.unit.data.data_hint import PepGenericTypevaredSingle
+    from beartype_test.unit.data.hint.data_hint import PepGenericTypevaredSingle
 
     # Assert that hashable non-tuple objects are *NOT* registrable via this
     # function.

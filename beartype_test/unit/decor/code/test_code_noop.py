@@ -72,7 +72,7 @@ def test_decor_noop_hint_ignorable_iter() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype_test.unit.data.data_hint import HINTS_IGNORABLE
+    from beartype_test.unit.data.hint.data_hint import HINTS_IGNORABLE
 
     # Assert that @beartype efficiently reduces to a noop when passed only
     # type hints known to be ignorable.

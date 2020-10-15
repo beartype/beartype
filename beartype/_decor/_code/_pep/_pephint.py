@@ -312,7 +312,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #elsewhere as cleverly documented in the "_pep563" submodule.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintPepException
+from beartype.roar import (
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepUnsupportedException,
+)
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import (
     register_typistry_type,
@@ -346,6 +349,7 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
     TYPING_ATTRS_SEQUENCE_STANDARD,
+    TYPING_ATTRS_SUPPORTED_DEEP,
     TYPING_ATTRS_UNION,
 )
 from beartype._util.hint.pep.utilhintpepget import (
@@ -500,8 +504,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
     BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
     BeartypeDecorHintPepUnsupportedException
-        If this object is a PEP-compliant type hint but is currently
-        unsupported by the :func:`beartype.beartype` decorator.
+        If this object is a PEP-compliant type hint currently unsupported by
+        the :func:`beartype.beartype` decorator.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
@@ -1075,8 +1079,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             #* In the "beartype._decor.main" submodule:
             #  *
 
-            # If the active Python interpreter targets at least Python
-            # 3.8 *AND* this parent hint is not the root hint,
+            # If...
             if (
                 # The active Python interpreter targets Python >= 3.8 *AND*...
                 IS_PYTHON_AT_LEAST_3_8 and
@@ -1086,7 +1089,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # seemingly equivalent metadata to account for edge cases.
                 # Notably, child hints of unions (and possibly other "typing"
                 # objects) do *NOT* narrow the current pith and are *NOT* the
-                # root hint; ergo, a seemingly equivalent test like
+                # root hint. Ergo, a seemingly equivalent test like
                 # "hints_meta_index_curr != 0" would generate false positives
                 # and thus unnecessarily inefficient code.
                 pith_curr_expr != pith_root_expr
@@ -1125,8 +1128,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.utilhintpeperror" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED"
-            #   frozen set of all supported argumentless "typing" attributes.
+            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED_DEEP"
+            #   frozen set of all supported argumentless "typing" attributes
+            #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             # Switch on (as in, pretend Python provides a "switch" statement)
@@ -1265,6 +1269,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 if hint_childs_nonpep:
                     func_curr_code += (
                         PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP_format(
+                            #FIXME: Ensure we unit test these two cases.
                             # Python expression yielding the value of the
                             # current pith. Specifically...
                             pith_curr_expr=(
@@ -1323,6 +1328,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 for hint_child_index, hint_child in enumerate(hint_childs_pep):
                     func_curr_code += (
                         PEP_CODE_CHECK_HINT_UNION_ARG_PEP_format(
+                            #FIXME: Ensure we unit test these three cases.
                             hint_child_placeholder=_enqueue_hint_child(
                                 # Python expression yielding the value of the
                                 # current pith.
@@ -1371,18 +1377,21 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # Else, this snippet is its initial value and thus ignorable.
             # Else, this hint is *NOT* a union.
 
-            # ..............{ ARGUMENTLESS                      }..............
-            # If this hint is its own argumentless "typing" attribute (e.g.,
-            # "typing.List") and is thus subscripted by *NO* child hints,
-            # generate trivial code shallowly type-checking the current pith as
-            # an instance of the PEP-noncompliant non-"typing" origin class
-            # originating this argumentless "typing" attribute (e.g., "list"
-            # for the attribute "List" associated with the hint "List[int]")...
-            elif hint_curr is hint_curr_attr:
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAVEATS: Synchronize changes here with the "FALLBACK"
-                # subsection below.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # ..............{ SHALLOW OR ARGUMENTLESS           }..............
+            # If this hint either...
+            elif (
+                # Is not yet deeply supported by this function *OR*...
+                hint_curr_attr not in TYPING_ATTRS_SUPPORTED_DEEP or
+                # Is deeply supported by this function but is its own
+                # argumentless "typing" attribute (e.g., "typing.List" rather
+                # than "typing.List[str]") and is thus subscripted by *NO*
+                # child hints...
+                hint_curr is hint_curr_attr
+            ):
+            # Then generate trivial code shallowly type-checking the current
+            # pith as an instance of the non-"typing" origin class originating
+            # this argumentless "typing" attribute (e.g., "list" for attribute
+            # "typing.List" identifying hint "typing.List[int]")...
 
                 # Assert this attribute is isinstance()-able.
                 assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
@@ -1612,41 +1621,16 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # # elif hint_curr_attr is Generic:
             # #     pass
 
-            # ..............{ FALLBACK                          }..............
-            #FIXME: Eliminate this entire conditional *AFTER* implementing
-            #proper deep type-checking support for all PEP-compliant types.
-
-            # Else, fallback to generating trivial code shallowly type-checking
-            # the current pith as an instance of the PEP-noncompliant
-            # non-"typing" origin class originating this argumentless "typing"
-            # attribute (e.g., "list" for the attribute "List" associated with
-            # the hint "List[int]").
+            # ..............{ UNSUPPORTED                       }..............
+            # Else, this hint is neither shallowly nor deeply supported and is
+            # thus unsupported. Since an exception should have already been
+            # raised above in this case, this conditional branch *NEVER* be
+            # triggered. Nonetheless, raise an exception for safety.
             else:
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAVEATS: Synchronize changes here with the "ARGUMENTLESS"
-                # subsection above.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                # Assert this attribute is isinstance()-able.
-                assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-                    f'{hint_child_label} argumentless "typing" attribute'
-                    f'{repr(hint_curr_attr)} not isinstance()-able.')
-
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAVEATS: Synchronize changes here with logic below.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                # Code type-checking the current pith against this class.
-                func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
-                    pith_curr_expr=pith_curr_expr,
-                    # Python expression evaluating to this class when accessed
-                    # via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_type(
-                        # Origin type of this attribute if any *OR* raise an
-                        # exception -- which should *NEVER* happen, as this
-                        # attribute was validated above to be supported.
-                        get_hint_type_origin(hint_curr_attr)),
-                )
+                raise BeartypeDecorHintPepUnsupportedException(
+                    f'{hint_child_label} PEP hint {repr(hint_curr)} '
+                    f'unsupported despite being erroneously flagged as '
+                    f'supported.')
         # Else, this hint is *NOT* PEP-compliant.
 
         # ................{ CLASSES                           }................
@@ -1696,8 +1680,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{hint_child_label} {repr(hint_curr)} not PEP-compliant '
-                f'(i.e., neither "typing" object nor non-"typing" class).')
+                f'{hint_child_label} hint {repr(hint_curr)} not PEP-compliant '
+                f'(e.g., neither "typing" object nor non-"typing" class).')
 
         # ................{ CLEANUP                           }................
         # Inject this code into the body of this wrapper.

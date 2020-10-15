@@ -30,7 +30,7 @@ def test_die_unless_hint() -> None:
         BeartypeDecorHintPepUnsupportedException,
     )
     from beartype._util.hint.utilhinttest import die_unless_hint
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,
         NONPEP_HINTS,
@@ -74,7 +74,7 @@ def test_is_hint() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.utilhinttest import is_hint
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,
         NONPEP_HINTS,
@@ -112,7 +112,7 @@ def test_is_hint_ignorable() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         HINTS_IGNORABLE, HINTS_UNIGNORABLE)
 
     # Assert this function accepts ignorable type hints.

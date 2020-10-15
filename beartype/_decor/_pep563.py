@@ -421,7 +421,7 @@ def _die_if_hint_repr_exceeds_child_limit(
     implementations of the :mod:`typing` module are sufficiently
     space-consumptive that they already implicitly prohibit deep nesting of
     PEP-compliant type hints. See commentary in the
-    :mod:`beartype_test.unit.data.data_p563` submodule for appalling details.
+    :mod:`beartype_test.unit.data.data_pep563` submodule for appalling details.
     Ergo, this validator could technically be disabled. Indeed, if this
     validator actually incurred any measurable costs, it *would* be disabled.
     Since it doesn't, this validator has preserved purely for forward

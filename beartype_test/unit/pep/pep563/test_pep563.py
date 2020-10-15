@@ -33,7 +33,7 @@ def test_p563() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype_test.unit.data.data_p563 import (
+    from beartype_test.unit.data.data_pep563 import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_stanza,
     )
@@ -85,7 +85,7 @@ def test_p563() -> None:
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. See commentary in the
-#"beartype_test.unit.data.data_p563" submodule for all the appalling details.
+#"beartype_test.unit.data.data_pep563" submodule for all the appalling details.
 
 # @skip_if_python_version_less_than('3.7.0')
 # def test_die_if_hint_repr_exceeds_child_limit() -> None:
@@ -100,7 +100,7 @@ def test_p563() -> None:
 #     # Defer heavyweight imports.
 #     from beartype import beartype
 #     from beartype.roar import BeartypeDecorHintPepException
-#     from beartype_test.unit.data.data_p563 import player_was_love
+#     from beartype_test.unit.data.data_pep563 import player_was_love
 #
 #     # Assert @beartype raises the expected exception when decorating a
 #     # callable violating this limit.

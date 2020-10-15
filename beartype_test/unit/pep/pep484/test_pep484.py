@@ -53,9 +53,9 @@ def test_p484() -> None:
         BeartypeCallCheckPepException,
         BeartypeCallCheckNonPepException,
     )
-    from beartype_test.unit.data.data_hint import (
+    from beartype_test.unit.data.hint.data_hint import (
         PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
-    from beartype_test.unit.data._data_hint_pep import (
+    from beartype_test.unit.data.hint.pep.data_hintpep import (
         _PepHintPithUnsatisfiedMetadata)
 
     # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
