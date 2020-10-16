@@ -12,24 +12,46 @@ unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
-import collections, typing
-from collections import (
-    abc as collections_abc,
-    namedtuple,
-)
+from collections import abc as collections_abc
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
+from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+    PepHintMetadata,
+    PepHintPithUnsatisfiedMetadata,
+)
+from typing import (
+    Any,
+    ByteString,
+    Callable,
+    Container,
+    Dict,
+    Generator,
+    Generic,
+    Hashable,
+    Iterable,
+    List,
+    MutableSequence,
+    NamedTuple,
+    NoReturn,
+    Sequence,
+    Sized,
+    Tuple,
+    Type,
+    TypeVar,
+    Optional,
+    Union,
+)
 
 # ....................{ TYPEVARS                          }....................
-S = typing.TypeVar('S')
+S = TypeVar('S')
 '''
 User-defined generic :mod:`typing` type variable.
 '''
 
 
-T = typing.TypeVar('T')
+T = TypeVar('T')
 '''
 User-defined generic :mod:`typing` type variable.
 '''
@@ -48,7 +70,7 @@ practice by leaving argumentless typing attributes unparametrized by default.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
-class PepGenericTypevaredSingle(typing.Generic[S, T]):
+class PepGenericTypevaredSingle(Generic[S, T]):
     '''
     PEP-compliant user-defined class subclassing a single parametrized
     :mod:`typing` type.
@@ -57,7 +79,7 @@ class PepGenericTypevaredSingle(typing.Generic[S, T]):
     pass
 
 
-class PepGenericUntypevaredSingle(typing.Dict[str, typing.List[str]]):
+class PepGenericUntypevaredSingle(Dict[str, List[str]]):
     '''
     PEP-compliant user-defined class subclassing a single unparametrized
     :mod:`typing` type.
@@ -66,8 +88,7 @@ class PepGenericUntypevaredSingle(typing.Dict[str, typing.List[str]]):
     pass
 
 # ....................{ GENERICS ~ multiple               }....................
-class PepGenericTypevaredShallowMultiple(
-    typing.Iterable[T], typing.Container[T]):
+class PepGenericTypevaredShallowMultiple(Iterable[T], Container[T]):
     '''
     PEP-compliant user-defined class subclassing multiple directly parametrized
     :mod:`typing` types.
@@ -78,8 +99,8 @@ class PepGenericTypevaredShallowMultiple(
 
 class PepGenericTypevaredDeepMultiple(
     collections_abc.Sized,
-    typing.Iterable[typing.Tuple[S, T]],
-    typing.Container[typing.Tuple[S, T]],
+    Iterable[Tuple[S, T]],
+    Container[Tuple[S, T]],
 ):
     '''
     PEP-compliant user-defined generic :mod:`typing` subtype subclassing a
@@ -92,7 +113,7 @@ class PepGenericTypevaredDeepMultiple(
 
 # ....................{ CALLABLES                         }....................
 def _make_generator_yield_int_send_float_return_str() -> (
-    typing.Generator[int, float, str]):
+    Generator[int, float, str]):
     '''
     Create a generator yielding integers, accepting floating-point numbers
     externally sent to this generator by the caller, and returning strings.
@@ -117,146 +138,64 @@ def _make_generator_yield_int_send_float_return_str() -> (
     return 'Unmarred, scarred revanent remnants'
 
 # ....................{ COLLECTIONS                       }....................
-NamedTupleType = typing.NamedTuple(
-    'Formful', [('fumarole', str), ('enrolled', int)])
+NamedTupleType = NamedTuple('Formful', [('fumarole', str), ('enrolled', int)])
 '''
 PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
 PEP-compliant annotations.
 '''
 
-# ....................{ METADATA ~ tuple                  }....................
-#FIXME: Refactor as follows:
-#* Define a new "_data_hintpepmeta" submodule in this subpackage.
-#* Shift this and the following named tuple types into that submodule.
-#* Refactor these named tuple types into full-blown classes whose __init__()
-#  method *OPTIONALLY* accepts most of these fields, which should then default
-#  to sane values. The only truly mandatory field appears to be "typing_attr".
-#* Refactor all usage of these types below to leverage these defaults by
-#  removing all fields that currently default to these defaults.
-
-_PepHintMetadata = namedtuple('_PepHintMetadata', (
-    'typing_attr',
-    'is_supported',
-    'is_generic_user',
-    'is_typevared',
-    'piths_satisfied',
-    'piths_unsatisfied_meta',
-))
-'''
-**PEP-compliant type hint metadata** (i.e., named tuple whose variables detail
-a PEP-compliant type hint with metadata applicable to testing scenarios).
-
-Attributes
-----------
-typing_attr : object
-    **Argumentless** :mod:`typing` **attribute** (i.e., public attribute of the
-    :mod:`typing` module uniquely identifying this PEP-compliant type hint,
-    stripped of all subscripted arguments but *not* default type variables) if
-    this hint is uniquely identified by such an attribute *or* ``None``
-    otherwise. Examples of PEP-compliant type hints *not* uniquely identified
-    by such attributes include those reducing to standard builtins on
-    instantiation such as:
-
-    * :class:`typing.NamedTuple` reducing to :class:`tuple`.
-    * :class:`typing.TypedDict` reducing to :class:`dict`.
-is_supported : bool
-    ``True`` only if this PEP-compliant type hint is currently supported by the
-    :func:`beartype.beartype` decorator.
-is_generic_user : bool
-    ``True`` only if this PEP-compliant type hint is a **user-defined generic**
-    (i.e., PEP-compliant type hint whose class subclasses one or more public
-    :mod:`typing` pseudo-superclasses but *not* itself defined by the
-    :mod:`typing` module).
-is_typevared : bool
-    ``True`` only if this PEP-compliant type hint is parametrized by one or
-    more **type variables** (i.e., :class:`typing.TypeVar` instances).
-piths_satisfied : tuple
-    Tuple of various objects satisfying this hint when either passed as a
-    parameter *or* returned as a value annotated by this hint.
-piths_unsatisfied_meta : _PepHintPithUnsatisfiedMetadata
-    Tuple of :class:`_PepHintPithUnsatisfiedMetadata` instances, each
-    describing an object *not* satisfying this hint when either passed as a
-    parameter *or* returned as a value annotated by this hint.
-'''
-
-
-_PepHintPithUnsatisfiedMetadata = namedtuple(
-    '_PepHintPithUnsatisfiedMetadata', (
-        'pith',
-        'exception_str_match_regexes',
-        'exception_str_not_match_regexes',
-    ),
-)
-'''
-**PEP-compliant type hint unsatisfied pith metadata** (i.e., named tuple whose
-variables describe an object *not* satisfying a PEP-compliant type hint when
-either passed as a parameter *or* returned as a value annotated by that hint).
-
-Attributes
-----------
-pith : object
-    Arbitrary object *not* satisfying this hint when either passed as a
-    parameter *or* returned as a value annotated by this hint.
-exception_str_match_regexes : tuple
-    Tuple of zero or more r''-style uncompiled regular expression strings, each
-    matching a substring of the exception message expected to be raised by
-    wrapper functions when either passed or returning this ``pith``.
-exception_str_not_match_regexes : tuple
-    Tuple of zero or more r''-style uncompiled regular expression strings, each
-    *not* matching a substring of the exception message expected to be raised
-    by wrapper functions when either passed or returning this ``pith``.
-'''
-
 # ....................{ METADATA ~ dict : attr            }....................
-#FIXME: Explicitly list all other "typing" types (e.g., "typing.IO").
+#FIXME: Explicitly list all other "typing" types (e.g., "IO").
 PEP_HINT_TO_META = {
-    # ..................{ CALLABLES                         }..................
-    typing.Callable[[], str]: _PepHintMetadata(
-        typing_attr=typing.Callable,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # ..................{ ARGUMENTLESS                      }..................
+    Any: PepHintMetadata(
+        typing_attr=Any,
+        piths_satisfied=(
+            # String.
+            'On our jism‐rinked populace’s ever‐popular overpopulation',
+            # Tuple of string items.
+            (
+                'Of Politico‐policed diction maledictions,',
+                'Of that numeral addicts’ “—Additive game,” self‐',
+            )
+        ),
+        # By definition, *ALL* objects satisfy this singleton.
+        piths_unsatisfied_meta=(),
+    ),
+    ByteString: PepHintMetadata(
+        typing_attr=ByteString,
+        piths_satisfied=(
+            # Byte string constant.
+            b'By nautical/particle consciousness',
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata('At that atom-nestled canticle'),
+        ),
+    ),
+    NoReturn: PepHintMetadata(
+        typing_attr=NoReturn,
+        is_supported=False,
+    ),
+
+    # ..................{ CALLABLE                          }..................
+    Callable[[], str]: PepHintMetadata(
+        typing_attr=Callable,
         piths_satisfied=(
             # Lambda function returning a string constant.
             lambda: 'Eudaemonia.',
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='...grant we heal',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata('...grant we heal'),
         ),
     ),
 
-    # ..................{ CALLABLES ~ generator             }..................
-    typing.Generator[int, float, str]: _PepHintMetadata(
-        typing_attr=typing.Generator,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # Generator yielding integers, accepting floating-point numbers
-            # sent to this generator by the caller, and returning strings.
-            _make_generator_yield_int_send_float_return_str(),
-        ),
-        piths_unsatisfied_meta=(
-            # Lambda function returning a string constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith=lambda: 'Cessation',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
-        ),
-    ),
-
-    # ..................{ COLLECTIONS ~ dict                }..................
+    # ..................{ DICT                              }..................
     # Argumentless "Dict" attribute.
-    typing.Dict: _PepHintMetadata(
-        typing_attr=typing.Dict,
+    Dict: PepHintMetadata(
+        typing_attr=Dict,
         is_supported=not _IS_TYPING_ATTR_TYPEVARED,
-        is_generic_user=False,
         is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Dictionary containing arbitrary key-value pairs.
@@ -267,22 +206,16 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # Set containing arbitrary items.
-            _PepHintPithUnsatisfiedMetadata(
-                pith={
-                    '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
-                    'Untiringly,'
-                },
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata({
+                '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
+                'Untiringly,'
+            }),
         ),
     ),
 
-    typing.Dict[int, str]: _PepHintMetadata(
-        typing_attr=typing.Dict,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # Flat dictionary.
+    Dict[int, str]: PepHintMetadata(
+        typing_attr=Dict,
         piths_satisfied=(
             # Dictionary mapping integer keys to string values.
             {
@@ -292,28 +225,38 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='To that beep‐prattling, LED‐ and lead-rattling crux',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata(
+                'To that beep‐prattling, LED‐ and lead-rattling crux'),
         ),
     ),
-    typing.Dict[S, T]: _PepHintMetadata(
-        typing_attr=typing.Dict,
+
+    # Generic dictionary.
+    Dict[S, T]: PepHintMetadata(
+        typing_attr=Dict,
         is_supported=False,
-        is_generic_user=False,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 
-    # ..................{ COLLECTIONS ~ list                }..................
+    # ..................{ GENERATOR                         }..................
+    # Flat generator.
+    Generator[int, float, str]: PepHintMetadata(
+        typing_attr=Generator,
+        piths_satisfied=(
+            # Generator yielding integers, accepting floating-point numbers
+            # sent to this generator by the caller, and returning strings.
+            _make_generator_yield_int_send_float_return_str(),
+        ),
+        piths_unsatisfied_meta=(
+            # Lambda function returning a string constant.
+            PepHintPithUnsatisfiedMetadata(lambda: 'Cessation'),
+        ),
+    ),
+
+    # ..................{ LIST                              }..................
     # Argumentless "List" attribute.
-    typing.List: _PepHintMetadata(
-        typing_attr=typing.List,
+    List: PepHintMetadata(
+        typing_attr=List,
         is_supported=not _IS_TYPING_ATTR_TYPEVARED,
-        is_generic_user=False,
         is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Empty list, which satisfies all hint arguments by definition.
@@ -327,30 +270,19 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Of acceptance.',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata('Of acceptance.'),
             # Tuple containing arbitrary items.
-            _PepHintPithUnsatisfiedMetadata(
-                pith=(
-                    'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
-                    '3. And Utter‐most, gutterly gut‐rending posts, glutton',
-                    3.1415,
-                ),
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata((
+                'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
+                '3. And Utter‐most, gutterly gut‐rending posts, glutton',
+                3.1415,
+            )),
         ),
     ),
 
     # List of ignorable objects.
-    typing.List[object]: _PepHintMetadata(
-        typing_attr=typing.List,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    List[object]: PepHintMetadata(
+        typing_attr=List,
         piths_satisfied=(
             # Empty list, which satisfies all hint arguments by definition.
             [],
@@ -363,20 +295,14 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Of actual change elevating alleviation — that',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata(
+                'Of actual change elevating alleviation — that'),
         ),
     ),
 
     # List of non-"typing" objects.
-    typing.List[str]: _PepHintMetadata(
-        typing_attr=typing.List,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    List[str]: PepHintMetadata(
+        typing_attr=List,
         piths_satisfied=(
             # Empty list, which satisfies all hint arguments by definition.
             [],
@@ -388,15 +314,11 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Devilet‐Sublet cities waxing',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
             # List containing exactly one integer. Since list items are only
             # randomly type-checked, only a list of exactly one item enables us
             # to match the explicit index at fault below.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=[73,],
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
@@ -405,141 +327,32 @@ PEP_HINT_TO_META = {
                     # Double-quotes the value of this item.
                     r'\s"73"\s',
                 ),
-                exception_str_not_match_regexes=(),
             ),
         ),
     ),
 
     # Generic list.
-    typing.List[T]: _PepHintMetadata(
-        typing_attr=typing.List,
+    List[T]: PepHintMetadata(
+        typing_attr=List,
         is_supported=False,
-        is_generic_user=False,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 
-    # ..................{ COLLECTIONS ~ tuple               }..................
-    # Note that argumentless "typing.Tuple" attributes are *NOT* parametrized
-    # by one or more type variables, unlike most other argumentless "typing"
-    # attributes originating from container types. *sigh*
-    typing.Tuple: _PepHintMetadata(
-        typing_attr=typing.Tuple,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # Tuple containing arbitrary items.
-            (
-                'a Steely dittied',
-                'Steel ‘phallus’ ballast',
-            ),
-        ),
-        piths_unsatisfied_meta=(
-            # List containing arbitrary items.
-            _PepHintPithUnsatisfiedMetadata(
-                pith=[
-                    'In this Tellus‐cloistered, pre‐mature pop nomenclature',
-                    'Of irremediable Media mollifications',
-                ],
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
-        ),
-    ),
-    typing.Tuple[float, str, int]: _PepHintMetadata(
-        typing_attr=typing.Tuple,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # Tuple containing a floating-point number, string, and integer (in
-            # that exact order).
-            (
-                20.09,
-                'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
-                2009,
-            ),
-        ),
-        piths_unsatisfied_meta=(
-            # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Jangling (brinkmanship “Ironside”) jingoisms',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
-        ),
-    ),
-    typing.Tuple[T, ...]: _PepHintMetadata(
-        typing_attr=typing.Tuple,
-        is_supported=False,
-        is_generic_user=False,
-        is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
-    ),
-
-    # ..................{ SINGLETONS                        }..................
-    typing.Any: _PepHintMetadata(
-        typing_attr=typing.Any,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # String.
-            'On our jism‐rinked populace’s ever‐popular overpopulation',
-            # Tuple of string items.
-            (
-                'Of Politico‐policed diction maledictions,',
-                'Of that numeral addicts’ “—Additive game,” self‐',
-            )
-        ),
-        # By definition, *ALL* objects satisfy this singleton.
-        piths_unsatisfied_meta=(),
-    ),
-    typing.ByteString: _PepHintMetadata(
-        typing_attr=typing.ByteString,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(
-            # Byte string constant.
-            b'By nautical/particle consciousness',
-        ),
-        piths_unsatisfied_meta=(
-            # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='At that atom-nestled canticle',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
-        ),
-    ),
-    typing.NoReturn: _PepHintMetadata(
-        typing_attr=typing.NoReturn,
-        is_supported=False,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
-    ),
-
-    # ..................{ SINGLETONS ~ regex                }..................
-    #FIXME: Uncomment after supporting "typing.Match". Doing so will prove
+    # ..................{ MATCH                             }..................
+    #FIXME: Uncomment after supporting "Match". Doing so will prove
     #non-trivial for a number of reasons, including the obvious fact that
-    #"typing.Match" is parametrized by the constrained concrete type variable
-    #"typing.AnyStr", whose implementation wildly varies across Python
-    #versions. Moreover, "repr(typing.Match) == 'Match[~AnyStr]'" is the case
+    #"Match" is parametrized by the constrained concrete type variable
+    #"AnyStr", whose implementation wildly varies across Python
+    #versions. Moreover, "repr(Match) == 'Match[~AnyStr]'" is the case
     #under Python < 3.7.0 -- significantly complicating detection. In short,
     #let's leave this until we drop support for Python 3.6, at which point
     #supporting this sanely will become *MUCH* simpler.
-    # typing.Match: _PepHintMetadata(
-    #     typing_attr=typing.Match,
+    # Match: PepHintMetadata(
+    #     typing_attr=Match,
     #     is_supported=False,
     #     is_generic_user=False,
-    #     # "typing.AnyStr" and hence "typing.Match" (which is coercively
-    #     # parametrized by "typing.AnyStr") is only a type variable proper under
+    #     # "AnyStr" and hence "Match" (which is coercively
+    #     # parametrized by "AnyStr") is only a type variable proper under
     #     # Python >= 3.7.0, which is frankly insane. Welcome to "typing".
     #     is_typevared=IS_PYTHON_AT_LEAST_3_7,
     #     piths_satisfied=(
@@ -555,11 +368,171 @@ PEP_HINT_TO_META = {
     #     ),
     # ),
 
-    # ..................{ TYPE ALIASES                      }..................
-    typing.Type: _PepHintMetadata(
-        typing_attr=typing.Type,
+    # ..................{ TUPLE                             }..................
+    # Argumentless "Tuple" attribute. Note that this attribute is *NOT*
+    # parametrized by one or more type variables under any Python version,
+    # unlike most other argumentless "typing" attributes originating from
+    # container types. Non-orthogonality, thy name is the "typing" module.
+    Tuple: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Tuple containing arbitrary items.
+            (
+                'a Steely dittied',
+                'Steel ‘phallus’ ballast',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # List containing arbitrary items.
+            PepHintPithUnsatisfiedMetadata([
+                'In this Tellus‐cloistered, pre‐mature pop nomenclature',
+                'Of irremediable Media mollifications',
+            ]),
+        ),
+    ),
+
+    # ..................{ TUPLE ~ fixed                     }..................
+    # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal with
+    # standard sequence syntax, which supports no comparable notion of an
+    # "empty {insert-standard-sequence-here}" (e.g., empty list). For example:
+    #     >>> import typing
+    #     >>> List[()]
+    #     TypeError: Too few parameters for List; actual 0, expected 1
+    #     >>> List[[]]
+    #     TypeError: Parameters to generic types must be types. Got [].
+    Tuple[()]: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Empty tuple.
+            (),
+        ),
+        piths_unsatisfied_meta=(
+            # Non-empty tuple containing arbitrary items.
+            PepHintPithUnsatisfiedMetadata((
+                'They shucked',
+                '(Or huckstered, knightly rupturing veritas)',
+            )),
+        ),
+    ),
+
+    # Fixed-length tuple of only ignorable child hints.
+    Tuple[Any, object,]: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Tuple containing arbitrary objects.
+            (
+                'Surseance',
+                'Of sky, the God, the surly',
+            ),
+        ),
+        # By definition, *ALL* objects satisfy this singleton.
+        piths_unsatisfied_meta=(),
+    ),
+
+    # Fixed-length tuple of at least one ignorable child hint.
+    Tuple[float, Any, str,]: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Tuple containing a floating-point number, string, and integer (in
+            # that exact order).
+            (
+                20.09,
+                'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
+                "Nightly tolled, pindololy, ol'",
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata(
+                'Jangling (brinkmanship “Ironside”) jingoisms'),
+            # Tuple containing a floating-point number, a string, and a
+            # boolean (in that exact order).
+            PepHintPithUnsatisfiedMetadata(
+                pith=(
+                    75.83,
+                    'Unwholesome gentry ventings',
+                    False,
+                ),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Declares the index of this tuple's problematic item.
+                    r'\s[Ll]ist item 0\s',
+                ),
+            ),
+        ),
+    ),
+
+    # Nested fixed-length tuple of at least one ignorable child hint.
+    Tuple[Tuple[float, Any, str,], ...]: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Tuple containing tuples containing a floating-point number,
+            # string, and integer (in that exact order).
+            (
+                90.02,
+                'Father — "Abstracted, OH WE LOVE YOU',
+                'Farther" — that',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # Tuple containing a floating-point number, a string, and a boolean
+            # (in that exact order).
+            PepHintPithUnsatisfiedMetadata(
+                pith=(
+                    (
+                        75.83,
+                        'Vespers’ hymnal seance, invoking',
+                        True,
+                    ),
+                ),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Declares the index of this tuple's problematic item.
+                    r'\s[Ll]ist item 0\s',
+                ),
+            ),
+        ),
+    ),
+
+    # ..................{ TUPLE ~ variadic                  }..................
+    # Variadic tuple.
+    Tuple[str, ...]: PepHintMetadata(
+        typing_attr=Tuple,
+        piths_satisfied=(
+            # Tuple containing arbitrarily many string constants.
+            (
+                'Of a scantly raptured Overture,'
+                'Ur‐churlishly',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata('Of Toll‐descanted grant money'),
+            # Tuple containing exactly one integer. Since tuple items are only
+            # randomly type-checked, only a tuple of exactly one item enables
+            # us to match the explicit index at fault below.
+            PepHintPithUnsatisfiedMetadata(
+                pith=((53,)),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Declares the index of this tuple's problematic item.
+                    r'\s[Ll]ist item 0\s',
+                ),
+            ),
+        ),
+    ),
+
+    # Generic variadic tuple.
+    Tuple[T, ...]: PepHintMetadata(
+        typing_attr=Tuple,
+        is_supported=False,
+        is_typevared=True,
+    ),
+
+    # ..................{ TYPE                              }..................
+    Type: PepHintMetadata(
+        typing_attr=Type,
         is_supported=not _IS_TYPING_ATTR_TYPEVARED,
-        is_generic_user=False,
         is_typevared=_IS_TYPING_ATTR_TYPEVARED,
         piths_satisfied=(
             # Transitive superclass of all superclasses.
@@ -569,74 +542,57 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Samely:',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata('Samely:'),
         ),
     ),
-    typing.Type[dict]: _PepHintMetadata(
-        typing_attr=typing.Type,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+
+    # Builtin type.
+    Type[dict]: PepHintMetadata(
+        typing_attr=Type,
         piths_satisfied=(
             # Builtin "dict" class itself.
             dict,
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Namely,',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
-            ),
+            PepHintPithUnsatisfiedMetadata('Namely,'),
         ),
     ),
-    typing.Type[T]: _PepHintMetadata(
-        typing_attr=typing.Type,
+
+    # Generic type.
+    Type[T]: PepHintMetadata(
+        typing_attr=Type,
         is_supported=False,
-        is_generic_user=False,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 
-    # ..................{ TYPE VARIABLES                    }..................
-    # Type variables.
-    T: _PepHintMetadata(
-        typing_attr=typing.TypeVar,
+    # ..................{ TYPEVAR                           }..................
+    # Type variable.
+    T: PepHintMetadata(
+        typing_attr=TypeVar,
         is_supported=False,
-        is_generic_user=False,
-        is_typevared=False,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 
-    # ..................{ UNIONS                            }..................
-    # Note that unions of one arguments (e.g., "typing.Union[str]") *CANNOT* be
+    # ..................{ UNION                             }..................
+    # Note that unions of one arguments (e.g., "Union[str]") *CANNOT* be
     # listed here, as the "typing" module implicitly reduces these unions to
     # only that argument (e.g., "str") on our behalf. Thanks. Thanks alot.
     #
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: The Python < 3.7.0-specific implementations of "typing.Union"
+    # CAUTION: The Python < 3.7.0-specific implementations of "Union"
     # are defective, in that they silently filter out various subscripted
     # arguments that they absolutely should *NOT*, including "bool": e.g.,
     #     $ python3.6
     #     >>> import typing
-    #     >>> typing.Union[bool, float, int, typing.Sequence[
-    #     ...     typing.Union[bool, float, int, typing.Sequence[str]]]]
-    #     typing.Union[float, int, typing.Sequence[typing.Union[float, int, typing.Sequence[str]]]]
+    #     >>> Union[bool, float, int, Sequence[
+    #     ...     Union[bool, float, int, Sequence[str]]]]
+    #     Union[float, int, Sequence[Union[float, int, Sequence[str]]]]
     # For this reason, these arguments *MUST* be omitted below.
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Ignorable bare "Union" attribute.
-    typing.Union: _PepHintMetadata(
-        typing_attr=typing.Union,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # Ignorable argumentless "Union" attribute.
+    Union: PepHintMetadata(
+        typing_attr=Union,
         piths_satisfied=(
             # Empty list, which satisfies all hint arguments by definition.
             [],
@@ -647,16 +603,16 @@ PEP_HINT_TO_META = {
                 37.73,
             },
         ),
+        # By definition, *ALL* objects satisfy this singleton.
         piths_unsatisfied_meta=(),
     ),
 
     # Union of one non-"typing" type and an originative "typing" type,
-    # exercising an edge case.
-    typing.Union[int, typing.Sequence[str]]: _PepHintMetadata(
-        typing_attr=typing.Union,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # exercising a prominent edge case when raising human-readable exceptions
+    # describing the failure of passed parameters or returned values to satisfy
+    # this union.
+    Union[int, Sequence[str]]: PepHintMetadata(
+        typing_attr=Union,
         piths_satisfied=(
             # Integer constant.
             21,
@@ -672,7 +628,7 @@ PEP_HINT_TO_META = {
             # Note that a string constant is intentionally *NOT* listed here,
             # as strings are technically sequences of strings of length one
             # commonly referred to as Unicode code points or simply characters.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=802.11,
                 # Match that the exception message raised for this object
                 # declares the types *NOT* satisfied by this object.
@@ -689,7 +645,7 @@ PEP_HINT_TO_META = {
             ),
 
             # Tuple of integers.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
@@ -700,21 +656,19 @@ PEP_HINT_TO_META = {
                     # list's first item *NOT* satisfying this hint.
                     r'\n\*\s.*\b[Tt]uple item 0\b',
                 ),
-                exception_str_not_match_regexes=(),
             ),
         ),
     ),
 
     # Union of three non-"typing" types and an originative "typing" type of a
     # union of three non-"typing" types and an originative "typing" type,
-    # exercising an edge case.
-    typing.Union[dict, float, int, typing.Sequence[
-        typing.Union[dict, float, int, typing.Sequence[
-        str]]]]: _PepHintMetadata(
-        typing_attr=typing.Union,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # exercising a prominent edge case when raising human-readable exceptions
+    # describing the failure of passed parameters or returned values to satisfy
+    # this union.
+    Union[dict, float, int, Sequence[
+        Union[dict, float, int, MutableSequence[
+        str]]]]: PepHintMetadata(
+        typing_attr=Union,
         piths_satisfied=(
             # Empty dictionary.
             {},
@@ -734,16 +688,16 @@ PEP_HINT_TO_META = {
                 666.666,
                 # Integer constant.
                 666,
-                # Sequence of string constants.
-                (
+                # Mutable sequence of string constants.
+                [
                     'Ansuded scientifically pontifical grapheme‐',
                     'Denuded hierography, professedly, to emulate ascen-',
-                ),
+                ],
             ),
         ),
         piths_unsatisfied_meta=(
             # Complex number constant.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=356+260j,
                 # Match that the exception message raised for this object
                 # declares the types *NOT* satisfied by this object.
@@ -762,7 +716,7 @@ PEP_HINT_TO_META = {
             ),
 
             # Sequence of lambda function items.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=(lambda:
                       'May they rest their certainties’ Solicitousness to',),
                 # Match that the exception message raised for this object...
@@ -774,12 +728,11 @@ PEP_HINT_TO_META = {
                     # list's first item *NOT* satisfying this hint.
                     r'\n\*\s.*\b[Tt]uple item 0\b',
                 ),
-                exception_str_not_match_regexes=(),
             ),
 
-            # Sequence of sequence of lambda function items.
-            _PepHintPithUnsatisfiedMetadata(
-                pith=((lambda: 'Untaint these ties',),),
+            # Sequence of mutable sequences of lambda function items.
+            PepHintPithUnsatisfiedMetadata(
+                pith=([lambda: 'Untaint these ties',],),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
                     # Contains an unindented bullet point declaring one of the
@@ -795,28 +748,165 @@ PEP_HINT_TO_META = {
                     # of this list's first item *NOT* satisfying this hint.
                     r'\n\s+\*\s.*\b[Tt]uple item 0\b',
                 ),
-                exception_str_not_match_regexes=(),
             ),
         ),
     ),
 
     # Union of one non-"typing" type and one concrete generic.
-    typing.Union[str, typing.Iterable[typing.Tuple[S, T]]]: _PepHintMetadata(
-        typing_attr=typing.Union,
+    Union[str, Iterable[Tuple[S, T]]]: PepHintMetadata(
+        typing_attr=Union,
         is_supported=False,
-        is_generic_user=False,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 
-    # ..................{ UNIONS ~ optional                 }..................
-    # Ignorable bare "Optional" attribute.
-    typing.Optional: _PepHintMetadata(
-        typing_attr=typing.Optional,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+    # ..................{ UNION ~ nested                    }..................
+    # Nested unions exercising all possible edge cases induced by Python >= 3.8
+    # optimizations leveraging PEP 572-style assignment expressions.
+
+    # Nested union of multiple non-"typing" types.
+    List[Union[int, str,]]: PepHintMetadata(
+        typing_attr=List,
+        piths_satisfied=(
+            # List containing a mixture of integer and string constants.
+            [
+                'Un‐seemly preening, pliant templar curs; and',
+                272,
+            ],
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata(
+                pith='Un‐seemly preening, pliant templar curs; and',
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bint\b',
+                    r'\bstr\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
+            ),
+
+            # List containing only bytestring constants.
+            PepHintPithUnsatisfiedMetadata(
+                pith=[
+                    b'Blamelessly Slur-chastened rights forthwith, affrighting',
+                    b"Beauty's lurid, beleaguered knolls, eland-leagued and",
+                ],
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains a bullet point declaring the non-"typing" type
+                    # *NOT* satisfied by this object.
+                    r'\n\*\s.*\bbytes\b',
+                    # Contains a bullet point declaring the index of this
+                    # list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 0\b',
+                ),
+            ),
+        ),
+    ),
+
+    # Nested union of one non-"typing" type and one "typing" type.
+    Sequence[Union[str, ByteString]]: PepHintMetadata(
+        typing_attr=Sequence,
+        piths_satisfied=(
+            # Sequence containing a mixture of string and bytestring constants.
+            (
+                b'For laconically formulaic, knavish,',
+                u'Or sordidly sellsword‐',
+                f'Horded temerities, bravely unmerited',
+            ),
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata(
+                pith='(Or Keening, standoffishly)',
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bByteString\b',
+                    r'\bstr\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
+            ),
+
+            # Sequence containing invalid integer constants.
+            PepHintPithUnsatisfiedMetadata(
+                pith=((55, 89, 144, 233, 377, 610, 987,)),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains a bullet point declaring the non-"typing" type
+                    # *NOT* satisfied by this object.
+                    r'\n\*\s.*\bint\b',
+                    # Contains a bullet point declaring the index of this
+                    # list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 1\b',
+                ),
+            ),
+        ),
+    ),
+
+    # Nested union of no non-"typing" type and multiple "typing" types.
+    MutableSequence[Union[ByteString, Callable]]: PepHintMetadata(
+        typing_attr=MutableSequence,
+        piths_satisfied=(
+            # Mutable sequence containing a mixture of string and bytestring
+            # constants.
+            [
+                b"Canonizing Afrikaans-kennelled Mine canaries,",
+                lambda: 'Of a floridly torrid, hasty love — that league',
+            ],
+        ),
+        piths_unsatisfied_meta=(
+            # String constant.
+            PepHintPithUnsatisfiedMetadata(
+                pith='Effaced.',
+                # Match that the exception message raised for this object
+                # declares the types *NOT* satisfied by this object.
+                exception_str_match_regexes=(
+                    r'\bByteString\b',
+                    r'\bCallable\b',
+                ),
+                # Match that the exception message raised for this object does
+                # *NOT* contain a newline or bullet delimiter.
+                exception_str_not_match_regexes=(
+                    r'\n',
+                    r'\*',
+                ),
+            ),
+
+            # Mutable sequence containing invalid string constants.
+            PepHintPithUnsatisfiedMetadata(
+                pith=[
+                    'Of genteel gentle‐folk — that that Ƹsper'
+                    'At my brand‐defaced, landless side',
+                ],
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Contains a bullet point declaring the non-"typing" type
+                    # *NOT* satisfied by this object.
+                    r'\n\*\s.*\bstr\b',
+                    # Contains a bullet point declaring the index of this
+                    # list's first item *NOT* satisfying this hint.
+                    r'\n\*\s.*\b[Tt]uple item 3\b',
+                ),
+            ),
+        ),
+    ),
+
+    # ..................{ UNION ~ optional                  }..................
+    # Ignorable argumentless "Optional" attribute.
+    Optional: PepHintMetadata(
+        typing_attr=Optional,
         piths_satisfied=(
             # Empty tuple, which satisfies all hint arguments by definition.
             (),
@@ -826,27 +916,25 @@ PEP_HINT_TO_META = {
                 'Called': 'it dunne and',
             },
         ),
+        # By definition, *ALL* objects satisfy this singleton.
         piths_unsatisfied_meta=(),
     ),
 
     # Optional isinstance()-able "typing" type.
-    typing.Optional[typing.Sequence[str]]: _PepHintMetadata(
-        # Subscriptions of the "typing.Optional" attribute reduce to
+    Optional[Sequence[str]]: PepHintMetadata(
+        # Subscriptions of the "Optional" attribute reduce to
         # fundamentally different argumentless typing attributes depending on
         # Python version. Specifically, under:
-        # * Python >= 3.9.0, the "typing.Optional" and "typing.Union"
+        # * Python >= 3.9.0, the "Optional" and "Union"
         #   attributes are distinct.
-        # * Python < 3.9.0, the "typing.Optional" and "typing.Union"
+        # * Python < 3.9.0, the "Optional" and "Union"
         #   attributes are *NOT* distinct. The "typing" module implicitly
-        #   reduces *ALL* subscriptions of the "typing.Optional" attribute by
-        #   the corresponding "typing.Union" attribute subscripted by both that
+        #   reduces *ALL* subscriptions of the "Optional" attribute by
+        #   the corresponding "Union" attribute subscripted by both that
         #   argument and "type(None)". Ergo, there effectively exists *NO*
-        #   "typing.Optional" attribute under older Python versions.
+        #   "Optional" attribute under older Python versions.
         typing_attr=(
-            typing.Optional if IS_PYTHON_AT_LEAST_3_9 else typing.Union),
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
+            Optional if IS_PYTHON_AT_LEAST_3_9 else Union),
         piths_satisfied=(
             # Sequence of string items.
             (
@@ -860,7 +948,7 @@ PEP_HINT_TO_META = {
             # Note that a string constant is intentionally *NOT* listed here,
             # as strings are technically sequences of strings of length one
             # commonly referred to as Unicode code points or simply characters.
-            _PepHintPithUnsatisfiedMetadata(
+            PepHintPithUnsatisfiedMetadata(
                 pith=802.2,
                 # Match that the exception message raised for this object
                 # declares the types *NOT* satisfied by this object.
@@ -878,43 +966,35 @@ PEP_HINT_TO_META = {
         ),
     ),
 
-    # ..................{ CUSTOM                            }..................
-    PepGenericTypevaredSingle: _PepHintMetadata(
-        typing_attr=typing.Generic,
+    # ..................{ USER-DEFINED GENERIC              }..................
+    PepGenericTypevaredSingle: PepHintMetadata(
+        typing_attr=Generic,
         is_supported=False,
         is_generic_user=True,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
-    PepGenericUntypevaredSingle: _PepHintMetadata(
-        typing_attr=typing.Generic,
+    PepGenericUntypevaredSingle: PepHintMetadata(
+        typing_attr=Generic,
         is_supported=False,
         is_generic_user=True,
         is_typevared=False,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
-    PepGenericTypevaredShallowMultiple: _PepHintMetadata(
-        typing_attr=typing.Generic,
+    PepGenericTypevaredShallowMultiple: PepHintMetadata(
+        typing_attr=Generic,
         is_supported=False,
         is_generic_user=True,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
-    PepGenericTypevaredDeepMultiple: _PepHintMetadata(
-        typing_attr=typing.Generic,
+    PepGenericTypevaredDeepMultiple: PepHintMetadata(
+        typing_attr=Generic,
         is_supported=False,
         is_generic_user=True,
         is_typevared=True,
-        piths_satisfied=(),
-        piths_unsatisfied_meta=(),
     ),
 }
 '''
 Dictionary mapping various PEP-compliant type hints to
-:class:`_PepHintMetadata` instances describing those hints with metadata
+:class:`PepHintMetadata` instances describing those hints with metadata
 applicable to testing scenarios.
 '''
 
@@ -926,12 +1006,10 @@ applicable to testing scenarios.
 # dictionary for detailed discussion.
 if IS_PYTHON_AT_LEAST_3_7:
     PEP_HINT_TO_META.update({
+        # ................{ ARGUMENTLESS                      }................
         # Argumentless "Hashable" attribute.
-        typing.Hashable: _PepHintMetadata(
-            typing_attr=typing.Hashable,
-            is_supported=True,
-            is_generic_user=False,
-            is_typevared=False,
+        Hashable: PepHintMetadata(
+            typing_attr=Hashable,
             piths_satisfied=(
                 # String constant.
                 "Oh, importunate Θ Fortuna'd afforded",
@@ -943,23 +1021,16 @@ if IS_PYTHON_AT_LEAST_3_7:
             ),
             piths_unsatisfied_meta=(
                 # List of string constants.
-                _PepHintPithUnsatisfiedMetadata(
-                    pith=[
-                        'Unwholesome gentry ventings',
-                        'Of a scantly raptured Overture,',
-                    ],
-                    exception_str_match_regexes=(),
-                    exception_str_not_match_regexes=(),
-                ),
+                PepHintPithUnsatisfiedMetadata([
+                    'Unwholesome gentry ventings',
+                    'Of a scantly raptured Overture,',
+                ]),
             ),
         ),
 
         # Argumentless "Sized" attribute.
-        typing.Sized: _PepHintMetadata(
-            typing_attr=typing.Sized,
-            is_supported=True,
-            is_generic_user=False,
-            is_typevared=False,
+        Sized: PepHintMetadata(
+            typing_attr=Sized,
             piths_satisfied=(
                 # String constant.
                 'Faire, a',
@@ -971,46 +1042,45 @@ if IS_PYTHON_AT_LEAST_3_7:
             ),
             piths_unsatisfied_meta=(
                 # Boolean constant.
-                _PepHintPithUnsatisfiedMetadata(
-                    pith=False,
-                    exception_str_match_regexes=(),
-                    exception_str_not_match_regexes=(),
-                ),
+                PepHintPithUnsatisfiedMetadata(False),
             ),
         ),
     })
 
 # ....................{ METADATA ~ dict : nonattr         }....................
 PEP_HINT_NONATTR_TO_META = {
-    # ..................{ COLLECTIONS ~ namedtuple          }..................
-    # "typing.NamedTuple" instances transparently reduce to tuples.
-    NamedTupleType: _PepHintMetadata(
+    # ..................{ NAMEDTUPLE                        }..................
+    # "NamedTuple" instances transparently reduce to standard tuples and *MUST*
+    # thus be handled as non-"typing" type hints.
+    NamedTupleType: PepHintMetadata(
         typing_attr=None,
-        is_supported=True,
-        is_generic_user=False,
-        is_typevared=False,
         piths_satisfied=(
             # Named tuple containing correctly typed items.
             NamedTupleType(fumarole='Leviathan', enrolled=37),
         ),
         piths_unsatisfied_meta=(
             # String constant.
-            _PepHintPithUnsatisfiedMetadata(
-                pith='Of ͼarthen concordance that',
-                exception_str_match_regexes=(),
-                exception_str_not_match_regexes=(),
+            PepHintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
+            # Named tuple containing incorrectly typed items.
+            PepHintPithUnsatisfiedMetadata(
+                pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Declares the name of this tuple's problematic item.
+                    r'\s[Ll]ist item 0\s',
+                ),
             ),
         ),
     ),
 
     # ..................{ COLLECTIONS ~ typeddict          }..................
-    # "typing.TypedDict" instances transparently reduce to dicts.
+    # "TypedDict" instances transparently reduce to dicts.
     #FIXME: Implement us up, but note when doing so that "TypeDict" was first
     #introduced with Python 3.8.
 }
 '''
 Dictionary mapping various PEP-compliant type hints *not* uniquely identified
-by argumentless :mod:`typing` attributes to :class:`_PepHintMetadata` instances
+by argumentless :mod:`typing` attributes to :class:`PepHintMetadata` instances
 describing those hints with metadata applicable to testing scenarios.
 
 These hints do *not* conform to standard expectations for PEP-compliant type
@@ -1020,10 +1090,10 @@ them) to avoid spurious issues throughout downstream unit tests.
 
 # ....................{ SETS                              }....................
 PEP_HINTS_DEEP_IGNORABLE = frozenset((
-    # Arbitrary unions containing the shallowly ignorable "typing.Any" and
+    # Arbitrary unions containing the shallowly ignorable "Any" and
     # "object" type hints.
-    typing.Union[typing.Any, float, str,],
-    typing.Union[complex, int, object,],
+    Union[Any, float, str,],
+    Union[complex, int, object,],
 ))
 '''
 Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,

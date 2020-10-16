@@ -30,7 +30,7 @@ from re import search
 from typing import List
 
 # ....................{ TESTS                             }....................
-def test_p484() -> None:
+def test_pep484() -> None:
     '''
     Test usage of the :func:`beartype.beartype` decorator for a function call
     passed non-variadic positional and/or keyword parameters annotated with
@@ -55,8 +55,8 @@ def test_p484() -> None:
     )
     from beartype_test.unit.data.hint.data_hint import (
         PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
-    from beartype_test.unit.data.hint.pep.data_hintpep import (
-        _PepHintPithUnsatisfiedMetadata)
+    from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+        PepHintPithUnsatisfiedMetadata)
 
     # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
     # instances detailing those hints with metadata applicable to testing
@@ -109,7 +109,7 @@ def test_p484() -> None:
             for pith_unsatisfied_meta in pep_hint_meta.piths_unsatisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
                 assert isinstance(
-                    pith_unsatisfied_meta, _PepHintPithUnsatisfiedMetadata)
+                    pith_unsatisfied_meta, PepHintPithUnsatisfiedMetadata)
 
                 # Assert that iterables of uncompiled regular expression
                 # expected to match and *NOT* match this message are *NOT*
@@ -156,7 +156,7 @@ def test_p484() -> None:
             # assert False is True
 
 # ....................{ TESTS ~ issue                     }....................
-def test_p484_sequence_standard_cached() -> None:
+def test_pep484_sequence_standard_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
     decorator with respect to metadata describing **PEP-compliant standard

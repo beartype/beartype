@@ -19,6 +19,15 @@ from beartype.roar import (
     _BeartypeUtilRaisePepException,
     _BeartypeUtilRaisePepDesynchronizationException,
 )
+from beartype._util.hint.pep.error._utilhintpeperrortype import (
+    get_cause_or_none_type_origin)
+from beartype._util.hint.pep.error._utilhintpeperrorsequence import (
+    get_cause_or_none_sequence_standard,
+    get_cause_or_none_tuple,
+)
+from beartype._util.hint.pep.error._utilhintpeperrorsleuth import CauseSleuth
+from beartype._util.hint.pep.error._utilhintpeperrorunion import (
+    get_cause_or_none_union)
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
     TYPING_ATTRS_SEQUENCE_STANDARD,
@@ -31,6 +40,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -177,31 +187,25 @@ def raise_pep_call_exception(
     # could deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
     if hint is None:
-        raise _BeartypeUtilRaisePepException(
-            '{} unannotated.'.format(pith_label))
+        raise _BeartypeUtilRaisePepException(f'{pith_label} unannotated.')
     # Else, this parameter or return value is annotated.
 
     # If type hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(
         hint=hint,
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-        hint_label='{} PEP type hint {!r}'.format(pith_label, hint))
+        hint_label=f'{pith_label} PEP type hint {repr(hint)}',
+    )
     # Else, this type hint is PEP-compliant.
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.error._utilhintpeperrorcause import (
-        get_cause_or_none)
 
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
     # if this pith satisfies this hint).
-    exception_cause = get_cause_or_none(
+    exception_cause = CauseSleuth(
         pith=pith_value,
         hint=hint,
         cause_indent='',
         exception_label=pith_label,
-    )
+    ).get_cause_or_none()
 
     # If this pith does *NOT* satisfy this hint...
     if exception_cause:
@@ -211,8 +215,8 @@ def raise_pep_call_exception(
 
         # Raise an exception of the desired class embedding this cause.
         raise exception_cls(
-            '{} violates PEP type hint {!r}, as {}'.format(
-                pith_label, hint, exception_cause_suffixed))
+            f'{pith_label} violates PEP type hint '
+            f'{repr(hint)}, as {exception_cause_suffixed}')
 
     # Else, this pith satisfies this hint. In this (hopefully uncommon) edge
     # case, *SOMETHING HAS GONE TERRIBLY AWRY.* In theory, this should never
@@ -220,34 +224,23 @@ def raise_pep_call_exception(
     # *ONLY* call this child helper function when this pith does *NOT* satisfy
     # this hint. In this case, raise an exception encouraging the end user to
     # submit an upstream issue with us.
+    pith_value_repr = get_object_representation(
+        obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
     raise _BeartypeUtilRaisePepDesynchronizationException(
-        '{} violates PEP type hint {!r}, '
-        'but utility function raise_pep_call_exception() '
-        'suggests this object satisfies this hint. '
-        'Please report this desynchronization failure to '
-        'the beartype issue tracker ({}) with '
-        "this object's representation and "
-        'accompanying exception traceback:\n{}'.format(
-            pith_label,
-            hint,
-            URL_ISSUES,
-            get_object_representation(
-                obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)))
+        f'{pith_label} violates PEP type hint {repr(hint)}, '
+        f'but utility function raise_pep_call_exception() '
+        f'suggests this object satisfies this hint. '
+        f'Please report this desynchronization failure to '
+        f'the beartype issue tracker ({URL_ISSUES}) with '
+        f"this object's representation and "
+        f'accompanying exception traceback:\n{pith_value_repr}'
+    )
 
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
     '''
     Initialize this submodule.
     '''
-
-    # Defer heavyweight imports.
-    # from typing import Union
-    from beartype._util.hint.pep.error._utilhintpeperrorcause import (
-        get_cause_or_none_type_origin)
-    from beartype._util.hint.pep.error._utilhintpeperrorcausesequence import (
-        get_cause_or_none_sequence_standard)
-    from beartype._util.hint.pep.error._utilhintpeperrorcauseunion import (
-        get_cause_or_none_union)
 
     # Map each originative "typing" attribute to the appropriate getter
     # *BEFORE* mapping any other attributes. This is merely a generalized
@@ -261,17 +254,16 @@ def _init() -> None:
         _TYPING_ATTR_TO_GETTER[typing_attr_type_union] = (
             get_cause_or_none_union)
 
-    # Map each "typing" attribute validated by a unique getter specific to that
-    # attribute to that getter.
-    #_TYPING_ATTR_TO_GETTER.update({
-    #    typing.Union: get_cause_or_none_union,
-    #})
-
     # Map each standard sequence "typing" attribute to the appropriate getter.
     for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:
         _TYPING_ATTR_TO_GETTER[typing_attr_sequence_standard] = (
             get_cause_or_none_sequence_standard)
 
+    # Map each "typing" attribute validated by a unique getter specific to that
+    # attribute to that getter.
+    _TYPING_ATTR_TO_GETTER.update({
+        Tuple: get_cause_or_none_tuple,
+    })
 
 # Initialize this submodule.
 _init()

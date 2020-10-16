@@ -12,12 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
 from beartype.roar import _BeartypeUtilRaisePepException
 from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.hint.pep.error._utilhintpeperrorcause import (
-    get_cause_or_none)
+from beartype._util.hint.pep.error._utilhintpeperrorsleuth import CauseSleuth
 from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_UNION
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
@@ -30,35 +28,32 @@ from beartype._util.text.utiltextrepr import get_object_representation
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_cause_or_none_union(
-    pith: object,
-    hint: object,
-    hint_attr: object,
-    cause_indent: str,
-    exception_label: str,
-) -> 'Optional[str]':
+def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed PEP-compliant union type hint if this object actually
     fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
     satisfies this hint).
 
-    See Also
+    Parameters
     ----------
-    :func:`_get_cause_or_none`
-        Further details.
+    sleuth : CauseSleuth
+        Type-checking error cause sleuth.
     '''
-    assert hint_attr in TYPING_ATTRS_UNION, (
-        '{!r} not argumentless "typing" union attribute.'.format(hint_attr))
+    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert sleuth.hint_attr in TYPING_ATTRS_UNION, (
+        f'{repr(sleuth.hint_attr)} not '
+        f'argumentless "typing" union attribute.')
 
     # Tuple of all subscripted arguments defining this union, localized for
     # both minor efficiency and major readability.
-    hint_childs = hint.__args__
+    hint_childs = sleuth.hint.__args__
 
     # Assert this union is unsubscripted. Note that the "typing" module should
     # have already guaranteed this on our behalf.
-    assert hint_childs, '{} PEP union type hint {!r} unsubscripted.'.format(
-        exception_label, hint)
+    assert hint_childs, (
+        f'{sleuth.exception_label} PEP union type hint '
+        f'{repr(sleuth.hint)} unsubscripted.')
     # Else, this union is subscripted by two or more arguments.
 
     # Subset of all classes shallowly associated with these child hints (i.e.,
@@ -74,7 +69,7 @@ def get_cause_or_none_union(
     # Indentation preceding each line of the strings returned by child getter
     # functions called by this parent getter function, offset to visually
     # demarcate child from parent causes in multiline strings.
-    CAUSE_INDENT_CHILD = cause_indent + '  '
+    CAUSE_INDENT_CHILD = sleuth.cause_indent + '  '
 
     # For each subscripted argument of this union...
     for hint_child in hint_childs:
@@ -92,7 +87,7 @@ def get_cause_or_none_union(
             hint_child_type_origin = get_hint_type_origin(hint_child_attr)
 
             # If this pith is *NOT* an instance of this class...
-            if not isinstance(pith, hint_child_type_origin):
+            if not isinstance(sleuth.pith, hint_child_type_origin):
                 # Add this class to the subset of all classes this pith does
                 # *NOT* satisfy.
                 hint_types_unsatisfied.add(hint_child_type_origin)
@@ -105,12 +100,10 @@ def get_cause_or_none_union(
             # Human-readable string describing the failure of this pith to
             # deeply satisfy this child hint if this pith actually fails to
             # deeply satisfy this child hint *or* "None" otherwise.
-            pith_cause_hint_child = get_cause_or_none(
-                pith=pith,
+            pith_cause_hint_child = sleuth.permute(
                 hint=hint_child,
                 cause_indent=CAUSE_INDENT_CHILD,
-                exception_label=exception_label,
-            )
+            ).get_cause_or_none()
 
             # If this pith deeply satisfies this child hint, return "None".
             if pith_cause_hint_child is None:
@@ -127,14 +120,14 @@ def get_cause_or_none_union(
             # subscripted arguments of unions are either PEP-compliant type
             # hints or non-"typing" classes.
             assert isinstance(hint_child, type), (
-                '{} PEP union type hint {!r} child hint {!r} invalid (i.e.,'
-                'neither PEP type hint nor non-"typing" class).'.format(
-                    exception_label, hint, hint_child))
+                f'{sleuth.exception_label} PEP union type hint '
+                f'{repr(sleuth.hint)} child hint {repr(hint_child)} invalid '
+                f'(i.e., neither PEP type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
             # If this pith is an instance of this class, this pith satisfies
             # this hint. In this case, return "None".
-            if isinstance(pith, hint_child):
+            if isinstance(sleuth.pith, hint_child):
                 return None
 
             # Else, this pith is *NOT* an instance of this class, implying this
@@ -162,9 +155,6 @@ def get_cause_or_none_union(
                 for hint_type_unsatisfied in hint_types_unsatisfied
             ))
 
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-
         # Prepend this cause as a discrete bullet-prefixed line.
         #
         # Note that this cause is intentionally prependend rather than appended
@@ -190,27 +180,24 @@ def get_cause_or_none_union(
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        causes_union.insert(0, 'not {}'.format(cause_types_unsatisfied))
+        causes_union.insert(0, f'not {cause_types_unsatisfied}')
 
     # If prior logic appended *NO* causes, raise an exception.
     if not causes_union:
         raise _BeartypeUtilRaisePepException(
-            '{} PEP type hint {!r} failure causes unknown.'.format(
-                exception_label, hint))
+            f'{sleuth.exception_label} PEP type hint '
+            f'{repr(sleuth.hint)} failure causes unknown.')
     # Else, prior logic appended one or more strings describing these failures.
 
     # Truncated object representation of this pith.
-    pith_repr = get_object_representation(pith)
+    pith_repr = get_object_representation(sleuth.pith)
 
     # If prior logic appended one cause, return this cause as a single-line
     # substring intended to be embedded in a longer string.
     if len(causes_union) == 1:
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-        return '{} {}'.format(pith_repr, causes_union[0])
+        return f'{pith_repr} {causes_union[0]}'
     # Else, prior logic appended two or more causes.
 
-    # return causes_union[-1]
     # Return a multiline string comprised of...
     return '{}:\n{}'.format(
         # This truncated object representation.
@@ -220,7 +207,7 @@ def get_cause_or_none_union(
         '\n'.join(
             '{}* {}'.format(
                 # Indented by the current indent.
-                cause_indent,
+                sleuth.cause_indent,
                 # Whose first character is uppercased.
                 uppercase_char_first(
                     # Suffixed by a period if *NOT* yet suffixed by a period.

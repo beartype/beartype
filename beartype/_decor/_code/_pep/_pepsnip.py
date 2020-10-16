@@ -251,18 +251,18 @@ based on ternary conditional (albeit slightly less intuitive).
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
     '''{pith_curr_assigned_expr}[__beartype_random_int % len({pith_curr_assigned_expr})]''')
 '''
-PEP-compliant code snippet Python code snippet evaluating to a randomly indexed
-item of the current pith (which, by definition, *must* be a standard sequence)
-against the current child hint (e.g., ``int``) of the currently visited
-PEP-compliant standard sequence type hint (e.g., ``typing.List[int]``).
+PEP-compliant Python expression yielding the value of a randomly indexed item
+of the current pith (which, by definition, *must* be a standard sequence).
 '''
 
 # ....................{ HINT ~ sequence : tuple           }....................
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX = '''('''
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX = '''(
+{indent_curr}    # True only if this pith is a tuple.
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
-against each subscripted argument of an itemized :class:`typing.Tuple` type of
-the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+against each subscripted child hint of an itemized :class:`typing.Tuple` type
+of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 '''
 
 
@@ -270,22 +270,39 @@ PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
-against each subscripted argument of an itemized :class:`typing.Tuple` type of
-the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+against each subscripted child hint of an itemized :class:`typing.Tuple` type
+of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 '''
 
 
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_ITEM = '''
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY = '''
+{{indent_curr}}    # True only if this tuple is empty.
+{{indent_curr}}    not {pith_curr_assigned_expr} and'''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+to be empty against an itemized :class:`typing.Tuple` type of the non-standard
+form ``typing.Tuple[()]``.
+
+See Also
+----------
+:data:`PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD`
+    Further details.
+'''
+
+
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD = '''
+{{indent_curr}}    # True only if this item of this non-empty tuple deeply
+{{indent_curr}}    # satisfies this child hint.
 {{indent_curr}}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
-argument subscripting an itemized :class:`typing.Tuple` type of the form
+child hint subscripting an itemized :class:`typing.Tuple` type of the form
 ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 
 Caveats
 ----------
 The caller is required to manually slice the trailing suffix ``" and"`` after
-applying this snippet to the last subscripted argument of an itemized
+applying this snippet to the last subscripted child hint of an itemized
 :class:`typing.Tuple` type. While there exist alternate and more readable means
 of accomplishing this, this approach is the optimally efficient.
 
@@ -293,6 +310,14 @@ The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
+'''
+
+
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR = (
+    '''{pith_curr_assigned_expr}[{pith_child_index}]''')
+'''
+PEP-compliant Python expression yielding the value of the currently indexed
+item of the current pith (which, by definition, *must* be a tuple).
 '''
 
 # ....................{ HINT ~ union                      }....................
@@ -311,7 +336,7 @@ against each subscripted argument of a :class:`typing.Union` type.
 '''
 
 
-PEP_CODE_CHECK_HINT_UNION_ARG_PEP = '''
+PEP_CODE_CHECK_HINT_UNION_CHILD_PEP = '''
 {{indent_curr}}    {hint_child_placeholder} or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
@@ -331,7 +356,7 @@ this parent type has been generated.
 '''
 
 
-PEP_CODE_CHECK_HINT_UNION_ARG_NONPEP = '''
+PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP = '''
 {{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
@@ -340,6 +365,29 @@ type.
 
 See Also
 ----------
-:data:`PEP_CODE_CHECK_HINT_UNION_ARG_PEP`
+:data:`PEP_CODE_CHECK_HINT_UNION_CHILD_PEP`
     Further details.
 '''
+
+# ....................{ FORMATTERS                        }....................
+# Bound format methods of string globals defined above, preserved as discrete
+# global variables for efficient lookup elsewhere.
+
+# Bound format methods of string globals imported above.
+PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
+    PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
+    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
+PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (
+    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format)
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD.format)
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR.format)
+PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY.format)
+PEP_CODE_CHECK_HINT_UNION_CHILD_PEP_format = (
+    PEP_CODE_CHECK_HINT_UNION_CHILD_PEP.format)
+PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format = (
+    PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format)
+PEP_CODE_PITH_ASSIGN_EXPR_format = PEP_CODE_PITH_ASSIGN_EXPR.format
