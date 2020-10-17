@@ -144,9 +144,8 @@ def raise_pep_call_exception(
           false positive by erroneously misdetecting this pith as satisfying
           this type check when in fact this pith fails to do so.
     '''
-    assert callable(func), '{!r} uncallable.'.format(func)
-    assert isinstance(pith_name, str), (
-        '{!r} not string.'.format(pith_name))
+    assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
     # print('''raise_pep_call_exception(
     #     func={!r},
     #     pith_name={!r},
@@ -249,15 +248,15 @@ def _init() -> None:
         _TYPING_ATTR_TO_GETTER[typing_attr_type_origin] = (
             get_cause_or_none_type_origin)
 
-    # Map each unifying "typing" attribute to the appropriate getter.
-    for typing_attr_type_union in TYPING_ATTRS_UNION:
-        _TYPING_ATTR_TO_GETTER[typing_attr_type_union] = (
-            get_cause_or_none_union)
-
     # Map each standard sequence "typing" attribute to the appropriate getter.
     for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:
         _TYPING_ATTR_TO_GETTER[typing_attr_sequence_standard] = (
             get_cause_or_none_sequence_standard)
+
+    # Map each unifying "typing" attribute to the appropriate getter.
+    for typing_attr_type_union in TYPING_ATTRS_UNION:
+        _TYPING_ATTR_TO_GETTER[typing_attr_type_union] = (
+            get_cause_or_none_union)
 
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.

@@ -42,19 +42,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_attr in TYPING_ATTRS_UNION, (
-        f'{repr(sleuth.hint_attr)} not '
-        f'argumentless "typing" union attribute.')
-
-    # Tuple of all subscripted arguments defining this union, localized for
-    # both minor efficiency and major readability.
-    hint_childs = sleuth.hint.__args__
-
-    # Assert this union is unsubscripted. Note that the "typing" module should
-    # have already guaranteed this on our behalf.
-    assert hint_childs, (
-        f'{sleuth.exception_label} PEP union type hint '
-        f'{repr(sleuth.hint)} unsubscripted.')
-    # Else, this union is subscripted by two or more arguments.
+        f'{repr(sleuth.hint)} not union.')
 
     # Subset of all classes shallowly associated with these child hints (i.e.,
     # by being either these child hints in the case of non-"typing" classes
@@ -72,7 +60,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
     CAUSE_INDENT_CHILD = sleuth.cause_indent + '  '
 
     # For each subscripted argument of this union...
-    for hint_child in hint_childs:
+    for hint_child in sleuth.hint_childs:
         # If this child hint is ignorable, continue to the next.
         if is_hint_ignorable(hint_child):
             continue

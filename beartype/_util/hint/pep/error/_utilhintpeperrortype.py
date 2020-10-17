@@ -66,8 +66,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-        f'{repr(sleuth.hint_attr)} not '
-        f'argumentless "typing" originative attribute.')
+        f'{repr(sleuth.hint)} not isinstance()-able.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
     hint_type_origin = get_hint_type_origin(sleuth.hint_attr)

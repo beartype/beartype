@@ -138,7 +138,8 @@ def _make_generator_yield_int_send_float_return_str() -> (
     return 'Unmarred, scarred revanent remnants'
 
 # ....................{ COLLECTIONS                       }....................
-NamedTupleType = NamedTuple('Formful', [('fumarole', str), ('enrolled', int)])
+NamedTupleType = NamedTuple(
+    'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 '''
 PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
 PEP-compliant annotations.
@@ -419,14 +420,18 @@ PEP_HINT_TO_META = {
     Tuple[Any, object,]: PepHintMetadata(
         typing_attr=Tuple,
         piths_satisfied=(
-            # Tuple containing arbitrary objects.
+            # Tuple containing arbitrary items.
             (
                 'Surseance',
                 'Of sky, the God, the surly',
             ),
         ),
-        # By definition, *ALL* objects satisfy this singleton.
-        piths_unsatisfied_meta=(),
+        piths_unsatisfied_meta=(
+            # Tuple containing fewer items than required.
+            PepHintPithUnsatisfiedMetadata((
+                'Obeisance',
+            )),
+        ),
     ),
 
     # Fixed-length tuple of at least one ignorable child hint.
@@ -445,6 +450,11 @@ PEP_HINT_TO_META = {
             # String constant.
             PepHintPithUnsatisfiedMetadata(
                 'Jangling (brinkmanship “Ironside”) jingoisms'),
+            # Tuple containing fewer items than required.
+            PepHintPithUnsatisfiedMetadata((
+                999.888,
+                'Obese, slipshodly muslin‐shod priests had maudlin solo',
+            )),
             # Tuple containing a floating-point number, a string, and a
             # boolean (in that exact order).
             PepHintPithUnsatisfiedMetadata(
@@ -475,8 +485,15 @@ PEP_HINT_TO_META = {
             ),
         ),
         piths_unsatisfied_meta=(
-            # Tuple containing a floating-point number, a string, and a boolean
-            # (in that exact order).
+            # Tuple containing a tuple containing fewer items than required.
+            PepHintPithUnsatisfiedMetadata((
+                (
+                    888.999,
+                    'Oboes‐obsoleting tines',
+                ),
+            )),
+            # Tuple containing a tuple containing a floating-point number,
+            # string, and boolean (in that exact order).
             PepHintPithUnsatisfiedMetadata(
                 pith=(
                     (
@@ -1061,15 +1078,17 @@ PEP_HINT_NONATTR_TO_META = {
         piths_unsatisfied_meta=(
             # String constant.
             PepHintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
-            # Named tuple containing incorrectly typed items.
-            PepHintPithUnsatisfiedMetadata(
-                pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
-                # Match that the exception message raised for this object...
-                exception_str_match_regexes=(
-                    # Declares the name of this tuple's problematic item.
-                    r'\s[Ll]ist item 0\s',
-                ),
-            ),
+
+            #FIXME: Uncomment after implementing "NamedTuple" support.
+            # # Named tuple containing incorrectly typed items.
+            # PepHintPithUnsatisfiedMetadata(
+            #     pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
+            #     # Match that the exception message raised for this object...
+            #     exception_str_match_regexes=(
+            #         # Declares the name of this tuple's problematic item.
+            #         r'\s[Ll]ist item 0\s',
+            #     ),
+            # ),
         ),
     ),
 

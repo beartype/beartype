@@ -256,7 +256,7 @@ of the current pith (which, by definition, *must* be a standard sequence).
 '''
 
 # ....................{ HINT ~ sequence : tuple           }....................
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX = '''(
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
@@ -266,7 +266,7 @@ of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 '''
 
 
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_SUFFIX = '''
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
@@ -275,7 +275,7 @@ of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 '''
 
 
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY = '''
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY = '''
 {{indent_curr}}    # True only if this tuple is empty.
 {{indent_curr}}    not {pith_curr_assigned_expr} and'''
 '''
@@ -285,12 +285,27 @@ form ``typing.Tuple[()]``.
 
 See Also
 ----------
-:data:`PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD`
+:data:`PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
     Further details.
 '''
 
 
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD = '''
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN = '''
+{{indent_curr}}    # True only if this tuple is of the expected length.
+{{indent_curr}}    len({pith_curr_assigned_expr}) == {hint_childs_len} and'''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+to be of the expected length against an itemized :class:`typing.Tuple` type of
+the non-standard form ``typing.Tuple[()]``.
+
+See Also
+----------
+:data:`PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
+    Further details.
+'''
+
+
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD = '''
 {{indent_curr}}    # True only if this item of this non-empty tuple deeply
 {{indent_curr}}    # satisfies this child hint.
 {{indent_curr}}    {hint_child_placeholder} and'''
@@ -313,7 +328,7 @@ this parent type has been generated.
 '''
 
 
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR = (
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR = (
     '''{pith_curr_assigned_expr}[{pith_child_index}]''')
 '''
 PEP-compliant Python expression yielding the value of the currently indexed
@@ -380,12 +395,14 @@ PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format)
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD.format)
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR.format)
-PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY.format)
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY.format)
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN.format)
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD.format)
+PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format = (
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format)
 PEP_CODE_CHECK_HINT_UNION_CHILD_PEP_format = (
     PEP_CODE_CHECK_HINT_UNION_CHILD_PEP.format)
 PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format = (

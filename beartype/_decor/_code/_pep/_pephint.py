@@ -324,8 +324,8 @@ from beartype._decor._typistry import (
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_ROOT,
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX,
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_SUFFIX,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX,
     PEP_CODE_CHECK_HINT_UNION_PREFIX,
     PEP_CODE_CHECK_HINT_UNION_SUFFIX,
     PEP_CODE_PITH_NAME_PREFIX,
@@ -335,9 +335,10 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_NONPEP_TYPE_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format,
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY_format,
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD_format,
-    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR_format,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format,
+    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
     PEP_CODE_CHECK_HINT_UNION_CHILD_PEP_format,
     PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format,
     PEP_CODE_PITH_ASSIGN_EXPR_format,
@@ -1547,11 +1548,11 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 #tuple. I mean, no one ever is actually going to use that, but
                 #let's just support it anyway. *sigh*
                 #FIXME: To do so, leverage:
-                #    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY
+                #    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY
 
                 # Initialize the code type-checking the current pith against
                 # this tuple to the substring prefixing all such code.
-                func_curr_code = PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_PREFIX
+                func_curr_code = PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
 
                 # If this hint is subscripted by exactly one child hint *AND*
                 # this child hint is the empty tuple, generate and append code
@@ -1559,27 +1560,37 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # Yes, this is a ridiculous edge case. Welcome to PEP 484.
                 if hint_childs_len == 1 and hint_childs[0] == ():
                     func_curr_code += (
-                        PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_EMPTY_format(
+                        PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format(
                             pith_curr_assigned_expr=pith_curr_assigned_expr))
                 # Else, that ridiculous edge case does *NOT* apply. In this
                 # case...
                 else:
+                    # Generate and append code type-checking the length of this
+                    # pith. Defer formatting the "indent_curr" prefix into this
+                    # code until below for efficiency.
+                    func_curr_code += (
+                        PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format(
+                            pith_curr_assigned_expr=pith_curr_assigned_expr,
+                            hint_childs_len=hint_childs_len,
+                        ))
+
                     # For each child hint of this tuple...
                     for hint_child_index, hint_child in enumerate(hint_childs):
                         # If this child hint is ignorable, continue to the next.
                         if is_hint_ignorable(hint_child):
                             continue
+                        # Else, this child hint is unignorable.
 
-                        #,Generate and append code type-checking this child hint.
-                        # Defer formatting the "indent_curr" prefix into this code
-                        # until below for efficiency
+                        # Generate and append code type-checking this child
+                        # pith. Defer formatting the "indent_curr" prefix into
+                        # this code until below for efficiency.
                         func_curr_code += (
-                            PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_CHILD_format(
+                            PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
                                 hint_child_placeholder=_enqueue_hint_child(
                                     # Python expression yielding the value of
                                     # the currently indexed item of this tuple to
                                     # be type-checked against this child hint.
-                                    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
                                         pith_curr_assigned_expr=(
                                             pith_curr_assigned_expr),
                                         pith_child_index=hint_child_index)),
@@ -1592,7 +1603,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     func_curr_code[:-4] +
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    PEP_CODE_CHECK_HINT_TUPLE_ITEMIZED_SUFFIX
+                    PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX
                 # Format the "indent_curr" prefix into this code deferred
                 # above for efficiency.
                 ).format(
