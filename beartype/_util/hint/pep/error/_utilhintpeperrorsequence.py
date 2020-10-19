@@ -147,15 +147,22 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
             # Human-readable string describing the failure of this tuple item
             # to satisfy this child hint if this item actually fails to satisfy
             # this child hint *or* "None" otherwise.
-            pith_item_cause = sleuth.permute(
+            # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
+            sleuth_copy = sleuth.permute(
                 pith=pith_item,
                 hint=hint_child,
-            ).get_cause_or_none()
+            )
+            pith_item_cause = sleuth_copy.get_cause_or_none()
+            # pith_item_cause = sleuth.permute(
+            #     pith=pith_item,
+            #     hint=hint_child,
+            # ).get_cause_or_none()
 
             # If this item is the cause of this failure, return a substring
             # describing this failure by embedding this failure (itself
             # intended to be embedded in a longer string).
             if pith_item_cause is not None:
+                # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
                 return f'tuple item {pith_item_index} {pith_item_cause}'
             # Else, this item is *NOT* the cause of this failure. Silently
             # continue to the next.

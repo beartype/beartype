@@ -409,10 +409,17 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # Non-empty tuple containing arbitrary items.
-            PepHintPithUnsatisfiedMetadata((
-                'They shucked',
-                '(Or huckstered, knightly rupturing veritas)',
-            )),
+            PepHintPithUnsatisfiedMetadata(
+                pith=(
+                    'They shucked',
+                    '(Or huckstered, knightly rupturing veritas)',
+                ),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Identify this tuple as non-empty.
+                    r'\bnon-empty\b',
+                ),
+            ),
         ),
     ),
 
@@ -428,9 +435,14 @@ PEP_HINT_TO_META = {
         ),
         piths_unsatisfied_meta=(
             # Tuple containing fewer items than required.
-            PepHintPithUnsatisfiedMetadata((
-                'Obeisance',
-            )),
+            PepHintPithUnsatisfiedMetadata(
+                pith=('Obeisance',),
+                # Match that the exception message raised for this object...
+                exception_str_match_regexes=(
+                    # Compare this tuple's length to the expected length.
+                    r'\b1 not 2\b',
+                ),
+            ),
         ),
     ),
 
@@ -465,8 +477,10 @@ PEP_HINT_TO_META = {
                 ),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Declares the index of this tuple's problematic item.
-                    r'\s[Ll]ist item 0\s',
+                    # Declares the index and expected type of this tuple's
+                    # problematic item.
+                    r'\s[Tt]uple item 2\s',
+                    r'\bstr\b',
                 ),
             ),
         ),
@@ -479,9 +493,16 @@ PEP_HINT_TO_META = {
             # Tuple containing tuples containing a floating-point number,
             # string, and integer (in that exact order).
             (
-                90.02,
-                'Father — "Abstracted, OH WE LOVE YOU',
-                'Farther" — that',
+                (
+                    90.02,
+                    'Father — "Abstracted, OH WE LOVE YOU',
+                    'Farther" — that',
+                ),
+                (
+                    2.9,
+                    'To languidly Ent‐wine',
+                    'Towards a timely, wines‐enticing gate',
+                ),
             ),
         ),
         piths_unsatisfied_meta=(
@@ -504,8 +525,10 @@ PEP_HINT_TO_META = {
                 ),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Declares the index of this tuple's problematic item.
-                    r'\s[Ll]ist item 0\s',
+                    # Declares the index and expected type of this tuple's
+                    # problematic item.
+                    r'\s[Tt]uple item 0 tuple item 2\s',
+                    r'\bstr\b',
                 ),
             ),
         ),
@@ -532,8 +555,10 @@ PEP_HINT_TO_META = {
                 pith=((53,)),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Declares the index of this tuple's problematic item.
-                    r'\s[Ll]ist item 0\s',
+                    # Declares the index and expected type of this tuple's
+                    # problematic item.
+                    r'\s[Tt]uple item 0\s',
+                    r'\bstr\b',
                 ),
             ),
         ),
@@ -732,10 +757,9 @@ PEP_HINT_TO_META = {
                 ),
             ),
 
-            # Sequence of lambda function items.
+            # Sequence of bytestring items.
             PepHintPithUnsatisfiedMetadata(
-                pith=(lambda:
-                      'May they rest their certainties’ Solicitousness to',),
+                pith=(b"May they rest their certainties' Solicitousness to",),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
                     # Contains a bullet point declaring one of the non-"typing"
@@ -747,9 +771,9 @@ PEP_HINT_TO_META = {
                 ),
             ),
 
-            # Sequence of mutable sequences of lambda function items.
+            # Sequence of mutable sequences of bytestring items.
             PepHintPithUnsatisfiedMetadata(
-                pith=([lambda: 'Untaint these ties',],),
+                pith=([b'Untaint these ties',],),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
                     # Contains an unindented bullet point declaring one of the
@@ -759,11 +783,11 @@ PEP_HINT_TO_META = {
                     # non-"typing" types *NOT* satisfied by this object.
                     r'\n\s+\*\s.*\bint\b',
                     # Contains an unindented bullet point declaring the index
-                    # of this list's first item *NOT* satisfying this hint.
+                    # of this tuple's first item *NOT* satisfying this hint.
                     r'\n\*\s.*\b[Tt]uple item 0\b',
                     # Contains an indented bullet point declaring the index
                     # of this list's first item *NOT* satisfying this hint.
-                    r'\n\s+\*\s.*\b[Tt]uple item 0\b',
+                    r'\n\s+\*\s.*\b[L]ist item 0\b',
                 ),
             ),
         ),
@@ -808,7 +832,7 @@ PEP_HINT_TO_META = {
                 ),
             ),
 
-            # List containing only bytestring constants.
+            # List of bytestring items.
             PepHintPithUnsatisfiedMetadata(
                 pith=[
                     b'Blamelessly Slur-chastened rights forthwith, affrighting',
@@ -816,12 +840,12 @@ PEP_HINT_TO_META = {
                 ],
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Contains a bullet point declaring the non-"typing" type
-                    # *NOT* satisfied by this object.
-                    r'\n\*\s.*\bbytes\b',
-                    # Contains a bullet point declaring the index of this
-                    # list's first item *NOT* satisfying this hint.
-                    r'\n\*\s.*\b[Tt]uple item 0\b',
+                    # Declares all non-"typing" types *NOT* satisfied by this
+                    # list's first problematic item.
+                    r'\bint\b',
+                    r'\bstr\b',
+                    # Declares the index of this list's first problematic item.
+                    r'\b[Ll]ist item 0\b',
                 ),
             ),
         ),
@@ -839,9 +863,9 @@ PEP_HINT_TO_META = {
             ),
         ),
         piths_unsatisfied_meta=(
-            # String constant.
+            # Integer constant.
             PepHintPithUnsatisfiedMetadata(
-                pith='(Or Keening, standoffishly)',
+                pith=7898797,
                 # Match that the exception message raised for this object
                 # declares the types *NOT* satisfied by this object.
                 exception_str_match_regexes=(
@@ -856,17 +880,17 @@ PEP_HINT_TO_META = {
                 ),
             ),
 
-            # Sequence containing invalid integer constants.
+            # Sequence of integer items.
             PepHintPithUnsatisfiedMetadata(
-                pith=((55, 89, 144, 233, 377, 610, 987,)),
+                pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Contains a bullet point declaring the non-"typing" type
-                    # *NOT* satisfied by this object.
-                    r'\n\*\s.*\bint\b',
-                    # Contains a bullet point declaring the index of this
-                    # list's first item *NOT* satisfying this hint.
-                    r'\n\*\s.*\b[Tt]uple item 1\b',
+                    # Declares all non-"typing" types *NOT* satisfied by this
+                    # list's first problematic item.
+                    r'\bByteString\b',
+                    r'\bstr\b',
+                    # Declares the index of this list's first problematic item.
+                    r'\b[Tt]uple item 0\b',
                 ),
             ),
         ),
@@ -901,20 +925,20 @@ PEP_HINT_TO_META = {
                 ),
             ),
 
-            # Mutable sequence containing invalid string constants.
+            # Mutable sequence of string constants.
             PepHintPithUnsatisfiedMetadata(
                 pith=[
-                    'Of genteel gentle‐folk — that that Ƹsper'
+                    'Of genteel gentle‐folk — that that Ƹsper',
                     'At my brand‐defaced, landless side',
                 ],
                 # Match that the exception message raised for this object...
                 exception_str_match_regexes=(
-                    # Contains a bullet point declaring the non-"typing" type
-                    # *NOT* satisfied by this object.
-                    r'\n\*\s.*\bstr\b',
-                    # Contains a bullet point declaring the index of this
-                    # list's first item *NOT* satisfying this hint.
-                    r'\n\*\s.*\b[Tt]uple item 3\b',
+                    # Declares all non-"typing" types *NOT* satisfied by this
+                    # list's first problematic item.
+                    r'\bByteString\b',
+                    r'\bCallable\b',
+                    # Declares the index of this list's first problematic item.
+                    r'\b[Ll]ist item 0\b',
                 ),
             ),
         ),
@@ -1039,8 +1063,8 @@ if IS_PYTHON_AT_LEAST_3_7:
             piths_unsatisfied_meta=(
                 # List of string constants.
                 PepHintPithUnsatisfiedMetadata([
-                    'Unwholesome gentry ventings',
-                    'Of a scantly raptured Overture,',
+                    'Oboes‐obsoleting tines',
+                    'Of language',
                 ]),
             ),
         ),

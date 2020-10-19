@@ -55,6 +55,7 @@ class PepHintMetadata(object):
         hint. Defaults to the empty tuple.
     '''
 
+    # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
 
@@ -93,6 +94,19 @@ class PepHintMetadata(object):
         self.piths_satisfied = piths_satisfied
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
 
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    typing_attr={self.typing_attr},',
+            f'    is_supported={self.is_supported},',
+            f'    is_generic_user={self.is_generic_user},',
+            f'    is_typevared={self.is_typevared},',
+            f'    piths_satisfied={self.piths_satisfied},',
+            f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
+            f')',
+        ))
+
 
 class PepHintPithUnsatisfiedMetadata(object):
     '''
@@ -118,6 +132,7 @@ class PepHintPithUnsatisfiedMetadata(object):
         ``pith``. Defaults to the empty tuple.
     '''
 
+    # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
 
@@ -146,3 +161,13 @@ class PepHintPithUnsatisfiedMetadata(object):
         self.pith = pith
         self.exception_str_match_regexes = exception_str_match_regexes
         self.exception_str_not_match_regexes = exception_str_not_match_regexes
+
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    pith={self.pith},',
+            f'    exception_str_match_regexes={self.exception_str_match_regexes},',
+            f'    exception_str_not_match_regexes={self.exception_str_not_match_regexes},',
+            f')',
+        ))

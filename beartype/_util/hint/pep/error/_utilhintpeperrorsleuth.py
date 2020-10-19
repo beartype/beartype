@@ -21,7 +21,6 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attr,
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-from copy import copy
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -55,6 +54,38 @@ class CauseSleuth(object):
         hint is PEP-compliant *or* ``None`` otherwise.
     pith : object
         Arbitrary object to be validated.
+    '''
+
+    # ..................{ CLASS VARIABLES                   }..................
+    # Slot *ALL* instance variables defined on this object to both:
+    # * Prevent accidental declaration of erroneous instance variables.
+    # * Minimize space and time complexity.
+    __slots__ = (
+        'cause_indent',
+        'exception_label',
+        'hint',
+        'hint_attr',
+        'hint_childs',
+        'pith',
+    )
+
+
+    _INIT_PARAM_NAMES = frozenset((
+        'cause_indent',
+        'exception_label',
+        'hint',
+        'pith',
+    ))
+    '''
+    Frozen set of the names of all parameters accepted by the :meth:`init`
+    method, defined as a set to enable efficient membership testing.
+    '''
+
+
+    _VAR_NAMES = frozenset(__slots__)
+    '''
+    Frozen set of the names of all instance variables permitted on this object,
+    defined as a set to enable efficient membership testing.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -244,6 +275,12 @@ class CauseSleuth(object):
             Shallow copy of this object such that each keyword argument
             overwrites the instance variable of the same name in this copy.
 
+        Raises
+        ----------
+        _BeartypeUtilRaisePepException
+            If the name of any passed keyword argument is *not* the name of an
+            existing instance variable of this object.
+
         Examples
         ----------
             >>> sleuth = CauseSleuth(
@@ -259,13 +296,22 @@ class CauseSleuth(object):
             typing.List[int]
         '''
 
-        # Shallow copy of this object.
-        sleuth_copy = copy(self)
+        # For the name of each passed keyword argument...
+        for param_name in kwargs.keys():
+            # If this copy does *NOT* already define an instance variable of
+            # the same name, raise an exception.
+            if param_name not in self._VAR_NAMES:
+                raise _BeartypeUtilRaisePepException(
+                    f'Unrecognized instance variable '
+                    f'{self.__class__.__name__}.{param_name} not permutable.'
+                )
 
-        # For each passed variable name and value, overwrite the instance
-        # variable of the same name in this copy.
-        for var_name, var_value in kwargs.items():
-            setattr(sleuth_copy, var_name, var_value)
+        # For the name of each instance variable initializable by this class...
+        for param_name in self._INIT_PARAM_NAMES:
+            # If this variable is not already defined by these arguments,
+            # cascade the current value of this variable into these arguments.
+            if param_name not in kwargs:
+                kwargs[param_name] = getattr(self, param_name)
 
-        # Return this copy.
-        return sleuth_copy
+        # Return a new instance of this class initialized with these arguments.
+        return CauseSleuth(**kwargs)

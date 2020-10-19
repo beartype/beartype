@@ -65,12 +65,16 @@ def get_hint_pep_args(hint: object) -> tuple:
         (int, str, typing.Dict[str, str])
     '''
 
-    #FIXME: Consider replacing with this more exacting test:
-    #return getattr(hint, '__args__', ())) if is_hint_pep(hint) else ()
-
     # Return the value of the "__args__" dunder attribute on this object if
-    # this object defines this attribute *OR* the empty tuple otherwise.
-    return getattr(hint, '__args__', ())
+    # this object defines this attribute *OR* the empty tuple otherwise. Note:
+    #
+    # * The trailing "or ()" test is required to handle edge cases under the
+    #   Python < 3.7.0 implementation of the "typing" module. Notably, under
+    #   Python 3.6.11:
+    #       >>> import typing as t
+    #       >>> t.Tuple.__args__   # yes, this is total bullocks
+    #       None
+    return getattr(hint, '__args__', ()) or ()
 
 
 def get_hint_pep_generic_bases(hint: object) -> tuple:
@@ -399,12 +403,9 @@ def get_hint_pep_typevars(hint: object) -> tuple:
     '''
 
     #FIXME: After dropping Python 3.6, drop the trailing "or ()". See below.
-    #FIXME: Consider replacing with this more exacting test:
-    #return getattr(hint, '__parameters__', ())) if is_hint_pep(hint) else ()
 
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute *OR* the empty tuple otherwise. Note that:
-    #
     # * The "typing._GenericAlias.__parameters__" dunder attribute tested here
     #   is defined by the typing._collect_type_vars() function at subscription
     #   time. Yes, this is insane. Yes, this is PEP 484.

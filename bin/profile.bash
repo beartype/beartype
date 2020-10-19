@@ -17,15 +17,22 @@
 #    $ sudo -H pip3 install beartype typeguard
 
 # ....................{ TODO                              }....................
+#FIXME: Consider supplanting with airspeed-velocity (asv), a Python-specific
+#space and time profiler oriented towards web-hosted tracking of lifetime
+#performance over all Git commits -- which is pretty awesome, basically:
+#    https://asv.readthedocs.io
+
+#FIXME: The stdlib "timeit" module should be conditionally replaced with the
+#superior third-party drop-in replacement "pyperf" module, if the latter is
+#conditionally available under the active Python interpreter. Indeed,
+#attempting to run "timeit" under PyPy3 emits eggregious warnings.
+
 #FIXME: Add support for profiling "enforce" *AFTER* "enforce" finally supports
 #Python >= 3.7, which it currently does *NOT*:
 #    https://github.com/RussBaz/enforce/issues/71
 #FIXME: Add support for profiling "pytypes" *AFTER* "pytypes" finally supports
 #Python >= 3.7, which it currently does *NOT*:
 #    https://github.com/Stewori/pytypes/issues/40
-
-#FIXME: Augment the profile_snippet() function to conditionally profile under
-#"pypy3" as well if that command as available.
 
 # ....................{ PREAMBLE                          }....................
 # Enable strictness for sanity.
@@ -38,6 +45,7 @@ VERSION='0.0.2'
 # Basename of the Python command to be invoked below.
 PYTHON_COMMAND_BASENAME='python3'
 # PYTHON_COMMAND_BASENAME='python3.8'
+# PYTHON_COMMAND_BASENAME='pypy3'
 
 # ....................{ GREETING                          }....................
 # Print a greeting preamble.

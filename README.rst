@@ -845,6 +845,7 @@ values annotated with these typing_ types:
 * typing.SupportsFloat_.
 * typing.SupportsRound_.
 * typing.Text_.
+* typing.Tuple_.
 * typing.Union_.
 
 Partial Compliance
@@ -879,7 +880,6 @@ types:
 * typing.MutableSet_.
 * typing.NamedTuple_.
 * typing.Set_.
-* typing.Tuple_.
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
