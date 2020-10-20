@@ -23,7 +23,7 @@ from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ type                      }....................
 @skip_if_python_version_less_than('3.7.0')
-def test_p563() -> None:
+def test_pep563() -> None:
     '''
     Test **PEP 563** (i.e., "Postponed Evaluation of Annotations") support
     implemented in the :func:`beartype.beartype` decorator if the active Python

@@ -21,6 +21,8 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attr,
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+from beartype._util.hint.pep.utilhintpep593test import is_hint_pep593
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -114,6 +116,13 @@ class CauseSleuth(object):
         self.hint_attr = None
         self.hint_childs = None
 
+        # If this hint is itself annotated, ignore all annotations on this hint
+        # (i.e., the "hint_curr.__metadata__" tuple) by reducing this hint to
+        # its origin (e.g., the "List[str]" in "Annotated[List[str], 50, 20]").
+        if is_hint_pep593(self.hint):
+            self.hint = self.hint.__origin__
+        # In either case, this hint is now unannotated.
+
         # If this hint is PEP-compliant...
         if is_hint_pep(self.hint):
             # Argumentless "typing" attribute identifying this hint.
@@ -181,9 +190,16 @@ class CauseSleuth(object):
         # Getter function returning the desired string.
         get_cause_or_none = None
 
-        # If *NO* argumentless "typing" attribute uniquely identifies this
+        # If this hint is ignorable, all possible objects satisfy this hint,
+        # implying this hint *CANNOT* by definition be the cause of this
+        # failure. In this case, immediately report None.
+        if is_hint_ignorable(self.hint):
+            return None
+        # Else, this hint is unignorable.
+        #
+        # Else if *NO* argumentless "typing" attribute uniquely identifies this
         # hint, this hint is PEP-noncompliant. In this case...
-        if self.hint_attr is None:
+        elif self.hint_attr is None:
             # Avoid circular import dependencies.
             from beartype._util.hint.pep.error._utilhintpeperrortype import (
                 get_cause_or_none_type)

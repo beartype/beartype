@@ -16,7 +16,9 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
+from beartype._util.hint.pep.utilhintpepdata import (
+    TYPING_ATTRS_SUPPORTED,
+)
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
@@ -320,7 +322,7 @@ def is_hint_pep(hint: object) -> bool:
         is_hint_pep_generic_user(hint)
     )
 
-
+# ....................{ TESTERS ~ supported               }....................
 @callable_cached
 def is_hint_pep_supported(hint: object) -> bool:
     '''
@@ -387,6 +389,45 @@ def is_hint_pep_supported(hint: object) -> bool:
 
     # Return true only if this attribute is supported.
     return is_hint_pep_typing_attr_supported(hint_typing_attr)
+
+
+def is_hint_pep_typing_attr_supported(hint) -> bool:
+    '''
+    ``True`` only if the passed object is a **PEP-compliant supported
+    argumentless typing attribute** (i.e., public attribute of the
+    :mod:`typing` module without arguments uniquely identifying a category of
+    PEP-compliant type hints currently supported by the
+    :func:`beartype.beartype` decorator).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be tested.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a PEP-compliant supported argumentless
+        typing attribute.
+
+    Raises
+    ----------
+    TypeError
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
+    '''
+    # from beartype._util.hint.pep.utilhintpepdata import (
+    #     TYPING_ATTRS_DEEP_SUPPORTED)
+    # print(f'TYPING_ATTRS_DEEP_SUPPORTED: {TYPING_ATTRS_DEEP_SUPPORTED}')
+
+    # Return true only if this hint is a supported argumentless "typing"
+    # attribute.
+    return hint in TYPING_ATTRS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
 # If the active Python interpreter targets exactly Python 3.6, define this
@@ -496,176 +537,6 @@ is_hint_pep_typing.__doc__ = '''
     ----------
     bool
         ``True`` only if this object is defined by the :mod:`typing` module.
-    '''
-
-
-def is_hint_pep_typing_attr_supported(hint) -> bool:
-    '''
-    ``True`` only if the passed object is a **PEP-compliant supported
-    argumentless typing attribute** (i.e., public attribute of the
-    :mod:`typing` module without arguments uniquely identifying a category of
-    PEP-compliant type hints currently supported by the
-    :func:`beartype.beartype` decorator).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be tested.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a PEP-compliant supported argumentless
-        typing attribute.
-
-    Raises
-    ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
-    '''
-
-    # Return true only if this hint is a supported argumentless "typing"
-    # attribute.
-    return hint in TYPING_ATTRS_SUPPORTED
-
-# ....................{ TESTERS ~ generic                 }....................
-# If the active Python interpreter targets Python >= 3.7.0, define the
-# is_hint_pep_generic_user() tester for Python >= 3.7.0. Sadly, Python
-# 3.7.0 broke backward compatibility with the public API of the "typing" module
-# by removing the prior "typing.GenericMeta" metaclass previously referenced by
-# this tester under Python < 3.7.0, necessitating fundamentally different
-# implementations for this tester between Python < 3.7.0 and >= 3.7.0.
-if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep_generic_user(hint: object) -> bool:
-
-        # Return true only if this hint is a subclass of the "typing.Generic"
-        # abstract base class (ABC) *not* defined by the "typing" module, in
-        # which case this hint is a user-defined generic.
-        #
-        # Note that this test is robust against edge case, as the "typing"
-        # module guarantees all user-defined classes subclassing one or more
-        # "typing" pseudo-superclasses to subclass the "typing.Generic"
-        # abstract base class (ABC) regardless of whether those classes
-        # originally did so explicitly. How? By type erasure, of course, the
-        # malicious gift that keeps on giving:
-        #     >>> import typing as t
-        #     >>> class MuhList(t.List): pass
-        #     >>> MuhList.__orig_bases__
-        #     (typing.List)
-        #     >>> MuhList.__mro__
-        #     (__main__.MuhList, list, typing.Generic, object)
-        #
-        # Note that this issubclass() call implicitly performs a surprisingly
-        # inefficient search over the method resolution order (MRO) of all
-        # superclasses of this hint. In theory, the cost of this search might
-        # be circumventable by observing that this ABC is expected to reside at
-        # the second-to-last index of the tuple exposing this MRO far all
-        # generics by virtue of fragile implementation details violating
-        # privacy encapsulation. In practice, this codebase is fragile enough.
-        #
-        # Note lastly that the following logic superficially appears to
-        # implement the same test *WITHOUT* the onerous cost of a search:
-        #     return len(get_hint_pep_generic_bases(hint)) > 0
-        #
-        # Why didn't we opt for that, then? Because this tester is routinely
-        # passed objects that *CANNOT* be guaranteed to be PEP-compliant.
-        # Indeed, the high-level is_hint_pep() tester establishing the
-        # PEP-compliance of arbitrary objects internally calls this lower-level
-        # tester to do so. Since the get_hint_pep_generic_bases() getter
-        # internally reduces to returning the tuple of the general-purpose
-        # "__orig_bases__" dunder attribute formalized by PEP 560, testing
-        # whether that tuple is non-empty or not in no way guarantees this
-        # object to be a PEP-compliant generic.
-        return (
-            isinstance(hint, type) and
-            issubclass(hint, Generic) and
-            not is_hint_pep_typing(hint)
-        )
-# Else if the active Python interpreter targets Python < 3.7.0, define the
-# is_hint_pep_generic_user() tester for Python < 3.7.0.
-else:
-    # Import the Python < 3.7.0-specific metaclass required by this tester.
-    from typing import GenericMeta
-
-    def is_hint_pep_generic_user(hint: object) -> bool:
-
-        # Return true only if this hint is a subclass *not* defined by the
-        # "typing" module whose class is the "typing.GenericMeta" metaclass, in
-        # which case this hint is a user-defined generic.
-        #
-        # Note the Python >= 3.7.0-specific implementation of this tester does
-        # *NOT* apply to Python < 3.7.0, as this metaclass unconditionally
-        # raises exceptions when user-defined "typing" subclasses internally
-        # requiring this metaclass are passed to the issubclass() builtin.
-        return isinstance(hint, GenericMeta) and not is_hint_pep_typing(hint)
-
-
-# Docstring for this function regardless of implementation details.
-is_hint_pep_generic_user.__doc__ = '''
-    ``True`` only if the passed object is a **user-defined generic** (i.e.,
-    PEP-compliant type hint subclassing one or more public :mod:`typing`
-    pseudo-superclasses but *not* itself defined by the :mod:`typing` module).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Design
-    ----------
-    This tester intentionally avoids returning ``True`` for *all* generics
-    (including both those internally defined by the :mod:`typing` module and
-    those externally defined by third-party callers). Why? Because generics
-    internally defined by the :mod:`typing` module are effectively *not*
-    generics and only implemented as such under Python < 3.7.0 for presumably
-    indefensible low-level reasons -- including:
-
-    * *All* callable types (e.g., :attr:`typing.Awaitable`,
-      :attr:`typing.Callable`, :attr:`typing.Coroutine`,
-      :attr:`typing.Generator`).
-    * *Most* container and iterable types (e.g., :attr:`typing.Dict`,
-      :attr:`typing.List`, :attr:`typing.Mapping`, :attr:`typing.Tuple`).
-
-    If this tester returned ``True`` for *all* generics, then downstream
-    callers would effectively have no means of distinguishing genuine
-    user-defined generics from disingenuous :mod:`typing` pseudo-generics.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a generic.
-
-    See Also
-    ----------
-    :func:`is_hint_pep_typevared`
-        Commentary on the relation between generics and typevared hints.
-
-    Examples
-    ----------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     is_hint_pep_generic_user)
-        >>> T = typing.TypeVar('T')
-        >>> class Genericized(typing.Generic[T]) pass
-        >>> class Containment(typing.Iterable[T], typing.Container[T]): pass
-        >>> is_hint_pep_generic_user(Genericized)
-        True
-        >>> is_hint_pep_generic_user(Containment)
-        True
-        >>> is_hint_pep_generic_user(typing.Generic[T])
-        False
-        >>> is_hint_pep_generic_user(typing.Iterable[T])
-        False
     '''
 
 # ....................{ TESTERS ~ newtype                 }....................
@@ -859,3 +730,137 @@ def is_hint_pep_typevared(hint: object) -> bool:
     # alias (e.g., "typing._GenericAlias" subtype) *OR* the empty tuple
     # otherwise is non-empty.
     return len(get_hint_pep_typevars(hint)) > 0
+
+# ....................{ TESTERS ~ user                    }....................
+# If the active Python interpreter targets Python >= 3.7.0, define the
+# is_hint_pep_generic_user() tester for Python >= 3.7.0. Sadly, Python
+# 3.7.0 broke backward compatibility with the public API of the "typing" module
+# by removing the prior "typing.GenericMeta" metaclass previously referenced by
+# this tester under Python < 3.7.0, necessitating fundamentally different
+# implementations for this tester between Python < 3.7.0 and >= 3.7.0.
+if IS_PYTHON_AT_LEAST_3_7:
+    def is_hint_pep_generic_user(hint: object) -> bool:
+
+        # Return true only if this hint is a subclass of the "typing.Generic"
+        # abstract base class (ABC) *not* defined by the "typing" module, in
+        # which case this hint is a user-defined generic.
+        #
+        # Note that this test is robust against edge case, as the "typing"
+        # module guarantees all user-defined classes subclassing one or more
+        # "typing" pseudo-superclasses to subclass the "typing.Generic"
+        # abstract base class (ABC) regardless of whether those classes
+        # originally did so explicitly. How? By type erasure, of course, the
+        # malicious gift that keeps on giving:
+        #     >>> import typing as t
+        #     >>> class MuhList(t.List): pass
+        #     >>> MuhList.__orig_bases__
+        #     (typing.List)
+        #     >>> MuhList.__mro__
+        #     (__main__.MuhList, list, typing.Generic, object)
+        #
+        # Note that this issubclass() call implicitly performs a surprisingly
+        # inefficient search over the method resolution order (MRO) of all
+        # superclasses of this hint. In theory, the cost of this search might
+        # be circumventable by observing that this ABC is expected to reside at
+        # the second-to-last index of the tuple exposing this MRO far all
+        # generics by virtue of fragile implementation details violating
+        # privacy encapsulation. In practice, this codebase is fragile enough.
+        #
+        # Note lastly that the following logic superficially appears to
+        # implement the same test *WITHOUT* the onerous cost of a search:
+        #     return len(get_hint_pep_generic_bases(hint)) > 0
+        #
+        # Why didn't we opt for that, then? Because this tester is routinely
+        # passed objects that *CANNOT* be guaranteed to be PEP-compliant.
+        # Indeed, the high-level is_hint_pep() tester establishing the
+        # PEP-compliance of arbitrary objects internally calls this lower-level
+        # tester to do so. Since the get_hint_pep_generic_bases() getter
+        # internally reduces to returning the tuple of the general-purpose
+        # "__orig_bases__" dunder attribute formalized by PEP 560, testing
+        # whether that tuple is non-empty or not in no way guarantees this
+        # object to be a PEP-compliant generic.
+        return (
+            isinstance(hint, type) and
+            issubclass(hint, Generic) and
+            not is_hint_pep_typing(hint)
+        )
+# Else if the active Python interpreter targets Python < 3.7.0, define the
+# is_hint_pep_generic_user() tester for Python < 3.7.0.
+else:
+    # Import the Python < 3.7.0-specific metaclass required by this tester.
+    from typing import GenericMeta
+
+    def is_hint_pep_generic_user(hint: object) -> bool:
+
+        # Return true only if this hint is a subclass *not* defined by the
+        # "typing" module whose class is the "typing.GenericMeta" metaclass, in
+        # which case this hint is a user-defined generic.
+        #
+        # Note the Python >= 3.7.0-specific implementation of this tester does
+        # *NOT* apply to Python < 3.7.0, as this metaclass unconditionally
+        # raises exceptions when user-defined "typing" subclasses internally
+        # requiring this metaclass are passed to the issubclass() builtin.
+        return isinstance(hint, GenericMeta) and not is_hint_pep_typing(hint)
+
+
+# Docstring for this function regardless of implementation details.
+is_hint_pep_generic_user.__doc__ = '''
+    ``True`` only if the passed object is a **user-defined generic** (i.e.,
+    PEP-compliant type hint subclassing one or more public :mod:`typing`
+    pseudo-superclasses but *not* itself defined by the :mod:`typing` module).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Design
+    ----------
+    This tester intentionally avoids returning ``True`` for *all* generics
+    (including both those internally defined by the :mod:`typing` module and
+    those externally defined by third-party callers). Why? Because generics
+    internally defined by the :mod:`typing` module are effectively *not*
+    generics and only implemented as such under Python < 3.7.0 for presumably
+    indefensible low-level reasons -- including:
+
+    * *All* callable types (e.g., :attr:`typing.Awaitable`,
+      :attr:`typing.Callable`, :attr:`typing.Coroutine`,
+      :attr:`typing.Generator`).
+    * *Most* container and iterable types (e.g., :attr:`typing.Dict`,
+      :attr:`typing.List`, :attr:`typing.Mapping`, :attr:`typing.Tuple`).
+
+    If this tester returned ``True`` for *all* generics, then downstream
+    callers would effectively have no means of distinguishing genuine
+    user-defined generics from disingenuous :mod:`typing` pseudo-generics.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a generic.
+
+    See Also
+    ----------
+    :func:`is_hint_pep_typevared`
+        Commentary on the relation between generics and typevared hints.
+
+    Examples
+    ----------
+        >>> import typing
+        >>> from beartype._util.hint.pep.utilhintpepget import (
+        ...     is_hint_pep_generic_user)
+        >>> T = typing.TypeVar('T')
+        >>> class Genericized(typing.Generic[T]) pass
+        >>> class Containment(typing.Iterable[T], typing.Container[T]): pass
+        >>> is_hint_pep_generic_user(Genericized)
+        True
+        >>> is_hint_pep_generic_user(Containment)
+        True
+        >>> is_hint_pep_generic_user(typing.Generic[T])
+        False
+        >>> is_hint_pep_generic_user(typing.Iterable[T])
+        False
+    '''

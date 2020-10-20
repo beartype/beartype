@@ -19,6 +19,7 @@ from beartype.cave import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_9,
 )
 from collections import abc as collections_abc
 
@@ -173,20 +174,26 @@ if IS_PYTHON_AT_LEAST_3_7:
         })
 
 # ....................{ SETS                              }....................
-TYPING_ATTRS_SUPPORTED_DEEP = frozenset((
-    typing.List,
-    typing.MutableSequence,
-    typing.Optional,
-    typing.Sequence,
-    typing.Tuple,
+TYPING_ATTRS_DEEP_SUPPORTED = frozenset(
+    # Deeply supported attributes available under *ALL* Python versions.
+    {
+        typing.List,
+        typing.MutableSequence,
+        typing.Optional,
+        typing.Sequence,
+        typing.Tuple,
 
-    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-    # under Python <= 3.9. The implementations of the "typing" module under
-    # those older Python versions transparently reduced "typing.Optional"
-    # to "typing.Union" at runtime. Since this reduction is no longer the
-    # case, both *MUST* now be explicitly listed here.
-    typing.Union,
-))
+        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+        # under Python <= 3.9. The implementations of the "typing" module under
+        # those older Python versions transparently reduced "typing.Optional"
+        # to "typing.Union" at runtime. Since this reduction is no longer the
+        # case, both *MUST* now be explicitly listed here.
+        typing.Union,
+    } |
+
+    # Deeply supported attributes available only under Python >= 3.9.
+    ({typing.Annotated,} if IS_PYTHON_AT_LEAST_3_9 else set())
+)
 '''
 Frozen set of all **deeply supported argumentless typing attributes** (i.e.,
 public attributes of the :mod:`typing` module uniquely identifying
@@ -206,7 +213,7 @@ This set is intended to be tested against typing attributes returned by the
 
 TYPING_ATTRS_SUPPORTED = frozenset(
     # Set of all deeply supported argumentless "typing" attributes.
-    TYPING_ATTRS_SUPPORTED_DEEP |
+    TYPING_ATTRS_DEEP_SUPPORTED |
     # Set of all shallowly supported argumentless "typing" attributes
     # originating from a non-"typing" origin type.
     set(TYPING_ATTR_TO_TYPE_ORIGIN.keys()) |

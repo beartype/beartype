@@ -353,8 +353,8 @@ from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
+    TYPING_ATTRS_DEEP_SUPPORTED,
     TYPING_ATTRS_SEQUENCE_STANDARD,
-    TYPING_ATTRS_SUPPORTED_DEEP,
     TYPING_ATTRS_UNION,
 )
 from beartype._util.hint.pep.utilhintpepget import (
@@ -366,7 +366,10 @@ from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_typing_attr_supported,
     is_hint_pep,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.hint.pep.utilhintpep593test import is_hint_pep593
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_8,
+)
 from itertools import count
 from typing import Tuple
 
@@ -901,6 +904,16 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
+        # ................{ ANNOTATED                         }................
+        # If this hint is itself annotated, ignore all annotations on this
+        # hint (i.e., the "hint_curr.__metadata__" tuple) by reducing this
+        # hint to its origin (e.g., the "List[str]" in
+        # "Annotated[List[str], 50, False]").
+        if is_hint_pep593(hint_curr):
+            hint_curr = hint_curr.__origin__
+        # ................{ UNANNOTATED                       }................
+        # In either case, this hint is now unannotated.
+
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
         #requires a linear search over the entire code and is thus costly.
@@ -908,8 +921,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
         #         hint_child_label, hint, hint_curr_placeholder, func_code))
 
+        # ................{ PEP                               }................
         # If this hint is PEP-compliant...
         if is_hint_pep(hint_curr):
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAVEATS: Synchronize changes here with "ANNOTATED" below.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             # If this hint is currently unsupported, raise an exception.
             #
             # Note the human-readable label prefixing the representations of
@@ -928,7 +946,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                '{} {!r} ignorable.'.format(hint_child_label, hint_curr))
+                f'{hint_child_label} PEP hint {repr(hint_curr)} ignorable.')
 
             # Argumentless "typing" attribute uniquely identifying this hint.
             hint_curr_attr = get_hint_pep_typing_attr(hint_curr)
@@ -1123,7 +1141,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.utilhintpeperror" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_SUPPORTED_DEEP"
+            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_DEEP_SUPPORTED"
             #   frozen set of all supported argumentless "typing" attributes
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1380,7 +1398,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # If this hint either...
             elif (
                 # Is not yet deeply supported by this function *OR*...
-                hint_curr_attr not in TYPING_ATTRS_SUPPORTED_DEEP or
+                hint_curr_attr not in TYPING_ATTRS_DEEP_SUPPORTED or
                 # Is deeply supported by this function but is its own
                 # argumentless "typing" attribute (e.g., "typing.List" rather
                 # than "typing.List[str]") and is thus subscripted by *NO*
@@ -1461,10 +1479,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     f'{hint_child_label} PEP sequence {repr(hint_curr)} '
                     f'subscripted by multiple arguments.')
 
-                #!@!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # CAVEATS: Synchronize changes here with "Tuple" below.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
                 # Lone child hint of this parent hint.
                 hint_child = hint_childs[0]
 
@@ -1542,13 +1556,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 ), (
                     f'{hint_child_label} PEP variadic tuple '
                     f'{repr(hint_curr)} unhandled.')
-
-                #FIXME: Note that we also need to explicitly handle *AND UNIT
-                #TEST* the "typing.Tuple[()]" edge case matching only an empty
-                #tuple. I mean, no one ever is actually going to use that, but
-                #let's just support it anyway. *sigh*
-                #FIXME: To do so, leverage:
-                #    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY
 
                 # Initialize the code type-checking the current pith against
                 # this tuple to the substring prefixing all such code.
@@ -1678,6 +1685,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     f'{hint_child_label} PEP hint {repr(hint_curr)} '
                     f'unsupported despite being erroneously flagged as '
                     f'supported.')
+
+        # ................{ NON-PEP                           }................
         # Else, this hint is *NOT* PEP-compliant.
 
         # ................{ CLASSES                           }................

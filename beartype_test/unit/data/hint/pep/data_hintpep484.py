@@ -12,6 +12,7 @@ unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
+import typing
 from collections import abc as collections_abc
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
@@ -1040,14 +1041,16 @@ applicable to testing scenarios.
 '''
 
 # ....................{ MAPPINGS ~ update                 }....................
-# If the active Python interpreter targets at least various Python versions,
-# map PEP-compliant type hints first introduced in those versions.
+# PEP-compliant type hints conditionally dependent on the major version of
+# Python targeted by the active Python interpreter.
 
-# See the "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTR_TO_TYPE_ORIGIN"
-# dictionary for detailed discussion.
 if IS_PYTHON_AT_LEAST_3_7:
     PEP_HINT_TO_META.update({
         # ................{ ARGUMENTLESS                      }................
+        # See the
+        # "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTR_TO_TYPE_ORIGIN"
+        # dictionary for detailed discussion.
+
         # Argumentless "Hashable" attribute.
         Hashable: PepHintMetadata(
             typing_attr=Hashable,
@@ -1087,6 +1090,37 @@ if IS_PYTHON_AT_LEAST_3_7:
             ),
         ),
     })
+
+    if IS_PYTHON_AT_LEAST_3_9:
+        PEP_HINT_TO_META.update({
+            # ..............{ ANNOTATED                         }..............
+            # Annotated of a non-"typing" type.
+            typing.Annotated[str, int]: PepHintMetadata(
+                typing_attr=typing.Annotated,
+                piths_satisfied=(
+                    # String constant.
+                    'Towards a timely, wines‐enticing gate',
+                ),
+                piths_unsatisfied_meta=(
+                    # List of string constants.
+                    PepHintPithUnsatisfiedMetadata([
+                        'Of languished anger’s sap‐spated rushings',]),
+                ),
+            ),
+
+            # Annotated of a "typing" type.
+            typing.Annotated[List[str], int]: PepHintMetadata(
+                typing_attr=typing.Annotated,
+                piths_satisfied=(
+                    # List of string constants.
+                    ['MINERVA‐unnerving, verve‐sapping enervations',],
+                ),
+                piths_unsatisfied_meta=(
+                    # String constant.
+                    PepHintPithUnsatisfiedMetadata('Of a Spicily sated',),
+                ),
+            ),
+        })
 
 # ....................{ METADATA ~ dict : nonattr         }....................
 PEP_HINT_NONATTR_TO_META = {
@@ -1132,12 +1166,33 @@ them) to avoid spurious issues throughout downstream unit tests.
 '''
 
 # ....................{ SETS                              }....................
-PEP_HINTS_DEEP_IGNORABLE = frozenset((
-    # Arbitrary unions containing the shallowly ignorable "Any" and
-    # "object" type hints.
-    Union[Any, float, str,],
-    Union[complex, int, object,],
-))
+PEP_HINTS_DEEP_IGNORABLE = frozenset(
+    # Deeply ignorable hints available under *ALL* Python versions.
+    (
+        # Unions containing any shallowly ignorable type hint.
+        Union[Any, float, str,],
+        Union[complex, int, object,],
+
+        # Optionals containing any shallowly ignorable type hint.
+        Optional[Any],
+        Optional[object],
+    ) +
+
+    # Deeply ignorable hints available only under Python >= 3.9.
+    (
+        # Annotated of shallowly ignorable type hints.
+        typing.Annotated[Any, int],
+        typing.Annotated[object, int],
+
+        # Annotated of ignorable unions and optionals.
+        typing.Annotated[Union[Any, float, str,], int],
+        typing.Annotated[Optional[Any], int],
+
+        # Unions and optionals of ignorable annotateds.
+        Union[complex, int, typing.Annotated[Any, int]],
+        Optional[typing.Annotated[object, int]],
+    ) if IS_PYTHON_AT_LEAST_3_9 else ()
+)
 '''
 Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in

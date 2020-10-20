@@ -7,7 +7,7 @@
 **Beartype PEP-compliant type hint metadata data-driven testing submodule.**
 
 This submodule declares lower-level metadata classes instantiated by the
-higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
+higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep484` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................

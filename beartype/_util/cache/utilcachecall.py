@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import inspect
 from beartype.roar import _BeartypeUtilCachedCallableException
+from beartype._util.utilobject import Iota
 from functools import wraps
 from inspect import Parameter
 
@@ -30,7 +31,7 @@ currently supported by the :func:`callable_cached` decorator.
 '''
 
 # ....................{ CONSTANTS ~ private : sentinel    }....................
-_SENTINEL_KWARGS_KEYS = (object(),)
+_SENTINEL_KWARGS_KEYS = (Iota(),)
 '''
 Sentinel tuple signifying subsequent keyword argument names.
 
@@ -40,7 +41,7 @@ flattened tuple of all parameters passed to the decorated callable.
 '''
 
 
-_SENTINEL_KWARGS_VALUES = (object(),)
+_SENTINEL_KWARGS_VALUES = (Iota(),)
 '''
 Sentinel tuple signifying subsequent keyword argument values.
 

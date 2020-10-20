@@ -795,6 +795,7 @@ PEP-compliant Type Hints
 
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 572 -- Assignment Expressions <PEP 572_>`__.
+* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 
 ``beartype`` is partially compliant with these PEPs:
 
@@ -813,7 +814,6 @@ PEP-compliant Type Hints
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 * `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
-* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 
 See also the **PEP** and **typing** categories of our `features matrix
 <Features_>`__ for further details.
@@ -831,6 +831,7 @@ Full Compliance
 recursively checks the types of items contained in) parameters and return
 values annotated with these typing_ types:
 
+* typing.Annotated_.
 * typing.Any_.
 * typing.ByteString_.
 * typing.List_.
@@ -907,7 +908,6 @@ typing_ types:
   typing_ non-classes).
 * User-defined protocols (i.e., user-defined classes transitively subclassing
   the typing.Protocol_ abstract base class (ABC)).
-* typing.Annotated_.
 * typing.AnyStr_.
 * typing.BinaryIO_.
 * typing.ClassVar_.
@@ -966,7 +966,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | typing_     | typing.AbstractSet_                 | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Annotated_                   | *none*                        | *none*                    |
+|             | typing.Annotated_                   | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Any_                         | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1114,7 +1114,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `591 <PEP 591_>`__                  | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `593 <PEP 593_>`__                  | *none*                        | *none*                    |
+|             | `593 <PEP 593_>`__                  | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | packages    | `PyPI <beartype PyPI_>`__           | **0.1.0**\ —\ *current*       | —                         |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

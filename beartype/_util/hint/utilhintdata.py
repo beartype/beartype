@@ -26,8 +26,6 @@ HINTS_SHALLOW_IGNORABLE = frozenset((
 
     # Ignorable "typing.Optional" objects.
     Optional,
-    Optional[object],
-    Optional[Any],
 
     # Ignorable "typing.Union" objects.
     Union,
