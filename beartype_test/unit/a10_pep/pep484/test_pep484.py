@@ -24,6 +24,7 @@ See Also
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 from beartype_test.util.pyterror import raises_uncached
 from collections import ChainMap
 from re import search
@@ -53,8 +54,10 @@ def test_pep484() -> None:
         BeartypeCallCheckPepException,
         BeartypeCallCheckNonPepException,
     )
-    from beartype_test.unit.data.hint.data_hint import (
-        PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
+    from beartype_test.unit.data.hint.pep.data_hintpep import (
+        PEP_HINT_TO_META,
+        PEP_HINT_CLASSED_TO_META,
+    )
     from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
         PepHintPithUnsatisfiedMetadata)
 
@@ -62,7 +65,7 @@ def test_pep484() -> None:
     # instances detailing those hints with metadata applicable to testing
     # scenarios -- regardless of whether those hints are uniquely identified by
     # argumentless "typing" attributes or not.
-    PEP_HINT_ALL_TO_META = ChainMap(PEP_HINT_TO_META, PEP_HINT_NONATTR_TO_META)
+    PEP_HINT_ALL_TO_META = ChainMap(PEP_HINT_TO_META, PEP_HINT_CLASSED_TO_META)
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
     RANGE_2 = (None, None)

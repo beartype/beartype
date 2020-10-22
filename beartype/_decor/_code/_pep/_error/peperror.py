@@ -19,14 +19,14 @@ from beartype.roar import (
     _BeartypeUtilRaisePepException,
     _BeartypeUtilRaisePepDesynchronizationException,
 )
-from beartype._util.hint.pep.error._utilhintpeperrortype import (
+from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type_origin)
-from beartype._util.hint.pep.error._utilhintpeperrorsequence import (
+from beartype._decor._code._pep._error._peperrorsequence import (
     get_cause_or_none_sequence_standard,
     get_cause_or_none_tuple,
 )
-from beartype._util.hint.pep.error._utilhintpeperrorsleuth import CauseSleuth
-from beartype._util.hint.pep.error._utilhintpeperrorunion import (
+from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._code._pep._error._peperrorunion import (
     get_cause_or_none_union)
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,

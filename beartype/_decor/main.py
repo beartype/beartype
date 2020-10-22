@@ -204,7 +204,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
-from beartype._util.hint.pep.error.utilhintpeperror import (
+from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.text.utiltextmunge import number_lines
 from beartype._util.text.utiltextrepr import get_object_representation

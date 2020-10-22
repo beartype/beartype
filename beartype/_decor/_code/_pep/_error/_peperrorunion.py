@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import _BeartypeUtilRaisePepException
 from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.hint.pep.error._utilhintpeperrorsleuth import CauseSleuth
+from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_UNION
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep

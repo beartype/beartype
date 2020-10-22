@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilRaisePepException
+from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN)
 from beartype._util.hint.pep.utilhintpepget import (
@@ -21,7 +22,6 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_typing_attr,
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-from beartype._util.hint.pep.utilhintpep593test import is_hint_pep593
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -142,12 +142,12 @@ class CauseSleuth(object):
         ----------
         This getter is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
-        the parent :func:`.utilhintpeperror.raise_pep_call_exception` function
+        the parent :func:`.peperror.raise_pep_call_exception` function
         calling this getter is *always* passed an object *not* satisfying the
         passed hint, this getter is under no such constraints. Why? Because
         this getter is also called to find which of an arbitrary number of
         objects transitively nested in the object passed to
-        :func:`.utilhintpeperror.raise_pep_call_exception` fails to satisfy the
+        :func:`.peperror.raise_pep_call_exception` fails to satisfy the
         corresponding hint transitively nested in the hint passed to that
         function.
 
@@ -156,15 +156,15 @@ class CauseSleuth(object):
         and the list ``list(range(256)) + [False,]`` consisting of the integers
         0 through 255 followed by boolean ``False``. Since this list is a
         standard sequence, the
-        :func:`._utilhintpeperrorsequence.get_cause_or_none_sequence_standard`
+        :func:`._peperrorsequence.get_cause_or_none_sequence_standard`
         function must decide the cause of this list's failure to comply with
         this hint by finding the list item that is neither an integer nor a
         string, implemented by by iteratively passing each list item to the
-        :func:`._utilhintpeperrorunion.get_cause_or_none_union` function. Since
+        :func:`._peperrorunion.get_cause_or_none_union` function. Since
         the first 256 items of this list are integers satisfying this hint,
-        :func:`._utilhintpeperrorunion.get_cause_or_none_union` returns
+        :func:`._peperrorunion.get_cause_or_none_union` returns
         ``None`` to
-        :func:`._utilhintpeperrorsequence.get_cause_or_none_sequence_standard`
+        :func:`._peperrorsequence.get_cause_or_none_sequence_standard`
         before finally finding the non-compliant boolean item and returning the
         human-readable cause.
 
@@ -201,7 +201,7 @@ class CauseSleuth(object):
         # hint, this hint is PEP-noncompliant. In this case...
         elif self.hint_attr is None:
             # Avoid circular import dependencies.
-            from beartype._util.hint.pep.error._utilhintpeperrortype import (
+            from beartype._decor._code._pep._error._peperrortype import (
                 get_cause_or_none_type)
 
             # If this hint is *NOT* a non-"typing" class, this hint is an
@@ -223,7 +223,7 @@ class CauseSleuth(object):
         # subscripted by *NO* child hints...
         elif self.hint is self.hint_attr:
             # Avoid circular import dependencies.
-            from beartype._util.hint.pep.error._utilhintpeperrortype import (
+            from beartype._decor._code._pep._error._peperrortype import (
                 get_cause_or_none_type_origin)
 
             # If this attribute is *NOT* isinstance()-able, raise an exception.
@@ -241,7 +241,7 @@ class CauseSleuth(object):
         # "typing.List[str]" rather than "typing.List"). In this case...
         else:
             # Avoid circular import dependencies.
-            from beartype._util.hint.pep.error.utilhintpeperror import (
+            from beartype._decor._code._pep._error.peperror import (
                 _TYPING_ATTR_TO_GETTER)
 
             # If this hint is paradoxically subscripted by *NO* child hints,

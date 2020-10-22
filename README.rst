@@ -803,12 +803,12 @@ PEP-compliant Type Hints
   detailed below <PEP 484 Compliance_>`__
 * `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
   <PEP 484 Compliance_>`__.
+* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
+  544_>`_.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
-  544_>`_.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
@@ -848,6 +848,8 @@ values annotated with these typing_ types:
 * typing.Text_.
 * typing.Tuple_.
 * typing.Union_.
+* **User-defined single-inherited protocols** (i.e., user-defined classes
+  directly subclassing *only* the typing.Protocol_ abstract base class (ABC)).
 
 Partial Compliance
 ++++++++++++++++++
@@ -895,19 +897,6 @@ No Compliance
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
-* `Forward references <relative forward references_>`__ (i.e., unqualified
-  relative string classnames internally coerced by typing_ into
-  typing.ForwardRef_ instances).
-* Forward reference-subscripted types (i.e., typing_ objects subscripted by one
-  or more `forward references <relative forward references_>`__).
-* Type variables (i.e., typing.TypeVar_ instances enabling general-purpose
-  type-checking of generically substitutable types).
-* Type variable-parametrized types (i.e., typing_ objects subscripted by one or
-  more type variables).
-* User-defined generics (i.e., user-defined classes subclassing one or more
-  typing_ non-classes).
-* User-defined protocols (i.e., user-defined classes transitively subclassing
-  the typing.Protocol_ abstract base class (ABC)).
 * typing.AnyStr_.
 * typing.BinaryIO_.
 * typing.ClassVar_.
@@ -919,6 +908,20 @@ typing_ types:
 * typing.TextIO_.
 * typing.Final_.
 * `@typing.final`_.
+* `Forward references <relative forward references_>`__ (i.e., unqualified
+  relative string classnames internally coerced by typing_ into
+  typing.ForwardRef_ instances).
+* **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
+  one or more `forward references <relative forward references_>`__).
+* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
+  type-checking of generically substitutable types).
+* **Type variable-parametrized types** (i.e., typing_ objects subscripted by
+  one or more type variables).
+* **User-defined generics** (i.e., user-defined classes subclassing one or more
+  typing_ non-classes).
+* **User-defined multiple-inherited protocols** (i.e., user-defined classes
+  directly subclassing the typing.Protocol_ ABC *and* one or more other
+  superclasses).
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
@@ -1056,7 +1059,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Pattern_                     | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Protocol_                    | *none*                        | *none*                    |
+|             | typing.Protocol_                    | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Reversible_                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1100,7 +1103,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | PEP         | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `544 <PEP 544_>`__                  | *none*                        | *none*                    |
+|             | `544 <PEP 544_>`__                  | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `563 <PEP 563_>`__                  | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

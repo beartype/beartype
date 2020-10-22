@@ -30,8 +30,8 @@ def test_get_hint_pep_generic_bases() -> None:
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_generic_bases)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-    from beartype_test.unit.data.hint.data_hint import (
-        NOT_PEP_HINTS, PEP_HINT_TO_META,)
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this getter returns...
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
@@ -69,8 +69,8 @@ def test_get_hint_pep_typevars() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
-    from beartype_test.unit.data.hint.data_hint import (
-        NOT_PEP_HINTS, PEP_HINT_TO_META,)
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this getter returns...
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
@@ -97,7 +97,7 @@ def test_get_hint_pep_typing_attr_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
-    from beartype_test.unit.data.hint.data_hint import PEP_HINT_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this getter returns the expected argumentless "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.

@@ -15,20 +15,9 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 import typing
 from beartype import cave
 from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
-
-# Import all public attributes of this private data-driven testing submodule
-# for use by higher-level unit test submodules elsewhere.
-from beartype_test.unit.data.hint.pep.data_hintpep484 import (
-    PEP_HINT_TO_META,
-    PEP_HINT_NONATTR_TO_META,
+from beartype_test.unit.data.hint.pep.data_hintpep import (
     PEP_HINTS,
     PEP_HINTS_DEEP_IGNORABLE,
-    S,
-    T,
-    PepGenericTypevaredSingle,
-    PepGenericUntypevaredSingle,
-    PepGenericTypevaredShallowMultiple,
-    PepGenericTypevaredDeepMultiple,
 )
 
 # ....................{ NON-HINTS ~ sets                  }....................

@@ -28,13 +28,23 @@ def test_is_hint_pep() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS, PEP_HINTS
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import (
+        PEP_HINT_CLASSED_TO_META,
+        PEP_HINTS,
+    )
 
-    # Assert that various "typing" types are correctly detected.
+    # Assert this tester accepts PEP-compliant type hints.
     for pep_hint in PEP_HINTS:
         assert is_hint_pep(pep_hint) is True
 
-    # Assert that various non-"typing" types are correctly detected.
+    # Assert this tester rejects PEP-compliant type hints implemented by the
+    # "typing" module as normal types indistinguishable from non-"typing" types
+    # and thus effectively non-PEP-compliant for all practical intents.
+    for pep_hint_classed in PEP_HINT_CLASSED_TO_META.keys():
+        assert is_hint_pep(pep_hint_classed) is False
+
+    # Assert this tester rejects non-PEP-compliant type hints.
     for not_pep_hint in NOT_PEP_HINTS:
         assert is_hint_pep(not_pep_hint) is False
 
@@ -47,8 +57,8 @@ def test_is_hint_pep_generic() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic_user
-    from beartype_test.unit.data.hint.data_hint import (
-        NOT_PEP_HINTS, PEP_HINT_TO_META)
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this tester:
     # * Accepts generic PEP-compliant type hints.
@@ -71,8 +81,8 @@ def test_is_hint_pep_typing() -> None:
     from beartype._util.hint.pep.utilhintpepdata import (
         TYPING_ATTR_TO_TYPE_ORIGIN)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-    from beartype_test.unit.data.hint.data_hint import (
-        NOT_PEP_HINTS, PEP_HINT_TO_META)
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this tester accepts concrete PEP-compliant type hints.
     #
@@ -104,7 +114,10 @@ def test_is_hint_pep_supported() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
+        NOT_HINTS_UNHASHABLE,
+        NOT_PEP_HINTS,
+    )
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this tester:
     # * Accepts supported PEP-compliant type hints.
@@ -137,7 +150,10 @@ def test_die_unless_hint_pep_supported() -> None:
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep_supported)
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NOT_PEP_HINTS, PEP_HINT_TO_META,)
+        NOT_HINTS_UNHASHABLE,
+        NOT_PEP_HINTS,
+    )
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this tester...
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
@@ -175,7 +191,8 @@ def test_die_unless_hint_pep_typing_attr_supported() -> None:
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep_typing_attr_supported)
     from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
-    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS, PEP_HINTS
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINTS
 
     # Assert this tester accepts all supported argumentless "typing"
     # attributes.
@@ -204,7 +221,7 @@ def test_is_hint_typing_typevar() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
-    from beartype_test.unit.data.hint.data_hint import T
+    from beartype_test.unit.data.hint.pep.data_hintpep484 import T
 
     # Assert that type variables are type variables.
     assert is_hint_pep_typevar(T) is True
@@ -222,10 +239,9 @@ def test_is_hint_typing_typevared() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import (
-        is_hint_pep_typevared)
-    from beartype_test.unit.data.hint.data_hint import (
-        PEP_HINT_TO_META, NONPEP_HINTS,)
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevared
+    from beartype_test.unit.data.hint.data_hint import NONPEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert that various "TypeVar"-centric types are correctly detected.
     for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():

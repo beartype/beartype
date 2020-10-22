@@ -4,8 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 593`_**-compliant type hint tester utilities** (i.e.,
-callables validating arbitrary objects to be `PEP 593`_-compliant type hints).
+**Beartype** `PEP 593`_**-compliant type hint utilities.**
 
 This private submodule is *not* intended for importation by downstream callers.
 

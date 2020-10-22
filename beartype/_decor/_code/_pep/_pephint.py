@@ -217,10 +217,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the logic necessary to do so. This is non-trivial, as "Protocol" was only
 #  introduced under Python >= 3.8 *BUT* various "typing" subclasses of a
 #  private "_Protocol" superclass have been available since Python >= 3.5.
-#* Define a new utilhinttest.is_hint_isinstanceable() tester returning True if
-#  the passed object is a type that either:
+#* Actually, the following refactoring should *NOT* be required, as "Protocol"
+#  subclasses are standard classes. Phew! Nonetheless: "Define a new
+#  utilhinttest.is_hint_isinstanceable() tester returning True if the passed
+#  object is a type that either:
 #  * Is a non-"typing" type.
-#  * Is a @runtime_checkable-decorated Protocol subclass.
+#  * Is a @runtime_checkable-decorated Protocol subclass."
+#  Oh, actually. We probably do still want an is_hint_isinstanceable() tester.
+#  Why? To raise human-readable exceptions when passed protocols *NOT*
+#  decorated by @runtime_checkable. *sigh*
 #* Call the is_hint_isinstanceable() tester *BEFORE* the is_hint_pep() tester
 #  everywhere in this codebase. Notably:
 #  * Revise:
@@ -228,6 +233,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #    elif isinstance(hint_curr, type):
 #    # ...into this test.
 #    elif is_hint_isinstanceable(hint_curr):
+#  * In fact, we'll want to globally grep the codebase for lines matching
+#    '\bisinstance\b.*\btype\b' and perform a similar refactoring.
 #  * Shift that test before the "if is_hint_pep(hint_curr):"
 #    test above.
 #  * Revise the above union-specific tests from:
@@ -351,6 +358,7 @@ from beartype._util.cache.utilcacheerror import (
 from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
 from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN,
     TYPING_ATTRS_DEEP_SUPPORTED,
@@ -366,7 +374,6 @@ from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_typing_attr_supported,
     is_hint_pep,
 )
-from beartype._util.hint.pep.utilhintpep593test import is_hint_pep593
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
@@ -1139,7 +1146,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.utilhintpeperror" submodule, which
+            # * "beartype._util.hint.pep.peperror" submodule, which
             #   raises exceptions on the current pith failing this check.
             # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_DEEP_SUPPORTED"
             #   frozen set of all supported argumentless "typing" attributes

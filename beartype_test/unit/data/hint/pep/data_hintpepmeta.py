@@ -7,17 +7,17 @@
 **Beartype PEP-compliant type hint metadata data-driven testing submodule.**
 
 This submodule declares lower-level metadata classes instantiated by the
-higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep484` submodule.
+higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
 
-# ....................{ METADATA ~ tuple                  }....................
+# ....................{ CLASSES ~ hint                    }....................
 class PepHintMetadata(object):
     '''
-    **PEP-compliant type hint metadata** (i.e., named tuple whose variables
-    detail a PEP-compliant type hint with metadata applicable to testing
-    scenarios).
+    **PEP-compliant type hint metadata** (i.e., dataclass whose instance
+    variables describe a PEP-compliant type hint with metadata applicable to
+    various testing scenarios).
 
     Attributes
     ----------
@@ -108,12 +108,36 @@ class PepHintMetadata(object):
         ))
 
 
+class PepHintClassedMetadata(PepHintMetadata):
+    '''
+    **PEP-compliant class type hint metadata** (i.e.,
+    dataclass whose instance variables describe a PEP-compliant type hint
+    implemented by the :mod:`typing` module as a standard class
+    indistinguishable from non-:mod:`typing` classes with metadata applicable
+    to various testing scenarios).
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, *args, **kwargs) -> None:
+
+        # Coerce the argumentless "typing" attribute identifying this hint to
+        # be "None" *BEFORE* initializing our superclass. This hint is
+        # implemented by the "typing" module as a normal class whose
+        # machine-readable representation is the standard class representation
+        # "<class '{self.__class__.__name__}'>" rather than the non-standard
+        # "typing" representation prefixed by "typing.".
+        kwargs['typing_attr'] = None
+
+        # Initialize our superclass.
+        super().__init__(*args, **kwargs)
+
+# ....................{ CLASSES ~ hint : unsatisfied      }....................
 class PepHintPithUnsatisfiedMetadata(object):
     '''
-    **PEP-compliant type hint unsatisfied pith metadata** (i.e., named tuple
-    whose variables describe an object *not* satisfying a PEP-compliant type
-    hint when either passed as a parameter *or* returned as a value annotated
-    by that hint).
+    **PEP-compliant type hint unsatisfied pith metadata** (i.e., dataclass
+    whose instance variables describe an object *not* satisfying a
+    PEP-compliant type hint when either passed as a parameter *or* returned as
+    a value annotated by that hint).
 
     Attributes
     ----------

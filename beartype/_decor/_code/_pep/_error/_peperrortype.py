@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.pep.utilhintpepdata import (
     TYPING_ATTR_TO_TYPE_ORIGIN)
-from beartype._util.hint.pep.error._utilhintpeperrorsleuth import CauseSleuth
+from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.text.utiltextrepr import get_object_representation
 
 # See the "beartype.__init__" submodule for further commentary.

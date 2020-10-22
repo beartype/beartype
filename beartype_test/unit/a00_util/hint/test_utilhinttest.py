@@ -34,8 +34,8 @@ def test_die_unless_hint() -> None:
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,
         NONPEP_HINTS,
-        PEP_HINT_TO_META,
     )
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonpep_hint in NONPEP_HINTS:
@@ -78,8 +78,8 @@ def test_is_hint() -> None:
         NOT_HINTS_UNHASHABLE,
         NOT_HINTS_HASHABLE,
         NONPEP_HINTS,
-        PEP_HINT_TO_META,
     )
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonpep_hint in NONPEP_HINTS:

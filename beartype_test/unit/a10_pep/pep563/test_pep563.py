@@ -25,10 +25,13 @@ from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 @skip_if_python_version_less_than('3.7.0')
 def test_pep563() -> None:
     '''
-    Test **PEP 563** (i.e., "Postponed Evaluation of Annotations") support
-    implemented in the :func:`beartype.beartype` decorator if the active Python
-    interpreter targets at least Python 3.7.0 (i.e., the first major Python
-    version to support PEP 563) *or* skip otherwise.
+    Test `PEP 563`_ support implemented in the :func:`beartype.beartype`
+    decorator if the active Python interpreter targets at least Python 3.7.0
+    (i.e., the first major Python version to support `PEP 563`_) *or* skip
+    otherwise.
+
+    .. _PEP 563:
+       https://www.python.org/dev/peps/pep-0563
     '''
 
     # Defer heavyweight imports.
