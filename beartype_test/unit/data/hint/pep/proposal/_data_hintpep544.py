@@ -80,7 +80,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Predefined "typing" protocol.
         SupportsInt: PepHintClassedMetadata(
-            typing_attr=Generic,
+            typing_attr=Protocol,
+            is_pep484_user=True,
             piths_satisfied=(
                 # Structurally subtyped instance.
                 SupportsIntStructural(),
@@ -93,7 +94,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # User-defined protocol.
         ProtocolCustom: PepHintClassedMetadata(
-            typing_attr=Generic,
+            typing_attr=Protocol,
+            is_pep484_user=True,
             piths_satisfied=(
                 # Structurally subtyped instance.
                 ProtocolCustomStructural(),

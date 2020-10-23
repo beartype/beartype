@@ -214,3 +214,69 @@ def test_pep484_sequence_standard_cached() -> None:
     ], 'All the sun long it was running, it was lovely, the hay') == (
         '  In the pebbles of the holy streams.'
         'All the sun long it was running, it was lovely, the hay')
+
+# ....................{ TESTS ~ getters                   }....................
+def test_get_hint_pep484_user_bases_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.utilhintpep484.get_hint_pep484_user_bases_or_none`
+    getter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.proposal.utilhintpep484 import (
+        get_hint_pep484_user_bases_or_none)
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
+
+    # Assert this getter returns...
+    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+        # One or more unerased pseudo-superclasses for user-defined generic
+        # PEP-compliant type hints.
+        if pep_hint_meta.is_pep484_user:
+            pep_hint_generic_bases = get_hint_pep484_user_bases_or_none(
+                pep_hint)
+            assert isinstance(pep_hint_generic_bases, tuple)
+            assert bool(pep_hint_generic_bases)
+        # *NO* unerased pseudo-superclasses for concrete PEP-compliant type
+        # hints *NOT* defined by the "typing" module.
+        elif not is_hint_pep_typing(pep_hint):
+            assert get_hint_pep484_user_bases_or_none(pep_hint) is None
+        # Else, this hint is defined by the "typing" module. In this case, this
+        # hint may or may not be implemented as a generic conditionally
+        # depending on the current Python version -- especially under the
+        # Python < 3.7.0 implementations of the "typing" module, where
+        # effectively *EVERYTHING* was internally implemented as a generic.
+        # While we could technically correct for this conditionality, doing so
+        # would render the resulting code less maintainable for no useful gain.
+        # Ergo, we quietly ignore this edge case and get on with actual coding.
+
+    # Assert this getter returns *NO* unerased pseudo-superclasses for
+    # non-"typing" hints.
+    for not_pep_hint in NOT_PEP_HINTS:
+        assert get_hint_pep484_user_bases_or_none(not_pep_hint) is None
+
+# ....................{ TESTS ~ testers                   }....................
+def test_is_hint_pep484_user() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.utilhintpep484.is_hint_pep484_user`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.proposal.utilhintpep484 import (
+        is_hint_pep484_user)
+    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
+    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
+
+    # Assert this tester:
+    # * Accepts generic PEP-compliant type hints.
+    # * Rejects concrete PEP-compliant type hints.
+    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
+        assert is_hint_pep484_user(pep_hint) is pep_hint_meta.is_pep484_user
+
+    # Assert this tester rejects non-"typing" types.
+    for not_pep_hint in NOT_PEP_HINTS:
+        assert is_hint_pep484_user(not_pep_hint) is False

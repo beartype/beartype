@@ -196,6 +196,22 @@ class BeartypeDecorHintPepUnsupportedException(
 
     pass
 
+# ....................{ DECORATOR ~ hint : pep : proposal }....................
+class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** `PEP 484`_**-compliant type hint value exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating `PEP 484`_ *or* this
+    decorator's implementation of `PEP 484`_.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ param                 }....................
 class BeartypeDecorParamException(BeartypeDecorException, metaclass=_ABCMeta):
     '''

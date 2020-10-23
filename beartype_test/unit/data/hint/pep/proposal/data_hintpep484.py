@@ -60,18 +60,18 @@ User-defined generic :mod:`typing` type variable.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
-class PepGenericTypevaredSingle(Generic[S, T]):
+class PepGenericUntypevaredSingle(List[str]):
     '''
-    PEP-compliant user-defined class subclassing a single parametrized
+    PEP-compliant user-defined class subclassing a single unparametrized
     :mod:`typing` type.
     '''
 
     pass
 
 
-class PepGenericUntypevaredSingle(Dict[str, List[str]]):
+class PepGenericTypevaredSingle(Generic[S, T]):
     '''
-    PEP-compliant user-defined class subclassing a single unparametrized
+    PEP-compliant user-defined class subclassing a single parametrized
     :mod:`typing` type.
     '''
 
@@ -366,7 +366,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Match: PepHintMetadata(
         #     typing_attr=Match,
         #     is_supported=False,
-        #     is_generic_user=False,
+        #     is_pep484_user=False,
         #     # "AnyStr" and hence "Match" (which is coercively
         #     # parametrized by "AnyStr") is only a type variable proper under
         #     # Python >= 3.7.0, which is frankly insane. Welcome to "typing".
@@ -1025,28 +1025,40 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ USER-DEFINED GENERIC              }................
+        PepGenericUntypevaredSingle: PepHintMetadata(
+            typing_attr=List,
+            is_pep484_user=True,
+            piths_satisfied=(
+                # List of string constants.
+                [
+                    'Forgive our Vocation’s vociferous publications',
+                    'Of',
+                ],
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Hourly sybaritical, pub sabbaticals'),
+                # List of integer constants.
+                PepHintPithUnsatisfiedMetadata([1, 3, 13, 87, 1053, 28576,]),
+            ),
+        ),
         PepGenericTypevaredSingle: PepHintMetadata(
             typing_attr=Generic,
             is_supported=False,
-            is_generic_user=True,
+            is_pep484_user=True,
             is_typevared=True,
-        ),
-        PepGenericUntypevaredSingle: PepHintMetadata(
-            typing_attr=Generic,
-            is_supported=False,
-            is_generic_user=True,
-            is_typevared=False,
         ),
         PepGenericTypevaredShallowMultiple: PepHintMetadata(
             typing_attr=Generic,
             is_supported=False,
-            is_generic_user=True,
+            is_pep484_user=True,
             is_typevared=True,
         ),
         PepGenericTypevaredDeepMultiple: PepHintMetadata(
             typing_attr=Generic,
             is_supported=False,
-            is_generic_user=True,
+            is_pep484_user=True,
             is_typevared=True,
         ),
     })

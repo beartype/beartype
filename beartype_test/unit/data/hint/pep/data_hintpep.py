@@ -13,7 +13,7 @@ unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import sys
-from beartype_test.unit.data.hint.pep import (
+from beartype_test.unit.data.hint.pep.proposal import (
     data_hintpep484,
     _data_hintpep544,
     _data_hintpep593,

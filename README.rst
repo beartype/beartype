@@ -159,7 +159,7 @@ Let's type-check like `greased lightning`_:
        param_must_satisfy_beartype_union_concatenated: (
            IteratorType,) + ScalarTypes,
 
-       # Annotate beartype-specific forward references dynamically resolved 
+       # Annotate beartype-specific forward references dynamically resolved
        # at first call time as fully-qualified "."-delimited classnames.
        param_must_satisfy_beartype_forward_ref: 'my_package.my_module.MyClass',
 
@@ -238,11 +238,11 @@ impartial, and unbiased use cases:
 .. code-block:: shell-session
 
    beartype profiler [version]: 0.0.2
-   
+
    python    [version]: Python 3.7.8
    beartype  [version]: 0.3.0
    typeguard [version]: 2.9.1
-   
+
    ========================== str (100 calls each loop) ==========================
    decoration         [none     ]: 100 loops, best of 3: 366 nsec per loop
    decoration         [beartype ]: 100 loops, best of 3: 346 usec per loop
@@ -250,7 +250,7 @@ impartial, and unbiased use cases:
    decoration + calls [none     ]: 100 loops, best of 3: 16.4 usec per loop
    decoration + calls [beartype ]: 100 loops, best of 3: 480 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 7 msec per loop
-   
+
    ==================== Union[int, str] (100 calls each loop) ====================
    decoration         [none     ]: 100 loops, best of 3: 2.97 usec per loop
    decoration         [beartype ]: 100 loops, best of 3: 363 usec per loop
@@ -258,7 +258,7 @@ impartial, and unbiased use cases:
    decoration + calls [none     ]: 100 loops, best of 3: 20.4 usec per loop
    decoration + calls [beartype ]: 100 loops, best of 3: 543 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 11.1 msec per loop
-   
+
    ================ List[int] of 1000 items (7485 calls each loop) ================
    decoration         [none     ]: 1 loop, best of 1: 41.7 usec per loop
    decoration         [beartype ]: 1 loop, best of 1: 1.33 msec per loop
@@ -345,7 +345,7 @@ Then:
 .. #FIXME: GitHub currently renders LaTeX-based "math" directives in
 .. # reStructuredText as monospaced literals, which is hot garbage. Until
 .. # resolved, do the following:
-.. # * Preserve *ALL* such directives as comments, enabling us to trivially 
+.. # * Preserve *ALL* such directives as comments, enabling us to trivially
 .. #   revert to the default approach after GitHub resolves this.
 .. # * Convert *ALL* such directives into GitHub-hosted URLs via any of the
 .. #   following third-party webapps:
@@ -426,7 +426,7 @@ inquisitors:
     0_>`__. (\ *That's bad, arguably.*\ )
 
 * `PEP-compliant type hints <PEP-compliant Type Hints_>`__, which:
-  
+
   * Are highly inefficient in both space and time. (\ *That's bad.*\ )
   * Are capable of deeply type-checking the contents, elements, items,
     metadata, structure, and other attributes of passed parameters and returned
@@ -805,6 +805,7 @@ PEP-compliant Type Hints
   <PEP 484 Compliance_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
+* `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
@@ -839,17 +840,20 @@ values annotated with these typing_ types:
 * typing.Optional_.
 * typing.Sequence_.
 * typing.Sized_.
-* typing.SupportsAbs_.
-* typing.SupportsBytes_.
-* typing.SupportsComplex_.
-* typing.SupportsInt_.
-* typing.SupportsFloat_.
-* typing.SupportsRound_.
 * typing.Text_.
 * typing.Tuple_.
 * typing.Union_.
-* **User-defined single-inherited protocols** (i.e., user-defined classes
-  directly subclassing *only* the typing.Protocol_ abstract base class (ABC)).
+* **Single-inherited generics** (i.e., classes subclassing exactly one
+  possibly non-class typing_ object).
+* **Single-inherited protocols** (i.e., classes directly subclassing *only* the
+  typing.Protocol_ abstract base class (ABC)), including both user-defined
+  and typing_ single-inherited protocols:
+  * typing.SupportsAbs_.
+  * typing.SupportsBytes_.
+  * typing.SupportsComplex_.
+  * typing.SupportsInt_.
+  * typing.SupportsFloat_.
+  * typing.SupportsRound_.
 
 Partial Compliance
 ++++++++++++++++++
@@ -917,11 +921,11 @@ typing_ types:
   type-checking of generically substitutable types).
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
-* **User-defined generics** (i.e., user-defined classes subclassing one or more
-  typing_ non-classes).
-* **User-defined multiple-inherited protocols** (i.e., user-defined classes
-  directly subclassing the typing.Protocol_ ABC *and* one or more other
-  superclasses).
+* **Multiple-inherited generics** (i.e., user-defined classes subclassing one
+  or more possibly non-classes typing_ objects).
+* **Multiple-inherited protocols** (i.e., user-defined classes directly
+  subclassing one typing.Protocol_ ABC *and* one or more typing_ non-class
+  objects).
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
@@ -1019,7 +1023,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Generator_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Generic_                     | *none*                        | *none*                    |
+|             | typing.Generic_                     | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Hashable_                    | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1069,21 +1073,21 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Sized_                       | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsAbs_                 | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsAbs_                 | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsBytes_               | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsBytes_               | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsComplex_             | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsComplex_             | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsFloat_               | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsFloat_               | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsIndex_               | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsIndex_               | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsInt_                 | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsInt_                 | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.SupportsRound_               | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.SupportsRound_               | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Text_                        | **0.1.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
+|             | typing.Text_                        | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.TextIO_                      | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1104,6 +1108,8 @@ Let's chart current and prospective new features for future generations:
 | PEP         | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `544 <PEP 544_>`__                  | **0.4.0**\ —\ *current*       | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `560 <PEP 560_>`__                  | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `563 <PEP 563_>`__                  | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1302,6 +1308,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
    https://www.python.org/dev/peps/pep-0544
+.. _PEP 560:
+   https://www.python.org/dev/peps/pep-0560
 .. _PEP 563:
    https://www.python.org/dev/peps/pep-0563
 .. _PEP 570:

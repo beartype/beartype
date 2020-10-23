@@ -35,7 +35,7 @@ class PepHintMetadata(object):
     is_supported : bool
         ``True`` only if this PEP-compliant type hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to ``True``.
-    is_generic_user : bool
+    is_pep484_user : bool
         ``True`` only if this PEP-compliant type hint is a **user-defined
         generic** (i.e., PEP-compliant type hint whose class subclasses one or
         more public :mod:`typing` pseudo-superclasses but *not* itself defined
@@ -64,15 +64,15 @@ class PepHintMetadata(object):
 
         # Optional parameters.
         is_supported: bool = True,
-        is_generic_user: bool = False,
+        is_pep484_user: bool = False,
         is_typevared: bool = False,
         piths_satisfied: tuple = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
     ) -> None:
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(is_generic_user, bool), (
-            f'{repr(is_generic_user)} not bool.')
+        assert isinstance(is_pep484_user, bool), (
+            f'{repr(is_pep484_user)} not bool.')
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
         assert isinstance(piths_satisfied, tuple), (
@@ -89,7 +89,7 @@ class PepHintMetadata(object):
         # Classify all passed parameters.
         self.typing_attr = typing_attr
         self.is_supported = is_supported
-        self.is_generic_user = is_generic_user
+        self.is_pep484_user = is_pep484_user
         self.is_typevared = is_typevared
         self.piths_satisfied = piths_satisfied
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
@@ -100,7 +100,7 @@ class PepHintMetadata(object):
             f'{self.__class__.__name__}(',
             f'    typing_attr={self.typing_attr},',
             f'    is_supported={self.is_supported},',
-            f'    is_generic_user={self.is_generic_user},',
+            f'    is_pep484_user={self.is_pep484_user},',
             f'    is_typevared={self.is_typevared},',
             f'    piths_satisfied={self.piths_satisfied},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',

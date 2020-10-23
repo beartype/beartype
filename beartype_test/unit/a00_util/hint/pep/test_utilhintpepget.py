@@ -18,48 +18,7 @@ This submodule unit tests the public API of the private
 from pytest import raises
 # from typing import Generic, TypeVar
 
-# ....................{ TESTS ~ super                     }....................
-def test_get_hint_pep_generic_bases() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_generic_bases`
-    getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_generic_bases)
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-    from beartype_test.unit.data.hint.data_hint import NOT_PEP_HINTS
-    from beartype_test.unit.data.hint.pep.data_hintpep import PEP_HINT_TO_META
-
-    # Assert this getter returns...
-    for pep_hint, pep_hint_meta in PEP_HINT_TO_META.items():
-        # One or more unerased pseudo-superclasses for user-defined generic
-        # PEP-compliant type hints.
-        if pep_hint_meta.is_generic_user:
-            pep_hint_generic_bases = get_hint_pep_generic_bases(pep_hint)
-            assert isinstance(pep_hint_generic_bases, tuple)
-            assert bool(pep_hint_generic_bases)
-        # *NO* unerased pseudo-superclasses for concrete PEP-compliant type
-        # hints *NOT* defined by the "typing" module.
-        elif not is_hint_pep_typing(pep_hint):
-            assert get_hint_pep_generic_bases(pep_hint) == ()
-        # Else, this hint is defined by the "typing" module. In this case, this
-        # hint may or may not be implemented as a generic conditionally
-        # depending on the current Python version -- especially under the
-        # Python < 3.7.0 implementations of the "typing" module, where
-        # effectively *EVERYTHING* was internally implemented as a generic.
-        # While we could technically correct for this conditionality, doing so
-        # would render the resulting code less maintainable for no useful gain.
-        # Ergo, we quietly ignore this edge case and get on with actual coding.
-
-    # Assert this getter returns *NO* unerased pseudo-superclasses for
-    # non-"typing" hints.
-    for not_pep_hint in NOT_PEP_HINTS:
-        assert get_hint_pep_generic_bases(not_pep_hint) == ()
-
-
+# ....................{ TESTS                             }....................
 def test_get_hint_pep_typevars() -> None:
     '''
     Test the

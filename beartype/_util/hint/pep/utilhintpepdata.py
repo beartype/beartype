@@ -180,6 +180,7 @@ TYPING_ATTRS_DEEP_SUPPORTED = frozenset(
         typing.List,
         typing.MutableSequence,
         typing.Optional,
+        typing.Protocol,
         typing.Sequence,
         typing.Tuple,
 

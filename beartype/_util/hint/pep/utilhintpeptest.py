@@ -16,15 +16,17 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTRS_SUPPORTED,
+from beartype._util.hint.pep.proposal.utilhintpep484 import (
+    is_hint_pep484_user,
+    is_hint_pep484_user_multiple,
 )
+from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -190,21 +192,20 @@ def die_unless_hint_pep_supported(
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
     # Else, this hint is PEP-compliant.
 
-    #FIXME: Remove *AFTER* implementing support for user-defined generics.
-    # Else if this hint is a user-defined generic, raise an exception. These
-    # hints require non-trivial decorator support that has yet to be
-    # implemented.
-    if is_hint_pep_generic_user(hint):
+    #FIXME: Remove *AFTER* adding support for multiple-inherited generics.
+    # If this hint is a multiple-inherited generic, raise an exception. These
+    # hints require non-trivial decorator support yet to be implemented.
+    if is_hint_pep484_user_multiple(hint):
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} generic PEP hint {repr(hint)} '
+            f'{hint_label} multiple-inherited generic PEP hint {repr(hint)} '
             f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
-    #FIXME: Remove *AFTER* implementing support for type variables.
+    #FIXME: Remove *AFTER* adding support for type variables.
     # Else if this hint is typevared, raise an exception. Type variables
-    # require non-trivial decorator support that has yet to be implemented.
+    # require non-trivial decorator support yet to be implemented.
     elif is_hint_pep_typevared(hint):
         raise BeartypeDecorHintPepUnsupportedException(
             f'{hint_label} "TypeVar"-parametrized PEP hint {repr(hint)} '
-            '{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
+            f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
 
     # Else, this hint is neither generic nor typevared. In this case, raise a
     # general-purpose exception.
@@ -212,7 +213,7 @@ def die_unless_hint_pep_supported(
     # Note that, by definition, the argumentless "typing" argument uniquely
     # identifying this hint *SHOULD* be in the "TYPING_ATTRS_SUPPORTED" set.
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
-    # there's no benefit to validating this expectation here.
+    # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
         f'{hint_label} PEP hint {repr(hint)} '
         f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
@@ -316,7 +317,7 @@ def is_hint_pep(hint: object) -> bool:
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.IO"), most generics are user-defined subclasses defined by
         # user-defined modules residing elsewhere.
-        is_hint_pep_generic_user(hint)
+        is_hint_pep484_user(hint)
     )
 
 # ....................{ TESTERS ~ supported               }....................
@@ -360,15 +361,17 @@ def is_hint_pep_supported(hint: object) -> bool:
     if (
         # Not PEP-compliant *OR*...
         not is_hint_pep(hint) or
+        # Is PEP-complaint and is either...
 
-        #FIXME: Remove *AFTER* implementing support for type variables.
-        # PEP-compliant but a generic...
+        #FIXME: Remove *AFTER* implementing support for multiple-inherited
+        #generics.
+        # A multiple-inherited generic...
         #
-        # Generics require non-trivial decorator support.
-        is_hint_pep_generic_user(hint) or
+        # Multiple-inherited generics require non-trivial decorator support.
+        is_hint_pep484_user_multiple(hint) or
 
         #FIXME: Remove *AFTER* implementing support for type variables.
-        # PEP-compliant but typevared...
+        # Typevared...
         #
         # Type variables require non-trivial decorator support.
         is_hint_pep_typevared(hint)
@@ -537,76 +540,11 @@ is_hint_pep_typing.__doc__ = '''
         ``True`` only if this object is defined by the :mod:`typing` module.
     '''
 
-# ....................{ TESTERS ~ newtype                 }....................
-#FIXME: Unit test us up.
-#FIXME: Actually call this tester elsewhere to generate code type-checking
-#these outrageously silly objects by simply type-checking the PEP-noncompliant
-#type stored in the "__supertype__" dunder attribute: e.g.,
-#    >>> from typing import NewType
-#    >>> UserId = t.NewType('UserId', int)
-#    >>> UserId.__supertype__
-#    int
-
-def is_hint_newtype(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object either is a `PEP 484`_ **new type
-    alias** (i.e., closure generated by the :mod:`typing.NewType` closure
-    factory).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Caveats
-    ----------
-    **New type aliases are a complete farce and thus best avoided.**
-    Specifically, these PEP-compliant type hints are *not* actually types but
-    rather **identity closures** that return their passed parameters as is.
-    Instead, where distinct types are:
-
-    * *Not* required, simply annotate parameters and return values with the
-      desired superclasses.
-    * Required, simply:
-
-      * Subclass the desired superclasses as usual.
-      * Annotate parameters and return values with those subclasses.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a new type alias.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    '''
-
-    # Return true only if this hint is a "NewType"-generated closure.
-    #
-    # Note that this test derives from the observation that the concatenation
-    # of this object's "__qualname__" and "__module" dunder attributes suffices
-    # to produce a string unambiguously identifying whether this hint is a
-    # "NewType"-generated closure: e.g.,
-    #
-    #    >>> from typing import NewType
-    #    >>> UserId = t.NewType('UserId', int)
-    #    >>> UserId.__qualname__
-    #    >>> 'NewType.<locals>.new_type'
-    #    >>> UserId.__module__
-    #    >>> 'typing'
-    #
-    # Lastly, note that "__qualname__" is safely available under Python >= 3.3.
-    return (hint.__module__ + hint.__qualname__).startswith('typing.NewType.')
-
 # ....................{ TESTERS ~ typevar                 }....................
 def is_hint_pep_typevar(hint: object) -> bool:
     '''
-    ``True`` only if the passed object either is a `PEP 484`_ **type variable**
-    (i.e., instance of the :class:`TypeVar` class).
+    ``True`` only if the passed object either is a `PEP 484`_-compliant **type
+    variable** (i.e., instance of the :class:`TypeVar` class).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -728,137 +666,3 @@ def is_hint_pep_typevared(hint: object) -> bool:
     # alias (e.g., "typing._GenericAlias" subtype) *OR* the empty tuple
     # otherwise is non-empty.
     return len(get_hint_pep_typevars(hint)) > 0
-
-# ....................{ TESTERS ~ user                    }....................
-# If the active Python interpreter targets Python >= 3.7.0, define the
-# is_hint_pep_generic_user() tester for Python >= 3.7.0. Sadly, Python
-# 3.7.0 broke backward compatibility with the public API of the "typing" module
-# by removing the prior "typing.GenericMeta" metaclass previously referenced by
-# this tester under Python < 3.7.0, necessitating fundamentally different
-# implementations for this tester between Python < 3.7.0 and >= 3.7.0.
-if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep_generic_user(hint: object) -> bool:
-
-        # Return true only if this hint is a subclass of the "typing.Generic"
-        # abstract base class (ABC) *not* defined by the "typing" module, in
-        # which case this hint is a user-defined generic.
-        #
-        # Note that this test is robust against edge case, as the "typing"
-        # module guarantees all user-defined classes subclassing one or more
-        # "typing" pseudo-superclasses to subclass the "typing.Generic"
-        # abstract base class (ABC) regardless of whether those classes
-        # originally did so explicitly. How? By type erasure, of course, the
-        # malicious gift that keeps on giving:
-        #     >>> import typing as t
-        #     >>> class MuhList(t.List): pass
-        #     >>> MuhList.__orig_bases__
-        #     (typing.List)
-        #     >>> MuhList.__mro__
-        #     (__main__.MuhList, list, typing.Generic, object)
-        #
-        # Note that this issubclass() call implicitly performs a surprisingly
-        # inefficient search over the method resolution order (MRO) of all
-        # superclasses of this hint. In theory, the cost of this search might
-        # be circumventable by observing that this ABC is expected to reside at
-        # the second-to-last index of the tuple exposing this MRO far all
-        # generics by virtue of fragile implementation details violating
-        # privacy encapsulation. In practice, this codebase is fragile enough.
-        #
-        # Note lastly that the following logic superficially appears to
-        # implement the same test *WITHOUT* the onerous cost of a search:
-        #     return len(get_hint_pep_generic_bases(hint)) > 0
-        #
-        # Why didn't we opt for that, then? Because this tester is routinely
-        # passed objects that *CANNOT* be guaranteed to be PEP-compliant.
-        # Indeed, the high-level is_hint_pep() tester establishing the
-        # PEP-compliance of arbitrary objects internally calls this lower-level
-        # tester to do so. Since the get_hint_pep_generic_bases() getter
-        # internally reduces to returning the tuple of the general-purpose
-        # "__orig_bases__" dunder attribute formalized by PEP 560, testing
-        # whether that tuple is non-empty or not in no way guarantees this
-        # object to be a PEP-compliant generic.
-        return (
-            isinstance(hint, type) and
-            issubclass(hint, Generic) and
-            not is_hint_pep_typing(hint)
-        )
-# Else if the active Python interpreter targets Python < 3.7.0, define the
-# is_hint_pep_generic_user() tester for Python < 3.7.0.
-else:
-    # Import the Python < 3.7.0-specific metaclass required by this tester.
-    from typing import GenericMeta
-
-    def is_hint_pep_generic_user(hint: object) -> bool:
-
-        # Return true only if this hint is a subclass *not* defined by the
-        # "typing" module whose class is the "typing.GenericMeta" metaclass, in
-        # which case this hint is a user-defined generic.
-        #
-        # Note the Python >= 3.7.0-specific implementation of this tester does
-        # *NOT* apply to Python < 3.7.0, as this metaclass unconditionally
-        # raises exceptions when user-defined "typing" subclasses internally
-        # requiring this metaclass are passed to the issubclass() builtin.
-        return isinstance(hint, GenericMeta) and not is_hint_pep_typing(hint)
-
-
-# Docstring for this function regardless of implementation details.
-is_hint_pep_generic_user.__doc__ = '''
-    ``True`` only if the passed object is a **user-defined generic** (i.e.,
-    PEP-compliant type hint subclassing one or more public :mod:`typing`
-    pseudo-superclasses but *not* itself defined by the :mod:`typing` module).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Design
-    ----------
-    This tester intentionally avoids returning ``True`` for *all* generics
-    (including both those internally defined by the :mod:`typing` module and
-    those externally defined by third-party callers). Why? Because generics
-    internally defined by the :mod:`typing` module are effectively *not*
-    generics and only implemented as such under Python < 3.7.0 for presumably
-    indefensible low-level reasons -- including:
-
-    * *All* callable types (e.g., :attr:`typing.Awaitable`,
-      :attr:`typing.Callable`, :attr:`typing.Coroutine`,
-      :attr:`typing.Generator`).
-    * *Most* container and iterable types (e.g., :attr:`typing.Dict`,
-      :attr:`typing.List`, :attr:`typing.Mapping`, :attr:`typing.Tuple`).
-
-    If this tester returned ``True`` for *all* generics, then downstream
-    callers would effectively have no means of distinguishing genuine
-    user-defined generics from disingenuous :mod:`typing` pseudo-generics.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a generic.
-
-    See Also
-    ----------
-    :func:`is_hint_pep_typevared`
-        Commentary on the relation between generics and typevared hints.
-
-    Examples
-    ----------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     is_hint_pep_generic_user)
-        >>> T = typing.TypeVar('T')
-        >>> class Genericized(typing.Generic[T]) pass
-        >>> class Containment(typing.Iterable[T], typing.Container[T]): pass
-        >>> is_hint_pep_generic_user(Genericized)
-        True
-        >>> is_hint_pep_generic_user(Containment)
-        True
-        >>> is_hint_pep_generic_user(typing.Generic[T])
-        False
-        >>> is_hint_pep_generic_user(typing.Iterable[T])
-        False
-    '''

@@ -1221,8 +1221,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 #       SyntaxError: invalid syntax
                 #       >>> typing.Union[()]
                 #       TypeError: Cannot take a Union of no types.
-                assert hint_childs, '{} PEP union {!r} unsubscripted.'.format(
-                    hint_child_label, hint)
+                assert hint_childs, (
+                    f'{hint_child_label} PEP union '
+                    f'{repr(hint_curr)} unsubscripted.')
                 # Else, this union is subscripted by two or more arguments. Why
                 # two rather than one? Because the "typing" module reduces
                 # unions of one argument to that argument: e.g.,
@@ -1248,8 +1249,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
                     assert hint_child not in HINTS_SHALLOW_IGNORABLE, (
-                        '{} ignorable PEP union {!r} not ignored.'.format(
-                            hint_child_label, hint_curr))
+                        f'{hint_child_label} ignorable PEP union '
+                        f'{repr(hint_curr)} not ignored.')
 
                     # If this child hint is PEP-compliant...
                     if is_hint_pep(hint_child):
@@ -1400,6 +1401,73 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     ).format(indent_curr=indent_curr)
                 # Else, this snippet is its initial value and thus ignorable.
             # Else, this hint is *NOT* a union.
+
+            # ..............{ PROTOCOLS ~ single                }..............
+            #FIXME: Implement support for single-inherited protocols here. To
+            #do so, we probably just want to replicate our "CLASSES" approach
+            #below here as is.
+
+            # ..............{ GENERICS ~ multiple               }..............
+            #FIXME: Implement support for multiple-inherited generics here
+            #similarly to how we currently handle "Union".
+            #
+            #Note that no support for single-inherited generics is required, as
+            #we handle that above already.
+            #
+            #Note also that *MOST* of the discussion below is obsolete and
+            #almost certainly unhelpful. Please ignore it and do what is best
+            #instead. Nonetheless, note these now painfully outdated notes on
+            #the subject:
+            #* Call the newly defined get_hint_pep484_user_bases_or_none()
+            #  getter to form the set of all base classes to generate code
+            #  intersected with " and ", much like "Union" hints united with "
+            #  or ". When doing so, we'll want to assert that the returned
+            #  tuple is non-empty. This doesn't warrant an exception, as the
+            #  is_hint_pep_custom() tester will have already ensured this tuple
+            #  to be non-empty.
+            #* Call the existing get_hint_pep_args() getter to iterate the set
+            #  of all concrete arguments parametrizing superclass type
+            #  variables. This doesn't apply to us at the moment, of
+            #  course, but we'll still want to note this somewhere.
+            #* Treat the multiple inheritance case as analogous to the
+            #  "Union" case. If one considers it, their structure should be
+            #  nearly identical -- the sole difference being the usage of
+            #  " and " rather than " or " as the boolean operator connecting
+            #  the code generated for each child. In this respect, we could
+            #  then consider each superclass of a user-defined subclass to be a
+            #  "child hint" of that subclass.
+            #* Add a new "elif hint_curr_attr is Generic:" test below, whose
+            #  code would basically be identical to the existing "if
+            #  hint_curr_attr is Union:" test above. Indeed, we should inspect
+            #  that existing test and if, by inspection, we believe the two can
+            #  indeed be fully unified, we should do so as follows:
+            #  * Define above:
+            #      HINT_ATTR_BOOL_TO_OPERATOR = {
+            #          Generic: 'and',
+            #          Union:   'or',
+            #      )
+            #  * Replace the hardcoded 'or' in both
+            #    "PEP_CODE_CHECK_HINT_UNION_CHILD_PEP" and
+            #    "PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP" with a
+            #    "{hint_curr_attr_bool_operator}" format variable.
+            #  * Rename the "PEP_CODE_CHECK_HINT_UNION_*" suite of globals to
+            #    "PEP_CODE_CHECK_HINT_BOOL_*" instead.
+            #  * Refactor above:
+            #      # Refactor this...
+            #      if hint_curr_attr is Union:
+            #
+            #      # ...into this:
+            #      hint_curr_attr_bool_operator = HINT_ATTR_BOOL_TO_OPERATOR.get(
+            #          hint_curr_attr, None)
+            #      if hint_curr_attr_bool_operator is not None:
+            #
+            #Welp, that's pretty brilliant. Nearly instantaneous support for
+            #multiple inheritance in a generically orthogonal manner.
+
+            # If this is a generic (i.e., user-defined class subclassing one or
+            # more "typing" pseudo-superclasses)...
+            # # elif hint_curr_attr is Generic:
+            # #     pass
 
             # ..............{ SHALLOW or ARGUMENTLESS           }..............
             # If this hint either...
@@ -1627,61 +1695,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 )
             # Else, this hint is *NOT* a tuple.
 
-            # ..............{ GENERICS                          }..............
-            #FIXME: Implement support for generics (i.e., user-defined
-            #subclasses) here similarly to how we currently handle "Union".
-            #To do so, we'll want to call:
-            #* The newly defined get_hint_pep_generic_bases() getter to form
-            #  the set of all base classes to generate code intersected
-            #  with " and ", much like "Union" hints united with " or ".
-            #  When doing so, we'll want to assert that the returned tuple
-            #  is non-empty. This doesn't warrant an exception, as the
-            #  is_hint_pep_custom() tester will have already ensured this
-            #  tuple to be non-empty.
-            #* The existing get_hint_pep_args() getter to iterate the set
-            #  of all concrete arguments parametrizing superclass type
-            #  variables. This doesn't apply to us at the moment, of
-            #  course, but we'll still want to note this somewhere.
-            #* To treat the multiple inheritance case as analogous to the
-            #  "Union" case. If one considers it, their structure should be
-            #  nearly identical -- the sole difference being the usage of
-            #  " and " rather than " or " as the boolean operator connecting
-            #  the code generated for each child. In this respect, we could
-            #  then consider each superclass of a user-defined subclass to be a
-            #  "child hint" of that subclass.
-            #* Add a new "elif hint_curr_attr is Generic:" test below, whose
-            #  code would basically be identical to the existing "if
-            #  hint_curr_attr is Union:" test above. Indeed, we should inspect
-            #  that existing test and if, by inspection, we believe the two can
-            #  indeed be fully unified, we should do so as follows:
-            #  * Define above:
-            #      HINT_ATTR_BOOL_TO_OPERATOR = {
-            #          Generic: 'and',
-            #          Union:   'or',
-            #      )
-            #  * Replace the hardcoded 'or' in both
-            #    "PEP_CODE_CHECK_HINT_UNION_CHILD_PEP" and
-            #    "PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP" with a
-            #    "{hint_curr_attr_bool_operator}" format variable.
-            #  * Rename the "PEP_CODE_CHECK_HINT_UNION_*" suite of globals to
-            #    "PEP_CODE_CHECK_HINT_BOOL_*" instead.
-            #  * Refactor above:
-            #      # Refactor this...
-            #      if hint_curr_attr is Union:
-            #
-            #      # ...into this:
-            #      hint_curr_attr_bool_operator = HINT_ATTR_BOOL_TO_OPERATOR.get(
-            #          hint_curr_attr, None)
-            #      if hint_curr_attr_bool_operator is not None:
-            #
-            #Welp, that's pretty brilliant. Nearly instantaneous support for
-            #multiple inheritance in a generically orthogonal manner.
-
-            # If this is a generic (i.e., user-defined class subclassing one or
-            # more "typing" pseudo-superclasses)...
-            # # elif hint_curr_attr is Generic:
-            # #     pass
-
             # ..............{ UNSUPPORTED                       }..............
             # Else, this hint is neither shallowly nor deeply supported and is
             # thus unsupported. Since an exception should have already been
@@ -1689,9 +1702,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # triggered. Nonetheless, raise an exception for safety.
             else:
                 raise BeartypeDecorHintPepUnsupportedException(
-                    f'{hint_child_label} PEP hint {repr(hint_curr)} '
-                    f'unsupported despite being erroneously flagged as '
-                    f'supported.')
+                    f'{hint_child_label} PEP hint '
+                    f'{repr(hint_curr)} unsupported but '
+                    f'erroneously detected as supported.')
 
         # ................{ NON-PEP                           }................
         # Else, this hint is *NOT* PEP-compliant.
