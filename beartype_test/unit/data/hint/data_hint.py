@@ -14,10 +14,10 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype import cave
-from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
 from beartype_test.unit.data.hint.pep.data_hintpep import (
-    PEP_HINTS,
-    PEP_HINTS_DEEP_IGNORABLE,
+    HINTS_PEP,
+    HINTS_PEP_DEEP_IGNORABLE,
 )
 
 # ....................{ NON-HINTS ~ sets                  }....................
@@ -81,7 +81,7 @@ class NonPepCustomFakeTyping(str):
 NonPepCustomFakeTyping.__module__ = 'typing'
 
 # ....................{ NON-PEP ~ sets                    }....................
-NONPEP_HINTS = frozenset((
+NONHINTS_PEP = frozenset((
     # Builtin container type.
     list,
     # Builtin scalar type.
@@ -103,7 +103,7 @@ Frozen set of PEP-noncompliant type hints exercising well-known edge cases.
 '''
 
 # ....................{ NOT ~ sets                        }....................
-NOT_NONPEP_HINTS = frozenset((
+NOT_NONHINTS_PEP = frozenset((
     # Set comprehension of tuples containing PEP-compliant type hints. Although
     # tuples containing PEP-noncompliant type hints are themselves valid
     # PEP-noncompliant type hints supported by @beartype, tuples containing
@@ -111,10 +111,10 @@ NOT_NONPEP_HINTS = frozenset((
     {
         # Tuple containing a PEP-compliant type hint.
         (int, pep_hint, cave.NoneType,)
-        for pep_hint in PEP_HINTS
+        for pep_hint in HINTS_PEP
     } |
     # PEP-compliant type hints.
-    PEP_HINTS |
+    HINTS_PEP |
     # Hashable objects invalid as type hints (e.g., scalars).
     NOT_HINTS_HASHABLE
 ))
@@ -124,9 +124,9 @@ well-known edge cases.
 '''
 
 
-NOT_PEP_HINTS = (
+NOT_HINTS_PEP = (
     # PEP-noncompliant type hints.
-    NONPEP_HINTS |
+    NONHINTS_PEP |
     # Hashable objects invalid as type hints (e.g., scalars).
     NOT_HINTS_HASHABLE
 )
@@ -140,7 +140,7 @@ HINTS_IGNORABLE = (
     # Shallowly ignorable type hints.
     HINTS_SHALLOW_IGNORABLE |
     # Deeply ignorable PEP-compliant type hints.
-    PEP_HINTS_DEEP_IGNORABLE
+    HINTS_PEP_DEEP_IGNORABLE
 )
 '''
 Frozen set of **ignorable type hints** (i.e., type hints that are either

@@ -23,7 +23,7 @@ from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintPithUnsatisfiedMetadata,
 )
 
-# ....................{ TYPEVARS                          }....................
+# ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add `PEP 544`_**-compliant type hint test data to various global containers
@@ -46,7 +46,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # thus supports PEP 544.
 
     # Defer Python >= 3.8-specific imports.
-    from typing import Generic, Protocol, SupportsInt, runtime_checkable
+    from typing import Protocol, SupportsInt, runtime_checkable
 
     # User-defined protocol declaring arbitrary concrete and abstract methods.
     @runtime_checkable
@@ -72,15 +72,15 @@ def add_data(data_module: 'ModuleType') -> None:
         def __int__(self) -> int:
             return 42
 
-    # Add PEP 544-specific test type hints to that dictionary global.
-    data_module.PEP_HINT_TO_META.update({
+    # Add PEP 544-specific test type hints to this dictionary global.
+    data_module.HINT_PEP_TO_META.update({
         # ................{ PROTOCOLS                         }................
         # Despite appearances, protocols implicitly subclass "typing.Generic"
         # and thus do *NOT* transparently reduce to standard types.
 
         # Predefined "typing" protocol.
         SupportsInt: PepHintClassedMetadata(
-            typing_attr=Protocol,
+            pep_sign=Protocol,
             is_pep484_user=True,
             piths_satisfied=(
                 # Structurally subtyped instance.
@@ -94,7 +94,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # User-defined protocol.
         ProtocolCustom: PepHintClassedMetadata(
-            typing_attr=Protocol,
+            pep_sign=Protocol,
             is_pep484_user=True,
             piths_satisfied=(
                 # Structurally subtyped instance.

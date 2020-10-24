@@ -14,12 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep, is_hint_nonpep)
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTRS_UNION,
+from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_SIGNS_UNION,
 )
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
-    get_hint_pep_typing_attr,
+    get_hint_pep_sign,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
@@ -27,7 +27,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep_supported,
 )
 from beartype._util.hint.pep.utilhintpeptyping import Annotated
-from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -247,10 +247,10 @@ def is_hint_ignorable(hint: object) -> bool:
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
         # Argumentless typing attribute uniquely identifying this hint.
-        hint_attr = get_hint_pep_typing_attr(hint)
+        hint_attr = get_hint_pep_sign(hint)
 
         # If this hint is a union, return true only if...
-        if hint_attr in TYPING_ATTRS_UNION:
+        if hint_attr in HINT_PEP_SIGNS_UNION:
             # Any child hint of this union is recursively ignorable. See the
             # function docstring for an explanatory justification.
             return any(

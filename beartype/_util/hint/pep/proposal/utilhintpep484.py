@@ -88,7 +88,7 @@ def is_hint_pep484_newtype(hint: object) -> bool:
 
 # ....................{ GETTERS ~ user                    }....................
 @callable_cached
-def get_hint_pep484_user_bases_or_none(hint: object) -> (
+def get_hint_pep484_generic_bases_or_none(hint: object) -> (
     'NoneTypeOr[tuple]'):
     '''
     Tuple of all `PEP 484`_-compliant **unerased pseudo-superclasses** (i.e.,
@@ -258,11 +258,11 @@ def get_hint_pep484_user_bases_or_none(hint: object) -> (
     ----------
         >>> import typing
         >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     get_hint_pep484_user_bases_or_none)
+        ...     get_hint_pep484_generic_bases_or_none)
         >>> T = typing.TypeVar('T')
         >>> class IterableContainer(typing.Iterable[T], typing.Container[T]):
         ...     pass
-        >>> get_hint_pep484_user_bases_or_none(typing.Union[str, typing.List[int]])
+        >>> get_hint_pep484_generic_bases_or_none(typing.Union[str, typing.List[int]])
         ()
         >>> get_hint_pep_typing_superobjects(IterableContainer)
         (typing.Iterable[~T], typing.Container[~T])
@@ -400,7 +400,7 @@ def get_hint_pep484_user_bases_or_none(hint: object) -> (
     #    duplicate superclasses.
 
     # If this hint is *NOT* a PEP 484-compliant generic, return "None".
-    if not is_hint_pep484_user(hint):
+    if not is_hint_pep484_generic(hint):
         return None
     # Else, this hint is a PEP 484-compliant generic.
 
@@ -461,7 +461,7 @@ def get_hint_pep484_user_bases_or_none(hint: object) -> (
 
 #FIXME: Unit test us up.
 @callable_cached
-def get_hint_pep484_user_single_base_or_none(hint: object) -> object:
+def get_hint_pep484_generic_single_base_or_none(hint: object) -> object:
     '''
     `PEP 484`_-compliant **unerased pseudo-superclass** (i.e., :mod:`typing`
     object originally listed as superclasses prior to its implicit type erasure
@@ -493,7 +493,7 @@ def get_hint_pep484_user_single_base_or_none(hint: object) -> object:
 
     See Also
     ----------
-    :func:`get_hint_pep484_user_bases_or_none`
+    :func:`get_hint_pep484_generic_bases_or_none`
         Further details.
 
     .. _PEP 484:
@@ -502,7 +502,7 @@ def get_hint_pep484_user_single_base_or_none(hint: object) -> object:
 
     # Tuple of all unerased pseudo-superclasses of this hint if this hint is a
     # PEP 484-compliant generic *OR* "None" otherwise.
-    hint_bases = get_hint_pep484_user_bases_or_none(hint)
+    hint_bases = get_hint_pep484_generic_bases_or_none(hint)
 
     # Return either...
     return (
@@ -515,13 +515,13 @@ def get_hint_pep484_user_single_base_or_none(hint: object) -> object:
 
 # ....................{ TESTERS ~ user                    }....................
 # If the active Python interpreter targets Python >= 3.7.0, define the
-# is_hint_pep484_user() tester for Python >= 3.7.0. Sadly, Python
+# is_hint_pep484_generic() tester for Python >= 3.7.0. Sadly, Python
 # 3.7.0 broke backward compatibility with the public API of the "typing" module
 # by removing the prior "typing.GenericMeta" metaclass previously referenced by
 # this tester under Python < 3.7.0, necessitating fundamentally different
 # implementations for this tester between Python < 3.7.0 and >= 3.7.0.
 if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep484_user(hint: object) -> bool:
+    def is_hint_pep484_generic(hint: object) -> bool:
 
         # Return true only if this hint is a subclass of the "typing.Generic"
         # abstract base class (ABC), in which case this hint is a user-defined
@@ -550,13 +550,13 @@ if IS_PYTHON_AT_LEAST_3_7:
         #
         # Note lastly that the following logic superficially appears to
         # implement the same test *WITHOUT* the onerous cost of a search:
-        #     return len(get_hint_pep484_user_bases_or_none(hint)) > 0
+        #     return len(get_hint_pep484_generic_bases_or_none(hint)) > 0
         #
         # Why didn't we opt for that, then? Because this tester is routinely
         # passed objects that *CANNOT* be guaranteed to be PEP-compliant.
         # Indeed, the high-level is_hint_pep() tester establishing the
         # PEP-compliance of arbitrary objects internally calls this lower-level
-        # tester to do so. Since the get_hint_pep484_user_bases_or_none() getter
+        # tester to do so. Since the get_hint_pep484_generic_bases_or_none() getter
         # internally reduces to returning the tuple of the general-purpose
         # "__orig_bases__" dunder attribute formalized by PEP 560, testing
         # whether that tuple is non-empty or not in no way guarantees this
@@ -566,12 +566,12 @@ if IS_PYTHON_AT_LEAST_3_7:
             issubclass(hint, Generic)
         )
 # Else if the active Python interpreter targets Python < 3.7.0, define the
-# is_hint_pep484_user() tester for Python < 3.7.0.
+# is_hint_pep484_generic() tester for Python < 3.7.0.
 else:
     # Import the Python < 3.7.0-specific metaclass required by this tester.
     from typing import GenericMeta
 
-    def is_hint_pep484_user(hint: object) -> bool:
+    def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
@@ -603,7 +603,7 @@ else:
 
 
 # Docstring for this function regardless of implementation details.
-is_hint_pep484_user.__doc__ = '''
+is_hint_pep484_generic.__doc__ = '''
     ``True`` only if the passed object is a `PEP 484`_-compliant **generic**
     (i.e., PEP-compliant type hint subclassing one or more :mod:`typing`
     non-class objects and/or the :mod:`typing.Generic` superclass).
@@ -629,7 +629,7 @@ is_hint_pep484_user.__doc__ = '''
     '''
 
 
-def is_hint_pep484_user_single(hint: object) -> bool:
+def is_hint_pep484_generic_single(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a `PEP 484`-compliant
     **single-inherited generic** (i.e., class subclassing exactly one
@@ -651,7 +651,7 @@ def is_hint_pep484_user_single(hint: object) -> bool:
 
     See Also
     ----------
-    :func:`get_hint_pep484_user_bases_or_none`
+    :func:`get_hint_pep484_generic_bases_or_none`
         Further details.
 
     .. _PEP 484:
@@ -659,10 +659,10 @@ def is_hint_pep484_user_single(hint: object) -> bool:
     '''
 
     # Everything nice is packed with one-liner spice.
-    return get_hint_pep484_user_single_base_or_none(hint) is not None
+    return get_hint_pep484_generic_single_base_or_none(hint) is not None
 
 
-def is_hint_pep484_user_multiple(hint: object) -> bool:
+def is_hint_pep484_generic_multiple(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a `PEP 484`-compliant
     **multiple-inherited generic** (i.e., class subclassing two or more
@@ -684,7 +684,7 @@ def is_hint_pep484_user_multiple(hint: object) -> bool:
 
     See Also
     ----------
-    :func:`get_hint_pep484_user_bases_or_none`
+    :func:`get_hint_pep484_generic_bases_or_none`
         Further details.
 
     .. _PEP 484:
@@ -693,7 +693,7 @@ def is_hint_pep484_user_multiple(hint: object) -> bool:
 
     # Tuple of all pseudo-superclasses of this hint if this hint is a generic
     # *OR* "None" otherwise.
-    hint_bases = get_hint_pep484_user_bases_or_none(hint)
+    hint_bases = get_hint_pep484_generic_bases_or_none(hint)
 
     # Return true only if this hint is a generic subclassing two or more
     # pseudo-superclasses.

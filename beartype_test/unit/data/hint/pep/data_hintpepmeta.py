@@ -21,7 +21,7 @@ class PepHintMetadata(object):
 
     Attributes
     ----------
-    typing_attr : object
+    pep_sign : object
         **Argumentless** :mod:`typing` **attribute** (i.e., public attribute of
         the :mod:`typing` module uniquely identifying this PEP-compliant type
         hint, stripped of all subscripted arguments but *not* default type
@@ -32,14 +32,14 @@ class PepHintMetadata(object):
 
         * :class:`typing.NamedTuple` reducing to :class:`tuple`.
         * :class:`typing.TypedDict` reducing to :class:`dict`.
-    is_supported : bool
-        ``True`` only if this PEP-compliant type hint is currently supported by
-        the :func:`beartype.beartype` decorator. Defaults to ``True``.
     is_pep484_user : bool
         ``True`` only if this PEP-compliant type hint is a **user-defined
         generic** (i.e., PEP-compliant type hint whose class subclasses one or
         more public :mod:`typing` pseudo-superclasses but *not* itself defined
         by the :mod:`typing` module). Defaults to ``False``.
+    is_supported : bool
+        ``True`` only if this PEP-compliant type hint is currently supported by
+        the :func:`beartype.beartype` decorator. Defaults to ``True``.
     is_typevared : bool
         ``True`` only if this PEP-compliant type hint is parametrized by one or
         more **type variables** (i.e., :class:`typing.TypeVar` instances).
@@ -53,6 +53,12 @@ class PepHintMetadata(object):
         instances, each describing an object *not* satisfying this hint when
         either passed as a parameter *or* returned as a value annotated by this
         hint. Defaults to the empty tuple.
+    type_origin : Optional[type]
+        **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
+        satisfying this hint are instances of this class) originating this hint
+        if this hint originates from a non-:mod:`typing` class *or* ``None``
+        otherwise (i.e., if this hint does *not* originate from such a class).
+        Defaults to ``None``.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -60,14 +66,15 @@ class PepHintMetadata(object):
         self,
 
         # Mandatory parameters.
-        typing_attr: object,
+        pep_sign: object,
 
         # Optional parameters.
-        is_supported: bool = True,
         is_pep484_user: bool = False,
+        is_supported: bool = True,
         is_typevared: bool = False,
         piths_satisfied: tuple = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
+        type_origin: 'Optional[type]' = None,
     ) -> None:
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
@@ -85,25 +92,29 @@ class PepHintMetadata(object):
         ), (
             f'{repr(piths_unsatisfied_meta)} not tuple of '
             f'"PepHintPithUnsatisfiedMetadata" instances.')
+        assert isinstance(type_origin, (type, type(None))), (
+            f'{repr(type_origin)} neither class nor "None".')
 
         # Classify all passed parameters.
-        self.typing_attr = typing_attr
+        self.pep_sign = pep_sign
         self.is_supported = is_supported
         self.is_pep484_user = is_pep484_user
         self.is_typevared = is_typevared
         self.piths_satisfied = piths_satisfied
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
+        self.type_origin = type_origin
 
     # ..................{ STRINGIFIERS                      }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    typing_attr={self.typing_attr},',
+            f'    pep_sign={self.pep_sign},',
             f'    is_supported={self.is_supported},',
             f'    is_pep484_user={self.is_pep484_user},',
             f'    is_typevared={self.is_typevared},',
             f'    piths_satisfied={self.piths_satisfied},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
+            f'    type_origin={self.type_origin},',
             f')',
         ))
 
@@ -126,7 +137,7 @@ class PepHintClassedMetadata(PepHintMetadata):
         # machine-readable representation is the standard class representation
         # "<class '{self.__class__.__name__}'>" rather than the non-standard
         # "typing" representation prefixed by "typing.".
-        kwargs['typing_attr'] = None
+        kwargs['pep_sign'] = None
 
         # Initialize our superclass.
         super().__init__(*args, **kwargs)

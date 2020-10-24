@@ -13,11 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilRaisePepException
-from beartype._util.hint.utilhintget import get_hint_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_UNION
-from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typing_attr
+from beartype._util.hint.data.pep.utilhintdatapep import HINT_PEP_SIGNS_UNION
+from beartype._util.hint.pep.utilhintpepget import (
+    get_hint_pep_sign,
+    get_hint_pep_type_origin,
+)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextmunge import (
@@ -41,7 +43,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr in TYPING_ATTRS_UNION, (
+    assert sleuth.hint_attr in HINT_PEP_SIGNS_UNION, (
         f'{repr(sleuth.hint)} not union.')
 
     # Subset of all classes shallowly associated with these child hints (i.e.,
@@ -68,11 +70,8 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
-            # Argumentless "typing" attribute identifying this child hint.
-            hint_child_attr = get_hint_pep_typing_attr(hint_child)
-
-            # Non-"typing" class originating this child attribute.
-            hint_child_type_origin = get_hint_type_origin(hint_child_attr)
+            # Non-"typing" class originating this child hint.
+            hint_child_type_origin = get_hint_pep_type_origin(hint_child)
 
             # If this pith is *NOT* an instance of this class...
             if not isinstance(sleuth.pith, hint_child_type_origin):

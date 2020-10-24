@@ -21,7 +21,7 @@ from beartype_test.unit.data.hint.pep.proposal import (
 
 # ....................{ METADATA ~ dict : attr            }....................
 # Initialized by the _init() function below.
-PEP_HINT_TO_META = {}
+HINT_PEP_TO_META = {}
 '''
 Dictionary mapping various PEP-compliant type hints to :class:`PepHintMetadata`
 instances describing those hints with metadata applicable to testing scenarios.
@@ -29,7 +29,7 @@ instances describing those hints with metadata applicable to testing scenarios.
 
 
 # Initialized by the _init() function below.
-PEP_HINT_CLASSED_TO_META = {}
+HINT_PEP_CLASSED_TO_META = {}
 '''
 Dictionary mapping various PEP-compliant type hints implemented by the
 :mod:`typing` module as standard classes indistinguishable from
@@ -45,18 +45,18 @@ attributes.
 
 # ....................{ SETS                              }....................
 # Initialized by the _init() function below.
-PEP_HINTS = None
+HINTS_PEP = None
 '''
 Frozen set of PEP-compliant type hints exercising well-known edge cases.
 '''
 
 
 # Initialized by the _init() function below.
-PEP_HINTS_DEEP_IGNORABLE = set()
+HINTS_PEP_DEEP_IGNORABLE = set()
 '''
 Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in
-the low-level :attr:`beartype._util.hint.utilhintdata.HINTS_SHALLOW_IGNORABLE`
+the low-level :attr:`beartype._util.hint.data.utilhintdata.HINTS_SHALLOW_IGNORABLE`
 set, but which are nonetheless ignorable and thus require dynamic testing by
 the high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable`
 tester function to demonstrate this fact).
@@ -68,10 +68,10 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    # Globals to be redefined below.
+    # Submodule globals to be redefined below.
     global \
-        PEP_HINTS, \
-        PEP_HINTS_DEEP_IGNORABLE
+        HINTS_PEP, \
+        HINTS_PEP_DEEP_IGNORABLE
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -89,14 +89,14 @@ def _init() -> None:
         data_hint_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    assert PEP_HINT_TO_META, 'Dictionary global "PEP_HINT_TO_META" empty.'
-    assert PEP_HINTS_DEEP_IGNORABLE, (
-        'Set global "PEP_HINTS_DEEP_IGNORABLE" empty.')
+    assert HINT_PEP_TO_META, 'Dictionary global "HINT_PEP_TO_META" empty.'
+    assert HINTS_PEP_DEEP_IGNORABLE, (
+        'Set global "HINTS_PEP_DEEP_IGNORABLE" empty.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    PEP_HINTS = frozenset(PEP_HINT_TO_META.keys())
-    PEP_HINTS_DEEP_IGNORABLE = frozenset(PEP_HINTS_DEEP_IGNORABLE)
+    HINTS_PEP = frozenset(HINT_PEP_TO_META.keys())
+    HINTS_PEP_DEEP_IGNORABLE = frozenset(HINTS_PEP_DEEP_IGNORABLE)
 
 
 # Initialize this submodule.

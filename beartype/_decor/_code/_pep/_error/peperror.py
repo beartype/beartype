@@ -28,10 +28,10 @@ from beartype._decor._code._pep._error._peperrorsequence import (
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._decor._code._pep._error._peperrorunion import (
     get_cause_or_none_union)
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTR_TO_TYPE_ORIGIN,
-    TYPING_ATTRS_SEQUENCE_STANDARD,
-    TYPING_ATTRS_UNION,
+from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP_SIGNS_TYPE_ORIGIN,
+    HINT_PEP_SIGNS_UNION,
 )
 from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
 from beartype._util.text.utiltextlabel import (
@@ -244,18 +244,18 @@ def _init() -> None:
     # Map each originative "typing" attribute to the appropriate getter
     # *BEFORE* mapping any other attributes. This is merely a generalized
     # fallback subsequently replaced by attribute-specific getters.
-    for typing_attr_type_origin in TYPING_ATTR_TO_TYPE_ORIGIN:
-        _TYPING_ATTR_TO_GETTER[typing_attr_type_origin] = (
+    for pep_sign_type_origin in HINT_PEP_SIGNS_TYPE_ORIGIN:
+        _TYPING_ATTR_TO_GETTER[pep_sign_type_origin] = (
             get_cause_or_none_type_origin)
 
     # Map each standard sequence "typing" attribute to the appropriate getter.
-    for typing_attr_sequence_standard in TYPING_ATTRS_SEQUENCE_STANDARD:
-        _TYPING_ATTR_TO_GETTER[typing_attr_sequence_standard] = (
+    for pep_sign_sequence_standard in HINT_PEP_SIGNS_SEQUENCE_STANDARD:
+        _TYPING_ATTR_TO_GETTER[pep_sign_sequence_standard] = (
             get_cause_or_none_sequence_standard)
 
     # Map each unifying "typing" attribute to the appropriate getter.
-    for typing_attr_type_union in TYPING_ATTRS_UNION:
-        _TYPING_ATTR_TO_GETTER[typing_attr_type_union] = (
+    for pep_sign_type_union in HINT_PEP_SIGNS_UNION:
+        _TYPING_ATTR_TO_GETTER[pep_sign_type_union] = (
             get_cause_or_none_union)
 
     # Map each "typing" attribute validated by a unique getter specific to that

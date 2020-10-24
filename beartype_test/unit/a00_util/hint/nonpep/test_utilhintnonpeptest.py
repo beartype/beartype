@@ -29,14 +29,14 @@ def test_is_hint_nonpep() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.nonpep.utilhintnonpeptest import is_hint_nonpep
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
+        NOT_HINTS_UNHASHABLE, NONHINTS_PEP, NOT_NONHINTS_PEP,)
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for nonpep_hint in NONPEP_HINTS:
+    for nonpep_hint in NONHINTS_PEP:
         assert is_hint_nonpep(nonpep_hint) is True
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NOT_NONPEP_HINTS:
+    for non_nonpep_hint in NOT_NONHINTS_PEP:
         assert is_hint_nonpep(non_nonpep_hint) is False
 
     # Assert this function rejects unhashable objects.
@@ -56,14 +56,14 @@ def test_die_unless_hint_nonpep() -> None:
     from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NONPEP_HINTS, NOT_NONPEP_HINTS,)
+        NOT_HINTS_UNHASHABLE, NONHINTS_PEP, NOT_NONHINTS_PEP,)
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for nonpep_hint in NONPEP_HINTS:
+    for nonpep_hint in NONHINTS_PEP:
         die_unless_hint_nonpep(nonpep_hint)
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NOT_NONPEP_HINTS:
+    for non_nonpep_hint in NOT_NONHINTS_PEP:
         with raises_uncached(BeartypeDecorHintNonPepException):
             die_unless_hint_nonpep(non_nonpep_hint)
 

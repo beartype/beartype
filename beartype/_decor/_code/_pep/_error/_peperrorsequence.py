@@ -14,10 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTRS_SEQUENCE_STANDARD)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.hint.utilhintget import get_hint_type_origin
+from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_SIGNS_SEQUENCE_STANDARD)
+from beartype._util.hint.pep.utilhintpepget import get_hint_pep_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import get_object_representation
 from typing import Tuple
@@ -44,7 +44,7 @@ def get_cause_or_none_sequence_standard(
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr in TYPING_ATTRS_SEQUENCE_STANDARD, (
+    assert sleuth.hint_attr in HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
         f'{repr(sleuth.hint)} not standard sequence.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
@@ -54,7 +54,7 @@ def get_cause_or_none_sequence_standard(
         f'multiple arguments.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_type_origin(sleuth.hint_attr)
+    hint_type_origin = get_hint_pep_type_origin(sleuth.hint_attr)
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
@@ -190,7 +190,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
-        sleuth.hint_attr in TYPING_ATTRS_SEQUENCE_STANDARD or (
+        sleuth.hint_attr in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
             sleuth.hint_attr is Tuple and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis

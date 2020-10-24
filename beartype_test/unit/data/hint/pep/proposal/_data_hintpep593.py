@@ -23,7 +23,7 @@ from typing import (
     Union,
 )
 
-# ....................{ TYPEVARS                          }....................
+# ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add `PEP 593`_**-compliant type hint test data to various global containers
@@ -48,12 +48,12 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.9-specific imports.
     from typing import Annotated
 
-    # Add PEP 593-specific test type hints to that dictionary global.
-    data_module.PEP_HINT_TO_META.update({
+    # Add PEP 593-specific test type hints to this dictionary global.
+    data_module.HINT_PEP_TO_META.update({
         # ................{ ANNOTATED                         }................
         # Annotated of a non-"typing" type.
         Annotated[str, int]: PepHintMetadata(
-            typing_attr=Annotated,
+            pep_sign=Annotated,
             piths_satisfied=(
                 # String constant.
                 'Towards a timely, wines‐enticing gate',
@@ -67,7 +67,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a "typing" type.
         Annotated[List[str], int]: PepHintMetadata(
-            typing_attr=Annotated,
+            pep_sign=Annotated,
             piths_satisfied=(
                 # List of string constants.
                 ['MINERVA‐unnerving, verve‐sapping enervations',],
@@ -80,7 +80,7 @@ def add_data(data_module: 'ModuleType') -> None:
     })
 
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
-    data_module.PEP_HINTS_DEEP_IGNORABLE.update((
+    data_module.HINTS_PEP_DEEP_IGNORABLE.update((
         # Annotated of shallowly ignorable type hints.
         Annotated[Any, int],
         Annotated[object, int],

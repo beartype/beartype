@@ -12,9 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.utilhintget import get_hint_type_origin
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTR_TO_TYPE_ORIGIN)
+from beartype.roar import (
+    BeartypeCallCheckPepParamException,
+    BeartypeCallCheckPepReturnException,
+    _BeartypeUtilRaisePepException,
+    _BeartypeUtilRaisePepDesynchronizationException,
+)
+from beartype._util.hint.pep.utilhintpepget import (
+    get_hint_pep_type_origin_or_none)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.text.utiltextrepr import get_object_representation
 
@@ -35,15 +40,21 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert isinstance(sleuth.hint, type), (
-        f'{repr(sleuth.hint)} not non-"typing" type.')
 
-    # If this object is an instance of this type, return "None".
+    # If this hint is *NOT* a class, raise an exception.
+    if not isinstance(sleuth.hint, type):
+        raise _BeartypeUtilRaisePepException(
+            f'{sleuth.exception_label} non-PEP type hint '
+            f'{repr(sleuth.hint)} unsupported '
+            f'(i.e., neither PEP-compliant nor standard class).'
+        )
+
+    # If this pith is an instance of this type, return "None".
     if isinstance(sleuth.pith, sleuth.hint):
         return None
-    # Else, this object is *NOT* an instance of this type.
+    # Else, this pith is *NOT* an instance of this type.
 
-    # Truncated representation of this object.
+    # Truncated representation of this pith.
     pith_repr = get_object_representation(sleuth.pith)
 
     # Return a substring describing this failure intended to be embedded in a
@@ -65,11 +76,17 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-        f'{repr(sleuth.hint)} not isinstance()-able.')
 
-    # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_type_origin(sleuth.hint_attr)
+    # Origin type originating this hint if any *OR* "None" otherwise.
+    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint_attr)
+
+    # If this hint does *NOT* originate from such a type, raise an exception.
+    if hint_type_origin is None:
+        raise _BeartypeUtilRaisePepException(
+            f'{sleuth.exception_label} type hint '
+            f'{repr(sleuth.hint)} not originated from an origin type.'
+        )
+    # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
     return get_cause_or_none_type(sleuth.permute(hint=hint_type_origin))

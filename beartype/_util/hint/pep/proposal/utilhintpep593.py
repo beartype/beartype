@@ -50,5 +50,5 @@ def is_hint_pep593(hint: object) -> bool:
     # approach avoids the following equally applicable but considerably less
     # efficient heuristic:
     #    return (
-    #        is_hint_pep(hint) and get_hint_pep_typing_attr(hint) is Annotated)
+    #        is_hint_pep(hint) and get_hint_pep_sign(hint) is Annotated)
     return repr(hint).startswith('typing.Annotated[')

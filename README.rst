@@ -890,6 +890,11 @@ types:
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
+* **Multiple-inherited generics** (i.e., user-defined classes subclassing one
+  or more possibly non-classes typing_ objects).
+* **Multiple-inherited protocols** (i.e., user-defined classes directly
+  subclassing one typing.Protocol_ ABC *and* one or more typing_ non-class
+  objects).
 
 Subsequent ``beartype`` versions will deeply type-check these typing_ types
 while preserving our `O(1) time complexity (with negligible constant factors)
@@ -910,8 +915,6 @@ typing_ types:
 * typing.NoReturn_.
 * typing.Pattern_.
 * typing.TextIO_.
-* typing.Final_.
-* `@typing.final`_.
 * `Forward references <relative forward references_>`__ (i.e., unqualified
   relative string classnames internally coerced by typing_ into
   typing.ForwardRef_ instances).
@@ -921,11 +924,11 @@ typing_ types:
   type-checking of generically substitutable types).
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
-* **Multiple-inherited generics** (i.e., user-defined classes subclassing one
-  or more possibly non-classes typing_ objects).
-* **Multiple-inherited protocols** (i.e., user-defined classes directly
-  subclassing one typing.Protocol_ ABC *and* one or more typing_ non-class
-  objects).
+
+``beartype`` currently silently ignores these typing_ types at decoration time:
+
+* typing.Final_.
+* `@typing.final`_.
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with

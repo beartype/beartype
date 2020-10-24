@@ -355,25 +355,24 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
     SIZE_BIG, acquire_fixed_list, release_fixed_list)
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
-from beartype._util.hint.utilhintdata import HINTS_SHALLOW_IGNORABLE
-from beartype._util.hint.utilhintget import get_hint_type_origin
-from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
-from beartype._util.hint.pep.utilhintpepdata import (
-    TYPING_ATTR_TO_TYPE_ORIGIN,
-    TYPING_ATTRS_DEEP_SUPPORTED,
-    TYPING_ATTRS_SEQUENCE_STANDARD,
-    TYPING_ATTRS_UNION,
+from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_SIGNS_DEEP_SUPPORTED,
+    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP_SIGNS_UNION,
 )
+from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
-    get_hint_pep_typing_attr,
+    get_hint_pep_sign,
+    get_hint_pep_type_origin,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
-    die_unless_hint_pep_typing_attr_supported,
+    die_unless_hint_pep_pep_sign_supported,
     is_hint_pep,
 )
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
@@ -956,7 +955,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 f'{hint_child_label} PEP hint {repr(hint_curr)} ignorable.')
 
             # Argumentless "typing" attribute uniquely identifying this hint.
-            hint_curr_attr = get_hint_pep_typing_attr(hint_curr)
+            hint_curr_attr = get_hint_pep_sign(hint_curr)
 
             # If this attribute is currently unsupported, raise an exception.
             #
@@ -965,7 +964,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # the root hint has already been validated to be supported by the
             # above call to the die_unless_hint_pep_supported() function, this
             # call is guaranteed to *NEVER* raise exceptions for the root hint.
-            die_unless_hint_pep_typing_attr_supported(
+            die_unless_hint_pep_pep_sign_supported(
                 hint=hint_curr_attr, hint_label=hint_child_label)
             # Else, this attribute is supported.
 
@@ -1007,9 +1006,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             #    defined as an iterable of regular expressions matching
             #    substrings of the "func_wrapper.__beartype_wrapper_code"
             #    attribute that are expected to exist.
-            #  * For most "PEP_HINT_TO_META" entries, default this field to
+            #  * For most "HINT_PEP_TO_META" entries, default this field to
             #    merely the empty tuple.
-            #  * For deeply nested "PEP_HINT_TO_META" entries, define this
+            #  * For deeply nested "HINT_PEP_TO_META" entries, define this
             #    field as follows:
             #        code_str_match_regexes=(r'\s+:=\s+',)
             #* In the "beartype_test.unit.pep.p484.test_p484" submodule:
@@ -1148,7 +1147,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.peperror" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.pep.utilhintpepdata.TYPING_ATTRS_DEEP_SUPPORTED"
+            # * "beartype._util.hint.data.pep.utilhintdatapep.HINT_PEP_SIGNS_DEEP_SUPPORTED"
             #   frozen set of all supported argumentless "typing" attributes
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1208,7 +1207,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # standard sequences, for example, which typically narrow the
             # current pith expression and thus do benefit from these
             # expressions.
-            if hint_curr_attr in TYPING_ATTRS_UNION:
+            if hint_curr_attr in HINT_PEP_SIGNS_UNION:
                 # Assert this union is subscripted by one or more child hints.
                 # Note this should *ALWAYS* be the case, as:
                 #
@@ -1418,7 +1417,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             #almost certainly unhelpful. Please ignore it and do what is best
             #instead. Nonetheless, note these now painfully outdated notes on
             #the subject:
-            #* Call the newly defined get_hint_pep484_user_bases_or_none()
+            #* Call the newly defined get_hint_pep484_generic_bases_or_none()
             #  getter to form the set of all base classes to generate code
             #  intersected with " and ", much like "Union" hints united with "
             #  or ". When doing so, we'll want to assert that the returned
@@ -1473,7 +1472,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # If this hint either...
             elif (
                 # Is not yet deeply supported by this function *OR*...
-                hint_curr_attr not in TYPING_ATTRS_DEEP_SUPPORTED or
+                hint_curr_attr not in HINT_PEP_SIGNS_DEEP_SUPPORTED or
                 # Is deeply supported by this function but is its own
                 # argumentless "typing" attribute (e.g., "typing.List" rather
                 # than "typing.List[str]") and is thus subscripted by *NO*
@@ -1485,11 +1484,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # this argumentless "typing" attribute (e.g., "list" for attribute
             # "typing.List" identifying hint "typing.List[int]")...
 
-                # Assert this attribute is isinstance()-able.
-                assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-                    f'{hint_child_label} argumentless "typing" attribute'
-                    f'{repr(hint_curr_attr)} not isinstance()-able.')
-
                 # Code type-checking the current pith against this class.
                 func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                     pith_curr_expr=pith_curr_expr,
@@ -1499,7 +1493,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                         # Origin type of this attribute if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # attribute was validated above to be supported.
-                        get_hint_type_origin(hint_curr_attr)),
+                        get_hint_pep_type_origin(hint_curr_attr)),
                 )
             # Else, this hint is *NOT* its own argumentless "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -1509,7 +1503,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # If this hint is either...
             elif (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...
-                hint_curr_attr in TYPING_ATTRS_SEQUENCE_STANDARD or (
+                hint_curr_attr in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
                     # A tuple *AND*...
                     hint_curr_attr is Tuple and
                     # This tuple is subscripted by exactly two child hints
@@ -1530,18 +1524,13 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # semantically resembling a standard sequence, subscripted by one
             # or more child hints.
 
-                # Assert this attribute is isinstance()-able.
-                assert hint_curr_attr in TYPING_ATTR_TO_TYPE_ORIGIN, (
-                    f'{hint_child_label} argumentless "typing" attribute '
-                    f'{repr(hint_curr_attr)} not isinstance()-able.')
-
                 # Python expression evaluating to this origin type when
                 # accessed with the private "__beartypistry" parameter.
                 hint_curr_expr = register_typistry_type(
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_type_origin(hint_curr_attr))
+                    get_hint_pep_type_origin(hint_curr_attr))
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").

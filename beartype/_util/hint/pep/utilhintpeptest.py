@@ -17,10 +17,10 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    is_hint_pep484_user,
-    is_hint_pep484_user_multiple,
+    is_hint_pep484_generic,
+    is_hint_pep484_generic_multiple,
 )
-from beartype._util.hint.pep.utilhintpepdata import TYPING_ATTRS_SUPPORTED
+from beartype._util.hint.data.pep.utilhintdatapep import HINT_PEP_SIGNS_SUPPORTED
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
@@ -141,8 +141,8 @@ def die_unless_hint_pep_supported(
     ----------
     **This function should never be called to validate argumentless**
     :mod:`typing` **attributes** (e.g., those returned by the
-    :func:`beartype._util.hint.pep.get_hint_pep_typing_attr` function). The
-    :func:`die_unless_hint_pep_typing_attr_supported` function should be called
+    :func:`beartype._util.hint.pep.get_hint_pep_sign` function). The
+    :func:`die_unless_hint_pep_pep_sign_supported` function should be called
     instead. Why? Because the :mod:`typing` module implicitly parametrizes
     these attributes by one or more type variables. Since this decorator
     currently fails to support type variables, this function unconditionally
@@ -195,7 +195,7 @@ def die_unless_hint_pep_supported(
     #FIXME: Remove *AFTER* adding support for multiple-inherited generics.
     # If this hint is a multiple-inherited generic, raise an exception. These
     # hints require non-trivial decorator support yet to be implemented.
-    if is_hint_pep484_user_multiple(hint):
+    if is_hint_pep484_generic_multiple(hint):
         raise BeartypeDecorHintPepUnsupportedException(
             f'{hint_label} multiple-inherited generic PEP hint {repr(hint)} '
             f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
@@ -211,7 +211,7 @@ def die_unless_hint_pep_supported(
     # general-purpose exception.
     #
     # Note that, by definition, the argumentless "typing" argument uniquely
-    # identifying this hint *SHOULD* be in the "TYPING_ATTRS_SUPPORTED" set.
+    # identifying this hint *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set.
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
@@ -219,7 +219,7 @@ def die_unless_hint_pep_supported(
         f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
 
 
-def die_unless_hint_pep_typing_attr_supported(
+def die_unless_hint_pep_pep_sign_supported(
     # Mandatory parameters.
     hint: object,
 
@@ -256,7 +256,7 @@ def die_unless_hint_pep_typing_attr_supported(
 
     # If this hint is *NOT* a supported argumentless "typing" attribute, raise
     # an exception.
-    if not is_hint_pep_typing_attr_supported(hint):
+    if not is_hint_pep_pep_sign_supported(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
             f'{hint_label} {repr(hint)} '
@@ -317,7 +317,7 @@ def is_hint_pep(hint: object) -> bool:
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.IO"), most generics are user-defined subclasses defined by
         # user-defined modules residing elsewhere.
-        is_hint_pep484_user(hint)
+        is_hint_pep484_generic(hint)
     )
 
 # ....................{ TESTERS ~ supported               }....................
@@ -368,7 +368,7 @@ def is_hint_pep_supported(hint: object) -> bool:
         # A multiple-inherited generic...
         #
         # Multiple-inherited generics require non-trivial decorator support.
-        is_hint_pep484_user_multiple(hint) or
+        is_hint_pep484_generic_multiple(hint) or
 
         #FIXME: Remove *AFTER* implementing support for type variables.
         # Typevared...
@@ -382,16 +382,16 @@ def is_hint_pep_supported(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_typing_attr)
+        get_hint_pep_sign)
 
     # Argumentless "typing" attribute uniquely identifying this hint.
-    hint_typing_attr = get_hint_pep_typing_attr(hint)
+    hint_pep_sign = get_hint_pep_sign(hint)
 
     # Return true only if this attribute is supported.
-    return is_hint_pep_typing_attr_supported(hint_typing_attr)
+    return is_hint_pep_pep_sign_supported(hint_pep_sign)
 
 
-def is_hint_pep_typing_attr_supported(hint) -> bool:
+def is_hint_pep_pep_sign_supported(hint) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-compliant supported
     argumentless typing attribute** (i.e., public attribute of the
@@ -421,13 +421,13 @@ def is_hint_pep_typing_attr_supported(hint) -> bool:
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
     '''
-    # from beartype._util.hint.pep.utilhintpepdata import (
-    #     TYPING_ATTRS_DEEP_SUPPORTED)
-    # print(f'TYPING_ATTRS_DEEP_SUPPORTED: {TYPING_ATTRS_DEEP_SUPPORTED}')
+    # from beartype._util.hint.data.pep.utilhintdatapep import (
+    #     HINT_PEP_SIGNS_DEEP_SUPPORTED)
+    # print(f'HINT_PEP_SIGNS_DEEP_SUPPORTED: {HINT_PEP_SIGNS_DEEP_SUPPORTED}')
 
     # Return true only if this hint is a supported argumentless "typing"
     # attribute.
-    return hint in TYPING_ATTRS_SUPPORTED
+    return hint in HINT_PEP_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
 # If the active Python interpreter targets at least Python 3.7 and is thus
@@ -437,12 +437,12 @@ if IS_PYTHON_AT_LEAST_3_7:
         # Return true only if this type is defined by the "typing" module.
         #
         # Note that this implementation could probably be reduced to the
-        # trailing portion of the body of the get_hint_pep_typing_attr()
+        # trailing portion of the body of the get_hint_pep_sign()
         # function testing this object's representation. While certainly more
         # compact and convenient than the current approach, that refactored
         # approach would also be considerably more fragile, failure-prone, and
         # subject to whimsical "improvements" in the already overly hostile
-        # "typing" API. Why? Because the get_hint_pep_typing_attr() function:
+        # "typing" API. Why? Because the get_hint_pep_sign() function:
         #
         # * Parses the machine-readable string returned by the __repr__()
         #   dunder method of "typing" types. Since that string is *NOT*
