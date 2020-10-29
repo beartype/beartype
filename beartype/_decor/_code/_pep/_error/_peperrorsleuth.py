@@ -46,8 +46,8 @@ class CauseSleuth(object):
         from this getter in the event of unexpected runtime failure.
     hint : object
         Type hint to validate this object against.
-    hint_attr : object
-        Argumentless :mod:`typing` attribute identifying this hint if this hint
+    hint_sign : object
+        Unsubscripted :mod:`typing` attribute identifying this hint if this hint
         is PEP-compliant *or* ``None`` otherwise.
     hint_childs : tuple
         Possibly empty tuple of all arguments subscripting this hint if this
@@ -64,7 +64,7 @@ class CauseSleuth(object):
         'cause_indent',
         'exception_label',
         'hint',
-        'hint_attr',
+        'hint_sign',
         'hint_childs',
         'pith',
     )
@@ -111,7 +111,7 @@ class CauseSleuth(object):
         self.exception_label = exception_label
 
         # Nullify all remaining parameters for safety.
-        self.hint_attr = None
+        self.hint_sign = None
         self.hint_childs = None
 
         # If this hint is itself annotated, ignore all annotations on this hint
@@ -123,8 +123,8 @@ class CauseSleuth(object):
 
         # If this hint is PEP-compliant...
         if is_hint_pep(self.hint):
-            # Argumentless "typing" attribute identifying this hint.
-            self.hint_attr = get_hint_pep_sign(self.hint)
+            # Unsubscripted "typing" attribute identifying this hint.
+            self.hint_sign = get_hint_pep_sign(self.hint)
 
             # Possibly empty tuple of all arguments subscripting this hint.
             self.hint_childs = get_hint_pep_args(self.hint)
@@ -197,7 +197,7 @@ class CauseSleuth(object):
         #
         # If *NO* sign uniquely identifies this hint, this hint is
         # PEP-noncompliant. In this case...
-        elif self.hint_attr is None:
+        elif self.hint_sign is None:
             # Avoid circular import dependencies.
             from beartype._decor._code._pep._error._peperrortype import (
                 get_cause_or_none_type)
@@ -206,10 +206,10 @@ class CauseSleuth(object):
             get_cause_or_none = get_cause_or_none_type
         # Else, this hint is PEP-compliant.
         #
-        # If this PEP-compliant hint is its own argumentless "typing" attribute
+        # If this PEP-compliant hint is its own unsubscripted "typing" attribute
         # (e.g., "typing.List" rather than "typing.List[str]") and is thus
         # subscripted by *NO* child hints...
-        elif self.hint is self.hint_attr:
+        elif self.hint is self.hint_sign:
             # Avoid circular import dependencies.
             from beartype._decor._code._pep._error._peperrortype import (
                 get_cause_or_none_type_origin)
@@ -217,7 +217,7 @@ class CauseSleuth(object):
             # Defer to the getter function supporting isinstance()-able
             # attributes.
             get_cause_or_none = get_cause_or_none_type_origin
-        # Else, this PEP-compliant hint is *NOT* its own argumentless "typing"
+        # Else, this PEP-compliant hint is *NOT* its own unsubscripted "typing"
         # attribute and is thus subscripted by one or more child hints (e.g.,
         # "typing.List[str]" rather than "typing.List"). In this case...
         else:
@@ -237,7 +237,7 @@ class CauseSleuth(object):
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
             get_cause_or_none = _TYPING_ATTR_TO_GETTER.get(
-                self.hint_attr, None)
+                self.hint_sign, None)
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.

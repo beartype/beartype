@@ -78,7 +78,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 
     # Origin type originating this hint if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint_attr)
+    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint_sign)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin is None:

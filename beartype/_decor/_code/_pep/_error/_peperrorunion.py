@@ -15,9 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import _BeartypeUtilRaisePepException
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.hint.data.pep.utilhintdatapep import HINT_PEP_SIGNS_UNION
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGNS_UNION
+)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_sign,
+    # get_hint_pep_sign,
     get_hint_pep_type_origin,
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
@@ -43,7 +45,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr in HINT_PEP_SIGNS_UNION, (
+    assert sleuth.hint_sign in HINT_PEP484_SIGNS_UNION, (
         f'{repr(sleuth.hint)} not union.')
 
     # Subset of all classes shallowly associated with these child hints (i.e.,

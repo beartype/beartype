@@ -60,46 +60,110 @@ User-defined generic :mod:`typing` type variable.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
-class PepGenericUntypevaredSingle(List[str]):
+class Pep484GenericUntypevaredSingle(List[str]):
     '''
-    PEP-compliant user-defined class subclassing a single unparametrized
-    :mod:`typing` type.
+    `PEP 484`_-compliant user-defined generic subclassing a single
+    unparametrized :mod:`typing` type.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
 
 
-class PepGenericTypevaredSingle(Generic[S, T]):
+class Pep484GenericTypevaredSingle(Generic[S, T]):
     '''
-    PEP-compliant user-defined class subclassing a single parametrized
+    `PEP 484`_-compliant user-defined generic subclassing a single parametrized
     :mod:`typing` type.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
 
 # ....................{ GENERICS ~ multiple               }....................
-class PepGenericTypevaredShallowMultiple(Iterable[T], Container[T]):
+class Pep484GenericUntypevaredMultiple(
+    collections_abc.Callable,
+    Sequence[str],
+    Tuple[str, str],
+):
     '''
-    PEP-compliant user-defined class subclassing multiple directly parametrized
-    :mod:`typing` types.
+    `PEP 484`_-compliant user-defined generic subclassing multiple
+    unparametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
+    class (ABC).
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
-    pass
+    # ..................{ ABCs                              }..................
+    # Define all protocols mandated by ABCs subclassed by this generic above.
+    def __call__(self) -> int:
+        return len(self)
 
 
-class PepGenericTypevaredDeepMultiple(
+class Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
+    '''
+    `PEP 484`_-compliant user-defined generic subclassing multiple directly
+    parametrized :mod:`typing` types.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, iterable: tuple) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
+        self._iterable = iterable
+
+    # ..................{ ABCs                              }..................
+    # Define all protocols mandated by ABCs subclassed by this generic above.
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._iterable
+
+    def __iter__(self) -> bool:
+        return iter(self._iterable)
+
+
+class Pep484GenericTypevaredDeepMultiple(
     collections_abc.Sized,
     Iterable[Tuple[S, T]],
     Container[Tuple[S, T]],
 ):
     '''
-    PEP-compliant user-defined generic :mod:`typing` subtype subclassing a
-    heterogeneous amalgam of non-:mod:`typing` and :mod:`typing` superclasses.
-    User-defined class subclassing multiple indirectly parametrized
-    :mod:`typing` types as well as a non-:mod:`typing` abstract base class
+    `PEP 484`_-compliant user-defined generic subclassing multiple indirectly
+    parametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
+    class (ABC).
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
-    pass
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, iterable: tuple) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
+        self._iterable = iterable
+
+    # ..................{ ABCs                              }..................
+    # Define all protocols mandated by ABCs subclassed by this generic above.
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._iterable
+
+    def __iter__(self) -> bool:
+        return iter(self._iterable)
+
+    def __len__(self) -> bool:
+        return len(self._iterable)
 
 # ....................{ CALLABLES                         }....................
 def _make_generator_yield_int_send_float_return_str() -> (
@@ -150,14 +214,14 @@ def add_data(data_module: 'ModuleType') -> None:
         https://www.python.org/dev/peps/pep-0484
     '''
 
-    # True only if argumentless typing attributes (i.e., public attributes of
+    # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
     #
     # This boolean is true for *ALL* Python interpreters targeting less than
     # Python < 3.9. Prior to Python 3.9, the "typing" module parametrized most
-    # argumentless typing attributes by default. Python 3.9 halted that
-    # barbaric practice by leaving argumentless typing attributes
+    # unsubscripted typing attributes by default. Python 3.9 halted that
+    # barbaric practice by leaving unsubscripted typing attributes
     # unparametrized by default.
     _IS_TYPING_ATTR_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
 
@@ -210,10 +274,9 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ DICT                              }................
-        # Argumentless "Dict" attribute.
+        # Unsubscripted "Dict" attribute.
         Dict: PepHintMetadata(
             pep_sign=Dict,
-            is_supported=not _IS_TYPING_ATTR_TYPEVARED,
             is_typevared=_IS_TYPING_ATTR_TYPEVARED,
             piths_satisfied=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -253,7 +316,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic dictionary.
         Dict[S, T]: PepHintMetadata(
             pep_sign=Dict,
-            is_supported=False,
             is_typevared=True,
             type_origin=dict,
         ),
@@ -275,10 +337,9 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ LIST                              }................
-        # Argumentless "List" attribute.
+        # Unsubscripted "List" attribute.
         List: PepHintMetadata(
             pep_sign=List,
-            is_supported=not _IS_TYPING_ATTR_TYPEVARED,
             is_typevared=_IS_TYPING_ATTR_TYPEVARED,
             piths_satisfied=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -359,7 +420,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic list.
         List[T]: PepHintMetadata(
             pep_sign=List,
-            is_supported=False,
             is_typevared=True,
             type_origin=list,
         ),
@@ -376,7 +436,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Match: PepHintMetadata(
         #     pep_sign=Match,
         #     is_supported=False,
-        #     is_pep484_user=False,
+        #     is_pep484_generic=False,
         #     # "AnyStr" and hence "Match" (which is coercively
         #     # parametrized by "AnyStr") is only a type variable proper under
         #     # Python >= 3.7.0, which is frankly insane. Welcome to "typing".
@@ -395,9 +455,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # ),
 
         # ................{ TUPLE                             }................
-        # Argumentless "Tuple" attribute. Note that this attribute is *NOT*
+        # Unsubscripted "Tuple" attribute. Note that this attribute is *NOT*
         # parametrized by one or more type variables under any Python version,
-        # unlike most other argumentless "typing" attributes originating from
+        # unlike most other unsubscripted "typing" attributes originating from
         # container types. Non-orthogonality, thy name is the "typing" module.
         Tuple: PepHintMetadata(
             pep_sign=Tuple,
@@ -564,6 +624,13 @@ def add_data(data_module: 'ModuleType') -> None:
             type_origin=tuple,
         ),
 
+        # Generic fixed-length tuple.
+        Tuple[S, T]: PepHintMetadata(
+            pep_sign=Tuple,
+            is_typevared=True,
+            type_origin=tuple,
+        ),
+
         # ................{ TUPLE ~ variadic                  }................
         # Variadic tuple.
         Tuple[str, ...]: PepHintMetadata(
@@ -598,7 +665,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic variadic tuple.
         Tuple[T, ...]: PepHintMetadata(
             pep_sign=Tuple,
-            is_supported=False,
             is_typevared=True,
             type_origin=tuple,
         ),
@@ -606,7 +672,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TYPE                              }................
         Type: PepHintMetadata(
             pep_sign=Type,
-            is_supported=not _IS_TYPING_ATTR_TYPEVARED,
             is_typevared=_IS_TYPING_ATTR_TYPEVARED,
             piths_satisfied=(
                 # Transitive superclass of all superclasses.
@@ -638,7 +703,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic type.
         Type[T]: PepHintMetadata(
             pep_sign=Type,
-            is_supported=False,
             is_typevared=True,
             type_origin=type,
         ),
@@ -647,7 +711,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Type variable.
         T: PepHintMetadata(
             pep_sign=TypeVar,
-            is_supported=False,
         ),
 
         # ................{ UNION                             }................
@@ -667,7 +730,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # For this reason, these arguments *MUST* be omitted below.
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        # Ignorable argumentless "Union" attribute.
+        # Ignorable unsubscripted "Union" attribute.
         Union: PepHintMetadata(
             pep_sign=Union,
             piths_satisfied=(
@@ -833,7 +896,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Union of one non-"typing" type and one concrete generic.
         Union[str, Iterable[Tuple[S, T]]]: PepHintMetadata(
             pep_sign=Union,
-            is_supported=False,
             is_typevared=True,
         ),
 
@@ -984,7 +1046,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ UNION ~ optional                  }................
-        # Ignorable argumentless "Optional" attribute.
+        # Ignorable unsubscripted "Optional" attribute.
         Optional: PepHintMetadata(
             pep_sign=Optional,
             piths_satisfied=(
@@ -1003,7 +1065,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Optional isinstance()-able "typing" type.
         Optional[Sequence[str]]: PepHintMetadata(
             # Subscriptions of the "Optional" attribute reduce to
-            # fundamentally different argumentless typing attributes depending
+            # fundamentally different unsubscripted typing attributes depending
             # on Python version. Specifically, under:
             # * Python >= 3.9.0, the "Optional" and "Union"
             #   attributes are distinct.
@@ -1048,42 +1110,105 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ USER-DEFINED GENERIC              }................
-        PepGenericUntypevaredSingle: PepHintMetadata(
+        # Generic subclassing a single unparametrized "typing" type.
+        Pep484GenericUntypevaredSingle: PepHintMetadata(
             pep_sign=List,
-            is_pep484_user=True,
+            is_pep484_generic=True,
             piths_satisfied=(
-                # List of string constants.
-                [
+                # Subclass-specific generic list of string constants.
+                Pep484GenericUntypevaredSingle((
                     'Forgive our Vocation’s vociferous publications',
                     'Of',
-                ],
+                )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
                 PepHintPithUnsatisfiedMetadata(
                     'Hourly sybaritical, pub sabbaticals'),
-                # List of integer constants.
-                PepHintPithUnsatisfiedMetadata([1, 3, 13, 87, 1053, 28576,]),
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    'Materially ostracizing, itinerant‐',
+                    'Anchoretic digimonks initiating',
+                ]),
             ),
-            type_origin=list,
         ),
-        PepGenericTypevaredSingle: PepHintMetadata(
+
+        # Generic subclassing a single parametrized "typing" type.
+        Pep484GenericTypevaredSingle: PepHintMetadata(
             pep_sign=Generic,
-            is_supported=False,
-            is_pep484_user=True,
+            is_pep484_generic=True,
             is_typevared=True,
+            piths_satisfied=(
+                # Subclass-specific generic.
+                Pep484GenericTypevaredSingle(),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'An arterially giving, triage nature — '
+                    'like this agat‐adzing likeness'
+                ),
+            ),
         ),
-        PepGenericTypevaredShallowMultiple: PepHintMetadata(
+
+        # Generic subclassing multiple unparametrized "typing" types *AND* a
+        # non-"typing" abstract base class (ABC).
+        Pep484GenericUntypevaredMultiple: PepHintMetadata(
             pep_sign=Generic,
-            is_supported=False,
-            is_pep484_user=True,
-            is_typevared=True,
+            is_pep484_generic=True,
+            piths_satisfied=(
+                # Subclass-specific generic 2-tuple of string constants.
+                Pep484GenericUntypevaredMultiple((
+                    'Into a viscerally Eviscerated eras’ meditative hallways',
+                    'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Initiations'),
+                # 2-tuple of string constants.
+                PepHintPithUnsatisfiedMetadata((
+                    "Into a fat mendicant’s",
+                    'Endgame‐defendant, dedicate rants',
+                )),
+            ),
         ),
-        PepGenericTypevaredDeepMultiple: PepHintMetadata(
+
+        # Generic subclassing multiple parametrized "typing" types.
+        Pep484GenericTypevaredShallowMultiple: PepHintMetadata(
             pep_sign=Generic,
-            is_supported=False,
-            is_pep484_user=True,
+            is_pep484_generic=True,
             is_typevared=True,
+            piths_satisfied=(
+                # Subclass-specific generic iterable of string constants.
+                Pep484GenericTypevaredShallowMultiple((
+                    "Of foliage's everliving antestature —",
+                    'In us, Leviticus‐confusedly drunk',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
+            ),
+        ),
+
+        # Generic subclassing multiple indirectly parametrized "typing" types
+        # *AND* a non-"typing" abstract base class (ABC).
+        Pep484GenericTypevaredDeepMultiple: PepHintMetadata(
+            pep_sign=Generic,
+            is_pep484_generic=True,
+            is_typevared=True,
+            piths_satisfied=(
+                # Subclass-specific generic iterable of string constants.
+                Pep484GenericTypevaredDeepMultiple((
+                    'Inertially tragicomipastoral, pastel anticandour —',
+                    'remanding undemanding',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Invitations'),
+            ),
         ),
     })
 
@@ -1097,7 +1222,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # "beartype._util.hint.data.pep.utilhintdatapep.TYPING_ATTR_TO_TYPE_ORIGIN"
             # dictionary for detailed discussion.
 
-            # Argumentless "Hashable" attribute.
+            # Unsubscripted "Hashable" attribute.
             Hashable: PepHintMetadata(
                 pep_sign=Hashable,
                 piths_satisfied=(
@@ -1119,7 +1244,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 type_origin=collections_abc.Hashable,
             ),
 
-            # Argumentless "Sized" attribute.
+            # Unsubscripted "Sized" attribute.
             Sized: PepHintMetadata(
                 pep_sign=Sized,
                 piths_satisfied=(
@@ -1175,11 +1300,14 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Add PEP 484-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_DEEP_IGNORABLE.update((
-        # Unions containing any shallowly ignorable type hint.
+        # Unions containing any ignorable type hint.
         Union[Any, float, str,],
         Union[complex, int, object,],
 
-        # Optionals containing any shallowly ignorable type hint.
+        # Optionals containing any ignorable type hint.
         Optional[Any],
         Optional[object],
+
+        # Parametrizations of the "typing.Generic" abstract base class (ABC).
+        Generic[S, T],
     ))

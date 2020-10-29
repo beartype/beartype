@@ -89,8 +89,14 @@ from argparse import (
     _SubParsersAction,
     ArgumentParser as _ArgumentParser,
 )
+from beartype.roar import (
+    BeartypeCallCheckUnavailableTypeException as
+    _BeartypeCallCheckUnavailableTypeException
+)
 from beartype._cave.abc import _BoolType
 from beartype._cave.mapping import _NoneTypeOrType
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9 as _IS_PYTHON_AT_LEAST_3_9)
 from collections import deque as _deque
 from collections.abc import (
     Collection as _Collection,
@@ -153,7 +159,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # #     **This type is unavailable under Python 3.5,** where it defaults to
 # #     :class:`UnavailableType` for safety.
 # try:
-#     from collections.abc import Collection as _Collection
+#     _Collection = type(list[str])
 # # If this is Python 3.5, define placeholder globals of the same name.
 # except ImportError:
 #     _Collection = None
@@ -169,13 +175,19 @@ class UnavailableType(object):
     third-party dependencies).
     '''
 
-    pass
+    def __instancecheck__(self, obj):
+        raise _BeartypeCallCheckUnavailableTypeException(
+            f'{self} not passable as the second parameter to isinstance().')
+
+    def __subclasscheck__(self, cls):
+        raise _BeartypeCallCheckUnavailableTypeException(
+            f'{self} not passable as the second parameter to issubclass().')
 
 
 def _get_type_or_unavailable(cls: type) -> type:
     '''
-    Return the passed type if non-``None`` *or* :class:`UnavailableType`
-    otherwise (i.e., if this type is ``None``).
+    Passed type if non-``None`` *or* :class:`UnavailableType` otherwise (i.e.,
+    if this type is ``None``).
     '''
 
     return UnavailableType if cls is None else cls
@@ -438,7 +450,6 @@ callables implemented in pure Python containing one or more ``yield``
 statements whose declaration is preceded by the ``async`` keyword) if the
 active Python interpreter is at least version 3.6.0 *or*
 :class:`UnavailableType` otherwise.
-
 
 Caveats
 ----------
@@ -884,6 +895,25 @@ that enumeration's type and should be directly referenced as such: e.g.,
     ... def our_feet_were_soft_in_flowers(superlative: EndymionType) -> str:
     ...     return str(superlative).lower()
 '''
+
+# ....................{ TYPES ~ hint                      }....................
+HintPep585Type = UnavailableType
+'''
+C-based type of all `PEP 585`_-compliant **type hint** (i.e., C-based type hint
+instantiated by subscripting either a concrete builtin container class like
+:class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
+the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable` or
+:class:`collections.abc.Sequence`) if the active Python interpreter targets at
+least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+# If the active Python interpreter targets at least Python >= 3.9 and thus
+# supports PEP 585, correctly declare this type.
+if _IS_PYTHON_AT_LEAST_3_9:
+    HintPep585Type = type(list[str])
 
 # ....................{ TYPES ~ scalar                    }....................
 BoolType = _BoolType

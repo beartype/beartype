@@ -794,6 +794,9 @@ PEP-compliant Type Hints
 <PEP 0_>`__:
 
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
+* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
+  544_>`_.
+* `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
 * `PEP 572 -- Assignment Expressions <PEP 572_>`__.
 * `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 
@@ -803,9 +806,6 @@ PEP-compliant Type Hints
   detailed below <PEP 484 Compliance_>`__
 * `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
   <PEP 484 Compliance_>`__.
-* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
-  544_>`_.
-* `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
@@ -843,11 +843,11 @@ values annotated with these typing_ types:
 * typing.Text_.
 * typing.Tuple_.
 * typing.Union_.
-* **Single-inherited generics** (i.e., classes subclassing exactly one
-  possibly non-class typing_ object).
-* **Single-inherited protocols** (i.e., classes directly subclassing *only* the
-  typing.Protocol_ abstract base class (ABC)), including both user-defined
-  and typing_ single-inherited protocols:
+* **Generics** (i.e., classes subclassing one or more typing_ non-class
+  objects).
+* **Protocols** (i.e., classes directly subclassing the typing.Protocol_
+  abstract base class (ABC) *and* zero or more typing_ non-class objects),
+  including:
   * typing.SupportsAbs_.
   * typing.SupportsBytes_.
   * typing.SupportsComplex_.
@@ -890,11 +890,10 @@ types:
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
-* **Multiple-inherited generics** (i.e., user-defined classes subclassing one
-  or more possibly non-classes typing_ objects).
-* **Multiple-inherited protocols** (i.e., user-defined classes directly
-  subclassing one typing.Protocol_ ABC *and* one or more typing_ non-class
-  objects).
+* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
+  type-checking of generically substitutable types).
+* **Type variable-parametrized types** (i.e., typing_ objects subscripted by
+  one or more type variables).
 
 Subsequent ``beartype`` versions will deeply type-check these typing_ types
 while preserving our `O(1) time complexity (with negligible constant factors)
@@ -920,10 +919,6 @@ typing_ types:
   typing.ForwardRef_ instances).
 * **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
   one or more `forward references <relative forward references_>`__).
-* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
-  type-checking of generically substitutable types).
-* **Type variable-parametrized types** (i.e., typing_ objects subscripted by
-  one or more type variables).
 
 ``beartype`` currently silently ignores these typing_ types at decoration time:
 
@@ -1026,7 +1021,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Generator_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Generic_                     | **0.4.0**\ —\ *current*       | *none*                    |
+|             | typing.Generic_                     | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Hashable_                    | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1066,7 +1061,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Pattern_                     | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Protocol_                    | **0.4.0**\ —\ *current*       | *none*                    |
+|             | typing.Protocol_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Reversible_                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1110,9 +1105,9 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | PEP         | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `544 <PEP 544_>`__                  | **0.4.0**\ —\ *current*       | *none*                    |
+|             | `544 <PEP 544_>`__                  | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `560 <PEP 560_>`__                  | **0.4.0**\ —\ *current*       | *none*                    |
+|             | `560 <PEP 560_>`__                  | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `563 <PEP 563_>`__                  | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

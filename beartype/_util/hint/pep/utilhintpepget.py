@@ -148,10 +148,6 @@ def get_hint_pep_typevars(hint: object) -> tuple:
 
 # ....................{ GETTERS ~ sign                    }....................
 #FIXME: Revise docstring to account for refactorings imposed by PEP 585.
-#FIXME: Does this getter *REALLY* need to detect type variables? We suspect the
-#answer is "almost certainly not", as type variable detection should ideally
-#occur outside the standard argumentless typing attribute logic path. Consider
-#dropping the internal detection this getter performs for type variables.
 
 @callable_cached
 def get_hint_pep_sign(hint: object) -> dict:
@@ -183,7 +179,7 @@ def get_hint_pep_sign(hint: object) -> dict:
       :attr:`typing.Union` singleton subscripted by both that argument and
       ``type(None)``. Ergo, there effectively exists *no*
       :attr:`typing.Optional` attribute with respect to categorization.
-    * Else, the argumentless :mod:`typing` attribute dynamically retrieved by
+    * Else, the unsubscripted :mod:`typing` attribute dynamically retrieved by
       inspecting this hint's **object representation** (i.e., the
       non-human-readable string returned by the :func:`repr` builtin).
 
@@ -245,70 +241,54 @@ def get_hint_pep_sign(hint: object) -> dict:
     '''
 
     # Avoid circular import dependencies.
+    from beartype.cave import HintPep585Type
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep,
         is_hint_pep_typevar,
     )
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        get_hint_pep484_generic_single_base_or_none,
         is_hint_pep484_generic,
     )
+    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
+    #
+    # Note that we intentionally avoid calling the
+    # die_unless_hint_pep_supported() function here, which calls the
+    # is_hint_pep_supported() function, which calls this function.
     die_unless_hint_pep(hint)
     # Else, this hint is PEP-compliant.
 
-    # If this hint is a generic (i.e., class subclassing one or more "typing"
-    # pseudo-superclasses)...
+    # If this hint is a PEP 484-compliant generic (i.e., class subclassing one
+    # or more "typing" pseudo-superclasses), return the "typing.Generic" ABC
+    # generically (...get it?) identifying multiple-inherited generics.
+    #
+    # Note that the "typing" module guarantees *ALL* generics to subclass
+    # this ABC regardless of whether those generics originally did so
+    # explicitly. How? By type erasure, the gift that keeps on giving:
+    #     >>> import typing as t
+    #     >>> class MuhList(t.List): pass
+    #     >>> MuhList.__orig_bases__
+    #     (typing.List)
+    #     >>> MuhList.__mro__
+    #     (__main__.MuhList, list, typing.Generic, object)
+    #
+    # Ergo, this ABC uniquely identifies *ALL* generics and thus serves as
+    # a sufficient and complete unsubscripted "typing" attribute.
     #
     # Note that generics *CANNOT* be detected by the general-purpose logic
-    # performed below, as the "typing.Generic" abstract base class (ABC) does
-    # *NOT* define a __repr__() dunder method returning a string prefixed by
-    # the non-standard "typing." substring.
+    # performed below, as this ABC does *NOT* define a __repr__() dunder method
+    # returning a string prefixed by the "typing." substring.
     if is_hint_pep484_generic(hint):
-        # Reduce this hint to the pseudo-superclass subclassed by this hint if
-        # this hint is a single-inherited generic (i.e., class subclassing
-        # exactly one "typing" pseudo-superclass) if this object is a
-        # single-inherited generic *OR* "None" otherwise.
-        hint = get_hint_pep484_generic_single_base_or_none(hint)
-
-        # If this hint is *NOT* a single-inherited generic, return the
-        # "typing.Generic" ABC generically identifying *ALL* generics.
-        #
-        # Note that the "typing" module guarantees *ALL* generics to subclass
-        # this ABC regardless of whether those generics originally did so
-        # explicitly. How? By type erasure, the gift that keeps on giving:
-        #     >>> import typing as t
-        #     >>> class MuhList(t.List): pass
-        #     >>> MuhList.__orig_bases__
-        #     (typing.List)
-        #     >>> MuhList.__mro__
-        #     (__main__.MuhList, list, typing.Generic, object)
-        #
-        # Ergo, this ABC uniquely identifies *ALL* generics and thus serves as
-        # a sufficient and complete argumentless "typing" attribute.
-        if hint is None:
-            return Generic
-        # Else, this hint is a single-inherited generic.
-        #
-        # If this pseudo-superclass is an actual superclass (e.g.,
-        # "typing.Protocol") rather than a pseudo-superclass (e.g.,
-        # "typing.Protocol[typing.TypeVar('T')]", which silently ceases to be
-        # an actual superclass as soon as it is indexed by a type variable),
-        # return this class as is.
-        #
-        # Note that classes *CANNOT* be detected by the general-purpose
-        # logic performed below, as their __repr__() dunder methods default to
-        # the standard implementation for classes returning strings resembling
-        # "<class '{cls.__name__}'>" rather than "typing.{cls.__name__}".
-        elif isinstance(hint, type):
-            return hint
-        # Else, this pseudo-superclass is a non-standard "typing" object. In
-        # this case, permit this pseudo-superclass to be munged below.
+        return Generic
     # Else, this hint is PEP-compliant but *NOT* a generic.
     #
-    # Else if this hint is a type variable, return a dictionary constant
-    # mapping from the common type of all such variables.
+    # If this hint is PEP 585-compliant type hint, return the C-based ABC
+    # generically identifying *ALL* such hints.
+    elif is_hint_pep585(hint):
+        return HintPep585Type
+    # If this hint is a type variable, return a dictionary constant mapping
+    # from the common type of all such variables.
     #
     # Note that type variables *CANNOT* be detected by the general-purpose
     # logic performed below, as the TypeVar.__repr__() dunder method insanely
@@ -352,8 +332,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     if not sign_name.startswith('typing.'):
         raise BeartypeDecorHintPepException(
             f'PEP 484-compliant type hint {repr(hint)} '
-            f'representation "{sign_name}" '
-            f'not prefixed by "typing.".'
+            f'representation "{sign_name}" not prefixed by "typing.".'
         )
 
     # Strip the now-harmful "typing." prefix from this representation.

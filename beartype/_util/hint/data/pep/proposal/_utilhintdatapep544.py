@@ -34,9 +34,28 @@ def add_data(data_module: 'ModuleType') -> None:
         https://www.python.org/dev/peps/pep-0544
     '''
 
-    # ..................{ SETS ~ supported                  }..................
-    # If the active Python interpreter targets at least Python >= 3.8 and thus
-    # supports PEP 544, add the PEP 544-specific signs introduced in this
-    # version.
-    if IS_PYTHON_AT_LEAST_3_8:
-        data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.update({typing.Protocol,})
+    # If the active Python interpreter does *NOT* target at least Python >= 3.8
+    # and thus fails to support PEP 544, silently reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_8:
+        return
+    # Else, the active Python interpreter targets at least Python >= 3.9 and
+    # thus supports PEP 593.
+
+    # Defer Python version-specific imports.
+    from typing import Protocol
+
+    # Register the version-specific signs introduced in this version.
+    #
+    # Note that ignoring the "typing.Protocol" superclass is vital here. For
+    # unknown and presumably uninteresting reasons, *ALL* possible objects
+    # satisfy this superclass. Ergo, this superclass is synonymous with the
+    # "object" root superclass: e.g.,
+    #     >>> import typing as t
+    #     >>> isinstance(object(), t.Protocol)
+    #     True
+    #     >>> isinstance('ok', t.Protocol)
+    #     True
+    #     >>> isinstance(3333, t.Protocol)
+    #     True
+    data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.add(Protocol)
+    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)

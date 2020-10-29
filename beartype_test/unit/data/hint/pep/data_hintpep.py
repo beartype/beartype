@@ -39,7 +39,7 @@ describing those hints with metadata applicable to testing scenarios.
 These hints do *not* conform to standard expectations for PEP-compliant type
 hints and must thus be segregated from those that do conform (which is most of
 them) to avoid spurious issues throughout downstream unit tests. In particular,
-these hints are *not* uniquely identified by argumentless :mod:`typing`
+these hints are *not* uniquely identified by unsubscripted :mod:`typing`
 attributes.
 '''
 

@@ -290,6 +290,20 @@ class BeartypeCallCheckException(BeartypeCallException, metaclass=_ABCMeta):
 
     pass
 
+
+class BeartypeCallCheckUnavailableTypeException(BeartypeCallCheckException):
+    '''
+    **Beartyped callable unavailable type exceptions.**
+
+    This exception is raised from the :class:`beartype.cave.UnavailableType`
+    class when passed to either the :func:`isinstance` or :func:`issubclass`
+    builtin functions, typically due to a type defined by the
+    :class:`beartype.cave` submodule being conditionally unavailable under the
+    active Python interpreter.
+    '''
+
+    pass
+
 # ....................{ CALL ~ type : pep                 }....................
 class BeartypeCallCheckPepException(
     BeartypeCallCheckException, metaclass=_ABCMeta):

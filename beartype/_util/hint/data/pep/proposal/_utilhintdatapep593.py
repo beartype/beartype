@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -34,9 +33,16 @@ def add_data(data_module: 'ModuleType') -> None:
         https://www.python.org/dev/peps/pep-0593
     '''
 
-    # ..................{ SETS ~ supported                  }..................
-    # If the active Python interpreter targets at least Python >= 3.9 and thus
-    # supports PEP 593, add the PEP 593-specific signs introduced in this
-    # version.
-    if IS_PYTHON_AT_LEAST_3_9:
-        data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.update({typing.Annotated,})
+    # If the active Python interpreter does *NOT* target at least Python >= 3.9
+    # and thus fails to support PEP 593, silently reduce to a noop.
+    if not IS_PYTHON_AT_LEAST_3_9:
+        return
+    # Else, the active Python interpreter targets at least Python >= 3.9 and
+    # thus supports PEP 593.
+
+    # Defer Python version-specific imports.
+    from typing import Annotated
+
+    # Register the version-specific signs introduced in this version.
+    data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.add(Annotated)
+    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Annotated)

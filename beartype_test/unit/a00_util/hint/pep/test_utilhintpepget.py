@@ -28,7 +28,7 @@ def test_get_hint_pep_sign_pass() -> None:
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
-    # Assert this getter returns the expected argumentless "typing" attribute
+    # Assert this getter returns the expected unsubscripted "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.
     for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
         assert get_hint_pep_sign(hint_pep) == hint_pep_meta.pep_sign

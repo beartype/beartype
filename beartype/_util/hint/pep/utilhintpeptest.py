@@ -16,11 +16,14 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    is_hint_pep484_generic,
-    is_hint_pep484_generic_multiple,
+from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_SIGNS_IGNORABLE,
+    HINT_PEP_SIGNS_SUPPORTED,
 )
-from beartype._util.hint.data.pep.utilhintdatapep import HINT_PEP_SIGNS_SUPPORTED
+from beartype._util.hint.pep.proposal.utilhintpep484 import (
+    is_hint_pep484_ignorable)
+from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    is_hint_pep593_ignorable)
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
@@ -32,10 +35,30 @@ from typing import TypeVar
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX = 'currently unsupported by @beartype.'
+_IS_HINT_PEP_IGNORABLE_TESTERS = (
+    is_hint_pep484_ignorable,
+    is_hint_pep593_ignorable,
+)
 '''
-Substring suffixing exception messages raised by functions validating objects
-to be supported by the :func:`beartype.beartype` decorator.
+Tuple of all PEP-specific functions testing whether the passed object is an
+ignorable type hint fully compliant with a specific PEP.
+
+Each such function is expected to have a signature resembling:
+
+.. code-block:: python
+
+    def is_hint_pep{PEP_NUMBER}_ignorable(hint: object, hint_sign: object) -> (
+        Optional[bool]):
+        ...
+
+Each such function is expected to return either:
+
+* If the passed object is fully compliant with that PEP:
+
+    * If this object is a ignorable, ``True``.
+    * Else, ``False``.
+
+* If this object is *not* fully compliant with that PEP, ``None``.
 '''
 
 # ....................{ EXCEPTIONS                        }....................
@@ -139,10 +162,10 @@ def die_unless_hint_pep_supported(
 
     Caveats
     ----------
-    **This function should never be called to validate argumentless**
+    **This function should never be called to validate unsubscripted**
     :mod:`typing` **attributes** (e.g., those returned by the
     :func:`beartype._util.hint.pep.get_hint_pep_sign` function). The
-    :func:`die_unless_hint_pep_pep_sign_supported` function should be called
+    :func:`die_unless_hint_pep_sign_supported` function should be called
     instead. Why? Because the :mod:`typing` module implicitly parametrizes
     these attributes by one or more type variables. Since this decorator
     currently fails to support type variables, this function unconditionally
@@ -184,51 +207,31 @@ def die_unless_hint_pep_supported(
     # parameters.
     assert hint_label.__class__ is str, f'{repr(hint_label)} not string.'
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with is_hint_pep_supported() below.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
-    # Else, this hint is PEP-compliant.
 
-    #FIXME: Remove *AFTER* adding support for multiple-inherited generics.
-    # If this hint is a multiple-inherited generic, raise an exception. These
-    # hints require non-trivial decorator support yet to be implemented.
-    if is_hint_pep484_generic_multiple(hint):
-        raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} multiple-inherited generic PEP hint {repr(hint)} '
-            f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
-    #FIXME: Remove *AFTER* adding support for type variables.
-    # Else if this hint is typevared, raise an exception. Type variables
-    # require non-trivial decorator support yet to be implemented.
-    elif is_hint_pep_typevared(hint):
-        raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} "TypeVar"-parametrized PEP hint {repr(hint)} '
-            f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
-
-    # Else, this hint is neither generic nor typevared. In this case, raise a
-    # general-purpose exception.
+    # Else, this hint is PEP-compliant. In this case, raise an exception.
     #
-    # Note that, by definition, the argumentless "typing" argument uniquely
+    # Note that, by definition, the unsubscripted "typing" argument uniquely
     # identifying this hint *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set.
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
         f'{hint_label} PEP hint {repr(hint)} '
-        f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
+        f'currently unsupported by @beartype.'
+    )
 
 
-def die_unless_hint_pep_pep_sign_supported(
+def die_unless_hint_pep_sign_supported(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Argumentless "typing" attribute',
+    hint_label: str = 'Unsubscripted "typing" attribute',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant supported
-    argumentless typing attribute** (i.e., public attribute of the
+    unsubscripted typing attribute** (i.e., public attribute of the
     :mod:`typing` module without arguments uniquely identifying a category of
     PEP-compliant type hints currently supported by the
     :func:`beartype.beartype` decorator).
@@ -254,13 +257,14 @@ def die_unless_hint_pep_pep_sign_supported(
         unsupported by the :func:`beartype.beartype` decorator.
     '''
 
-    # If this hint is *NOT* a supported argumentless "typing" attribute, raise
+    # If this hint is *NOT* a supported unsubscripted "typing" attribute, raise
     # an exception.
-    if not is_hint_pep_pep_sign_supported(hint):
+    if not is_hint_pep_sign_supported(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} {repr(hint)} '
-            f'{_EXCEPTION_MESSAGE_UNSUPPORTED_SUFFIX}')
+            f'{hint_label} PEP sign {repr(hint)} '
+            f'currently unsupported by @beartype.'
+        )
 
 # ....................{ TESTERS                           }....................
 @callable_cached
@@ -304,21 +308,91 @@ def is_hint_pep(hint: object) -> bool:
        https://www.python.org/dev/peps/pep-0484
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.utilhintpep484 import (
+        is_hint_pep484_generic,
+    )
+    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
     hint_type = get_object_type(hint)
 
     # Return true only if either...
     return (
-        # This hint's type is directly defined by the "typing" module and thus
-        # PEP-compliant by definition *OR*...
+        # This hint's type is directly declared by the "typing" module and thus
+        # PEP 484-compliant by definition *OR*...
         is_hint_pep_typing(hint_type) or
-        # This hint is a PEP-compliant generic. Although a small subset of
+        # This hint is a PEP 484-compliant generic. Although a small subset of
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.IO"), most generics are user-defined subclasses defined by
         # user-defined modules residing elsewhere.
-        is_hint_pep484_generic(hint)
+        is_hint_pep484_generic(hint) or
+        # This hint is a PEP 585-compliant type hint.
+        is_hint_pep585(hint)
     )
+
+# ....................{ TESTERS ~ ignorable               }....................
+def is_hint_pep_ignorable(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is an **ignorable PEP-compliant type
+    hint.**
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as this tester is only safely callable
+    by the memoized parent
+    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is an ignorable PEP-compliant type hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
+
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign(hint)
+
+    # If this sign is shallowly ignorable, return true.
+    #
+    # Note this efficiently ignores parametrizations of both the
+    # "typing.Generic" and "typing.Protocol" abstract base classes (ABC) by one
+    # or more type variables. As their names imply, this ABCs are generic and
+    # thus fail to impose any meaningful constraints. Since a type variable in
+    # and of itself also fails to impose any meaningful constraints, these
+    # parametrizations are safely ignorable in all possible contexts: e.g.,
+    #
+    #   from typing import Generic, TypeVar
+    #   T = TypeVar('T')
+    #   def noop(param_hint_ignorable: Generic[T]) -> T: pass
+    if hint in HINT_PEP_SIGNS_IGNORABLE:
+        return True
+    # Else, this sign is *NOT* shallowly ignorable.
+
+    # For each PEP-specific function testing whether this hint is an ignorable
+    # type hint fully compliant with that PEP...
+    for is_hint_pep_ignorable_tester in _IS_HINT_PEP_IGNORABLE_TESTERS:
+        # True only if this hint is a ignorable under this PEP, False only if
+        # this hint is unignorable under this PEP, and None if this hint is
+        # *NOT* compliant with this PEP.
+        is_hint_pep_ignorable_test = is_hint_pep_ignorable_tester(
+            hint, hint_sign)
+
+        # If this hint is compliant with this PEP, return this boolean.
+        if is_hint_pep_ignorable_test is not None:
+            return is_hint_pep_ignorable_test
+        # Else, this hint is *NOT* compliant with this PEP. In this case,
+        # silently continue to the next such tester.
+
+    # Else, this hint is *NOT* deeply ignorable. In this case, return false.
+    return False
 
 # ....................{ TESTERS ~ supported               }....................
 @callable_cached
@@ -353,48 +427,26 @@ def is_hint_pep_supported(hint: object) -> bool:
         ``True`` only if this object is a supported PEP-compliant type hint.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with die_unless_hint_pep_supported().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # If this hint is either...
-    if (
-        # Not PEP-compliant *OR*...
-        not is_hint_pep(hint) or
-        # Is PEP-complaint and is either...
-
-        #FIXME: Remove *AFTER* implementing support for multiple-inherited
-        #generics.
-        # A multiple-inherited generic...
-        #
-        # Multiple-inherited generics require non-trivial decorator support.
-        is_hint_pep484_generic_multiple(hint) or
-
-        #FIXME: Remove *AFTER* implementing support for type variables.
-        # Typevared...
-        #
-        # Type variables require non-trivial decorator support.
-        is_hint_pep_typevared(hint)
-    # Return false.
-    ):
+    # If this hint is *NOT* PEP-compliant, immediately return false.
+    if not is_hint_pep(hint):
         return False
-    # Else, this hint is PEP-compliant, *NOT* a generic, and *NOT* typevared.
+    # Else, this hint is PEP-compliant.
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_sign)
 
-    # Argumentless "typing" attribute uniquely identifying this hint.
+    # Unsubscripted "typing" attribute uniquely identifying this hint.
     hint_pep_sign = get_hint_pep_sign(hint)
 
     # Return true only if this attribute is supported.
-    return is_hint_pep_pep_sign_supported(hint_pep_sign)
+    return is_hint_pep_sign_supported(hint_pep_sign)
 
 
-def is_hint_pep_pep_sign_supported(hint) -> bool:
+def is_hint_pep_sign_supported(hint) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-compliant supported
-    argumentless typing attribute** (i.e., public attribute of the
+    unsubscripted typing attribute** (i.e., public attribute of the
     :mod:`typing` module without arguments uniquely identifying a category of
     PEP-compliant type hints currently supported by the
     :func:`beartype.beartype` decorator).
@@ -411,7 +463,7 @@ def is_hint_pep_pep_sign_supported(hint) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a PEP-compliant supported argumentless
+        ``True`` only if this object is a PEP-compliant supported unsubscripted
         typing attribute.
 
     Raises
@@ -425,7 +477,7 @@ def is_hint_pep_pep_sign_supported(hint) -> bool:
     #     HINT_PEP_SIGNS_DEEP_SUPPORTED)
     # print(f'HINT_PEP_SIGNS_DEEP_SUPPORTED: {HINT_PEP_SIGNS_DEEP_SUPPORTED}')
 
-    # Return true only if this hint is a supported argumentless "typing"
+    # Return true only if this hint is a supported unsubscripted "typing"
     # attribute.
     return hint in HINT_PEP_SIGNS_SUPPORTED
 

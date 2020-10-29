@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import sys
 from beartype._util.hint.data.pep.proposal import (
-    _utilhintdatapep484,
+    utilhintdatapep484,
     _utilhintdatapep544,
     _utilhintdatapep593,
 )
@@ -34,12 +34,28 @@ instances of this class).
 Since any arbitrary object is trivially type-checkable against an
 :func:`isinstance`-able class by passing that object and class to the
 :func:`isinstance` builtin, *all* parameters and return values annotated by
-PEP-compliant type hints subscripting argumentless typing attributes listed in
+PEP-compliant type hints subscripting unsubscripted typing attributes listed in
 this dictionary are shallowly type-checkable from wrapper functions generated
 by the :func:`beartype.beartype` decorator.
 '''
 
-# ....................{ SETS                              }....................
+# ..................{ SETS ~ ignorable                  }..................
+HINT_PEP_SIGNS_IGNORABLE = set()
+'''
+Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints unconditionally ignored by the
+:func:`beartype.beartype` decorator).
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_sign` getter function.
+
+See Also
+----------
+:attr:`beartype._util.hint.data.utilhintdata.HINTS_SHALLOW_IGNORABLE`
+    Further commentary.
+'''
+
+# ....................{ SETS ~ supported                  }....................
 # Initialized by the _init() function below.
 HINT_PEP_SIGNS_DEEP_SUPPORTED = set()
 '''
@@ -107,39 +123,25 @@ This set intentionally excludes the:
    https://docs.python.org/3/library/collections.html#collections.deque
 '''
 
-
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_UNION = set()
-'''
-Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-PEP-compliant type hints unifying one or more subscripted type hint arguments
-into a disjunctive set union of these arguments).
-
-If the active Python interpreter targets:
-
-* At least Python 3.9.0, the :attr:`typing.Optional` and
-  :attr:`typing.Union` attributes are distinct.
-* Less than Python 3.9.0, the :attr:`typing.Optional` attribute reduces to the
-  :attr:`typing.Union` attribute, in which case this set is technically
-  semantically redundant. Since tests of both object identity and set
-  membership are ``O(1)``, this set incurs no significant performance penalty
-  versus direct usage of the :attr:`typing.Union` attribute and is thus
-  unconditionally used as is irrespective of Python version.
-'''
-
 # ....................{ INITIALIZERS                      }....................
-def _init() -> None:
+def add_data(data_module: 'ModuleType') -> None:
     '''
-    Initialize this submodule.
+    Add PEP-compliant type hint data to various global containers declared by
+    the passed module.
+
+    Parameters
+    ----------
+    data_module : ModuleType
+        Module to be added to.
     '''
 
     # Submodule globals to be redefined below.
     global \
-        HINT_PEP_SIGNS_TYPE_ORIGIN, \
         HINT_PEP_SIGNS_DEEP_SUPPORTED, \
-        HINT_PEP_SIGNS_SUPPORTED, \
+        HINT_PEP_SIGNS_IGNORABLE, \
         HINT_PEP_SIGNS_SEQUENCE_STANDARD, \
-        HINT_PEP_SIGNS_UNION
+        HINT_PEP_SIGNS_SUPPORTED, \
+        HINT_PEP_SIGNS_TYPE_ORIGIN
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -147,7 +149,7 @@ def _init() -> None:
 
     # Tuple of all private submodules of this subpackage to be initialized.
     HINT_DATA_PEP_SUBMODULES = (
-        _utilhintdatapep484,
+        utilhintdatapep484,
         _utilhintdatapep544,
         _utilhintdatapep593,
     )
@@ -157,21 +159,22 @@ def _init() -> None:
         hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    assert HINT_PEP_SIGNS_TYPE_ORIGIN, (
-        'Set global "HINT_PEP_SIGNS_TYPE_ORIGIN" empty.')
     assert HINT_PEP_SIGNS_DEEP_SUPPORTED, (
         'Set global "HINT_PEP_SIGNS_DEEP_SUPPORTED" empty.')
+    assert HINT_PEP_SIGNS_IGNORABLE, (
+        'Set global "HINT_PEP_SIGNS_IGNORABLE" empty.')
     assert HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
         'Set global "HINT_PEP_SIGNS_SEQUENCE_STANDARD" empty.')
-    assert HINT_PEP_SIGNS_UNION, 'Set global "HINT_PEP_SIGNS_UNION" empty.'
+    assert HINT_PEP_SIGNS_TYPE_ORIGIN, (
+        'Set global "HINT_PEP_SIGNS_TYPE_ORIGIN" empty.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
     HINT_PEP_SIGNS_DEEP_SUPPORTED = frozenset(HINT_PEP_SIGNS_DEEP_SUPPORTED)
+    HINT_PEP_SIGNS_IGNORABLE = frozenset(HINT_PEP_SIGNS_IGNORABLE)
     HINT_PEP_SIGNS_SEQUENCE_STANDARD = frozenset(
         HINT_PEP_SIGNS_SEQUENCE_STANDARD)
-    HINT_PEP_SIGNS_UNION = frozenset(HINT_PEP_SIGNS_UNION)
+    HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
     HINT_PEP_SIGNS_SUPPORTED = frozenset(
         # Set of all deeply supported signs.
         HINT_PEP_SIGNS_DEEP_SUPPORTED |
@@ -183,6 +186,6 @@ def _init() -> None:
         set((Any,))
     )
 
-
-# Initialize this submodule.
-_init()
+    # Add PEP-compliant type hint data to various global containers declared by
+    # the passed module.
+    data_module.HINTS_SHALLOW_IGNORABLE.update(HINT_PEP_SIGNS_IGNORABLE)

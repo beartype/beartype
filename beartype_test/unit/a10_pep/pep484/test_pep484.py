@@ -64,7 +64,7 @@ def test_pep484() -> None:
     # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
     # instances detailing those hints with metadata applicable to testing
     # scenarios -- regardless of whether those hints are uniquely identified by
-    # argumentless "typing" attributes or not.
+    # unsubscripted "typing" attributes or not.
     HINT_PEP_ALL_TO_META = ChainMap(HINT_PEP_TO_META, HINT_PEP_CLASSED_TO_META)
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
@@ -90,7 +90,7 @@ def test_pep484() -> None:
 
             # Type of exception raised by this wrapper on type-check failures.
             exception_cls = (
-                # If this hint is uniquely identified by an argumentless
+                # If this hint is uniquely identified by an unsubscripted
                 # "typing" attribute, this wrapper raises PEP-compliant
                 # exceptions.
                 BeartypeCallCheckPepException
@@ -234,7 +234,7 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
     for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
         # One or more unerased pseudo-superclasses for user-defined generic
         # PEP-compliant type hints.
-        if pep_hint_meta.is_pep484_user:
+        if pep_hint_meta.is_pep484_generic:
             pep_hint_generic_bases = get_hint_pep484_generic_bases_or_none(
                 pep_hint)
             assert isinstance(pep_hint_generic_bases, tuple)
@@ -275,7 +275,7 @@ def test_is_hint_pep484_generic() -> None:
     # * Accepts generic PEP-compliant type hints.
     # * Rejects concrete PEP-compliant type hints.
     for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep484_generic(pep_hint) is pep_hint_meta.is_pep484_user
+        assert is_hint_pep484_generic(pep_hint) is pep_hint_meta.is_pep484_generic
 
     # Assert this tester rejects non-"typing" types.
     for not_pep_hint in NOT_HINTS_PEP:

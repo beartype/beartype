@@ -44,7 +44,7 @@ def get_cause_or_none_sequence_standard(
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr in HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
+    assert sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
         f'{repr(sleuth.hint)} not standard sequence.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
@@ -54,7 +54,7 @@ def get_cause_or_none_sequence_standard(
         f'multiple arguments.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_pep_type_origin(sleuth.hint_attr)
+    hint_type_origin = get_hint_pep_type_origin(sleuth.hint_sign)
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
@@ -83,7 +83,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_attr is Tuple, f'{repr(sleuth.hint_attr)} not tuple.'
+    assert sleuth.hint_sign is Tuple, f'{repr(sleuth.hint_sign)} not tuple.'
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
@@ -148,15 +148,10 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
             # to satisfy this child hint if this item actually fails to satisfy
             # this child hint *or* "None" otherwise.
             # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
-            sleuth_copy = sleuth.permute(
-                pith=pith_item,
-                hint=hint_child,
-            )
-            pith_item_cause = sleuth_copy.get_cause_or_none()
-            # pith_item_cause = sleuth.permute(
-            #     pith=pith_item,
-            #     hint=hint_child,
-            # ).get_cause_or_none()
+            # sleuth_copy = sleuth.permute(pith=pith_item, hint=hint_child)
+            # pith_item_cause = sleuth_copy.get_cause_or_none()
+            pith_item_cause = sleuth.permute(
+                pith=pith_item, hint=hint_child).get_cause_or_none()
 
             # If this item is the cause of this failure, return a substring
             # describing this failure by embedding this failure (itself
@@ -190,8 +185,8 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
-        sleuth.hint_attr in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
-            sleuth.hint_attr is Tuple and
+        sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
+            sleuth.hint_sign is Tuple and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis
         )
@@ -214,9 +209,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
             # satisfy this child hint if this item actually fails to satisfy
             # this child hint *or* "None" otherwise.
             pith_item_cause = sleuth.permute(
-                pith=pith_item,
-                hint=hint_child,
-            ).get_cause_or_none()
+                pith=pith_item, hint=hint_child).get_cause_or_none()
 
             # If this item is the cause of this failure, return a substring
             # describing this failure by embedding this failure (itself

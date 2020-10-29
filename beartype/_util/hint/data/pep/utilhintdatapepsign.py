@@ -22,7 +22,8 @@ from beartype._util.py.utilpyversion import (
 # the active Python interpreter, falling back to a unique minimally small
 # placeholder under older versions.
 
-if IS_PYTHON_AT_LEAST_3_9:
-    from typing import Annotated
-else:
-    Annotated = Iota()
+#FIXME: Currently unused and possibly fragile.
+# if IS_PYTHON_AT_LEAST_3_9:
+#     from typing import Annotated
+# else:
+#     Annotated = Iota()

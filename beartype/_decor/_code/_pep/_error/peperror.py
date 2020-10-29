@@ -19,19 +19,23 @@ from beartype.roar import (
     _BeartypeUtilRaisePepException,
     _BeartypeUtilRaisePepDesynchronizationException,
 )
-from beartype._decor._code._pep._error._peperrortype import (
-    get_cause_or_none_type_origin)
+from beartype._decor._code._pep._error._peperrorgeneric import (
+    get_cause_or_none_generic)
 from beartype._decor._code._pep._error._peperrorsequence import (
     get_cause_or_none_sequence_standard,
     get_cause_or_none_tuple,
 )
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._code._pep._error._peperrortype import (
+    get_cause_or_none_type_origin)
 from beartype._decor._code._pep._error._peperrorunion import (
     get_cause_or_none_union)
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TYPE_ORIGIN,
-    HINT_PEP_SIGNS_UNION,
+)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
 from beartype._util.text.utiltextlabel import (
@@ -40,7 +44,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Tuple
+from typing import Generic, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -62,12 +66,12 @@ excessively long as to prevent human-readability.
 # unconditionally called below at module scope.
 _TYPING_ATTR_TO_GETTER = {}
 '''
-Dictionary mapping each **argumentless typing attribute** (i.e., public
+Dictionary mapping each **unsubscripted typing attribute** (i.e., public
 attribute of the :mod:`typing` module uniquely identifying a PEP-compliant type
 hints without arguments) to a private getter function defined by this submodule
 whose signature matches that of the :func:`_get_cause_or_none` function and
 which is dynamically dispatched by that function to describe type-checking
-failures specific to that argumentless :mod:`typing` attribute.,
+failures specific to that unsubscripted :mod:`typing` attribute.,
 '''
 
 # ....................{ RAISERS                           }....................
@@ -254,13 +258,14 @@ def _init() -> None:
             get_cause_or_none_sequence_standard)
 
     # Map each unifying "typing" attribute to the appropriate getter.
-    for pep_sign_type_union in HINT_PEP_SIGNS_UNION:
+    for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:
         _TYPING_ATTR_TO_GETTER[pep_sign_type_union] = (
             get_cause_or_none_union)
 
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
     _TYPING_ATTR_TO_GETTER.update({
+        Generic: get_cause_or_none_generic,
         Tuple: get_cause_or_none_tuple,
     })
 

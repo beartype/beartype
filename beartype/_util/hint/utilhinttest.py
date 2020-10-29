@@ -13,20 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
-    die_unless_hint_nonpep, is_hint_nonpep)
-from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_UNION,
-)
-from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign,
+    die_unless_hint_nonpep,
+    is_hint_nonpep,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_unless_hint_pep_supported,
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.hint.pep.utilhintpeptyping import Annotated
 from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -196,29 +190,6 @@ def is_hint_ignorable(hint: object) -> bool:
     '''
     ``True`` only if the passed object is an **ignorable type hint.**
 
-    Specifically, this tester function returns ``True`` only if this object is
-    either:
-
-    * In the finite set of shallowly ignorable type hints defined by the
-      lower-level :data:`HINTS_SHALLOW_IGNORABLE` frozenset.
-    * A deeply ignorable PEP-compliant type hint, including:
-
-      * The :data:`Optional` or :data:`Union` singleton subscripted by one or
-        more ignorable type hints (e.g., ``typing.Union[typing.Any, bool]``).
-        Why? Because unions are by definition only as narrow as their widest
-        child hint. However, shallowly ignorable type hints are ignorable
-        precisely because they are the widest possible hints (e.g.,
-        :class:`object`, :attr:`typing.Any`), which are so wide as to constrain
-        nothing and convey no meaningful semantics. A union of one or more
-        shallowly ignorable child hints is thus the widest possible union,
-        which is so wide as to constrain nothing and convey no meaningful
-        semantics. Since there exist a countably infinite number of possible
-        :data:`Union` subscriptions by one or more shallowly ignorable type
-        hints, these subscriptions *cannot* be explicitly listed in the
-        :data:`HINTS_SHALLOW_IGNORABLE` frozenset. Instead, these subscriptions
-        are dynamically detected by this tester at runtime and thus referred to
-        as **deeply ignorable type hints.**
-
     This tester function is memoized for efficiency.
 
     Parameters
@@ -246,25 +217,15 @@ def is_hint_ignorable(hint: object) -> bool:
 
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
-        # Argumentless typing attribute uniquely identifying this hint.
-        hint_attr = get_hint_pep_sign(hint)
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpeptest import (
+            is_hint_pep_ignorable)
 
-        # If this hint is a union, return true only if...
-        if hint_attr in HINT_PEP_SIGNS_UNION:
-            # Any child hint of this union is recursively ignorable. See the
-            # function docstring for an explanatory justification.
-            return any(
-                is_hint_ignorable(hint_child)
-                for hint_child in get_hint_pep_args(hint)
-            )
-        # If this hint is annotated, return true only if the origin is
-        # recursively ignorable (e.g., the "Sequence[str]" in
-        # "Annotated[Sequence[str], 50, False]").
-        elif hint_attr is Annotated:
-            return is_hint_ignorable(hint.__origin__)
-        # Else, this hint is *NOT* deeply ignorable.
+        # Defer to the function testing whether this hint is an ignorable
+        # PEP-compliant type hint.
+        return is_hint_pep_ignorable(hint)
+
     # Else, this hint is PEP-noncompliant and thus *NOT* deeply ignorable.
-
-    # Else, this hint is neither shallowly nor deeply ignorable. In this case,
-    # return false.
+    # Since this hint is also *NOT* shallowly ignorable, this hint is
+    # unignorable. In this case, return false.
     return False

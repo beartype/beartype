@@ -68,7 +68,7 @@ def test_is_hint_pep_typing() -> None:
     # stdlib classes defined in the "typing" module (e.g., "typing.IO"). Let's
     # avoid rendering this any more fragile than we have.
     for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        if not pep_hint_meta.is_pep484_user:
+        if not pep_hint_meta.is_pep484_generic:
             assert is_hint_pep_typing(pep_hint) is True
 
     # Assert this tester rejects non-"typing" types.
@@ -148,10 +148,10 @@ def test_die_unless_hint_pep_supported() -> None:
             die_unless_hint_pep_supported(non_hint_unhashable)
 
 
-def test_die_unless_hint_pep_pep_sign_supported() -> None:
+def test_die_unless_hint_pep_sign_supported() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.die_unless_hint_pep_pep_sign_supported`
+    :func:`beartype._util.hint.pep.utilhintpeptest.die_unless_hint_pep_sign_supported`
     validator.
     '''
 
@@ -161,27 +161,27 @@ def test_die_unless_hint_pep_pep_sign_supported() -> None:
         BeartypeDecorHintPepUnsupportedException,
     )
     from beartype._util.hint.pep.utilhintpeptest import (
-        die_unless_hint_pep_pep_sign_supported)
+        die_unless_hint_pep_sign_supported)
     from beartype._util.hint.data.pep.utilhintdatapep import HINT_PEP_SIGNS_SUPPORTED
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP
 
-    # Assert this tester accepts all supported argumentless "typing"
+    # Assert this tester accepts all supported unsubscripted "typing"
     # attributes.
     for pep_signs_supported in HINT_PEP_SIGNS_SUPPORTED:
-        die_unless_hint_pep_pep_sign_supported(pep_signs_supported)
+        die_unless_hint_pep_sign_supported(pep_signs_supported)
 
     # Assert this tester rejects PEP-compliant type hints that are *NOT*
-    # supported argumentless "typing" attributes.
+    # supported unsubscripted "typing" attributes.
     for pep_hint in HINTS_PEP:
         if pep_hint not in HINT_PEP_SIGNS_SUPPORTED:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint_pep_pep_sign_supported(pep_hint)
+                die_unless_hint_pep_sign_supported(pep_hint)
 
     # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
     for not_pep_hint in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            die_unless_hint_pep_pep_sign_supported(not_pep_hint)
+            die_unless_hint_pep_sign_supported(not_pep_hint)
 
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:
