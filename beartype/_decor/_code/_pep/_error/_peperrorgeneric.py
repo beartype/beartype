@@ -16,8 +16,6 @@ from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_or_none)
 from typing import Generic
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -50,17 +48,8 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> 'Optional[str]':
         return get_cause_or_none_type(sleuth)
     # Else, this pith is an instance of this generic.
 
-    # Tuple of the one or more unerased pseudo-superclasses (i.e., "typing"
-    # objects originally listed as superclasses prior to their implicit type
-    # erasure by the "typing" module) subclassed by this generic.
-    hint_bases = get_hint_pep484_generic_bases_or_none(sleuth.hint)
-
-    # Assert this generic subclassed at least one pseudo-superclass.
-    assert hint_bases, (
-        f'PEP generic {repr(sleuth.hint)} subclasses no superclasses.')
-
     # For each pseudo-superclass of this generic...
-    for hint_base in hint_bases:
+    for hint_base in sleuth.hint_childs:
         # If this pseudo-superclass is either...
         if (
             # An actual superclass, this pseudo-superclass is effectively

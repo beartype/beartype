@@ -19,7 +19,7 @@
 from abc import abstractmethod
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
-    PepHintClassedMetadata,
+    PepHintMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
 
@@ -46,7 +46,13 @@ def add_data(data_module: 'ModuleType') -> None:
     # thus supports PEP 544.
 
     # Defer Python >= 3.8-specific imports.
-    from typing import Protocol, SupportsInt, TypeVar, runtime_checkable
+    from typing import (
+        Generic,
+        Protocol,
+        SupportsInt,
+        TypeVar,
+        runtime_checkable,
+    )
 
     # Type variables.
     S = TypeVar('S')
@@ -84,9 +90,16 @@ def add_data(data_module: 'ModuleType') -> None:
     # Instance of this class.
     protocol_custom_structural = ProtocolCustomStructural()
 
-    # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
-    # explicitly subclassing the predefined "typing.SupportsInt" protocol.
-    class SupportsIntStructural(object):
+    # User-defined protocol structurally (i.e., implicitly) satisfying
+    # *WITHOUT* explicitly subclassing the predefined "typing.SupportsInt"
+    # abstract base class (ABC).
+    #
+    # Note that the implementations of this and *ALL* other predefined "typing"
+    # protocols (e.g., "typing.SupportsFloat") bundled with older Python
+    # versions < 3.8 are *NOT* safely type-checkable at runtime. For safety
+    # , tests against *ALL* protocols including these previously predefined
+    # protocols *MUST* be isolated to this submodule.
+    class ProtocolSupportsInt(object):
         def __int__(self) -> int:
             return 42
 
@@ -95,25 +108,15 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ PROTOCOLS                         }................
         # Despite appearances, protocols implicitly subclass "typing.Generic"
         # and thus do *NOT* transparently reduce to standard types.
-
-        # Predefined "typing" protocol.
-        SupportsInt: PepHintClassedMetadata(
-            pep_sign=Protocol,
-            is_pep484_generic=True,
-            piths_satisfied=(
-                # Structurally subtyped instance.
-                SupportsIntStructural(),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata('For durance needs.'),
-            ),
-        ),
+        #
+        # Note that the "data_hintpep484" submodule already exercises
+        # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
+        # were technically introduced with PEP 484 and thus available since
+        # Python >= 3.4 or so.
 
         # User-defined protocol parametrized by *NO* type variables.
-        ProtocolCustomUntypevared: PepHintClassedMetadata(
-            pep_sign=Protocol,
-            is_pep484_generic=True,
+        ProtocolCustomUntypevared: PepHintMetadata(
+            pep_sign=Generic,
             piths_satisfied=(protocol_custom_structural,),
             piths_unsatisfied_meta=(
                 # String constant.
@@ -122,19 +125,31 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # User-defined protocol parametrized by a type variable.
-        ProtocolCustomTypevared: PepHintClassedMetadata(
-            pep_sign=Protocol,
-            is_pep484_generic=True,
+        ProtocolCustomTypevared: PepHintMetadata(
+            pep_sign=Generic,
             piths_satisfied=(protocol_custom_structural,),
             piths_unsatisfied_meta=(
                 # String constant.
                 PepHintPithUnsatisfiedMetadata('Machist-'),
             ),
         ),
+
+        # Predefined "typing" protocol.
+        SupportsInt: PepHintMetadata(
+            pep_sign=Generic,
+            piths_satisfied=(
+                # Structurally subtyped instance.
+                ProtocolSupportsInt(),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('For durance needs.'),
+            ),
+        ),
     })
 
     # Add PEP 484-specific deeply ignorable test type hints to that set global.
-    data_module.HINTS_PEP_DEEP_IGNORABLE.update((
+    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Parametrizations of the "typing.Protocol" abstract base class (ABC).
         Protocol[S, T],
     ))

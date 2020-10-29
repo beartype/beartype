@@ -80,7 +80,7 @@ def add_data(data_module: 'ModuleType') -> None:
     })
 
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
-    data_module.HINTS_PEP_DEEP_IGNORABLE.update((
+    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Annotated of shallowly ignorable type hints.
         Annotated[Any, int],
         Annotated[object, int],

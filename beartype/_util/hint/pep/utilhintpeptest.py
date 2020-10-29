@@ -17,13 +17,14 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_IGNORABLE,
     HINT_PEP_SIGNS_SUPPORTED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    is_hint_pep484_ignorable)
+    is_hint_pep484_ignorable_or_none)
+from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
-    is_hint_pep593_ignorable)
+    is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import (
     get_object_module_name_or_none,
     get_object_type,
@@ -36,8 +37,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
 _IS_HINT_PEP_IGNORABLE_TESTERS = (
-    is_hint_pep484_ignorable,
-    is_hint_pep593_ignorable,
+    is_hint_pep484_ignorable_or_none,
+    is_hint_pep544_ignorable_or_none,
+    is_hint_pep593_ignorable_or_none,
 )
 '''
 Tuple of all PEP-specific functions testing whether the passed object is an
@@ -47,8 +49,8 @@ Each such function is expected to have a signature resembling:
 
 .. code-block:: python
 
-    def is_hint_pep{PEP_NUMBER}_ignorable(hint: object, hint_sign: object) -> (
-        Optional[bool]):
+    def is_hint_pep{PEP_NUMBER}_ignorable_or_none(
+        hint: object, hint_sign: object) -> Optional[bool]:
         ...
 
 Each such function is expected to return either:
@@ -357,24 +359,16 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
 
+    #FIXME: Remove this *AFTER* properly supporting type variables. For
+    #now, ignoring type variables is required ta at least shallowly support
+    #generics parametrized by one or more type variables.
+    # If this hint is a type variable, return true. Type variables require
+    # non-trivial and currently unimplemented decorator support.
+    if is_hint_pep_typevar(hint):
+        return True
+
     # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign(hint)
-
-    # If this sign is shallowly ignorable, return true.
-    #
-    # Note this efficiently ignores parametrizations of both the
-    # "typing.Generic" and "typing.Protocol" abstract base classes (ABC) by one
-    # or more type variables. As their names imply, this ABCs are generic and
-    # thus fail to impose any meaningful constraints. Since a type variable in
-    # and of itself also fails to impose any meaningful constraints, these
-    # parametrizations are safely ignorable in all possible contexts: e.g.,
-    #
-    #   from typing import Generic, TypeVar
-    #   T = TypeVar('T')
-    #   def noop(param_hint_ignorable: Generic[T]) -> T: pass
-    if hint in HINT_PEP_SIGNS_IGNORABLE:
-        return True
-    # Else, this sign is *NOT* shallowly ignorable.
 
     # For each PEP-specific function testing whether this hint is an ignorable
     # type hint fully compliant with that PEP...
@@ -474,8 +468,8 @@ def is_hint_pep_sign_supported(hint) -> bool:
         dictionaries and sets). All supported type hints are hashable.
     '''
     # from beartype._util.hint.data.pep.utilhintdatapep import (
-    #     HINT_PEP_SIGNS_DEEP_SUPPORTED)
-    # print(f'HINT_PEP_SIGNS_DEEP_SUPPORTED: {HINT_PEP_SIGNS_DEEP_SUPPORTED}')
+    #     HINT_PEP_SIGNS_SUPPORTED_DEEP)
+    # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')
 
     # Return true only if this hint is a supported unsubscripted "typing"
     # attribute.

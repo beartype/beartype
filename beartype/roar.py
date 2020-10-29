@@ -182,6 +182,20 @@ class BeartypeDecorHintPepException(
     pass
 
 
+class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator PEP-compliant type hint sign exception.**
+
+    Instances of subclasses of this exception are raised at decoration time
+    from the :func:`beartype.beartype` decorator on receiving a callable
+    annotated with one or more PEP-compliant type hints *not* uniquely
+    identifiable by a **sign** (i.e., object uniquely identifying a category
+    of PEP-compliant type hints).
+    '''
+
+    pass
+
+
 class BeartypeDecorHintPepUnsupportedException(
     BeartypeDecorHintPepException):
     '''

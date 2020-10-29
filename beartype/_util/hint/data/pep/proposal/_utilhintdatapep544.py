@@ -57,5 +57,5 @@ def add_data(data_module: 'ModuleType') -> None:
     #     True
     #     >>> isinstance(3333, t.Protocol)
     #     True
-    data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.add(Protocol)
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Protocol)
     data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)

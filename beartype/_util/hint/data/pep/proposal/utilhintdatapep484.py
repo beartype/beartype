@@ -55,12 +55,6 @@ from typing import (
     Reversible,
     Sequence,
     Set,
-    SupportsAbs,
-    SupportsBytes,
-    SupportsComplex,
-    SupportsInt,
-    SupportsFloat,
-    SupportsRound,
     Tuple,
     Type,
     TypeVar,
@@ -143,12 +137,6 @@ def add_data(data_module: 'ModuleType') -> None:
         Reversible,
         Sequence,
         Set,
-        SupportsAbs,
-        SupportsBytes,
-        SupportsComplex,
-        SupportsInt,
-        SupportsFloat,
-        SupportsRound,
         Tuple,
         Type,
         ValuesView,
@@ -213,6 +201,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # "typing" module physically reduces to merely "type(None)". *shrug*
         Optional,
 
+        # The "TypeVar" superclass imposes no constraints, much like the
+        # "Generic" superclass.
+        TypeVar,
+
         # The unsubscripted "Union" singleton semantically expands to the
         # implicit "Union[Any]" singleton by the same argument. Since PEP 484
         # stipulates that a union of one type semantically reduces to only that
@@ -240,15 +232,14 @@ def add_data(data_module: 'ModuleType') -> None:
         #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
         #   function and thus referred to as deeply ignorable type hints.
         Union,
-
-        #FIXME: Remove this *AFTER* properly supporting type variables. For
-        #now, ignoring type variables is required ta at least shallowly support
-        #generics parametrized by one or more type variables.
-        TypeVar,
     ))
 
     # ..................{ SETS ~ supported                  }..................
-    data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.update((
+    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
+        Any,
+        TypeVar,
+    ))
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
         Generic,
         List,
         MutableSequence,
@@ -260,8 +251,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # those older Python versions transparently reduced "typing.Optional"
         # to "typing.Union" at runtime. Since this reduction is no longer the
         # case, both *MUST* now be explicitly listed here.
-        Optional,
         Union,
+        Optional,
     ))
 
     # ..................{ SETS ~ category                   }..................

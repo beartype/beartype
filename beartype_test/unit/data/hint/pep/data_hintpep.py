@@ -33,7 +33,7 @@ HINT_PEP_CLASSED_TO_META = {}
 '''
 Dictionary mapping various PEP-compliant type hints implemented by the
 :mod:`typing` module as standard classes indistinguishable from
-non-:mod:`typing` classes to :class:`PepHintClassedMetadata` instances
+non-:mod:`typing` classes to :class:`PepHintUnsignedMetadata` instances
 describing those hints with metadata applicable to testing scenarios.
 
 These hints do *not* conform to standard expectations for PEP-compliant type
@@ -52,14 +52,15 @@ Frozen set of PEP-compliant type hints exercising well-known edge cases.
 
 
 # Initialized by the _init() function below.
-HINTS_PEP_DEEP_IGNORABLE = set()
+HINTS_PEP_IGNORABLE_DEEP = set()
 '''
 Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in
-the low-level :attr:`beartype._util.hint.data.utilhintdata.HINTS_SHALLOW_IGNORABLE`
-set, but which are nonetheless ignorable and thus require dynamic testing by
-the high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable`
-tester function to demonstrate this fact).
+the low-level
+:attr:`beartype._util.hint.data.utilhintdata.HINTS_IGNORABLE_SHALLOW` set, but
+which are nonetheless ignorable and thus require dynamic testing by the
+high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
+function to demonstrate this fact).
 '''
 
 # ....................{ INITIALIZERS                      }....................
@@ -71,7 +72,7 @@ def _init() -> None:
     # Submodule globals to be redefined below.
     global \
         HINTS_PEP, \
-        HINTS_PEP_DEEP_IGNORABLE
+        HINTS_PEP_IGNORABLE_DEEP
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -90,13 +91,13 @@ def _init() -> None:
 
     # Assert these global to have been initialized by these private submodules.
     assert HINT_PEP_TO_META, 'Dictionary global "HINT_PEP_TO_META" empty.'
-    assert HINTS_PEP_DEEP_IGNORABLE, (
-        'Set global "HINTS_PEP_DEEP_IGNORABLE" empty.')
+    assert HINTS_PEP_IGNORABLE_DEEP, (
+        'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
     HINTS_PEP = frozenset(HINT_PEP_TO_META.keys())
-    HINTS_PEP_DEEP_IGNORABLE = frozenset(HINTS_PEP_DEEP_IGNORABLE)
+    HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
 
 
 # Initialize this submodule.

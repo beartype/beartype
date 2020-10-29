@@ -25,8 +25,8 @@ from typing import Generic
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS ~ ignorable               }....................
-def is_hint_pep484_ignorable_or_none(hint: object, hint_sign: object) -> (
-    'Optional[bool]'):
+def is_hint_pep484_ignorable_or_none(
+    hint: object, hint_sign: object) -> 'Optional[bool]':
     '''
     ``True`` only if the passed object is a `PEP 484`_-compliant **ignorable
     type hint,** ``False`` only if this object is a `PEP 484`_-compliant
@@ -35,6 +35,19 @@ def is_hint_pep484_ignorable_or_none(hint: object, hint_sign: object) -> (
 
     Specifically, this tester function returns ``True`` only if this object is
     a deeply ignorable `PEP 484`_-compliant type hint, including:
+
+    * A parametrization of the :class:`typing.Generic` abstract base class
+      (ABC) by one or more type variables. As the name implies, this ABC is
+      generic and thus fails to impose any meaningful constraints. Since a type
+      variable in and of itself also fails to impose any meaningful
+      constraints, these parametrizations are safely ignorable in all possible
+      contexts: e.g.,
+
+      .. code-block:: python
+
+         from typing import Generic, TypeVar
+         T = TypeVar('T')
+         def noop(param_hint_ignorable: Generic[T]) -> T: pass
 
     * The :data:`Optional` or :data:`Union` singleton subscripted by one or
       more ignorable type hints (e.g., ``typing.Union[typing.Any, bool]``).
@@ -48,7 +61,7 @@ def is_hint_pep484_ignorable_or_none(hint: object, hint_sign: object) -> (
       semantics. Since there exist a countably infinite number of possible
       :data:`Union` subscriptions by one or more shallowly ignorable type
       hints, these subscriptions *cannot* be explicitly listed in the
-      :data:`HINTS_SHALLOW_IGNORABLE` frozenset. Instead, these subscriptions
+      :data:`HINTS_IGNORABLE_SHALLOW` frozenset. Instead, these subscriptions
       are dynamically detected by this tester at runtime and thus referred to
       as **deeply ignorable type hints.**
 
@@ -84,19 +97,42 @@ def is_hint_pep484_ignorable_or_none(hint: object, hint_sign: object) -> (
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_args
 
-    # Else, this hint is *NOT* such a parametrization.
+    # If this hint is a generic...
+    #
+    # Note that the "beartype._util.hint.data.pep.proposal.utilhintdatapep484"
+    # submodule already ignores the unsubscripted "typing.Generic" ABC itself.
+    if hint_sign is Generic:
+        # If this generic is the "typing.Generic" superclass directly
+        # parametrized by one or more type variables (e.g.,
+        # "typing.Generic[T]"), return true.
+        #
+        # Note that we intentionally avoid calling the
+        # get_hint_pep_type_origin_or_none() function here, which has been
+        # intentionally designed to exclude PEP-compliant type hints
+        # originating from "typing" type origins for stability reasons.
+        if getattr(hint, '__origin__', None) is Generic:
+            return True
+        # Else, this generic is *NOT* the "typing.Generic" superclass directly
+        # parametrized by one or more type variables and thus *NOT* an
+        # ignorable non-protocol.
+        #
+        # Note that this condition being false is *NOT* sufficient to declare
+        # this hint to be unignorable. Notably, the type origin originating
+        # both ignorable and unignorable protocols is "Protocol" rather than
+        # "Generic". Ergo, this generic could still be an ignorable protocol.
+    # Else, this hint is *NOT* a generic.
     #
     # If this hint is a union, return true only if one or more child hints of
     # this union are recursively ignorable. See the function docstring.
-    if hint_sign in HINT_PEP484_SIGNS_UNION:
+    elif hint_sign in HINT_PEP484_SIGNS_UNION:
         return any(
             is_hint_ignorable(hint_child)
             for hint_child in get_hint_pep_args(hint)
         )
     # Else, this hint is *NOT* a union.
 
-    # Return false, as only the above categories of hints are ignorable.
-    return False
+    # Return "None", as this hint is unignorable only under PEP 484.
+    return None
 
 # ....................{ TESTERS ~ generic                 }....................
 # If the active Python interpreter targets at least Python >= 3.7.0, define the

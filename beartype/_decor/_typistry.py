@@ -458,22 +458,14 @@ class Beartypistry(dict):
                 f'prior registered value {repr(self[hint_name])} and '
                 f'newly registered value {repr(hint)}).')
 
-        # If this hint is *NOT* PEP-noncompliant, raise an exception.
-        die_unless_hint_nonpep(
-            hint=hint,
-            hint_label='Beartypistry value',
-
-            #FIXME: Actually, we eventually want to permit this to enable
-            #trivial resolution of forward references. For now, this is fine.
-            is_str_valid=False,
-
-            # Raise a decoration- rather than call-specific exception, as this
-            # setter should *ONLY* be called at decoration time (e.g., by
-            # registration functions defined above).
-            exception_cls=_BeartypeDecorBeartypistryException,
-        )
-
-        # If this hint is a type...
+        # If this hint is a class...
+        #
+        # Note that although *MOST* classes are PEP-noncompliant (e.g., the
+        # builtin "str" type), *SOME* classes are PEP-compliant (e.g., the
+        # stdlib "typing.SupportsInt" protocol). Since both PEP-noncompliant
+        # and -compliant classes are shallowly type-checkable via the
+        # isinnstance() builtin, there exists no demonstrable benefit to
+        # distinguishing between either here.
         if isinstance(hint, type):
             # Fully-qualified classname of this type as declared by this type.
             hint_clsname = get_object_type_name_qualified(hint)
@@ -494,9 +486,26 @@ class Beartypistry(dict):
                 raise _BeartypeDecorBeartypistryException(
                     f'Beartypistry key "{hint_name}" not '
                     f'fully-qualified classname "{hint_clsname}" of '
-                    f'type {repr(hint)}.')
+                    f'type {repr(hint)}.'
+                )
         # Else if this hint is a tuple...
         elif hint.__class__ is tuple:
+            # If this tuple is *NOT* PEP-noncompliant (e.g., due to containing
+            # PEP-compliant type hints), raise an exception.
+            die_unless_hint_nonpep(
+                hint=hint,
+                hint_label='Beartypistry value',
+
+                #FIXME: Actually, we eventually want to permit this to enable
+                #trivial resolution of forward references. For now, this is fine.
+                is_str_valid=False,
+
+                # Raise a decoration- rather than call-specific exception, as
+                # this setter should *ONLY* be called at decoration time (e.g.,
+                # by registration functions defined above).
+                exception_cls=_BeartypeDecorBeartypistryException,
+            )
+
             # If this tuple's name is *NOT* prefixed by a magic substring
             # uniquely identifying this hint as a tuple, raise an exception.
             #
@@ -515,12 +524,14 @@ class Beartypistry(dict):
                 raise _BeartypeDecorBeartypistryException(
                     f'Beartypistry key "{hint_name}" not '
                     f'prefixed by "{_TYPISTRY_HINT_NAME_TUPLE_PREFIX}" for '
-                    f'tuple {repr(hint)}.')
+                    f'tuple {repr(hint)}.'
+                )
         # Else, something has gone terribly awry. Raise us up the exception!
         else:
             raise _BeartypeDecorBeartypistryException(
                 f'Beartypistry key "{hint_name}" value {repr(hint)} invalid '
-                '(i.e., neither type nor tuple).')
+                f'(i.e., neither type nor tuple).'
+            )
 
         # Cache this object under this name.
         super().__setitem__(hint_name, hint)

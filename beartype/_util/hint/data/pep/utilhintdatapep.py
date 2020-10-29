@@ -17,7 +17,6 @@ from beartype._util.hint.data.pep.proposal import (
     _utilhintdatapep544,
     _utilhintdatapep593,
 )
-from typing import Any
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -51,13 +50,24 @@ This set is intended to be tested against typing attributes returned by the
 
 See Also
 ----------
-:attr:`beartype._util.hint.data.utilhintdata.HINTS_SHALLOW_IGNORABLE`
+:attr:`beartype._util.hint.data.utilhintdata.HINTS_IGNORABLE_SHALLOW`
     Further commentary.
 '''
 
 # ....................{ SETS ~ supported                  }....................
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_DEEP_SUPPORTED = set()
+HINT_PEP_SIGNS_SUPPORTED = None
+'''
+Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints).
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_sign` getter function.
+'''
+
+
+# Initialized by the _init() function below.
+HINT_PEP_SIGNS_SUPPORTED_DEEP = set()
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints for which the :func:`beartype.beartype`
@@ -75,10 +85,12 @@ This set is intended to be tested against typing attributes returned by the
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED = None
+HINT_PEP_SIGNS_SUPPORTED_SHALLOW = set()
 '''
-Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints).
+Frozen set of all **shallowly supported non-originative signs** (i.e.,
+arbitrary objects uniquely identifying PEP-compliant type hints *not*
+originating from a non-:mod:`typing` origin type for which the
+:func:`beartype.beartype` decorator generates shallow type-checking code).
 
 This set is intended to be tested against typing attributes returned by the
 :func:`get_hint_pep_sign` getter function.
@@ -137,7 +149,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Submodule globals to be redefined below.
     global \
-        HINT_PEP_SIGNS_DEEP_SUPPORTED, \
+        HINT_PEP_SIGNS_SUPPORTED_DEEP, \
+        HINT_PEP_SIGNS_SUPPORTED_SHALLOW, \
         HINT_PEP_SIGNS_IGNORABLE, \
         HINT_PEP_SIGNS_SEQUENCE_STANDARD, \
         HINT_PEP_SIGNS_SUPPORTED, \
@@ -159,8 +172,10 @@ def add_data(data_module: 'ModuleType') -> None:
         hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    assert HINT_PEP_SIGNS_DEEP_SUPPORTED, (
-        'Set global "HINT_PEP_SIGNS_DEEP_SUPPORTED" empty.')
+    assert HINT_PEP_SIGNS_SUPPORTED_DEEP, (
+        'Set global "HINT_PEP_SIGNS_SUPPORTED_DEEP" empty.')
+    assert HINT_PEP_SIGNS_SUPPORTED_SHALLOW, (
+        'Set global "HINT_PEP_SIGNS_SUPPORTED_SHALLOW" empty.')
     assert HINT_PEP_SIGNS_IGNORABLE, (
         'Set global "HINT_PEP_SIGNS_IGNORABLE" empty.')
     assert HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
@@ -170,22 +185,24 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    HINT_PEP_SIGNS_DEEP_SUPPORTED = frozenset(HINT_PEP_SIGNS_DEEP_SUPPORTED)
+    HINT_PEP_SIGNS_SUPPORTED_DEEP = frozenset(HINT_PEP_SIGNS_SUPPORTED_DEEP)
+    HINT_PEP_SIGNS_SUPPORTED_SHALLOW = frozenset(
+        HINT_PEP_SIGNS_SUPPORTED_SHALLOW)
     HINT_PEP_SIGNS_IGNORABLE = frozenset(HINT_PEP_SIGNS_IGNORABLE)
     HINT_PEP_SIGNS_SEQUENCE_STANDARD = frozenset(
         HINT_PEP_SIGNS_SEQUENCE_STANDARD)
     HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
     HINT_PEP_SIGNS_SUPPORTED = frozenset(
         # Set of all deeply supported signs.
-        HINT_PEP_SIGNS_DEEP_SUPPORTED |
-        # Set of all shallowly supported signs originating from a non-"typing"
-        # origin type.
-        HINT_PEP_SIGNS_TYPE_ORIGIN |
+        HINT_PEP_SIGNS_SUPPORTED_DEEP |
         # Set of all shallowly supported signs *NOT* originating from a
         # non-"typing" origin type.
-        set((Any,))
+        HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
+        # Set of all shallowly supported signs originating from a non-"typing"
+        # origin type.
+        HINT_PEP_SIGNS_TYPE_ORIGIN
     )
 
     # Add PEP-compliant type hint data to various global containers declared by
     # the passed module.
-    data_module.HINTS_SHALLOW_IGNORABLE.update(HINT_PEP_SIGNS_IGNORABLE)
+    data_module.HINTS_IGNORABLE_SHALLOW.update(HINT_PEP_SIGNS_IGNORABLE)

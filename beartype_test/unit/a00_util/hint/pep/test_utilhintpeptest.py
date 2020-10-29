@@ -15,9 +15,8 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import typing
-# from beartype_test.util.pyterror import raises_uncached
 from pytest import raises
+from typing import Generic, List
 
 # ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
@@ -35,18 +34,18 @@ def test_is_hint_pep() -> None:
     )
 
     # Assert this tester accepts PEP-compliant type hints.
-    for pep_hint in HINTS_PEP:
-        assert is_hint_pep(pep_hint) is True
+    for hint_pep in HINTS_PEP:
+        assert is_hint_pep(hint_pep) is True
 
     # Assert this tester rejects PEP-compliant type hints implemented by the
     # "typing" module as normal types indistinguishable from non-"typing" types
     # and thus effectively non-PEP-compliant for all practical intents.
-    for pep_hint_classed in HINT_PEP_CLASSED_TO_META.keys():
-        assert is_hint_pep(pep_hint_classed) is False
+    for hint_pep_classed in HINT_PEP_CLASSED_TO_META.keys():
+        assert is_hint_pep(hint_pep_classed) is False
 
     # Assert this tester rejects non-PEP-compliant type hints.
-    for not_pep_hint in NOT_HINTS_PEP:
-        assert is_hint_pep(not_pep_hint) is False
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep(not_hint_pep) is False
 
 
 def test_is_hint_pep_typing() -> None:
@@ -65,15 +64,15 @@ def test_is_hint_pep_typing() -> None:
     # Ideally, we would also assert this tester to rejects generic
     # PEP-compliant type hints. Although most generics are instances of
     # user-defined classes defined in non-"typing" modules, a small subset are
-    # stdlib classes defined in the "typing" module (e.g., "typing.IO"). Let's
-    # avoid rendering this any more fragile than we have.
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        if not pep_hint_meta.is_pep484_generic:
-            assert is_hint_pep_typing(pep_hint) is True
+    # stdlib classes defined in the "typing" module (e.g., "typing.IO") are
+    # *NOT*. Let's avoid rendering this any more fragile than we have.
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+        if hint_pep_meta.pep_sign is not Generic:
+            assert is_hint_pep_typing(hint_pep) is True
 
     # Assert this tester rejects non-"typing" types.
-    for not_pep_hint in NOT_HINTS_PEP:
-        assert is_hint_pep_typing(not_pep_hint) is False
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_typing(not_hint_pep) is False
 
 # ....................{ TESTS ~ supported                 }....................
 def test_is_hint_pep_supported() -> None:
@@ -94,12 +93,12 @@ def test_is_hint_pep_supported() -> None:
     # Assert this tester:
     # * Accepts supported PEP-compliant type hints.
     # * Rejects unsupported PEP-compliant type hints.
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep_supported(pep_hint) is pep_hint_meta.is_supported
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+        assert is_hint_pep_supported(hint_pep) is hint_pep_meta.is_supported
 
     # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
-    for not_pep_hint in NOT_HINTS_PEP:
-        assert is_hint_pep_supported(not_pep_hint) is False
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_supported(not_hint_pep) is False
 
     # Assert this tester rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
@@ -128,19 +127,19 @@ def test_die_unless_hint_pep_supported() -> None:
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester...
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
         # Accepts supported PEP-compliant type hints.
-        if pep_hint_meta.is_supported:
-            die_unless_hint_pep_supported(pep_hint)
+        if hint_pep_meta.is_supported:
+            die_unless_hint_pep_supported(hint_pep)
         # Rejects unsupported PEP-compliant type hints.
         else:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint_pep_supported(pep_hint)
+                die_unless_hint_pep_supported(hint_pep)
 
     # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
-    for not_pep_hint in NOT_HINTS_PEP:
+    for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            die_unless_hint_pep_supported(not_pep_hint)
+            die_unless_hint_pep_supported(not_hint_pep)
 
     # Assert this tester rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
@@ -173,15 +172,15 @@ def test_die_unless_hint_pep_sign_supported() -> None:
 
     # Assert this tester rejects PEP-compliant type hints that are *NOT*
     # supported unsubscripted "typing" attributes.
-    for pep_hint in HINTS_PEP:
-        if pep_hint not in HINT_PEP_SIGNS_SUPPORTED:
+    for hint_pep in HINTS_PEP:
+        if hint_pep not in HINT_PEP_SIGNS_SUPPORTED:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint_pep_sign_supported(pep_hint)
+                die_unless_hint_pep_sign_supported(hint_pep)
 
     # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
-    for not_pep_hint in NOT_HINTS_PEP:
+    for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            die_unless_hint_pep_sign_supported(not_pep_hint)
+            die_unless_hint_pep_sign_supported(not_hint_pep)
 
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:
@@ -200,7 +199,7 @@ def test_is_hint_typing_typevar() -> None:
 
     # Assert that "typing" types parametrized by type variables are *NOT* type
     # variables.
-    assert is_hint_pep_typevar(typing.List[T]) is False
+    assert is_hint_pep_typevar(List[T]) is False
 
 
 def test_is_hint_typing_typevared() -> None:
@@ -212,14 +211,14 @@ def test_is_hint_typing_typevared() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevared
-    from beartype_test.unit.data.hint.data_hint import NONHINTS_PEP
+    from beartype_test.unit.data.hint.data_hint import HINTS_NONPEP
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert that various "TypeVar"-centric types are correctly detected.
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep_typevared(pep_hint) is (
-            pep_hint_meta.is_typevared)
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+        assert is_hint_pep_typevared(hint_pep) is (
+            hint_pep_meta.is_typevared)
 
     # Assert that various "TypeVar"-agnostic types are correctly detected.
-    for nonpep_hint in NONHINTS_PEP:
-        assert is_hint_pep_typevared(nonpep_hint) is False
+    for nonhint_pep in HINTS_NONPEP:
+        assert is_hint_pep_typevared(nonhint_pep) is False

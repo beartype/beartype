@@ -32,17 +32,15 @@ class PepHintMetadata(object):
 
         * :class:`typing.NamedTuple` reducing to :class:`tuple`.
         * :class:`typing.TypedDict` reducing to :class:`dict`.
-    is_pep484_generic : bool
-        ``True`` only if this PEP-compliant type hint is a **user-defined
-        generic** (i.e., PEP-compliant type hint whose class subclasses one or
-        more public :mod:`typing` pseudo-superclasses but *not* itself defined
-        by the :mod:`typing` module). Defaults to ``False``.
+    is_ignorable : bool
+        ``True`` only if this hint is safely ignorable by the
+        :func:`beartype.beartype` decorator. Defaults to ``False``.
     is_supported : bool
-        ``True`` only if this PEP-compliant type hint is currently supported by
+        ``True`` only if this hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to ``True``.
     is_typevared : bool
-        ``True`` only if this PEP-compliant type hint is parametrized by one or
-        more **type variables** (i.e., :class:`typing.TypeVar` instances).
+        ``True`` only if this hint is parametrized by one or more **type
+        variables** (i.e., :class:`typing.TypeVar` instances).
         Defaults to ``False``.
     piths_satisfied : Tuple[object]
         Tuple of zero or more arbitrary objects satisfying this hint when
@@ -69,17 +67,17 @@ class PepHintMetadata(object):
         pep_sign: object,
 
         # Optional parameters.
-        is_pep484_generic: bool = False,
+        is_ignorable: bool = False,
         is_supported: bool = True,
         is_typevared: bool = False,
         piths_satisfied: tuple = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
         type_origin: 'Optional[type]' = None,
     ) -> None:
+        assert isinstance(is_ignorable, bool), (
+            f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(is_pep484_generic, bool), (
-            f'{repr(is_pep484_generic)} not bool.')
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
         assert isinstance(piths_satisfied, tuple), (
@@ -97,8 +95,8 @@ class PepHintMetadata(object):
 
         # Classify all passed parameters.
         self.pep_sign = pep_sign
+        self.is_ignorable = is_ignorable
         self.is_supported = is_supported
-        self.is_pep484_generic = is_pep484_generic
         self.is_typevared = is_typevared
         self.piths_satisfied = piths_satisfied
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
@@ -109,8 +107,8 @@ class PepHintMetadata(object):
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    pep_sign={self.pep_sign},',
+            f'    is_ignorable={self.is_ignorable},',
             f'    is_supported={self.is_supported},',
-            f'    is_pep484_generic={self.is_pep484_generic},',
             f'    is_typevared={self.is_typevared},',
             f'    piths_satisfied={self.piths_satisfied},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
@@ -119,17 +117,19 @@ class PepHintMetadata(object):
         ))
 
 
-class PepHintClassedMetadata(PepHintMetadata):
+class PepHintUnsignedMetadata(PepHintMetadata):
     '''
-    **PEP-compliant class type hint metadata** (i.e.,
+    **PEP-compliant unsigned type hint metadata** (i.e.,
     dataclass whose instance variables describe a PEP-compliant type hint
-    implemented by the :mod:`typing` module as a standard class
-    indistinguishable from non-:mod:`typing` classes with metadata applicable
-    to various testing scenarios).
+    uniquely identifiable by *no* arbitrary object, typically due to being
+    implemented as a conventional class indistinguishable from
+    non-:mod:`typing` classes).
     '''
 
     # ..................{ INITIALIZERS                      }..................
     def __init__(self, *args, **kwargs) -> None:
+        assert 'pep_sign' not in kwargs, (
+            f'Keyword argument "pep_sign"={repr(kwargs["pep_sign"])} passed.')
 
         # Coerce the unsubscripted "typing" attribute identifying this hint to
         # be "None" *BEFORE* initializing our superclass. This hint is

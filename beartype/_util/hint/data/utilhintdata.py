@@ -20,7 +20,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ SETS                              }....................
 # Fully initialized by the _init() function below.
 
-HINTS_SHALLOW_IGNORABLE = {
+HINTS_IGNORABLE_SHALLOW = {
     # The PEP-noncompliant builtin "object" type is the transitive superclass
     # of all classes, parameters and return values annotated as "object"
     # unconditionally match *ALL* objects under isinstance()-based type
@@ -54,7 +54,7 @@ def _init() -> None:
     '''
 
     # Submodule globals to be redefined below.
-    global HINTS_SHALLOW_IGNORABLE
+    global HINTS_IGNORABLE_SHALLOW
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -64,12 +64,12 @@ def _init() -> None:
     utilhintdatapep.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    assert HINTS_SHALLOW_IGNORABLE, (
-        'Set global "HINTS_SHALLOW_IGNORABLE" empty.')
+    assert HINTS_IGNORABLE_SHALLOW, (
+        'Set global "HINTS_IGNORABLE_SHALLOW" empty.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    HINTS_SHALLOW_IGNORABLE = frozenset(HINTS_SHALLOW_IGNORABLE)
+    HINTS_IGNORABLE_SHALLOW = frozenset(HINTS_IGNORABLE_SHALLOW)
 
 
 # Initialize this submodule.

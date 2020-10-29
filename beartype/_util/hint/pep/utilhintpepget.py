@@ -12,14 +12,26 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.roar import BeartypeDecorHintPepException
+from beartype.roar import (
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepSignException,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN)
+from beartype._util.utilobject import get_object_module_name_or_none
 from typing import Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS                         }....................
+_HINT_PEP_SIGN_MODULE_NAMES = frozenset(('typing', 'beartype.cave',))
+'''
+Frozen set of the fully-qualified names of all modules whose classes are
+interpreted as **signs** (i.e., arbitrary objects uniquely identifying types of
+PEP-compliant type hints) by the :func:`get_hint_pep_sign` function.
+'''
 
 # ....................{ GETTERS ~ tuple                   }....................
 def get_hint_pep_args(hint: object) -> tuple:
@@ -147,8 +159,6 @@ def get_hint_pep_typevars(hint: object) -> tuple:
     return getattr(hint, '__parameters__', ()) or ()
 
 # ....................{ GETTERS ~ sign                    }....................
-#FIXME: Revise docstring to account for refactorings imposed by PEP 585.
-
 @callable_cached
 def get_hint_pep_sign(hint: object) -> dict:
     '''
@@ -167,18 +177,22 @@ def get_hint_pep_sign(hint: object) -> dict:
 
     Specifically, this function returns either:
 
-    * If this hint is a **generic** (i.e., instance of the
+    * If this hint is a **generic** (i.e., subclasses of the
       :class:`typing.Generic` abstract base class (ABC)),
-      :class:`typing.Generic`.
+      :class:`typing.Generic`. Note this includes `PEP 544`-compliant
+      **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
+      which implicitly subclass the :class:`typing.Generic` ABC as well.
+    * Else if this hint is any other class declared by either the :mod:`typing`
+      module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
+      submodule (e.g., :class:`beartype.cave.HintPep585Type`), that class.
     * Else if this hint is a **type variable** (i.e., instance of the concrete
       :class:`typing.TypeVar` class), :class:`typing.TypeVar`.
-    * Else if this hint is **optional** (i.e., subscription of the
-      :attr:`typing.Optional` attribute), :attr:`typing.Union`. The
-      :mod:`typing` module implicitly reduces *all* subscriptions of the
-      :attr:`typing.Optional` singleton by the corresponding
-      :attr:`typing.Union` singleton subscripted by both that argument and
-      ``type(None)``. Ergo, there effectively exists *no*
-      :attr:`typing.Optional` attribute with respect to categorization.
+    * Else if this hint is a `PEP 585`_-compliant **builtin** (e.g., C-based
+      type hint instantiated by subscripting either a concrete builtin
+      container class like :class:`list` or :class:`tuple` *or* an abstract
+      base class (ABC) declared by the :mod:`collections.abc` submodule like
+      :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
+      :class:`beartype.cave.HintPep585Type`.
     * Else, the unsubscripted :mod:`typing` attribute dynamically retrieved by
       inspecting this hint's **object representation** (i.e., the
       non-human-readable string returned by the :func:`repr` builtin).
@@ -216,6 +230,9 @@ def get_hint_pep_sign(hint: object) -> dict:
         *not* an attribute of the :mod:`typing` module.
     BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
+    BeartypeDecorHintPepSignException
+        If this object is a PEP-compliant type hint *not* uniquely identifiable
+        by a sign.
 
     Examples
     ----------
@@ -238,6 +255,8 @@ def get_hint_pep_sign(hint: object) -> dict:
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
     '''
 
     # Avoid circular import dependencies.
@@ -281,14 +300,34 @@ def get_hint_pep_sign(hint: object) -> dict:
     # returning a string prefixed by the "typing." substring.
     if is_hint_pep484_generic(hint):
         return Generic
-    # Else, this hint is PEP-compliant but *NOT* a generic.
+    # Else, this hint is *NOT* a generic.
+    #
+    # If this hint is any other class...
+    elif isinstance(hint, type):
+        # Fully-qualified name of the module declaring this class.
+        hint_module_name = get_object_module_name_or_none(hint)
+
+        # If this class is *NOT* declared by a module explicitly permitted to
+        # declare signs, this class is impermissible as an sign and thus *NOT*
+        # PEP-compliant. But by the validation above, this hint is
+        # PEP-compliant. Since this invokes a world-shattering paradox, raise
+        # an exception.
+        if hint_module_name not in _HINT_PEP_SIGN_MODULE_NAMES:
+            raise BeartypeDecorHintPepSignException(
+                f'PEP-compliant type hint {repr(hint)} not declared by '
+                f'module in {repr(_HINT_PEP_SIGN_MODULE_NAMES)}.'
+            )
+
+        # Else, this class is declared by such a module and thus permissible as
+        # a sign. In this case, return this class as is.
+        return hint
+    # Else, this hint is *NOT* a class.
     #
     # If this hint is PEP 585-compliant type hint, return the C-based ABC
     # generically identifying *ALL* such hints.
     elif is_hint_pep585(hint):
         return HintPep585Type
-    # If this hint is a type variable, return a dictionary constant mapping
-    # from the common type of all such variables.
+    # If this hint is a type variable, return the class of all type variables.
     #
     # Note that type variables *CANNOT* be detected by the general-purpose
     # logic performed below, as the TypeVar.__repr__() dunder method insanely
@@ -303,12 +342,11 @@ def get_hint_pep_sign(hint: object) -> dict:
     # evaluated, instantiates an object equal to the original object. Instead,
     # this API was designed by incorrigible monkeys who profoundly hate the
     # Python language. This is why we can't have sane things.
-    #
-    # Ergo, type variables require special-purpose handling and *CANNOT* be
-    # handled by the general-purpose detection implemented below.
     elif is_hint_pep_typevar(hint):
         return TypeVar
-    # Else, this hint is PEP-compliant but neither a generic nor type variable.
+    # Else, this hint is neither a class, type variable, nor PEP 585-compliant
+    # type hint. In this case, this hint *MUST* be a standard PEP 484-compliant
+    # type hint defined by the "typing" module.
 
     #FIXME: Consider shifting this PEP 484-specific logic as well as the above
     #"if is_hint_pep484_generic(hint):" branch into a new
@@ -322,7 +360,8 @@ def get_hint_pep_sign(hint: object) -> dict:
     # reliably implement the __repr__() dunder method across most objects and
     # types to return a string prefixed "typing." regardless of Python version.
     # Ergo, this string is effectively the *ONLY* sane means of deciding which
-    # broad category of behaviour an arbitrary PEP 484 type hint conforms to.
+    # broad category of behaviour an arbitrary PEP 484-compliant type hint
+    # conforms to.
     sign_name = repr(hint)
 
     # If this representation is *NOT* prefixed by "typing.", this hint does
@@ -330,7 +369,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # But by the validation above, this hint is PEP-compliant. Since this
     # invokes a world-shattering paradox, raise an exception.
     if not sign_name.startswith('typing.'):
-        raise BeartypeDecorHintPepException(
+        raise BeartypeDecorHintPepSignException(
             f'PEP 484-compliant type hint {repr(hint)} '
             f'representation "{sign_name}" not prefixed by "typing.".'
         )

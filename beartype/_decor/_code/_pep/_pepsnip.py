@@ -197,8 +197,8 @@ embedded
 
 # ....................{ HINT ~ generic                    }....................
 PEP_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
-{{indent_curr}}    # True only if this pith is an instance of this generic.
-{{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+{indent_curr}    # True only if this pith is an instance of this generic.
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant

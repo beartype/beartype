@@ -41,15 +41,15 @@ if IS_PYTHON_AT_LEAST_3_9:
         return repr(hint).startswith('typing.Annotated[')
 
 
-    def is_hint_pep593_ignorable(hint: object, hint_sign: object) -> (
-        'Optional[bool]'):
+    def is_hint_pep593_ignorable_or_none(
+        hint: object, hint_sign: object) -> 'Optional[bool]':
 
         # Avoid circular import dependencies.
         from beartype._util.hint.utilhinttest import is_hint_ignorable
 
         # Return either...
         return (
-            # if this hint is annotated, true only if the PEP-compliant child
+            # If this hint is annotated, true only if the PEP-compliant child
             # type hint annotated by this hint hint is ignorable (e.g., the
             # "Any" in "Annotated[Any, 50, False]").
             is_hint_ignorable(hint.__origin__)
@@ -65,11 +65,11 @@ else:
         return False
 
 
-    def is_hint_pep593_ignorable(hint: object, hint_sign: object) -> (
-        'Optional[bool]'):
+    def is_hint_pep593_ignorable_or_none(
+        hint: object, hint_sign: object) -> 'Optional[bool]':
         return None
 
-
+# ....................{ TESTERS ~ doc                     }....................
 # Docstring for these functions regardless of the implementation details above.
 is_hint_pep593.__doc__ = '''
     ``True`` only if the passed object is a `PEP 593`_-compliant **user-defined
@@ -96,7 +96,7 @@ is_hint_pep593.__doc__ = '''
     '''
 
 
-is_hint_pep593_ignorable.__doc__ = '''
+is_hint_pep593_ignorable_or_none.__doc__ = '''
     ``True`` only if the passed object is a `PEP 593`_-compliant **ignorable
     type hint,** ``False`` only if this object is a `PEP 593`_-compliant
     unignorable type hint, and ``None`` if this object is *not* `PEP

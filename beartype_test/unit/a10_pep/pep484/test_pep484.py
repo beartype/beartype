@@ -28,7 +28,7 @@ See Also
 from beartype_test.util.pyterror import raises_uncached
 from collections import ChainMap
 from re import search
-from typing import List
+from typing import Generic, List
 
 # ....................{ TESTS                             }....................
 def test_pep484() -> None:
@@ -71,9 +71,9 @@ def test_pep484() -> None:
     RANGE_2 = (None, None)
 
     # For each predefined PEP-compliant type hint and associated metadata...
-    for pep_hint, pep_hint_meta in HINT_PEP_ALL_TO_META.items():
+    for hint_pep, hint_pep_meta in HINT_PEP_ALL_TO_META.items():
         # If this hint is currently unsupported, continue to the next.
-        if not pep_hint_meta.is_supported:
+        if not hint_pep_meta.is_supported:
             continue
         # Else, this hint is currently supported.
 
@@ -85,8 +85,8 @@ def test_pep484() -> None:
             # and returning a value annotated by this hint whose implementation
             # trivially reduces to the identity function.
             @beartype
-            def pep_hinted(pep_hinted_param: pep_hint) -> pep_hint:
-                return pep_hinted_param
+            def hint_peped(hint_peped_param: hint_pep) -> hint_pep:
+                return hint_peped_param
 
             # Type of exception raised by this wrapper on type-check failures.
             exception_cls = (
@@ -94,7 +94,7 @@ def test_pep484() -> None:
                 # "typing" attribute, this wrapper raises PEP-compliant
                 # exceptions.
                 BeartypeCallCheckPepException
-                if pep_hint_meta.pep_sign is not None else
+                if hint_pep_meta.pep_sign is not None else
                 # Else, this hint reduces to a builtin type and is thus
                 # detected as a PEP-noncompliant type hint. In this case, this
                 # wrapper raises PEP-noncompliant exceptions.
@@ -102,14 +102,14 @@ def test_pep484() -> None:
             )
 
             # For each object satisfying this hint...
-            for pith_satisfied in pep_hint_meta.piths_satisfied:
+            for pith_satisfied in hint_pep_meta.piths_satisfied:
                 # Assert this wrapper function successfully type-checks this
                 # object against this hint *WITHOUT* modifying this object.
-                # print('PEP-testing {!r} against {!r}...'.format(pep_hint, pith_satisfied))
-                assert pep_hinted(pith_satisfied) is pith_satisfied
+                # print('PEP-testing {!r} against {!r}...'.format(hint_pep, pith_satisfied))
+                assert hint_peped(pith_satisfied) is pith_satisfied
 
             # For each object *NOT* satisfying this hint...
-            for pith_unsatisfied_meta in pep_hint_meta.piths_unsatisfied_meta:
+            for pith_unsatisfied_meta in hint_pep_meta.piths_unsatisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
                 assert isinstance(
                     pith_unsatisfied_meta, PepHintPithUnsatisfiedMetadata)
@@ -130,7 +130,7 @@ def test_pep484() -> None:
                 # Assert this wrapper function raises the expected exception
                 # when type-checking this object against this hint.
                 with raises_uncached(exception_cls) as exception_info:
-                    pep_hinted(pith_unsatisfied_meta.pith)
+                    hint_peped(pith_unsatisfied_meta.pith)
 
                 # Exception message raised by this wrapper function.
                 exception_str = str(exception_info.value)
@@ -231,18 +231,17 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this getter returns...
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        # One or more unerased pseudo-superclasses for user-defined generic
-        # PEP-compliant type hints.
-        if pep_hint_meta.is_pep484_generic:
-            pep_hint_generic_bases = get_hint_pep484_generic_bases_or_none(
-                pep_hint)
-            assert isinstance(pep_hint_generic_bases, tuple)
-            assert bool(pep_hint_generic_bases)
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+        # One or more unerased pseudo-superclasses for PEP 484-compliant
+        # generics.
+        if hint_pep_meta.pep_sign is Generic:
+            hint_pep_bases = get_hint_pep484_generic_bases_or_none(hint_pep)
+            assert isinstance(hint_pep_bases, tuple)
+            assert hint_pep_bases
         # *NO* unerased pseudo-superclasses for concrete PEP-compliant type
         # hints *NOT* defined by the "typing" module.
-        elif not is_hint_pep_typing(pep_hint):
-            assert get_hint_pep484_generic_bases_or_none(pep_hint) is None
+        elif not is_hint_pep_typing(hint_pep):
+            assert get_hint_pep484_generic_bases_or_none(hint_pep) is None
         # Else, this hint is defined by the "typing" module. In this case, this
         # hint may or may not be implemented as a generic conditionally
         # depending on the current Python version -- especially under the
@@ -254,8 +253,8 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
 
     # Assert this getter returns *NO* unerased pseudo-superclasses for
     # non-"typing" hints.
-    for not_pep_hint in NOT_HINTS_PEP:
-        assert get_hint_pep484_generic_bases_or_none(not_pep_hint) is None
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert get_hint_pep484_generic_bases_or_none(not_hint_pep) is None
 
 # ....................{ TESTS ~ testers                   }....................
 def test_is_hint_pep484_generic() -> None:
@@ -272,11 +271,12 @@ def test_is_hint_pep484_generic() -> None:
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester:
-    # * Accepts generic PEP-compliant type hints.
+    # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for pep_hint, pep_hint_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep484_generic(pep_hint) is pep_hint_meta.is_pep484_generic
+    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+        assert is_hint_pep484_generic(hint_pep) is (
+            hint_pep_meta.pep_sign is Generic)
 
     # Assert this tester rejects non-"typing" types.
-    for not_pep_hint in NOT_HINTS_PEP:
-        assert is_hint_pep484_generic(not_pep_hint) is False
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep484_generic(not_hint_pep) is False

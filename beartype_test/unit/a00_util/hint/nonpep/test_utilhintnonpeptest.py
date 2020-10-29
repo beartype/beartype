@@ -29,15 +29,15 @@ def test_is_hint_nonpep() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.nonpep.utilhintnonpeptest import is_hint_nonpep
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NONHINTS_PEP, NOT_NONHINTS_PEP,)
+        NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for nonpep_hint in NONHINTS_PEP:
-        assert is_hint_nonpep(nonpep_hint) is True
+    for nonhint_pep in HINTS_NONPEP:
+        assert is_hint_nonpep(nonhint_pep) is True
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NOT_NONHINTS_PEP:
-        assert is_hint_nonpep(non_nonpep_hint) is False
+    for non_nonhint_pep in NOT_HINTS_NONPEP:
+        assert is_hint_nonpep(non_nonhint_pep) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
@@ -56,16 +56,16 @@ def test_die_unless_hint_nonpep() -> None:
     from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NONHINTS_PEP, NOT_NONHINTS_PEP,)
+        NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for nonpep_hint in NONHINTS_PEP:
-        die_unless_hint_nonpep(nonpep_hint)
+    for nonhint_pep in HINTS_NONPEP:
+        die_unless_hint_nonpep(nonhint_pep)
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonpep_hint in NOT_NONHINTS_PEP:
+    for non_nonhint_pep in NOT_HINTS_NONPEP:
         with raises_uncached(BeartypeDecorHintNonPepException):
-            die_unless_hint_nonpep(non_nonpep_hint)
+            die_unless_hint_nonpep(non_nonhint_pep)
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:

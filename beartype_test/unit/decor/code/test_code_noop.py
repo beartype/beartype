@@ -74,8 +74,8 @@ def test_decor_noop_hint_ignorable_iter() -> None:
     from beartype import beartype
     from beartype_test.unit.data.hint.data_hint import HINTS_IGNORABLE
 
-    # Assert that @beartype efficiently reduces to a noop when passed only
-    # type hints known to be ignorable.
+    # Assert that @beartype efficiently reduces to a noop when passed only type
+    # hints known to be ignorable.
     for hint_ignorable in HINTS_IGNORABLE:
         def revenant_scout_titan(
             antecedent:  hint_ignorable,

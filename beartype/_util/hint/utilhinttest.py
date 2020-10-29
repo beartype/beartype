@@ -21,7 +21,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -211,7 +211,7 @@ def is_hint_ignorable(hint: object) -> bool:
     '''
 
     # If this hint is shallowly ignorable, return true.
-    if hint in HINTS_SHALLOW_IGNORABLE:
+    if hint in HINTS_IGNORABLE_SHALLOW:
         return True
     # Else, this hint is *NOT* shallowly ignorable.
 

@@ -196,113 +196,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #     def muh_func(muh_mapping: BeartypeDict[str, int]) -> None: pass
 #In short, we'll need to conduct considerably more research here.
 
-#FIXME: Type-check instances of user-defined subclasses subclassing multiple
-#"typing" pseudo-superclasses. While we currently do iterate over these
-#superclasses properly in the breadth-first search implemented below, we
-#currently do *NOT* generate sane code type-checking such instances against
-#these superclasses and thus raise exceptions on detecting such subclasses.
-#See the related "FIXME:" comment preceding this test below.:
-#           elif len(hint_curr_signs_to_args) > 2:
-
-#FIXME: Type-check instances of types subclassing the "typing.Protocol"
-#superclass decorated by the @runtime_checkable decorator, detectable at
-#runtime by the existence of both "typing.Protocol" in their "__mro__" dunder
-#attribute *AND* the protocol-specific private "_is_runtime_protocol" instance
-#variable set to True.
-#
-#Specifically, refactor the codebase as follows to support protocols:
-#
-#* Define a new utilhintpeptest.is_hint_pep_protocol() tester returning True if
-#  the passed object is a @runtime_checkable-decorated Protocol. See below for
-#  the logic necessary to do so. This is non-trivial, as "Protocol" was only
-#  introduced under Python >= 3.8 *BUT* various "typing" subclasses of a
-#  private "_Protocol" superclass have been available since Python >= 3.5.
-#* Actually, the following refactoring should *NOT* be required, as "Protocol"
-#  subclasses are standard classes. Phew! Nonetheless: "Define a new
-#  utilhinttest.is_hint_isinstanceable() tester returning True if the passed
-#  object is a type that either:
-#  * Is a non-"typing" type.
-#  * Is a @runtime_checkable-decorated Protocol subclass."
-#  Oh, actually. We probably do still want an is_hint_isinstanceable() tester.
-#  Why? To raise human-readable exceptions when passed protocols *NOT*
-#  decorated by @runtime_checkable. *sigh*
-#* Call the is_hint_isinstanceable() tester *BEFORE* the is_hint_pep() tester
-#  everywhere in this codebase. Notably:
-#  * Revise:
-#    # ...this test...
-#    elif isinstance(hint_curr, type):
-#    # ...into this test.
-#    elif is_hint_isinstanceable(hint_curr):
-#  * In fact, we'll want to globally grep the codebase for lines matching
-#    '\bisinstance\b.*\btype\b' and perform a similar refactoring.
-#  * Shift that test before the "if is_hint_pep(hint_curr):"
-#    test above.
-#  * Revise the above union-specific tests from:
-#    # ...this logic...
-#         # If this argument is PEP-compliant...
-#         if is_hint_pep(hint_child):
-#             # Filter this argument into the list of
-#             # PEP-compliant arguments.
-#             hint_childs_pep.append(hint_child)
-#
-#         # Else, this argument is PEP-noncompliant. In this
-#         # case, filter this argument into the list of
-#         # PEP-noncompliant arguments.
-#         else:
-#             hint_childs_nonpep.append(hint_child)
-#
-#    # ...into this logic.
-#         # If this argument is an isinstance()-compatible
-#         # type, filter this argument into the list of these
-#         # types.
-#         if is_hint_isinstanceable(hint_child):
-#             hint_childs_nonpep.append(hint_child)
-#         # Else, this argument is *NOT* an
-#         # isinstance()-compatible type. In this case...
-#         else:
-#             # If this argument is *NOT* a PEP-compliant
-#             # type hint, raise an exception.
-#             die_unless_hint_pep(
-#                 hint=hint_child, hint_label=???)
-#             # Else, this argument is a PEP-compliant
-#             # type hint.
-#
-#             # Filter this argument into the list of
-#             # PEP-compliant arguments.
-#             hint_childs_pep.append(hint_child)
-#
-#Note lastly that support for protocols conditionally depends on the current
-#Python version. Besically:
-#
-#* Under Python < 3.8, the following abstract base classes (ABCs) are standard
-#  ABCs and thus trivially support isinstance() as is:
-#  * typing.SupportsInt
-#  * typing.SupportsFloat
-#  * typing.SupportsComplex
-#  * typing.SupportsBytes
-#  * typing.SupportsAbs
-#  * typing.SupportsRound
-#  Note that "typing.Protocol" does *NOT* exist here. Ergo, the
-#  is_hint_pep_protocol() tester should return True under Python < 3.8 only if
-#  the passed hint is an instance of one of these six ABCs. This is essential,
-#  as these instances would otherwise be treated as PEP-compliant type hints --
-#  which they're not, really.
-#* Under Python >= 3.8, the "typing.Protocol" superclass appears and all of the
-#  above ABCs both subclass that *AND* are decorated by @runtime_checkable.
-#  Lastly, a new "typing.SupportsIndex" ABC is introduced as well. So, we need
-#  to check that the protocol-specific private "_is_runtime_protocol" instance
-#  variable is set to True
-#  for "Protocol" subclasses.
-#FIXME: Note that the ProtocolMeta.__subclasshook__() dunder method
-#implementation is insanely inefficient in a way that only "typing" authors
-#could have written. Ideally, rather than naively calling isinstance() on
-#instances of core "typing.Protocol" subclasses defined by the "typing" module
-#itself (e.g., "typing.SupportsInt"), we would instead generate efficient code
-#directly type-checking that those instances define the requisite attributes.
-#Note, however, that the typing.Protocol.__init_subclass__._proto_hook()
-#implementing structural subtyping checks is sufficiently non-trivial that we
-#*REALLY* don't want to get into that for now.
-
 #FIXME: Type-check "typing.NoReturn", too. Note that whether a callable returns
 #"None" or not is *NOT* a sufficient condition to positively declare a function
 #to return no value for hopefully obvious reasons. Rather, we instead need to
@@ -312,7 +205,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Constructing the abstract syntax tree (AST) for the decorated callable with
 #  the "ast" module and parsing the returned AST for the first node marked as a
 #  "return" statement if any.
-
 
 #FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
 #highly non-trivial -- sufficiently so, in fact, that we probably want to do so
@@ -359,13 +251,13 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_DEEP_SUPPORTED,
+    HINT_PEP_SIGNS_SUPPORTED_DEEP,
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_or_none)
 from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
@@ -1174,7 +1066,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.peperror" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.data.pep.utilhintdatapep.HINT_PEP_SIGNS_DEEP_SUPPORTED"
+            # * "beartype._util.hint.data.pep.utilhintdatapep.HINT_PEP_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all supported unsubscripted "typing" attributes
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1239,7 +1131,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # Note this should *ALWAYS* be the case, as:
                 #
                 # * The unsubscripted "typing.Union" object is explicitly
-                #   listed in the "HINTS_SHALLOW_IGNORABLE" set and should thus
+                #   listed in the "HINTS_IGNORABLE_SHALLOW" set and should thus
                 #   have already been ignored when present.
                 # * The "typing" module explicitly prohibits empty
                 #   subscription: e.g.,
@@ -1274,7 +1166,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # have already been ignored after a call to the
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
-                    assert hint_child not in HINTS_SHALLOW_IGNORABLE, (
+                    assert hint_child not in HINTS_IGNORABLE_SHALLOW, (
                         f'{hint_child_label} ignorable PEP union '
                         f'{repr(hint_curr)} not ignored.')
 
@@ -1499,13 +1391,14 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # when accessed via the private "__beartypistry" parameter.
                     hint_curr_expr=register_typistry_type(hint_curr),
                 )
-            # Else, this hint is *NOT* a tuple.
+                # print(f'{hint_child_label} PEP generic {repr(hint)} handled.')
+            # Else, this hint is *NOT* a generic.
 
             # ..............{ SHALLOW or ARGUMENTLESS           }..............
             # If this hint either...
             elif (
                 # Is not yet deeply supported by this function *OR*...
-                hint_curr_sign not in HINT_PEP_SIGNS_DEEP_SUPPORTED or
+                hint_curr_sign not in HINT_PEP_SIGNS_SUPPORTED_DEEP or
                 # Is deeply supported by this function but is its own
                 # unsubscripted "typing" attribute (e.g., "typing.List" rather
                 # than "typing.List[str]") and is thus subscripted by *NO*

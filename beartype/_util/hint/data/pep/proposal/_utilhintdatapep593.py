@@ -44,5 +44,5 @@ def add_data(data_module: 'ModuleType') -> None:
     from typing import Annotated
 
     # Register the version-specific signs introduced in this version.
-    data_module.HINT_PEP_SIGNS_DEEP_SUPPORTED.add(Annotated)
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Annotated)
     data_module.HINT_PEP_SIGNS_IGNORABLE.add(Annotated)

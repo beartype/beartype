@@ -14,10 +14,10 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype import cave
-from beartype._util.hint.data.utilhintdata import HINTS_SHALLOW_IGNORABLE
+from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype_test.unit.data.hint.pep.data_hintpep import (
     HINTS_PEP,
-    HINTS_PEP_DEEP_IGNORABLE,
+    HINTS_PEP_IGNORABLE_DEEP,
 )
 
 # ....................{ NON-HINTS ~ sets                  }....................
@@ -81,7 +81,7 @@ class NonPepCustomFakeTyping(str):
 NonPepCustomFakeTyping.__module__ = 'typing'
 
 # ....................{ NON-PEP ~ sets                    }....................
-NONHINTS_PEP = frozenset((
+HINTS_NONPEP = frozenset((
     # Builtin container type.
     list,
     # Builtin scalar type.
@@ -102,16 +102,30 @@ NONHINTS_PEP = frozenset((
 Frozen set of PEP-noncompliant type hints exercising well-known edge cases.
 '''
 
+
+HINTS_NONPEP_UNIGNORABLE = (
+    # PEP-noncompliant type.
+    str,
+    # PEP-noncompliant forward reference.
+    'beartype.cave.AnyType',
+    # PEP-noncompliant tuple of types.
+    cave.NoneTypeOr[cave.AnyType],
+)
+'''
+Frozen set of **unignorable PEP-noncompliant type hints** (i.e.,
+PEP-noncompliant type hints that are *not* ignorable).
+'''
+
 # ....................{ NOT ~ sets                        }....................
-NOT_NONHINTS_PEP = frozenset((
+NOT_HINTS_NONPEP = frozenset((
     # Set comprehension of tuples containing PEP-compliant type hints. Although
     # tuples containing PEP-noncompliant type hints are themselves valid
     # PEP-noncompliant type hints supported by @beartype, tuples containing
     # PEP-compliant type hints are invalid and thus unsupported.
     {
         # Tuple containing a PEP-compliant type hint.
-        (int, pep_hint, cave.NoneType,)
-        for pep_hint in HINTS_PEP
+        (int, hint_pep, cave.NoneType,)
+        for hint_pep in HINTS_PEP
     } |
     # PEP-compliant type hints.
     HINTS_PEP |
@@ -126,7 +140,7 @@ well-known edge cases.
 
 NOT_HINTS_PEP = (
     # PEP-noncompliant type hints.
-    NONHINTS_PEP |
+    HINTS_NONPEP |
     # Hashable objects invalid as type hints (e.g., scalars).
     NOT_HINTS_HASHABLE
 )
@@ -138,27 +152,11 @@ well-known edge cases.
 # ....................{ NOT ~ tuples                      }....................
 HINTS_IGNORABLE = (
     # Shallowly ignorable type hints.
-    HINTS_SHALLOW_IGNORABLE |
+    HINTS_IGNORABLE_SHALLOW |
     # Deeply ignorable PEP-compliant type hints.
-    HINTS_PEP_DEEP_IGNORABLE
+    HINTS_PEP_IGNORABLE_DEEP
 )
 '''
 Frozen set of **ignorable type hints** (i.e., type hints that are either
 shallowly ignorable *or* deeply ignorable PEP-compliant type hints).
-'''
-
-
-HINTS_UNIGNORABLE = (
-    # PEP-noncompliant type.
-    str,
-    # PEP-noncompliant forward reference.
-    'beartype.cave.AnyType',
-    # PEP-noncompliant tuple of types.
-    cave.NoneTypeOr[cave.AnyType],
-    # PEP-compliant type hint.
-    typing.List[str],
-)
-'''
-Frozen set of **unignorable type hints** (i.e., type hints that are neither
-shallowly ignorable *nor* deeply ignorable PEP-compliant type hints).
 '''
