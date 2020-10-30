@@ -28,20 +28,19 @@ if IS_PYTHON_AT_LEAST_3_8:
     def is_hint_pep544_ignorable_or_none(
         hint: object, hint_sign: object) -> 'Optional[bool]':
 
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpepget import (
-            get_hint_pep_type_origin_or_none)
-
-        # Return either...
-        return (
-            # If this hint is a protocol, true only if this protocol is the
-            # "typing.Protocol" superclass directly parametrized by one or more
-            # type variables (e.g., "typing.Protocol[T]")
-            get_hint_pep_type_origin_or_none(hint) is Protocol
-            if isinstance(hint, Protocol) else
-            # Else, "None".
-            None
-        )
+        # Return either:
+        # * If this hint is the "typing.Protocol" superclass directly
+        #   parametrized by one or more type variables (e.g.,
+        #   "typing.Protocol[S, T]"), True. Testing whether this sign is that
+        #   superclass suffices to test this condition, as the
+        #   get_hint_pep_sign() function returns that superclass as a sign
+        #   *ONLY* when that superclass is directly parametrized by one or more
+        #   type variables. In *ALL* other cases involving that superclass,
+        #   that function *ALWAYS* returns the standard "typing.Generic"
+        #   superclass for instead -- as generics and protocols are otherwise
+        #   indistinguishable with respect to runtime type-checking.
+        # * Else, "None".
+        return hint_sign is Protocol or None
 # Else, the active Python interpreter targets at most Python < 3.8 and thus
 # fails to support PEP 544. In this case, fallback to declaring this function
 # to unconditionally return False.

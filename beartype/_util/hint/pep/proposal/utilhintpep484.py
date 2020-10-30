@@ -96,6 +96,7 @@ def is_hint_pep484_ignorable_or_none(
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_args
+    # print(f'!!!!!!!Received 484 hint: {repr(hint)} [{repr(hint_sign)}]')
 
     # If this hint is a generic...
     #
@@ -135,12 +136,12 @@ def is_hint_pep484_ignorable_or_none(
     return None
 
 # ....................{ TESTERS ~ generic                 }....................
-# If the active Python interpreter targets at least Python >= 3.7.0, define the
-# is_hint_pep484_generic() tester for Python >= 3.7.0. Sadly, Python
-# 3.7.0 broke backward compatibility with the public API of the "typing" module
-# by removing the prior "typing.GenericMeta" metaclass previously referenced by
-# this tester under Python < 3.7.0, necessitating fundamentally different
-# implementations for this tester between Python < 3.7.0 and >= 3.7.0.
+# If the active Python interpreter targets at least Python >= 3.7.0, implement
+# this function in the standard way.
+#
+# Sadly, Python 3.7.0 broke backward compatibility with the public API of the
+# "typing" module by removing the "typing.GenericMeta" metaclass previously
+# referenced by this function under Python 3.6.
 if IS_PYTHON_AT_LEAST_3_7:
     def is_hint_pep484_generic(hint: object) -> bool:
 
@@ -186,8 +187,8 @@ if IS_PYTHON_AT_LEAST_3_7:
             isinstance(hint, type) and
             issubclass(hint, Generic)
         )
-# Else if the active Python interpreter targets Python < 3.7.0, define the
-# is_hint_pep484_generic() tester for Python < 3.7.0.
+# Else, the active Python interpreter targets Python 3.6. In this case,
+# implement this function specific to this Python version.
 else:
     # Import the Python < 3.7.0-specific metaclass required by this tester.
     from typing import GenericMeta

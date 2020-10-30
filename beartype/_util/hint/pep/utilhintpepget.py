@@ -20,12 +20,36 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN)
 from beartype._util.utilobject import get_object_module_name_or_none
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ MAPPINGS                          }....................
+_HINT_PEP_TYPING_NAME_BAD_TO_GOOD = {
+    'AbstractContextManager': 'ContextManager',
+    'AbstractAsyncContextManager': 'AsyncContextManager',
+}
+'''
+Dictionary mapping from **bad typing names** (i.e., substrings following the
+``typing.`` prefix of strings returned by the ``__repr__()`` dunder methods of
+:mod:`typing` attributes that erroneously refer to non-existing :mod:`typing`
+attributes) to **good typing names** (i.e., the corresponding substrings that
+correctly refer to non-existing :mod:`typing` attributes).
+
+For example, under at least Python <= 3.9 (and possibly newer Python versions),
+the ``__repr__()`` dunder method of the :attr:`typing.ContextManager` attribute
+erroneously returns the string ``typing.AbstractContextManager`` referring to a
+non-existing ``typing.AbstractContextManager`` attribute; instead, that method
+should ideally return the string ``typing.ContextManager`` referring to the
+existing :attr:`typing.ContextManager` attribute. Ergo, this dictionary
+contains a key-value pair mapping from the non-existing :mod:`typing` attribute
+``AbstractContextManager`` to the existing :mod:`typing` attribute
+``ContextManager``.
+'''
+
+# ....................{ SETS                              }....................
 _HINT_PEP_SIGN_MODULE_NAMES = frozenset(('typing', 'beartype.cave',))
 '''
 Frozen set of the fully-qualified names of all modules whose classes are
@@ -317,10 +341,28 @@ def get_hint_pep_sign(hint: object) -> dict:
                 f'PEP-compliant type hint {repr(hint)} not declared by '
                 f'module in {repr(_HINT_PEP_SIGN_MODULE_NAMES)}.'
             )
+        # Else, this class is declared by such a module.
 
-        # Else, this class is declared by such a module and thus permissible as
+        # If this class is subscripted by neither child hints nor type
+        # variables and is thus a standard class, this class is permissible as
         # a sign. In this case, return this class as is.
-        return hint
+        #
+        # Note that this is principally useful under Python 3.6, where the
+        # "typing" module idiosyncratically most attributes as classes: e.g.,
+        #     >>> import typing
+        #     >>> isinstance(typing.List[int], type)
+        #     True     # <-- this is balls cray-cray
+        #
+        # While that suggests that we *COULD* technically fence this
+        # conditional behind a Python 3.6 check, doing so would render this
+        # function less robust against unwarranted stdlib changes. Ergo, we
+        # preserve this as is for forward-proofing.
+        if not (get_hint_pep_args(hint) or get_hint_pep_typevars(hint)):
+            return hint
+        # Else, this class is subscripted by one or more child hints and/or
+        # type variables and is thus *NOT* a standard class. In this case,
+        # continue (i.e., attempt to handle this class as a PEP 484-compliant
+        # type hint defined by the "typing" module).
     # Else, this hint is *NOT* a class.
     #
     # If this hint is PEP 585-compliant type hint, return the C-based ABC
@@ -395,13 +437,26 @@ def get_hint_pep_sign(hint: object) -> dict:
     # Else, this representation contains no such delimiter and is thus already
     # unsubscripted. In this case, preserve this representation as is.
 
-    # Return the "typing" attribute with this name if any *OR* implicitly raise
-    # an "AttributeError" exception. This is an unlikely edge case that will
-    # probably only occur with intentionally malicious callers whose objects
-    # override their __repr__() dunder methods to return strings prefixed by
-    # "typing.". Ergo, we avoid performing any deeper validation here.
-    # print(f'sign_name: {sign_name}')
-    return getattr(typing, sign_name)
+    # If this name erroneously refers to a non-existing "typing" attribute,
+    # rewrite this name to refer to the actual existing "typing" attribute
+    # corresponding to this sign (e.g., from the non-existing
+    # "typing.AbstractContextManager" attribute to the existing
+    # "typing.ContextManager" attribute).
+    sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
+
+    # "typing" attribute with this name if any *OR* "None" otherwise.
+    sign = getattr(typing, sign_name, None)
+
+    # If this "typing" attribute does *NOT* exist, raise an exception.
+    if sign is None:
+        raise BeartypeDecorHintPepSignException(
+            f'PEP 484-compliant type hint {repr(hint)} '
+            f'attribute "typing.{sign_name}" not found.'
+        )
+    # Else, this "typing" attribute exists.
+
+    # Return this "typing" attribute.
+    return sign
 
 # ....................{ GETTERS ~ type                    }....................
 def get_hint_pep_type_origin(hint: object) -> type:
@@ -443,8 +498,47 @@ def get_hint_pep_type_origin(hint: object) -> type:
         f'PEP type hint {repr(hint)} originates from no non-"typing" type.')
 
 
-def get_hint_pep_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
-    '''
+# If the active Python interpreter targets at least Python >= 3.7, implement
+# this function to access the standard "__origin__" dunder instance variable
+# whose value is the origin type originating this hint.
+if IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep_type_origin_or_none(hint: object) -> 'Optional[type]':
+
+        # Sign uniquely identifying this hint.
+        hint_sign = get_hint_pep_sign(hint)
+
+        # Return either...
+        return (
+            # If this sign originates from an origin type, that type.
+            hint_sign.__origin__
+            if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
+            # Else, "None".
+            None
+        )
+# Else, the active Python interpreter targets Python 3.6. In this case,
+# implement this function to access the non-standard "__extra__" dunder
+# instance variable whose value is the origin type originating this hint. The
+# "__origin__" dunder instance variable *DOES* exist under Python 3.6 but is
+# typically the identity class referring to the same "typing" singleton (e.g.,
+# "typing.List" for "typing.List[int]") rather than the origin type (e.g.,
+# "list" for "typing.List[int]") and is thus completely useless for everything.
+else:
+    def get_hint_pep_type_origin_or_none(hint: object) -> 'Optional[type]':
+
+        # Sign uniquely identifying this hint.
+        hint_sign = get_hint_pep_sign(hint)
+
+        # Return either...
+        return (
+            # If this sign originates from an origin type, that type.
+            hint_sign.__extra__
+            if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
+            # Else, "None".
+            None
+        )
+
+# Document this function regardless of implementation details.
+get_hint_pep_type_origin_or_none.__doc__ = '''
     **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
     satisfying the passed PEP-compliant type hint are instances of this class)
     originating this hint if this hint originates from a non-:mod:`typing`
@@ -511,15 +605,3 @@ def get_hint_pep_type_origin_or_none(hint: object) -> 'NoneTypeOr[type]':
         >>> typing.Union[int, str].__origin__
         typing.Union
     '''
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
-
-    # Return either...
-    return (
-        # If this sign originates from an origin type, that type.
-        hint_sign.__origin__
-        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
-        # Else, "None".
-        None
-    )

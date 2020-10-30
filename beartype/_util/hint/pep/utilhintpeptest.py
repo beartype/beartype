@@ -376,12 +376,13 @@ def is_hint_pep_ignorable(hint: object) -> bool:
         # True only if this hint is a ignorable under this PEP, False only if
         # this hint is unignorable under this PEP, and None if this hint is
         # *NOT* compliant with this PEP.
-        is_hint_pep_ignorable_test = is_hint_pep_ignorable_tester(
+        is_hint_pep_ignorable_or_none = is_hint_pep_ignorable_tester(
             hint, hint_sign)
 
         # If this hint is compliant with this PEP, return this boolean.
-        if is_hint_pep_ignorable_test is not None:
-            return is_hint_pep_ignorable_test
+        print(f'{is_hint_pep_ignorable_or_none} = {is_hint_pep_ignorable_tester}({hint}, {hint_sign})')
+        if is_hint_pep_ignorable_or_none is not None:
+            return is_hint_pep_ignorable_or_none
         # Else, this hint is *NOT* compliant with this PEP. In this case,
         # silently continue to the next such tester.
 

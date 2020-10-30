@@ -41,14 +41,17 @@ def test_get_hint_pep_sign_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintPepException
+    from beartype.roar import (
+        BeartypeDecorHintPepException,
+        BeartypeDecorHintPepSignException,
+    )
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
     from beartype_test.unit.data.hint.data_hint import (
         NOT_HINTS_PEP, NonPepCustomFakeTyping)
 
     # Assert this getter raises the expected exception for an instance of a
     # class erroneously masquerading as a "typing" class.
-    with raises(AttributeError):
+    with raises(BeartypeDecorHintPepSignException):
         get_hint_pep_sign(NonPepCustomFakeTyping())
 
     # Assert this getter raises the expected exception for non-"typing" hints.

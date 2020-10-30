@@ -46,6 +46,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.utilhinttest import is_hint_ignorable
+        # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
 
         # Return either...
         return (

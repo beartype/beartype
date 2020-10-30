@@ -14,7 +14,7 @@
 #FIXME: Add type hint test data all other "typing" types as well (e.g., "IO").
 
 # ....................{ IMPORTS                           }....................
-from collections import abc as collections_abc
+import contextlib
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
@@ -24,11 +24,14 @@ from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintUnsignedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
+from collections import abc as collections_abc
+from contextlib import contextmanager
 from typing import (
     Any,
     ByteString,
     Callable,
     Container,
+    ContextManager,
     Dict,
     Generator,
     Generic,
@@ -85,7 +88,7 @@ class Pep484GenericTypevaredSingle(Generic[S, T]):
 
 # ....................{ GENERICS ~ multiple               }....................
 class Pep484GenericUntypevaredMultiple(
-    collections_abc.Callable, Sequence[str], Tuple[str, str]):
+    collections_abc.Callable, ContextManager[str], Sequence[str]):
     '''
     `PEP 484`_-compliant user-defined generic subclassing multiple
     unparametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
@@ -95,10 +98,41 @@ class Pep484GenericUntypevaredMultiple(
        https://www.python.org/dev/peps/pep-0484
     '''
 
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, sequence: tuple) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
+
     # ..................{ ABCs                              }..................
     # Define all protocols mandated by ABCs subclassed by this generic above.
+
     def __call__(self) -> int:
         return len(self)
+
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._sequence
+
+    def __enter__(self) -> object:
+        return self
+
+    def __exit__(self, *args, **kwargs) -> bool:
+        return False
+
+    def __getitem__(self, index: int) -> object:
+        return self._sequence[index]
+
+    def __iter__(self) -> bool:
+        return iter(self._sequence)
+
+    def __len__(self) -> bool:
+        return len(self._sequence)
+
+    def __reversed__(self) -> object:
+        return self._sequence.reverse()
 
 
 class Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
@@ -163,8 +197,8 @@ class Pep484GenericTypevaredDeepMultiple(
 def _make_generator_yield_int_send_float_return_str() -> (
     Generator[int, float, str]):
     '''
-    Create a generator yielding integers, accepting floating-point numbers
-    externally sent to this generator by the caller, and returning strings.
+    Create and return a generator yielding integers, accepting floating-point
+    numbers sent to this generator by the caller, and returning strings.
 
     See Also
     ----------
@@ -184,6 +218,15 @@ def _make_generator_yield_int_send_float_return_str() -> (
 
     # Return a string constant.
     return 'Unmarred, scarred revanent remnants'
+
+
+@contextmanager
+def _make_context_manager(obj: object) -> ContextManager[object]:
+    '''
+    Create and return a context manager trivially yielding the passed object.
+    '''
+
+    yield obj
 
 # ....................{ COLLECTIONS                       }....................
 NamedTupleType = NamedTuple(
@@ -270,6 +313,20 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # String constant.
                 PepHintPithUnsatisfiedMetadata('...grant we heal'),
+            ),
+        ),
+
+        # ................{ CONTEXTMANAGER                    }................
+        ContextManager[str]: PepHintMetadata(
+            pep_sign=ContextManager,
+            type_origin=contextlib.AbstractContextManager,
+            piths_satisfied=(
+                # Context manager.
+                _make_context_manager('We were mysteries, unwon'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('We donned apportionments'),
             ),
         ),
 

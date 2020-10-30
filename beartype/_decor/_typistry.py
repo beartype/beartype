@@ -489,7 +489,7 @@ class Beartypistry(dict):
                     f'type {repr(hint)}.'
                 )
         # Else if this hint is a tuple...
-        elif hint.__class__ is tuple:
+        elif isinstance(hint, tuple):
             # If this tuple is *NOT* PEP-noncompliant (e.g., due to containing
             # PEP-compliant type hints), raise an exception.
             die_unless_hint_nonpep(

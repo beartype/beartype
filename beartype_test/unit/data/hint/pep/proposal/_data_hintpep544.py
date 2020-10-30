@@ -127,6 +127,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # User-defined protocol parametrized by a type variable.
         ProtocolCustomTypevared: PepHintMetadata(
             pep_sign=Generic,
+            is_typevared=True,
             piths_satisfied=(protocol_custom_structural,),
             piths_unsatisfied_meta=(
                 # String constant.

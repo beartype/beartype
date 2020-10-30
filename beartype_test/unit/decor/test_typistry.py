@@ -88,8 +88,6 @@ def test_typistry_register_type_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
-    from beartype_test.unit.data.hint.pep.proposal.data_hintpep484 import (
-        Pep484GenericTypevaredSingle)
 
     # Assert that non-types are *NOT* registrable via the same function.
     with raises(_BeartypeDecorBeartypistryException):
@@ -98,11 +96,6 @@ def test_typistry_register_type_fail() -> None:
             'while the worst',
             'Are full of passionate intensity',
         ))
-
-    # Assert that PEP-compliant types are *NOT* registrable via the same
-    # function.
-    with raises(_BeartypeDecorBeartypistryException):
-        register_typistry_type(Pep484GenericTypevaredSingle)
 
 # ....................{ TESTS ~ callable : tuple          }....................
 def test_typistry_register_tuple_pass() -> None:
@@ -256,7 +249,7 @@ def test_typistry_singleton_fail() -> None:
     from beartype._decor._typistry import bear_typistry
 
     # Assert that unhashable objects are *NOT* registrable.
-    with raises(TypeError):
+    with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['Turning.and.turning.in.the.widening.gyre'] = {
             'The falcon cannot hear the falconer;': (
                 'Things fall apart; the centre cannot hold;'),
