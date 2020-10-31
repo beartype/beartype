@@ -206,6 +206,90 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the "ast" module and parsing the returned AST for the first node marked as a
 #  "return" statement if any.
 
+#FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
+#surprisingly non-trivial.
+#
+#First, note that the user-defined literal object defined by a "typing.Literal"
+#hint is available as "hint.__args__[0]". That is, such hints *ALWAYS* have
+#exactly one child hint which is the user-defined literal object.
+#
+#Second, note that mutable objects are *NOT* hashable. So, registering these
+#objects with the "beartypistry" is *NOT* a valid generic solution. That said,
+#we *COULD* technically still do so for the subset of literal objects that are
+#hashable -- which will probably be most of them, actually. To do so, we would
+#then define a new beartype._decor._typistry.register_hashable() function
+#registering a generic hashable. This would then necessitate a new prefix
+#unique to hashables (e.g., "h"). In short, this actually entails quite a bit
+#of work and fails in the general case. So, we might simply avoid this for now.
+#
+#Third, note that one approach would be to augment the breadth-first search
+#performed below to record the "hint_path" used to access the currently visited
+#and possibly nested hint from the universally accessible
+#"__beartype_func.__annotations__[{param_name}]". This is obviously *NOT* the
+#optimally efficient approach, as this will entail multiple dictionary lookups
+#to type-check each literal object. Nonetheless, this is absolutely the
+#simplest approach and thus probably the one we should at least initially
+#pursue. Why? Because literal objects are unlikely to be used much (if at all)
+#in practical real-world applications. We certainly can't think of a single
+#valid use case ourselves. Literal objects are an obvious "code smell." If your
+#callable unconditionally accepts or returns an object, why even go to the
+#trouble of accepting or returning that object in the first place, right? So,
+#efficiency is *ABSOLUTELY* not a concern here.
+#
+#The issue, of course, is that we currently do *NOT* record the "hint_path"
+#used to access the currently visited and possibly nested hint from the
+#universally accessible "__beartype_func.__annotations__[{param_name}]". Doing
+#so will probably prove annoying and possibly non-trivial. Since we might need
+#to refactor quite a bit to do that and would increase the space complexity of
+#this algorithm by a little bit as well, we might consider alternatives.
+#
+#The obvious alternative is to refactor the pep_code_check_hint() function to
+#instead return the 3-tuple "Tuple[str, bool, Tuple[object]]" rather than the
+#2-tuple "Tuple[str, bool]" as we currently do. The new third item of that
+#3-tuple "Tuple[object]" is, of course, the tuple listing all user-defined
+#literal objects (i.e., "hint.__args__[0]" objects) such that the 0-based index
+#in this list of each such object is the breadth-first visitation order in
+#which this submodule discovers that object. Consider the callable with
+#signature:
+#      def muh_func(muh_param: Union[
+#          Literal[True],
+#          Tuple[str, List[Literal['ok']]],
+#          Sequence[Literal[5]],
+#      ]) -> Literal[23.35]: pass
+#
+#The third item of the tuple returned by the pep_code_check_hint() function
+#would then be the following tuple:
+#      (True, 5, 'ok',)
+#
+#Note the unexpected breadth-first ordering and omission of the "23.35" return
+#value literal. In any case, parent functions would then be responsible for
+#aggregating all literal object tuples returned by all calls to the
+#pep_code_check_hint() function for the decorated callable into a new
+#"data.func.__beartype_param_name_to_literals" dictionary mapping from the
+#name of each passed parameter as well as "return" for the return value to the
+#tuple returned by the pep_code_check_hint() function for that parameter.
+#
+#Given that, the pep_code_check_hint() function may then safely and reasonably
+#efficiently access each parameter-specific literal in breadth-first visitation
+#order with a placeholder expression resembling:
+#
+#    PEP586_CODE_PARAM_LITERAL_EXPR = (
+#        '''__beartype_func.__beartype_param_name_to_literals[PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER][{literal_curr_index}]''')
+#    '''
+#    `PEP 586`_-compliant Python expression yielding the literal object subscripting
+#    a possibly nested :attr:`typing.Literal` type hint annotated by the current
+#    parameter or return value.
+#
+#    .. _PEP 586:
+#       https://www.python.org/dev/peps/pep-0586
+#    '''
+#
+#This works, because "PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER" will be
+#globally replaced by the caller with the code-safe name of this parameter or
+#return value. Pretty sweet, yah? There's basically *NO* other way to
+#reasonably render literal objects accessible. This is sufficiently efficient
+#for these bizarre edge-case objects that this will suffice for all time.
+
 #FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
 #highly non-trivial -- sufficiently so, in fact, that we probably want to do so
 #elsewhere as cleverly documented in the "_pep563" submodule.
@@ -223,17 +307,17 @@ from beartype._decor._typistry import (
 from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_ROOT,
-    PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
-    PEP_CODE_CHECK_HINT_GENERIC_SUFFIX,
+    PEP484_CODE_CHECK_HINT_GENERIC_PREFIX,
+    PEP484_CODE_CHECK_HINT_GENERIC_SUFFIX,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX,
-    PEP_CODE_CHECK_HINT_UNION_PREFIX,
-    PEP_CODE_CHECK_HINT_UNION_SUFFIX,
+    PEP484_CODE_CHECK_HINT_UNION_PREFIX,
+    PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
     PEP_CODE_PITH_NAME_PREFIX,
     PEP_CODE_PITH_ROOT_NAME,
 
     # Bound format methods.
-    PEP_CODE_CHECK_HINT_GENERIC_CHILD_format,
+    PEP484_CODE_CHECK_HINT_GENERIC_CHILD_format,
     PEP_CODE_CHECK_HINT_NONPEP_TYPE_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format,
@@ -241,8 +325,8 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
-    PEP_CODE_CHECK_HINT_UNION_CHILD_PEP_format,
-    PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format,
+    PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format,
+    PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format,
     PEP_CODE_PITH_ASSIGN_EXPR_format,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -1192,7 +1276,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
 
                 # Initialize the code type-checking the current pith against
                 # these arguments to the substring prefixing all such code.
-                func_curr_code = PEP_CODE_CHECK_HINT_UNION_PREFIX
+                func_curr_code = PEP484_CODE_CHECK_HINT_UNION_PREFIX
 
                 # If this union is subscripted by one or more PEP-noncompliant
                 # child hints, generate and append efficient code type-checking
@@ -1200,7 +1284,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # any PEP-compliant child hints subscripting this union.
                 if hint_childs_nonpep:
                     func_curr_code += (
-                        PEP_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format(
+                        PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format(
                             # Python expression yielding the value of the
                             # current pith. Specifically...
                             pith_curr_expr=(
@@ -1255,7 +1339,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # append code type-checking this child hint.
                 for hint_child_index, hint_child in enumerate(hint_childs_pep):
                     func_curr_code += (
-                        PEP_CODE_CHECK_HINT_UNION_CHILD_PEP_format(
+                        PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format(
                             # Python expression yielding the value of the
                             # current pith.
                             hint_child_placeholder=_enqueue_hint_child(
@@ -1298,7 +1382,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # subscripted by one or more unignorable child hints and the
                 # above logic generated code type-checking these child hints.
                 # In this case...
-                if func_curr_code is not PEP_CODE_CHECK_HINT_UNION_PREFIX:
+                if func_curr_code is not PEP484_CODE_CHECK_HINT_UNION_PREFIX:
                     # Munge this code to...
                     func_curr_code = (
                         # Strip the erroneous " or" suffix appended by the
@@ -1306,7 +1390,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                         func_curr_code[:-_OPERATOR_SUFFIX_LEN_OR] +
                         # Suffix this code by the substring suffixing all such
                         # code.
-                        PEP_CODE_CHECK_HINT_UNION_SUFFIX
+                        PEP484_CODE_CHECK_HINT_UNION_SUFFIX
                     # Format the "indent_curr" prefix into this code deferred
                     # above for efficiency.
                     ).format(indent_curr=indent_curr)
@@ -1342,7 +1426,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
 
                 # Initialize the code type-checking the current pith against
                 # this generic to the substring prefixing all such code.
-                func_curr_code = PEP_CODE_CHECK_HINT_GENERIC_PREFIX
+                func_curr_code = PEP484_CODE_CHECK_HINT_GENERIC_PREFIX
 
                 # For each pseudo-superclass subclassed by this generic...
                 for hint_child in hint_childs:
@@ -1350,7 +1434,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     if (
                         # An actual superclass, this pseudo-superclass is
                         # effectively ignorable. Why? Because the
-                        # "PEP_CODE_CHECK_HINT_GENERIC_PREFIX" snippet
+                        # "PEP484_CODE_CHECK_HINT_GENERIC_PREFIX" snippet
                         # leveraged above already type-checks this pith against
                         # the generic subclassing this superclass and thus this
                         # superclass as well with a trivial isinstance() call.
@@ -1366,7 +1450,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     # Generate and append code type-checking this pith against
                     # this pseudo-superclass.
                     func_curr_code += (
-                        PEP_CODE_CHECK_HINT_GENERIC_CHILD_format(
+                        PEP484_CODE_CHECK_HINT_GENERIC_CHILD_format(
                             hint_child_placeholder=_enqueue_hint_child(
                                 # Python expression efficiently reusing the
                                 # value of this pith previously assigned to a
@@ -1381,7 +1465,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                     func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND] +
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    PEP_CODE_CHECK_HINT_GENERIC_SUFFIX
+                    PEP484_CODE_CHECK_HINT_GENERIC_SUFFIX
                 # Format the "indent_curr" prefix into this code deferred
                 # above for efficiency.
                 ).format(

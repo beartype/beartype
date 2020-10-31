@@ -20,7 +20,10 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN)
 from beartype._util.utilobject import get_object_module_name_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_3_6,
+)
 from typing import Generic, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -57,9 +60,53 @@ interpreted as **signs** (i.e., arbitrary objects uniquely identifying types of
 PEP-compliant type hints) by the :func:`get_hint_pep_sign` function.
 '''
 
-# ....................{ GETTERS ~ tuple                   }....................
-def get_hint_pep_args(hint: object) -> tuple:
-    '''
+# ....................{ GETTERS ~ args                    }....................
+# If the active Python interpreter targets at least Python >= 3.7, implement
+# this function to access the standard "__args__" dunder instance variable.
+if IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep_args(hint: object) -> tuple:
+
+        # Return the value of the "__args__" dunder attribute on this object if
+        # this object defines this attribute *OR* the empty tuple otherwise.
+        return getattr(hint, '__args__', ())
+#FIXME: Drop this like hot lead after dropping Python 3.6 support.
+# Else, the active Python interpreter targets Python 3.6. In this case...
+#
+# Gods... this is horrible. Thanks for nuthin', Python 3.6.
+else:
+    def get_hint_pep_args(hint: object) -> tuple:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+
+        # If this hint is a poorly designed Python 3.6-specific "type alias",
+        # this hint is a subscription of either the "typing.Match" or
+        # "typing.Pattern" objects. In this case, this hint declares a
+        # non-standard "type_var" instance variable whose value is either
+        # "typing.AnyStr", "str", or "bytes". Since only the former is an
+        # actual type variable, however, we further test that condition.
+        if isinstance(hint, typing._TypeAlias):
+            # If this value is a type variable, return the empty tuple.
+            if is_hint_pep_typevar(hint.type_var):
+                return ()
+            # Else, this value is either the builtin "str" or "bytes" class. In
+            # either case, return a new 1-tuple containing only this class.
+            else:
+                return (hint.type_var,)
+
+        # Else, this hint is a poorly designed Python 3.6-specific "generic
+        # meta." In this case, this hint declares the standard
+        # "__parameters__" dunder instance variable in a non-standard way.
+        # Specifically, the trailing "or ()" test below is needed to handle
+        # undocumented edge cases under the Python 3.6-specific implementation
+        # of the "typing" module:
+        #       >>> import typing as t
+        #       >>> t.Tuple.__args__   # yes, this is total bullocks
+        #       None
+        return getattr(hint, '__args__', ()) or ()
+
+# Document this function regardless of implementation details above.
+get_hint_pep_args.__doc__ = '''
     Tuple of all **typing arguments** (i.e., subscripted objects of the passed
     PEP-compliant type hint listed by the caller at hint declaration time)
     if any *or* the empty tuple otherwise.
@@ -103,20 +150,64 @@ def get_hint_pep_args(hint: object) -> tuple:
         (int, str, typing.Dict[str, str])
     '''
 
-    # Return the value of the "__args__" dunder attribute on this object if
-    # this object defines this attribute *OR* the empty tuple otherwise. Note:
-    #
-    # * The trailing "or ()" test is required to handle edge cases under the
-    #   Python < 3.7.0 implementation of the "typing" module. Notably, under
-    #   Python 3.6.11:
-    #       >>> import typing as t
-    #       >>> t.Tuple.__args__   # yes, this is total bullocks
-    #       None
-    return getattr(hint, '__args__', ()) or ()
+# ....................{ GETTERS ~ typevars                }....................
+# If the active Python interpreter targets at least Python >= 3.7, implement
+# this function to access the standard "__parameters__" dunder instance
+# variable.
+if IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep_typevars(hint: object) -> tuple:
+
+        # Value of the "__parameters__" dunder attribute on this object if this
+        # object defines this attribute *OR* the empty tuple otherwise. Note:
+        # * The "typing._GenericAlias.__parameters__" dunder attribute tested
+        #   here is defined by the typing._collect_type_vars() function at
+        #   subscription time. Yes, this is insane. Yes, this is PEP 484.
+        # * This trivial test implicitly handles superclass parametrizations.
+        #   Thankfully, the "typing" module percolates the "__parameters__"
+        #   dunder attribute from "typing" pseudo-superclasses to user-defined
+        #   subclasses during PEP 560-style type erasure. Finally: they did
+        #   something slightly right.
+        return getattr(hint, '__parameters__', ())
+#FIXME: Drop this like hot lead after dropping Python 3.6 support.
+# Else, the active Python interpreter targets Python 3.6. In this case...
+#
+# Gods... this is horrible. Thanks for nuthin', Python 3.6.
+else:
+    def get_hint_pep_typevars(hint: object) -> tuple:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+
+        # If this hint is a poorly designed Python 3.6-specific "type alias",
+        # this hint is a subscription of either the "typing.Match" or
+        # "typing.Pattern" objects. In this case, this hint declares a
+        # non-standard "type_var" instance variable whose value is either
+        # "typing.AnyStr", "str", or "bytes". Since only the former is an
+        # actual type variable, however, we further test that condition.
+        if isinstance(hint, typing._TypeAlias):
+            # If this value is a type variable, return a new 1-tuple containing
+            # only this type variable.
+            if is_hint_pep_typevar(hint.type_var):
+                return (hint.type_var,)
+            # Else, this value is *NOT* a type variable. In this case, return
+            # the empty tuple.
+            else:
+                return ()
+
+        # Else, this hint is a poorly designed Python 3.6-specific "generic
+        # meta." In this case, this hint declares the standard
+        # "__parameters__" dunder instance variable in a non-standard way.
+        # Specifically, the trailing "or ()" test below is needed to handle
+        # undocumented edge cases under the Python 3.6-specific implementation
+        # of the "typing" module:
+        #       >>> import typing as t
+        #       >>> t.Union.__parameters__   # yes, this is total bullocks
+        #       None
+        return getattr(hint, '__parameters__', ()) or ()
 
 
-def get_hint_pep_typevars(hint: object) -> tuple:
-    '''
+# Document this function regardless of implementation details above.
+get_hint_pep_typevars.__doc__ = '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed PEP-compliant type hint listed by the caller at
     hint declaration time ignoring duplicates) if any *or* the empty tuple
@@ -162,25 +253,6 @@ def get_hint_pep_typevars(hint: object) -> tuple:
         >>> get_hint_pep_typevars(typing.List[T, int, S, str, T)
         (T, S)
     '''
-
-    #FIXME: After dropping Python 3.6, drop the trailing "or ()". See below.
-
-    # Value of the "__parameters__" dunder attribute on this object if this
-    # object defines this attribute *OR* the empty tuple otherwise. Note that:
-    # * The "typing._GenericAlias.__parameters__" dunder attribute tested here
-    #   is defined by the typing._collect_type_vars() function at subscription
-    #   time. Yes, this is insane. Yes, this is PEP 484.
-    # * This trivial test implicitly handles superclass parametrizations.
-    #   Thankfully, the "typing" module percolates the "__parameters__" dunder
-    #   attribute from "typing" pseudo-superclasses to user-defined subclasses
-    #   during PEP 560-style type erasure. Finally: they did something right.
-    # * The trailing "or ()" test is required to handle edge cases under the
-    #   Python < 3.7.0 implementation of the "typing" module. Notably, under
-    #   Python 3.6.11:
-    #       >>> import typing as t
-    #       >>> t.Union.__parameters__   # yes, this is total bullocks
-    #       None
-    return getattr(hint, '__parameters__', ()) or ()
 
 # ....................{ GETTERS ~ sign                    }....................
 @callable_cached
@@ -386,9 +458,20 @@ def get_hint_pep_sign(hint: object) -> dict:
     # Python language. This is why we can't have sane things.
     elif is_hint_pep_typevar(hint):
         return TypeVar
-    # Else, this hint is neither a class, type variable, nor PEP 585-compliant
-    # type hint. In this case, this hint *MUST* be a standard PEP 484-compliant
-    # type hint defined by the "typing" module.
+    #FIXME: Drop this like hot lead after dropping Python 3.6 support.
+    # If the active Python interpreter targets Python 3.6 *AND* this hint is a
+    # poorly designed Python 3.6-specific "type alias", this hint is a
+    # subscription of either the "typing.Match" or "typing.Pattern" objects. In
+    # this case, this hint declares a non-standard "name" instance variable
+    # whose value is either the literal string "Match" or "Pattern". Return the
+    # "typing" attribute with this name *OR* implicitly raise an
+    # "AttributeError" exception if something goes horribly awry.
+    #
+    # Gods... this is horrible. Thanks for nuthin', Python 3.6.
+    elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):
+        return getattr(typing, hint.name)
+    # Else, this hint *MUST* be a standard PEP 484-compliant type hint defined
+    # by the "typing" module.
 
     #FIXME: Consider shifting this PEP 484-specific logic as well as the above
     #"if is_hint_pep484_generic(hint):" branch into a new
@@ -515,29 +598,46 @@ if IS_PYTHON_AT_LEAST_3_7:
             # Else, "None".
             None
         )
-# Else, the active Python interpreter targets Python 3.6. In this case,
-# implement this function to access the non-standard "__extra__" dunder
-# instance variable whose value is the origin type originating this hint. The
-# "__origin__" dunder instance variable *DOES* exist under Python 3.6 but is
-# typically the identity class referring to the same "typing" singleton (e.g.,
-# "typing.List" for "typing.List[int]") rather than the origin type (e.g.,
-# "list" for "typing.List[int]") and is thus completely useless for everything.
+#FIXME: Drop this like hot lead after dropping Python 3.6 support.
+# Else, the active Python interpreter targets Python 3.6. In this case...
+#
+# Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
     def get_hint_pep_type_origin_or_none(hint: object) -> 'Optional[type]':
 
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
 
-        # Return either...
-        return (
-            # If this sign originates from an origin type, that type.
-            hint_sign.__extra__
-            if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
-            # Else, "None".
-            None
-        )
+        # If this sign originates from an origin type...
+        #
+        # Note this could be implemented substantially more efficiently -- but
+        # why even bother? Python 3.6 is on unofficial intubation and will be
+        # officially terminated shortly.
+        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN:
+            # If this hint is a poorly designed Python 3.6-specific "type
+            # alias", this hint is a subscription of either the "typing.Match"
+            # or "typing.Pattern" objects. In this case, this hint declares a
+            # non-standard "impl_type" instance variable whose value is either
+            # the "re.Match" or "re.Pattern" class. Return this class.
+            if isinstance(hint, typing._TypeAlias):
+                return hint.impl_type
 
-# Document this function regardless of implementation details.
+            # Else, this hint is a poorly designed Python 3.6-specific "generic
+            # meta." In this case, this hint declares a non-standard
+            # "__extra__" dunder instance variable whose value is the origin
+            # type originating this hint. The "__origin__" dunder instance
+            # variable *DOES* exist under Python 3.6 but is typically the
+            # identity class referring to the same "typing" singleton (e.g.,
+            # "typing.List" for "typing.List[int]") rather than the origin type
+            # (e.g., "list" for "typing.List[int]") and is thus completely
+            # useless for everything.
+            return hint_sign.__extra__
+
+        # Else, this sign does *NOT* originate from an origin type. In this
+        # case, return "None".
+        return None
+
+# Document this function regardless of implementation details above.
 get_hint_pep_type_origin_or_none.__doc__ = '''
     **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
     satisfying the passed PEP-compliant type hint are instances of this class)

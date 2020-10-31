@@ -12,16 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeCallCheckPepParamException,
-    BeartypeCallCheckPepReturnException,
-    _BeartypeUtilRaisePepException,
-    _BeartypeUtilRaisePepDesynchronizationException,
-)
+from beartype.roar import _BeartypeUtilRaisePepException
+from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.utilobject import get_object_type_name_qualified
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -54,12 +50,22 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
         return None
     # Else, this pith is *NOT* an instance of this type.
 
+    # Fully-qualified name of this class.
+    classname = get_object_type_name_qualified(sleuth.hint)
+
+    # If this name contains one or more periods, this class is *NOT* a builtin
+    # (e.g., "list"). Whereas builtin classes are largely self-explanatory,
+    # non-builtin classes are *NOT* and thus benefit from more verbose
+    # human-readable explanation.
+    if '.' in classname:
+        classname = f'instance of <class "{classname}">'
+
     # Truncated representation of this pith.
     pith_repr = get_object_representation(sleuth.pith)
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return f'value {pith_repr} not {sleuth.hint.__name__}'
+    return f'value {pith_repr} not {classname}'
 
 
 def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':

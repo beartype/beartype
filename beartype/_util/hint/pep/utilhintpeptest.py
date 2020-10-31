@@ -362,6 +362,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     #FIXME: Remove this *AFTER* properly supporting type variables. For
     #now, ignoring type variables is required ta at least shallowly support
     #generics parametrized by one or more type variables.
+
     # If this hint is a type variable, return true. Type variables require
     # non-trivial and currently unimplemented decorator support.
     if is_hint_pep_typevar(hint):
@@ -380,7 +381,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
             hint, hint_sign)
 
         # If this hint is compliant with this PEP, return this boolean.
-        print(f'{is_hint_pep_ignorable_or_none} = {is_hint_pep_ignorable_tester}({hint}, {hint_sign})')
+        # print(f'{is_hint_pep_ignorable_or_none} = {is_hint_pep_ignorable_tester}({hint}, {hint_sign})')
         if is_hint_pep_ignorable_or_none is not None:
             return is_hint_pep_ignorable_or_none
         # Else, this hint is *NOT* compliant with this PEP. In this case,

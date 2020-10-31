@@ -92,11 +92,11 @@ def pep_code_check_param(
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+        f'{repr(data)} not @beartype data.')
     assert isinstance(func_arg, Parameter), (
-        '{!r} not parameter metadata.'.format(func_arg))
+        f'{repr(func_arg)} not parameter metadata.')
     assert func_arg_index.__class__ is int, (
-        '{!r} not parameter index.'.format(func_arg_index))
+        f'{repr(func_arg_index)} not parameter index.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
@@ -117,7 +117,7 @@ def pep_code_check_param(
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            '{} kind {!r} unsupported.'.format(hint_label, func_arg.kind))
+            f'{hint_label} kind {repr(func_arg.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Attempt to...
@@ -140,16 +140,12 @@ def pep_code_check_param(
     # cached exception...
     except Exception as exception:
         # Human-readable label describing this parameter.
-        hint_label = (
-            label_callable_decorated_param(
-                func=data.func, param_name=func_arg.name) + ' PEP hint')
+        hint_label = label_callable_decorated_param(
+            func=data.func, param_name=func_arg.name) + ' PEP hint'
 
         # Reraise this cached exception's memoized parameter-agnostic message
         # into an unmemoized parameter-specific message.
         reraise_exception_cached(exception=exception, target_str=hint_label)
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
 
     # Return all metadata required by higher-level callers, including...
     return (
@@ -194,7 +190,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # (e.g., by explicitly calling the die_unless_hint_pep_supported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+        f'{repr(data)} not @beartype data.')
 
     # Attempt to...
     try:
@@ -218,15 +214,11 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # cached exception...
     except Exception as exception:
         # Human-readable label describing this return.
-        hint_label = (
-            label_callable_decorated_return(data.func) + ' PEP hint')
+        hint_label = label_callable_decorated_return(data.func) + ' PEP hint'
 
         # Reraise this cached exception's memoized return value-agnostic
         # message into an unmemoized return value-specific message.
         reraise_exception_cached(exception=exception, target_str=hint_label)
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
 
     # Return all metadata required by higher-level callers, including...
     return (

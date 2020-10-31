@@ -14,7 +14,11 @@
 #FIXME: Add type hint test data all other "typing" types as well (e.g., "IO").
 
 # ....................{ IMPORTS                           }....................
-import contextlib
+import contextlib, re
+from beartype.cave import (
+    RegexMatchType,
+    RegexCompiledType,
+)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
@@ -28,6 +32,7 @@ from collections import abc as collections_abc
 from contextlib import contextmanager
 from typing import (
     Any,
+    AnyStr,
     ByteString,
     Callable,
     Container,
@@ -38,9 +43,11 @@ from typing import (
     Hashable,
     Iterable,
     List,
+    Match,
     MutableSequence,
     NamedTuple,
     NoReturn,
+    Pattern,
     Sequence,
     Sized,
     Tuple,
@@ -260,7 +267,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # unsubscripted typing attributes by default. Python 3.9 halted that
     # barbaric practice by leaving unsubscripted typing attributes
     # unparametrized by default.
-    _IS_TYPING_ATTR_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
+    _IS_SIGN_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
 
     # Add PEP 484-specific test type hints to this dictionary global.
     data_module.HINT_PEP_TO_META.update({
@@ -287,7 +294,8 @@ def add_data(data_module: 'ModuleType') -> None:
             is_supported=False,
         ),
 
-        # Type variable.
+        # ................{ UNSUBSCRIPTED ~ typevar           }................
+        # Generic type variable.
         T: PepHintMetadata(
             pep_sign=TypeVar,
             #FIXME: Remove after fully supporting type variables.
@@ -300,6 +308,29 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             # By definition, *ALL* objects satisfy *ALL* type variables.
             piths_unsatisfied_meta=(),
+        ),
+
+        # String type variable.
+        AnyStr: PepHintMetadata(
+            pep_sign=TypeVar,
+            #FIXME: Remove after fully supporting type variables.
+            is_ignorable=True,
+            piths_satisfied=(
+                # String constant.
+                'We were mysteries, unwon',
+                # Byte string constant.
+                b'We donned apportionments',
+            ),
+            #FIXME: Uncomment after fully supporting type variables.
+            # piths_unsatisfied_meta=(
+            #     # Integer constant.
+            #     728,
+            #     # List of string constants.
+            #     PepHintPithUnsatisfiedMetadata([
+            #         'Of Politico‐policed diction maledictions,',
+            #         'Of that numeral addicts’ “—Additive game,” self‐',
+            #     ]),
+            # ),
         ),
 
         # ................{ CALLABLE                          }................
@@ -334,7 +365,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unsubscripted "Dict" attribute.
         Dict: PepHintMetadata(
             pep_sign=Dict,
-            is_typevared=_IS_TYPING_ATTR_TYPEVARED,
+            is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=dict,
             piths_satisfied=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -408,7 +439,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unsubscripted "List" attribute.
         List: PepHintMetadata(
             pep_sign=List,
-            is_typevared=_IS_TYPING_ATTR_TYPEVARED,
+            is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=list,
             piths_satisfied=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -506,34 +537,72 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ MATCH                             }................
-        #FIXME: Uncomment after supporting "Match". Doing so will prove
-        #non-trivial for a number of reasons, including the obvious fact that
-        #"Match" is parametrized by the constrained concrete type variable
-        #"AnyStr", whose implementation wildly varies across Python
-        #versions. Moreover, "repr(Match) == 'Match[~AnyStr]'" is the case
-        #under Python < 3.7.0 -- significantly complicating detection. In short,
-        #let's leave this until we drop support for Python 3.6, at which point
-        #supporting this sanely will become *MUCH* simpler.
-        # Match: PepHintMetadata(
-        #     pep_sign=Match,
-        #     is_supported=False,
-        #     # "AnyStr" and hence "Match" (which is coercively
-        #     # parametrized by "AnyStr") is only a type variable proper under
-        #     # Python >= 3.7.0, which is frankly insane. Welcome to "typing".
-        #     is_typevared=IS_PYTHON_AT_LEAST_3_7,
-        #     piths_satisfied=(
-        #         # C-based container of one or more regular expression matches.
-        #         re.match(
-        #             r'\b[a-z]+ance[a-z]+\b',
-        #             'æriferous Elements’ dance, entranced',
-        #         ),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         'Formless, demiurgic offerings, preliminarily,',
-        #     ),
-        # ),
+        # ................{ REGEX ~ match                     }................
+        # Regular expression match of either strings or byte strings.
+        Match: PepHintMetadata(
+            pep_sign=Match,
+            type_origin=RegexMatchType,
+            is_typevared=_IS_SIGN_TYPEVARED,
+            piths_satisfied=(
+                # Regular expression match of one or more string constants.
+                re.search(
+                    r'\b[a-z]+ance[a-z]+\b',
+                    'æriferous Elements’ dance, entranced',
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Formless, demiurgic offerings, preliminarily,'),
+            ),
+        ),
+
+        # Regular expression match of only strings.
+        Match[str]: PepHintMetadata(
+            pep_sign=Match,
+            type_origin=RegexMatchType,
+            piths_satisfied=(
+                # Regular expression match of one or more string constants.
+                re.search(
+                    r'\b[a-z]+itiat[a-z]+\b',
+                    'Vitiating novitiate Succubæ – a',
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Into Elitistly'),
+            ),
+        ),
+
+        # ................{ REGEX ~ pattern                   }................
+        # Regular expression pattern of either strings or byte strings.
+        Pattern: PepHintMetadata(
+            pep_sign=Pattern,
+            type_origin=RegexCompiledType,
+            is_typevared=_IS_SIGN_TYPEVARED,
+            piths_satisfied=(
+                # Regular expression string pattern.
+                re.compile(r'\b[A-Z]+ANCE[A-Z]+\b'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Legal indiscretions'),
+            ),
+        ),
+
+        # Regular expression pattern of only strings.
+        Pattern[str]: PepHintMetadata(
+            pep_sign=Pattern,
+            type_origin=RegexCompiledType,
+            piths_satisfied=(
+                # Regular expression string pattern.
+                re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Obsessing men'),
+            ),
+        ),
 
         # ................{ TUPLE                             }................
         # Unsubscripted "Tuple" attribute. Note that this attribute is *NOT*
@@ -723,7 +792,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata('Leisurely excreted by'),
                 # Tuple containing fewer items than required.
                 PepHintPithUnsatisfiedMetadata((
-                    'Vitiating novitiate Succubæ — a',
+                    'Market states‐created, stark abscess',
                 )),
             ),
         ),
@@ -783,7 +852,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TYPE                              }................
         Type: PepHintMetadata(
             pep_sign=Type,
-            is_typevared=_IS_TYPING_ATTR_TYPEVARED,
+            is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=type,
             piths_satisfied=(
                 # Transitive superclass of all superclasses.

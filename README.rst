@@ -844,10 +844,15 @@ values annotated with these typing_ types:
 * typing.Tuple_.
 * typing.Union_.
 * **Generics** (i.e., classes subclassing one or more typing_ non-class
-  objects).
+  objects), including:
+
+  * typing.BinaryIO_.
+  * typing.TextIO_.
+
 * **Protocols** (i.e., classes directly subclassing the typing.Protocol_
   abstract base class (ABC) *and* zero or more typing_ non-class objects),
   including:
+
   * typing.SupportsAbs_.
   * typing.SupportsBytes_.
   * typing.SupportsComplex_.
@@ -877,21 +882,27 @@ types:
 * typing.FrozenSet_.
 * typing.Generator_.
 * typing.Hashable_.
+* typing.IO_.
 * typing.ItemsView_.
 * typing.Iterable_.
 * typing.Iterator_.
 * typing.KeysView_.
 * typing.MappingView_.
 * typing.Mapping_.
+* typing.Match_.
 * typing.MutableMapping_.
 * typing.MutableSet_.
 * typing.NamedTuple_.
+* typing.Pattern_.
 * typing.Set_.
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
 * **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
-  type-checking of generically substitutable types).
+  type-checking of generically substitutable types), including:
+
+  * typing.AnyStr_.
+
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
 
@@ -905,15 +916,9 @@ No Compliance
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
-* typing.AnyStr_.
-* typing.BinaryIO_.
 * typing.ClassVar_.
-* typing.IO_.
-* typing.Match_.
 * typing.NewType_.
 * typing.NoReturn_.
-* typing.Pattern_.
-* typing.TextIO_.
 * `Forward references <relative forward references_>`__ (i.e., unqualified
   relative string classnames internally coerced by typing_ into
   typing.ForwardRef_ instances).
@@ -975,7 +980,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Any_                         | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.AnyStr_                      | *none*                        | *none*                    |
+|             | typing.AnyStr_                      | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.AsyncContextManager_         | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -987,7 +992,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Awaitable_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.BinaryIO_                    | *none*                        | *none*                    |
+|             | typing.BinaryIO_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ByteString_                  | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1025,7 +1030,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Hashable_                    | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.IO_                          | *none*                        | *none*                    |
+|             | typing.IO_                          | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ItemsView_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1036,6 +1041,8 @@ Let's chart current and prospective new features for future generations:
 |             | typing.KeysView_                    | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.List_                        | **0.2.0**\ —\ *current*       | **0.3.0**\ —\ *current*   |
++-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | typing.Literal_                     | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Mapping_                     | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1059,7 +1066,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.OrderedDict_                 | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.Pattern_                     | *none*                        | *none*                    |
+|             | typing.Pattern_                     | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Protocol_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1087,7 +1094,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Text_                        | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.TextIO_                      | *none*                        | *none*                    |
+|             | typing.TextIO_                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Tuple_                       | **0.2.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1430,6 +1437,8 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.KeysView
 .. _typing.List:
    https://docs.python.org/3/library/typing.html#typing.List
+.. _typing.Literal:
+   https://docs.python.org/3/library/typing.html#typing.Literal
 .. _typing.Mapping:
    https://docs.python.org/3/library/typing.html#typing.Mapping
 .. _typing.MappingView:
