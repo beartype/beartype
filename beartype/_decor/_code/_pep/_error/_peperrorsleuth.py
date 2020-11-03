@@ -23,6 +23,7 @@ from beartype._util.hint.pep.utilhintpepget import (
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from typing import NoReturn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -46,6 +47,8 @@ class CauseSleuth(object):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
+    func : object
+        Decorated callable generating this type-checking error.
     hint : object
         Type hint to validate this object against.
     hint_sign : object
@@ -75,6 +78,7 @@ class CauseSleuth(object):
     __slots__ = (
         'cause_indent',
         'exception_label',
+        'func',
         'hint',
         'hint_sign',
         'hint_childs',
@@ -85,6 +89,7 @@ class CauseSleuth(object):
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
         'exception_label',
+        'func',
         'hint',
         'pith',
     ))
@@ -103,6 +108,7 @@ class CauseSleuth(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
+        func: object,
         pith: object,
         hint: object,
         cause_indent: str,
@@ -111,12 +117,14 @@ class CauseSleuth(object):
         '''
         Initialize this object.
         '''
+        assert callable(func), f'{repr(func)} not callable.'
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
         assert isinstance(exception_label, str), (
             f'{repr(exception_label)} not string.')
 
         # Classify all passed parameters.
+        self.func = func
         self.pith = pith
         self.hint = hint
         self.cause_indent = cause_indent
@@ -228,13 +236,26 @@ class CauseSleuth(object):
         # attribute (e.g., "typing.List" rather than "typing.List[str]") and is
         # thus subscripted by *NO* child hints...
         elif self.hint is self.hint_sign:
-            # Avoid circular import dependencies.
-            from beartype._decor._code._pep._error._peperrortype import (
-                get_cause_or_none_type_origin)
+            # If this hint is the non-standard "typing.NoReturn" type hint
+            # specific to return values...
+            if self.hint is NoReturn:
+                # Avoid circular import dependencies.
+                from beartype._decor._code._pep._error._peperrorreturn import (
+                    get_cause_or_none_noreturn)
 
-            # Defer to the getter function supporting isinstance()-able
-            # attributes.
-            get_cause_or_none = get_cause_or_none_type_origin
+                # Defer to the getter function specific to this hint.
+                get_cause_or_none = get_cause_or_none_noreturn
+            # Else, this hint is a standard PEP-compliant type hint supported
+            # by both parameters and return values. In this case, we assume
+            # this hint to originate from an origin type.
+            else:
+                # Avoid circular import dependencies.
+                from beartype._decor._code._pep._error._peperrortype import (
+                    get_cause_or_none_type_origin)
+
+                # Defer to the getter function supporting hints originating
+                # from origin types.
+                get_cause_or_none = get_cause_or_none_type_origin
         # Else, this PEP-compliant hint is *NOT* its own unsubscripted "typing"
         # attribute and is thus subscripted by one or more child hints (e.g.,
         # "typing.List[str]" rather than "typing.List"). In this case...

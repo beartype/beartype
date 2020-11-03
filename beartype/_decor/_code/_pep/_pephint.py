@@ -196,16 +196,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #     def muh_func(muh_mapping: BeartypeDict[str, int]) -> None: pass
 #In short, we'll need to conduct considerably more research here.
 
-#FIXME: Type-check "typing.NoReturn", too. Note that whether a callable returns
-#"None" or not is *NOT* a sufficient condition to positively declare a function
-#to return no value for hopefully obvious reasons. Rather, we instead need to
-#validate this condition entirely at decoration time by either:
-#* Disassembling the decorated callable with the "dis" module and parsing the
-#  returned bytecode assembly for the first "return" statement if any.
-#* Constructing the abstract syntax tree (AST) for the decorated callable with
-#  the "ast" module and parsing the returned AST for the first node marked as a
-#  "return" statement if any.
-
 #FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
 #surprisingly non-trivial.
 #
@@ -297,6 +287,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
+    BeartypeDecorHintPepInvalidException,
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype._decor._data import BeartypeData
@@ -351,8 +342,9 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
-    die_unless_hint_pep_supported,
-    die_unless_hint_pep_sign_supported,
+    die_if_hint_pep_invalid,
+    die_if_hint_pep_unsupported,
+    die_if_hint_pep_sign_unsupported,
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -360,7 +352,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
 from itertools import count
-from typing import Generic, Tuple
+from typing import Generic, NoReturn, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -519,7 +511,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         the :func:`beartype.beartype` decorator.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_pep_supported()
+    # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, (
         '{!r} not @beartype data.'.format(data))
@@ -937,6 +929,21 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # CAVEATS: Synchronize changes here with "ANNOTATED" below.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+            #FIXME: Refactor to call warn_if_hint_pep_unsupported() instead.
+            #Actually...wait. This is probably still a valid test here. We'll
+            #need to instead augment the is_hint_ignorable() function to
+            #additionally test whether the passed hint is unsupported, in which
+            #case that function should return false as well as emit a non-fatal
+            #warning ala the new warn_if_hint_pep_unsupported() function --
+            #which should probably simply be removed now. *sigh*
+            #FIXME: Actually, in that case, we can simply reduce the following
+            #two calls to simply:
+            #    die_if_hint_pep_ignorable(
+            #        hint=hint_curr, hint_label=hint_child_label)
+            #Of course, this implies we want to refactor the
+            #die_if_hint_pep_unsupported() function into
+            #die_if_hint_pep_ignorable()... probably.
+
             # If this hint is currently unsupported, raise an exception.
             #
             # Note the human-readable label prefixing the representations of
@@ -944,7 +951,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # the root hint has already been validated to be supported by
             # the above call to the same function, this call is guaranteed to
             # *NEVER* raise an exception for that hint.
-            die_unless_hint_pep_supported(
+            die_if_hint_pep_unsupported(
                 hint=hint_curr, hint_label=hint_child_label)
             # Else, this hint is supported.
 
@@ -965,9 +972,9 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # Note the human-readable label prefixing the representations of
             # child PEP-compliant type hints is unconditionally passed. Since
             # the root hint has already been validated to be supported by the
-            # above call to the die_unless_hint_pep_supported() function, this
+            # above call to the die_if_hint_pep_unsupported() function, this
             # call is guaranteed to *NEVER* raise exceptions for the root hint.
-            die_unless_hint_pep_sign_supported(
+            die_if_hint_pep_sign_unsupported(
                 hint=hint_curr_sign, hint_label=hint_child_label)
             # Else, this attribute is supported.
 
@@ -1478,6 +1485,25 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 # print(f'{hint_child_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
 
+            # ..............{ NORETURN                          }..............
+            # If this hint is the non-standard PEP 484-compliant "NoReturn"
+            # singleton valid *ONLY* as the non-nested return annotation of a
+            # callable, raise an exception. This singleton is invalid when
+            # subscripting *ANY* PEP-compliant type hint (e.g.,
+            # "typing.List[typing.NoReturn]"), which is guaranteed to be the
+            # case if this conditional is true. Why? Because the previously
+            # called higher-level pep_code_check_return() function has already
+            # handled the single edge case in which this singleton is
+            # contextually valid, implying this singleton to be invalid here.
+            elif hint_curr is NoReturn:
+                raise BeartypeDecorHintPepInvalidException(
+                    f'{hint_child_label} PEP hint '
+                    f'{repr(hint_curr)} nesting "typing.NoReturn" invalid '
+                    f'(i.e., as "typing.NoReturn" valid only as a '
+                    f'non-nested return annotation).'
+                )
+            # Else, this hint is *NOT* "NoReturn".
+
             # ..............{ SHALLOW or ARGUMENTLESS           }..............
             # If this hint either...
             elif (
@@ -1697,7 +1723,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 raise BeartypeDecorHintPepUnsupportedException(
                     f'{hint_child_label} PEP hint '
                     f'{repr(hint_curr)} unsupported but '
-                    f'erroneously detected as supported.')
+                    f'erroneously detected as supported.'
+                )
 
         # ................{ NON-PEP                           }................
         # Else, this hint is *NOT* PEP-compliant.
@@ -1750,7 +1777,8 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
         else:
             raise BeartypeDecorHintPepException(
                 f'{hint_child_label} hint {repr(hint_curr)} not PEP-compliant '
-                f'(e.g., neither "typing" object nor non-"typing" class).')
+                f'(e.g., neither "typing" object nor non-"typing" class).'
+            )
 
         # ................{ CLEANUP                           }................
         # Inject this code into the body of this wrapper.
@@ -1780,7 +1808,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
     # absolutely should have... but may not have, which is why we're testing.
     if func_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            '{} not type-checked.'.format(hint_root_label))
+            f'{hint_root_label} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
 
     # Return all metadata required by higher-level callers.

@@ -204,6 +204,7 @@ def raise_pep_call_exception(
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
     # if this pith satisfies this hint).
     exception_cause = CauseSleuth(
+        func=func,
         pith=pith_value,
         hint=hint,
         cause_indent='',

@@ -222,7 +222,6 @@ _GLOBAL_ATTRS = {
         BeartypeCallCheckNonPepParamException),
     '__beartype_nonpep_return_exception': (
         BeartypeCallCheckNonPepReturnException),
-    '__beartype_pep_exception': BeartypeCallCheckPepException,
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
     '__beartype_trim': get_object_representation,
 }

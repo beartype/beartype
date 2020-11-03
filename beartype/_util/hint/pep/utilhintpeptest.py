@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
+    BeartypeDecorHintPepUnsupportedWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
@@ -31,6 +32,7 @@ from beartype._util.utilobject import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
+from warnings import warn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -145,8 +147,8 @@ def die_unless_hint_pep(
             f'{hint_label} {repr(hint)} not PEP-compliant '
             f'(e.g., not "typing" type).')
 
-# ....................{ EXCEPTIONS                        }....................
-def die_unless_hint_pep_supported(
+# ....................{ EXCEPTIONS ~ invalid              }....................
+def die_if_hint_pep_invalid(
     # Mandatory parameters.
     hint: object,
 
@@ -154,9 +156,87 @@ def die_unless_hint_pep_supported(
     hint_label: str = 'Annotated',
 ) -> None:
     '''
-    Raise an exception unless the passed object is a **PEP-compliant supported
+    Raise an exception if the passed object is a **PEP-compliant shallowly
+    invalid type hint** (i.e., :mod:`beartype`-agnostic annotation compliant
+    with annotation-centric PEPs but shallowly invalid in the context of this
+    hint).
+
+    Specifically, this function raises an exception if this hint:
+
+    * Is the non-standard :attr:`typing.NoReturn` singleton, which is valid
+      *only* as the return annotation of a callable. Notably, this singleton is
+      invalid when subscripting any other PEP-compliant type hint (e.g.,
+      ``typing.List[typing.NoReturn]``). Since this function is called *only*
+      after handling the single edge case in which this singleton is
+      contextually valid, this singleton is effectively invalid in all other
+      contexts for the general case.
+
+    This validator is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``"Annotated"``.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this object is *not* a PEP-compliant type hint.
+    BeartypeDecorHintPepInvalidException
+        If this object is a PEP-compliant invalid type hint.
+
+    See Also
+    ----------
+    :func:`is_hint_pep_valid`
+        Further details.
+    '''
+
+    # If this object is a supported PEP-compliant type hint, reduce to a noop.
+    #
+    # Note that this memoized call is intentionally passed positional rather
+    # than keyword parameters to maximize efficiency.
+    if hint is not NoReturn:
+        return
+    # Else, this object is *NOT* a supported PEP-compliant type hint. In this
+    # case, subsequent logic raises an exception specific to the passed
+    # parameters.
+    assert hint_label.__class__ is str, f'{repr(hint_label)} not string.'
+
+    # If this hint is *NOT* PEP-compliant, raise an exception.
+    die_unless_hint_pep(hint=hint, hint_label=hint_label)
+
+    # Else, this hint is PEP-compliant. In this case, raise an exception.
+    #
+    # Note that, by definition, the unsubscripted "typing" argument uniquely
+    # identifying this hint *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set.
+    # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
+    # there's no benefit to validating that expectation here.
+    raise BeartypeDecorHintPepUnsupportedException(
+        f'{hint_label} PEP hint {repr(hint)} '
+        f'currently unsupported by @beartype.'
+    )
+
+# ....................{ EXCEPTIONS ~ supported            }....................
+#FIXME: Refactor all or most calls to this and the
+#die_if_hint_pep_sign_unsupported() functions into calls to the
+#warn_if_hint_pep_unsupported() function; then, consider excising these as well
+#as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
+def die_if_hint_pep_unsupported(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotated',
+) -> None:
+    '''
+    Raise an exception if the passed object is a **PEP-compliant unsupported
     type hint** (i.e., :mod:`beartype`-agnostic annotation compliant with
-    annotation-centric PEPs currently supported by the
+    annotation-centric PEPs currently *not* supported by the
     :func:`beartype.beartype` decorator).
 
     This validator is effectively (but technically *not*) memoized. See the
@@ -164,10 +244,10 @@ def die_unless_hint_pep_supported(
 
     Caveats
     ----------
-    **This function should never be called to validate unsubscripted**
-    :mod:`typing` **attributes** (e.g., those returned by the
+    **This function should never be called to validate either signs or
+    unsubscripted** :mod:`typing` **objects** (e.g., those returned by the
     :func:`beartype._util.hint.pep.get_hint_pep_sign` function). The
-    :func:`die_unless_hint_pep_sign_supported` function should be called
+    :func:`die_if_hint_pep_sign_unsupported` function should be called
     instead. Why? Because the :mod:`typing` module implicitly parametrizes
     these attributes by one or more type variables. Since this decorator
     currently fails to support type variables, this function unconditionally
@@ -224,7 +304,7 @@ def die_unless_hint_pep_supported(
     )
 
 
-def die_unless_hint_pep_sign_supported(
+def die_if_hint_pep_sign_unsupported(
     # Mandatory parameters.
     hint: object,
 
@@ -267,6 +347,76 @@ def die_unless_hint_pep_sign_supported(
             f'{hint_label} PEP sign {repr(hint)} '
             f'currently unsupported by @beartype.'
         )
+
+# ....................{ WARNINGS                          }....................
+#FIXME: Unit test us up.
+#FIXME: ACtually use us in place of die_if_hint_pep_unsupported().
+def warn_if_hint_pep_unsupported(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotated',
+) -> bool:
+    '''
+    Return ``True`` and emit a non-fatal warning only if the passed object is a
+    **PEP-compliant unsupported type hint** (i.e., :mod:`beartype`-agnostic
+    annotation compliant with annotation-centric PEPs currently *not* supported
+    by the :func:`beartype.beartype` decorator).
+
+    This validator is effectively (but technically *not*) memoized. See the
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        warning message emitted by this function. Defaults to ``"Annotated"``.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this PEP-compliant type hint is currently supported by
+        that decorator.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this object is *not* a PEP-compliant type hint.
+
+    Warnings
+    ----------
+    BeartypeDecorHintPepUnsupportedWarning
+        If this object is a PEP-compliant type hint currently unsupported by
+        that decorator.
+    '''
+
+    # True only if this object is a supported PEP-compliant type hint.
+    #
+    # Note that this memoized call is intentionally passed positional rather
+    # than keyword parameters to maximize efficiency.
+    is_hint_pep_supported_test = is_hint_pep_supported(hint)
+
+    # If this object is an unsupported PEP-compliant type hint...
+    if not is_hint_pep_supported_test:
+        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+
+        # If this hint is *NOT* PEP-compliant, raise an exception.
+        die_unless_hint_pep(hint=hint, hint_label=hint_label)
+
+        # Else, this hint is PEP-compliant. In this case, emit a warning.
+        warn(
+            (
+                f'{hint_label} PEP hint {repr(hint)} '
+                f'currently unsupported by @beartype.'
+            ),
+            BeartypeDecorHintPepUnsupportedWarning
+        )
+
+    # Return true only if this object is a supported PEP-compliant type hint.
+    return is_hint_pep_supported_test
 
 # ....................{ TESTERS                           }....................
 @callable_cached

@@ -17,7 +17,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
     is_hint_nonpep,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
-    die_unless_hint_pep_supported,
+    die_if_hint_pep_unsupported,
     is_hint_pep,
     is_hint_pep_supported,
 )
@@ -106,7 +106,7 @@ def die_unless_hint(
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
     if is_hint_pep(hint):
-        die_unless_hint_pep_supported(
+        die_if_hint_pep_unsupported(
             hint=hint,
             hint_label=hint_label,
         )

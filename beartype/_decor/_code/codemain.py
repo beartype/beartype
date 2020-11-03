@@ -254,8 +254,7 @@ def generate_code(data: BeartypeData) -> None:
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
     '''
-    assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
     # Python code snippet declaring the signature of this wrapper.
     code_sig = CODE_SIGNATURE.format(func_wrapper_name=data.func_wrapper_name)
@@ -277,16 +276,13 @@ def generate_code(data: BeartypeData) -> None:
     code_init = (
         # If the body of this wrapper requires a pseudo-random integer, append
         # code generating and localizing such an integer to this signature.
-        code_sig + CODE_INIT_RANDOM_INT
+        f'{code_sig}{CODE_INIT_RANDOM_INT}'
         if (is_code_params_needs_random_int or is_code_return_needs_random_int)
         else
         # Else, this body requires *NO* such integer. In this case, preserve
         # this signature as is.
         code_sig
     )
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
 
     # Python code defining the wrapper type-checking this callable.
     #
@@ -300,10 +296,10 @@ def generate_code(data: BeartypeData) -> None:
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal.
-    func_code = code_init + code_params + code_return
+    func_code = f'{code_init}{code_params}{code_return}'
 
     # True only if this code proxies this callable *WITHOUT* type checking.
-    is_func_code_noop = (func_code == code_sig + CODE_RETURN_UNCHECKED)
+    is_func_code_noop = (func_code == f'{code_sig}{CODE_RETURN_UNCHECKED}')
 
     # Return this code and accompanying boolean.
     return func_code, is_func_code_noop
@@ -349,8 +345,7 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
     '''
-    assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
     # Python code snippet to be returned.
     func_code = ''
@@ -391,8 +386,9 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         # defaults.
         if func_arg.name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
-                '{} parameter "{}" reserved by @beartype.'.format(
-                    data.func_name, func_arg.name))
+                f'{data.func_name} parameter '
+                f'"{func_arg.name}" reserved by @beartype.'
+            )
 
         # If either this hint *OR* the type of this parameter is silently
         # ignorable, continue to the next parameter.
@@ -452,7 +448,7 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
             # If this callable accepts one or more positional parameters, this
             # snippet preceded by code localizing the number of these
             # parameters.
-            CODE_INIT_PARAMS_POSITIONAL_LEN + func_code
+            f'{CODE_INIT_PARAMS_POSITIONAL_LEN}{func_code}'
             if is_params_positional else
             # Else, this callable accepts *NO* positional parameters. In this
             # case, this snippet as is.
@@ -501,8 +497,7 @@ def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
         builtin :func:`hash` function and thus unusable in hash-based
         containers like dictionaries).
     '''
-    assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
     # Python code snippet to be returned.
     func_code = None

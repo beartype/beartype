@@ -46,7 +46,6 @@ from typing import (
     Match,
     MutableSequence,
     NamedTuple,
-    NoReturn,
     Pattern,
     Sequence,
     Sized,
@@ -272,6 +271,10 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 484-specific test type hints to this dictionary global.
     data_module.HINT_PEP_TO_META.update({
         # ................{ UNSUBSCRIPTED                     }................
+        # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
+        # permissible *ONLY* as a return annotation and *MUST* thus be
+        # exercised independently with special-purposed unit tests.
+
         Any: PepHintMetadata(
             pep_sign=Any,
             is_ignorable=True,
@@ -288,10 +291,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata(
                     'At that atom-nestled canticle'),
             ),
-        ),
-        NoReturn: PepHintMetadata(
-            pep_sign=NoReturn,
-            is_supported=False,
         ),
 
         # ................{ UNSUBSCRIPTED ~ typevar           }................

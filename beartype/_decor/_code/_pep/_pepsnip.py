@@ -85,38 +85,31 @@ PARAM_KIND_TO_PEP_CODE_GET = {
     #   we could pass a "__beartype_sentinel" parameter to all wrapper
     #   functions defaulting to "object()" and then use that here instead,
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
-    Parameter.POSITIONAL_OR_KEYWORD: '''
+    Parameter.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
     # sentinel value "__beartypistry" guaranteed to never be passed otherwise.
-    {pith_root_name} = (
+    {PEP_CODE_PITH_ROOT_NAME} = (
         args[{{arg_index}}] if __beartype_args_len > {{arg_index}} else
-        kwargs.get({{arg_name!r}}, {param_name_typistry})
+        kwargs.get({{arg_name!r}}, {PARAM_NAME_TYPISTRY})
     )
 
     # If this parameter was passed...
-    if {pith_root_name} is not {param_name_typistry}:'''.format(
-        param_name_typistry=PARAM_NAME_TYPISTRY,
-        pith_root_name=PEP_CODE_PITH_ROOT_NAME,
-    ),
+    if {PEP_CODE_PITH_ROOT_NAME} is not {PARAM_NAME_TYPISTRY}:''',
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
-    Parameter.KEYWORD_ONLY: '''
+    Parameter.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartypistry" guaranteed to never be passed otherwise.
-    {pith_root_name} = kwargs.get({{arg_name!r}}, {param_name_typistry})
+    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {PARAM_NAME_TYPISTRY})
 
     # If this parameter was passed...
-    if {pith_root_name} is not {param_name_typistry}:'''.format(
-        param_name_typistry=PARAM_NAME_TYPISTRY,
-        pith_root_name=PEP_CODE_PITH_ROOT_NAME,
-    ),
+    if {PEP_CODE_PITH_ROOT_NAME} is not {PARAM_NAME_TYPISTRY}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
-    Parameter.VAR_POSITIONAL: '''
+    Parameter.VAR_POSITIONAL: f'''
     # For all passed positional variadic parameters...
-    for {pith_root_name} in args[{{arg_index!r}}:]:'''.format(
-        pith_root_name=PEP_CODE_PITH_ROOT_NAME),
+    for {PEP_CODE_PITH_ROOT_NAME} in args[{{arg_index!r}}:]:''',
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the
@@ -125,17 +118,14 @@ that callable's next parameter to be type-checked.
 '''
 
 # ....................{ RETURN                            }....................
-PEP_CODE_CHECK_RETURN_PREFIX = '''
+PEP_CODE_CHECK_RETURN_PREFIX = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {pith_root_name} = {param_name_func}(*args, **kwargs)
+    {PEP_CODE_PITH_ROOT_NAME} = {PARAM_NAME_FUNC}(*args, **kwargs)
 
     # Noop required to artifically increase indentation level. Note that
     # CPython implicitly optimizes this conditional away - which is nice.
-    if True:'''.format(
-    param_name_func=PARAM_NAME_FUNC,
-    pith_root_name=PEP_CODE_PITH_ROOT_NAME,
-)
+    if True:'''
 '''
 PEP-compliant code snippet calling the decorated callable and localizing the
 value returned by that call.
@@ -156,8 +146,8 @@ https://stackoverflow.com/a/18124151/2809027
 '''
 
 
-PEP_CODE_CHECK_RETURN_SUFFIX = '''
-    return {pith_root_name}'''.format(pith_root_name=PEP_CODE_PITH_ROOT_NAME)
+PEP_CODE_CHECK_RETURN_SUFFIX = f'''
+    return {PEP_CODE_PITH_ROOT_NAME}'''
 '''
 PEP-compliant code snippet returning from the wrapper function the successfully
 type-checked value returned from the decorated callable.
@@ -167,21 +157,41 @@ Note that this snippet intentionally terminates on a line containing only the
 :data:`PEP_CODE_GET_RETURN` snippet.
 '''
 
+# ....................{ RETURN ~ noreturn                 }....................
+PEP484_CODE_CHECK_NORETURN = f'''
+    # Call this function with all passed parameters and localize the value
+    # returned from this call.
+    {PEP_CODE_PITH_ROOT_NAME} = {PARAM_NAME_FUNC}(*args, **kwargs)
+
+    # Since this function annotated by "typing.NoReturn" successfully returned
+    # a value rather than raising an exception or halting the active Python
+    # interpreter, unconditionally raise an exception.
+    __beartype_raise_pep_call_exception(
+        func={PARAM_NAME_FUNC},
+        pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
+        pith_value={PEP_CODE_PITH_ROOT_NAME},
+    )'''
+'''
+`PEP 484`_-compliant code snippet calling the decorated callable annotated by
+the :attr:`typing.NoReturn` singleton and raising an exception if this call
+successfully returned a value rather than raising an exception or halting the
+active Python interpreter.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+'''
+
 # ....................{ HINT                              }....................
-PEP_CODE_CHECK_HINT_ROOT = '''
+PEP_CODE_CHECK_HINT_ROOT = f'''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
         if not {{hint_child_placeholder}}:
             __beartype_raise_pep_call_exception(
-                func={param_name_func},
-                pith_name={pith_root_name},
-                pith_value={pith_root_expr},
+                func={PARAM_NAME_FUNC},
+                pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
+                pith_value={PEP_CODE_PITH_ROOT_NAME},
             )
-'''.format(
-    param_name_func=PARAM_NAME_FUNC,
-    pith_root_name=PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
-    pith_root_expr=PEP_CODE_PITH_ROOT_NAME,
-)
+'''
 '''
 PEP-compliant code snippet type-checking the **root pith** (i.e., value of the
 current parameter or return value) against the root PEP-compliant type hint

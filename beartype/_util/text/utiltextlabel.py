@@ -18,6 +18,27 @@ from beartype._util.text.utiltextrepr import get_object_representation
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS                         }....................
+def label_callable(func: 'CallableTypes') -> None:
+    '''
+    Human-readable label describing the passed **callable** (e.g., function,
+    method, property).
+
+    Parameters
+    ----------
+    func : CallableTypes
+        Callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this callable.
+    '''
+    assert callable(func), f'{repr(func)} uncallable.'
+
+    # Create and return this label.
+    return f'{func.__name__}()'
+
+
 def label_callable_decorated(func: 'CallableTypes') -> None:
     '''
     Human-readable label describing the passed **decorated callable** (i.e.,
@@ -34,13 +55,9 @@ def label_callable_decorated(func: 'CallableTypes') -> None:
     str
         Human-readable label describing this decorated callable.
     '''
-    assert callable(func), '{!r} uncallable.'.format(func)
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
 
     # Create and return this label.
-    return '@beartyped ' + func.__name__ + '()'
+    return f'@beartyped {label_callable(func)}'
 
 
 def label_callable_decorated_pith(
@@ -64,7 +81,7 @@ def label_callable_decorated_pith(
         Human-readable label describing either the name of this parameter *or*
         this return value.
     '''
-    assert isinstance(pith_name, str), '{!r} not string.'.format(pith_name)
+    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
     # Return a human-readable label describing either...
     return (
@@ -96,14 +113,10 @@ def label_callable_decorated_param(
     str
         Human-readable label describing this parameter's name.
     '''
-    assert isinstance(param_name, str), '{!r} not string.'.format(param_name)
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
+    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
 
     # Create and return this label.
-    return '{} parameter "{}"'.format(
-        label_callable_decorated(func), param_name)
+    return f'{label_callable_decorated(func)} parameter "{param_name}"'
 
 
 def label_callable_decorated_param_value(
@@ -128,16 +141,12 @@ def label_callable_decorated_param_value(
     str
         Human-readable label describing this parameter's name and value.
     '''
-    assert isinstance(param_name, str), '{!r} not string.'.format(param_name)
-
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-    #which are the optimal means of performing string formatting.
+    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
 
     # Create and return this label.
-    return '{} parameter {}={}'.format(
-        label_callable_decorated(func),
-        param_name,
-        get_object_representation(param_value),
+    return (
+        f'{label_callable_decorated(func)} parameter '
+        f'{param_name}={get_object_representation(param_value)}'
     )
 
 # ....................{ LABELLERS ~ return                }....................
@@ -159,7 +168,7 @@ def label_callable_decorated_return(func: 'CallableTypes') -> None:
     '''
 
     # Create and return this label.
-    return label_callable_decorated(func) + ' return value'
+    return f'{label_callable_decorated(func)} return value'
 
 
 def label_callable_decorated_return_value(
@@ -187,6 +196,7 @@ def label_callable_decorated_return_value(
     #which are the optimal means of performing string formatting.
 
     # Create and return this label.
-    return '{} {}'.format(
-        label_callable_decorated_return(func),
-        get_object_representation(return_value))
+    return (
+        f'{label_callable_decorated_return(func)} '
+        f'{get_object_representation(return_value)}'
+    )

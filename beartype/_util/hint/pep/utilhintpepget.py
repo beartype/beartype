@@ -369,7 +369,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # If this hint is *NOT* PEP-compliant, raise an exception.
     #
     # Note that we intentionally avoid calling the
-    # die_unless_hint_pep_supported() function here, which calls the
+    # die_if_hint_pep_unsupported() function here, which calls the
     # is_hint_pep_supported() function, which calls this function.
     die_unless_hint_pep(hint)
     # Else, this hint is PEP-compliant.

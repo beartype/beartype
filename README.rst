@@ -806,11 +806,11 @@ PEP-compliant Type Hints
   detailed below <PEP 484 Compliance_>`__
 * `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
   <PEP 484 Compliance_>`__.
+* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 * `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
@@ -837,6 +837,7 @@ values annotated with these typing_ types:
 * typing.ByteString_.
 * typing.List_.
 * typing.MutableSequence_.
+* typing.NoReturn_.
 * typing.Optional_.
 * typing.Sequence_.
 * typing.Sized_.
@@ -918,7 +919,6 @@ typing_ types:
 
 * typing.ClassVar_.
 * typing.NewType_.
-* typing.NoReturn_.
 * `Forward references <relative forward references_>`__ (i.e., unqualified
   relative string classnames internally coerced by typing_ into
   typing.ForwardRef_ instances).
@@ -992,7 +992,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Awaitable_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.BinaryIO_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
+|             | typing.BinaryIO_                    | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ByteString_                  | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1060,7 +1060,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.NewType_                     | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.NoReturn_                    | *none*                        | *none*                    |
+|             | typing.NoReturn_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Optional_                    | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1094,7 +1094,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Text_                        | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.TextIO_                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
+|             | typing.TextIO_                      | **0.4.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Tuple_                       | **0.2.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

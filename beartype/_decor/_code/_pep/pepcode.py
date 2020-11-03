@@ -27,11 +27,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #as cleverly documented in the "_pep563" submodule.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintPepException
+from beartype.roar import (
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepParamException,
+)
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
     PEP_CODE_CHECK_RETURN_PREFIX,
     PEP_CODE_CHECK_RETURN_SUFFIX,
+    PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
@@ -43,6 +47,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_return,
 )
 from inspect import Parameter
+from typing import NoReturn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -89,10 +94,9 @@ def pep_code_check_param(
           localizing a pseudo-random integer.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_pep_supported()
+    # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
-    assert data.__class__ is BeartypeData, (
-        f'{repr(data)} not @beartype data.')
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
     assert isinstance(func_arg, Parameter), (
         f'{repr(func_arg)} not parameter metadata.')
     assert func_arg_index.__class__ is int, (
@@ -120,12 +124,29 @@ def pep_code_check_param(
             f'{hint_label} kind {repr(func_arg.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
+    # PEP-compliant type hint annotating this parameter.
+    param_hint = func_arg.annotation
+
+    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
+    # *ONLY* as a return annotation...
+    if param_hint is NoReturn:
+        # Human-readable label describing this parameter.
+        hint_label = label_callable_decorated_param(
+            func=data.func, param_name=func_arg.name)
+
+        # Raise an exception embedding this label.
+        raise BeartypeDecorHintPepParamException(
+            f'{hint_label} PEP return hint '
+            f'{repr(param_hint)} invalid as parameter annotation.'
+        )
+    # Else, this is a standard PEP-compliant type hint.
+
     # Attempt to...
     try:
         # Generate memoized parameter-agnostic Python code type-checking either
         # a parameter or return value with an arbitrary name.
         param_code_check, is_func_code_needs_random_int = pep_code_check_hint(
-            data=data, hint=func_arg.annotation)
+            data=data, hint=param_hint)
 
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact parameter by globally replacing in this parameter-agnostic
@@ -187,50 +208,67 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
           localizing a pseudo-random integer.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
-    # (e.g., by explicitly calling the die_unless_hint_pep_supported()
+    # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
-    assert data.__class__ is BeartypeData, (
-        f'{repr(data)} not @beartype data.')
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
-    # Attempt to...
-    try:
-        # Generate memoized parameter-agnostic Python code type-checking either
-        # a parameter or return value with an arbitrary name.
-        return_code_check, is_func_code_needs_random_int = pep_code_check_hint(
-            # In this memoized parameter-agnostic code type-checking either a
-            # parameter or return value with arbitrary name...
-            data=data, hint=data.func_sig.return_annotation)
+    # Python code snippet type-checking this return value against this hint.
+    func_code = None
 
-        # Generate unmemoized parameter-specific Python code type-checking this
-        # exact return value by globally replacing in this parameter-agnostic
-        # code...
-        return_code_check = return_code_check.replace(
-            # This placeholder substring cached into this code with...
-            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
-            # This object representation of this return value,
-            _RETURN_REPR,
-        )
-    # If the prior call to the memoized _pep_code_check() function raises a
-    # cached exception...
-    except Exception as exception:
-        # Human-readable label describing this return.
-        hint_label = label_callable_decorated_return(data.func) + ' PEP hint'
+    # PEP-compliant type hint annotating this parameter.
+    param_hint = data.func_sig.return_annotation
 
-        # Reraise this cached exception's memoized return value-agnostic
-        # message into an unmemoized return value-specific message.
-        reraise_exception_cached(exception=exception, target_str=hint_label)
+    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
+    # *ONLY* as a return annotation, prefer pregenerated code type-checking
+    # this peculiar type hint against this hint.
+    if param_hint is NoReturn:
+        func_code = PEP484_CODE_CHECK_NORETURN
+    # Else, this is a standard PEP-compliant type hint. In this case, attempt
+    # to...
+    else:
+        try:
+            # Generate memoized parameter-agnostic Python code type-checking
+            # either a parameter or return value with an arbitrary name.
+            return_code_check, is_func_code_needs_random_int = (
+                # In this memoized parameter-agnostic code type-checking either
+                # a parameter or return value with arbitrary name...
+                pep_code_check_hint(data=data, hint=param_hint))
+
+            # Generate unmemoized parameter-specific Python code type-checking
+            # this exact return value by globally replacing in this
+            # parameter-agnostic code...
+            return_code_check = return_code_check.replace(
+                # This placeholder substring cached into this code with...
+                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+                # This object representation of this return value,
+                _RETURN_REPR,
+            )
+
+            # Python code to:
+            # * Call the decorated callable and localize its return value
+            #   *AND*...
+            # * Type-check this return value *AND*...
+            # * Return this value from this wrapper function.
+            func_code = (
+                f'{PEP_CODE_CHECK_RETURN_PREFIX}{return_code_check}'
+                f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
+            )
+        # If the prior call to the memoized _pep_code_check() function raises a
+        # cached exception...
+        except Exception as exception:
+            # Human-readable label describing this return.
+            hint_label = (
+                label_callable_decorated_return(data.func) + ' PEP hint')
+
+            # Reraise this cached exception's memoized return value-agnostic
+            # message into an unmemoized return value-specific message.
+            reraise_exception_cached(
+                exception=exception, target_str=hint_label)
 
     # Return all metadata required by higher-level callers, including...
     return (
-        # Python code to....
-        (
-            # Call the decorated callable and localize its return value *AND*...
-            PEP_CODE_CHECK_RETURN_PREFIX +
-            # Type-check this return value *AND*...
-            return_code_check +
-            # Return this value from this wrapper function.
-            PEP_CODE_CHECK_RETURN_SUFFIX
-        ),
+        # Python code type-checking this return value against this hint.
+        func_code,
         # Boolean true only if type-checking this return value requires first
         # localizing a pseudo-random integer.
         is_func_code_needs_random_int,
