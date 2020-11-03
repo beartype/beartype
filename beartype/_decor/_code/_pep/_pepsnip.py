@@ -43,7 +43,7 @@ return value being type-checked by the current call).
 '''
 
 # ....................{ PITH ~ root                       }....................
-PEP_CODE_PITH_ROOT_NAME = PEP_CODE_PITH_NAME_PREFIX + '0'
+PEP_CODE_PITH_ROOT_NAME = f'{PEP_CODE_PITH_NAME_PREFIX}0'
 '''
 Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).
@@ -142,7 +142,7 @@ See Also
 ----------
 https://stackoverflow.com/a/18124151/2809027
     Bytecode disassembly demonstrating that CPython optimizes away the spurious
-   ``If True:`` conditional hardcoded into this snippet.
+   ``if True:`` conditional hardcoded into this snippet.
 '''
 
 

@@ -143,8 +143,8 @@ def pep_code_check_param(
 
     # Attempt to...
     try:
-        # Generate memoized parameter-agnostic Python code type-checking either
-        # a parameter or return value with an arbitrary name.
+        # Generate memoized parameter-agnostic Python code type-checking a
+        # parameter or return value with an arbitrary name.
         param_code_check, is_func_code_needs_random_int = pep_code_check_hint(
             data=data, hint=param_hint)
 
@@ -212,8 +212,14 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
-    # Python code snippet type-checking this return value against this hint.
-    func_code = None
+    # Memoized parameter-agnostic Python code type-checking either a parameter
+    # or return value with an arbitrary name.
+    return_code_check = None
+
+    # True only if type-checking for this return value requires a higher-level
+    # caller to prefix the body of this wrapper function with code generating
+    # and localizing a pseudo-random integer.
+    is_func_code_needs_random_int = False
 
     # PEP-compliant type hint annotating this parameter.
     param_hint = data.func_sig.return_annotation
@@ -222,34 +228,21 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # *ONLY* as a return annotation, prefer pregenerated code type-checking
     # this peculiar type hint against this hint.
     if param_hint is NoReturn:
-        func_code = PEP484_CODE_CHECK_NORETURN
-    # Else, this is a standard PEP-compliant type hint. In this case, attempt
-    # to...
+        return_code_check = PEP484_CODE_CHECK_NORETURN
+    # Else, this is a standard PEP-compliant type hint. In this case...
     else:
+        # Attempt to generate memoized parameter-agnostic Python code
+        # type-checking a parameter or return value with an arbitrary name.
         try:
-            # Generate memoized parameter-agnostic Python code type-checking
-            # either a parameter or return value with an arbitrary name.
             return_code_check, is_func_code_needs_random_int = (
-                # In this memoized parameter-agnostic code type-checking either
-                # a parameter or return value with arbitrary name...
                 pep_code_check_hint(data=data, hint=param_hint))
-
-            # Generate unmemoized parameter-specific Python code type-checking
-            # this exact return value by globally replacing in this
-            # parameter-agnostic code...
-            return_code_check = return_code_check.replace(
-                # This placeholder substring cached into this code with...
-                PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
-                # This object representation of this return value,
-                _RETURN_REPR,
-            )
 
             # Python code to:
             # * Call the decorated callable and localize its return value
             #   *AND*...
             # * Type-check this return value *AND*...
             # * Return this value from this wrapper function.
-            func_code = (
+            return_code_check = (
                 f'{PEP_CODE_CHECK_RETURN_PREFIX}{return_code_check}'
                 f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
             )
@@ -267,8 +260,14 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
 
     # Return all metadata required by higher-level callers, including...
     return (
-        # Python code type-checking this return value against this hint.
-        func_code,
+        # Generate unmemoized parameter-specific Python code type-checking this
+        # exact return value by globally replacing in this return-agnostic code...
+        return_code_check.replace(
+            # This placeholder substring cached into this code with...
+            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+            # This object representation of this return value,
+            _RETURN_REPR,
+        ),
         # Boolean true only if type-checking this return value requires first
         # localizing a pseudo-random integer.
         is_func_code_needs_random_int,

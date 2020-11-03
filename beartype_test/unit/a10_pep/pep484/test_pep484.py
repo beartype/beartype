@@ -240,14 +240,19 @@ def test_pep484_hint_noreturn() -> None:
         BeartypeDecorHintPepParamException,
     )
 
+    # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
+    class BeforeIBuiltAWallIdAskToKnow(Exception): pass
+
     # Callable unconditionally raising an exception correctly annotating its
     # return as "NoReturn".
     @beartype
     def mending_wall() -> NoReturn:
-        raise ValueError("Something there is that doesn't love a wall,")
+        raise BeforeIBuiltAWallIdAskToKnow(
+            "Something there is that doesn't love a wall,")
 
-    # Implicitly assert this callable raises *NO* exceptions when called.
-    mending_wall()
+    # Assert this callable raises the expected exception when called.
+    with raises_uncached(BeforeIBuiltAWallIdAskToKnow):
+        mending_wall()
 
     # Callable explicitly returning a value incorrectly annotating its return
     # as "NoReturn".

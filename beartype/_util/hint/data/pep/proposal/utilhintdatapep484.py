@@ -50,6 +50,7 @@ from typing import (
     MutableMapping,
     MutableSequence,
     MutableSet,
+    NoReturn,
     Optional,
     Pattern,
     Reversible,
@@ -237,6 +238,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ SETS ~ supported                  }..................
     data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
         Any,
+        NoReturn,
         TypeVar,
     ))
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
