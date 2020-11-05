@@ -280,10 +280,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #reasonably render literal objects accessible. This is sufficiently efficient
 #for these bizarre edge-case objects that this will suffice for all time.
 
-#FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
-#highly non-trivial -- sufficiently so, in fact, that we probably want to do so
-#elsewhere as cleverly documented in the "_pep563" submodule.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -292,6 +288,7 @@ from beartype.roar import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import (
+    register_typistry_forwardref,
     register_typistry_type,
     register_typistry_tuple,
 )
@@ -338,11 +335,11 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
+    get_hint_pep_func_forwardref_classname,
     get_hint_pep_sign,
     get_hint_pep_type_origin,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
-    die_if_hint_pep_invalid,
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
@@ -352,7 +349,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
 from itertools import count
-from typing import Generic, NoReturn, Tuple
+from typing import ForwardRef, Generic, NoReturn, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -1484,6 +1481,29 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
                 )
                 # print(f'{hint_child_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
+
+            # ..............{ FORWARDREF                        }..............
+            # If this hint is a forward reference...
+
+            #FIXME: Don't forget to add human-readable exception handling for
+            #forward references as well, please.
+            elif hint_curr_sign is ForwardRef:
+                # Canonicalize this forward reference into the fully-qualified
+                # classname referred to by this reference relative to the
+                # decorated callable.
+                hint_curr = get_hint_pep_func_forwardref_classname(
+                    func=data.func, forwardref=hint_curr)
+
+                # Code type-checking the current pith against the possibly
+                # currently undeclared class referred to by this forward
+                # reference.
+                func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                    pith_curr_expr=pith_curr_expr,
+                    # Python expression evaluating to this class when accessed
+                    # via the private "__beartypistry" parameter.
+                    hint_curr_expr=register_typistry_forwardref(hint_curr),
+                )
+            # Else, this hint is *NOT* a forward reference.
 
             # ..............{ NORETURN                          }..............
             # If this hint is the non-standard PEP 484-compliant "NoReturn"

@@ -18,7 +18,11 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_TYPE_ORIGIN)
+    HINT_PEP_SIGNS_TYPE_ORIGIN,
+)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGN_FORWARDREF,
+)
 from beartype._util.utilobject import get_object_module_name_or_none
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
@@ -150,6 +154,84 @@ get_hint_pep_args.__doc__ = '''
         (int, str, typing.Dict[str, str])
     '''
 
+# ....................{ GETTERS ~ forwardref              }....................
+def get_hint_pep_func_forwardref_classname(
+    func: 'Callable', forwardref: object) -> str:
+    '''
+    Fully-qualified classname referred to by the passed **PEP-compliant forward
+    reference** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined) relative to the passed callable annotated
+    by this forward reference.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator). Although this getter's implementation
+    is computationally expensive when the passed reference is relative rather
+    than absolute and would thus typically benefit from memoization, this
+    getter's unavoidable acceptance of the callable to which this reference is
+    relative effectively renders this getter unmemoizable.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable annotated by this forward reference.
+    hint : object
+        Forward reference to be inspected.
+
+    Returns
+    ----------
+    str
+        Fully-qualified classname referred to by this forward reference
+        relative to this callable.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If either:
+        * This callable is *not* actually callable.
+        * This forward reference is *not* actually a forward reference.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_forwardref
+
+    # If this callable is *NOT* actually callable, raise an exception.
+    if not callable(func):
+        raise BeartypeDecorHintPepException(
+            f'{repr(forwardref)} not callable.')
+    # Else if this forward reference is *NOT* actually a forward reference,
+    # raise an exception.
+    elif not is_hint_pep_forwardref(forwardref):
+        raise BeartypeDecorHintPepException(
+            f'PEP type hint {repr(forwardref)} not forward reference.')
+
+    # If this hint is a PEP 484-compliant forward reference wrapper object
+    # implicitly created by the "typing" module on subscripting a "typing"
+    # object by a string, reduce this wrapper object to that string.
+    # Naturally, this requires violating privacy encapsulation by accessing a
+    # dunder instance variable unique to the "typing.ForwardRef" class.
+    #
+    # Note that this wrapper object defines a significant number of other
+    # "__forward_"-prefixed dunder instance variables, which exist *ONLY* to
+    # enable the blatantly useless typing.get_type_hints() function to cache
+    # the result of evaluating the same forward reference. *sigh*
+    if isinstance(forwardref, HINT_PEP484_SIGN_FORWARDREF):
+        forwardref = forwardref.__forward_arg__
+
+    # Assert this reference to now be a string.
+    assert isinstance(forwardref, str), (
+        f'{repr(forwardref)} not string forward reference.')
+
+    # Return either...
+    return (
+        # If this reference contains one or more "." characters, this reference
+        # as is, since this reference is already fully-qualified.
+        forwardref
+        if '.' in forwardref else
+        # Else, this reference canonicalized relative to the module defining
+        # the passed callable.
+        f'{func.__module__}.{forwardref}'
+    )
+
 # ....................{ GETTERS ~ typevars                }....................
 # If the active Python interpreter targets at least Python >= 3.7, implement
 # this function to access the standard "__parameters__" dunder instance
@@ -273,22 +355,24 @@ def get_hint_pep_sign(hint: object) -> dict:
 
     Specifically, this function returns either:
 
+    * If this hint is a `PEP 585`_-compliant **builtin** (e.g., C-based type
+      hint instantiated by subscripting either a concrete builtin container
+      class like :class:`list` or :class:`tuple` *or* an abstract base class
+      (ABC) declared by the :mod:`collections.abc` submodule like
+      :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
+      :class:`beartype.cave.HintPep585Type`.
     * If this hint is a **generic** (i.e., subclasses of the
       :class:`typing.Generic` abstract base class (ABC)),
       :class:`typing.Generic`. Note this includes `PEP 544`-compliant
       **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
       which implicitly subclass the :class:`typing.Generic` ABC as well.
-    * Else if this hint is any other class declared by either the :mod:`typing`
+    * If this hint is any other class declared by either the :mod:`typing`
       module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
       submodule (e.g., :class:`beartype.cave.HintPep585Type`), that class.
-    * Else if this hint is a **type variable** (i.e., instance of the concrete
+    * If this hint is a **forward reference** (i.e., string or instance of the
+      concrete :class:`typing.ForwardRef` class), :class:`typing.ForwardRef`.
+    * If this hint is a **type variable** (i.e., instance of the concrete
       :class:`typing.TypeVar` class), :class:`typing.TypeVar`.
-    * Else if this hint is a `PEP 585`_-compliant **builtin** (e.g., C-based
-      type hint instantiated by subscripting either a concrete builtin
-      container class like :class:`list` or :class:`tuple` *or* an abstract
-      base class (ABC) declared by the :mod:`collections.abc` submodule like
-      :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
-      :class:`beartype.cave.HintPep585Type`.
     * Else, the unsubscripted :mod:`typing` attribute dynamically retrieved by
       inspecting this hint's **object representation** (i.e., the
       non-human-readable string returned by the :func:`repr` builtin).
@@ -359,6 +443,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     from beartype.cave import HintPep585Type
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep,
+        is_hint_pep_forwardref,
         is_hint_pep_typevar,
     )
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -441,15 +526,27 @@ def get_hint_pep_sign(hint: object) -> dict:
     # generically identifying *ALL* such hints.
     elif is_hint_pep585(hint):
         return HintPep585Type
+    # If this hint is a forward reference, return the class of all PEP
+    # 484-compliant (but *NOT* PEP 585-compliant) forward references.
+    #
+    # Note that PEP 484-compliant forward references *CANNOT* be detected by
+    # the general-purpose logic performed below, as the ForwardRef.__repr__()
+    # dunder method returns a standard representation rather than the module
+    # name "typing." -- unlike most "typing" objects:
+    #     >>> import typing as t
+    #     >>> repr(t.ForwardRef('str'))
+    #     "ForwardRef('str')"
+    elif is_hint_pep_forwardref(hint):
+        return HINT_PEP484_SIGN_FORWARDREF
     # If this hint is a type variable, return the class of all type variables.
     #
     # Note that type variables *CANNOT* be detected by the general-purpose
     # logic performed below, as the TypeVar.__repr__() dunder method insanely
     # returns a string prefixed by the non-human-readable character "~" rather
     # than the module name "typing." -- unlike most "typing" objects:
-    #      >>> import typing as t
-    #      >>> repr(t.TypeVar('T'))
-    #      ~T
+    #     >>> import typing as t
+    #     >>> repr(t.TypeVar('T'))
+    #     ~T
     #
     # Of course, that brazenly violates Pythonic standards. __repr__() is
     # generally assumed to return an evaluatable Python expression that, when

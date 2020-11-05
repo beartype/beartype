@@ -21,7 +21,16 @@ from beartype._util.hint.data.pep.proposal import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ MAPPINGS ~ origin                 }....................
+# ....................{ BASES                             }....................
+# Initialized by the _init() function below.
+HINT_PEP_BASES_FORWARDREF = set()
+'''
+Tuple of all **forward reference type hint superclasses** (i.e., superclasses
+such that all type hints forward referencing user-defined types are instances
+of these superclasses).
+'''
+
+# ....................{ SIGNS                             }....................
 # Initialized by the _init() function below.
 HINT_PEP_SIGNS_TYPE_ORIGIN = set()
 '''
@@ -38,7 +47,7 @@ this dictionary are shallowly type-checkable from wrapper functions generated
 by the :func:`beartype.beartype` decorator.
 '''
 
-# ..................{ SETS ~ ignorable                  }..................
+
 HINT_PEP_SIGNS_IGNORABLE = set()
 '''
 Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
@@ -149,6 +158,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Submodule globals to be redefined below.
     global \
+        HINT_PEP_BASES_FORWARDREF, \
         HINT_PEP_SIGNS_SUPPORTED_DEEP, \
         HINT_PEP_SIGNS_SUPPORTED_SHALLOW, \
         HINT_PEP_SIGNS_IGNORABLE, \
@@ -172,6 +182,8 @@ def add_data(data_module: 'ModuleType') -> None:
         hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
+    assert HINT_PEP_BASES_FORWARDREF, (
+        'Set global "HINT_PEP_BASES_FORWARDREF" empty.')
     assert HINT_PEP_SIGNS_SUPPORTED_DEEP, (
         'Set global "HINT_PEP_SIGNS_SUPPORTED_DEEP" empty.')
     assert HINT_PEP_SIGNS_SUPPORTED_SHALLOW, (
@@ -182,6 +194,10 @@ def add_data(data_module: 'ModuleType') -> None:
         'Set global "HINT_PEP_SIGNS_SEQUENCE_STANDARD" empty.')
     assert HINT_PEP_SIGNS_TYPE_ORIGIN, (
         'Set global "HINT_PEP_SIGNS_TYPE_ORIGIN" empty.')
+
+    # Tuples defined *AFTER* initializing these private submodules and
+    # thus the lower-level globals required by these tuples.
+    HINT_PEP_BASES_FORWARDREF = tuple(HINT_PEP_BASES_FORWARDREF)
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.

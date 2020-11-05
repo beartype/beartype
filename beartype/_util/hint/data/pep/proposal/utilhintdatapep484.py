@@ -66,15 +66,30 @@ from typing import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ SETS                              }....................
+# ....................{ SIGNS                             }....................
+# Conditionally add the "typing.ForwardRef" superclass depending on the
+# current Python version, as this superclass was thankfully publicized
+# under Python >= 3.7 after its initial privatization under Python <= 3.6.
+HINT_PEP484_SIGN_FORWARDREF = (
+    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else typing._ForwardRef)
+'''
+**Forward reference sign** (i.e., arbitrary objects uniquely identifying a
+`PEP 484`_-compliant type hint unifying one or more subscripted type hint
+arguments into a disjunctive set union of these arguments).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+# ....................{ SIGNS ~ sets                      }....................
 HINT_PEP484_SIGNS_UNION = frozenset((
     typing.Optional,
     typing.Union,
 ))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-PEP-compliant type hints unifying one or more subscripted type hint arguments
-into a disjunctive set union of these arguments).
+`PEP 484`_-compliant type hints unifying one or more subscripted type hint
+arguments into a disjunctive set union of these arguments).
 
 If the active Python interpreter targets:
 
@@ -86,6 +101,9 @@ If the active Python interpreter targets:
   membership are ``O(1)``, this set incurs no significant performance penalty
   versus direct usage of the :attr:`typing.Union` attribute and is thus
   unconditionally used as is irrespective of Python version.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ ADDERS                            }....................
@@ -103,7 +121,23 @@ def add_data(data_module: 'ModuleType') -> None:
         https://www.python.org/dev/peps/pep-0484
     '''
 
-    # ..................{ SETS ~ type                       }..................
+    # ..................{ SETS ~ bases                      }..................
+    data_module.HINT_PEP_BASES_FORWARDREF.update((
+        # PEP 484-compliant forward reference superclass.
+        HINT_PEP484_SIGN_FORWARDREF,
+
+        # Technically, the builtin "str" type is the superclass of *only* PEP
+        # 585-compliant nested forward references (e.g., "list['Typo']"). PEP
+        # 484-compliant nested forward references (e.g., "List['Typo']") are
+        # instead internally coerced by the "typing" module into instances of
+        # the "typing.ForwardRef" superclass. Nonetheless, including "str" here
+        # unconditionally does no harm *AND* should improve both robustness and
+        # forward compatibility with spurious "typing" edge cases (of which we
+        # currently unaware but which probably exist, because "typing").
+        str,
+    ))
+
+    # ..................{ SETS ~ signs : type               }..................
     data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update((
         AbstractSet,
         AsyncGenerator,
@@ -174,7 +208,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 typing.SupportsIndex,
             ))
 
-    # ..................{ SETS ~ ignorable                  }..................
+    # ..................{ SETS ~ signs : ignorable          }..................
     data_module.HINT_PEP_SIGNS_IGNORABLE.update((
         # The "Any" singleton is semantically synonymous with the ignorable
         # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
@@ -235,11 +269,12 @@ def add_data(data_module: 'ModuleType') -> None:
         Union,
     ))
 
-    # ..................{ SETS ~ supported                  }..................
+    # ..................{ SETS ~ signs : supported          }..................
     data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
         Any,
         NoReturn,
         TypeVar,
+        HINT_PEP484_SIGN_FORWARDREF,
     ))
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
         Generic,
@@ -257,7 +292,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Optional,
     ))
 
-    # ..................{ SETS ~ category                   }..................
+    # ..................{ SETS ~ signs : subtypes           }..................
     data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((
         typing.List,
         typing.MutableSequence,

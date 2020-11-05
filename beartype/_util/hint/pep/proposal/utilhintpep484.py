@@ -302,24 +302,31 @@ def is_hint_pep484_newtype(hint: object) -> bool:
        https://www.python.org/dev/peps/pep-0484
     '''
 
-    # Return true only if this hint is a "NewType"-generated closure.
-    #
-    # Note that this test derives from the observation that the concatenation
-    # of this object's "__qualname__" and "__module" dunder attributes suffices
-    # to produce a string unambiguously identifying whether this hint is a
-    # "NewType"-generated closure: e.g.,
-    #
-    #    >>> from typing import NewType
-    #    >>> UserId = t.NewType('UserId', int)
-    #    >>> UserId.__qualname__
-    #    >>> 'NewType.<locals>.new_type'
-    #    >>> UserId.__module__
-    #    >>> 'typing'
-    #
-    # Lastly, note that "__qualname__" is safely available under Python >= 3.3.
-    return (hint.__module__ + hint.__qualname__).startswith('typing.NewType.')
+    # Return true only if...
+    return (
+        # This hint is callable *AND*...
+        callable(hint) and
+        # This callable is a "NewType"-generated closure.
+        #
+        # Note that:
+        # * The "__module__" and "__qualname__" dunder instance variables are
+        #   *NOT* generally defined for arbitrary objects but are specifically
+        #   defined for callables.
+        # * "__qualname__" is safely available under Python >= 3.3.
+        # * This test derives from the observation that the concatenation of
+        #   this callable's "__qualname__" and "__module" dunder instance
+        #   variables suffices to produce a string unambiguously identifying
+        #   whether this hint is a "NewType"-generated closure: e.g.,
+        #       >>> from typing import NewType
+        #       >>> UserId = t.NewType('UserId', int)
+        #       >>> UserId.__qualname__
+        #       >>> 'NewType.<locals>.new_type'
+        #       >>> UserId.__module__
+        #       >>> 'typing'
+        (hint.__module__ + hint.__qualname__).startswith('typing.NewType.')
+    )
 
-# ....................{ GETTERS ~ user                    }....................
+# ....................{ GETTERS ~ generic                 }....................
 @callable_cached
 def get_hint_pep484_generic_bases_or_none(hint: object) -> (
     'NoneTypeOr[tuple]'):

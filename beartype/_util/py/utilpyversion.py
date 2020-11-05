@@ -16,6 +16,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import sys
 
+# See the "beartype.__init__" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ CONSTANTS ~ at least              }....................
 IS_PYTHON_AT_LEAST_4_0 = sys.version_info >= (4, 0)
 '''

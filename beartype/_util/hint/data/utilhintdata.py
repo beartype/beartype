@@ -29,11 +29,8 @@ HINTS_IGNORABLE_SHALLOW = {
     object,
 }
 '''
-Frozen set of all **ignorable type hints** (i.e., annotations unconditionally
-ignored by the :func:`beartype.beartype` decorator).
-
-Frozen set of all type hints to be unconditionally ignored by the
-:func:`beartype.beartype` decorator.
+Frozen set of all **shallowly ignorable type hints** (i.e., annotations
+unconditionally ignored by the :func:`beartype.beartype` decorator).
 
 Caveats
 ----------

@@ -202,10 +202,11 @@ class BeartypeDecorHintPepInvalidException(BeartypeDecorHintPepException):
 
     Instances of subclasses of this exception are raised at decoration time
     from the :func:`beartype.beartype` decorator on receiving a callable
-    annotated with invalid PEP-compliant type hints, including those:
+    annotated with invalid PEP-compliant type hints, including:
 
-    * Subscripted by the :attr:`typing.NoReturn` type hint (e.g.,
-      ``List[NoReturn]``).
+    * Syntactically invalid forward references (e.g., ``"0h!Muh!G0dz1ll@?"``).
+    * Hints subscripted by the :attr:`typing.NoReturn` type hint (e.g.,
+      ``typing.List[typing.NoReturn]``).
     '''
 
     pass

@@ -18,6 +18,7 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_BASES_FORWARDREF,
     HINT_PEP_SIGNS_SUPPORTED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -146,80 +147,6 @@ def die_unless_hint_pep(
         raise BeartypeDecorHintPepException(
             f'{hint_label} {repr(hint)} not PEP-compliant '
             f'(e.g., not "typing" type).')
-
-# ....................{ EXCEPTIONS ~ invalid              }....................
-def die_if_hint_pep_invalid(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    hint_label: str = 'Annotated',
-) -> None:
-    '''
-    Raise an exception if the passed object is a **PEP-compliant shallowly
-    invalid type hint** (i.e., :mod:`beartype`-agnostic annotation compliant
-    with annotation-centric PEPs but shallowly invalid in the context of this
-    hint).
-
-    Specifically, this function raises an exception if this hint:
-
-    * Is the non-standard :attr:`typing.NoReturn` singleton, which is valid
-      *only* as the return annotation of a callable. Notably, this singleton is
-      invalid when subscripting any other PEP-compliant type hint (e.g.,
-      ``typing.List[typing.NoReturn]``). Since this function is called *only*
-      after handling the single edge case in which this singleton is
-      contextually valid, this singleton is effectively invalid in all other
-      contexts for the general case.
-
-    This validator is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be validated.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintPepInvalidException
-        If this object is a PEP-compliant invalid type hint.
-
-    See Also
-    ----------
-    :func:`is_hint_pep_valid`
-        Further details.
-    '''
-
-    # If this object is a supported PEP-compliant type hint, reduce to a noop.
-    #
-    # Note that this memoized call is intentionally passed positional rather
-    # than keyword parameters to maximize efficiency.
-    if hint is not NoReturn:
-        return
-    # Else, this object is *NOT* a supported PEP-compliant type hint. In this
-    # case, subsequent logic raises an exception specific to the passed
-    # parameters.
-    assert hint_label.__class__ is str, f'{repr(hint_label)} not string.'
-
-    # If this hint is *NOT* PEP-compliant, raise an exception.
-    die_unless_hint_pep(hint=hint, hint_label=hint_label)
-
-    # Else, this hint is PEP-compliant. In this case, raise an exception.
-    #
-    # Note that, by definition, the unsubscripted "typing" argument uniquely
-    # identifying this hint *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set.
-    # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
-    # there's no benefit to validating that expectation here.
-    raise BeartypeDecorHintPepUnsupportedException(
-        f'{hint_label} PEP hint {repr(hint)} '
-        f'currently unsupported by @beartype.'
-    )
 
 # ....................{ EXCEPTIONS ~ supported            }....................
 #FIXME: Refactor all or most calls to this and the
@@ -350,7 +277,9 @@ def die_if_hint_pep_sign_unsupported(
 
 # ....................{ WARNINGS                          }....................
 #FIXME: Unit test us up.
-#FIXME: ACtually use us in place of die_if_hint_pep_unsupported().
+#FIXME: Actually use us in place of die_if_hint_pep_unsupported().
+#FIXME: Actually, it's unclear whether we still require or desire this. See
+#"_pephint" commentary for further details.
 def warn_if_hint_pep_unsupported(
     # Mandatory parameters.
     hint: object,
@@ -738,10 +667,46 @@ is_hint_pep_typing.__doc__ = '''
         ``True`` only if this object is defined by the :mod:`typing` module.
     '''
 
-# ....................{ TESTERS ~ typevar                 }....................
+# ....................{ TESTERS ~ subtype                 }....................
+def is_hint_pep_forwardref(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **PEP-compliant forward
+    reference** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined).
+
+    Specifically, this tester returns ``True`` only if this object is either:
+
+    * A string whose value is the syntactically valid name of a class.
+    * An instance of the :class:`typing.ForwardRef` class. The :mod:`typing`
+      module implicitly replaces all strings subscripting :mod:`typing` objects
+      (e.g., the ``MuhType`` in ``List['MuhType']``) with
+      :class:`typing.ForwardRef` instances containing those strings as instance
+      variables, for nebulous reasons that make little justifiable sense but
+      what you gonna do 'cause this is 2020. *Fight me.*
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a forward reference.
+    '''
+
+    # Return true only if this hint is an instance of a PEP-compliant forward
+    # reference superclass.
+    return isinstance(hint, HINT_PEP_BASES_FORWARDREF)
+
+# ....................{ TESTERS ~ subtype : typevar       }....................
 def is_hint_pep_typevar(hint: object) -> bool:
     '''
-    ``True`` only if the passed object either is a `PEP 484`_-compliant **type
+    ``True`` only if the passed object either is a PEP-compliant **type
     variable** (i.e., instance of the :class:`TypeVar` class).
 
     This tester is intentionally *not* memoized (e.g., by the

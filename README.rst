@@ -861,6 +861,12 @@ values annotated with these typing_ types:
   * typing.SupportsFloat_.
   * typing.SupportsRound_.
 
+* `Forward references <relative forward references_>`__ (i.e., unqualified
+  relative string classnames internally coerced by typing_ into
+  typing.ForwardRef_ instances).
+* **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
+  one or more `forward references <relative forward references_>`__).
+
 Partial Compliance
 ++++++++++++++++++
 
@@ -917,16 +923,11 @@ No Compliance
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
-* typing.ClassVar_.
 * typing.NewType_.
-* `Forward references <relative forward references_>`__ (i.e., unqualified
-  relative string classnames internally coerced by typing_ into
-  typing.ForwardRef_ instances).
-* **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
-  one or more `forward references <relative forward references_>`__).
 
 ``beartype`` currently silently ignores these typing_ types at decoration time:
 
+* typing.ClassVar_.
 * typing.Final_.
 * `@typing.final`_.
 
@@ -970,7 +971,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | absolute forward references         | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `relative forward references`_      | *none*                        | *none*                    |
+|             | `relative forward references`_      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `tuple unions <Unions of Types_>`__ | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1020,7 +1021,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.Final_                       | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.ForwardRef_                  | *none*                        | *none*                    |
+|             | typing.ForwardRef_                  | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.FrozenSet_                   | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
