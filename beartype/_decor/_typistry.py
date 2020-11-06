@@ -13,27 +13,36 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                              }....................
 #FIXME: For efficiency, register tuples under their numeric hashes rather than
-#strings embedding numeric hashes formatted as "+{numeric_hash}". Ergo:
+#strings embedding numeric hashes formatted as "+{numeric_hash}". Thus:
 #* Tuples would be registered instead with numeric hashes.
 #* Types would continue to be registered with fully-qualified classnames.
+#
+#Note that there's guaranteed to be *NO* key collisions between the two, as
+#the first characters of Python identifiers and thus classnames are prohibited
+#from being digits. Conversely, all characters (and thus the first characters)
+#of numeric hashes are guaranteed to be digits. Ergo, no collisions.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
-    BeartypeDecorHintPepInvalidException,
-    # _BeartypeCallBeartypistryException,
+    BeartypeCallHintForwardRefException,
+    BeartypeDecorHintForwardRefException,
     _BeartypeDecorBeartypistryException,
 )
 from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
 from beartype._util.utilobject import (
-    MODULE_NAME_BUILTINS,
     get_object_module_name_or_none,
     get_object_type_name_qualified,
     get_object_type_name_unqualified,
 )
-from beartype._util.py.utilpyidentifier import is_identifiers_joined
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
+from beartype._util.py.utilpyidentifier import is_identifiers_joined
+from beartype._util.py.utilpymodule import (
+    MODULE_NAME_BUILTINS,
+    MODULE_NAME_BUILTINS_DOTTED,
+    import_module_attr,
+)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -67,7 +76,7 @@ beartypistry parameter.
 
 # ....................{ REGISTRARS ~ forwardref           }....................
 @callable_cached
-def register_typistry_forwardref(hint: str) -> str:
+def register_typistry_forwardref(hint_classname: str) -> str:
     '''
     Register the passed **fully-qualified forward reference** (i.e., string
     whose value is the fully-qualified name of a user-defined class that
@@ -81,8 +90,9 @@ def register_typistry_forwardref(hint: str) -> str:
 
     Parameters
     ----------
-    hint : object
+    hint_classname : object
         Forward reference to be registered, defined as either:
+
         * A string whose value is the syntactically valid name of a class.
         * An instance of the :class:`typing.ForwardRef` class.
 
@@ -96,42 +106,50 @@ def register_typistry_forwardref(hint: str) -> str:
 
     Raises
     ----------
-    BeartypeDecorHintPepInvalidException
-        If this forward reference is a string that contains one or more ``.``
-        characters and is thus fully-qualified but is syntactically invalid as
-        a Python classname.
-    _BeartypeDecorBeartypistryException
+    BeartypeDecorHintForwardRefException
         If this forward reference is either:
 
         * *Not* a string.
-        * Is a string that Does *not* contain a ``.`` character and thus
-          relative rather than fully-qualified. Technically, this condition
-          also ambiguously implies this string *could* be the fully-qualified
-          name of a builtin type (e.g., ``"str"``). Since there exists *no*
-          demonstrable reason to refer to a builtin type with a forward
-          reference, however, that edge case is safely ignorable.
+        * A string containing *no* ``.`` character and thus relative rather
+          than fully-qualified. Technically, this condition also ambiguously
+          implies this string *could* be the fully-qualified name of a builtin
+          type (e.g., ``"str"``). Since there exists *no* demonstrable reason
+          to refer to a builtin type with a forward reference, however, that
+          edge case is safely ignorable.
+        * A string containing one or more ``.`` characters and thus
+          fully-qualified but otherwise syntactically invalid as a classname.
     '''
 
     # If this object is *NOT* a string, raise an exception.
-    if not isinstance(hint, str):
-        raise _BeartypeDecorBeartypistryException(
-            f'Beartypistry forward reference {repr(hint)} not string.')
+    if not isinstance(hint_classname, str):
+        raise BeartypeDecorHintForwardRefException(
+            f'Beartypistry forward reference '
+            f'{repr(hint_classname)} not string.'
+        )
     # Else, this object is a string.
     #
     # If this string contains *NO* "." characters, this string is either
     # relative or fully-qualified but refers to a builtin type. In either case,
     # raise an exception.
-    elif '.' not in hint:
-        raise _BeartypeDecorBeartypistryException(
-            f'Beartypistry forward reference {repr(hint)} relative.')
+    elif '.' not in hint_classname:
+        raise BeartypeDecorHintForwardRefException(
+            f'Beartypistry forward reference {repr(hint_classname)} relative.')
     # Else, this string is the fully-qualified name of a non-builtin type.
     #
     # If this name is syntactically invalid as a classname, raise an exception.
-    elif not is_identifiers_joined(hint):
-        raise BeartypeDecorHintPepInvalidException(
-            f'Forward reference {repr(hint)} syntactically invalid.')
+    elif not is_identifiers_joined(hint_classname):
+        raise BeartypeDecorHintForwardRefException(
+            f'Forward reference {repr(hint_classname)} syntactically invalid.')
 
-    #FIXME: Implement us up.
+    # Return a Python expression evaluating to this type *WITHOUT* explicitly
+    # registering this forward reference with the beartypistry singleton. Why?
+    # Because the Beartypistry.__missing__() dunder method implicitly handles
+    # forward references by dynamically registering types on their first access
+    # if *NOT* already registered. Ergo, our job is actually done here.
+    return (
+        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_classname)}'
+        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
+    )
 
 # ....................{ REGISTRARS ~ type                 }....................
 @callable_cached
@@ -225,7 +243,7 @@ def register_typistry_type(hint: type) -> str:
     # assert hint_basename != 'NoneType'
 
     # Fully-qualified name of this type.
-    hint_name = f'{hint_module_name}.{hint_basename}'
+    hint_classname = f'{hint_module_name}.{hint_basename}'
 
     # If this type has *NOT* yet been registered with the beartypistry
     # singleton, do so.
@@ -235,11 +253,11 @@ def register_typistry_type(hint: type) -> str:
     # object twice, as tuple re-registration requires special handling to avoid
     # hash collisions. Nonetheless, this is a non-issue. Why? Since this
     # function is memoized, re-registration should *NEVER* happen.
-    bear_typistry[hint_name] = hint
+    bear_typistry[hint_classname] = hint
 
     # Return a Python expression evaluating to this type.
     return (
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_name)}'
+        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_classname)}'
         f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
     )
 
@@ -507,7 +525,7 @@ class Beartypistry(dict):
         '''
 
         # If this name is *NOT* a string, raise an exception.
-        if hint_name.__class__ is not str:
+        if not isinstance(hint_name, str):
             raise _BeartypeDecorBeartypistryException(
                 f'Beartypistry key {repr(hint_name)} not string.')
         # Else, this name is a string.
@@ -523,7 +541,8 @@ class Beartypistry(dict):
                 f'(i.e., key collision between '
                 f'prior registered value {repr(self[hint_name])} and '
                 f'newly registered value {repr(hint)}).')
-
+        # Else, this name is *NOT* an existing key of this dictionary.
+        #
         # If this hint is a class...
         #
         # Note that although *MOST* classes are PEP-noncompliant (e.g., the
@@ -532,7 +551,7 @@ class Beartypistry(dict):
         # and -compliant classes are shallowly type-checkable via the
         # isinnstance() builtin, there exists no demonstrable benefit to
         # distinguishing between either here.
-        if isinstance(hint, type):
+        elif isinstance(hint, type):
             # Fully-qualified classname of this type as declared by this type.
             hint_clsname = get_object_type_name_qualified(hint)
 
@@ -546,7 +565,7 @@ class Beartypistry(dict):
                 # unqualified basenames (e.g., "list" rather than
                 # "builtins.list") for runtime efficiency, a core optimization
                 # requiring manual whitelisting here.
-                not hint_clsname.startswith(MODULE_NAME_BUILTINS + '.')
+                not hint_clsname.startswith(MODULE_NAME_BUILTINS_DOTTED)
             # Then raise an exception.
             ):
                 raise _BeartypeDecorBeartypistryException(
@@ -554,7 +573,9 @@ class Beartypistry(dict):
                     f'fully-qualified classname "{hint_clsname}" of '
                     f'type {repr(hint)}.'
                 )
-        # Else if this hint is a tuple...
+        # Else, this hint is *NOT* a class.
+        #
+        # If this hint is a tuple...
         elif isinstance(hint, tuple):
             # If this tuple is *NOT* PEP-noncompliant (e.g., due to containing
             # PEP-compliant type hints), raise an exception.
@@ -592,7 +613,8 @@ class Beartypistry(dict):
                     f'prefixed by "{_TYPISTRY_HINT_NAME_TUPLE_PREFIX}" for '
                     f'tuple {repr(hint)}.'
                 )
-        # Else, something has gone terribly awry. Raise us up the exception!
+        # Else, this hint is neither a class nor a tuple. In this case,
+        # something has gone terribly awry. Pour out an exception.
         else:
             raise _BeartypeDecorBeartypistryException(
                 f'Beartypistry key "{hint_name}" value {repr(hint)} invalid '
@@ -603,69 +625,82 @@ class Beartypistry(dict):
         super().__setitem__(hint_name, hint)
 
 
-    #FIXME: Uncomment when implementing forward referencing support.
-    # def __missing__(self, hint_name: str) -> type:
-    #     '''
-    #     Dunder method explicitly called by the superclass
-    #     :meth:`dict.__getitem__` method implicitly called on getting the passed
-    #     missing key with ``[``- and ``]``-delimited syntax.
-    #
-    #     This method treats this attempt to get this missing key as the
-    #     intentional resolution of a forward reference whose fully-qualified
-    #     classname is this key. Specifically, this method:
-    #
-    #     #.
-    #
-    #     Parameters
-    #     ----------
-    #     hint_name : str
-    #         **Name** (i.e., fully-qualified name of the module attribute
-    #         declaring this hint) of this hint to be resolved as a forward
-    #         reference.
-    #
-    #     Returns
-    #     ----------
-    #     object
-    #         :mod:`beartype`-supported type hint whose fully-qualified module
-    #         attribute name is this missing key.
-    #
-    #     Raises
-    #     ----------
-    #     _BeartypeDecorBeartypistryException
-    #         If this name is either:
-    #
-    #         * *Not* a fully-qualified classname.
-    #         * A fully-qualified classname but the object to which this name
-    #           refers is *not* a **PEP-noncompliant class** (i.e., class neither
-    #           defined by the :mod:`typing` module *nor* subclassing a class
-    #           defined by the :mod:`typing` module).
-    #     '''
-    #
-    #     # If this name is *NOT* a string, raise an exception.
-    #     if not isinstance(hint_name, str):
-    #         raise _BeartypeDecorBeartypistryException(
-    #             'Beartypistry key {!r} not a '
-    #             'fully-qualified module attribute name.'.format(hint_name))
-    #
-    #     #FIXME: Dynamically import this object here.
-    #     # Type hint dynamically imported from this name.
-    #     hint = None
-    #
-    #     # If this hint is *NOT* a valid PEP-noncompliant type hint, raise an
-    #     # exception.
-    #     die_unless_hint_nonpep(
-    #         hint=hint,
-    #         hint_label='Beartypistry value {!r}'.format(hint),
-    #         is_str_valid=False,
-    #         exception_cls=_BeartypeCallBeartypistryException,
-    #     )
-    #
-    #     # Return this hint.
-    #     #
-    #     # The superclass dict.__getitem__() dunder method then implicitly maps
-    #     # the passed missing key to this class by effectively:
-    #     #     self[hint_name] = hint
-    #     return hint
+    def __missing__(self, hint_name: str) -> type:
+        '''
+        Dunder method explicitly called by the superclass
+        :meth:`dict.__getitem__` method implicitly called on caller attempts to
+        access the passed missing key with ``[``- and ``]``-delimited syntax.
+
+        This method treats this attempt to get this missing key as the
+        intentional resolution of a forward reference whose fully-qualified
+        classname is this key. Specifically, this method:
+
+        #.
+
+        Parameters
+        ----------
+        hint_name : str
+            **Name** (i.e., fully-qualified name of the module attribute
+            declaring this hint) of this hint to be resolved as a forward
+            reference.
+
+        Returns
+        ----------
+        object
+            :mod:`beartype`-supported type hint whose fully-qualified module
+            attribute name is this missing key.
+
+        Raises
+        ----------
+        BeartypeCallHintForwardRefException
+            If this name is either:
+
+            * *Not* a fully-qualified classname.
+            * A fully-qualified classname but the object to which this name
+              refers is *not* a **PEP-noncompliant class** (i.e., class neither
+              defined by the :mod:`typing` module *nor* subclassing a class
+              defined by the :mod:`typing` module).
+        '''
+
+        # If this name is *NOT* a string, raise an exception.
+        if not isinstance(hint_name, str):
+            raise BeartypeCallHintForwardRefException(
+                f'Forward reference {repr(hint_name)} not '
+                f'fully-qualified module attribute name.'
+            )
+        # Else, this name is a string.
+        #
+        # If this name contains *NO* "." characters and thus is relative to the
+        # calling subpackage or refers to a builtin object, raise an exception.
+        #
+        # Note that the import_module_attr() function called below validates
+        # the exact same condition, but raises a less human-readable exception
+        # for generality. For readability, we validate this condition specific
+        # to forward references here.
+        elif '.' not in hint_name:
+            raise BeartypeCallHintForwardRefException(
+                f'Forward reference "{hint_name}" '
+                f'relative or refers to builtin object '
+                f'(i.e., due to containing no "." characters).'
+            )
+        # Else, this name is fully-qualified.
+
+        # Type hint dynamically imported from this fully-qualified name.
+        hint = import_module_attr(hint_name)
+
+        # If this hint is *NOT* a class, raise an exception.
+        if not isinstance(hint, type):
+            raise BeartypeCallHintForwardRefException(
+                f'Forward reference "{hint_name}" '
+                f'value {repr(hint)} not class.'
+            )
+        # Else, this hint is a class.
+
+        # Return this hint. The superclass dict.__getitem__() dunder method
+        # then implicitly maps the passed missing key to this class by
+        # effectively assigning this name to this class: e.g.,
+        #     self[hint_name] = hint
+        return hint
 
 # ....................{ SINGLETONS                        }....................
 bear_typistry = Beartypistry()

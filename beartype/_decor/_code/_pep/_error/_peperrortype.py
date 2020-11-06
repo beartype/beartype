@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilRaisePepException
+from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
@@ -39,7 +39,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
 
     # If this hint is *NOT* a class, raise an exception.
     if not isinstance(sleuth.hint, type):
-        raise _BeartypeUtilRaisePepException(
+        raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} non-PEP type hint '
             f'{repr(sleuth.hint)} unsupported '
             f'(i.e., neither PEP-compliant nor standard class).'
@@ -88,7 +88,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin is None:
-        raise _BeartypeUtilRaisePepException(
+        raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} type hint '
             f'{repr(sleuth.hint)} not originated from an origin type.'
         )

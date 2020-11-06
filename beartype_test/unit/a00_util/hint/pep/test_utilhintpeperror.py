@@ -28,10 +28,10 @@ def test_raise_pep_call_exception() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import (
-        BeartypeCallCheckPepParamException,
-        BeartypeCallCheckPepReturnException,
+        BeartypeCallHintPepParamException,
+        BeartypeCallHintPepReturnException,
         BeartypeDecorHintPepException,
-        _BeartypeUtilRaisePepException,
+        _BeartypeCallHintPepRaiseException,
     )
     from beartype._decor._code._pep._error.peperror import (
         raise_pep_call_exception)
@@ -46,7 +46,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to satisfy this
     # type hint.
-    with raises(BeartypeCallCheckPepParamException):
+    with raises(BeartypeCallHintPepParamException):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='secret_orchard',
@@ -59,7 +59,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when returning a
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # this type hint.
-    with raises(BeartypeCallCheckPepReturnException):
+    with raises(BeartypeCallHintPepReturnException):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='return',
@@ -71,7 +71,7 @@ def test_raise_pep_call_exception() -> None:
 
     # Assert this function raises the expected exception when passed an
     # unannotated parameter.
-    with raises(_BeartypeUtilRaisePepException):
+    with raises(_BeartypeCallHintPepRaiseException):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='achromatic_voice',

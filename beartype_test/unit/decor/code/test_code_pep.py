@@ -116,7 +116,7 @@ def test_pep_param_kind_variadic_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckPepException
+    from beartype.roar import BeartypeCallHintPepException
 
     # Decorated callable to be exercised.
     @beartype
@@ -133,7 +133,7 @@ def test_pep_param_kind_variadic_fail() -> None:
 
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
-    with raises_uncached(BeartypeCallCheckPepException):
+    with raises_uncached(BeartypeCallHintPepException):
         tongue_tasting_its_savour(
             'One needs to have a plan, someone said',
             'Who was turned away into the shadows',

@@ -187,9 +187,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import functools, random
 from beartype.roar import (
-    BeartypeCallCheckNonPepParamException,
-    BeartypeCallCheckNonPepReturnException,
-    BeartypeCallCheckPepException,
+    BeartypeCallHintNonPepParamException,
+    BeartypeCallHintNonPepReturnException,
+    BeartypeCallHintPepException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
@@ -219,9 +219,9 @@ _GLOBAL_ATTRS = {
     '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
     '__beartype_getrandbits': random.getrandbits,
     '__beartype_nonpep_param_exception': (
-        BeartypeCallCheckNonPepParamException),
+        BeartypeCallHintNonPepParamException),
     '__beartype_nonpep_return_exception': (
-        BeartypeCallCheckNonPepReturnException),
+        BeartypeCallHintNonPepReturnException),
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
     '__beartype_trim': get_object_representation,
 }

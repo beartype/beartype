@@ -67,18 +67,6 @@ def but_i_have_promises(to_keep: TheDarkestUnionOfTheYear) -> (
     TheDarkestUnionOfTheYear):
     return to_keep
 
-# ....................{ CALLS                             }....................
-# Assert the above callables return the expected values *BEFORE* declaring the
-# user-defined class previously referred to by forward references above.
-assert the_woods_are_lovely('Whose woods these are I think I know.') == (
-    'Whose woods these are I think I know.')
-assert of_easy_wind('The woods are lovely, dark and deep,') == (
-    'The woods are lovely, dark and deep,')
-assert stopping_by_woods_on('Between the woods and frozen lake') == (
-    'Between the woods and frozen lake')
-assert but_i_have_promises('And miles to go before I sleep') == (
-    'And miles to go before I sleep')
-
 # ....................{ CLASSES                           }....................
 # User-defined class previously referred to by forward references above.
 class TheDarkestEveningOfTheYear(str): pass

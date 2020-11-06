@@ -85,7 +85,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckNonPepParamException
+    from beartype.roar import BeartypeCallHintNonPepParamException
 
     # Decorated callable to be exercised.
     @beartype
@@ -95,7 +95,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
-    with raises(BeartypeCallCheckNonPepParamException):
+    with raises(BeartypeCallHintNonPepParamException):
         imperium_of_man(
             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 
@@ -179,7 +179,7 @@ def test_nonpep_fail_param_call_ref() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckNonPepParamException
+    from beartype.roar import BeartypeCallHintNonPepParamException
 
     # Dates between which the Black Legion must have been established.
     ESTABLISHMENT_DATE_MIN = 30000
@@ -193,7 +193,7 @@ def test_nonpep_fail_param_call_ref() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with raises(BeartypeCallCheckNonPepParamException):
+    with raises(BeartypeCallHintNonPepParamException):
         black_legion('Horus', 'Abaddon the Despoiler')
 
 
@@ -205,7 +205,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckNonPepParamException
+    from beartype.roar import BeartypeCallHintNonPepParamException
 
     # Annotated function to be type-checked.
     @beartype
@@ -214,7 +214,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with raises(BeartypeCallCheckNonPepParamException):
+    with raises(BeartypeCallHintNonPepParamException):
         eldar('Mother of the Eldar', 100.100)
 
 # ....................{ TESTS ~ fail : param : hint       }....................
@@ -290,7 +290,7 @@ def test_nonpep_fail_return_call() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckNonPepReturnException
+    from beartype.roar import BeartypeCallHintNonPepReturnException
 
     # Annotated function to be type-checked.
     @beartype
@@ -298,7 +298,7 @@ def test_nonpep_fail_return_call() -> None:
         return 60e6
 
     # Call this function and assert the expected exception.
-    with raises(BeartypeCallCheckNonPepReturnException):
+    with raises(BeartypeCallHintNonPepReturnException):
         necron("C'tan", 'Elder Thing')
 
 

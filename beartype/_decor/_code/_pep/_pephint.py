@@ -283,8 +283,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
-    BeartypeDecorHintPepInvalidException,
     BeartypeDecorHintPepUnsupportedException,
+    BeartypeDecorHintPep484Exception,
 )
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import (
@@ -1516,7 +1516,7 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
             # handled the single edge case in which this singleton is
             # contextually valid, implying this singleton to be invalid here.
             elif hint_curr is NoReturn:
-                raise BeartypeDecorHintPepInvalidException(
+                raise BeartypeDecorHintPep484Exception(
                     f'{hint_child_label} PEP hint '
                     f'{repr(hint_curr)} nesting "typing.NoReturn" invalid '
                     f'(i.e., as "typing.NoReturn" valid only as a '

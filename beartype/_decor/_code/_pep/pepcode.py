@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
-    BeartypeDecorHintPepParamException,
+    BeartypeDecorHintPep484Exception,
 )
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
@@ -135,7 +135,7 @@ def pep_code_check_param(
             func=data.func, param_name=func_arg.name)
 
         # Raise an exception embedding this label.
-        raise BeartypeDecorHintPepParamException(
+        raise BeartypeDecorHintPep484Exception(
             f'{hint_label} PEP return hint '
             f'{repr(param_hint)} invalid as parameter annotation.'
         )

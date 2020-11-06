@@ -90,7 +90,7 @@ from argparse import (
     ArgumentParser as _ArgumentParser,
 )
 from beartype.roar import (
-    BeartypeCallCheckUnavailableTypeException as
+    BeartypeCallUnavailableTypeException as
     _BeartypeCallCheckUnavailableTypeException
 )
 from beartype._cave.abc import _BoolType

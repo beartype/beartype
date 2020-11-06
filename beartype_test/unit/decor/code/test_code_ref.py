@@ -27,9 +27,23 @@ def test_hint_ref_pass() -> None:
     respect to both PEP-compliant and -noncompliant forward references.
     '''
 
-    # Import this data submodule, which necessarily sequesters away *ALL* data
-    # and assertions exercising successful usage of forward references.
-    from beartype_test.unit.data.hint import data_hintref
+    # Defer heavyweight imports.
+    from beartype_test.unit.data.hint.data_hintref import (
+        but_i_have_promises,
+        of_easy_wind,
+        stopping_by_woods_on,
+        the_woods_are_lovely,
+    )
+
+    # Assert these forward referenced callables return the expected values.
+    assert but_i_have_promises('And miles to go before I sleep') == (
+        'And miles to go before I sleep')
+    assert of_easy_wind('The woods are lovely, dark and deep,') == (
+        'The woods are lovely, dark and deep,')
+    assert stopping_by_woods_on('Between the woods and frozen lake') == (
+        'Between the woods and frozen lake')
+    assert the_woods_are_lovely('Whose woods these are I think I know.') == (
+        'Whose woods these are I think I know.')
 
 
 def test_hint_ref_fail() -> None:
@@ -40,7 +54,7 @@ def test_hint_ref_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallCheckUnavailableTypeException
+    from beartype.roar import BeartypeCallUnavailableTypeException
 
     # Decorated callable annotated by a PEP-noncompliant fully-qualified
     # forward reference referring to a non-existent type.
@@ -81,13 +95,13 @@ def test_hint_ref_fail() -> None:
         return and_ages_hence
 
     # Assert calling these callables raise the expected exceptions.
-    with raises_uncached(BeartypeCallCheckUnavailableTypeException):
+    with raises_uncached(BeartypeCallUnavailableTypeException):
         the_road('Two roads diverged in a wood, and I—')
-    with raises_uncached(BeartypeCallCheckUnavailableTypeException):
+    with raises_uncached(BeartypeCallUnavailableTypeException):
         in_leaves_no_step('I took the one less traveled by,')
-    with raises_uncached(BeartypeCallCheckUnavailableTypeException):
+    with raises_uncached(BeartypeCallUnavailableTypeException):
         yet_knowing_how_way('And that has made all the difference.')
-    with raises_uncached(BeartypeCallCheckUnavailableTypeException):
+    with raises_uncached(BeartypeCallUnavailableTypeException):
         yet_knowing_how_way('And that has made all the difference.')
-    with raises_uncached(BeartypeCallCheckUnavailableTypeException):
+    with raises_uncached(BeartypeCallUnavailableTypeException):
         somewhere_ages('I doubted if I should ever come back.')

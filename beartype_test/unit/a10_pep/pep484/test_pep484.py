@@ -51,8 +51,8 @@ def test_pep484() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import (
-        BeartypeCallCheckPepException,
-        BeartypeCallCheckNonPepException,
+        BeartypeCallHintPepException,
+        BeartypeCallHintNonPepException,
     )
     from beartype_test.unit.data.hint.pep.data_hintpep import (
         HINT_PEP_TO_META,
@@ -93,12 +93,12 @@ def test_pep484() -> None:
                 # If this hint is uniquely identified by an unsubscripted
                 # "typing" attribute, this wrapper raises PEP-compliant
                 # exceptions.
-                BeartypeCallCheckPepException
+                BeartypeCallHintPepException
                 if hint_pep_meta.pep_sign is not None else
                 # Else, this hint reduces to a builtin type and is thus
                 # detected as a PEP-noncompliant type hint. In this case, this
                 # wrapper raises PEP-noncompliant exceptions.
-                BeartypeCallCheckNonPepException
+                BeartypeCallHintNonPepException
             )
 
             # For each object satisfying this hint...
@@ -235,9 +235,8 @@ def test_pep484_hint_noreturn() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import (
-        BeartypeCallCheckPepException,
-        BeartypeDecorHintPepInvalidException,
-        BeartypeDecorHintPepParamException,
+        BeartypeCallHintPepException,
+        BeartypeDecorHintPep484Exception,
     )
 
     # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
@@ -261,7 +260,7 @@ def test_pep484_hint_noreturn() -> None:
         return 'That sends the frozen-ground-swell under it,'
 
     # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeartypeCallCheckPepException):
+    with raises_uncached(BeartypeCallHintPepException):
         frozen_ground_swell()
 
     # Callable implicitly returning a value incorrectly annotating its return
@@ -271,13 +270,13 @@ def test_pep484_hint_noreturn() -> None:
         'There where it is we do not need the wall:'
 
     # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeartypeCallCheckPepException):
+    with raises_uncached(BeartypeCallHintPepException):
         we_do_not_need_the_wall()
 
     # Assert this decorator raises the expected exception when decorating a
     # callable returning a value incorrectly annotating its return as
     # "NoReturn".
-    with raises_uncached(BeartypeDecorHintPepParamException):
+    with raises_uncached(BeartypeDecorHintPep484Exception):
         # Callable returning a value incorrectly annotating a parameter as
         # "NoReturn".
         @beartype
@@ -287,7 +286,7 @@ def test_pep484_hint_noreturn() -> None:
     # Assert this decorator raises the expected exception when decorating a
     # callable returning a value annotating a parameter as a supported PEP
     # 484-compliant type hint incorrectly subscripted by "NoReturn".
-    with raises_uncached(BeartypeDecorHintPepInvalidException):
+    with raises_uncached(BeartypeDecorHintPep484Exception):
         @beartype
         def makes_gaps(abreast: List[NoReturn]):
             return 'And makes gaps even two can pass abreast.'

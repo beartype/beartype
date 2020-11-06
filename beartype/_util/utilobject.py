@@ -23,14 +23,6 @@ class Iota(object):
     __slots__ = ()
 
 # ....................{ CONSTANTS                          }....................
-MODULE_NAME_BUILTINS = 'builtins'
-'''
-Fully-qualified name of the module declaring all **builtins** (i.e., objects
-defined by the standard :mod:`builtins` module and thus globally available by
-default *without* requiring explicit importation).
-'''
-
-
 SENTINEL = Iota()
 '''
 Sentinel object of arbitrary value.

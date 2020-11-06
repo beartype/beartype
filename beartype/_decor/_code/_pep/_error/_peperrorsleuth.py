@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilRaisePepException
+from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_or_none)
@@ -203,7 +203,7 @@ class CauseSleuth(object):
 
         Raises
         ----------
-        _BeartypeUtilRaisePepException
+        _BeartypeCallHintPepRaiseException
             If this type hint is either:
 
             * PEP-noncompliant (e.g., tuple union).
@@ -267,7 +267,7 @@ class CauseSleuth(object):
             # If this hint is paradoxically subscripted by *NO* child hints,
             # raise an exception.
             if not self.hint_childs:
-                raise _BeartypeUtilRaisePepException(
+                raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_label} argumentative PEP type hint '
                     f'{repr(self.hint)} unsubscripted.'
                 )
@@ -281,7 +281,7 @@ class CauseSleuth(object):
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.
             if get_cause_or_none is None:
-                raise _BeartypeUtilRaisePepException(
+                raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_label} PEP type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
                     f'"get_cause_or_none_"-prefixed getter function defined '
@@ -313,7 +313,7 @@ class CauseSleuth(object):
 
         Raises
         ----------
-        _BeartypeUtilRaisePepException
+        _BeartypeCallHintPepRaiseException
             If the name of any passed keyword argument is *not* the name of an
             existing instance variable of this object.
 
@@ -337,7 +337,7 @@ class CauseSleuth(object):
             # If this copy does *NOT* already define an instance variable of
             # the same name, raise an exception.
             if param_name not in self._VAR_NAMES:
-                raise _BeartypeUtilRaisePepException(
+                raise _BeartypeCallHintPepRaiseException(
                     f'Unrecognized instance variable '
                     f'{self.__class__.__name__}.{param_name} not permutable.'
                 )

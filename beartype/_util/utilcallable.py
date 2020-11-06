@@ -14,56 +14,39 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from collections.abc import Callable
-
-# ....................{ CONSTANTS                          }....................
-MODULE_NAME_BUILTINS = 'builtins'
-'''
-Fully-qualified name of the module declaring all **builtins** (i.e., objects
-defined by the standard :mod:`builtins` module and thus globally available by
-default *without* requiring explicit importation).
-'''
-
-
-SENTINEL = object()
-'''
-Sentinel object of arbitrary value.
-
-This object is internally leveraged by various utility functions to identify
-erroneous and edge-case input (e.g., iterables of insufficient length).
-'''
+# from collections.abc import Callable
 
 # ....................{ GETTERS                           }....................
 #FIXME: Implement us up.
 #FIXME: Unit test us up.
-def get_callable_filename_or_placeholder(func: Callable) -> str:
-    '''
-    Absolute filename of the uncompiled Python script or module physically
-    declaring the passed callable if any *or* the placeholder string
-    ``"<string>"`` implying this callable to have been dynamically declared
-    in-memory otherwise.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-
-    Returns
-    ----------
-    str
-        Either:
-
-        * If this callable is physically declared by an uncompiled Python
-          script or module, the absolute filename of this script or module.
-        * Else, the placeholder string ``"<string>"`` implying this callable to
-          have been dynamically declared in-memory.
-
-    See Also
-    ----------
-    :func:`inspect.getsourcefile`
-        Inefficient stdlib function strongly inspiring this implementation,
-        which has been highly optimized for use by the performance-sensitive
-        :func:`beartype.beartype` decorator.
-    '''
-
-    pass
+# def get_callable_filename_or_placeholder(func: Callable) -> str:
+#     '''
+#     Absolute filename of the uncompiled Python script or module physically
+#     declaring the passed callable if any *or* the placeholder string
+#     ``"<string>"`` implying this callable to have been dynamically declared
+#     in-memory otherwise.
+#
+#     Parameters
+#     ----------
+#     func : Callable
+#         Callable to be inspected.
+#
+#     Returns
+#     ----------
+#     str
+#         Either:
+#
+#         * If this callable is physically declared by an uncompiled Python
+#           script or module, the absolute filename of this script or module.
+#         * Else, the placeholder string ``"<string>"`` implying this callable to
+#           have been dynamically declared in-memory.
+#
+#     See Also
+#     ----------
+#     :func:`inspect.getsourcefile`
+#         Inefficient stdlib function strongly inspiring this implementation,
+#         which has been highly optimized for use by the performance-sensitive
+#         :func:`beartype.beartype` decorator.
+#     '''
+#
+#     pass

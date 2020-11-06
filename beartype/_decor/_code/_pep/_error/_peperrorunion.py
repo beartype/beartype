@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilRaisePepException
+from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
@@ -173,7 +173,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
 
     # If prior logic appended *NO* causes, raise an exception.
     if not causes_union:
-        raise _BeartypeUtilRaisePepException(
+        raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} PEP type hint '
             f'{repr(sleuth.hint)} failure causes unknown.')
     # Else, prior logic appended one or more strings describing these failures.
