@@ -185,8 +185,9 @@ def get_hint_pep_func_forwardref_classname(
 
     Raises
     ----------
-    BeartypeDecorHintPepException
+    BeartypeDecorHintForwardRefException
         If either:
+
         * This callable is *not* actually callable.
         * This forward reference is *not* actually a forward reference.
     '''
@@ -196,12 +197,12 @@ def get_hint_pep_func_forwardref_classname(
 
     # If this callable is *NOT* actually callable, raise an exception.
     if not callable(func):
-        raise BeartypeDecorHintPepException(
-            f'{repr(forwardref)} not callable.')
+        raise BeartypeDecorHintForwardRefException(
+            f'{repr(func)} not callable.')
     # Else if this forward reference is *NOT* actually a forward reference,
     # raise an exception.
     elif not is_hint_pep_forwardref(forwardref):
-        raise BeartypeDecorHintPepException(
+        raise BeartypeDecorHintForwardRefException(
             f'PEP type hint {repr(forwardref)} not forward reference.')
 
     # If this hint is a PEP 484-compliant forward reference wrapper object

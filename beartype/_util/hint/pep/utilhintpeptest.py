@@ -72,8 +72,8 @@ def die_if_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
-    exception_cls: type = BeartypeDecorHintPepException,
+    hint_label: 'Optional[str]' = 'Type hint',
+    exception_cls: 'Optional[type]' = BeartypeDecorHintPepException,
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-compliant type
@@ -89,7 +89,8 @@ def die_if_hint_pep(
         Object to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
+        exception message raised by this function. Defaults to
+        ``"Annotation"``.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintPepException`.
@@ -100,15 +101,17 @@ def die_if_hint_pep(
         If this object is a PEP-compliant type hint.
     '''
 
-    # If this hint is PEP-compliant, raise an exception of this class.
+    # If this hint is PEP-compliant...
     if is_hint_pep(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not type.')
 
+        # Raise an exception of this class.
         raise exception_cls(
             f'{hint_label} {repr(hint)} PEP-compliant '
-            f'(e.g., rather than non-"typing" type).')
+            f'(e.g., rather than non-"typing" type).'
+        )
 
 
 def die_unless_hint_pep(

@@ -1484,9 +1484,6 @@ def pep_code_check_hint(data: BeartypeData, hint: object) -> (
 
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
-
-            #FIXME: Don't forget to add human-readable exception handling for
-            #forward references as well, please.
             elif hint_curr_sign is ForwardRef:
                 # Canonicalize this forward reference into the fully-qualified
                 # classname referred to by this reference relative to the

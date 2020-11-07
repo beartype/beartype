@@ -27,9 +27,12 @@ from beartype._decor._code._pep._error._peperrorsequence import (
 )
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._decor._code._pep._error._peperrortype import (
-    get_cause_or_none_type_origin)
+    get_cause_or_none_forwardref,
+    get_cause_or_none_type_origin,
+)
 from beartype._decor._code._pep._error._peperrorunion import (
-    get_cause_or_none_union)
+    get_cause_or_none_union,
+)
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TYPE_ORIGIN,
@@ -44,7 +47,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Generic, Tuple
+from typing import ForwardRef, Generic, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -220,7 +223,8 @@ def raise_pep_call_exception(
         # Raise an exception of the desired class embedding this cause.
         raise exception_cls(
             f'{pith_label} violates PEP type hint '
-            f'{repr(hint)}, as {exception_cause_suffixed}')
+            f'{repr(hint)}, as {exception_cause_suffixed}'
+        )
 
     # Else, this pith satisfies this hint. In this (hopefully uncommon) edge
     # case, *SOMETHING HAS GONE TERRIBLY AWRY.* In theory, this should never
@@ -266,8 +270,9 @@ def _init() -> None:
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
     _TYPING_ATTR_TO_GETTER.update({
-        Generic: get_cause_or_none_generic,
-        Tuple: get_cause_or_none_tuple,
+        ForwardRef: get_cause_or_none_forwardref,
+        Generic:    get_cause_or_none_generic,
+        Tuple:      get_cause_or_none_tuple,
     })
 
 # Initialize this submodule.

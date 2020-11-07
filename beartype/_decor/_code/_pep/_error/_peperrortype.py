@@ -14,15 +14,47 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGN_FORWARDREF,
+)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_type_origin_or_none)
+    get_hint_pep_func_forwardref_classname,
+    get_hint_pep_type_origin_or_none,
+)
 from beartype._util.text.utiltextrepr import get_object_representation
 from beartype._util.utilobject import get_object_type_name_qualified
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS ~ forwardref              }....................
+def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> 'Optional[str]':
+    '''
+    Human-readable string describing the failure of the passed arbitrary object
+    to satisfy the passed **forward reference type hint** (i.e., string whose
+    value is the name of a user-defined class which has yet to be defined) if
+    this object actually fails to satisfy this hint *or* ``None`` otherwise
+    (i.e., if this object satisfies this hint).
+
+    Parameters
+    ----------
+    sleuth : CauseSleuth
+        Type-checking error cause sleuth.
+    '''
+    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert sleuth.hint_sign is HINT_PEP484_SIGN_FORWARDREF, (
+        f'{repr(sleuth.hint_sign)} not '
+        f'{repr(HINT_PEP484_SIGN_FORWARDREF)}.')
+
+    # Fully-qualified classname referred to by this forward reference relative
+    # to the decorated callable.
+    forwardref_classname = get_hint_pep_func_forwardref_classname(
+        func=sleuth.func, forwardref=sleuth.hint)
+
+    # Defer to the getter function handling non-"typing" classes. Neato!
+    return get_cause_or_none_type(sleuth.permute(hint=forwardref_classname))
+
+# ....................{ GETTERS ~ type                    }....................
 def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     Human-readable string describing the failure of the passed arbitrary object
