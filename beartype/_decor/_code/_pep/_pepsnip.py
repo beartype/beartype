@@ -181,7 +181,45 @@ active Python interpreter.
    https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ HINT                              }....................
+# ....................{ HINT ~ placeholder : child        }....................
+PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
+'''
+Prefix of each **placeholder hint child type-checking substring** (i.e.,
+placeholder to be globally replaced by a Python code snippet type-checking the
+current pith expression against the currently iterated child hint of the
+currently visited parent hint).
+'''
+
+
+PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX = ')!'
+'''
+Suffix of each **placeholder hint child type-checking substring** (i.e.,
+placeholder to be globally replaced by a Python code snippet type-checking the
+current pith expression against the currently iterated child hint of the
+currently visited parent hint).
+'''
+
+# ....................{ HINT ~ placeholder : forwardref   }....................
+PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX = '${'
+'''
+Prefix of each **placeholder unqualified forward reference classname
+substring** (i.e., placeholder to be globally replaced by a Python code snippet
+evaluating to the currently visited unqualified forward reference hint
+canonicalized into a fully-qualified classname relative to the external
+caller-defined module declaring the currently decorated callable).
+'''
+
+
+PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX = ']?'
+'''
+Suffix of each **placeholder unqualified forward reference classname
+substring** (i.e., placeholder to be globally replaced by a Python code snippet
+evaluating to the currently visited unqualified forward reference hint
+canonicalized into a fully-qualified classname relative to the external
+caller-defined module declaring the currently decorated callable).
+'''
+
+# ....................{ HINT ~ pith : root                }....................
 PEP_CODE_CHECK_HINT_ROOT = f'''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.

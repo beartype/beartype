@@ -145,8 +145,15 @@ def pep_code_check_param(
     try:
         # Generate memoized parameter-agnostic Python code type-checking a
         # parameter or return value with an arbitrary name.
-        param_code_check, is_func_code_needs_random_int = pep_code_check_hint(
-            data=data, hint=param_hint)
+        (
+            param_code_check,
+            is_func_code_needs_random_int,
+
+            #FIXME: Actually use this, please. To minimize DRY with the
+            #function below, we probably want to define a new private helper of
+            #this submodule to do so.
+            hint_forwardrefs_unqualified,
+        ) = pep_code_check_hint(param_hint)
 
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact parameter by globally replacing in this parameter-agnostic
@@ -234,8 +241,15 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
         # Attempt to generate memoized parameter-agnostic Python code
         # type-checking a parameter or return value with an arbitrary name.
         try:
-            return_code_check, is_func_code_needs_random_int = (
-                pep_code_check_hint(data=data, hint=param_hint))
+            (
+                return_code_check,
+                is_func_code_needs_random_int,
+
+                #FIXME: Actually use this, please. To minimize DRY with the
+                #function below, we probably want to define a new private
+                #helper of this submodule to do so.
+                hint_forwardrefs_unqualified,
+            ) = pep_code_check_hint(param_hint)
 
             # Python code to:
             # * Call the decorated callable and localize its return value
@@ -251,7 +265,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
         except Exception as exception:
             # Human-readable label describing this return.
             hint_label = (
-                label_callable_decorated_return(data.func) + ' PEP hint')
+                f'{label_callable_decorated_return(data.func)} PEP hint')
 
             # Reraise this cached exception's memoized return value-agnostic
             # message into an unmemoized return value-specific message.

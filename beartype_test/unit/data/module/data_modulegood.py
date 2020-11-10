@@ -12,7 +12,7 @@ dynamically import this attribute from this submodule.
 '''
 
 # ....................{ ATTRIBUTES                        }....................
-attribute = (
+attrgood = (
     "I started to see human beings as little lonesome, water based, pink "
     "meat, life forms pushing air through themselves and making noises that "
     "the other little pieces of meat seemed to understand. I was thinking to "

@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import importlib
-from beartype.roar import BeartypeUtilModuleException
+from beartype.roar import _BeartypeUtilModuleException
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -39,7 +39,7 @@ def die_unless_module_attr_name(
 
     # Optional parameters.
     exception_label: 'Optional[str]' = 'Module attribute name',
-    exception_cls:   'Optional[type]' = BeartypeUtilModuleException,
+    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
 ) -> object:
     '''
     Raise an exception unless the passed string is the fully-qualified
@@ -58,7 +58,7 @@ def die_unless_module_attr_name(
         raised by this function. Defaults to ``"Module attribute name"``.
     exception_cls : Optional[type]
         Type of exception to be raised by this function. Defaults to
-        :class:`BeartypeUtilModuleException`.
+        :class:`_BeartypeUtilModuleException`.
 
     Raises
     ----------
@@ -123,7 +123,7 @@ def import_module(
     module_name: str,
 
     # Optional parameters.
-    exception_cls:   'Optional[type]' = BeartypeUtilModuleException,
+    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
 ) -> 'ModuleType':
     '''
     Dynamically import and return the module, package, or C extension with the
@@ -136,7 +136,7 @@ def import_module(
         Fully-qualified name of the module to be imported.
     exception_cls : Optional[type]
         Type of exception to be raised by this function. Defaults to
-        :class:`BeartypeUtilModuleException`.
+        :class:`_BeartypeUtilModuleException`.
 
     Raises
     ----------
@@ -172,7 +172,7 @@ def import_module_attr(
 
     # Optional parameters.
     exception_label: 'Optional[str]' = 'Module attribute name',
-    exception_cls:   'Optional[type]' = BeartypeUtilModuleException,
+    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
 ) -> object:
     '''
     Dynamically import and return the **module attribute** (i.e., object
@@ -188,7 +188,7 @@ def import_module_attr(
         raised by this function. Defaults to ``"Module attribute name"``.
     exception_cls : Optional[type]
         Type of exception to be raised by this function. Defaults to
-        :class:`BeartypeUtilModuleException`.
+        :class:`_BeartypeUtilModuleException`.
 
     Returns
     ----------
@@ -245,7 +245,7 @@ def import_module_attr(
 
     # Module attribute with this name if this module declares this attribute
     # *OR* "None" otherwise.
-    module_attr = getattr(module, module_attr_basename)
+    module_attr = getattr(module, module_attr_basename, None)
 
     # If this module declares *NO* such attribute, raise an exception.
     if module_attr is None:

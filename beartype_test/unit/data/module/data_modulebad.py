@@ -12,8 +12,7 @@ dynamically import this attribute from this submodule.
 '''
 
 # ....................{ EXCEPTIONS                        }....................
-class Fulfillment(Exception): pass
-raise Fulfillment(
+raise ValueError(
     'Can you imagine a fulfilled society? '
     'Whoa, what would everyone do?'
 )

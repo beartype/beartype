@@ -534,6 +534,38 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
+
+class _BeartypeUtilModuleException(_BeartypeUtilException):
+    '''
+    **Beartype module utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.py.utilpymodule` subpackage when dynamically importing
+    an unimportable external user-defined module, typically due to a
+    **PEP-compliant forward reference type hint** (i.e., string whose value is
+    the name of a user-defined class that has yet to be defined) erroneously
+    referencing a non-existent module or module attribute.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTextException(_BeartypeUtilException):
+    '''
+    **Beartype text utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.text` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util : cache              }..................
 class _BeartypeUtilCachedException(_BeartypeUtilException, metaclass=_ABCMeta):
     '''
@@ -595,37 +627,3 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
     '''
 
     pass
-
-# ....................{ PUBLIC ~ util : module            }....................
-class BeartypeUtilModuleException(_BeartypeUtilException):
-    '''
-    **Beartype module utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.py.utilpymodule` subpackage when dynamically importing
-    an unimportable external user-defined module, typically due to a
-    **PEP-compliant forward reference type hint** (i.e., string whose value is
-    the name of a user-defined class that has yet to be defined) erroneously
-    referencing a non-existent module or module attribute.
-
-    Unlike all other private beartype exceptions, this public beartype
-    exception denotes a critical *external* issue and is thus allowed to
-    percolate up the call stack from decorated callables to end users.
-    '''
-
-    pass
-
-# ....................{ PRIVATE ~ util : text             }....................
-class _BeartypeUtilTextException(_BeartypeUtilException):
-    '''
-    **Beartype text utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.text` subpackage on various fatal edge cases.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
