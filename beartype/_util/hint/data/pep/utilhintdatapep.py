@@ -21,16 +21,23 @@ from beartype._util.hint.data.pep.proposal import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ BASES                             }....................
-# Initialized by the _init() function below.
-HINT_PEP_BASES_FORWARDREF = set()
+# ....................{ SIGNS                             }....................
+HINT_PEP_SIGNS_IGNORABLE = set()
 '''
-Tuple of all **forward reference type hint superclasses** (i.e., superclasses
-such that all type hints forward referencing user-defined types are instances
-of these superclasses).
+Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints unconditionally ignored by the
+:func:`beartype.beartype` decorator).
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_sign` getter function.
+
+See Also
+----------
+:attr:`beartype._util.hint.data.utilhintdata.HINTS_IGNORABLE_SHALLOW`
+    Further commentary.
 '''
 
-# ....................{ SIGNS                             }....................
+
 # Initialized by the _init() function below.
 HINT_PEP_SIGNS_TYPE_ORIGIN = set()
 '''
@@ -45,22 +52,6 @@ Since any arbitrary object is trivially type-checkable against an
 PEP-compliant type hints subscripting unsubscripted typing attributes listed in
 this dictionary are shallowly type-checkable from wrapper functions generated
 by the :func:`beartype.beartype` decorator.
-'''
-
-
-HINT_PEP_SIGNS_IGNORABLE = set()
-'''
-Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints unconditionally ignored by the
-:func:`beartype.beartype` decorator).
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
-
-See Also
-----------
-:attr:`beartype._util.hint.data.utilhintdata.HINTS_IGNORABLE_SHALLOW`
-    Further commentary.
 '''
 
 # ....................{ SETS ~ supported                  }....................
@@ -106,6 +97,15 @@ This set is intended to be tested against typing attributes returned by the
 '''
 
 # ....................{ SETS ~ subtype                    }....................
+# Fully initialized by the _init() function below.
+HINT_PEP_BASES_FORWARDREF = set()
+'''
+Tuple of all **PEP-compliant forward reference type hint superclasses** (i.e.,
+superclasses such that all PEP-compliant type hints forward referencing
+user-defined types are instances of these superclasses).
+'''
+
+
 # Initialized by the _init() function below.
 HINT_PEP_SIGNS_SEQUENCE_STANDARD = set()
 '''
@@ -183,7 +183,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Assert these global to have been initialized by these private submodules.
     assert HINT_PEP_BASES_FORWARDREF, (
-        'Set global "HINT_PEP_BASES_FORWARDREF" empty.')
+        'Set global "HINT_BASES_FORWARDREF" empty.')
     assert HINT_PEP_SIGNS_SUPPORTED_DEEP, (
         'Set global "HINT_PEP_SIGNS_SUPPORTED_DEEP" empty.')
     assert HINT_PEP_SIGNS_SUPPORTED_SHALLOW, (
@@ -221,4 +221,5 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Add PEP-compliant type hint data to various global containers declared by
     # the passed module.
+    data_module.HINT_BASES_FORWARDREF.update(HINT_PEP_BASES_FORWARDREF)
     data_module.HINTS_IGNORABLE_SHALLOW.update(HINT_PEP_SIGNS_IGNORABLE)

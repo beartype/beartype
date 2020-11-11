@@ -78,6 +78,7 @@ def is_object_hashable(obj: object) -> bool:
     return True
 
 # ....................{ GETTERS ~ name                    }....................
+#FIXME: Rename to get_module_attr_name_or_none() and shift to "utilpymodule".
 def get_object_name_qualified(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -107,7 +108,7 @@ def get_object_name_qualified(obj: object) -> str:
 
     # Fully-qualified name of the module defining this object if this
     # object is # defined by a module *OR* "None" otherwise.
-    object_module_name = get_object_module_name_or_none(object)
+    object_module_name = get_object_type_module_name_or_none(object)
 
     # Return either...
     return (
@@ -146,6 +147,28 @@ def get_object_type(obj: object) -> type:
     return obj if isinstance(obj, type) else type(obj)
 
 # ....................{ GETTERS ~ type : name             }....................
+def get_object_type_name_unqualified(obj: object) -> str:
+    '''
+    **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
+    object if this object is a class *or* the class of this object otherwise
+    (i.e., if this object is *not* a class).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    str
+        Unqualified name of this class.
+    '''
+
+    # Elegant simplicity diminishes aggressive tendencies.
+    return get_object_type(obj).__name__
+
+
+#FIXME: Rename to get_module_classname() and shift to "utilpymodule".
 def get_object_type_name_qualified(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -171,7 +194,7 @@ def get_object_type_name_qualified(obj: object) -> str:
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
-    cls_module_name = get_object_module_name_or_none(cls)
+    cls_module_name = get_object_type_module_name_or_none(cls)
 
     # Return either...
     return (
@@ -184,34 +207,14 @@ def get_object_type_name_qualified(obj: object) -> str:
     )
 
 
-def get_object_type_name_unqualified(obj: object) -> str:
-    '''
-    **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
-    object if this object is a class *or* the class of this object otherwise
-    (i.e., if this object is *not* a class).
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    str
-        Unqualified name of this class.
-    '''
-
-    # Elegant simplicity diminishes aggressive tendencies.
-    return get_object_type(obj).__name__
-
-# ....................{ GETTERS ~ name : module           }....................
-def get_object_module_name_or_none(obj: object) -> (str, None):
+#FIXME: Rename to get_module_classname_or_none() and shift to "utilpymodule".
+def get_object_type_module_name_or_none(obj: object) -> 'Optional[str]':
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring either the passed object if this
     object is a class *or* the class of this object otherwise (i.e., if this
-    object is *not* a class) if this class declares a ``__module__`` dunder
-    attribute *or* ``None`` otherwise.
+    object is *not* a class) if this class declares the ``__module__`` dunder
+    instance variable *or* ``None`` otherwise.
 
     Parameters
     ----------
@@ -220,7 +223,7 @@ def get_object_module_name_or_none(obj: object) -> (str, None):
 
     Returns
     ----------
-    (str, type(None))
+    Optional[str]
         Either:
 
         * Fully-qualified name of the module declaring the type of this object
@@ -228,5 +231,8 @@ def get_object_module_name_or_none(obj: object) -> (str, None):
         * ``None`` otherwise.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.py.utilpymodule import get_module_name_or_none
+
     # Make it so, ensign.
-    return getattr(get_object_type(obj), '__module__', None)
+    return get_module_name_or_none(get_object_type(obj))

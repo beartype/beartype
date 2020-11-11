@@ -22,9 +22,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Resolve PEP-compliant forward references as well. Note that doing so is
-#highly non-trivial -- sufficiently so, in fact, that we probably want to do so
-#as cleverly documented in the "_pep563" submodule.
+#FIXME: Refactor *ALL* calls below (and probably elsewhere throughout the
+#codebase) to call a newly defined
+#beartype._util.text.utiltextmunge.replace_str_substrs() function whose
+#signature resembles:
+#    def replace_str_substrs(text: str, substr: str) -> str:
+#
+#The body of this function should:
+#* If the passed string does *NOT* contain at least one instance of the passed
+#  substring, raise an exception.
+#* Else, return:
+#      str.replace(text, substr)
+#
+#Why? Because the builtin str.replace() method performs *NO* such validation,
+#inviting non-human-readable exceptions when we inevitably muck things up.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
@@ -35,13 +46,19 @@ from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_GET,
     PEP_CODE_CHECK_RETURN_PREFIX,
     PEP_CODE_CHECK_RETURN_SUFFIX,
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
     PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER)
 from beartype._decor._data import BeartypeData
+from beartype._decor._typistry import register_typistry_forwardref
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
+from beartype._util.hint.utilhintget import (
+    get_hint_forwardref_classname_relative_to_obj,
+)
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
@@ -99,8 +116,8 @@ def pep_code_check_param(
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
     assert isinstance(func_arg, Parameter), (
         f'{repr(func_arg)} not parameter metadata.')
-    assert func_arg_index.__class__ is int, (
-        f'{repr(func_arg_index)} not parameter index.')
+    assert isinstance(func_arg_index, int), (
+        f'{repr(func_arg_index)} not integer.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
@@ -146,24 +163,33 @@ def pep_code_check_param(
         # Generate memoized parameter-agnostic Python code type-checking a
         # parameter or return value with an arbitrary name.
         (
-            param_code_check,
+            func_code,
             is_func_code_needs_random_int,
-
-            #FIXME: Actually use this, please. To minimize DRY with the
-            #function below, we probably want to define a new private helper of
-            #this submodule to do so.
-            hint_forwardrefs_unqualified,
+            hints_forwardref_class_basename,
         ) = pep_code_check_hint(param_hint)
 
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact parameter by globally replacing in this parameter-agnostic
         # code...
-        param_code_check = param_code_check.replace(
+        func_code = func_code.replace(
             # This placeholder substring cached into this code with...
             PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this parameter's name.
             repr(func_arg.name),
         )
+
+        # If this code contains one or more relative forward reference
+        # placeholder substrings memoized into this code, unmemoize this code
+        # by globally resolving these placeholders relative to the currently
+        # decorated callable.
+        if hints_forwardref_class_basename is not None:
+            func_code = (
+                resolve_pep_code_hints_forwardref_class_basename(
+                    data=data,
+                    func_code=func_code,
+                    hints_forwardref_class_basename=(
+                        hints_forwardref_class_basename),
+                ))
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
     except Exception as exception:
@@ -183,7 +209,7 @@ def pep_code_check_param(
             get_arg_code_template.format(
                 arg_name=func_arg.name, arg_index=func_arg_index) +
             # Type-check this parameter.
-            param_code_check
+            func_code
         ),
         # Boolean true only if type-checking this parameter requires first
         # localizing a pseudo-random integer.
@@ -221,7 +247,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
 
     # Memoized parameter-agnostic Python code type-checking either a parameter
     # or return value with an arbitrary name.
-    return_code_check = None
+    func_code = None
 
     # True only if type-checking for this return value requires a higher-level
     # caller to prefix the body of this wrapper function with code generating
@@ -235,29 +261,38 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # *ONLY* as a return annotation, prefer pregenerated code type-checking
     # this peculiar type hint against this hint.
     if param_hint is NoReturn:
-        return_code_check = PEP484_CODE_CHECK_NORETURN
+        func_code = PEP484_CODE_CHECK_NORETURN
     # Else, this is a standard PEP-compliant type hint. In this case...
     else:
         # Attempt to generate memoized parameter-agnostic Python code
         # type-checking a parameter or return value with an arbitrary name.
         try:
             (
-                return_code_check,
+                func_code,
                 is_func_code_needs_random_int,
-
-                #FIXME: Actually use this, please. To minimize DRY with the
-                #function below, we probably want to define a new private
-                #helper of this submodule to do so.
-                hint_forwardrefs_unqualified,
+                hints_forwardref_class_basename,
             ) = pep_code_check_hint(param_hint)
+
+            # If this code contains one or more relative forward reference
+            # placeholder substrings memoized into this code, unmemoize this
+            # code by globally resolving these placeholders relative to the
+            # currently decorated callable.
+            if hints_forwardref_class_basename is not None:
+                func_code = (
+                    resolve_pep_code_hints_forwardref_class_basename(
+                        data=data,
+                        func_code=func_code,
+                        hints_forwardref_class_basename=(
+                            hints_forwardref_class_basename),
+                    ))
 
             # Python code to:
             # * Call the decorated callable and localize its return value
             #   *AND*...
             # * Type-check this return value *AND*...
             # * Return this value from this wrapper function.
-            return_code_check = (
-                f'{PEP_CODE_CHECK_RETURN_PREFIX}{return_code_check}'
+            func_code = (
+                f'{PEP_CODE_CHECK_RETURN_PREFIX}{func_code}'
                 f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
             )
         # If the prior call to the memoized _pep_code_check() function raises a
@@ -275,8 +310,9 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # Return all metadata required by higher-level callers, including...
     return (
         # Generate unmemoized parameter-specific Python code type-checking this
-        # exact return value by globally replacing in this return-agnostic code...
-        return_code_check.replace(
+        # exact return value by globally replacing in this return-agnostic
+        # code...
+        func_code.replace(
             # This placeholder substring cached into this code with...
             PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this return value,
@@ -286,3 +322,67 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
         # localizing a pseudo-random integer.
         is_func_code_needs_random_int,
     )
+
+# ....................{ CODERS                            }....................
+def resolve_pep_code_hints_forwardref_class_basename(
+    data: BeartypeData,
+    func_code: str,
+    hints_forwardref_class_basename: set,
+) -> str:
+    '''
+    Passed memoized Python code type-checking a parameter or return value of
+    the currently decorated callable unmemoized by globally replacing all
+    relative forward reference placeholder substrings cached into this code
+    with Python expressions evaluating to the classes referred to by these
+    substrings relative to that callable when accessed via the private
+    ``__beartypistry`` parameter.
+
+    Parameters
+    ----------
+    data : BeartypeData
+        Decorated callable to be type-checked.
+    func_code : str
+        Memoized Python code type-checking a parameter or return value of
+        the currently decorated callable.
+    hints_forwardref_class_basename : set
+        Set of the unqualified classnames referred to by all relative forward
+        reference type hints visitable from the current root root.
+
+    Returns
+    ----------
+    str
+        This memoized code unmemoized by globally resolving all relative
+        forward reference placeholder substrings cached into this code relative
+        to that callable.
+    '''
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
+    assert isinstance(func_code, str), f'{repr(func_code)} not string.'
+    assert isinstance(hints_forwardref_class_basename, set), (
+        f'{repr(hints_forwardref_class_basename)} not set.')
+
+    # For
+    for hint_forwardref_class_basename in hints_forwardref_class_basename:
+        # Fully-qualified classname referred to by this forward
+        # reference relative to the decorated callable.
+        hint_forwardref_classname = (
+            get_hint_forwardref_classname_relative_to_obj(
+                obj=data.func,
+                hint=hint_forwardref_class_basename))
+
+        # Generate unmemoized callable-specific Python code type-checking this
+        # class by globally replacing in this callable-agnostic code...
+        func_code = func_code.replace(
+            # This placeholder substring cached into this code with...
+            (
+                f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
+                f'{hint_forwardref_class_basename}'
+                f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
+            ),
+            # Python expression evaluating to this class when accessed
+            # via the private "__beartypistry" parameter.
+            hint_curr_expr = register_typistry_forwardref(
+                hint_forwardref_classname)
+        )
+
+    # Return this unmemoized callable-specific Python code.
+    return func_code

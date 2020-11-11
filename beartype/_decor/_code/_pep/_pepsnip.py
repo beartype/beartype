@@ -200,7 +200,7 @@ currently visited parent hint).
 '''
 
 # ....................{ HINT ~ placeholder : forwardref   }....................
-PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX = '${'
+PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX = '${FORWARDREF:'
 '''
 Prefix of each **placeholder unqualified forward reference classname
 substring** (i.e., placeholder to be globally replaced by a Python code snippet

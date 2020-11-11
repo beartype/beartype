@@ -25,7 +25,6 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep_supported,
 )
 from beartype._util.hint.data.utilhintdata import (
-    #FIXME: Refactor "HINT_PEP_BASES_FORWARDREF" into this, please.
     HINT_BASES_FORWARDREF,
     HINTS_IGNORABLE_SHALLOW,
 )

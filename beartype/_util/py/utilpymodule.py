@@ -117,6 +117,131 @@ def die_unless_module_attr_name(
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
+# ....................{ GETTERS ~ name                    }....................
+def get_module_name(obj: object) -> 'Optional[str]':
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring the passed object if this
+    object defines the ``__module__`` dunder instance variable *or* ``None``
+    otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Fully-qualified name of the module declaring this object.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If this object does *not* define the ``__module__`` dunder instance
+        variable.
+    '''
+
+    # Fully-qualified name of the module declaring this object if this object
+    # defines the "__module__" dunder instance variable *OR* "None" otherwise.
+    module_name = get_module_name_or_none(obj)
+
+    # If this object defines *NO* "__module__" dunder instance variable, raise
+    # an exception.
+    if module_name is None:
+        raise _BeartypeUtilModuleException(
+            f'{repr(obj)} "__module__" dunder attribute undefined '
+            f'(e.g., due to being neither class nor callable).'
+        )
+    # Else, this fully-qualified module name exists.
+
+    # Return this name.
+    return module_name
+
+
+def get_module_name_or_none(obj: object) -> 'Optional[str]':
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring the passed object if this
+    object defines the ``__module__`` dunder instance variable *or* ``None``
+    otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * Fully-qualified name of the module declaring this object if this
+          object declares a ``__module__`` dunder attribute.
+        * ``None`` otherwise.
+    '''
+
+    # Let it be, speaking one-liners of wisdom.
+    return getattr(obj, '__module__', None)
+
+# ....................{ GETTERS ~ attr : name             }....................
+def get_module_attr_name_relative_to_obj(
+    obj: object, module_attr_name: str) -> str:
+    '''
+    **Fully-qualified module attribute name** (i.e., ``.``-delimited name
+    prefixed by the declaring module) canonicalized by concatenating the
+    fully-qualified name of the module declaring the passed object with the
+    passed unqualified basename if this basename is unqualified (i.e., contains
+    *no* ``.`` characters) *or* this basename as is otherwise (i.e., if this
+    basename is already fully qualified).
+
+    Specifically, this function:
+
+    * If the passed ``module_attr_name`` is already fully-qualified (i.e.,
+      contains one or more ``.`` characters), returns this string as is.
+    * Else if the passed ``module_obj`` does *not* define the ``__module__``
+      dunder attribute whose value is the fully-qualified name of the module
+      declaring this object, raise an exception. Note that most objects do
+      *not* define this attribute. Those that do include:
+
+      * Classes.
+      * Callables (e.g., functions, methods).
+
+    * Else, returns ``f'{module_obj.__module__}.{module_attr_name}``.
+
+    Parameters
+    ----------
+    obj : object
+        Object to canonicalize the passed unqualified basename relative to.
+    module_attr_name : str
+        Unqualified basename to be canonicalized relative to the module
+        declaring this object.
+
+    Returns
+    ----------
+    str
+        Fully-qualified name of this module attribute.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If ``module_obj`` does *not* define the ``__module__`` dunder instance
+        variable.
+    '''
+    assert isinstance(module_attr_name, str), (
+        f'{repr(module_attr_name)} not string.')
+
+    # Return either...
+    return (
+        # If this name contains one or more "." characters and is thus already
+        # fully-qualified, this name as is.
+        module_attr_name
+        if '.' in module_attr_name else
+        # Else, the "."-delimited concatenation of the fully-qualified name of
+        # the module declaring this object with this unqualified basename.
+        f'{get_module_name(obj)}.{module_attr_name}'
+    )
+
 # ....................{ IMPORTERS                         }....................
 def import_module(
     # Mandatory parameters.
@@ -165,7 +290,6 @@ def import_module(
             f'Module "{module_name}" not found.') from exception
 
 
-#FIXME: Unit test us up.
 def import_module_attr(
     # Mandatory parameters.
     module_attr_name: str,

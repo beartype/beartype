@@ -30,7 +30,7 @@ from beartype.roar import (
 )
 from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
 from beartype._util.utilobject import (
-    get_object_module_name_or_none,
+    get_object_type_module_name_or_none,
     get_object_type_name_qualified,
     get_object_type_name_unqualified,
 )
@@ -190,7 +190,7 @@ def register_typistry_type(hint: type) -> str:
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
-    hint_module_name = get_object_module_name_or_none(hint)
+    hint_module_name = get_object_type_module_name_or_none(hint)
 
     # If...
     if (

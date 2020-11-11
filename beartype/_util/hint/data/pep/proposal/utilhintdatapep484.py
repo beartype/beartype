@@ -66,11 +66,11 @@ from typing import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ SIGNS                             }....................
+# ....................{ BASES                             }....................
 # Conditionally add the "typing.ForwardRef" superclass depending on the
 # current Python version, as this superclass was thankfully publicized
 # under Python >= 3.7 after its initial privatization under Python <= 3.6.
-HINT_PEP484_SIGN_FORWARDREF = (
+HINT_PEP484_BASE_FORWARDREF = (
     typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else typing._ForwardRef)
 '''
 **Forward reference sign** (i.e., arbitrary objects uniquely identifying a
@@ -124,17 +124,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ SETS ~ bases                      }..................
     data_module.HINT_PEP_BASES_FORWARDREF.update((
         # PEP 484-compliant forward reference superclass.
-        HINT_PEP484_SIGN_FORWARDREF,
-
-        # Technically, the builtin "str" type is the superclass of *only* PEP
-        # 585-compliant nested forward references (e.g., "list['Typo']"). PEP
-        # 484-compliant nested forward references (e.g., "List['Typo']") are
-        # instead internally coerced by the "typing" module into instances of
-        # the "typing.ForwardRef" superclass. Nonetheless, including "str" here
-        # unconditionally does no harm *AND* should improve both robustness and
-        # forward compatibility with spurious "typing" edge cases (of which we
-        # currently unaware but which probably exist, because "typing").
-        str,
+        HINT_PEP484_BASE_FORWARDREF,
     ))
 
     # ..................{ SETS ~ signs : type               }..................
@@ -274,7 +264,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Any,
         NoReturn,
         TypeVar,
-        HINT_PEP484_SIGN_FORWARDREF,
+        HINT_PEP484_BASE_FORWARDREF,
     ))
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
         Generic,

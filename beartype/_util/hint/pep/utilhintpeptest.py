@@ -18,7 +18,7 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_BASES_FORWARDREF,
+    HINT_BASES_FORWARDREF,
     HINT_PEP_SIGNS_SUPPORTED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -28,7 +28,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import (
-    get_object_module_name_or_none,
+    get_object_type_module_name_or_none,
     get_object_type,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
@@ -612,7 +612,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_module_name_or_none(hint) == 'typing'
+        return get_object_type_module_name_or_none(hint) == 'typing'
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -628,7 +628,7 @@ else:
         # Return true only if...
         return (
             # This type pretends to be defined by the "typing" module *AND*...
-            get_object_module_name_or_none(hint) == 'typing' and
+            get_object_type_module_name_or_none(hint) == 'typing' and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment
             # the following test:

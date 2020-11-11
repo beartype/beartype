@@ -16,39 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: *WOOPS.* We'd love to memoize this, but doing so is currently
-#pragmatically infeasible for the following reasons:
-#* *FORWARD REFERENCES.* By definition, they are relative to the decorated
-#  callable and thus cannot be memoized as is. Instead, what we'll need to do
-#  is:
-#  * Avoid calling get_hint_pep_func_forwardref_classname() below.
-#  * Define a new local hint_forwardref_to_placeholder dictionary with internal
-#    data structure resembling:
-#    hint_forwardref_to_placeholder_str = {
-#        'MuhType': "!$FORWARDREF:MuhType?#",
-#        'MuhOtherType': "!$FORWARDREF:MuhOtherType?#",
-#    }
-#  * Generate placeholder substrings (e.g., "!$FORWARDREF:{classname}?#") for
-#    each forward reference. Whenever doing so, add a new key-value pair
-#    {classname}: "!$FORWARDREF:{classname}?#" to
-#    "hint_forwardref_to_placeholder_str".
-#  * Return "hint_forwardref_to_placeholder_str" from this function. Note that,
-#    unlike tuples, their is *NO* empty dictionary singleton. Ergo, we should
-#    return "None" rather than an empty dictionary for the common case of a
-#    hint with *NO* forward references, avoiding excess space consumption:
-#    e.g.,
-#        >>> {} is {}
-#        False
-#  * Refactor callers to iterate over the "hint_forwardref_to_placeholder_str"
-#    dictionary in the returned memoized tuple and, for each such key-value
-#    pair:
-#    * Call get_hint_pep_func_forwardref_classname() appropriately.
-#    * Globally replace all instances of this "placeholder_str" with something
-#      resembling:
-#      register_typistry_forwardref(
-#          get_hint_pep_func_forwardref_classname(
-#              func=data.func, forwardref=forwardref)
-
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
@@ -368,12 +335,12 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
+from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_or_none)
 from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
-    get_hint_pep_func_forwardref_classname,
     get_hint_pep_sign,
     get_hint_pep_type_origin,
 )
@@ -558,7 +525,7 @@ def pep_code_check_hint(hint: object) -> (
     ----------
     Tuple[str, bool, Optional[Set[str]]
         3-tuple ``(func_code, is_func_code_needs_random_int,
-        hint_forwardrefs_unqualified)``, where:
+        hints_forwardref_class_basename)``, where:
 
         * ``func_code`` is Python code type-checking the previously localized
           parameter or return value against this hint.
@@ -569,7 +536,7 @@ def pep_code_check_hint(hint: object) -> (
           :func:`beartype._decor._code.codemain.generate_code` function
           prefixes the body of this wrapper function with code generating such
           an integer.
-        * ``hint_forwardrefs_unqualified`` is either:
+        * ``hints_forwardref_class_basename`` is either:
 
           * If one or more PEP 484-compliant relative forward references are
             visitable from this root hint, the set of the unqualified
@@ -729,10 +696,14 @@ def pep_code_check_hint(hint: object) -> (
     hint_childs_pep = None
 
     # ..................{ HINT ~ pep 484 : forwardref       }..................
-    # Set of the unqualified classnames of all PEP 484-compliant relative
-    # forward references visitable from this root hint if any *OR* "None"
-    # otherwise (i.e., if no such forward references are visitable).
-    hint_forwardrefs_unqualified = None
+    # Set of the unqualified classnames referred to by all relative forward
+    # references visitable from this root hint if any *OR* "None" otherwise
+    # (i.e., if no such forward references are visitable).
+    hints_forwardref_class_basename = None
+
+    # Possibly unqualified classname referred to by the currently visited
+    # forward reference type hint.
+    hint_curr_forwardref_classname = None
 
     # ..................{ HINT ~ pep 572                    }..................
     # The following local variables isolated to this subsection are only
@@ -1562,26 +1533,49 @@ def pep_code_check_hint(hint: object) -> (
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
             elif hint_curr_sign is ForwardRef:
-                #FIXME: Refactor as documented above, please. Specifically,
-                #use "PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX"
-                #and "PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX".
-                pass
+                # Possibly unqualified classname referred to by this hint.
+                hint_curr_forwardref_classname = get_hint_forwardref_classname(
+                    hint_curr)
 
-                # # Canonicalize this forward reference into the fully-qualified
-                # # classname referred to by this reference relative to the
-                # # decorated callable.
-                # hint_curr = get_hint_pep_func_forwardref_classname(
-                #     func=data.func, forwardref=hint_curr)
-                #
-                # # Code type-checking the current pith against the possibly
-                # # currently undeclared class referred to by this forward
-                # # reference.
-                # func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
-                #     pith_curr_expr=pith_curr_expr,
-                #     # Python expression evaluating to this class when accessed
-                #     # via the private "__beartypistry" parameter.
-                #     hint_curr_expr=register_typistry_forwardref(hint_curr),
-                # )
+                # If this classname contains one or more "." characters, this
+                # classname is fully-qualified. In this case...
+                if '.' in hint_curr_forwardref_classname:
+                    # Python expression evaluating to this class when accessed
+                    # via the private "__beartypistry" parameter.
+                    hint_curr_expr = register_typistry_forwardref(
+                        hint_curr_forwardref_classname)
+                # Else, this classname is unqualified. In this case...
+                else:
+                    # If the set of unqualified classnames referred to by all
+                    # relative forward references has yet to be instantiated,
+                    # do so.
+                    if hints_forwardref_class_basename is None:
+                        hints_forwardref_class_basename = set()
+                    # In any case, this set now exists.
+
+                    # Add this unqualified classname to this set.
+                    hints_forwardref_class_basename.add(
+                        hint_curr_forwardref_classname)
+
+                    # Placeholder substring to be replaced by the caller with a
+                    # Python expression evaluating to this unqualified
+                    # classname canonicalized relative to the module declaring
+                    # the currently decorated callable when accessed via the
+                    # private "__beartypistry" parameter.
+                    hint_curr_expr = (
+                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
+                        f'{hint_curr_forwardref_classname}'
+                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
+                    )
+
+                # Code type-checking the current pith against this class.
+                func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                    pith_curr_expr=pith_curr_expr,
+                    # Python expression evaluating to this class when
+                    # accessed via the private "__beartypistry" parameter.
+                    hint_curr_expr=register_typistry_forwardref(
+                        hint_curr_forwardref_classname),
+                )
             # Else, this hint is *NOT* a forward reference.
 
             # ..............{ NORETURN                          }..............
@@ -1914,5 +1908,5 @@ def pep_code_check_hint(hint: object) -> (
     return (
         func_code,
         is_func_code_needs_random_int,
-        hint_forwardrefs_unqualified,
+        hints_forwardref_class_basename,
     )
