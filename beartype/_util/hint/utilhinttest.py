@@ -11,6 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep,
@@ -21,7 +24,11 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
+from beartype._util.hint.data.utilhintdata import (
+    #FIXME: Refactor "HINT_PEP_BASES_FORWARDREF" into this, please.
+    HINT_BASES_FORWARDREF,
+    HINTS_IGNORABLE_SHALLOW,
+)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -119,6 +126,29 @@ def die_unless_hint(
         hint_label=hint_label,
         is_str_valid=is_str_valid,
     )
+
+# ....................{ EXCEPTIONS ~ forwardref           }....................
+def die_unless_hint_forwardref(hint: object) -> None:
+    '''
+    Raise an exception unless the passed object is a **forward reference type
+    hint** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this object is *not* a forward reference type hint.
+    '''
+
+    # If this is *NOT* a forward reference type hint, raise an exception.
+    if not is_hint_forwardref(hint):
+        raise BeartypeDecorHintForwardRefException(
+            f'Type hint {repr(hint)} not forward reference.')
 
 # ....................{ TESTERS                           }....................
 @callable_cached
@@ -229,3 +259,39 @@ def is_hint_ignorable(hint: object) -> bool:
     # Since this hint is also *NOT* shallowly ignorable, this hint is
     # unignorable. In this case, return false.
     return False
+
+# ....................{ TESTERS ~ forwardref              }....................
+def is_hint_forwardref(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **forward reference type hint**
+    (i.e., object indirectly referring to a user-defined class that typically
+    has yet to be defined).
+
+    Specifically, this tester returns ``True`` only if this object is either:
+
+    * A string whose value is the syntactically valid name of a class.
+    * An instance of the :class:`typing.ForwardRef` class. The :mod:`typing`
+      module implicitly replaces all strings subscripting :mod:`typing` objects
+      (e.g., the ``MuhType`` in ``List['MuhType']``) with
+      :class:`typing.ForwardRef` instances containing those strings as instance
+      variables, for nebulous reasons that make little justifiable sense but
+      what you gonna do 'cause this is 2020. *Fight me.*
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a forward reference type hint.
+    '''
+
+    # Return true only if this hint is an instance of a PEP-compliant forward
+    # reference superclass.
+    return isinstance(hint, HINT_BASES_FORWARDREF)

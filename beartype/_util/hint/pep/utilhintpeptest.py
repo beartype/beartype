@@ -670,42 +670,6 @@ is_hint_pep_typing.__doc__ = '''
         ``True`` only if this object is defined by the :mod:`typing` module.
     '''
 
-# ....................{ TESTERS ~ subtype                 }....................
-def is_hint_pep_forwardref(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a **PEP-compliant forward
-    reference** (i.e., object indirectly referring to a user-defined class that
-    typically has yet to be defined).
-
-    Specifically, this tester returns ``True`` only if this object is either:
-
-    * A string whose value is the syntactically valid name of a class.
-    * An instance of the :class:`typing.ForwardRef` class. The :mod:`typing`
-      module implicitly replaces all strings subscripting :mod:`typing` objects
-      (e.g., the ``MuhType`` in ``List['MuhType']``) with
-      :class:`typing.ForwardRef` instances containing those strings as instance
-      variables, for nebulous reasons that make little justifiable sense but
-      what you gonna do 'cause this is 2020. *Fight me.*
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a forward reference.
-    '''
-
-    # Return true only if this hint is an instance of a PEP-compliant forward
-    # reference superclass.
-    return isinstance(hint, HINT_PEP_BASES_FORWARDREF)
-
 # ....................{ TESTERS ~ subtype : typevar       }....................
 def is_hint_pep_typevar(hint: object) -> bool:
     '''

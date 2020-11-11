@@ -154,85 +154,6 @@ get_hint_pep_args.__doc__ = '''
         (int, str, typing.Dict[str, str])
     '''
 
-# ....................{ GETTERS ~ forwardref              }....................
-def get_hint_pep_func_forwardref_classname(
-    func: 'Callable', forwardref: object) -> str:
-    '''
-    Fully-qualified classname referred to by the passed **PEP-compliant forward
-    reference** (i.e., object indirectly referring to a user-defined class that
-    typically has yet to be defined) relative to the passed callable annotated
-    by this forward reference.
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Although this getter's implementation
-    is computationally expensive when the passed reference is relative rather
-    than absolute and would thus typically benefit from memoization, this
-    getter's unavoidable acceptance of the callable to which this reference is
-    relative effectively renders this getter unmemoizable.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable annotated by this forward reference.
-    hint : object
-        Forward reference to be inspected.
-
-    Returns
-    ----------
-    str
-        Fully-qualified classname referred to by this forward reference
-        relative to this callable.
-
-    Raises
-    ----------
-    BeartypeDecorHintForwardRefException
-        If either:
-
-        * This callable is *not* actually callable.
-        * This forward reference is *not* actually a forward reference.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_forwardref
-
-    # If this callable is *NOT* actually callable, raise an exception.
-    if not callable(func):
-        raise BeartypeDecorHintForwardRefException(
-            f'{repr(func)} not callable.')
-    # Else if this forward reference is *NOT* actually a forward reference,
-    # raise an exception.
-    elif not is_hint_pep_forwardref(forwardref):
-        raise BeartypeDecorHintForwardRefException(
-            f'PEP type hint {repr(forwardref)} not forward reference.')
-
-    # If this hint is a PEP 484-compliant forward reference wrapper object
-    # implicitly created by the "typing" module on subscripting a "typing"
-    # object by a string, reduce this wrapper object to that string.
-    # Naturally, this requires violating privacy encapsulation by accessing a
-    # dunder instance variable unique to the "typing.ForwardRef" class.
-    #
-    # Note that this wrapper object defines a significant number of other
-    # "__forward_"-prefixed dunder instance variables, which exist *ONLY* to
-    # enable the blatantly useless typing.get_type_hints() function to cache
-    # the result of evaluating the same forward reference. *sigh*
-    if isinstance(forwardref, HINT_PEP484_SIGN_FORWARDREF):
-        forwardref = forwardref.__forward_arg__
-
-    # Assert this reference to now be a string.
-    assert isinstance(forwardref, str), (
-        f'{repr(forwardref)} not string forward reference.')
-
-    # Return either...
-    return (
-        # If this reference contains one or more "." characters, this reference
-        # as is, since this reference is already fully-qualified.
-        forwardref
-        if '.' in forwardref else
-        # Else, this reference canonicalized relative to the module defining
-        # the passed callable.
-        f'{func.__module__}.{forwardref}'
-    )
-
 # ....................{ GETTERS ~ typevars                }....................
 # If the active Python interpreter targets at least Python >= 3.7, implement
 # this function to access the standard "__parameters__" dunder instance
@@ -442,9 +363,11 @@ def get_hint_pep_sign(hint: object) -> dict:
 
     # Avoid circular import dependencies.
     from beartype.cave import HintPep585Type
+    from beartype._util.hint.utilhinttest import (
+        is_hint_forwardref,
+    )
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep,
-        is_hint_pep_forwardref,
         is_hint_pep_typevar,
     )
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -537,7 +460,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     #     >>> import typing as t
     #     >>> repr(t.ForwardRef('str'))
     #     "ForwardRef('str')"
-    elif is_hint_pep_forwardref(hint):
+    elif is_hint_forwardref(hint):
         return HINT_PEP484_SIGN_FORWARDREF
     # If this hint is a type variable, return the class of all type variables.
     #

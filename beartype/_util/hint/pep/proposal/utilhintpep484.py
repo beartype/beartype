@@ -13,9 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+    BeartypeDecorHintPep484Exception,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGN_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
@@ -23,6 +27,31 @@ from typing import Generic
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ EXCEPTIONS ~ forwardref           }....................
+def die_unless_hint_pep484_forwardref(hint: object) -> None:
+    '''
+    Raise an exception unless the passed object is a `PEP 484`_-compliant
+    **forward reference type hint** (i.e., instance of the
+    :class:`typing.ForwardRef` class implicitly replacing all string arguments
+    subscripting :mod:`typing` objects).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this object is *not* a `PEP 484`_-compliant forward reference type
+        hint.
+    '''
+
+    # If this is *NOT* a forward reference type hint, raise an exception.
+    if not is_hint_pep484_forwardref(hint):
+        raise BeartypeDecorHintForwardRefException(
+            f'Type hint {repr(hint)} not forward reference.')
 
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep484_ignorable_or_none(
@@ -134,6 +163,42 @@ def is_hint_pep484_ignorable_or_none(
 
     # Return "None", as this hint is unignorable only under PEP 484.
     return None
+
+# ....................{ TESTERS ~ forwardref              }....................
+def is_hint_pep484_forwardref(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a `PEP 484`_-compliant **forward
+    reference type hint** (i.e., instance of the :class:`typing.ForwardRef`
+    class implicitly replacing all string arguments subscripting :mod:`typing`
+    objects).
+
+    The :mod:`typing` module implicitly replaces all strings subscripting
+    :mod:`typing` objects (e.g., the ``MuhType`` in ``List['MuhType']``) with
+    :class:`typing.ForwardRef` instances containing those strings as instance
+    variables, for nebulous reasons that make little justifiable sense.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a `PEP 484`_-compliant forward
+        reference type hint.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # Return true only if this hint is an instance of the PEP 484-compliant
+    # forward reference superclass.
+    return isinstance(hint, HINT_PEP484_SIGN_FORWARDREF)
 
 # ....................{ TESTERS ~ generic                 }....................
 # If the active Python interpreter targets at least Python >= 3.7.0, implement
@@ -325,6 +390,59 @@ def is_hint_pep484_newtype(hint: object) -> bool:
         #       >>> 'typing'
         (hint.__module__ + hint.__qualname__).startswith('typing.NewType.')
     )
+
+# ....................{ GETTERS ~ forwardref              }....................
+@callable_cached
+def get_hint_pep484_forwardref_classname_unqualified(hint: object) -> str:
+    '''
+    **Unqualified classname** (i.e., name of a class *not* containing a ``.``
+    delimiter and thus relative to the fully-qualified name of the submodule
+    declaring that class) referred to by the passed `PEP 484`_-compliant
+    **forward reference type hint** (i.e., instance of the
+    :class:`typing.ForwardRef` class implicitly replacing all string arguments
+    subscripting :mod:`typing` objects).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    str
+        Unqualified classname referred to by this `PEP 484`_-compliant forward
+        reference type hint.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this object is *not* a `PEP 484`_-compliant forward
+        reference type hint.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # If this object is *NOT* a PEP 484-compliant forward reference type hint,
+    # raise an exception.
+    die_unless_hint_pep484_forwardref(hint)
+    # Else, this object is *NOT* a PEP 484-compliant forward reference type
+    # hint.
+
+    # Return the unqualified classname referred to by this reference. Note
+    # that:
+    #
+    # * This requires violating privacy encapsulation by accessing a dunder
+    #   instance variable unique to the "typing.ForwardRef" class.
+    # * This object defines a significant number of other "__forward_"-prefixed
+    #   dunder instance variables, which exist *ONLY* to enable the blatantly
+    #   useless typing.get_type_hints() function to cache the results of
+    #   evaluating the same forward reference. *sigh*
+    return hint.__forward_arg__
 
 # ....................{ GETTERS ~ generic                 }....................
 @callable_cached
