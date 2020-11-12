@@ -332,6 +332,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_BASE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
@@ -354,7 +355,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
 from itertools import count
-from typing import ForwardRef, Generic, NoReturn, Tuple
+from typing import Generic, NoReturn, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -523,7 +524,7 @@ def pep_code_check_hint(hint: object) -> (
 
     Returns
     ----------
-    Tuple[str, bool, Optional[Set[str]]
+    Tuple[str, bool, Optional[Tuple[str]]
         3-tuple ``(func_code, is_func_code_needs_random_int,
         hints_forwardref_class_basename)``, where:
 
@@ -536,22 +537,10 @@ def pep_code_check_hint(hint: object) -> (
           :func:`beartype._decor._code.codemain.generate_code` function
           prefixes the body of this wrapper function with code generating such
           an integer.
-        * ``hints_forwardref_class_basename`` is either:
-
-          * If one or more PEP 484-compliant relative forward references are
-            visitable from this root hint, the set of the unqualified
-            classnames of these references (e.g., ``{'MuhClass', 'YoClass'}``
-            given a root hint ``Union['MuhClass', List['YoClass']]``).
-          * Else, ``None``. Note that the empty set is intentionally *not*
-            returned in this case, as the empty set is *not* a singleton
-            (unlike both ``None`` and the empty tuple): e.g.,
-
-                >>> None is None
-                True
-                >>> () is ()
-                True
-                >>> set() is set()
-                False
+        * ``hints_forwardref_class_basename`` is the tuple of the unqualified
+          classnames of PEP 484-compliant relative forward references visitable
+          from this root hint (e.g., ``('MuhClass', 'YoClass')`` given the root
+          hint ``Union['MuhClass', List['YoClass']]``).
 
     Raises
     ----------
@@ -809,8 +798,10 @@ def pep_code_check_hint(hint: object) -> (
     hints_meta_index_curr = 0
 
     # 0-based index of metadata describing the last visitable hint in the
-    # "hints_meta" list.
-    hints_meta_index_last = 0
+    # "hints_meta" list, initialized to "-1" to ensure that the initial
+    # incrementation of this index by the _enqueue_hint_child() directly called
+    # below initializes index 0 of the "hints_meta" fixed list.
+    hints_meta_index_last = -1
 
     # ..................{ CLOSURES ~ hint : child           }..................
     # Closures centralizing frequently repeated logic and thus addressing any
@@ -936,8 +927,8 @@ def pep_code_check_hint(hint: object) -> (
         # of unused items of the parent fixed list containing this tuple, since
         # an unused item of this list is initialized to "None" by default.
         assert hint_curr_meta.__class__ is tuple, (
-            'Current hint metadata {!r} at index {!r} '
-            'not tuple.'.format(hint_curr_meta, hints_meta_index_curr))
+            f'Current hint metadata {repr(hint_curr_meta)} at '
+            f'index {hints_meta_index_curr} not tuple.')
 
         # Localize metadatum for both efficiency and f-string purposes.
         hint_curr             = hint_curr_meta[_HINT_META_INDEX_HINT]
@@ -1290,6 +1281,10 @@ def pep_code_check_hint(hint: object) -> (
                 hint_childs_nonpep = acquire_object_typed(set)
                 hint_childs_pep = acquire_object_typed(set)
 
+                # Clear these sets prior to use below.
+                hint_childs_nonpep.clear()
+                hint_childs_pep.clear()
+
                 # For each subscripted argument of this union...
                 for hint_child in hint_childs:
                     # Assert that this child hint is *NOT* shallowly ignorable.
@@ -1532,7 +1527,7 @@ def pep_code_check_hint(hint: object) -> (
 
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
-            elif hint_curr_sign is ForwardRef:
+            elif hint_curr_sign is HINT_PEP484_BASE_FORWARDREF:
                 # Possibly unqualified classname referred to by this hint.
                 hint_curr_forwardref_classname = get_hint_forwardref_classname(
                     hint_curr)
@@ -1571,10 +1566,7 @@ def pep_code_check_hint(hint: object) -> (
                 # Code type-checking the current pith against this class.
                 func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                     pith_curr_expr=pith_curr_expr,
-                    # Python expression evaluating to this class when
-                    # accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_forwardref(
-                        hint_curr_forwardref_classname),
+                    hint_curr_expr=hint_curr_expr,
                 )
             # Else, this hint is *NOT* a forward reference.
 
@@ -1903,6 +1895,18 @@ def pep_code_check_hint(hint: object) -> (
         raise BeartypeDecorHintPepException(
             f'{hint_root_label} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
+
+    # Tuple of the unqualified classnames referred to by all relative forward
+    # references visitable from this root hint converted from this set to
+    # reduce space consumption after memoization by @callable_cached.
+    hints_forwardref_class_basename = (
+        # If *NO* relative forward references are visitable from this root
+        # hint, the empty tuple.
+        ()
+        if hints_forwardref_class_basename is None else
+        # Else, this set converted into a tuple.
+        tuple(hints_forwardref_class_basename)
+    )
 
     # Return all metadata required by higher-level callers.
     return (

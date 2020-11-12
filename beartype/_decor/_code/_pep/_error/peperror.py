@@ -38,6 +38,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_BASE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
@@ -47,7 +48,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import ForwardRef, Generic, Tuple
+from typing import Generic, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -270,9 +271,9 @@ def _init() -> None:
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
     _TYPING_ATTR_TO_GETTER.update({
-        ForwardRef: get_cause_or_none_forwardref,
-        Generic:    get_cause_or_none_generic,
-        Tuple:      get_cause_or_none_tuple,
+        HINT_PEP484_BASE_FORWARDREF: get_cause_or_none_forwardref,
+        Generic: get_cause_or_none_generic,
+        Tuple: get_cause_or_none_tuple,
     })
 
 # Initialize this submodule.

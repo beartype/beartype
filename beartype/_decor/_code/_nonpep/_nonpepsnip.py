@@ -15,10 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code.codemain import (
-    PARAM_NAME_FUNC,
-    # PARAM_NAME_TYPISTRY,
-)
+from beartype._decor._code.codemain import PARAM_NAME_FUNC
 from inspect import Parameter
 
 # ....................{ CODE ~ hint                       }....................
@@ -34,8 +31,8 @@ from inspect import Parameter
 #want to:
 #
 #* Rename:
-#  * "NONPEP_CODE_PARAM_HINT" to "NONPEP_CODE_PARAM_HINT_TUPLE".
-#  * "NONPEP_CODE_RETURN_HINT" to "NONPEP_CODE_RETURN_HINT_TUPLE".
+#  * "NONPEP_CODE_PARAM_HINT" to "NONPEP_CODE_PARAM_HINT_TUPLE_WITH_FORWARDREFS".
+#  * "NONPEP_CODE_RETURN_HINT" to "NONPEP_CODE_RETURN_HINT_TUPLE_WITH_FORWARDREFS".
 #* Define a new:
 #  * "NONPEP_CODE_PARAM_HINT_NONTUPLE" global string constant.
 #  * "NONPEP_CODE_RETURN_HINT_NONTUPLE" global string constant.
@@ -68,12 +65,13 @@ PARAM_KIND_TO_NONPEP_CODE = {
         if {arg_name!r} in kwargs else True
     ):
         raise __beartype_nonpep_param_exception(
-            '{func_name} parameter {arg_name}={{}} not a {{!r}}.'.format(
-            __beartype_trim(
-                args[{arg_index}] if __beartype_args_len > {arg_index} else
-                kwargs[{arg_name!r}]
-            ),
-            {hint_expr})
+            '{func_name} parameter {arg_name}={{}} not {{!r}}.'.format(
+                __beartype_trim(
+                    args[{arg_index}] if __beartype_args_len > {arg_index} else
+                    kwargs[{arg_name!r}]
+                ),
+                {hint_expr},
+            )
         )
 ''',
 
@@ -86,7 +84,7 @@ PARAM_KIND_TO_NONPEP_CODE = {
         kwargs[{arg_name!r}], {hint_expr}):
         raise __beartype_nonpep_param_exception(
             '{func_name} keyword-only parameter '
-            '{arg_name}={{}} not a {{!r}}.'.format(
+            '{arg_name}={{}} not {{!r}}.'.format(
                 __beartype_trim(kwargs[{arg_name!r}]), {hint_expr}))
 ''',
 
@@ -99,7 +97,7 @@ PARAM_KIND_TO_NONPEP_CODE = {
         if not isinstance(__beartype_arg, {hint_expr}):
             raise __beartype_nonpep_param_exception(
                 '{func_name} positional variadic parameter '
-                '{{}} not a {{!r}}.'.format(
+                '{{}} not {{!r}}.'.format(
                     __beartype_trim(__beartype_arg), {hint_expr}))
 ''',
 }
@@ -110,17 +108,16 @@ type-checking that type.
 '''
 
 # ....................{ CODE ~ return                     }....................
-NONPEP_CODE_RETURN_CHECKED = '''
+NONPEP_CODE_RETURN_CHECKED = f'''
     # Call this function with all passed parameters, type-check the value
     # returned from this call against this PEP-noncompliant type hint, and
     # return this value only if this check succeeds.
-    __beartype_return_value = {param_name_func}(*args, **kwargs)
+    __beartype_return_value = {PARAM_NAME_FUNC}(*args, **kwargs)
     if not isinstance(__beartype_return_value, {{hint_expr}}):
         raise __beartype_nonpep_return_exception(
-            '{{func_name}} return value {{{{}}}} not a {{{{!r}}}}.'.format(
+            '{{func_name}} return value {{{{}}}} not {{{{!r}}}}.'.format(
                 __beartype_trim(__beartype_return_value), {{hint_expr}}))
-    return __beartype_return_value'''.format(
-        param_name_func=PARAM_NAME_FUNC)
+    return __beartype_return_value'''
 '''
 PEP-noncompliant code snippet type-checking the return value if any.
 
@@ -130,39 +127,6 @@ Specifically, this snippet (in order):
 #. Localizes the value returned by that call.
 #. Type-checks that value.
 #. Returns that value as this wrapper function's value.
-'''
-
-# ....................{ CODE ~ reference : str            }....................
-NONPEP_CODE_STR_REPLACE = '''
-    # If this annotation is still a classname, this annotation has yet to be
-    # replaced by the corresponding class, implying this to be the first call
-    # to this callable. Perform this replacement in this call, preventing
-    # subsequent calls to this callable from repeatedly doing so.
-    if isinstance({hint_expr}, str):
-        {hint_type_import_code}
-
-        # Validate this class to be either a class or tuple of classes,
-        # preventing this attribute from being yet another classname. (The
-        # recursion definitively ends here, folks.)
-        __beartype_die_unless_hint_nonpep(
-            hint={hint_type_basename},
-            hint_label={hint_label!r},
-            is_str_valid=False,
-        )
-
-        # Replace the external copy of this annotation stored in this
-        # function's signature by this class -- guaranteeing that subsequent
-        # access of this annotation via "__beartype_hints" access this class
-        # rather than this classname.
-        {hint_expr} = {hint_type_basename}
-'''
-
-
-NONPEP_CODE_STR_IMPORT = '''
-        # Attempt to import this attribute from this module, implicitly
-        # raising a human-readable "ImportError" or "ModuleNotFoundError"
-        # exception on failure.
-        from {hint_type_module_name} import {hint_type_basename}
 '''
 
 # ....................{ CODE ~ reference : tuple          }....................
@@ -180,9 +144,13 @@ NONPEP_CODE_TUPLE_STR_TEST = '''
 
 
 NONPEP_CODE_TUPLE_STR_IMPORT = '''
-        # Attempt to import this attribute from this module, implicitly
-        # raising a human-readable "ImportError" exception on failure.
-        from {subhint_type_module_name} import {subhint_type_basename}
+        # Attempt to import this attribute from this module.
+        try:
+            from {subhint_type_module_name} import {subhint_type_basename}
+        except ImportError as exception:
+            #FIXME: Raise a more human-readable exception when time permits.
+            #For now, this crude approximation suffices.
+            raise __beartype_forward_ref_exception(str(exception)) from exception
 '''
 
 

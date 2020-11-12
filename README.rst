@@ -105,7 +105,7 @@ Let's type-check like `greased lightning`_:
    from beartype import beartype
 
    # Import PEP-compliant types for use with @beartype.
-   from typing import List, Optional, Union
+   from typing import List, Optional, Tuple, Union
 
    # Import beartype-specific types for use with @beartype, too.
    from beartype.cave import (
@@ -137,20 +137,37 @@ Let's type-check like `greased lightning`_:
        # Annotate builtin types as is.
        param_must_satisfy_builtin_type: str,
 
-       # Annotate user-defined types as is, too.
+       # Annotate user-defined classes as is, too. Note this covariantly
+       # matches all instances of both this class and subclasses of this class.
        param_must_satisfy_user_type: MyClass,
 
-       # Annotate PEP-compliant types predefined by the "typing" module.
-       param_must_satisfy_pep_type: List[int],
+       # Annotate PEP-compliant objects predefined by the "typing" module.
+       param_must_satisfy_pep_hint: List[int],
+
+       # Annotate PEP-compliant unions of types.
+       param_must_satisfy_pep_union: Union[dict, Tuple[MyClass, ...], int],
+
+       # Annotate PEP-compliant optional types.
+       param_must_satisfy_pep_optional: Optional[float] = None,
+
+       # Annotate PEP-compliant optional unions of types.
+       param_must_satisfy_pep_tuple_optional: Optional[
+           Union[float, int]]) = None,
+
+       # Annotate PEP-compliant relative forward references dynamically
+       # resolved at call time as unqualified classnames relative to the
+       # current user-defined submodule. Note this class is defined below.
+       param_must_satisfy_pep_relative_forward_ref: 'MyCrassClass',
+
+       # Annotate PEP-compliant objects predefined by the "typing" module
+       # subscripted by PEP-compliant relative forward references.
+       param_must_satisfy_pep_hint_relative_forward_ref: List['MyCrassClass'],
 
        # Annotate beartypes-specific types predefined by the beartype cave.
        param_must_satisfy_beartype_type_from_cave: NumberType,
 
-       # Annotate PEP-compliant unions of types.
-       param_must_satisfy_pep_union: Union[dict, MyClass, int,],
-
-       # Annotate beartype-specific unions of types as tuples, too.
-       param_must_satisfy_beartype_union: (dict, MyClass, int,),
+       # Annotate beartype-specific unions of types as tuples.
+       param_must_satisfy_beartype_union: (dict, MyClass, int),
 
        # Annotate beartype-specific unions predefined by the beartype cave.
        param_must_satisfy_beartype_union_from_cave: CallableTypes,
@@ -159,28 +176,25 @@ Let's type-check like `greased lightning`_:
        param_must_satisfy_beartype_union_concatenated: (
            IteratorType,) + ScalarTypes,
 
-       # Annotate beartype-specific forward references dynamically resolved
-       # at first call time as fully-qualified "."-delimited classnames.
-       param_must_satisfy_beartype_forward_ref: 'my_package.my_module.MyClass',
+       # Annotate beartype-specific absolute forward references dynamically
+       # resolved at call time as fully-qualified "."-delimited classnames.
+       param_must_satisfy_beartype_absolute_forward_ref: (
+           'my_package.my_module.MyClass'),
 
        # Annotate beartype-specific forward references in unions of types, too.
        param_must_satisfy_beartype_union_with_forward_ref: (
-           IterableType, 'my_package.my_module.MyOtherClass', NoneType,),
-
-       # Annotate PEP-compliant optional types.
-       param_must_satisfy_pep_type_optional: Optional[float] = None,
+           IterableType, 'my_package.my_module.MyOtherClass', NoneType),
 
        # Annotate beartype-specific optional types.
        param_must_satisfy_beartype_type_optional: NoneTypeOr[float] = None,
 
-       # Annotate PEP-compliant optional unions of types.
-       param_must_satisfy_pep_tuple_optional: Optional[Union[float, int]]) = None,
-
        # Annotate beartype-specific optional unions of types.
-       param_must_satisfy_beartype_tuple_optional: NoneTypeOr[float, int] = None,
+       param_must_satisfy_beartype_tuple_optional: NoneTypeOr[
+           float, int] = None,
 
        # Annotate variadic positional arguments as above, too.
-       *args: VersionTypes + (IntOrFloatType, 'my_package.my_module.MyVersionType',),
+       *args: VersionTypes + (
+           IntOrFloatType, 'my_package.my_module.MyVersionType'),
 
        # Annotate keyword-only arguments as above, too.
        param_must_be_passed_by_keyword_only: SequenceType,
@@ -793,6 +807,10 @@ PEP-compliant Type Hints
 ``beartype`` is fully compliant with these `Python Enhancement Proposals (PEPs)
 <PEP 0_>`__:
 
+* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
+  detailed below <PEP 484 Compliance_>`__
+* `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
+  <PEP 484 Compliance_>`__.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
@@ -802,10 +820,6 @@ PEP-compliant Type Hints
 
 ``beartype`` is partially compliant with these PEPs:
 
-* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
-  detailed below <PEP 484 Compliance_>`__
-* `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
-  <PEP 484 Compliance_>`__.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:

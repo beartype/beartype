@@ -187,9 +187,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import functools, random
 from beartype.roar import (
+    BeartypeCallHintForwardRefException,
     BeartypeCallHintNonPepParamException,
     BeartypeCallHintNonPepReturnException,
-    BeartypeCallHintPepException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
@@ -218,6 +218,11 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 _GLOBAL_ATTRS = {
     '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
     '__beartype_getrandbits': random.getrandbits,
+    #FIXME: This is currently only required for the outlier edge case of
+    #callables annotated by PEP-noncompliant tuples containing fully-qualified
+    #forward references referring to non-existent types. *sigh*
+    '__beartype_forward_ref_exception': (
+        BeartypeCallHintForwardRefException),
     '__beartype_nonpep_param_exception': (
         BeartypeCallHintNonPepParamException),
     '__beartype_nonpep_return_exception': (
@@ -317,13 +322,13 @@ def beartype(func):
     #
     # If this object is uncallable, raise an exception.
     if not callable(func):
-        raise BeartypeDecorWrappeeException('{!r} uncallable.'.format(func))
+        raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
     # Else if this object is a class, raise an exception.
     elif isinstance(func, type):
-        raise BeartypeDecorWrappeeException((
-            '{!r} is a class, '
-            'which is currently unsupported by @beartype.'
-        ).format(func))
+        raise BeartypeDecorWrappeeException(
+            f'{repr(func)} unsupported, '
+            f'as classes currently unsupported by @beartype.'
+        )
     # Else, this object is a non-class callable. Let's do this, folks.
 
     # If either...
@@ -386,7 +391,7 @@ def beartype(func):
     }
 
     # Fully-qualified name of this undecorated callable to be decorated.
-    func_name_qualified = get_object_name_qualified(func)
+    # func_name_qualified = get_object_name_qualified(func)
 
     #FIXME: Once this is working, use the commented code example starting with
     #"func_code_compiled = compile" given below to associate this filename with
@@ -416,7 +421,7 @@ def beartype(func):
     # the eval() and exec() builtins. Since Python occasionally emits in-memory
     # fake filenames resembling "memory:0x7f2ea8589810", we adopt a similar
     # syntax here to generate beartype-specific fake module filenames.
-    func_wrapper_filename = f'beartype_wrapper:{func_name_qualified}'
+    # func_wrapper_filename = f'beartype_wrapper:{func_name_qualified}'
 
     #FIXME: Actually, we absolutely *DO* want to leverage the example
     #documented below of leveraging the compile() builtin. We want to do so
@@ -483,21 +488,18 @@ def beartype(func):
         #     #FIXME: This really doesn't seem right, but... *shrug*
         #     argdefs=tuple(local_attrs.values()),
         # )
-    # If doing so fails for any reason...
+    # If doing so fails for any reason, raise an exception suffixed by
+    # debuggable wrapper code such that each line of this code is prefixed by
+    # that line's number, rendering "SyntaxError" exceptions referencing
+    # arbitrary line numbers human-readable: e.g.,
+    #       File "<string>", line 56
+    #         if not (
+    #          ^
+    #     SyntaxError: invalid syntax
     except Exception as exception:
-        # Debuggable wrapper code such that each line of this code is prefixed
-        # by that line's number, rendering "SyntaxError" exceptions referencing
-        # arbitrary line numbers human-readable: e.g.,
-        #       File "<string>", line 56
-        #         if not (
-        #          ^
-        #     SyntaxError: invalid syntax
-        func_code_line_numbered = number_lines(func_code)
-
-        # Raise an exception this code for debugging purposes.
         raise BeartypeDecorWrapperException(
-            '@beartyped {} wrapper unparseable:\n\n{}'.format(
-                func_data.func_name, func_code_line_numbered)
+            f'@beartyped {func_data.func_name} wrapper unparseable:\n\n'
+            f'{number_lines(func_code)}'
         ) from exception
 
     # This wrapper.

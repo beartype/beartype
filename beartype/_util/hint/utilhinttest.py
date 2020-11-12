@@ -39,7 +39,6 @@ def die_unless_hint(
 
     # Optional parameters.
     hint_label: str = 'Annotated',
-    is_str_valid: bool = True,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **supported type hint**
@@ -73,14 +72,6 @@ def die_unless_hint(
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to ``"Annotated"``.
-    is_str_valid : Optional[bool]
-        ``True`` only if this function permits this object to be a string.
-        Defaults to ``True``. If this boolean is:
-
-        * ``True``, this object is valid only if this object is either a class,
-          classname, or tuple of classes and/or classnames.
-        * ``False``, this object is valid only if this object is either a class
-          or tuple of classes.
 
     Raises
     ----------
@@ -97,10 +88,7 @@ def die_unless_hint(
     '''
 
     # If this object is a supported type hint, reduce to a noop.
-    #
-    # Note that this memoized call is intentionally passed positional rather
-    # than keyword parameters to maximize efficiency.
-    if is_hint(hint, is_str_valid):
+    if is_hint(hint):
         return
     # Else, this object is *NOT* a supported type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -118,12 +106,11 @@ def die_unless_hint(
         )
 
     # Else, this hint is *NOT* PEP-compliant. In this case, raise an exception
-    # only if this hint is also *NOT* PEP-noncompliant. By design, all
+    # only if this hint is also *NOT* PEP-noncompliant. By definition, all
     # PEP-noncompliant type hints are supported by @beartype.
     die_unless_hint_nonpep(
         hint=hint,
         hint_label=hint_label,
-        is_str_valid=is_str_valid,
     )
 
 # ....................{ EXCEPTIONS ~ forwardref           }....................
@@ -151,13 +138,7 @@ def die_unless_hint_forwardref(hint: object) -> None:
 
 # ....................{ TESTERS                           }....................
 @callable_cached
-def is_hint(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    is_str_valid: bool = True,
-) -> bool:
+def is_hint(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **supported type hint** (i.e.,
     object supported by the :func:`beartype.beartype` decorator as a valid type
@@ -169,14 +150,6 @@ def is_hint(
     ----------
     hint : object
         Object to be validated.
-    is_str_valid : Optional[bool]
-        ``True`` only if this function permits this object to be a string.
-        Defaults to ``True``. If this boolean is:
-
-        * ``True``, this object is valid only if this object is either a class,
-          classname, or tuple of classes and/or classnames.
-        * ``False``, this object is valid only if this object is either a class
-          or tuple of classes.
 
     Returns
     ----------
@@ -207,10 +180,7 @@ def is_hint(
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype.
-        #
-        # Note that this memoized call is intentionally passed positional
-        # rather than keyword parameters to maximize efficiency.
-        is_hint_nonpep(hint, is_str_valid)
+        is_hint_nonpep(hint)
     )
 
 # ....................{ TESTERS ~ ignorable               }....................

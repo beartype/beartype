@@ -15,14 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
-)
+    HINT_PEP484_BASE_FORWARDREF)
 from beartype._util.hint.utilhintget import (
-    get_hint_forwardref_classname_relative_to_obj,
-)
+    get_hint_forwardref_classname_relative_to_obj)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_type_origin_or_none,
-)
+    get_hint_pep_type_origin_or_none)
 from beartype._util.py.utilpymodule import import_module_attr
 from beartype._util.text.utiltextrepr import get_object_representation
 from beartype._util.utilobject import get_object_type_name_qualified

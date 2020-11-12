@@ -57,10 +57,6 @@ def test_die_unless_hint() -> None:
         with raises(BeartypeDecorHintNonPepException):
             die_unless_hint(non_hint_hashable)
 
-    # Assert this function rejects forward references when instructed to do so.
-    with raises(BeartypeDecorHintNonPepException):
-        die_unless_hint(hint='dict', is_str_valid=False)
-
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(TypeError):
@@ -95,9 +91,6 @@ def test_is_hint() -> None:
     # type hints *NOR* supported PEP-compliant type hints.
     for non_hint_hashable in NOT_HINTS_HASHABLE:
         assert is_hint(non_hint_hashable) is False
-
-    # Assert this function rejects forward references when instructed to do so.
-    assert is_hint(hint='dict', is_str_valid=False) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:

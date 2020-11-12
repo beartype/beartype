@@ -16,12 +16,9 @@ from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_SIGNS_UNION
-)
+    HINT_PEP484_SIGNS_UNION)
 from beartype._util.hint.pep.utilhintpepget import (
-    # get_hint_pep_sign,
-    get_hint_pep_type_origin,
-)
+    get_hint_pep_type_origin_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextmunge import (
@@ -72,11 +69,19 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
-            # Non-"typing" class originating this child hint.
-            hint_child_type_origin = get_hint_pep_type_origin(hint_child)
+            # Non-"typing" class originating this child hint if any *OR* "None"
+            # otherwise.
+            hint_child_type_origin = get_hint_pep_type_origin_or_none(
+                hint_child)
 
-            # If this pith is *NOT* an instance of this class...
-            if not isinstance(sleuth.pith, hint_child_type_origin):
+            # If...
+            if (
+                # This child hint originates from a non-"typing" class *AND*...
+                hint_child_type_origin is not None and
+                # This pith is *NOT* an instance of this class...
+                not isinstance(sleuth.pith, hint_child_type_origin)
+            ):
+            # Then this pith fails to satisfy this child hint. In this case...
                 # Add this class to the subset of all classes this pith does
                 # *NOT* satisfy.
                 hint_types_unsatisfied.add(hint_child_type_origin)

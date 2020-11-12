@@ -265,9 +265,7 @@ def generate_code(data: BeartypeData) -> None:
 
     # Python code snippet type-checking the return value annotated on this
     # callable if any *or* the empty string otherwise.
-    code_check_return = _code_check_return(data)
-    code_return, is_code_return_needs_random_int = code_check_return
-    # code_return, is_code_return_needs_random_int = _code_check_return(data)
+    code_return, is_code_return_needs_random_int = _code_check_return(data)
 
     # Python code snippet declaring the signature of this wrapper followed by
     # preliminary statements (e.g., assignment initializations) if desired

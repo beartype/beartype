@@ -63,6 +63,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
 )
+from collections.abc import Iterable
 from inspect import Parameter
 from typing import NoReturn
 
@@ -182,7 +183,7 @@ def pep_code_check_param(
         # placeholder substrings memoized into this code, unmemoize this code
         # by globally resolving these placeholders relative to the currently
         # decorated callable.
-        if hints_forwardref_class_basename is not None:
+        if hints_forwardref_class_basename:
             func_code = (
                 resolve_pep_code_hints_forwardref_class_basename(
                     data=data,
@@ -277,7 +278,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
             # placeholder substrings memoized into this code, unmemoize this
             # code by globally resolving these placeholders relative to the
             # currently decorated callable.
-            if hints_forwardref_class_basename is not None:
+            if hints_forwardref_class_basename:
                 func_code = (
                     resolve_pep_code_hints_forwardref_class_basename(
                         data=data,
@@ -327,7 +328,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
 def resolve_pep_code_hints_forwardref_class_basename(
     data: BeartypeData,
     func_code: str,
-    hints_forwardref_class_basename: set,
+    hints_forwardref_class_basename: tuple,
 ) -> str:
     '''
     Passed memoized Python code type-checking a parameter or return value of
@@ -344,31 +345,25 @@ def resolve_pep_code_hints_forwardref_class_basename(
     func_code : str
         Memoized Python code type-checking a parameter or return value of
         the currently decorated callable.
-    hints_forwardref_class_basename : set
-        Set of the unqualified classnames referred to by all relative forward
-        reference type hints visitable from the current root root.
+    hints_forwardref_class_basename : tuple
+        Tuple of the unqualified classnames referred to by all relative forward
+        reference type hints visitable from the current root type hint.
 
     Returns
     ----------
     str
         This memoized code unmemoized by globally resolving all relative
         forward reference placeholder substrings cached into this code relative
-        to that callable.
+        to the currently decorated callable.
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
-    assert isinstance(hints_forwardref_class_basename, set), (
-        f'{repr(hints_forwardref_class_basename)} not set.')
+    assert isinstance(hints_forwardref_class_basename, Iterable), (
+        f'{repr(hints_forwardref_class_basename)} not iterable.')
 
-    # For
+    # For each unqualified classname referred to by a relative forward
+    # reference type hints visitable from the current root type hint...
     for hint_forwardref_class_basename in hints_forwardref_class_basename:
-        # Fully-qualified classname referred to by this forward
-        # reference relative to the decorated callable.
-        hint_forwardref_classname = (
-            get_hint_forwardref_classname_relative_to_obj(
-                obj=data.func,
-                hint=hint_forwardref_class_basename))
-
         # Generate unmemoized callable-specific Python code type-checking this
         # class by globally replacing in this callable-agnostic code...
         func_code = func_code.replace(
@@ -380,8 +375,14 @@ def resolve_pep_code_hints_forwardref_class_basename(
             ),
             # Python expression evaluating to this class when accessed
             # via the private "__beartypistry" parameter.
-            hint_curr_expr = register_typistry_forwardref(
-                hint_forwardref_classname)
+            register_typistry_forwardref(
+                # Fully-qualified classname referred to by this forward
+                # reference relative to the decorated callable.
+                get_hint_forwardref_classname_relative_to_obj(
+                    obj=data.func,
+                    hint=hint_forwardref_class_basename,
+                )
+            )
         )
 
     # Return this unmemoized callable-specific Python code.

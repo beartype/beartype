@@ -52,12 +52,14 @@ def test_get_hint_pep_sign_fail() -> None:
     # Assert this getter raises the expected exception for an instance of a
     # class erroneously masquerading as a "typing" class.
     with raises(BeartypeDecorHintPepSignException):
-        get_hint_pep_sign(NonPepCustomFakeTyping())
+        # Localize this return value to simplify debugging.
+        hint_pep_sign = get_hint_pep_sign(NonPepCustomFakeTyping())
 
     # Assert this getter raises the expected exception for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            get_hint_pep_sign(not_hint_pep)
+            # Localize this return value to simplify debugging.
+            hint_pep_sign = get_hint_pep_sign(not_hint_pep)
 
 # ....................{ TESTS ~ type                      }....................
 def test_get_hint_pep_type_origin() -> None:
@@ -146,4 +148,3 @@ def test_get_hint_pep_typevars() -> None:
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep_typevars(not_hint_pep) == ()
-

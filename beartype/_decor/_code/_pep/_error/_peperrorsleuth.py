@@ -21,8 +21,14 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
 )
-from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.pep.utilhintpeptest import (
+    is_hint_pep,
+    is_hint_pep_typevar,
+)
+from beartype._util.hint.utilhinttest import (
+    is_hint_forwardref,
+    is_hint_ignorable,
+)
 from typing import NoReturn
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -257,20 +263,31 @@ class CauseSleuth(object):
                 # from origin types.
                 get_cause_or_none = get_cause_or_none_type_origin
         # Else, this PEP-compliant hint is *NOT* its own unsubscripted "typing"
-        # attribute and is thus subscripted by one or more child hints (e.g.,
-        # "typing.List[str]" rather than "typing.List"). In this case...
+        # attribute. In this case...
         else:
             # Avoid circular import dependencies.
             from beartype._decor._code._pep._error.peperror import (
                 _TYPING_ATTR_TO_GETTER)
 
-            # If this hint is paradoxically subscripted by *NO* child hints,
-            # raise an exception.
-            if not self.hint_childs:
+            # If this hint is neither...
+            if not (
+                # Subscripted by no child hints *NOR*...
+                self.hint_childs or
+                # A forward reference nor type variable, whose designs reside
+                # well outside the standard "typing" dunder variable API and
+                # are thus *NEVER* subscripted by child hints...
+                is_hint_forwardref(self.hint) or
+                is_hint_pep_typevar(self.hint)
+            ):
+            # Then this hint should have been subscripted by one or more child
+            # hints but wasn't. In this case, raise an exception.
                 raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_label} argumentative PEP type hint '
                     f'{repr(self.hint)} unsubscripted.'
                 )
+            # Else, thus subscripted by one or more child hints (e.g.,
+            # "typing.List[str]" rather than "typing.List")
+            #
             # Else, this hint is subscripted by one or more child hints.
 
             # Getter function returning the desired string for this attribute

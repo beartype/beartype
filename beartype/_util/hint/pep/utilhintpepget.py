@@ -18,15 +18,13 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_TYPE_ORIGIN,
-)
+    HINT_PEP_SIGNS_TYPE_ORIGIN)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
-)
+    HINT_PEP484_BASE_FORWARDREF)
 from beartype._util.utilobject import get_object_type_module_name_or_none
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_3_6,
+    IS_PYTHON_AT_LEAST_3_7,
 )
 from typing import Generic, TypeVar
 
@@ -363,17 +361,13 @@ def get_hint_pep_sign(hint: object) -> dict:
 
     # Avoid circular import dependencies.
     from beartype.cave import HintPep585Type
-    from beartype._util.hint.utilhinttest import (
-        is_hint_forwardref,
-    )
+    from beartype._util.hint.utilhinttest import is_hint_forwardref
     from beartype._util.hint.pep.utilhintpeptest import (
-        die_unless_hint_pep,
-        is_hint_pep_typevar,
-    )
+        die_unless_hint_pep, is_hint_pep_typevar)
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        is_hint_pep484_generic,
-    )
-    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+        is_hint_pep484_generic)
+    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+        is_hint_pep585)
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     #
@@ -593,13 +587,16 @@ def get_hint_pep_type_origin(hint: object) -> type:
     # Origin type originating this object if any *OR* "None" otherwise.
     hint_type_origin = get_hint_pep_type_origin_or_none(hint)
 
-    # If this type exists, return this type.
-    if hint_type_origin is not None:
-        return hint_type_origin
+    # If this type does *NOT* exist, raise an exception.
+    if hint_type_origin is None:
+        raise BeartypeDecorHintPepException(
+            f'PEP type hint {repr(hint)} not originative '
+            f'(i.e., does not originate from a lower-level class).'
+        )
+    # Else, this type exists.
 
-    # Else, no such type exists. In this case, raise an exception.
-    raise BeartypeDecorHintPepException(
-        f'PEP type hint {repr(hint)} originates from no non-"typing" type.')
+    # Return this type.
+    return hint_type_origin
 
 
 # If the active Python interpreter targets at least Python >= 3.7, implement

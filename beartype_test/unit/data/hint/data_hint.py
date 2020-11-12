@@ -12,7 +12,6 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
 from beartype import cave
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype_test.unit.data.hint.pep.data_hintpep import (
@@ -63,7 +62,7 @@ class NonPepCustom(str):
     pass
 
 
-class NonPepCustomFakeTyping(str):
+class NonPepCustomFakeTyping(object):
     '''
     PEP-noncompliant user-defined class subclassing an arbitrary superclass
     erroneously masquerading as a :mod:`typing` class.
@@ -90,8 +89,6 @@ HINTS_NONPEP = frozenset((
     NonPepCustom,
     # Beartype cave type.
     cave.NoneType,
-    # Fully-qualified forward reference.
-    'beartype.cave.AnyType',
     # Non-empty tuple containing two types.
     cave.NoneTypeOr[cave.AnyType],
     # Non-empty tuple containing two types and a fully-qualified forward
@@ -106,8 +103,6 @@ Frozen set of PEP-noncompliant type hints exercising well-known edge cases.
 HINTS_NONPEP_UNIGNORABLE = (
     # PEP-noncompliant type.
     str,
-    # PEP-noncompliant forward reference.
-    'beartype.cave.AnyType',
     # PEP-noncompliant tuple of types.
     cave.NoneTypeOr[cave.AnyType],
 )

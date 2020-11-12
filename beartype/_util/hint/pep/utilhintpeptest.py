@@ -18,7 +18,6 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_BASES_FORWARDREF,
     HINT_PEP_SIGNS_SUPPORTED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -393,10 +392,11 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
+    from beartype._util.hint.utilhinttest import is_hint_forwardref
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        is_hint_pep484_generic,
-    )
-    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+        is_hint_pep484_generic)
+    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+        is_hint_pep585)
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
@@ -407,13 +407,23 @@ def is_hint_pep(hint: object) -> bool:
         # This hint's type is directly declared by the "typing" module and thus
         # PEP 484-compliant by definition *OR*...
         is_hint_pep_typing(hint_type) or
+        # This hint is a PEP 585-compliant type hint.
+        is_hint_pep585(hint) or
         # This hint is a PEP 484-compliant generic. Although a small subset of
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.IO"), most generics are user-defined subclasses defined by
         # user-defined modules residing elsewhere.
         is_hint_pep484_generic(hint) or
-        # This hint is a PEP 585-compliant type hint.
-        is_hint_pep585(hint)
+        # This hint is a forward reference type hint.
+        #
+        # Note this unconditionally matches *ALL* forward references, including
+        # absolute forward references (i.e., fully-qualified classnames)
+        # technically non-compliant with PEP 484 but seemingly compliant with
+        # PEP 585. Since the distinction between PEP-compliant and
+        # -noncompliant forward references is murky at best and since
+        # unconditionally matching *ALL* forward references as PEP-compliant
+        # substantially simplifies logic throughout the codebase, we do so.
+        is_hint_forwardref(hint)
     )
 
 # ....................{ TESTERS ~ ignorable               }....................
