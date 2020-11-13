@@ -46,6 +46,7 @@ from typing import (
     Match,
     MutableSequence,
     NamedTuple,
+    NewType,
     Pattern,
     Sequence,
     Sized,
@@ -200,6 +201,15 @@ class Pep484GenericTypevaredDeepMultiple(
         return len(self._iterable)
 
 # ....................{ CALLABLES                         }....................
+@contextmanager
+def _make_context_manager(obj: object) -> ContextManager[object]:
+    '''
+    Create and return a context manager trivially yielding the passed object.
+    '''
+
+    yield obj
+
+
 def _make_generator_yield_int_send_float_return_str() -> (
     Generator[int, float, str]):
     '''
@@ -224,15 +234,6 @@ def _make_generator_yield_int_send_float_return_str() -> (
 
     # Return a string constant.
     return 'Unmarred, scarred revanent remnants'
-
-
-@contextmanager
-def _make_context_manager(obj: object) -> ContextManager[object]:
-    '''
-    Create and return a context manager trivially yielding the passed object.
-    '''
-
-    yield obj
 
 # ....................{ COLLECTIONS                       }....................
 NamedTupleType = NamedTuple(
@@ -274,7 +275,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
         # exercised independently with special-purposed unit tests.
-
         Any: PepHintMetadata(
             pep_sign=Any,
             is_ignorable=True,
@@ -536,6 +536,23 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        # ................{ NEWTYPE                           }................
+        # New type aliasing a non-ignorable type.
+        NewType('TotallyNotAStr', str): PepHintMetadata(
+            pep_sign=NewType,
+            piths_satisfied=(
+                # String constant.
+                'Ishmælite‐ish, aberrant control',
+            ),
+            piths_unsatisfied_meta=(
+                # Tuple of string constants.
+                PepHintPithUnsatisfiedMetadata((
+                    'Of Common Street‐harrying barrens',
+                    'Of harmony, harm’s abetting Harlem bedlam, and',
+                )),
+            ),
+        ),
+
         # ................{ REGEX ~ match                     }................
         # Regular expression match of either strings or byte strings.
         Match: PepHintMetadata(
@@ -701,10 +718,17 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata(
                     'Jangling (brinkmanship “Ironside”) jingoisms'),
                 # Tuple containing fewer items than required.
-                PepHintPithUnsatisfiedMetadata((
-                    999.888,
-                    'Obese, slipshodly muslin‐shod priests had maudlin solo',
-                )),
+                PepHintPithUnsatisfiedMetadata(
+                    pith=(
+                        999.888,
+                        'Obese, slipshodly muslin‐shod priests had maudlin solo',
+                    ),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Compare this tuple's length to the expected length.
+                        r'\b2 not 3\b',
+                    ),
+                ),
                 # Tuple containing a floating-point number, a string, and a
                 # boolean (in that exact order).
                 PepHintPithUnsatisfiedMetadata(
@@ -1494,14 +1518,17 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Add PEP 484-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-        # Unions containing any ignorable type hint.
-        Union[Any, float, str,],
-        Union[complex, int, object,],
+        # Parametrizations of the "typing.Generic" abstract base class (ABC).
+        Generic[S, T],
+
+        # New type aliasing an ignorable type.
+        NewType('TotallyNotAnObjeect', object),
 
         # Optionals containing any ignorable type hint.
         Optional[Any],
         Optional[object],
 
-        # Parametrizations of the "typing.Generic" abstract base class (ABC).
-        Generic[S, T],
+        # Unions containing any ignorable type hint.
+        Union[Any, float, str,],
+        Union[complex, int, object,],
     ))

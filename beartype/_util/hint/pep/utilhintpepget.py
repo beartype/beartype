@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
+from beartype.cave import HintPep585Type
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
@@ -26,7 +27,13 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
 )
-from typing import Generic, TypeVar
+from beartype._util.hint.pep.proposal.utilhintpep484 import (
+    is_hint_pep484_generic,
+    is_hint_pep484_newtype,
+)
+from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    is_hint_pep585)
+from typing import Generic, NewType, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -360,14 +367,9 @@ def get_hint_pep_sign(hint: object) -> dict:
     '''
 
     # Avoid circular import dependencies.
-    from beartype.cave import HintPep585Type
     from beartype._util.hint.utilhinttest import is_hint_forwardref
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep, is_hint_pep_typevar)
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        is_hint_pep484_generic)
-    from beartype._util.hint.pep.proposal.utilhintpep585 import (
-        is_hint_pep585)
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     #
@@ -449,13 +451,26 @@ def get_hint_pep_sign(hint: object) -> dict:
     #
     # Note that PEP 484-compliant forward references *CANNOT* be detected by
     # the general-purpose logic performed below, as the ForwardRef.__repr__()
-    # dunder method returns a standard representation rather than the module
-    # name "typing." -- unlike most "typing" objects:
+    # dunder method returns a standard representation rather than a string
+    # prefixed by the module name "typing." -- unlike most "typing" objects:
     #     >>> import typing as t
     #     >>> repr(t.ForwardRef('str'))
     #     "ForwardRef('str')"
     elif is_hint_forwardref(hint):
         return HINT_PEP484_BASE_FORWARDREF
+    # If this hint is a PEP 484-compliant new type, return the closure factory
+    # function responsible for creating these types.
+    #
+    # Note that these types *CANNOT* be detected by the general-purpose logic
+    # performed below, as the __repr__() dunder methods of the closures created
+    # and returned by the NewType() closure factory function returns a
+    # standard representation rather than a string prefixed by the module name
+    # "typing." -- unlike most "typing" objects:
+    #     >>> import typing as t
+    #     >>> repr(t.NewType('FakeStr', str))
+    #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
+    elif is_hint_pep484_newtype(hint):
+        return NewType
     # If this hint is a type variable, return the class of all type variables.
     #
     # Note that type variables *CANNOT* be detected by the general-purpose

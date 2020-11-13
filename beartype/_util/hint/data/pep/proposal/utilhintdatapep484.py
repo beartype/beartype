@@ -50,6 +50,7 @@ from typing import (
     MutableMapping,
     MutableSequence,
     MutableSet,
+    NewType,
     NoReturn,
     Optional,
     Pattern,
@@ -213,6 +214,12 @@ def add_data(data_module: 'ModuleType') -> None:
         # semantically expands to the implicit "Generic[Any]" singleton.
         Generic,
 
+        # The NewType() closure factory function as an object arguably does
+        # *NOT* constitute a valid PEP-compliant type hint. Nonetheless, simply
+        # ignoring this class when used as an annotation is a reasonably safe
+        # minimal-effort approach.
+        NewType,
+
         # The unsubscripted "Optional" singleton semantically expands to the
         # implicit "Optional[Any]" singleton by the same argument. Since PEP
         # 484 also stipulates that all "Optional[t]" singletons semantically
@@ -257,11 +264,17 @@ def add_data(data_module: 'ModuleType') -> None:
         #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
         #   function and thus referred to as deeply ignorable type hints.
         Union,
+
+        # The "ForwardRef" class as an object arguably does *NOT* constitute a
+        # valid PEP-compliant type hint. Nonetheless, simply ignoring this
+        # class when used as an annotation is a safe minimal-effort approach.
+        HINT_PEP484_BASE_FORWARDREF,
     ))
 
     # ..................{ SETS ~ signs : supported          }..................
     data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
         Any,
+        NewType,
         NoReturn,
         TypeVar,
         HINT_PEP484_BASE_FORWARDREF,

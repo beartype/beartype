@@ -322,9 +322,14 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
-    SIZE_BIG, acquire_fixed_list, release_fixed_list)
+    SIZE_BIG,
+    acquire_fixed_list,
+    release_fixed_list,
+)
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed, release_object_typed)
+    acquire_object_typed,
+    release_object_typed,
+)
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
 from beartype._util.hint.data.pep.utilhintdatapep import (
@@ -338,8 +343,14 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_or_none)
-from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
+    get_hint_pep484_generic_bases_or_none,
+    get_hint_pep484_newtype_class,
+    is_hint_pep484_newtype,
+)
+from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    get_hint_pep593_hint,
+    is_hint_pep593,
+)
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
@@ -355,7 +366,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
 )
 from itertools import count
-from typing import Generic, NoReturn, Tuple
+from typing import Generic, NewType, NoReturn, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -936,12 +947,18 @@ def pep_code_check_hint(hint: object) -> (
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
-        # ................{ ANNOTATED                         }................
-        # If this hint is itself annotated, ignore all annotations on this hint
-        # (i.e., the "hint_curr.__metadata__" tuple) by reducing this hint to
-        # its origin (e.g., the "str" in "Annotated[str, 50, False]").
-        if is_hint_pep593(hint_curr):
-            hint_curr = hint_curr.__origin__
+        # ................{ PEP 484                           }................
+        # If this is a PEP 484-compliant new type hint, reduce this hint to the
+        # user-defined class aliased by this hint. Although this logic could
+        # also be performed below, doing so here simplifies matters.
+        if is_hint_pep484_newtype(hint_curr):
+            hint_curr = get_hint_pep484_newtype_class(hint_curr)
+        # ................{ PEP 593                           }................
+        # If this is a PEP 593-compliant type metahint, ignore all annotations
+        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
+        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+        elif is_hint_pep593(hint_curr):
+            hint_curr = get_hint_pep593_hint(hint_curr)
         # In either case, this hint is now unannotated.
 
         #FIXME: Comment this sanity check out after we're sufficiently
@@ -1571,15 +1588,15 @@ def pep_code_check_hint(hint: object) -> (
             # Else, this hint is *NOT* a forward reference.
 
             # ..............{ NORETURN                          }..............
-            # If this hint is the non-standard PEP 484-compliant "NoReturn"
-            # singleton valid *ONLY* as the non-nested return annotation of a
-            # callable, raise an exception. This singleton is invalid when
-            # subscripting *ANY* PEP-compliant type hint (e.g.,
-            # "typing.List[typing.NoReturn]"), which is guaranteed to be the
-            # case if this conditional is true. Why? Because the previously
-            # called higher-level pep_code_check_return() function has already
-            # handled the single edge case in which this singleton is
-            # contextually valid, implying this singleton to be invalid here.
+            # If this hint is the PEP 484-compliant "NoReturn" singleton valid
+            # *ONLY* as the non-nested return annotation of a callable, raise
+            # an exception. This singleton is invalid when subscripting *ANY*
+            # PEP-compliant type hint (e.g., "typing.List[typing.NoReturn]"),
+            # which is guaranteed to be the case if this conditional is true.
+            # Why? Because the previously called higher-level
+            # pep_code_check_return() function has already handled the single
+            # edge case in which this singleton is contextually valid, implying
+            # this singleton to be invalid here.
             elif hint_curr is NoReturn:
                 raise BeartypeDecorHintPep484Exception(
                     f'{hint_child_label} PEP hint '
@@ -1620,7 +1637,7 @@ def pep_code_check_hint(hint: object) -> (
             # (e.g., "typing.List") and is thus subscripted by one or more
             # child hints.
 
-            # ............{ SEQUENCES ~ standard, tuple variad. }..............
+            # ............{ SEQUENCES ~ standard OR tuple vari. }..............
             # If this hint is either...
             elif (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...

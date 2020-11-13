@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar import BeartypeDecorHintPepException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -73,9 +74,8 @@ else:
 # ....................{ TESTERS ~ doc                     }....................
 # Docstring for these functions regardless of the implementation details above.
 is_hint_pep593.__doc__ = '''
-    ``True`` only if the passed object is a `PEP 593`_-compliant **user-defined
-    type metahint** (i.e., subscription of the :attr:`typing.Annotated`
-    singleton).
+    ``True`` only if the passed object is a `PEP 593`_-compliant **type
+    metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -134,3 +134,62 @@ is_hint_pep593_ignorable_or_none.__doc__ = '''
     .. _PEP 593:
        https://www.python.org/dev/peps/pep-0593
     '''
+
+# ....................{ GETTERS ~ newtype                 }....................
+def get_hint_pep593_hint(hint: object) -> object:
+    '''
+    PEP-compliant type hint annotated by the passed `PEP 593`_-compliant **type
+    metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
+
+    This getter does *not* return any of the arbitrary user-defined metadata
+    associated with this metahint, as that metadata is by definition
+    application-specific and mostly useless for basically all valid purposes.
+    Welcome to `PEP 593`_, where the effort you waste is only your own.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    object
+        PEP-compliant type hint annotated by the passed `PEP 593`_-compliant
+        type metahint.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this object is *not* a `PEP 484`_-compliant new type.
+
+    See Also
+    ----------
+    :func:`is_hint_pep593`
+        Further commentary.
+
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
+    '''
+
+    # If this object is *NOT* a PEP 593-compliant type metahint, raise an
+    # exception.
+    if not is_hint_pep593(hint):
+        raise BeartypeDecorHintPepException(
+            f'PEP-compliant type hint {repr(hint)} not "typing.Annotated".')
+    # Else, this object is a PEP 593-compliant type metahint.
+
+    # Return the PEP-compliant type hint annotated by this metahint.
+    #
+    # Most non-standard PEP-compliant type hints store their data in
+    # non-standard hint-specific dunder attributes (e.g., "__supertype__" for
+    # new type aliases, "__forward_arg__" for forward references). Some,
+    # however, coopt and misuse standard dunder attributes commonly used for
+    # entirely different purposes. PEP 593-compliant type metahints are of the
+    # latter sort, preferring to store their data in the standard "__origin__"
+    # commonly used to store the origin type of type hints originating from a
+    # standard class rather than in a metahint-specific dunder attribute.
+    return hint.__origin__

@@ -851,6 +851,7 @@ values annotated with these typing_ types:
 * typing.ByteString_.
 * typing.List_.
 * typing.MutableSequence_.
+* typing.NewType_.
 * typing.NoReturn_.
 * typing.Optional_.
 * typing.Sequence_.
@@ -937,7 +938,11 @@ No Compliance
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
-* typing.NewType_.
+* **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
+  instantiated by subscripting either a concrete builtin container class like
+  :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
+  the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
+  or :class:`collections.abc.Sequence`).
 
 ``beartype`` currently silently ignores these typing_ types at decoration time:
 
@@ -1073,7 +1078,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.NamedTuple_                  | **0.1.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | typing.NewType_                     | *none*                        | *none*                    |
+|             | typing.NewType_                     | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.NoReturn_                    | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

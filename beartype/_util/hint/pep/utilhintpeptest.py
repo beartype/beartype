@@ -14,16 +14,21 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
-    BeartypeDecorHintPepUnsupportedWarning,
+    # BeartypeDecorHintPepUnsupportedWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SUPPORTED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    is_hint_pep484_ignorable_or_none)
+    is_hint_pep484_generic,
+    is_hint_pep484_ignorable_or_none,
+    is_hint_pep484_newtype,
+)
 from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_ignorable_or_none)
+from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    is_hint_pep585)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import (
@@ -32,7 +37,7 @@ from beartype._util.utilobject import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
-from warnings import warn
+# from warnings import warn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -216,7 +221,7 @@ def die_if_hint_pep_unsupported(
     # Else, this object is *NOT* a supported PEP-compliant type hint. In this
     # case, subsequent logic raises an exception specific to the passed
     # parameters.
-    assert hint_label.__class__ is str, f'{repr(hint_label)} not string.'
+    assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
@@ -282,72 +287,72 @@ def die_if_hint_pep_sign_unsupported(
 #FIXME: Actually use us in place of die_if_hint_pep_unsupported().
 #FIXME: Actually, it's unclear whether we still require or desire this. See
 #"_pephint" commentary for further details.
-def warn_if_hint_pep_unsupported(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    hint_label: str = 'Annotated',
-) -> bool:
-    '''
-    Return ``True`` and emit a non-fatal warning only if the passed object is a
-    **PEP-compliant unsupported type hint** (i.e., :mod:`beartype`-agnostic
-    annotation compliant with annotation-centric PEPs currently *not* supported
-    by the :func:`beartype.beartype` decorator).
-
-    This validator is effectively (but technically *not*) memoized. See the
-    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be validated.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        warning message emitted by this function. Defaults to ``"Annotated"``.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this PEP-compliant type hint is currently supported by
-        that decorator.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this object is *not* a PEP-compliant type hint.
-
-    Warnings
-    ----------
-    BeartypeDecorHintPepUnsupportedWarning
-        If this object is a PEP-compliant type hint currently unsupported by
-        that decorator.
-    '''
-
-    # True only if this object is a supported PEP-compliant type hint.
-    #
-    # Note that this memoized call is intentionally passed positional rather
-    # than keyword parameters to maximize efficiency.
-    is_hint_pep_supported_test = is_hint_pep_supported(hint)
-
-    # If this object is an unsupported PEP-compliant type hint...
-    if not is_hint_pep_supported_test:
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
-
-        # If this hint is *NOT* PEP-compliant, raise an exception.
-        die_unless_hint_pep(hint=hint, hint_label=hint_label)
-
-        # Else, this hint is PEP-compliant. In this case, emit a warning.
-        warn(
-            (
-                f'{hint_label} PEP hint {repr(hint)} '
-                f'currently unsupported by @beartype.'
-            ),
-            BeartypeDecorHintPepUnsupportedWarning
-        )
-
-    # Return true only if this object is a supported PEP-compliant type hint.
-    return is_hint_pep_supported_test
+# def warn_if_hint_pep_unsupported(
+#     # Mandatory parameters.
+#     hint: object,
+#
+#     # Optional parameters.
+#     hint_label: str = 'Annotated',
+# ) -> bool:
+#     '''
+#     Return ``True`` and emit a non-fatal warning only if the passed object is a
+#     **PEP-compliant unsupported type hint** (i.e., :mod:`beartype`-agnostic
+#     annotation compliant with annotation-centric PEPs currently *not* supported
+#     by the :func:`beartype.beartype` decorator).
+#
+#     This validator is effectively (but technically *not*) memoized. See the
+#     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
+#
+#     Parameters
+#     ----------
+#     hint : object
+#         Object to be validated.
+#     hint_label : Optional[str]
+#         Human-readable label prefixing this object's representation in the
+#         warning message emitted by this function. Defaults to ``"Annotated"``.
+#
+#     Returns
+#     ----------
+#     bool
+#         ``True`` only if this PEP-compliant type hint is currently supported by
+#         that decorator.
+#
+#     Raises
+#     ----------
+#     BeartypeDecorHintPepException
+#         If this object is *not* a PEP-compliant type hint.
+#
+#     Warnings
+#     ----------
+#     BeartypeDecorHintPepUnsupportedWarning
+#         If this object is a PEP-compliant type hint currently unsupported by
+#         that decorator.
+#     '''
+#
+#     # True only if this object is a supported PEP-compliant type hint.
+#     #
+#     # Note that this memoized call is intentionally passed positional rather
+#     # than keyword parameters to maximize efficiency.
+#     is_hint_pep_supported_test = is_hint_pep_supported(hint)
+#
+#     # If this object is an unsupported PEP-compliant type hint...
+#     if not is_hint_pep_supported_test:
+#         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+#
+#         # If this hint is *NOT* PEP-compliant, raise an exception.
+#         die_unless_hint_pep(hint=hint, hint_label=hint_label)
+#
+#         # Else, this hint is PEP-compliant. In this case, emit a warning.
+#         warn(
+#             (
+#                 f'{hint_label} PEP hint {repr(hint)} '
+#                 f'currently unsupported by @beartype.'
+#             ),
+#             BeartypeDecorHintPepUnsupportedWarning
+#         )
+#
+#     # Return true only if this object is a supported PEP-compliant type hint.
+#     return is_hint_pep_supported_test
 
 # ....................{ TESTERS                           }....................
 @callable_cached
@@ -393,19 +398,19 @@ def is_hint_pep(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_forwardref
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        is_hint_pep484_generic)
-    from beartype._util.hint.pep.proposal.utilhintpep585 import (
-        is_hint_pep585)
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
     hint_type = get_object_type(hint)
 
     # Return true only if either...
+    #
+    # Note that these tests are intentionally ordered in descending likelihood
+    # of a match with the least common type hints tested last and the most
+    # common type hints tested first.
     return (
         # This hint's type is directly declared by the "typing" module and thus
-        # PEP 484-compliant by definition *OR*...
+        # PEP-compliant by definition *OR*...
         is_hint_pep_typing(hint_type) or
         # This hint is a PEP 585-compliant type hint.
         is_hint_pep585(hint) or
@@ -423,7 +428,9 @@ def is_hint_pep(hint: object) -> bool:
         # -noncompliant forward references is murky at best and since
         # unconditionally matching *ALL* forward references as PEP-compliant
         # substantially simplifies logic throughout the codebase, we do so.
-        is_hint_forwardref(hint)
+        is_hint_forwardref(hint) or
+        # This hint is a PEP 484-compliant new type hint.
+        is_hint_pep484_newtype(hint)
     )
 
 # ....................{ TESTERS ~ ignorable               }....................

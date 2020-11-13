@@ -14,9 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeCallHintPepRaiseException
-from beartype._util.hint.pep.proposal.utilhintpep593 import is_hint_pep593
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_or_none)
+    get_hint_pep484_generic_bases_or_none,
+    get_hint_pep484_newtype_class,
+    is_hint_pep484_newtype,
+)
+from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    get_hint_pep593_hint,
+    is_hint_pep593,
+)
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
@@ -140,11 +146,18 @@ class CauseSleuth(object):
         self.hint_sign = None
         self.hint_childs = None
 
-        # If this hint is itself annotated, ignore all annotations on this hint
-        # (i.e., the "hint_curr.__metadata__" tuple) by reducing this hint to
-        # its origin (e.g., the "List[str]" in "Annotated[List[str], 50, 20]").
-        if is_hint_pep593(self.hint):
-            self.hint = self.hint.__origin__
+        # ................{ PEP 484                           }................
+        # If this is a PEP 484-compliant new type hint, reduce this hint to the
+        # user-defined class aliased by this hint. Although this logic could
+        # also be performed below, doing so here simplifies matters.
+        if is_hint_pep484_newtype(self.hint):
+            self.hint = get_hint_pep484_newtype_class(self.hint)
+        # ................{ PEP 593                           }................
+        # If this is a PEP 593-compliant type metahint, ignore all annotations
+        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
+        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+        elif is_hint_pep593(self.hint):
+            self.hint = get_hint_pep593_hint(self.hint)
         # In either case, this hint is now unannotated.
 
         # If this hint is PEP-compliant...
