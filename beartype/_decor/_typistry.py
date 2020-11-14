@@ -29,11 +29,6 @@ from beartype.roar import (
     _BeartypeDecorBeartypistryException,
 )
 from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
-from beartype._util.utilobject import (
-    get_object_type_module_name_or_none,
-    get_object_type_name_qualified,
-    get_object_type_name_unqualified,
-)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
@@ -41,7 +36,12 @@ from beartype._util.py.utilpymodule import (
     MODULE_NAME_BUILTINS,
     MODULE_NAME_BUILTINS_DOTTED,
     die_unless_module_attr_name,
+    get_object_class_module_name_or_none,
     import_module_attr,
+)
+from beartype._util.utilobject import (
+    get_object_classname,
+    get_object_class_basename,
 )
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -145,8 +145,8 @@ def register_typistry_type(hint: type) -> str:
     codebase, but is otherwise roughly equivalent to:
 
         >>> from beartype._decor._typistry import bear_typistry
-        >>> from beartype._util.utilobject import get_object_type_name_qualified
-        >>> bear_typistry[get_object_type_name_qualified(hint)] = hint
+        >>> from beartype._util.utilobject import get_object_classname
+        >>> bear_typistry[get_object_classname(hint)] = hint
 
     This function is memoized for both efficiency *and* safety, preventing
     accidental reregistration.
@@ -186,11 +186,11 @@ def register_typistry_type(hint: type) -> str:
     # assigning a "bear_typistry" key-value pair.
 
     # Unqualified name of this type.
-    hint_basename = get_object_type_name_unqualified(hint)
+    hint_basename = get_object_class_basename(hint)
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
-    hint_module_name = get_object_type_module_name_or_none(hint)
+    hint_module_name = get_object_class_module_name_or_none(hint)
 
     # If...
     if (
@@ -532,7 +532,7 @@ class Beartypistry(dict):
         # distinguishing between either here.
         elif isinstance(hint, type):
             # Fully-qualified classname of this type as declared by this type.
-            hint_clsname = get_object_type_name_qualified(hint)
+            hint_clsname = get_object_classname(hint)
 
             # If...
             if (

@@ -196,7 +196,7 @@ def pep_code_check_param(
     except Exception as exception:
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name) + ' PEP hint'
+            func=data.func, param_name=func_arg.name) + ' PEP type hint'
 
         # Reraise this cached exception's memoized parameter-agnostic message
         # into an unmemoized parameter-specific message.
@@ -301,7 +301,7 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
         except Exception as exception:
             # Human-readable label describing this return.
             hint_label = (
-                f'{label_callable_decorated_return(data.func)} PEP hint')
+                f'{label_callable_decorated_return(data.func)} PEP type hint')
 
             # Reraise this cached exception's memoized return value-agnostic
             # message into an unmemoized return value-specific message.

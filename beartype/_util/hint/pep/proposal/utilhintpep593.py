@@ -54,7 +54,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             # If this hint is annotated, true only if the PEP-compliant child
             # type hint annotated by this hint hint is ignorable (e.g., the
             # "Any" in "Annotated[Any, 50, False]").
-            is_hint_ignorable(hint.__origin__)
+            is_hint_ignorable(get_hint_pep593_hint(hint))
             if hint_sign is Annotated else
             # Else, "None".
             None

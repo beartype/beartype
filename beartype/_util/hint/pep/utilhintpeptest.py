@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
+    BeartypeDecorHintPepIgnorableDeepWarning,
     # BeartypeDecorHintPepUnsupportedWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -31,13 +32,11 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.utilobject import (
-    get_object_type_module_name_or_none,
-    get_object_type,
-)
+from beartype._util.utilobject import get_object_class_unless_class
+from beartype._util.py.utilpymodule import get_object_class_module_name_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
-# from warnings import warn
+from warnings import warn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -233,7 +232,7 @@ def die_if_hint_pep_unsupported(
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
-        f'{hint_label} PEP hint {repr(hint)} '
+        f'{hint_label} PEP type hint {repr(hint)} '
         f'currently unsupported by @beartype.'
     )
 
@@ -345,7 +344,7 @@ def die_if_hint_pep_sign_unsupported(
 #         # Else, this hint is PEP-compliant. In this case, emit a warning.
 #         warn(
 #             (
-#                 f'{hint_label} PEP hint {repr(hint)} '
+#                 f'{hint_label} PEP type hint {repr(hint)} '
 #                 f'currently unsupported by @beartype.'
 #             ),
 #             BeartypeDecorHintPepUnsupportedWarning
@@ -401,7 +400,7 @@ def is_hint_pep(hint: object) -> bool:
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = get_object_type(hint)
+    hint_type = get_object_class_unless_class(hint)
 
     # Return true only if either...
     #
@@ -436,8 +435,9 @@ def is_hint_pep(hint: object) -> bool:
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is an **ignorable PEP-compliant type
-    hint.**
+    ``True`` only if the passed object is a **deeply ignorable PEP-compliant
+    type hint** (i.e., PEP-compliant type hint shown to be ignorable only after
+    recursively inspecting the contents of this hint).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this tester is only safely callable
@@ -452,8 +452,21 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is an ignorable PEP-compliant type hint.
+        ``True`` only if this object is a deeply ignorable PEP-compliant type
+        hint.
+
+    Warnings
+    ----------
+    BeartypeDecorHintPepIgnorableDeepWarning
+        If this object is a deeply ignorable PEP-compliant type hint. Why?
+        Because deeply ignorable PEP-compliant type hints convey *no*
+        meaningful semantics but superficially appear to do so. Consider
+        ``Union[str, List[int], NewType('MetaType', Annotated[object, 53])]``,
+        for example; this PEP-compliant type hint effectively reduces to
+        ``typing.Any`` and thus conveys *no* meaningful semantics despite
+        superficially appearing to do so.
     '''
+
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
@@ -479,9 +492,27 @@ def is_hint_pep_ignorable(hint: object) -> bool:
         is_hint_pep_ignorable_or_none = is_hint_pep_ignorable_tester(
             hint, hint_sign)
 
-        # If this hint is compliant with this PEP, return this boolean.
+        # If this hint is compliant with this PEP...
         # print(f'{is_hint_pep_ignorable_or_none} = {is_hint_pep_ignorable_tester}({hint}, {hint_sign})')
         if is_hint_pep_ignorable_or_none is not None:
+            #FIXME: Uncomment *AFTER* we properly support type variables. Since
+            #we currently ignore type variables, uncommenting this now would
+            #raise spurious warnings for otherwise unignorable and absolutely
+            #unsuspicious generics and protocols parametrized by type
+            #variables, which would be worse than the existing situation.
+
+            # # If this hint is ignorable under this PEP, warn the user this hint
+            # # is deeply ignorable. (See the docstring for justification.)
+            # if is_hint_pep_ignorable_or_none:
+            #     warn(
+            #         (
+            #             f'Ignorable PEP type hint {repr(hint)} '
+            #             f'typically not intended to be ignored.'
+            #         ),
+            #         BeartypeDecorHintPepIgnorableDeepWarning,
+            #     )
+
+            # Return this boolean.
             return is_hint_pep_ignorable_or_none
         # Else, this hint is *NOT* compliant with this PEP. In this case,
         # silently continue to the next such tester.
@@ -629,7 +660,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_type_module_name_or_none(hint) == 'typing'
+        return get_object_class_module_name_or_none(hint) == 'typing'
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -645,7 +676,7 @@ else:
         # Return true only if...
         return (
             # This type pretends to be defined by the "typing" module *AND*...
-            get_object_type_module_name_or_none(hint) == 'typing' and
+            get_object_class_module_name_or_none(hint) == 'typing' and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment
             # the following test:

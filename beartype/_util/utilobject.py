@@ -78,8 +78,7 @@ def is_object_hashable(obj: object) -> bool:
     return True
 
 # ....................{ GETTERS ~ name                    }....................
-#FIXME: Rename to get_module_attr_name_or_none() and shift to "utilpymodule".
-def get_object_name_qualified(obj: object) -> str:
+def get_object_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring module) of the passed object if this object defines the
@@ -102,13 +101,17 @@ def get_object_name_qualified(obj: object) -> str:
         If this object defines *no* ``__name__`` dunder attribute.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.py.utilpymodule import (
+        get_object_class_module_name_or_none)
+
     # Unqualified name of this object, implicitly raising an
     # "AttributeError" if this object defines no such name.
     object_basename = object.__name__
 
-    # Fully-qualified name of the module defining this object if this
-    # object is # defined by a module *OR* "None" otherwise.
-    object_module_name = get_object_type_module_name_or_none(object)
+    # Fully-qualified name of the module defining this object if this object is
+    # defined by a module *OR* "None" otherwise.
+    object_module_name = get_object_class_module_name_or_none(object)
 
     # Return either...
     return (
@@ -121,7 +124,7 @@ def get_object_name_qualified(obj: object) -> str:
     )
 
 # ....................{ GETTERS ~ type                    }....................
-def get_object_type(obj: object) -> type:
+def get_object_class_unless_class(obj: object) -> type:
     '''
     Either the passed object if this object is a class *or* the class of this
     object otherwise (i.e., if this object is *not* a class).
@@ -147,7 +150,7 @@ def get_object_type(obj: object) -> type:
     return obj if isinstance(obj, type) else type(obj)
 
 # ....................{ GETTERS ~ type : name             }....................
-def get_object_type_name_unqualified(obj: object) -> str:
+def get_object_class_basename(obj: object) -> str:
     '''
     **Unqualified name** (i.e., non-``.``-delimited basename) of either passed
     object if this object is a class *or* the class of this object otherwise
@@ -165,11 +168,10 @@ def get_object_type_name_unqualified(obj: object) -> str:
     '''
 
     # Elegant simplicity diminishes aggressive tendencies.
-    return get_object_type(obj).__name__
+    return get_object_class_unless_class(obj).__name__
 
 
-#FIXME: Rename to get_module_classname() and shift to "utilpymodule".
-def get_object_type_name_qualified(obj: object) -> str:
+def get_object_classname(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring module) of either passed object if this object is a class *or*
@@ -186,15 +188,19 @@ def get_object_type_name_qualified(obj: object) -> str:
         Fully-qualified name of the type of this object.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.py.utilpymodule import (
+        get_object_class_module_name_or_none)
+
     # Type of this object.
-    cls = get_object_type(obj)
+    cls = get_object_class_unless_class(obj)
 
     # Unqualified name of this type.
-    cls_basename = get_object_type_name_unqualified(cls)
+    cls_basename = get_object_class_basename(cls)
 
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise.
-    cls_module_name = get_object_type_module_name_or_none(cls)
+    cls_module_name = get_object_class_module_name_or_none(cls)
 
     # Return either...
     return (
@@ -205,34 +211,3 @@ def get_object_type_name_qualified(obj: object) -> str:
         # This class basename as is otherwise.
         cls_basename
     )
-
-
-#FIXME: Rename to get_module_classname_or_none() and shift to "utilpymodule".
-def get_object_type_module_name_or_none(obj: object) -> 'Optional[str]':
-    '''
-    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring package) of the module declaring either the passed object if this
-    object is a class *or* the class of this object otherwise (i.e., if this
-    object is *not* a class) if this class declares the ``__module__`` dunder
-    instance variable *or* ``None`` otherwise.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Optional[str]
-        Either:
-
-        * Fully-qualified name of the module declaring the type of this object
-          if this type declares a ``__module__`` dunder attribute.
-        * ``None`` otherwise.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.py.utilpymodule import get_module_name_or_none
-
-    # Make it so, ensign.
-    return get_module_name_or_none(get_object_type(obj))

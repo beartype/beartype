@@ -10,11 +10,8 @@
     https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Add type hint test data all other "typing" types as well (e.g., "IO").
-
 # ....................{ IMPORTS                           }....................
-import contextlib, re
+import contextlib, re, typing
 from beartype.cave import (
     RegexMatchType,
     RegexCompiledType,
@@ -30,6 +27,12 @@ from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
 )
 from collections import abc as collections_abc
 from contextlib import contextmanager
+
+# Note that the "typing.Supports*" family of abstract base classes (ABCs) are
+# intentionally tested in the "_data_hintpep544" submodule rather than here
+# despite being specified by PEP 484 and available under Python < 3.8.0. Why?
+# Because the implementation of these ABCs under Python < 3.8.0 is unusable at
+# runtime, which is nonsensical and awful, but that's "typing" for you.
 from typing import (
     Any,
     AnyStr,
@@ -434,6 +437,148 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        # ................{ GENERICS ~ user                   }................
+        # Generic subclassing a single unparametrized "typing" type.
+        Pep484GenericUntypevaredSingle: PepHintMetadata(
+            pep_sign=Generic,
+            is_typing=False,
+            piths_satisfied=(
+                # Subclass-specific generic list of string constants.
+                Pep484GenericUntypevaredSingle((
+                    'Forgive our Vocation’s vociferous publications',
+                    'Of',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Hourly sybaritical, pub sabbaticals'),
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    'Materially ostracizing, itinerant‐',
+                    'Anchoretic digimonks initiating',
+                ]),
+            ),
+        ),
+
+        # Generic subclassing a single parametrized "typing" type.
+        Pep484GenericTypevaredSingle: PepHintMetadata(
+            pep_sign=Generic,
+            is_typevared=True,
+            is_typing=False,
+            piths_satisfied=(
+                # Subclass-specific generic.
+                Pep484GenericTypevaredSingle(),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'An arterially giving, triage nature — '
+                    'like this agat‐adzing likeness'
+                ),
+            ),
+        ),
+
+        # Generic subclassing multiple unparametrized "typing" types *AND* a
+        # non-"typing" abstract base class (ABC).
+        Pep484GenericUntypevaredMultiple: PepHintMetadata(
+            pep_sign=Generic,
+            is_typing=False,
+            piths_satisfied=(
+                # Subclass-specific generic 2-tuple of string constants.
+                Pep484GenericUntypevaredMultiple((
+                    'Into a viscerally Eviscerated eras’ meditative hallways',
+                    'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Initiations'),
+                # 2-tuple of string constants.
+                PepHintPithUnsatisfiedMetadata((
+                    "Into a fat mendicant’s",
+                    'Endgame‐defendant, dedicate rants',
+                )),
+            ),
+        ),
+
+        # Generic subclassing multiple parametrized "typing" types.
+        Pep484GenericTypevaredShallowMultiple: PepHintMetadata(
+            pep_sign=Generic,
+            is_typevared=True,
+            is_typing=False,
+            piths_satisfied=(
+                # Subclass-specific generic iterable of string constants.
+                Pep484GenericTypevaredShallowMultiple((
+                    "Of foliage's everliving antestature —",
+                    'In us, Leviticus‐confusedly drunk',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
+            ),
+        ),
+
+        # Generic subclassing multiple indirectly parametrized "typing" types
+        # *AND* a non-"typing" abstract base class (ABC).
+        Pep484GenericTypevaredDeepMultiple: PepHintMetadata(
+            pep_sign=Generic,
+            is_typevared=True,
+            is_typing=False,
+            piths_satisfied=(
+                # Subclass-specific generic iterable of 2-tuples of string
+                # constants.
+                Pep484GenericTypevaredDeepMultiple((
+                    (
+                        'Inertially tragicomipastoral, pastel anticandour —',
+                        'remanding undemanding',
+                    ),
+                    (
+                        'Of a',
+                        '"hallow be Thy nameless',
+                    ),
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Invitations'),
+            ),
+        ),
+
+        # Nested list of generics subclassing multiple unparametrized "typing"
+        # types *AND* a non-"typing" abstract base class (ABC).
+        List[Pep484GenericUntypevaredMultiple]: PepHintMetadata(
+            pep_sign=List,
+            type_origin=list,
+            piths_satisfied=(
+                # List of subclass-specific generic 2-tuples of string
+                # constants.
+                [
+                    Pep484GenericUntypevaredMultiple((
+                        'Stalling inevit‐abilities)',
+                        'For carbined',
+                    )),
+                    Pep484GenericUntypevaredMultiple((
+                        'Power-over (than',
+                        'Power-with)',
+                    )),
+                ],
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'that forced triforced, farcically carcinogenic Obelisks'),
+                # List of 2-tuples of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    (
+                        'Obliterating their literate decency',
+                        'Of a cannabis‐enthroning regency',
+                    ),
+                ]),
+            ),
+        ),
+
         # ................{ LIST                              }................
         # Unsubscripted "List" attribute.
         List: PepHintMetadata(
@@ -540,6 +685,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # New type aliasing a non-ignorable type.
         NewType('TotallyNotAStr', str): PepHintMetadata(
             pep_sign=NewType,
+            # New types are merely pure-Python functions of the standard
+            # pure-Python function type, which is *NOT* defined by the "typing"
+            # module.
+            is_typing=False,
             piths_satisfied=(
                 # String constant.
                 'Ishmælite‐ish, aberrant control',
@@ -1291,143 +1440,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
         ),
-
-        # ................{ GENERICS ~ user                   }................
-        # Generic subclassing a single unparametrized "typing" type.
-        Pep484GenericUntypevaredSingle: PepHintMetadata(
-            pep_sign=Generic,
-            piths_satisfied=(
-                # Subclass-specific generic list of string constants.
-                Pep484GenericUntypevaredSingle((
-                    'Forgive our Vocation’s vociferous publications',
-                    'Of',
-                )),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata(
-                    'Hourly sybaritical, pub sabbaticals'),
-                # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
-                    'Materially ostracizing, itinerant‐',
-                    'Anchoretic digimonks initiating',
-                ]),
-            ),
-        ),
-
-        # Generic subclassing a single parametrized "typing" type.
-        Pep484GenericTypevaredSingle: PepHintMetadata(
-            pep_sign=Generic,
-            is_typevared=True,
-            piths_satisfied=(
-                # Subclass-specific generic.
-                Pep484GenericTypevaredSingle(),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata(
-                    'An arterially giving, triage nature — '
-                    'like this agat‐adzing likeness'
-                ),
-            ),
-        ),
-
-        # Generic subclassing multiple unparametrized "typing" types *AND* a
-        # non-"typing" abstract base class (ABC).
-        Pep484GenericUntypevaredMultiple: PepHintMetadata(
-            pep_sign=Generic,
-            piths_satisfied=(
-                # Subclass-specific generic 2-tuple of string constants.
-                Pep484GenericUntypevaredMultiple((
-                    'Into a viscerally Eviscerated eras’ meditative hallways',
-                    'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
-                )),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata('Initiations'),
-                # 2-tuple of string constants.
-                PepHintPithUnsatisfiedMetadata((
-                    "Into a fat mendicant’s",
-                    'Endgame‐defendant, dedicate rants',
-                )),
-            ),
-        ),
-
-        # Generic subclassing multiple parametrized "typing" types.
-        Pep484GenericTypevaredShallowMultiple: PepHintMetadata(
-            pep_sign=Generic,
-            is_typevared=True,
-            piths_satisfied=(
-                # Subclass-specific generic iterable of string constants.
-                Pep484GenericTypevaredShallowMultiple((
-                    "Of foliage's everliving antestature —",
-                    'In us, Leviticus‐confusedly drunk',
-                )),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
-            ),
-        ),
-
-        # Generic subclassing multiple indirectly parametrized "typing" types
-        # *AND* a non-"typing" abstract base class (ABC).
-        Pep484GenericTypevaredDeepMultiple: PepHintMetadata(
-            pep_sign=Generic,
-            is_typevared=True,
-            piths_satisfied=(
-                # Subclass-specific generic iterable of 2-tuples of string
-                # constants.
-                Pep484GenericTypevaredDeepMultiple((
-                    (
-                        'Inertially tragicomipastoral, pastel anticandour —',
-                        'remanding undemanding',
-                    ),
-                    (
-                        'Of a',
-                        '"hallow be Thy nameless',
-                    ),
-                )),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata('Invitations'),
-            ),
-        ),
-
-        # Nested list of generics subclassing multiple unparametrized "typing"
-        # types *AND* a non-"typing" abstract base class (ABC).
-        List[Pep484GenericUntypevaredMultiple]: PepHintMetadata(
-            pep_sign=List,
-            type_origin=list,
-            piths_satisfied=(
-                # List of subclass-specific generic 2-tuples of string
-                # constants.
-                [
-                    Pep484GenericUntypevaredMultiple((
-                        'Stalling inevit‐abilities)',
-                        'For carbined',
-                    )),
-                    Pep484GenericUntypevaredMultiple((
-                        'Power-over (than',
-                        'Power-with)',
-                    )),
-                ],
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata(
-                    'that forced triforced, farcically carcinogenic Obelisks'),
-                # List of 2-tuples of string constants.
-                PepHintPithUnsatisfiedMetadata([
-                    (
-                        'Obliterating their literate decency',
-                        'Of a cannabis‐enthroning regency',
-                    ),
-                ]),
-            ),
-        ),
     })
 
     # ..................{ MAPPINGS ~ update                 }..................
@@ -1435,13 +1447,13 @@ def add_data(data_module: 'ModuleType') -> None:
     # Python targeted by the active Python interpreter.
     if IS_PYTHON_AT_LEAST_3_7:
         data_module.HINT_PEP_TO_META.update({
-            # ..............{ ARGUMENTLESS                      }..............
+            # ..............{ UNSUBSCRIPTED                     }..............
             # See the
             # "beartype._util.hint.data.pep.utilhintdatapep.TYPING_ATTR_TO_TYPE_ORIGIN"
             # dictionary for detailed discussion.
 
             # Unsubscripted "Hashable" attribute.
-            Hashable: PepHintMetadata(
+            typing.Hashable: PepHintMetadata(
                 pep_sign=Hashable,
                 piths_satisfied=(
                     # String constant.
@@ -1463,7 +1475,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
 
             # Unsubscripted "Sized" attribute.
-            Sized: PepHintMetadata(
+            typing.Sized: PepHintMetadata(
                 pep_sign=Sized,
                 piths_satisfied=(
                     # String constant.
@@ -1481,7 +1493,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 type_origin=collections_abc.Sized,
             ),
         })
-
 
     data_module.HINT_PEP_CLASSED_TO_META.update({
         # ................{ NAMEDTUPLE                        }................

@@ -118,7 +118,7 @@ def die_unless_module_attr_name(
     # attribute name.
 
 # ....................{ GETTERS ~ name                    }....................
-def get_module_name(obj: object) -> 'Optional[str]':
+def get_object_module_name(obj: object) -> 'Optional[str]':
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this
@@ -144,7 +144,7 @@ def get_module_name(obj: object) -> 'Optional[str]':
 
     # Fully-qualified name of the module declaring this object if this object
     # defines the "__module__" dunder instance variable *OR* "None" otherwise.
-    module_name = get_module_name_or_none(obj)
+    module_name = get_object_module_name_or_none(obj)
 
     # If this object defines *NO* "__module__" dunder instance variable, raise
     # an exception.
@@ -159,7 +159,7 @@ def get_module_name(obj: object) -> 'Optional[str]':
     return module_name
 
 
-def get_module_name_or_none(obj: object) -> 'Optional[str]':
+def get_object_module_name_or_none(obj: object) -> 'Optional[str]':
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this
@@ -183,6 +183,36 @@ def get_module_name_or_none(obj: object) -> 'Optional[str]':
 
     # Let it be, speaking one-liners of wisdom.
     return getattr(obj, '__module__', None)
+
+
+def get_object_class_module_name_or_none(obj: object) -> 'Optional[str]':
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring either the passed object if this
+    object is a class *or* the class of this object otherwise (i.e., if this
+    object is *not* a class) if this class declares the ``__module__`` dunder
+    instance variable *or* ``None`` otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * Fully-qualified name of the module declaring the type of this object
+          if this type declares a ``__module__`` dunder attribute.
+        * ``None`` otherwise.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.utilobject import get_object_class_unless_class
+
+    # Make it so, ensign.
+    return get_object_module_name_or_none(get_object_class_unless_class(obj))
 
 # ....................{ GETTERS ~ attr : name             }....................
 def get_module_attr_name_relative_to_obj(
@@ -239,7 +269,7 @@ def get_module_attr_name_relative_to_obj(
         if '.' in module_attr_name else
         # Else, the "."-delimited concatenation of the fully-qualified name of
         # the module declaring this object with this unqualified basename.
-        f'{get_module_name(obj)}.{module_attr_name}'
+        f'{get_object_module_name(obj)}.{module_attr_name}'
     )
 
 # ....................{ IMPORTERS                         }....................

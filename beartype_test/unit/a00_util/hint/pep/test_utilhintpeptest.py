@@ -60,15 +60,8 @@ def test_is_hint_pep_typing() -> None:
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester accepts concrete PEP-compliant type hints.
-    #
-    # Ideally, we would also assert this tester to rejects generic
-    # PEP-compliant type hints. Although most generics are instances of
-    # user-defined classes defined in non-"typing" modules, a small subset are
-    # stdlib classes defined in the "typing" module (e.g., "typing.IO") are
-    # *NOT*. Let's avoid rendering this any more fragile than we have.
     for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        if hint_pep_meta.pep_sign is not Generic:
-            assert is_hint_pep_typing(hint_pep) is True
+        assert is_hint_pep_typing(hint_pep) is hint_pep_meta.is_typing
 
     # Assert this tester rejects non-"typing" types.
     for not_hint_pep in NOT_HINTS_PEP:

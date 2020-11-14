@@ -477,6 +477,7 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
     '''
 
     pass
+
 # ....................{ WARNINGS                          }....................
 class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     '''
@@ -491,19 +492,48 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
 
     pass
 
-
-class BeartypeDecorHintPepUnsupportedWarning(BeartypeWarning):
+# ....................{ WARNINGS ~ decor : hint : pep     }....................
+class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
     '''
-    **Beartype decorator unsupported PEP-compliant type hint warning.**
+    Abstract base class of all **beartype decorator PEP-compliant type hint
+    warnings.**
+
+    Instances of subclasses of this warning are emitted at decoration time from
+    the :func:`beartype.beartype` decorator on receiving a callable annotated
+    by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
+    warranting non-fatal warnings *without* raising fatal exceptions.
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
+    '''
+    **Beartype decorator deeply ignorable PEP-compliant type hint warning.**
 
     This warning is emitted at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints (e.g., instances or classes declared
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more **deeply ignorable PEP-compliant type hints** (i.e., instances or classes declared
     by the stdlib :mod:`typing` module) currently unsupported by this
     decorator.
     '''
 
     pass
+
+
+#FIXME: Consider removal.
+# class BeartypeDecorHintPepUnsupportedWarning(BeartypeWarning):
+#     '''
+#     **Beartype decorator unsupported PEP-compliant type hint warning.**
+#
+#     This warning is emitted at decoration time from the
+#     :func:`beartype.beartype` decorator on receiving a callable annotated with
+#     one or more PEP-compliant type hints (e.g., instances or classes declared
+#     by the stdlib :mod:`typing` module) currently unsupported by this
+#     decorator.
+#     '''
+#
+#     pass
 
 # ....................{ PRIVATE ~ decorator               }....................
 class _BeartypeDecorBeartypistryException(BeartypeDecorException):

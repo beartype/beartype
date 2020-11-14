@@ -208,7 +208,7 @@ from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.text.utiltextmunge import number_lines
 from beartype._util.text.utiltextrepr import get_object_representation
-from beartype._util.utilobject import get_object_name_qualified
+from beartype._util.utilobject import get_object_name
 # from types import FunctionType
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -391,7 +391,7 @@ def beartype(func):
     }
 
     # Fully-qualified name of this undecorated callable to be decorated.
-    # func_name_qualified = get_object_name_qualified(func)
+    # func_name_qualified = get_object_name(func)
 
     #FIXME: Once this is working, use the commented code example starting with
     #"func_code_compiled = compile" given below to associate this filename with

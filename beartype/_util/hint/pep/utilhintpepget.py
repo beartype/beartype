@@ -22,7 +22,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF)
-from beartype._util.utilobject import get_object_type_module_name_or_none
+from beartype._util.py.utilpymodule import get_object_class_module_name_or_none
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -406,7 +406,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # If this hint is any other class...
     elif isinstance(hint, type):
         # Fully-qualified name of the module declaring this class.
-        hint_module_name = get_object_type_module_name_or_none(hint)
+        hint_module_name = get_object_class_module_name_or_none(hint)
 
         # If this class is *NOT* declared by a module explicitly permitted to
         # declare signs, this class is impermissible as an sign and thus *NOT*

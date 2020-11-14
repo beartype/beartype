@@ -22,7 +22,7 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
 from beartype._util.py.utilpymodule import import_module_attr
 from beartype._util.text.utiltextrepr import get_object_representation
-from beartype._util.utilobject import get_object_type_name_qualified
+from beartype._util.utilobject import get_object_classname
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -43,7 +43,7 @@ def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HINT_PEP484_BASE_FORWARDREF, (
-        f'PEP hint sign {repr(sleuth.hint_sign)} not forward reference.')
+        f'PEP type hint sign {repr(sleuth.hint_sign)} not forward reference.')
 
     # Fully-qualified classname referred to by this forward reference relative
     # to the decorated callable.
@@ -90,7 +90,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
     # Else, this pith is *NOT* an instance of this type.
 
     # Fully-qualified name of this class.
-    classname = get_object_type_name_qualified(sleuth.hint)
+    classname = get_object_classname(sleuth.hint)
 
     # If this name contains one or more periods, this class is *NOT* a builtin
     # (e.g., "list"). Whereas builtin classes are largely self-explanatory,

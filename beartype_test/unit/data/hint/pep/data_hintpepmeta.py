@@ -42,6 +42,9 @@ class PepHintMetadata(object):
         ``True`` only if this hint is parametrized by one or more **type
         variables** (i.e., :class:`typing.TypeVar` instances).
         Defaults to ``False``.
+    is_typing : bool
+        ``True`` only if this hint's class is defined by the :mod:`typing`
+        module. Defaults to ``True``.
     piths_satisfied : Tuple[object]
         Tuple of zero or more arbitrary objects satisfying this hint when
         either passed as a parameter *or* returned as a value annotated by this
@@ -70,6 +73,7 @@ class PepHintMetadata(object):
         is_ignorable: bool = False,
         is_supported: bool = True,
         is_typevared: bool = False,
+        is_typing: bool = True,
         piths_satisfied: tuple = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
         type_origin: 'Optional[type]' = None,
@@ -80,6 +84,7 @@ class PepHintMetadata(object):
             f'{repr(is_supported)} not bool.')
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
+        assert isinstance(is_typing, bool), f'{repr(is_typing)} not bool.'
         assert isinstance(piths_satisfied, tuple), (
             f'{repr(piths_satisfied)} not tuple.')
         assert isinstance(piths_unsatisfied_meta, tuple), (
@@ -98,6 +103,7 @@ class PepHintMetadata(object):
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
         self.is_typevared = is_typevared
+        self.is_typing = is_typing
         self.piths_satisfied = piths_satisfied
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
         self.type_origin = type_origin
@@ -110,6 +116,7 @@ class PepHintMetadata(object):
             f'    is_ignorable={self.is_ignorable},',
             f'    is_supported={self.is_supported},',
             f'    is_typevared={self.is_typevared},',
+            f'    is_typing={self.is_typing},',
             f'    piths_satisfied={self.piths_satisfied},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
             f'    type_origin={self.type_origin},',

@@ -50,13 +50,13 @@ def test_typistry_register_type_pass() -> None:
     from beartype.cave import RegexCompiledType
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import register_typistry_type
-    from beartype._util.utilobject import get_object_type_name_unqualified
+    from beartype._util.utilobject import get_object_class_basename
 
     # Assert this function registers a non-builtin type under the beartypistry
     # and silently permits re-registration of the same type.
     for hint in (RegexCompiledType,)*2:
         hint_name_cached = register_typistry_type(hint)
-        assert hint_name_cached != get_object_type_name_unqualified(hint)
+        assert hint_name_cached != get_object_class_basename(hint)
         hint_cached = _eval_registered_expr(hint_name_cached)
         assert hint is hint_cached
 
@@ -66,7 +66,7 @@ def test_typistry_register_type_pass() -> None:
     # doesn't actually exist, which is inconsistent nonsense, but whatever).
     hint = type(None)
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached != get_object_type_name_unqualified(hint)
+    assert hint_name_cached != get_object_class_basename(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
@@ -74,7 +74,7 @@ def test_typistry_register_type_pass() -> None:
     # basename.
     hint = list
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached == get_object_type_name_unqualified(hint)
+    assert hint_name_cached == get_object_class_basename(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
@@ -214,14 +214,14 @@ def test_typistry_singleton_pass() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._typistry import bear_typistry
-    from beartype._util.utilobject import get_object_type_name_qualified
+    from beartype._util.utilobject import get_object_classname
 
     # Assert that dictionary syntax also implicitly registers a type. Since
     # this approach explicitly prohibits re-registration for safety, we define
     # a custom user-defined type guaranteed *NOT* to have been registered yet.
     class TestTypistrySingletonPassType(object): pass
     hint = TestTypistrySingletonPassType
-    hint_name = get_object_type_name_qualified(hint)
+    hint_name = get_object_classname(hint)
     bear_typistry[hint_name] = hint
     assert bear_typistry.get(hint_name) is hint
 

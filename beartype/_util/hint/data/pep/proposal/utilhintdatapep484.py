@@ -214,12 +214,6 @@ def add_data(data_module: 'ModuleType') -> None:
         # semantically expands to the implicit "Generic[Any]" singleton.
         Generic,
 
-        # The NewType() closure factory function as an object arguably does
-        # *NOT* constitute a valid PEP-compliant type hint. Nonetheless, simply
-        # ignoring this class when used as an annotation is a reasonably safe
-        # minimal-effort approach.
-        NewType,
-
         # The unsubscripted "Optional" singleton semantically expands to the
         # implicit "Optional[Any]" singleton by the same argument. Since PEP
         # 484 also stipulates that all "Optional[t]" singletons semantically

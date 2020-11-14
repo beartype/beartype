@@ -1008,7 +1008,8 @@ def pep_code_check_hint(hint: object) -> (
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                f'{hint_child_label} PEP hint {repr(hint_curr)} ignorable.')
+                f'{hint_child_label} PEP type hint '
+                f'{repr(hint_curr)} ignorable.')
 
             # Unsubscripted "typing" attribute uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
@@ -1599,7 +1600,7 @@ def pep_code_check_hint(hint: object) -> (
             # this singleton to be invalid here.
             elif hint_curr is NoReturn:
                 raise BeartypeDecorHintPep484Exception(
-                    f'{hint_child_label} PEP hint '
+                    f'{hint_child_label} PEP type hint '
                     f'{repr(hint_curr)} nesting "typing.NoReturn" invalid '
                     f'(i.e., as "typing.NoReturn" valid only as a '
                     f'non-nested return annotation).'
@@ -1823,7 +1824,7 @@ def pep_code_check_hint(hint: object) -> (
             # triggered. Nonetheless, raise an exception for safety.
             else:
                 raise BeartypeDecorHintPepUnsupportedException(
-                    f'{hint_child_label} PEP hint '
+                    f'{hint_child_label} PEP type hint '
                     f'{repr(hint_curr)} unsupported but '
                     f'erroneously detected as supported.'
                 )
