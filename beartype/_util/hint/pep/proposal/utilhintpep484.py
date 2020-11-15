@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import FunctionType
 from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     BeartypeDecorHintPep484Exception,
@@ -320,16 +321,9 @@ def is_hint_pep484_newtype(hint: object) -> bool:
     type** (i.e., closure created and returned by the :func:`typing.NewType`
     closure factory function).
 
-
-    * The private classes of most `PEP 484`_-compliant type hints define the
-      ``__call__()`` dunder method to unconditionally raise an exception and,
-      ironically, are thus erroneously detected as callables by the
-      :func:`callable` builtin. This implies that most `PEP 484`_-compliant
-      type hints pass the first of several conditions internally tested by this
-      tester.
-    * All remaining conditions internally tested by this tester unavoidably
-      call the :func:`getattr` builtin multiple times, which is known to be
-      inefficient in the general (and especially worst) cases.
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Caveats
     ----------
@@ -359,52 +353,38 @@ def is_hint_pep484_newtype(hint: object) -> bool:
        https://www.python.org/dev/peps/pep-0484
     '''
 
-    # If this hint is uncallable, immediately return false.
-    if not callable(hint):
-        return False
-    # Else, this hint is callable. Note that:
-    #
-    # * The "__module__" and "__qualname__" dunder instance variables are *NOT*
-    #   generally defined for arbitrary objects but are specifically defined
-    #   for callables.
-    # * These variables are defined for *ALL* standard callables under Python
-    #   >= 3.3.. Sadly, the non-standard private classes of most PEP
-    #   484-compliant type hints define the __call__() dunder method to
-    #   unconditionally raise an exception and, ironically, are thus
-    #   erroneously detected as callables by the callable() builtin. Naturally,
-    #   these callables fail to define these variables. </shaking_my_head>
-
-    # Fully-qualified name of this module declaring this callable if any *OR*
-    # "None" otherwise.
-    hint_module_name = getattr(hint, "__module__", None)
-
-    # If this callable either fails to define this name *OR* this name is
-    # anything other than the fully-qualified name of the "typing" module,
-    # immediately return false. By the above discussion, most PEP-compliant
-    # type hints are callable but fail to define this name. *sigh*
-    if hint_module_name != 'typing':
-        return False
-
-    # Basename of the callable that created this closure if any *OR* the empty
-    # string otherwise.
-    hint_factory_basename = getattr(hint, "__qualname__", '')
-
-    # Return true only if this callable is a closure created and returned by
-    # the typing.NewType() closure factory function. This test derives from the
-    # observation this basename unambiguously identifying this hint as a
-    # "NewType"-generated closure: e.g.,
-    #     >>> from typing import NewType
-    #     >>> UserId = t.NewType('UserId', int)
-    #     >>> UserId.__module__
-    #     >>> 'typing'
-    #     >>> UserId.__qualname__
-    #     >>> 'NewType.<locals>.new_type'
-    #
-    # Note that we could also test whether the "__supertype__" dunder instance
-    # variable exists and that the value of this variable is a class, but that
-    # doing so would invariably be more fragile and thus error-prone than the
-    # less ambiguous test performed here.
-    return hint_factory_basename.startswith('NewType.')
+    # Return true only if...
+    return (
+        # This hint is a pure-Python function *AND*...
+        #
+        # Note that we intentionally do *NOT* call the callable() builtin here,
+        # as that builtin erroneously returns false positives for non-standard
+        # classes defining the __call__() dunder method to unconditionally
+        # raise exceptions. Critically, this includes most PEP 484-compliant
+        # type hints, which naturally fail to define both the "__module__"
+        # *AND* "__qualname__" dunder instance variables accessed below.
+        #
+        # Shoot me now, fam.
+        isinstance(hint, FunctionType) and
+        # This callable is a closure created and returned by the
+        # typing.NewType() function. Note that:
+        #
+        # * The "__module__" and "__qualname__" dunder instance variables are
+        #   *NOT* generally defined for arbitrary objects but are specifically
+        #   defined for callables.
+        # * "__qualname__" is safely available under Python >= 3.3.
+        # * This test derives from the observation that the concatenation of
+        #   this callable's "__qualname__" and "__module" dunder instance
+        #   variables suffices to produce a string unambiguously identifying
+        #   whether this hint is a "NewType"-generated closure: e.g.,
+        #       >>> from typing import NewType
+        #       >>> UserId = t.NewType('UserId', int)
+        #       >>> UserId.__qualname__
+        #       >>> 'NewType.<locals>.new_type'
+        #       >>> UserId.__module__
+        #       >>> 'typing'
+        f'{hint.__module__}.{hint.__qualname__}'.startswith('typing.NewType.')
+    )
 
 # ....................{ GETTERS ~ forwardref              }....................
 @callable_cached
