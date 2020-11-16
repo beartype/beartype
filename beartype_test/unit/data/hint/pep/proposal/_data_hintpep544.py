@@ -121,29 +121,6 @@ def add_data(data_module: 'ModuleType') -> None:
         #decorating methods with @abstractmethod -- which frankly seems like an
         #egregious error. It's doubtful that we'd be able to sanely
         #monkey-patch these classes; instead, what we should probably do is:
-        #* In the "beartype._util.hint.data.pep.proposal.utilhintdatapep544"
-        #  submodule:
-        #  * Copy-and-paste these classes, but subclassing "typing.Protocol"
-        #    rather than "typing.Generic". The remainder of these classes
-        #    should remain the same. For disambiguity, they should probably be
-        #    renamed as well: e.g.,
-        #    * HINT_PEP544_PROTOCOL_IO for "typing.IO".
-        #    * HINT_PEP544_PROTOCOL_TEXTIO for "typing.TextIO".
-        #  * Define a new "HINT_PEP544_IO_GENERIC_TO_PROTOCOL" mapping ala:
-        #    HINT_PEP544_IO_GENERIC_TO_PROTOCOL = {
-        #        typing.IO: HINT_PEP544_PROTOCOL_IO,
-        #        typing.BinaryIO: HINT_PEP544_PROTOCOL_BINARYIO,
-        #        typing.TextIO: HINT_PEP544_PROTOCOL_TEXTIO,
-        #    }
-        #  * Define a new is_hint_pep544_io_generic() tester ala:
-        #    def is_hint_pep544_io_generic(hint: object) -> bool:
-        #        return hint in HINT_PEP544_IO_GENERIC_TO_PROTOCOL
-        #  * Define a new get_hint_pep544_io_protocol_from_generic() ala:
-        #    def get_hint_pep544_io_protocol_from_generic(hint: object) -> Protocol:
-        #        if not is_hint_pep544_io_generic(hint):
-        #            raise SomeExceptionHerePlease!
-        #
-        #        return HINT_PEP544_IO_GENERIC_TO_PROTOCOL[hint]
         #* In "_pephint":
         #  * Call is_hint_pep544_io_generic() and
         #    get_hint_pep544_io_protocol_from_generic() somewhere -- probably

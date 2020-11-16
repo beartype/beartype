@@ -243,6 +243,22 @@ class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
 
     pass
 
+
+class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** `PEP 544`_**-compliant type hint value exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating `PEP 544`_ *or* this
+    decorator's implementation of `PEP 544`_.
+
+    .. _PEP 544:
+       https://www.python.org/dev/peps/pep-0544
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ param                 }....................
 class BeartypeDecorParamException(BeartypeDecorException, metaclass=_ABCMeta):
     '''
@@ -507,18 +523,19 @@ class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
-    '''
-    **Beartype decorator deeply ignorable PEP-compliant type hint warning.**
-
-    This warning is emitted at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **deeply ignorable PEP-compliant type hints** (i.e., instances or classes declared
-    by the stdlib :mod:`typing` module) currently unsupported by this
-    decorator.
-    '''
-
-    pass
+#FIXME: Consider removal.
+# class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
+#     '''
+#     **Beartype decorator deeply ignorable PEP-compliant type hint warning.**
+#
+#     This warning is emitted at decoration time from the
+#     :func:`beartype.beartype` decorator on receiving a callable annotated by
+#     one or more **deeply ignorable PEP-compliant type hints** (i.e., instances or classes declared
+#     by the stdlib :mod:`typing` module) currently unsupported by this
+#     decorator.
+#     '''
+#
+#     pass
 
 
 #FIXME: Consider removal.

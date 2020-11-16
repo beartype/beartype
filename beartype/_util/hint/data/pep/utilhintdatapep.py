@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 import sys
 from beartype._util.hint.data.pep.proposal import (
     utilhintdatapep484,
-    _utilhintdatapep544,
-    _utilhintdatapep593,
+    utilhintdatapep544,
+    utilhintdatapep593,
 )
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -173,8 +173,8 @@ def add_data(data_module: 'ModuleType') -> None:
     # Tuple of all private submodules of this subpackage to be initialized.
     HINT_DATA_PEP_SUBMODULES = (
         utilhintdatapep484,
-        _utilhintdatapep544,
-        _utilhintdatapep593,
+        utilhintdatapep544,
+        utilhintdatapep593,
     )
 
     # Initialize all private submodules of this subpackage.

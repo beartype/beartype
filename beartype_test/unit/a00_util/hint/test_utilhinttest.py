@@ -15,8 +15,8 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import BeartypeDecorHintPepIgnorableDeepWarning
-from beartype_test.util.mark.pytmark import ignore_warnings
+# from beartype.roar import BeartypeDecorHintPepIgnorableDeepWarning
+# from beartype_test.util.mark.pytmark import ignore_warnings
 from pytest import raises
 
 # ....................{ TESTS                             }....................
@@ -102,7 +102,7 @@ def test_is_hint() -> None:
 
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the is_hint_ignorable() tester.
-@ignore_warnings(BeartypeDecorHintPepIgnorableDeepWarning)
+# @ignore_warnings(BeartypeDecorHintPepIgnorableDeepWarning)
 def test_is_hint_ignorable() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.

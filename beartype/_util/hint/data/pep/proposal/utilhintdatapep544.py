@@ -20,6 +20,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................
+# Conditionally initialized by the add_data() function below.
 _Pep544IO = None
 '''
 `PEP 544`_-compliant protocol base class for :class:`_Pep544TextIO` and
@@ -74,15 +75,27 @@ advertised (or at all)... *and no one ever will.*
 '''
 
 
+# Conditionally initialized by the add_data() function below.
 _Pep544BinaryIO = None
 '''
 Typed version of the return of open() in binary mode.
 '''
 
 
+# Conditionally initialized by the add_data() function below.
 _Pep544TextIO = None
 '''
 Typed version of the return of open() in text mode.
+'''
+
+# ....................{ MAPPINGS                          }....................
+_HINT_PEP544_IO_GENERIC_TO_PROTOCOL = {}
+'''
+Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
+either :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined
+by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
+(i.e., either :class:`_Pep544IO` itself *or* a subclass of :class:`_Pep544IO`
+defined by this submodule).
 '''
 
 # ....................{ ADDERS                            }....................
@@ -100,9 +113,6 @@ def add_data(data_module: 'ModuleType') -> None:
         https://www.python.org/dev/peps/pep-0544
     '''
 
-    # Global classes to be redefined below.
-    global _Pep544BinaryIO, _Pep544IO, _Pep544TextIO
-
     # If the active Python interpreter does *NOT* target at least Python >= 3.8
     # and thus fails to support PEP 544, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_8:
@@ -114,28 +124,22 @@ def add_data(data_module: 'ModuleType') -> None:
     from typing import (
         Any,
         AnyStr,
+        BinaryIO,
+        IO,
         List,
         Optional,
         Protocol,
         Union,
+        TextIO,
         runtime_checkable,
     )
 
-    # Register the version-specific signs introduced in this version.
-    #
-    # Note that ignoring the "typing.Protocol" superclass is vital here. For
-    # unknown and presumably uninteresting reasons, *ALL* possible objects
-    # satisfy this superclass. Ergo, this superclass is synonymous with the
-    # "object" root superclass: e.g.,
-    #     >>> import typing as t
-    #     >>> isinstance(object(), t.Protocol)
-    #     True
-    #     >>> isinstance('ok', t.Protocol)
-    #     True
-    #     >>> isinstance(3333, t.Protocol)
-    #     True
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Protocol)
-    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)
+    # Global classes to be redefined below.
+    global \
+        _HINT_PEP544_IO_GENERIC_TO_PROTOCOL, \
+        _Pep544BinaryIO, \
+        _Pep544IO, \
+        _Pep544TextIO
 
     # ..................{ CLASSES                           }..................
     @runtime_checkable
@@ -286,3 +290,29 @@ def add_data(data_module: 'ModuleType') -> None:
         @abstractmethod
         def __enter__(self) -> '_Pep544TextIO':
             pass
+
+    # ..................{ MAPPINGS                          }..................
+    # Dictionary mapping from each "typing" IO generic base class to the
+    # associated IO protocol defined above.
+    _HINT_PEP544_IO_GENERIC_TO_PROTOCOL = {
+        IO:       _Pep544IO,
+        BinaryIO: _Pep544BinaryIO,
+        TextIO:   _Pep544TextIO,
+    }
+
+    # ..................{ SETS                              }..................
+    # Register the version-specific signs introduced in this version.
+    #
+    # Note that ignoring the "typing.Protocol" superclass is vital here. For
+    # unknown and presumably uninteresting reasons, *ALL* possible objects
+    # satisfy this superclass. Ergo, this superclass is synonymous with the
+    # "object" root superclass: e.g.,
+    #     >>> import typing as t
+    #     >>> isinstance(object(), t.Protocol)
+    #     True
+    #     >>> isinstance('ok', t.Protocol)
+    #     True
+    #     >>> isinstance(3333, t.Protocol)
+    #     True
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Protocol)
+    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)
