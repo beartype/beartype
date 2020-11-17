@@ -63,7 +63,8 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import get_object_class_unless_class
-from beartype._util.py.utilpymodule import get_object_class_module_name_or_none
+from beartype._util.py.utilpymodule import (
+    get_object_module_name, get_object_class_module_name_or_none)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
 # from warnings import warn
@@ -440,7 +441,7 @@ def is_hint_pep(hint: object) -> bool:
     return (
         # This hint's type is directly declared by the "typing" module and thus
         # PEP-compliant by definition *OR*...
-        is_hint_pep_typing(hint_type) or
+        is_hint_pep_class_typing(hint_type) or
         # This hint is a PEP 585-compliant type hint.
         is_hint_pep585(hint) or
         # This hint is a PEP 484-compliant generic. Although a small subset of
@@ -638,10 +639,32 @@ def is_hint_pep_sign_supported(hint) -> bool:
     return hint in HINT_PEP_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
+def is_hint_pep_typing(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is defined by the :mod:`typing` module.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is defined by the :mod:`typing` module.
+    '''
+
+    return repr(hint).startswith('typing.')
+
+
 # If the active Python interpreter targets at least Python 3.7 and is thus
 # sane enough to support the normal implementation of this tester, do so.
 if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep_typing(hint: object) -> bool:
+    def is_hint_pep_class_typing(hint: object) -> bool:
         # Return true only if this type is defined by the "typing" module.
         #
         # Note that this implementation could probably be reduced to the
@@ -690,7 +713,8 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_class_module_name_or_none(hint) == 'typing'
+        return get_object_module_name(get_object_class_unless_class(hint)) == (
+            'typing')
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -702,11 +726,12 @@ if IS_PYTHON_AT_LEAST_3_7:
 # the resolution is simply to explicitly test for and reject "collections.abc"
 # superclasses passed to this Python 3.6-specific tester implementation.
 else:
-    def is_hint_pep_typing(hint: object) -> bool:
+    def is_hint_pep_class_typing(hint: object) -> bool:
         # Return true only if...
         return (
             # This type pretends to be defined by the "typing" module *AND*...
-            get_object_class_module_name_or_none(hint) == 'typing' and
+            get_object_module_name(get_object_class_unless_class(hint)) == (
+                'typing') and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment
             # the following test:
@@ -730,8 +755,11 @@ else:
         )
 
 # Docstring for this function regardless of implementation details.
-is_hint_pep_typing.__doc__ = '''
-    ``True`` only if the passed object is defined by the :mod:`typing` module.
+is_hint_pep_class_typing.__doc__ = '''
+    ``True`` only if either the passed object is defined by the :mod:`typing`
+    module if this object is a class *or* the class of this object is defined
+    by the :mod:`typing` module otherwise (i.e., if this object is *not* a
+    class).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -745,7 +773,12 @@ is_hint_pep_typing.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is defined by the :mod:`typing` module.
+        ``True`` only if either:
+
+        * If this object is a class, this class is defined by the :mod:`typing`
+          module.
+        * Else, the class of this object is defined by the :mod:`typing`
+          module.
     '''
 
 # ....................{ TESTERS ~ subtype : typevar       }....................

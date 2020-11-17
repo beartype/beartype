@@ -18,6 +18,8 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF)
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj)
+from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    is_hint_pep544_protocol)
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
 from beartype._util.py.utilpymodule import import_module_attr
@@ -83,9 +85,10 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
             f'{repr(sleuth.hint)} unsupported '
             f'(i.e., neither PEP-compliant nor standard class).'
         )
-
-    # If this pith is an instance of this type, return "None".
-    if isinstance(sleuth.pith, sleuth.hint):
+    # Else, this hint is a class.
+    #
+    # Else if this pith is an instance of this class, return "None".
+    elif isinstance(sleuth.pith, sleuth.hint):
         return None
     # Else, this pith is *NOT* an instance of this type.
 
@@ -95,9 +98,35 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
     # If this name contains one or more periods, this class is *NOT* a builtin
     # (e.g., "list"). Whereas builtin classes are largely self-explanatory,
     # non-builtin classes are *NOT* and thus benefit from more verbose
-    # human-readable explanation.
+    # human-readable explanation. In this case...
     if '.' in classname:
-        classname = f'instance of <class "{classname}">'
+        # If this class is a PEP 544-compliant protocol supporting structural
+        # subtyping, describe this protocol.
+        if is_hint_pep544_protocol(sleuth.hint):
+            classname = (
+                f'structural (i.e., duck-typed) instance of '
+                f'<protocol "{classname}">'
+            )
+        # Else if this class is a standard abstract base class (ABC) defined by
+        # a stdlib submodule also known to support structural subtyping (e.g.,
+        # "collections.abc.Hashable", "contextlib.AbstractContextManager"),
+        # describe this ABC.
+        #
+        # Note that user-defined ABCs do *NOT* generally support structural
+        # subtyping. Doing so requires arcane knowledge of undocumented and
+        # mostly private "abc.ABCMeta" metaclass internals unlikely to be
+        # implemented by third-party developers.
+        elif (
+            classname.startswith('collections.abc.') or
+            classname.startswith('contextlib.')
+        ):
+            classname = (
+                f'structural (i.e., duck-typed) instance of '
+                f'<protocol ABC "{classname}">'
+            )
+        # Else, this is a standard class. In this case, describe this class.
+        else:
+            classname = f'instance of <class "{classname}">'
 
     # Truncated representation of this pith.
     pith_repr = get_object_representation(sleuth.pith)

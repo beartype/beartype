@@ -938,6 +938,7 @@ No Compliance
 ``beartype`` currently raises exceptions at decoration time when passed these
 typing_ types:
 
+* typing.Literal_.
 * **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
   instantiated by subscripting either a concrete builtin container class like
   :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by

@@ -51,21 +51,21 @@ def test_is_hint_pep() -> None:
 def test_is_hint_pep_typing() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing` tester.
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_class_typing` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_class_typing
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester accepts concrete PEP-compliant type hints.
     for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep_typing(hint_pep) is hint_pep_meta.is_typing
+        assert is_hint_pep_class_typing(hint_pep) is hint_pep_meta.is_typing
 
     # Assert this tester rejects non-"typing" types.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_typing(not_hint_pep) is False
+        assert is_hint_pep_class_typing(not_hint_pep) is False
 
 # ....................{ TESTS ~ supported                 }....................
 def test_is_hint_pep_supported() -> None:

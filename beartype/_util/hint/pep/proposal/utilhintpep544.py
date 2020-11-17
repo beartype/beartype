@@ -17,6 +17,7 @@ from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
     _HINT_PEP544_IO_GENERIC_TO_PROTOCOL)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.utilobject import is_object_subclass
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -49,6 +50,10 @@ if IS_PYTHON_AT_LEAST_3_8:
     def is_hint_pep544_io_generic(hint: object) -> bool:
         return hint in _HINT_PEP544_IO_GENERIC_TO_PROTOCOL
 
+
+    def is_hint_pep544_protocol(hint: object) -> None:
+        return is_object_subclass(hint, Protocol)
+
 # Else, the active Python interpreter targets at most Python < 3.8 and thus
 # fails to support PEP 544. In this case, fallback to declaring this function
 # to unconditionally return False.
@@ -59,6 +64,10 @@ else:
 
 
     def is_hint_pep544_io_generic(hint: object) -> bool:
+        return False
+
+
+    def is_hint_pep544_protocol(hint: object) -> None:
         return False
 
 # ....................{ TESTERS ~ doc                     }....................
@@ -112,6 +121,7 @@ is_hint_pep544_ignorable_or_none.__doc__ = '''
        https://www.python.org/dev/peps/pep-0544
     '''
 
+
 is_hint_pep544_io_generic.__doc__ = '''
     ``True`` only if the passed object is a functionally useless `PEP
     484`_-compliant :mod:`typing` **IO generic base class** (i.e., either
@@ -145,6 +155,29 @@ is_hint_pep544_io_generic.__doc__ = '''
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
+    .. _PEP 544:
+       https://www.python.org/dev/peps/pep-0544
+    '''
+
+
+is_hint_pep544_protocol.__doc__ = '''
+    ``True`` only if the passed object is a `PEP 544`_-compliant **protocol**
+    (i.e., subclass of the :class:`typing.Protocol` superclass).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a `PEP 544`_-compliant protocol.
+
     .. _PEP 544:
        https://www.python.org/dev/peps/pep-0544
     '''

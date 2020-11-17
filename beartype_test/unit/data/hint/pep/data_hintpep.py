@@ -33,7 +33,7 @@ HINT_PEP_CLASSED_TO_META = {}
 '''
 Dictionary mapping various PEP-compliant type hints implemented by the
 :mod:`typing` module as standard classes indistinguishable from
-non-:mod:`typing` classes to :class:`PepHintUnsignedMetadata` instances
+non-:mod:`typing` classes to :class:`PepHintNonsignedMetadata` instances
 describing those hints with metadata applicable to testing scenarios.
 
 These hints do *not* conform to standard expectations for PEP-compliant type

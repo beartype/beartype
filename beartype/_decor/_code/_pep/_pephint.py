@@ -343,9 +343,14 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_or_none,
+    get_hint_pep484_generic_base_erased_from_unerased,
+    get_hint_pep484_generic_bases_unerased_or_none,
     get_hint_pep484_newtype_class,
     is_hint_pep484_newtype,
+)
+from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    get_hint_pep544_io_protocol_from_generic,
+    is_hint_pep544_io_generic,
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_hint,
@@ -360,11 +365,10 @@ from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
+    is_hint_pep_typing,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_8,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
 from typing import Generic, NewType, NoReturn, Tuple
 
@@ -659,12 +663,11 @@ def pep_code_check_hint(hint: object) -> (
     # hint of the currently visited parent hint.
     # hint_child_expr = None
 
-    #FIXME: Excise us up.
     # Origin type (i.e., non-"typing" superclass suitable for shallowly
     # type-checking the current pith against the currently visited hint by
     # passing both to the isinstance() builtin) of the currently iterated child
     # hint of the currently visited parent hint.
-    # hint_child_type_origin = None
+    hint_child_type_origin = None
 
     #FIXME: Excise us up.
     # Python code snippet evaluating to the current (possibly nested) object of
@@ -947,19 +950,37 @@ def pep_code_check_hint(hint: object) -> (
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
-        # ................{ PEP 484                           }................
+        # ................{ REDUCTION                         }................
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAVEATS: Synchronize changes here with the corresponding block of the
+        # beartype._decor._code._pep._error._peperrorsleuth.CauseSleuth__init__()
+        # method.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # This logic reduces the currently visited hint to an arbitrary object
+        # associated with this hint when this hint conditionally satisfies any
+        # of various conditions.
+        #
+        # ................{ REDUCTION ~ pep 484               }................
         # If this is a PEP 484-compliant new type hint, reduce this hint to the
         # user-defined class aliased by this hint. Although this logic could
         # also be performed below, doing so here simplifies matters.
         if is_hint_pep484_newtype(hint_curr):
             hint_curr = get_hint_pep484_newtype_class(hint_curr)
-        # ................{ PEP 593                           }................
+        # ................{ REDUCTION ~ pep 544               }................
+        # If this is a PEP 484-compliant IO generic base class *AND* the active
+        # Python interpreter targets at least Python >= 3.8 and thus supports
+        # PEP 544-compliant protocols, reduce this functionally useless hint to
+        # the corresponding functionally useful beartype-specific PEP
+        # 544-compliant protocol implementing this hint.
+        elif is_hint_pep544_io_generic(hint_curr):
+            hint_curr = get_hint_pep544_io_protocol_from_generic(hint_curr)
+        # ................{ REDUCTION ~ pep 593               }................
         # If this is a PEP 593-compliant type metahint, ignore all annotations
         # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
         # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
         elif is_hint_pep593(hint_curr):
             hint_curr = get_hint_pep593_hint(hint_curr)
-        # In either case, this hint is now unannotated.
+        # ................{ REDUCTION ~ end                   }................
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -1480,7 +1501,7 @@ def pep_code_check_hint(hint: object) -> (
                 # "typing" objects originally listed as superclasses prior to
                 # their implicit type erasure by the "typing" module)
                 # subclassed by this generic.
-                hint_childs = get_hint_pep484_generic_bases_or_none(hint_curr)
+                hint_childs = get_hint_pep484_generic_bases_unerased_or_none(hint_curr)
 
                 # Assert this generic subclassed at least one
                 # pseudo-superclass. Note that the "typing" module should have
@@ -1495,25 +1516,80 @@ def pep_code_check_hint(hint: object) -> (
 
                 # For each pseudo-superclass subclassed by this generic...
                 for hint_child in hint_childs:
-                    # If this pseudo-superclass is either...
-                    if (
-                        # An actual superclass, this pseudo-superclass is
-                        # effectively ignorable. Why? Because the
-                        # "PEP484_CODE_CHECK_HINT_GENERIC_PREFIX" snippet
-                        # leveraged above already type-checks this pith against
-                        # the generic subclassing this superclass and thus this
-                        # superclass as well with a trivial isinstance() call.
-                        isinstance(hint_child, type) or
-                        # Explicitly ignorable...
-                        is_hint_ignorable(hint_child)
-                    # Then this pseudo-superclass is ignorable. In this case,
-                    # skip to the next pseudo-superclass.
-                    ):
+                    # print(f'hint_child: {repr(hint_child)} {is_hint_pep_class_typing(hint_child)}')
+
+                    # If this pseudo-superclass is an actual class, this class
+                    # is effectively ignorable. Why? Because the
+                    # "PEP484_CODE_CHECK_HINT_GENERIC_PREFIX" snippet leveraged
+                    # above already type-checks this pith against the generic
+                    # subclassing this superclass and thus this superclass as
+                    # well with a trivial isinstance() call. In this case, skip
+                    # to the next pseudo-superclass.
+                    if isinstance(hint_child, type):
                         continue
-                    # Else, this pseudo-superclass is unignorable.
+                    # Else, this pseudo-superclass is *NOT* an actual class.
+                    #
+                    # If this pseudo-superclass is *NOT* defined by the
+                    # "typing" module (and is thus user-defined), reduce this
+                    # pseudo-superclass to a real superclass originating this
+                    # pseudo-superclass.
+                    #
+                    # Note that this edge case arises *ONLY* for user-defined
+                    # generics and protocols subclassing another user-defined
+                    # generic or protocol superclass subscripted by one or more
+                    # type variables: e.g.,
+                    #
+                    #     >>> import typing as t
+                    #     >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
+                    #     >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
+                    #     >>> UserSubprotocol.__orig_bases__
+                    #     (UserProtocol[bytes], typing.Protocol)
+                    #     >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
+                    #     >>> UserProtocolUnerased is UserProtocol
+                    #     False
+                    #     >>> isinstance(UserProtocolUnerased, type)
+                    #     False
+                    #
+                    # Walking up the unerased inheritance hierarchy for this
+                    # generic or protocol iteratively visits the user-defined
+                    # generic or protocol pseudo-superclass subscripted by one
+                    # or more type variable. Due to poorly defined obscurities
+                    # in the "typing" implementation, this pseudo-superclass is
+                    # *NOT* actually a class but rather an instance of a
+                    # private "typing" class (e.g., "typing._SpecialForm").
+                    #
+                    # Ergo, this pseudo-superclass will be subsequently
+                    # detected as neither a generic nor "typing" object and
+                    # thus raise exceptions. Our only recourse is to silently
+                    # reduce this hint into the erased superclass to which the
+                    # "typing" module previously transformed this hint (e.g.,
+                    # "UserProtocol" above). This is slightly non-ideal, as
+                    # this erased superclass is an actual class that should
+                    # ideally be ignored rather than redundantly tested against
+                    # the current pith again. Nonetheless, there exists no
+                    # other means of recursing into the possibly relevant
+                    # superclasses of this erased superclass.
+                    #
+                    # Note that, in theory, we could deeply refactor this
+                    # algorithm to support the notion of child hints that
+                    # should be ignored for purposes of type-checking but
+                    # nonetheless recursed into. In practice, the current
+                    # approach only introduces mild runtime inefficiencies
+                    # while preserving sanity throughout this algorithm.
+                    elif not is_hint_pep_typing(hint_child):
+                        hint_child = (
+                            get_hint_pep484_generic_base_erased_from_unerased(
+                                hint_child))
+                    # Else, this pseudo-superclass is defined by the "typing"
+                    # module.
+
+                    # If this superclass is ignorable, do so.
+                    if is_hint_ignorable(hint_child):
+                        continue
+                    # Else, this superclass is unignorable.
 
                     # Generate and append code type-checking this pith against
-                    # this pseudo-superclass.
+                    # this superclass.
                     func_curr_code += (
                         PEP484_CODE_CHECK_HINT_GENERIC_CHILD_format(
                             hint_child_placeholder=_enqueue_hint_child(

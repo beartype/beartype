@@ -15,9 +15,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_or_none,
+    get_hint_pep484_generic_bases_unerased_or_none,
     get_hint_pep484_newtype_class,
     is_hint_pep484_newtype,
+)
+from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    get_hint_pep544_io_protocol_from_generic,
+    is_hint_pep544_io_generic,
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_hint,
@@ -146,19 +150,36 @@ class CauseSleuth(object):
         self.hint_sign = None
         self.hint_childs = None
 
-        # ................{ PEP 484                           }................
+        # ................{ REDUCTION                         }................
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAVEATS: Synchronize changes here with the corresponding block of the
+        # beartype._decor._code._pep._pephint.pep_code_check_hint() function.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # This logic reduces the currently visited hint to an arbitrary object
+        # associated with this hint when this hint conditionally satisfies any
+        # of various conditions.
+        #
+        # ................{ REDUCTION ~ pep 484               }................
         # If this is a PEP 484-compliant new type hint, reduce this hint to the
         # user-defined class aliased by this hint. Although this logic could
         # also be performed below, doing so here simplifies matters.
         if is_hint_pep484_newtype(self.hint):
             self.hint = get_hint_pep484_newtype_class(self.hint)
-        # ................{ PEP 593                           }................
+        # ................{ REDUCTION ~ pep 544               }................
+        # If this is a PEP 484-compliant IO generic base class *AND* the active
+        # Python interpreter targets at least Python >= 3.8 and thus supports
+        # PEP 544-compliant protocols, reduce this functionally useless hint to
+        # the corresponding functionally useful beartype-specific PEP
+        # 544-compliant protocol implementing this hint.
+        elif is_hint_pep544_io_generic(self.hint):
+            self.hint = get_hint_pep544_io_protocol_from_generic(self.hint)
+        # ................{ REDUCTION ~ pep 593               }................
         # If this is a PEP 593-compliant type metahint, ignore all annotations
         # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
         # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
         elif is_hint_pep593(self.hint):
             self.hint = get_hint_pep593_hint(self.hint)
-        # In either case, this hint is now unannotated.
+        # ................{ REDUCTION ~ end                   }................
 
         # If this hint is PEP-compliant...
         if is_hint_pep(self.hint):
@@ -167,7 +188,7 @@ class CauseSleuth(object):
 
             # Tuple of the one or more unerased pseudo-superclasses subclassed
             # by this hint if this hint is a generic *OR* "None" otherwise.
-            self.hint_childs = get_hint_pep484_generic_bases_or_none(self.hint)
+            self.hint_childs = get_hint_pep484_generic_bases_unerased_or_none(self.hint)
 
             # If this hint is *NOT* a generic, generalize this variable to the
             # possibly empty tuple of all arguments subscripting this hint.

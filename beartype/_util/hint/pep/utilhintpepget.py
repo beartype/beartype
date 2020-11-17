@@ -383,9 +383,9 @@ def get_hint_pep_sign(hint: object) -> dict:
     # or more "typing" pseudo-superclasses), return the "typing.Generic" ABC
     # generically (...get it?) identifying multiple-inherited generics.
     #
-    # Note that the "typing" module guarantees *ALL* generics to subclass
-    # this ABC regardless of whether those generics originally did so
-    # explicitly. How? By type erasure, the gift that keeps on giving:
+    # Note that the "typing" module guarantees *ALL* generics to subclass this
+    # ABC regardless of whether those generics originally did so explicitly.
+    # How? By type erasure, the gift that keeps on giving:
     #     >>> import typing as t
     #     >>> class MuhList(t.List): pass
     #     >>> MuhList.__orig_bases__
@@ -393,8 +393,8 @@ def get_hint_pep_sign(hint: object) -> dict:
     #     >>> MuhList.__mro__
     #     (__main__.MuhList, list, typing.Generic, object)
     #
-    # Ergo, this ABC uniquely identifies *ALL* generics and thus serves as
-    # a sufficient and complete unsubscripted "typing" attribute.
+    # Ergo, this ABC uniquely identifies *ALL* generics and thus serves as a
+    # sufficient and complete unsubscripted "typing" attribute.
     #
     # Note that generics *CANNOT* be detected by the general-purpose logic
     # performed below, as this ABC does *NOT* define a __repr__() dunder method
@@ -425,7 +425,8 @@ def get_hint_pep_sign(hint: object) -> dict:
         # a sign. In this case, return this class as is.
         #
         # Note that this is principally useful under Python 3.6, where the
-        # "typing" module idiosyncratically most attributes as classes: e.g.,
+        # "typing" module idiosyncratically declares most subscriptions of
+        # "typing" objects as ad-hoc classes: e.g.,
         #     >>> import typing
         #     >>> isinstance(typing.List[int], type)
         #     True     # <-- this is balls cray-cray
@@ -519,10 +520,10 @@ def get_hint_pep_sign(hint: object) -> dict:
     # conforms to.
     sign_name = repr(hint)
 
-    # If this representation is *NOT* prefixed by "typing.", this hint does
+    # If this representation is *NOT* prefixed by "typing,", this hint does
     # *NOT* originate from the "typing" module and is thus *NOT* PEP-compliant.
     # But by the validation above, this hint is PEP-compliant. Since this
-    # invokes a world-shattering paradox, raise an exception.
+    # invokes a world-shattering paradox, raise an exception
     if not sign_name.startswith('typing.'):
         raise BeartypeDecorHintPepSignException(
             f'PEP 484-compliant type hint {repr(hint)} '
@@ -560,7 +561,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # "typing" attribute with this name if any *OR* "None" otherwise.
     sign = getattr(typing, sign_name, None)
 
-    # If this "typing" attribute does *NOT* exist, raise an exception.
+    # If this "typing" attribute does *NOT* exist...
     if sign is None:
         raise BeartypeDecorHintPepSignException(
             f'PEP 484-compliant type hint {repr(hint)} '

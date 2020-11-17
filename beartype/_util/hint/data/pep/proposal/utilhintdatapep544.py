@@ -141,7 +141,7 @@ def add_data(data_module: 'ModuleType') -> None:
         _Pep544IO, \
         _Pep544TextIO
 
-    # ..................{ CLASSES                           }..................
+    # ..................{ PROTOCOLS                         }..................
     @runtime_checkable
     class _Pep544IO(Protocol[AnyStr]):
         # The body of this class is copied wholesale from the existing

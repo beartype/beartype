@@ -10,8 +10,6 @@ This submodule declares lower-level metadata classes instantiated by the
 higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-
 # ....................{ CLASSES ~ hint                    }....................
 class PepHintMetadata(object):
     '''
@@ -45,10 +43,11 @@ class PepHintMetadata(object):
     is_typing : bool
         ``True`` only if this hint's class is defined by the :mod:`typing`
         module. Defaults to ``True``.
-    piths_satisfied : Tuple[object]
-        Tuple of zero or more arbitrary objects satisfying this hint when
-        either passed as a parameter *or* returned as a value annotated by this
-        hint. Defaults to the empty tuple.
+    piths_satisfied_meta : Tuple[PepHintPithSatisfiedMetadata]
+        Tuple of zero or more :class:`_PepHintPithSatisfiedMetadata` instances,
+        each describing an object satisfying this hint when either passed as a
+        parameter *or* returned as a value annotated by this hint. Defaults to
+        the empty tuple.
     piths_unsatisfied_meta : Tuple[PepHintPithUnsatisfiedMetadata]
         Tuple of zero or more :class:`_PepHintPithUnsatisfiedMetadata`
         instances, each describing an object *not* satisfying this hint when
@@ -74,7 +73,7 @@ class PepHintMetadata(object):
         is_supported: bool = True,
         is_typevared: bool = False,
         is_typing: bool = True,
-        piths_satisfied: tuple = (),
+        piths_satisfied_meta: 'Tuple[PepHintPithSatisfiedMetadata]' = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
         type_origin: 'Optional[type]' = None,
     ) -> None:
@@ -85,10 +84,14 @@ class PepHintMetadata(object):
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
         assert isinstance(is_typing, bool), f'{repr(is_typing)} not bool.'
-        assert isinstance(piths_satisfied, tuple), (
-            f'{repr(piths_satisfied)} not tuple.')
         assert isinstance(piths_unsatisfied_meta, tuple), (
             f'{repr(piths_unsatisfied_meta)} not tuple.')
+        assert all(
+            isinstance(pith_satisfied_meta, PepHintPithSatisfiedMetadata)
+            for pith_satisfied_meta in piths_satisfied_meta
+        ), (
+            f'{repr(piths_satisfied_meta)} not tuple of '
+            f'"PepHintPithSatisfiedMetadata" instances.')
         assert all(
             isinstance(pith_unsatisfied_meta, PepHintPithUnsatisfiedMetadata)
             for pith_unsatisfied_meta in piths_unsatisfied_meta
@@ -104,7 +107,7 @@ class PepHintMetadata(object):
         self.is_supported = is_supported
         self.is_typevared = is_typevared
         self.is_typing = is_typing
-        self.piths_satisfied = piths_satisfied
+        self.piths_satisfied_meta = piths_satisfied_meta
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
         self.type_origin = type_origin
 
@@ -117,14 +120,14 @@ class PepHintMetadata(object):
             f'    is_supported={self.is_supported},',
             f'    is_typevared={self.is_typevared},',
             f'    is_typing={self.is_typing},',
-            f'    piths_satisfied={self.piths_satisfied},',
+            f'    piths_satisfied_meta={self.piths_satisfied_meta},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
             f'    type_origin={self.type_origin},',
             f')',
         ))
 
 
-class PepHintUnsignedMetadata(PepHintMetadata):
+class PepHintNonsignedMetadata(PepHintMetadata):
     '''
     **PEP-compliant unsigned type hint metadata** (i.e.,
     dataclass whose instance variables describe a PEP-compliant type hint
@@ -149,7 +152,71 @@ class PepHintUnsignedMetadata(PepHintMetadata):
         # Initialize our superclass.
         super().__init__(*args, **kwargs)
 
-# ....................{ CLASSES ~ hint : unsatisfied      }....................
+# ....................{ CLASSES ~ hint : [un]satisfied    }....................
+class PepHintPithSatisfiedMetadata(object):
+    '''
+    **PEP-compliant type hint satisfied pith metadata** (i.e., dataclass whose
+    instance variables describe an object satisfying a PEP-compliant type hint
+    when either passed as a parameter *or* returned as a value annotated by
+    that hint).
+
+    Attributes
+    ----------
+    pith : object
+        Arbitrary object *not* satisfying this hint when either passed as a
+        parameter *or* returned as a value annotated by this hint.
+    is_context_manager : bool
+        If this pith is a **context manager** (i.e., object defining both the
+        ``__exit__`` and ``__enter__`` dunder methods required to satisfy the
+        context manager protocol), this boolean is either:
+
+        * ``True`` if callers should preserve this context manager as is (e.g.,
+          by passing this context manager to the decorated callable).
+        * ``False`` if callers should safely open and close this context
+          manager to its context *and* replace this context manager with that
+          context (e.g., by passing this context to the decorated callable).
+
+        If this pith is *not* a context manager, this boolean is ignored.
+        Defaults to ``False``.
+    is_pith_factory : bool
+        ``True`` only if this pith is actually a **pith factory** (i.e.,
+        callable accepting *no* parameters and dynamically creating and
+        returning the value to be used as the desired pith, presumably by
+        passing this value to the decorated callable). Defaults to ``False``.
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        pith: object,
+
+        # Optional parameters.
+        is_context_manager: bool = False,
+        is_pith_factory: bool = False,
+    ) -> None:
+        assert isinstance(is_context_manager, bool), (
+            f'{repr(is_context_manager)} not boolean.')
+        assert isinstance(is_pith_factory, bool), (
+            f'{repr(is_pith_factory)} not boolean.')
+
+        # Classify all passed parameters.
+        self.pith = pith
+        self.is_context_manager = is_context_manager
+        self.is_pith_factory = is_pith_factory
+
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    pith={self.pith},',
+            f'    is_context_manager={self.is_context_manager},',
+            f'    is_pith_factory={self.is_pith_factory},',
+            f')',
+        ))
+
+
 class PepHintPithUnsatisfiedMetadata(object):
     '''
     **PEP-compliant type hint unsatisfied pith metadata** (i.e., dataclass

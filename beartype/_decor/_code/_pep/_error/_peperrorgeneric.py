@@ -16,6 +16,9 @@ from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.pep.proposal.utilhintpep484 import (
+    get_hint_pep484_generic_base_erased_from_unerased)
+from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 from typing import Generic
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -38,9 +41,9 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
     assert sleuth.hint_sign is Generic, (
         f'{repr(sleuth.hint_sign)} not generic.')
-    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
     # If this pith is *NOT* an instance of this generic, defer to the getter
     # function handling non-"typing" classes.
@@ -50,20 +53,28 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> 'Optional[str]':
 
     # For each pseudo-superclass of this generic...
     for hint_base in sleuth.hint_childs:
-        # If this pseudo-superclass is either...
-        if (
-            # An actual superclass, this pseudo-superclass is effectively
-            # ignorable. Why? Because the isinstance() call above already
-            # type-checked this pith against the generic subclassing this
-            # superclass and thus this superclass as well.
-            isinstance(hint_base, type) or
-            # Explicitly ignorable...
-            is_hint_ignorable(hint_base)
-        # Then this pseudo-superclass is ignorable. In this case, skip to the
-        # next pseudo-superclass.
-        ):
+        # If this pseudo-superclass is an actual superclass, this
+        # pseudo-superclass is effectively ignorable. Why? Because the
+        # isinstance() call above already type-checked this pith against the
+        # generic subclassing this superclass and thus this superclass as well.
+        # In this case, skip to the next pseudo-superclass.
+        if isinstance(hint_base, type):
             continue
-        # Else, this pseudo-superclass is unignorable.
+        # Else, this pseudo-superclass is *NOT* an actual class.
+        #
+        # If this pseudo-superclass is *NOT* defined by the "typing" module
+        # (and is thus user-defined), reduce this pseudo-superclass to a real
+        # superclass originating this pseudo-superclass. See related commentary
+        # in the "_pephint" submodule.
+        elif not is_hint_pep_typing(hint_base):
+            hint_base = get_hint_pep484_generic_base_erased_from_unerased(
+                hint_base)
+        # Else, this pseudo-superclass is defined by the "typing" module.
+
+        # If this superclass is ignorable, do so.
+        if is_hint_ignorable(hint_base):
+            continue
+        # Else, this superclass is unignorable.
 
         # Human-readable string describing the failure of this pith to satisfy
         # this pseudo-superclass if this pith actually fails to satisfy

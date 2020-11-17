@@ -14,6 +14,7 @@
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
+    PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
 from typing import (
@@ -54,9 +55,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type.
         Annotated[str, int]: PepHintMetadata(
             pep_sign=Annotated,
-            piths_satisfied=(
+            piths_satisfied_meta=(
                 # String constant.
-                'Towards a timely, wines‐enticing gate',
+                PepHintPithSatisfiedMetadata(
+                    'Towards a timely, wines‐enticing gate'),
             ),
             piths_unsatisfied_meta=(
                 # List of string constants.
@@ -68,9 +70,12 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a "typing" type.
         Annotated[List[str], int]: PepHintMetadata(
             pep_sign=Annotated,
-            piths_satisfied=(
+            piths_satisfied_meta=(
                 # List of string constants.
-                ['MINERVA‐unnerving, verve‐sapping enervations',],
+                PepHintPithSatisfiedMetadata([
+                    'MINERVA‐unnerving, verve‐sapping enervations',
+                    'Of a magik-stoned Shinto rivery',
+                ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
