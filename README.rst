@@ -14,9 +14,8 @@ beartype —[ …the bare-metal type checker ]—
 
                            — `The Jungle Book`_.
 
-**Beartype** is an open-source pure-Python `PEP-compliant <PEP-compliant Type
-Hints_>`__ runtime type checker emphasizing efficiency, portability, and
-thrilling puns.
+**Beartype** is an open-source pure-Python `PEP-compliant <Compliance_>`__
+runtime type checker emphasizing efficiency, portability, and thrilling puns.
 
 Unlike comparable static type checkers operating at the coarse-grained
 application level (e.g., Pyre_, mypy_, pyright_, pytype_), beartype operates
@@ -26,9 +25,9 @@ natively compatible with *all* interpreters and compilers targeting the Python
 language – including CPython_, PyPy_, Numba_, and Nuitka_.
 
 Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
-beartype wraps each decorated callable with a dynamically generated wrapper
-efficiently type-checking that specific callable. Since "performance by
-default" is our first-class concern, *all* wrappers are guaranteed to:
+beartype wraps decorated callables with dynamically generated wrappers
+efficiently type-checking those specific callables. Since "performance by
+default" is our first-class concern, these wrappers are guaranteed to:
 
 * Exhibit `O(1) time complexity with negligible constant factors <Nobody
   Believes You_>`__.
@@ -40,7 +39,7 @@ Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the lawless world of pure Python.
 
 Beartype is `portably implemented <codebase_>`__ in `pure Python 3
-<Python_>`__, `continuously stress-tested <tests_>`__ with `GitHub Actions`_
+<Python_>`__, `continuously stress-tested <tests_>`__ via `GitHub Actions`_
 **+** tox_ **+** pytest_, and `permissively distributed <license_>`__ under the
 `MIT license`_. Beartype has no runtime dependencies, `only one test-time
 dependency <pytest_>`__, and supports `all Python 3.x releases still in active
@@ -163,7 +162,7 @@ Let's type-check like `greased lightning`_:
        # subscripted by PEP-compliant relative forward references.
        param_must_satisfy_pep_hint_relative_forward_ref: List['MyCrassClass'],
 
-       # Annotate beartypes-specific types predefined by the beartype cave.
+       # Annotate beartype-specific types predefined by the beartype cave.
        param_must_satisfy_beartype_type_from_cave: NumberType,
 
        # Annotate beartype-specific unions of types as tuples.
@@ -417,56 +416,190 @@ Fully checking a container takes no more calls than that container's size times
 the logarithm of that size on average. For example, fully checking a **list of
 50 integers** is expected to take **225 calls** on average.
 
+Compliance
+==========
+
+``beartype`` is fully compliant with these `Python Enhancement Proposals (PEPs)
+<PEP 0_>`__:
+
+* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
+  detailed below <Partial Compliance_>`__
+* `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
+  <Partial Compliance_>`__.
+* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
+  544_>`_.
+* `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
+* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
+* `PEP 572 -- Assignment Expressions <PEP 572_>`__.
+* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
+
+``beartype`` is partially compliant with these PEPs:
+
+* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
+
+``beartype`` is currently *not* compliant whatsoever with these PEPs:
+
+* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
+* `PEP 586 -- Literal Types <PEP 586_>`__.
+* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
+  <PEP 589_>`__.
+* `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
+
+See also the **PEP** and **typing** categories of our `features matrix
+<Features_>`__ for further details.
+
+Full Compliance
+---------------
+
+``beartype`` **deeply type-checks** (i.e., directly checks the types of *and*
+recursively checks the types of items contained in) parameters and return
+values annotated with these typing_ types:
+
+* typing.Annotated_.
+* typing.Any_.
+* typing.ByteString_.
+* typing.Hashable_.
+* typing.List_.
+* typing.MutableSequence_.
+* typing.NewType_.
+* typing.NoReturn_.
+* typing.Optional_.
+* typing.Sequence_.
+* typing.Sized_.
+* typing.Text_.
+* typing.Tuple_.
+* typing.Union_.
+* **Generics** (i.e., classes subclassing one or more typing_ non-class
+  objects), including:
+
+  * typing.IO_.
+  * typing.BinaryIO_.
+  * typing.TextIO_.
+
+* **Protocols** (i.e., classes directly subclassing the typing.Protocol_
+  abstract base class (ABC) *and* zero or more typing_ non-class objects),
+  including:
+
+  * typing.SupportsAbs_.
+  * typing.SupportsBytes_.
+  * typing.SupportsComplex_.
+  * typing.SupportsIndex_.
+  * typing.SupportsInt_.
+  * typing.SupportsFloat_.
+  * typing.SupportsRound_.
+
+* `Forward references <relative forward references_>`__ (i.e., unqualified
+  relative classnames typically referring to user-defined classes that have yet
+  to be defined).
+* **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
+  one or more `forward references <relative forward references_>`__).
+
+Partial Compliance
+------------------
+
+``beartype`` currently only **shallowly type-checks** (i.e., only directly
+checks the types of) parameters and return values annotated with these typing_
+types:
+
+* typing.AbstractSet_.
+* typing.AsyncIterable_.
+* typing.AsyncIterator_.
+* typing.Awaitable_.
+* typing.Callable_.
+* typing.ChainMap_.
+* typing.Container_.
+* typing.Coroutine_.
+* typing.Counter_.
+* typing.DefaultDict_.
+* typing.Deque_.
+* typing.Dict_.
+* typing.FrozenSet_.
+* typing.Generator_.
+* typing.IO_.
+* typing.ItemsView_.
+* typing.Iterable_.
+* typing.Iterator_.
+* typing.KeysView_.
+* typing.MappingView_.
+* typing.Mapping_.
+* typing.Match_.
+* typing.MutableMapping_.
+* typing.MutableSet_.
+* typing.NamedTuple_.
+* typing.Pattern_.
+* typing.Set_.
+* typing.Type_.
+* typing.TypedDict_.
+* typing.ValuesView_.
+* **Type variable-parametrized types** (i.e., typing_ objects subscripted by
+  one or more type variables).
+
+Subsequent ``beartype`` versions will deeply type-check these typing_ types
+while preserving our `O(1) time complexity (with negligible constant factors)
+guarantee <Nobody Believes You_>`__.
+
+No Compliance
+-------------
+
+``beartype`` currently silently ignores these typing_ types at decoration time:
+
+* typing.ClassVar_.
+* typing.Final_.
+* `@typing.final`_.
+* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
+  type-checking of generically substitutable types), including:
+
+  * typing.AnyStr_.
+
+``beartype`` currently raises exceptions at decoration time when passed these
+typing_ types:
+
+* typing.Literal_.
+* **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
+  instantiated by subscripting either a concrete builtin container class like
+  list_ or tuple_ *or* an abstract base class (ABC) declared by
+  the collections.abc_ or contextlib_ modules like collections.abc.Iterable_
+  or contextlib.AbstractContextManager_ with one or more PEP-compliant child
+  type hints).
+
+Subsequent ``beartype`` versions will first shallowly and then deeply
+type-check these typing_ types while preserving our `O(1) time complexity (with
+negligible constant factors) guarantee <Nobody Believes You_>`__.
+
 Usage
 =====
 
-The ``@beartype`` decorator published by the ``beartype`` package transparently
+The ``@beartype`` decorator provided by the ``beartype`` package transparently
 supports two fundamentally different types of callable type hints – each with
 its own tradeoffs, tribal dogmas, religious icons, and zealous code
 inquisitors:
 
-* `Beartype-specific type hints <Beartype-specific Type Hints_>`__, which:
+* `PEP-compliant type hints <Compliance_>`__, which:
 
-  * Are highly performant in both space and time. (\ *That's good.*\ )
-    Efficiency is our raison d'être, after all. If your use case doesn't need
-    efficiency, consider adopting an alternate runtime type-checker more
-    compatible with Python's existing type-checking landscape – like
-    typeguard_.
-  * Are incapable of deeply type-checking the contents, elements, items,
-    metadata, structure, or other attributes of passed parameters and returned
-    values. (\ *That's bad.*\ )
-  * Are fully supported by ``beartype``. (\ *That's good.*\ )
-  * Do *not* comply with existing `Python Enhancement Proposals (PEPs) <PEP
-    0_>`__. (\ *That's bad, arguably.*\ )
-
-* `PEP-compliant type hints <PEP-compliant Type Hints_>`__, which:
-
-  * Are highly inefficient in both space and time. (\ *That's bad.*\ )
-  * Are capable of deeply type-checking the contents, elements, items,
-    metadata, structure, and other attributes of passed parameters and returned
+  * Are capable of deeply type-checking the contents, attributes, items,
+    metadata, structure, and other aspects of passed parameters and returned
     values. (\ *That's good.*\ )
-  * Are only partially supported by ``beartype``. (\ *That's bad.*\ )
-  * Comply with existing PEPs. (\ *That's good, arguably.*\ )
+  * Are usually a bit less performant in space and time. (\ *That's bad.*\ )
+  * Are *mostly* fully supported by ``beartype``. (\ *That's mostly good.*\ )
+  * Comply with community standards. (\ *That's good.*\ )
+
+* `Beartype-specific type hints <Unions of Types_>`__, which:
+
+  * Are incapable of deeply type-checking the contents, attributes, items,
+    metadata, structure, or other aspects of passed parameters and returned
+    values. (\ *That's bad.*\ )
+  * Are highly performant in both space and time. (\ *That's good.*\ )
+    Efficiency is our raison d'être and modus operandi, after all.
+  * Are fully supported by ``beartype``. (\ *That's good.*\ )
+  * Do *not* comply with community standards. (\ *That's bad, arguably.*\ )
 
 Callers may freely intermingle these two types and thus obtain "the best of
-both worlds" when annotating parameters and return values. All else being
-equal, your maxim to type by ``beartype`` should be:
-
-.. parsed-literal::
-
-     Use `beartype-specific type hints <Beartype-specific Type Hints_>`__
-       where sufficient.
-     Use `PEP-compliant type hints <PEP-compliant Type Hints_>`__
-       everywhere else.
-
-Beartype-specific Type Hints
-----------------------------
-
-This is simpler than it sounds. Would we lie? Instead of answering that, let's
-begin with the simplest type of type-checking supported by ``@beartype``.
+both worlds" when annotating parameters and return values. This is simpler than
+it sounds. Would we lie? Instead of answering that, let's begin with the
+simplest type of type-checking supported by ``@beartype``.
 
 Builtin Types
-~~~~~~~~~~~~~
+-------------
 
 **Builtin types** like ``dict``, ``int``, ``list``, ``set``, and ``str`` are
 trivially type-checked by annotating parameters and return values with those
@@ -556,7 +689,7 @@ Good function! The type hints applied to this function now accurately document
 this function's API. All's well that ends typed well. Suck it, `Shere Khan`_.
 
 Arbitrary Types
-~~~~~~~~~~~~~~~
+---------------
 
 Everything above also extends to:
 
@@ -632,7 +765,7 @@ document their respective APIs. Thanks to the pernicious magic of beartype, all
 ends typed well... *yet again.*
 
 Unions of Types
-~~~~~~~~~~~~~~~
+---------------
 
 That's all typed well, but everything above only applies to parameters and
 return values constrained to *singular* types. In practice, parameters and
@@ -695,7 +828,7 @@ Good function! The type hints applied to this callable now accurately documents
 its API. All ends typed well... *still again and again.*
 
 Optional Types
-++++++++++++++
+~~~~~~~~~~~~~~
 
 That's also all typed well, but everything above only applies to *mandatory*
 parameters and return values whose types are never ``NoneType``. In practice,
@@ -800,160 +933,6 @@ Let's call that function with good types:
 
 Behold! The terrifying power of the ``NoneTypeOr`` tuple factory, resplendent
 in its highly over-optimized cache utilization.
-
-PEP-compliant Type Hints
-------------------------
-
-``beartype`` is fully compliant with these `Python Enhancement Proposals (PEPs)
-<PEP 0_>`__:
-
-* `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
-  detailed below <PEP 484 Compliance_>`__
-* `PEP 484 -- Type Hints <PEP 484_>`__, subject to `caveats detailed below
-  <PEP 484 Compliance_>`__.
-* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
-* `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
-  544_>`_.
-* `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
-* `PEP 572 -- Assignment Expressions <PEP 572_>`__.
-* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
-
-``beartype`` is partially compliant with these PEPs:
-
-* `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
-
-``beartype`` is currently *not* compliant whatsoever with these PEPs:
-
-* `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 586 -- Literal Types <PEP 586_>`__.
-* `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
-  <PEP 589_>`__.
-* `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
-
-See also the **PEP** and **typing** categories of our `features matrix
-<Features_>`__ for further details.
-
-PEP 484 Compliance
-~~~~~~~~~~~~~~~~~~
-
-``beartype`` is only partially compliant with `PEP 483`_ and `484 <PEP
-484_>`__. Let's see what that means in practice.
-
-Full Compliance
-+++++++++++++++
-
-``beartype`` **deeply type-checks** (i.e., directly checks the types of *and*
-recursively checks the types of items contained in) parameters and return
-values annotated with these typing_ types:
-
-* typing.Annotated_.
-* typing.Any_.
-* typing.ByteString_.
-* typing.List_.
-* typing.MutableSequence_.
-* typing.NewType_.
-* typing.NoReturn_.
-* typing.Optional_.
-* typing.Sequence_.
-* typing.Sized_.
-* typing.Text_.
-* typing.Tuple_.
-* typing.Union_.
-* **Generics** (i.e., classes subclassing one or more typing_ non-class
-  objects), including:
-
-  * typing.BinaryIO_.
-  * typing.TextIO_.
-
-* **Protocols** (i.e., classes directly subclassing the typing.Protocol_
-  abstract base class (ABC) *and* zero or more typing_ non-class objects),
-  including:
-
-  * typing.SupportsAbs_.
-  * typing.SupportsBytes_.
-  * typing.SupportsComplex_.
-  * typing.SupportsInt_.
-  * typing.SupportsFloat_.
-  * typing.SupportsRound_.
-
-* `Forward references <relative forward references_>`__ (i.e., unqualified
-  relative string classnames internally coerced by typing_ into
-  typing.ForwardRef_ instances).
-* **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
-  one or more `forward references <relative forward references_>`__).
-
-Partial Compliance
-++++++++++++++++++
-
-``beartype`` currently only **shallowly type-checks** (i.e., only directly
-checks the types of) parameters and return values annotated with these typing_
-types:
-
-* typing.AbstractSet_.
-* typing.AsyncIterable_.
-* typing.AsyncIterator_.
-* typing.Awaitable_.
-* typing.Callable_.
-* typing.ChainMap_.
-* typing.Container_.
-* typing.Coroutine_.
-* typing.Counter_.
-* typing.DefaultDict_.
-* typing.Deque_.
-* typing.Dict_.
-* typing.FrozenSet_.
-* typing.Generator_.
-* typing.Hashable_.
-* typing.IO_.
-* typing.ItemsView_.
-* typing.Iterable_.
-* typing.Iterator_.
-* typing.KeysView_.
-* typing.MappingView_.
-* typing.Mapping_.
-* typing.Match_.
-* typing.MutableMapping_.
-* typing.MutableSet_.
-* typing.NamedTuple_.
-* typing.Pattern_.
-* typing.Set_.
-* typing.Type_.
-* typing.TypedDict_.
-* typing.ValuesView_.
-* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
-  type-checking of generically substitutable types), including:
-
-  * typing.AnyStr_.
-
-* **Type variable-parametrized types** (i.e., typing_ objects subscripted by
-  one or more type variables).
-
-Subsequent ``beartype`` versions will deeply type-check these typing_ types
-while preserving our `O(1) time complexity (with negligible constant factors)
-guarantee <Nobody Believes You_>`__.
-
-No Compliance
-+++++++++++++
-
-``beartype`` currently raises exceptions at decoration time when passed these
-typing_ types:
-
-* typing.Literal_.
-* **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
-  instantiated by subscripting either a concrete builtin container class like
-  :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
-  the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-  or :class:`collections.abc.Sequence`).
-
-``beartype`` currently silently ignores these typing_ types at decoration time:
-
-* typing.ClassVar_.
-* typing.Final_.
-* `@typing.final`_.
-
-Subsequent ``beartype`` versions will first shallowly and then deeply
-type-check these typing_ types while preserving our `O(1) time complexity (with
-negligible constant factors) guarantee <Nobody Believes You_>`__.
 
 Features
 ========
@@ -1361,37 +1340,33 @@ application stack at tool rather than Python runtime) include:
 .. _PyPI:
    https://pypi.org
 
-.. # ------------------( LINKS ~ py : test                  )------------------
-.. _pytest:
-   https://docs.pytest.org
-.. _tox:
-   https://tox.readthedocs.io
+.. # ------------------( LINKS ~ py : stdlib                )------------------
+.. _collections.abc:
+   https://docs.python.org/3/library/collections.abc.html
+.. _contextlib:
+   https://docs.python.org/3/library/contextlib.html
 
-.. # ------------------( LINKS ~ py : type : runtime        )------------------
-.. _enforce:
-   https://github.com/RussBaz/enforce
-.. _pytypes:
-   https://github.com/Stewori/pytypes
-.. _typeguard:
-   https://github.com/agronholm/typeguard
+.. # ------------------( LINKS ~ py : stdlib : collections  )------------------
+.. _collections.abc.Iterable:
+   https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable
 
-.. # ------------------( LINKS ~ py : type : static         )------------------
-.. _Pyre:
-   https://pyre-check.org
-.. _mypy:
-   http://mypy-lang.org
-.. _pytype:
-   https://github.com/google/pytype
-.. _pyright:
-   https://github.com/Microsoft/pyright
+.. # ------------------( LINKS ~ py : stdlib : contextlib   )------------------
+.. _contextlib.AbstractContextManager:
+   https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
 
-.. # ------------------( LINKS ~ py : typing                )------------------
+.. # ------------------( LINKS ~ py : stdlib : types        )------------------
+.. _list:
+   https://docs.python.org/3/library/typing.html#typing.List
+.. _tuple:
+   https://docs.python.org/3/library/typing.html#typing.Tuple
+
+.. # ------------------( LINKS ~ py : stdlib : typing       )------------------
 .. _typing:
    https://docs.python.org/3/library/typing.html
 .. _relative forward references:
    https://www.python.org/dev/peps/pep-0484/#id28
 
-.. # ------------------( LINKS ~ py : typing : attribute    )------------------
+.. # ------------------( LINKS ~ py : stdlib : typing : attr)------------------
 .. _typing.AbstractSet:
    https://docs.python.org/3/library/typing.html#typing.AbstractSet
 .. _typing.Annotated:
@@ -1528,3 +1503,27 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.Final
 .. _@typing.final:
    https://docs.python.org/3/library/typing.html#typing.final
+
+.. # ------------------( LINKS ~ py : test                  )------------------
+.. _pytest:
+   https://docs.pytest.org
+.. _tox:
+   https://tox.readthedocs.io
+
+.. # ------------------( LINKS ~ py : type : runtime        )------------------
+.. _enforce:
+   https://github.com/RussBaz/enforce
+.. _pytypes:
+   https://github.com/Stewori/pytypes
+.. _typeguard:
+   https://github.com/agronholm/typeguard
+
+.. # ------------------( LINKS ~ py : type : static         )------------------
+.. _Pyre:
+   https://pyre-check.org
+.. _mypy:
+   http://mypy-lang.org
+.. _pytype:
+   https://github.com/google/pytype
+.. _pyright:
+   https://github.com/Microsoft/pyright

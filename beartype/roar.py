@@ -509,18 +509,19 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     pass
 
 # ....................{ WARNINGS ~ decor : hint : pep     }....................
-class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype decorator PEP-compliant type hint
-    warnings.**
-
-    Instances of subclasses of this warning are emitted at decoration time from
-    the :func:`beartype.beartype` decorator on receiving a callable annotated
-    by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
-    warranting non-fatal warnings *without* raising fatal exceptions.
-    '''
-
-    pass
+#FIXME: Consider removal.
+# class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
+#     '''
+#     Abstract base class of all **beartype decorator PEP-compliant type hint
+#     warnings.**
+#
+#     Instances of subclasses of this warning are emitted at decoration time from
+#     the :func:`beartype.beartype` decorator on receiving a callable annotated
+#     by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
+#     warranting non-fatal warnings *without* raising fatal exceptions.
+#     '''
+#
+#     pass
 
 
 #FIXME: Consider removal.
