@@ -35,6 +35,7 @@ from beartype._decor._code._pep._error._peperrorunion import (
 )
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP_SIGNS_TUPLE,
     HINT_PEP_SIGNS_TYPE_ORIGIN,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
@@ -48,7 +49,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Generic, Tuple
+from typing import Generic
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -263,6 +264,10 @@ def _init() -> None:
         _TYPING_ATTR_TO_GETTER[pep_sign_sequence_standard] = (
             get_cause_or_none_sequence_standard)
 
+    # Map each tuple "typing" attribute to the appropriate getter.
+    for pep_sign_tuple in HINT_PEP_SIGNS_TUPLE:
+        _TYPING_ATTR_TO_GETTER[pep_sign_tuple] = get_cause_or_none_tuple
+
     # Map each unifying "typing" attribute to the appropriate getter.
     for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:
         _TYPING_ATTR_TO_GETTER[pep_sign_type_union] = (
@@ -273,8 +278,8 @@ def _init() -> None:
     _TYPING_ATTR_TO_GETTER.update({
         HINT_PEP484_BASE_FORWARDREF: get_cause_or_none_forwardref,
         Generic: get_cause_or_none_generic,
-        Tuple: get_cause_or_none_tuple,
     })
+
 
 # Initialize this submodule.
 _init()

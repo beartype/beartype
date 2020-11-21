@@ -40,9 +40,17 @@ class PepHintMetadata(object):
         ``True`` only if this hint is parametrized by one or more **type
         variables** (i.e., :class:`typing.TypeVar` instances).
         Defaults to ``False``.
+    is_pep585 : bool
+        ``True`` only if this hint is `PEP 585`-compliant (i.e., instance of
+        the :class:`beartype.cave.HintPep585Type` class). If ``True``, then
+        ``is_typing`` *must* be ``False``. Defaults to ``False``.
     is_typing : bool
         ``True`` only if this hint's class is defined by the :mod:`typing`
-        module. Defaults to ``True``.
+        module. If ``True``, then ``is_pep585`` *must* be ``False``. Defaults
+        to either:
+
+        * If ``is_pep585`` is ``True``, ``False``.
+        * Else, ``False``.
     piths_satisfied_meta : Tuple[PepHintPithSatisfiedMetadata]
         Tuple of zero or more :class:`_PepHintPithSatisfiedMetadata` instances,
         each describing an object satisfying this hint when either passed as a
@@ -72,18 +80,20 @@ class PepHintMetadata(object):
         is_ignorable: bool = False,
         is_supported: bool = True,
         is_typevared: bool = False,
-        is_typing: bool = True,
+        is_pep585: bool = False,
+        is_typing: bool = None,
         piths_satisfied_meta: 'Tuple[PepHintPithSatisfiedMetadata]' = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
         type_origin: 'Optional[type]' = None,
     ) -> None:
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
+        assert isinstance(is_pep585, bool), (
+            f'{repr(is_pep585)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
-        assert isinstance(is_typing, bool), f'{repr(is_typing)} not bool.'
         assert isinstance(piths_unsatisfied_meta, tuple), (
             f'{repr(piths_unsatisfied_meta)} not tuple.')
         assert all(
@@ -98,14 +108,43 @@ class PepHintMetadata(object):
         ), (
             f'{repr(piths_unsatisfied_meta)} not tuple of '
             f'"PepHintPithUnsatisfiedMetadata" instances.')
+
+        #FIXME: Excise if no longer desired.
+        # If the caller did not explicitly pass the "type_origin" parameter
+        # *AND* this is a PEP 585-compliant type hint, initialize this
+        # parameter to this hint's sign. By definition, the type origins of
+        # *ALL* PEP 585-compliant type hints are simply their signs.
+        # if type_origin is None and is_pep585:
+        #     type_origin = pep_sign
+
+        # If the caller did not explicitly pass the "is_typing" parameter,
+        # initialize this parameter to the negation of the "is_585" parameter.
+        # By definition, PEP 585-compliant type hints are *NOT* defined by the
+        # "typing" module and vice versa.
+        if is_typing is None:
+            is_typing = not is_pep585
+
+        # Defer validating parameters defaulting to "None" until *AFTER*
+        # initializing these parameters above.
+        assert isinstance(is_typing, bool), f'{repr(is_typing)} not bool.'
         assert isinstance(type_origin, (type, type(None))), (
             f'{repr(type_origin)} neither class nor "None".')
+
+        # Validate that the "is_pep585" and "is_typing" are *NOT* both true.
+        # Note that both can be false (e.g., for PEP 484-compliant user-defined
+        # generics).
+        assert not (is_pep585 and is_typing), (
+            f'Mutually incompatible boolean parameters '
+            f'is_pep585={repr(is_pep585)} and '
+            f'is_typing={repr(is_typing)} both enabled.'
+        )
 
         # Classify all passed parameters.
         self.pep_sign = pep_sign
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
         self.is_typevared = is_typevared
+        self.is_pep585 = is_pep585
         self.is_typing = is_typing
         self.piths_satisfied_meta = piths_satisfied_meta
         self.piths_unsatisfied_meta = piths_unsatisfied_meta
@@ -119,6 +158,7 @@ class PepHintMetadata(object):
             f'    is_ignorable={self.is_ignorable},',
             f'    is_supported={self.is_supported},',
             f'    is_typevared={self.is_typevared},',
+            f'    is_pep585={self.is_pep585},',
             f'    is_typing={self.is_typing},',
             f'    piths_satisfied_meta={self.piths_satisfied_meta},',
             f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',

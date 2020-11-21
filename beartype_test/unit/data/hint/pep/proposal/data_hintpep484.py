@@ -273,6 +273,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # unparametrized by default.
     _IS_SIGN_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
 
+    # ..................{ MAPPINGS                          }..................
     # Add PEP 484-specific test type hints to this dictionary global.
     data_module.HINT_PEP_TO_META.update({
         # ................{ UNSUBSCRIPTED                     }................
@@ -283,6 +284,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=Any,
             is_ignorable=True,
         ),
+
+        # Unsubscripted "ByteString" singleton. Bizarrely, note that:
+        # * "collections.abc.ByteString" is subscriptable under PEP 585.
+        # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
+        #
+        # Since neither PEP 484 nor 585 comment on "ByteString" in detail (or
+        # at all, really), this non-orthogonality remains inexplicable,
+        # frustrating, and utterly unsurprising.
         ByteString: PepHintMetadata(
             pep_sign=ByteString,
             type_origin=collections_abc.ByteString,
@@ -290,6 +299,9 @@ def add_data(data_module: 'ModuleType') -> None:
                 # Byte string constant.
                 PepHintPithSatisfiedMetadata(
                     b'By nautical/particle consciousness'),
+                # Byte array initialized from a byte string constant.
+                PepHintPithSatisfiedMetadata(
+                    bytearray(b"Hour's straight fates, (distemperate-ly)")),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
@@ -338,6 +350,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ CALLABLE                          }................
+        # Callable accepting no parameters and returning a string.
         Callable[[], str]: PepHintMetadata(
             pep_sign=Callable,
             type_origin=collections_abc.Callable,
@@ -352,6 +365,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ CONTEXTMANAGER                    }................
+        # Context manager yielding strings.
         ContextManager[str]: PepHintMetadata(
             pep_sign=ContextManager,
             type_origin=contextlib.AbstractContextManager,
@@ -558,8 +572,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Nested list of generics subclassing multiple unparametrized "typing"
-        # types *AND* a non-"typing" abstract base class (ABC).
+        # Nested list of PEP 484-compliant generics.
         List[Pep484GenericUntypevaredMultiple]: PepHintMetadata(
             pep_sign=List,
             type_origin=list,
@@ -1037,6 +1050,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ TYPE                              }................
+        # Unsubscripted "Type" singleton.
         Type: PepHintMetadata(
             pep_sign=Type,
             is_typevared=_IS_SIGN_TYPEVARED,
@@ -1544,6 +1558,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #introduced with Python 3.8.
     })
 
+    # ..................{ SETS                              }..................
     # Add PEP 484-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Parametrizations of the "typing.Generic" abstract base class (ABC).

@@ -15,6 +15,7 @@ import sys
 from beartype._util.hint.data.pep.proposal import (
     utilhintdatapep484,
     utilhintdatapep544,
+    utilhintdatapep585,
     utilhintdatapep593,
 )
 
@@ -144,6 +145,15 @@ This set intentionally excludes the:
    https://docs.python.org/3/library/collections.html#collections.deque
 '''
 
+
+# Initialized by the _init() function below.
+HINT_PEP_SIGNS_TUPLE = set()
+'''
+Frozen set of all **tuple signs** (i.e., arbitrary objects uniquely identifying
+PEP-compliant type hints accepting exactly one subscripted type hint argument
+constraining *all* items of compliant tuples).
+'''
+
 # ....................{ INITIALIZERS                      }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
@@ -164,6 +174,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HINT_PEP_SIGNS_IGNORABLE, \
         HINT_PEP_SIGNS_SEQUENCE_STANDARD, \
         HINT_PEP_SIGNS_SUPPORTED, \
+        HINT_PEP_SIGNS_TUPLE, \
         HINT_PEP_SIGNS_TYPE_ORIGIN
 
     # Current submodule, obtained via the standard idiom. See also:
@@ -174,6 +185,7 @@ def add_data(data_module: 'ModuleType') -> None:
     HINT_DATA_PEP_SUBMODULES = (
         utilhintdatapep484,
         utilhintdatapep544,
+        utilhintdatapep585,
         utilhintdatapep593,
     )
 
@@ -192,6 +204,8 @@ def add_data(data_module: 'ModuleType') -> None:
         'Set global "HINT_PEP_SIGNS_IGNORABLE" empty.')
     assert HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
         'Set global "HINT_PEP_SIGNS_SEQUENCE_STANDARD" empty.')
+    assert HINT_PEP_SIGNS_TUPLE, (
+        'Set global "HINT_PEP_SIGNS_TUPLE" empty.')
     assert HINT_PEP_SIGNS_TYPE_ORIGIN, (
         'Set global "HINT_PEP_SIGNS_TYPE_ORIGIN" empty.')
 
@@ -207,6 +221,7 @@ def add_data(data_module: 'ModuleType') -> None:
     HINT_PEP_SIGNS_IGNORABLE = frozenset(HINT_PEP_SIGNS_IGNORABLE)
     HINT_PEP_SIGNS_SEQUENCE_STANDARD = frozenset(
         HINT_PEP_SIGNS_SEQUENCE_STANDARD)
+    HINT_PEP_SIGNS_TUPLE = frozenset(HINT_PEP_SIGNS_TUPLE)
     HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
     HINT_PEP_SIGNS_SUPPORTED = frozenset(
         # Set of all deeply supported signs.

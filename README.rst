@@ -431,11 +431,8 @@ Compliance
 * `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 572 -- Assignment Expressions <PEP 572_>`__.
-* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
-
-``beartype`` is partially compliant with these PEPs:
-
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
+* `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
@@ -531,6 +528,12 @@ types:
 * typing.Type_.
 * typing.TypedDict_.
 * typing.ValuesView_.
+* **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
+  instantiated by subscripting either a concrete builtin container class like
+  list_ or tuple_ *or* an abstract base class (ABC) declared by
+  the collections.abc_ or contextlib_ modules like collections.abc.Iterable_
+  or contextlib.AbstractContextManager_ with one or more PEP-compliant child
+  type hints).
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
 
@@ -555,12 +558,6 @@ No Compliance
 typing_ types:
 
 * typing.Literal_.
-* **Subscripted builtins** (i.e., `PEP 585`_-compliant C-based type hint
-  instantiated by subscripting either a concrete builtin container class like
-  list_ or tuple_ *or* an abstract base class (ABC) declared by
-  the collections.abc_ or contextlib_ modules like collections.abc.Iterable_
-  or contextlib.AbstractContextManager_ with one or more PEP-compliant child
-  type hints).
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
@@ -1120,7 +1117,7 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `572 <PEP 572_>`__                  | **0.3.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
-|             | `585 <PEP 585_>`__                  | *none*                        | *none*                    |
+|             | `585 <PEP 585_>`__                  | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `586 <PEP 586_>`__                  | *none*                        | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+

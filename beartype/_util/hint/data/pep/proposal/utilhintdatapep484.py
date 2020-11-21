@@ -291,7 +291,10 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ SETS ~ signs : subtypes           }..................
     data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((
-        typing.List,
-        typing.MutableSequence,
-        typing.Sequence,
+        List,
+        MutableSequence,
+        Sequence,
+    ))
+    data_module.HINT_PEP_SIGNS_TUPLE.update((
+        Tuple,
     ))

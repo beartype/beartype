@@ -158,8 +158,7 @@ def test_die_unless_hint_pep_sign_supported() -> None:
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP
 
-    # Assert this tester accepts all supported unsubscripted "typing"
-    # attributes.
+    # Assert this tester accepts all supported signs.
     for pep_signs_supported in HINT_PEP_SIGNS_SUPPORTED:
         die_if_hint_pep_sign_unsupported(pep_signs_supported)
 
@@ -170,10 +169,14 @@ def test_die_unless_hint_pep_sign_supported() -> None:
             with raises(BeartypeDecorHintPepUnsupportedException):
                 die_if_hint_pep_sign_unsupported(hint_pep)
 
-    # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
+    # Assert this tester rejects objects that are neither PEP-noncompliant
+    # *NOR* supported signs. Examples of objects that are PEP-noncompliant but
+    # also supported signs include *ALL* PEP 585-compliant type origins under
+    # Python >= 3.9 (e.g., "dict", "list", "collections.abc.Sequence").
     for not_hint_pep in NOT_HINTS_PEP:
-        with raises(BeartypeDecorHintPepException):
-            die_if_hint_pep_sign_unsupported(not_hint_pep)
+        if not_hint_pep not in HINT_PEP_SIGNS_SUPPORTED:
+            with raises(BeartypeDecorHintPepException):
+                die_if_hint_pep_sign_unsupported(not_hint_pep)
 
 # ....................{ TESTS ~ typevar                   }....................
 def test_is_hint_typing_typevar() -> None:

@@ -16,11 +16,12 @@ from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_SEQUENCE_STANDARD)
+    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP_SIGNS_TUPLE,
+)
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_type_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -83,7 +84,8 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is Tuple, f'{repr(sleuth.hint_sign)} not tuple.'
+    assert sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE, (
+        f'{repr(sleuth.hint_sign)} not tuple.')
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
@@ -186,7 +188,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
         sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
-            sleuth.hint_sign is Tuple and
+            sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis
         )

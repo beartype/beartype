@@ -117,9 +117,10 @@ def add_data(data_module: 'ModuleType') -> None:
     # and thus fails to support PEP 544, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_8:
         return
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
+    # Else, the active Python interpreter targets at least Python >= 3.8 and
     # thus supports PEP 593.
 
+    # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
     from typing import (
         Any,

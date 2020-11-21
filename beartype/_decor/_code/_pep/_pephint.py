@@ -16,6 +16,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Emit non-fatal warnings for each "typing" object deprecated by PEP 585
+#when used under Python >= 3.9 (e.g., "typing.AbstractSet", "typing.Tuple"). To
+#quote PEP 585:
+#   "Importing those from typing is deprecated. Due to PEP 563 and the
+#    intention to minimize the runtime impact of typing, this deprecation will
+#    not generate DeprecationWarnings. Instead, type checkers may warn about
+#    such deprecated usage when the target version of the checked program is
+#    signalled to be Python 3.9 or newer. It's recommended to allow for those
+#    warnings to be silenced on a project-wide basis."
+
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
@@ -335,6 +345,7 @@ from beartype._util.cache.utilcacheerror import (
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP_SIGNS_TUPLE,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF,
@@ -370,7 +381,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
-from typing import Generic, NewType, NoReturn, Tuple
+from typing import Generic, NewType, NoReturn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -1720,7 +1731,7 @@ def pep_code_check_hint(hint: object) -> (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...
                 hint_curr_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
                     # A tuple *AND*...
-                    hint_curr_sign is Tuple and
+                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE and
                     # This tuple is subscripted by exactly two child hints
                     # *AND*...
                     hint_childs_len == 2 and
@@ -1754,7 +1765,10 @@ def pep_code_check_hint(hint: object) -> (
                 #     >>> import typing as t
                 #     >>> t.List[int, str]
                 #     TypeError: Too many parameters for typing.List; actual 2, expected 1
-                assert hint_childs_len == 1 or hint_curr_sign is Tuple, (
+                assert (
+                    hint_childs_len == 1 or
+                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE
+                ), (
                     f'{hint_child_label} PEP sequence {repr(hint_curr)} '
                     f'subscripted by multiple arguments.')
 
@@ -1815,7 +1829,7 @@ def pep_code_check_hint(hint: object) -> (
             #   Note that the "..." substring here is *NOT* a literal ellipses.
             #
             # This is what happens when non-human-readable APIs are promoted.
-            elif hint_curr_sign is Tuple:
+            elif hint_curr_sign in HINT_PEP_SIGNS_TUPLE:
                 # Assert this tuple was subscripted by at least one argument.
                 # Note that the "typing" module should have already guaranteed
                 # this on our behalf. Trust is for the weak.

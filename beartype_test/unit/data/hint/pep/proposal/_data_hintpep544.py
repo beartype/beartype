@@ -54,6 +54,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Else, the active Python interpreter targets at least Python >= 3.8 and
     # thus supports PEP 544.
 
+    # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
     from typing import (
         BinaryIO,
