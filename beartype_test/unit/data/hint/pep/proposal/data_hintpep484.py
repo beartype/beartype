@@ -16,6 +16,8 @@ from beartype.cave import (
     RegexMatchType,
     RegexCompiledType,
 )
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_BASE_FORWARDREF)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
@@ -1574,4 +1576,13 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unions containing any ignorable type hint.
         Union[Any, float, str,],
         Union[complex, int, object,],
+    ))
+
+    # Add PEP 484-specific invalid non-generic types to that set global.
+    data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+        # The "TypeVar" class as is does *NOT* constitute a valid type hint.
+        TypeVar,
+
+        # The "ForwardRef" class as is does *NOT* constitute a valid type hint.
+        HINT_PEP484_BASE_FORWARDREF,
     ))

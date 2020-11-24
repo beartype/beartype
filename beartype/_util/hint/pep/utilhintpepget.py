@@ -19,10 +19,11 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_TYPE_ORIGIN)
+    HINT_PEP_SIGNS_TYPE,
+    HINT_PEP_SIGNS_TYPE_ORIGIN,
+)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF)
-from beartype._util.py.utilpymodule import get_object_class_module_name_or_none
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -33,6 +34,7 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585)
+from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from typing import Generic, NewType, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -59,14 +61,6 @@ existing :attr:`typing.ContextManager` attribute. Ergo, this dictionary
 contains a key-value pair mapping from the non-existing :mod:`typing` attribute
 ``AbstractContextManager`` to the existing :mod:`typing` attribute
 ``ContextManager``.
-'''
-
-# ....................{ SETS                              }....................
-_HINT_PEP_SIGN_MODULE_NAMES = frozenset(('typing', 'beartype.cave',))
-'''
-Frozen set of the fully-qualified names of all modules whose classes are
-interpreted as **signs** (i.e., arbitrary objects uniquely identifying types of
-PEP-compliant type hints) by the :func:`get_hint_pep_sign` function.
 '''
 
 # ....................{ GETTERS ~ args                    }....................
@@ -403,50 +397,46 @@ def get_hint_pep_sign(hint: object) -> dict:
         return Generic
     # Else, this hint is *NOT* a generic.
     #
-    # If this hint is any other class...
-    elif isinstance(hint, type):
-        # Fully-qualified name of the module declaring this class.
-        hint_module_name = get_object_class_module_name_or_none(hint)
-
-        # If this class is *NOT* declared by a module explicitly permitted to
-        # declare signs, this class is impermissible as an sign and thus *NOT*
-        # PEP-compliant. But by the validation above, this hint is
-        # PEP-compliant. Since this invokes a world-shattering paradox, raise
-        # an exception.
-        if hint_module_name not in _HINT_PEP_SIGN_MODULE_NAMES:
-            raise BeartypeDecorHintPepSignException(
-                f'PEP-compliant type hint {repr(hint)} not declared by '
-                f'module in {repr(_HINT_PEP_SIGN_MODULE_NAMES)}.'
-            )
-        # Else, this class is declared by such a module.
-
-        # If this class is subscripted by neither child hints nor type
-        # variables and is thus a standard class, this class is permissible as
-        # a sign. In this case, return this class as is.
-        #
-        # Note that this is principally useful under Python 3.6, where the
-        # "typing" module idiosyncratically declares most subscriptions of
-        # "typing" objects as ad-hoc classes: e.g.,
-        #     >>> import typing
-        #     >>> isinstance(typing.List[int], type)
-        #     True     # <-- this is balls cray-cray
-        #
-        # While that suggests that we *COULD* technically fence this
-        # conditional behind a Python 3.6 check, doing so would render this
-        # function less robust against unwarranted stdlib changes. Ergo, we
-        # preserve this as is for forward-proofing.
-        if not (get_hint_pep_args(hint) or get_hint_pep_typevars(hint)):
-            return hint
-        # Else, this class is subscripted by one or more child hints and/or
-        # type variables and is thus *NOT* a standard class. In this case,
-        # continue (i.e., attempt to handle this class as a PEP 484-compliant
-        # type hint defined by the "typing" module).
-    # Else, this hint is *NOT* a class.
-    #
-    # If this hint is PEP 585-compliant type hint, return the C-based ABC
-    # generically identifying *ALL* such hints.
+    # If this hint is PEP 585-compliant type hint, return the origin type
+    # originating this hint (e.g., "list" for "list[str]").
     elif is_hint_pep585(hint):
-        return HintPep585Type
+        return get_hint_pep_type_origin(hint)
+    # Else, this hint is *NOT* a PEP 585-compliant type hint.
+    #
+    # If this hint is...
+    elif (
+        # A class...
+        isinstance(hint, type) and
+        # *NOT* subscripted by one or more child hints or type variables...
+        not (get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+    # Then this class is a standard class. In this case...
+    #
+    # Note that this is principally useful under Python 3.6, which
+    # idiosyncratically defines subscriptions of "typing" objects as classes:
+    #     >>> import typing
+    #     >>> isinstance(typing.List[int], type)
+    #     True     # <-- this is balls cray-cray, too.
+    #
+    # While we *COULD* technically fence this conditional behind a Python 3.6
+    # check, doing so would render this getter less robust against unwarranted
+    # stdlib changes. Ergo, we preserve this as is for forward-proofing.
+    ):
+        # If this class is *NOT* explicitly allowed as a sign, raise an
+        # exception.
+        if hint not in HINT_PEP_SIGNS_TYPE:
+            raise BeartypeDecorHintPepSignException(
+                f'PEP-compliant type hint {repr(hint)} invalid as sign '
+                f'(i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
+            )
+        # Else, this class is explicitly allowed as a sign.
+
+        # Return this class as is.
+        return hint
+    # Else, this hint is either not a class *OR* or class subscripted by one or
+    # more child hints or type variables and is thus *NOT* a standard class. In
+    # either case, continue (i.e., attempt to handle this class as a PEP
+    # 484-compliant type hint defined by the "typing" module).
+    #
     # If this hint is a forward reference, return the class of all PEP
     # 484-compliant (but *NOT* PEP 585-compliant) forward references.
     #

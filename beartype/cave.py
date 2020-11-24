@@ -906,6 +906,10 @@ the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable` or
 :class:`collections.abc.Sequence`) if the active Python interpreter targets at
 least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
 
+Note that *all* `PEP 585`_-compliant type hints are classes. Ergo, this C-based
+type is the class of classes and thus effectively a metaclass. It's probably
+best not to think too hard about that.
+
 .. _PEP 585:
     https://www.python.org/dev/peps/pep-0585
 '''

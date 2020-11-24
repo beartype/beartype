@@ -16,6 +16,7 @@ import sys
 from beartype_test.unit.data.hint.pep.proposal import (
     data_hintpep484,
     _data_hintpep544,
+    _data_hintpep585,
     _data_hintpep593,
 )
 
@@ -63,6 +64,15 @@ high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
 function to demonstrate this fact).
 '''
 
+
+# Initialized by the _init() function below.
+HINTS_PEP_INVALID_TYPE_NONGENERIC = set()
+'''
+Frozen set of **invalid non-generic classes** (i.e., classes declared by the
+:mod:`typing` module used to instantiate PEP-compliant type hints but
+themselves invalid as PEP-compliant type hints).
+'''
+
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
     '''
@@ -72,7 +82,8 @@ def _init() -> None:
     # Submodule globals to be redefined below.
     global \
         HINTS_PEP, \
-        HINTS_PEP_IGNORABLE_DEEP
+        HINTS_PEP_IGNORABLE_DEEP, \
+        HINTS_PEP_INVALID_TYPE_NONGENERIC
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -82,6 +93,7 @@ def _init() -> None:
     DATA_HINT_PEP_SUBMODULES = (
         data_hintpep484,
         _data_hintpep544,
+        _data_hintpep585,
         _data_hintpep593,
     )
 
@@ -93,11 +105,15 @@ def _init() -> None:
     assert HINT_PEP_TO_META, 'Dictionary global "HINT_PEP_TO_META" empty.'
     assert HINTS_PEP_IGNORABLE_DEEP, (
         'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
+    assert HINTS_PEP_INVALID_TYPE_NONGENERIC, (
+        'Set global "HINTS_PEP_INVALID_TYPE_NONGENERIC" empty.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
     HINTS_PEP = frozenset(HINT_PEP_TO_META.keys())
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
+    HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
+        HINTS_PEP_INVALID_TYPE_NONGENERIC)
 
 
 # Initialize this submodule.

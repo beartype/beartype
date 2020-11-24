@@ -84,7 +84,9 @@ def add_data(data_module: 'ModuleType') -> None:
     )
 
     # ..................{ SETS ~ signs : type               }..................
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update((
+    # Tuple of all PEP 585-compliant standard class signs (i.e., instances of
+    # the builtin "type" type identifying PEP 585-compliant type hints).
+    _HINT_PEP585_SIGNS_TYPE = (
         defaultdict,
         deque,
         dict,
@@ -122,7 +124,10 @@ def add_data(data_module: 'ModuleType') -> None:
         Sequence,
         Set,
         ValuesView,
-    ))
+    )
+
+    data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP585_SIGNS_TYPE)
+    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(_HINT_PEP585_SIGNS_TYPE)
 
     # ..................{ SETS ~ signs : supported          }..................
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((

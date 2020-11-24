@@ -11,28 +11,28 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 # ....................{ JOINERS                           }....................
 def join_delimited(
-    strs: 'Sequence[str]',
+    strs: 'Iterable[str]',
     delimiter_if_two: str,
     delimiter_if_three_or_more_nonlast: str,
     delimiter_if_three_or_more_last: str
 ) -> str:
     '''
-    Concatenate the passed sequence of zero or more strings delimited by the
+    Concatenate the passed iterable of zero or more strings delimited by the
     passed delimiter (conditionally depending on both the length of this
     sequence and index of each string in this sequence), yielding a
     human-readable string listing arbitrarily many substrings.
 
     Specifically, this function returns either:
 
-    * If this sequence contains no strings, the empty string.
-    * If this sequence contains one string, this string as is is unmodified.
-    * If this sequence contains two strings, these strings delimited by the
+    * If this iterable contains no strings, the empty string.
+    * If this iterable contains one string, this string as is is unmodified.
+    * If this iterable contains two strings, these strings delimited by the
       passed ``delimiter_if_two`` delimiter.
-    * If this sequence contains three or more strings, a string listing these
+    * If this iterable contains three or more strings, a string listing these
       contained strings such that:
 
       * All contained strings except the last two are suffixed by the passed
@@ -42,17 +42,17 @@ def join_delimited(
 
     Parameters
     ----------
-    strs : Sequence[str]
-        Sequence of all strings to be joined.
+    strs : Iterable[str]
+        Iterable of all strings to be joined.
     delimiter_if_two : str
-        Substring separating each string contained in this sequence if this
-        sequence contains exactly two strings.
+        Substring separating each string contained in this iterable if this
+        iterable contains exactly two strings.
     delimiter_if_three_or_more_nonlast : str
         Substring separating each string *except* the last two contained in
-        this sequence if this sequence contains three or more strings.
+        this iterable if this iterable contains three or more strings.
     delimiter_if_three_or_more_last : str
         Substring separating each string the last two contained in this
-        sequence if this sequence contains three or more strings.
+        iterable if this iterable contains three or more strings.
 
     Returns
     ----------
@@ -69,14 +69,19 @@ def join_delimited(
     ... )
     'Fulgrim, Perturabo, Angron, and Mortarion'
     '''
-    assert isinstance(strs, Sequence) and not isinstance(strs, str), (
-        '{!r} not non-string sequence.'.format(strs))
+    assert isinstance(strs, Iterable) and not isinstance(strs, str), (
+        f'{repr(strs)} not non-string iterable.')
     assert isinstance(delimiter_if_two, str), (
-        '{!r} not string.'.format(delimiter_if_two))
+        f'{repr(delimiter_if_two)} not string.')
     assert isinstance(delimiter_if_three_or_more_nonlast, str), (
-        '{!r} not string.'.format(delimiter_if_three_or_more_nonlast))
+        f'{repr(delimiter_if_three_or_more_nonlast)} not string.')
     assert isinstance(delimiter_if_three_or_more_last, str), (
-        '{!r} not string.'.format(delimiter_if_three_or_more_last))
+        f'{repr(delimiter_if_three_or_more_last)} not string.')
+
+    # If this iterable is *NOT* a sequence, internally coerce this iterable
+    # into a sequence for subsequent indexing purposes.
+    if not isinstance(strs, Sequence):
+        strs = tuple(strs)
 
     # Number of strings in this sequence.
     num_strs = len(strs)
@@ -89,41 +94,34 @@ def join_delimited(
         return strs[0]
     # If two strings are passed, return these strings delimited appropriately.
     elif num_strs == 2:
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-        return '{}{}{}'.format(strs[0], delimiter_if_two, strs[1])
+        return f'{strs[0]}{delimiter_if_two}{strs[1]}'
 
     # Else, three or more strings are passed.
     #
     # All such strings except the last two, delimited appropriately.
     strs_nonlast = delimiter_if_three_or_more_nonlast.join(strs[0:-2])
 
-    #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-    #support, which are the optimal means of performing string formatting.
-
     # The last two such strings, delimited appropriately.
-    strs_last = '{}{}{}'.format(
-        strs[-2], delimiter_if_three_or_more_last, strs[-1])
+    strs_last = f'{strs[-2]}{delimiter_if_three_or_more_last}{strs[-1]}'
 
     # Return these two substrings, delimited appropriately.
-    return '{}{}{}'.format(
-        strs_nonlast, delimiter_if_three_or_more_nonlast, strs_last)
+    return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
 
-def join_delimited_disjunction(strs: 'Sequence[str]') -> str:
+def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
     '''
-    Concatenate the passed sequence of zero or more strings delimited by commas
+    Concatenate the passed iterable of zero or more strings delimited by commas
     and/or the conjunction "or" (conditionally depending on both the length of
-    this sequence and index of each string in this sequence), yielding a
+    this iterable and index of each string in this iterable), yielding a
     human-readable string listing arbitrarily many substrings disjunctively.
 
     Specifically, this function returns either:
 
-    * If this sequence contains no strings, the empty string.
-    * If this sequence contains one string, this string as is is unmodified.
-    * If this sequence contains two strings, these strings delimited by the
+    * If this iterable contains no strings, the empty string.
+    * If this iterable contains one string, this string as is is unmodified.
+    * If this iterable contains two strings, these strings delimited by the
       conjunction "or".
-    * If this sequence contains three or more strings, a string listing these
+    * If this iterable contains three or more strings, a string listing these
       contained strings such that:
 
       * All contained strings except the last two are suffixed by commas.
@@ -131,8 +129,8 @@ def join_delimited_disjunction(strs: 'Sequence[str]') -> str:
 
     Parameters
     ----------
-    strs : Sequence[str]
-        Sequence of all strings to be concatenated disjunctively.
+    strs : Iterable[str]
+        Iterable of all strings to be concatenated disjunctively.
 
     Returns
     ----------

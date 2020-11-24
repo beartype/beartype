@@ -49,6 +49,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.9-specific imports.
     from typing import Annotated
 
+    # ..................{ MAPPINGS                          }..................
     # Add PEP 593-specific test type hints to this dictionary global.
     data_module.HINT_PEP_TO_META.update({
         # ................{ ANNOTATED                         }................
@@ -84,6 +85,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
     })
 
+    # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Annotated of shallowly ignorable type hints.
@@ -97,4 +99,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unions and optionals of ignorable annotateds.
         Union[complex, int, Annotated[Any, int]],
         Optional[Annotated[object, int]],
+    ))
+
+    # Add PEP 593-specific invalid non-generic types to that set global.
+    data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+        # The "Annotated" class as is does *NOT* constitute a valid type hint.
+        Annotated,
     ))

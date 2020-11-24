@@ -28,7 +28,6 @@ See Also
 from beartype_test.util.pyterror import raises_uncached
 from typing import Generic, List, NoReturn
 
-# ....................{ TESTS                             }....................
 # ....................{ TESTS ~ getters                   }....................
 def test_get_hint_pep484_generic_bases_or_none() -> None:
     '''
@@ -70,7 +69,7 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep484_generic_bases_unerased_or_none(not_hint_pep) is None
 
-# ....................{ TESTS ~ callable                  }....................
+# ....................{ TESTS ~ testers                   }....................
 def test_is_hint_pep484_generic() -> None:
     '''
     Test the
@@ -101,6 +100,9 @@ def test_pep484_hint_noreturn() -> None:
     Test the :func:`beartype.beartype` decorator against all edge cases of the
     `PEP 484`_-compliant :attr:`typing.NoReturn` type hint, which is
     contextually permissible *only* as an unsubscripted return annotation.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Defer heavyweight imports.
@@ -162,8 +164,8 @@ def test_pep484_hint_noreturn() -> None:
         def makes_gaps(abreast: List[NoReturn]):
             return 'And makes gaps even two can pass abreast.'
 
-# ....................{ TESTS ~ issues                    }....................
-def test_pep484_sequence_standard_cached() -> None:
+
+def test_pep484_hint_sequence_standard_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
     decorator with respect to metadata describing **PEP-compliant standard
@@ -218,3 +220,27 @@ def test_pep484_sequence_standard_cached() -> None:
     ], 'All the sun long it was running, it was lovely, the hay') == (
         '  In the pebbles of the holy streams.'
         'All the sun long it was running, it was lovely, the hay')
+
+# ....................{ TESTS ~ hints : invalid           }....................
+def test_pep484_hint_invalid_types_nongeneric() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator against **invalid non-generic
+    classes** (i.e., classes declared by the :mod:`typing` module used to
+    instantiate PEP-compliant type hints but themselves invalid as
+    PEP-compliant type hints).
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorHintPepSignException
+    from beartype_test.unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_INVALID_TYPE_NONGENERIC)
+
+    # Assert that decorating a callable annotated by a non-generic class raises
+    # the expected exception.
+    for type_nongeneric in HINTS_PEP_INVALID_TYPE_NONGENERIC:
+        with raises_uncached(BeartypeDecorHintPepSignException):
+            @beartype
+            def childe_roland(to_the_dark_tower_came: type_nongeneric) -> (
+                type_nongeneric):
+                raise to_the_dark_tower_came

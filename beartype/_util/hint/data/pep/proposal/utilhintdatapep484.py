@@ -128,8 +128,91 @@ def add_data(data_module: 'ModuleType') -> None:
         HINT_PEP484_BASE_FORWARDREF,
     ))
 
+    # ..................{ SETS ~ signs : ignorable          }..................
+    data_module.HINT_PEP_SIGNS_IGNORABLE.update((
+        # The "Any" singleton is semantically synonymous with the ignorable
+        # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
+        Any,
+
+        # The "Generic" superclass imposes no constraints and is thus also
+        # semantically synonymous with the ignorable PEP-noncompliant
+        # "beartype.cave.AnyType" and hence "object" types. Since PEP
+        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        # singleton including "typing.Generic" semantically expands to that
+        # singelton subscripted by an implicit "Any" argument, "Generic"
+        # semantically expands to the implicit "Generic[Any]" singleton.
+        Generic,
+
+        # The unsubscripted "Optional" singleton semantically expands to the
+        # implicit "Optional[Any]" singleton by the same argument. Since PEP
+        # 484 also stipulates that all "Optional[t]" singletons semantically
+        # expand to "Union[t, type(None)]" singletons for arbitrary arguments
+        # "t", "Optional[Any]" semantically expands to merely "Union[Any,
+        # type(None)]". Since all unions subscripted by "Any" semantically
+        # reduce to merely "Any", the "Optional" singleton also reduces to
+        # merely "Any".
+        #
+        # This intentionally excludes "Optional[type(None)]", which the
+        # "typing" module physically reduces to merely "type(None)". *shrug*
+        Optional,
+
+        # The unsubscripted "Union" singleton semantically expands to the
+        # implicit "Union[Any]" singleton by the same argument. Since PEP 484
+        # stipulates that a union of one type semantically reduces to only that
+        # type, "Union[Any]" semantically reduces to merely "Any". Despite
+        # their semantic equivalency, however, these objects remain
+        # syntactically distinct with respect to object identification: e.g.,
+        #     >>> Union is not Union[Any]
+        #     True
+        #     >>> Union is not Any
+        #     True
+        #
+        # This intentionally excludes:
+        #
+        # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
+        #   module physically reduces:
+        #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
+        #     this frozen set already contains.
+        #   * "Union[object]" to merely "object" (i.e., "Union[object] is
+        #     object"), which this frozen set also already contains.
+        # * "Union" singleton subscripted by one or more ignorable type hints
+        #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
+        #   exist a countably infinite number of these subscriptions, these
+        #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
+        #   these subscriptions are dynamically detected by the high-level
+        #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
+        #   function and thus referred to as deeply ignorable type hints.
+        Union,
+    ))
+
+    # ..................{ SETS ~ signs : supported          }..................
+    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
+        Any,
+        NewType,
+        NoReturn,
+        TypeVar,
+        HINT_PEP484_BASE_FORWARDREF,
+    ))
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
+        Generic,
+        List,
+        MutableSequence,
+        Sequence,
+        Tuple,
+
+        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+        # under Python <= 3.9. The implementations of the "typing" module under
+        # those older Python versions transparently reduced "typing.Optional"
+        # to "typing.Union" at runtime. Since this reduction is no longer the
+        # case, both *MUST* now be explicitly listed here.
+        Union,
+        Optional,
+    ))
+
     # ..................{ SETS ~ signs : type               }..................
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update((
+    # List of all signs uniquely identifying PEP 484-compliant type hints
+    # originating from an origin type.
+    _HINT_PEP484_SIGNS_TYPE_ORIGIN = [
         AbstractSet,
         AsyncGenerator,
         AsyncIterable,
@@ -166,12 +249,12 @@ def add_data(data_module: 'ModuleType') -> None:
         Tuple,
         Type,
         ValuesView,
-    ))
+    ]
 
     # If the active Python interpreter targets at least various Python
     # versions, add PEP 484-specific signs introduced in those versions.
     if IS_PYTHON_AT_LEAST_3_7:
-        data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update((
+        _HINT_PEP484_SIGNS_TYPE_ORIGIN.extend((
             typing.AsyncContextManager,
             typing.OrderedDict,
 
@@ -195,101 +278,26 @@ def add_data(data_module: 'ModuleType') -> None:
         ))
 
         if IS_PYTHON_AT_LEAST_3_8:
-            data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update((
-                typing.SupportsIndex,
-            ))
+            _HINT_PEP484_SIGNS_TYPE_ORIGIN.append(typing.SupportsIndex)
+    # If the active Python interpreter targets Python 3.6. In this case, also
+    # add these signs to the superclass set of all standard class signs.
+    # Insanely, the Python 3.6 implementation of the "typing" module defines
+    # *ALL* these signs as unique public classes.
+    else:
+        data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP484_SIGNS_TYPE_ORIGIN)
+        # import sys
+        # print(f'HINT_PEP_SIGNS_TYPE: {repr(data_module.HINT_PEP_SIGNS_TYPE)}', file=sys.stderr)
 
-    # ..................{ SETS ~ signs : ignorable          }..................
-    data_module.HINT_PEP_SIGNS_IGNORABLE.update((
-        # The "Any" singleton is semantically synonymous with the ignorable
-        # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
-        Any,
+    # The "Generic" superclass is explicitly equivalent under PEP 484 to the
+    # "Generic[Any]" subscription and thus valid as a standard class sign.
+    data_module.HINT_PEP_SIGNS_TYPE.add(Generic)
 
-        # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the ignorable PEP-noncompliant
-        # "beartype.cave.AnyType" and hence "object" types. Since PEP
-        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-        # singleton including "typing.Generic" semantically expands to that
-        # singelton subscripted by an implicit "Any" argument, "Generic"
-        # semantically expands to the implicit "Generic[Any]" singleton.
-        Generic,
+    # Add these signs to the superclass set of all sign uniquely identifying
+    # PEP-compliant type hints originating from an origin type.
+    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(
+        _HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
-        # The unsubscripted "Optional" singleton semantically expands to the
-        # implicit "Optional[Any]" singleton by the same argument. Since PEP
-        # 484 also stipulates that all "Optional[t]" singletons semantically
-        # expand to "Union[t, type(None)]" singletons for arbitrary arguments
-        # "t", "Optional[Any]" semantically expands to merely "Union[Any,
-        # type(None)]". Since all unions subscripted by "Any" semantically
-        # reduce to merely "Any", the "Optional" singleton also reduces to
-        # merely "Any".
-        #
-        # This intentionally excludes "Optional[type(None)]", which the
-        # "typing" module physically reduces to merely "type(None)". *shrug*
-        Optional,
-
-        # The "TypeVar" superclass imposes no constraints, much like the
-        # "Generic" superclass.
-        TypeVar,
-
-        # The unsubscripted "Union" singleton semantically expands to the
-        # implicit "Union[Any]" singleton by the same argument. Since PEP 484
-        # stipulates that a union of one type semantically reduces to only that
-        # type, "Union[Any]" semantically reduces to merely "Any". Despite
-        # their semantic equivalency, however, these objects remain
-        # syntactically distinct with respect to object identification: e.g.,
-        #     >>> Union is not Union[Any]
-        #     True
-        #     >>> Union is not Any
-        #     True
-        #
-        # This intentionally excludes:
-        #
-        # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
-        #   module physically reduces:
-        #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
-        #     this frozen set already contains.
-        #   * "Union[object]" to merely "object" (i.e., "Union[object] is
-        #     object"), which this frozen set also already contains.
-        # * "Union" singleton subscripted by one or more ignorable type hints
-        #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
-        #   exist a countably infinite number of these subscriptions, these
-        #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
-        #   these subscriptions are dynamically detected by the high-level
-        #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
-        #   function and thus referred to as deeply ignorable type hints.
-        Union,
-
-        # The "ForwardRef" class as an object arguably does *NOT* constitute a
-        # valid PEP-compliant type hint. Nonetheless, simply ignoring this
-        # class when used as an annotation is a safe minimal-effort approach.
-        HINT_PEP484_BASE_FORWARDREF,
-    ))
-
-    # ..................{ SETS ~ signs : supported          }..................
-    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
-        Any,
-        NewType,
-        NoReturn,
-        TypeVar,
-        HINT_PEP484_BASE_FORWARDREF,
-    ))
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
-        Generic,
-        List,
-        MutableSequence,
-        Sequence,
-        Tuple,
-
-        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-        # under Python <= 3.9. The implementations of the "typing" module under
-        # those older Python versions transparently reduced "typing.Optional"
-        # to "typing.Union" at runtime. Since this reduction is no longer the
-        # case, both *MUST* now be explicitly listed here.
-        Union,
-        Optional,
-    ))
-
-    # ..................{ SETS ~ signs : subtypes           }..................
+    # ..................{ SETS ~ signs : subtype            }..................
     data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((
         List,
         MutableSequence,
