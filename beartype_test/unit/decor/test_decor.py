@@ -94,33 +94,6 @@ def test_decor_wrappee_type_fail() -> None:
         class ImperiumNihilus(object):
             pass
 
-
-def test_decor_hint_unhashable_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
-    callables with one or more parameters or return value annotated by an
-    unhashable object.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype import beartype
-
-    # Assert that decorating a callable whose parameter is annotated by an
-    # unhashable object raises the expected exception.
-    with raises(TypeError):
-        @beartype
-        def before_the_fall(
-            craftworld: ['Alaitoc', 'Black Library', 'Biel-Tan',]) -> str:
-            return craftworld[0]
-
-    # Assert that decorating a callable whose return value is annotated by an
-    # unhashable object raises the expected exception.
-    with raises(TypeError):
-        @beartype
-        def after_the_fall(craftworld: str) -> [
-            'Iyanden', 'Saim-Hann', 'Ulthwé',]:
-            return [craftworld,]
-
 # ....................{ TESTS ~ param                     }....................
 def test_decor_param_name_fail() -> None:
     '''

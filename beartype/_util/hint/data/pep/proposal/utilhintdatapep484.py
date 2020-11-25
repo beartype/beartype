@@ -83,10 +83,18 @@ arguments into a disjunctive set union of these arguments).
 '''
 
 # ....................{ SIGNS ~ sets                      }....................
-HINT_PEP484_SIGNS_UNION = frozenset((
-    typing.Optional,
-    typing.Union,
-))
+# Initialized by the add_data() function below.
+HINT_PEP484_SIGNS_TYPE_ORIGIN = None
+'''
+Frozen set of all signs uniquely identifying `PEP 484`_-compliant type hints
+originating from an origin type.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+HINT_PEP484_SIGNS_UNION = frozenset((Optional, Union))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
 `PEP 484`_-compliant type hints unifying one or more subscripted type hint
@@ -121,6 +129,10 @@ def add_data(data_module: 'ModuleType') -> None:
     .. _PEP 484:
         https://www.python.org/dev/peps/pep-0484
     '''
+
+    # ..................{ GLOBALS                           }..................
+    # Submodule globals to be redefined below.
+    global HINT_PEP484_SIGNS_TYPE_ORIGIN
 
     # ..................{ SETS ~ bases                      }..................
     data_module.HINT_PEP_BASES_FORWARDREF.update((
@@ -212,7 +224,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ SETS ~ signs : type               }..................
     # List of all signs uniquely identifying PEP 484-compliant type hints
     # originating from an origin type.
-    _HINT_PEP484_SIGNS_TYPE_ORIGIN = [
+    HINT_PEP484_SIGNS_TYPE_ORIGIN = [
         AbstractSet,
         AsyncGenerator,
         AsyncIterable,
@@ -254,7 +266,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # If the active Python interpreter targets at least various Python
     # versions, add PEP 484-specific signs introduced in those versions.
     if IS_PYTHON_AT_LEAST_3_7:
-        _HINT_PEP484_SIGNS_TYPE_ORIGIN.extend((
+        HINT_PEP484_SIGNS_TYPE_ORIGIN.extend((
             typing.AsyncContextManager,
             typing.OrderedDict,
 
@@ -278,15 +290,18 @@ def add_data(data_module: 'ModuleType') -> None:
         ))
 
         if IS_PYTHON_AT_LEAST_3_8:
-            _HINT_PEP484_SIGNS_TYPE_ORIGIN.append(typing.SupportsIndex)
+            HINT_PEP484_SIGNS_TYPE_ORIGIN.append(typing.SupportsIndex)
     # If the active Python interpreter targets Python 3.6. In this case, also
     # add these signs to the superclass set of all standard class signs.
     # Insanely, the Python 3.6 implementation of the "typing" module defines
     # *ALL* these signs as unique public classes.
     else:
-        data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP484_SIGNS_TYPE_ORIGIN)
+        data_module.HINT_PEP_SIGNS_TYPE.update(HINT_PEP484_SIGNS_TYPE_ORIGIN)
         # import sys
         # print(f'HINT_PEP_SIGNS_TYPE: {repr(data_module.HINT_PEP_SIGNS_TYPE)}', file=sys.stderr)
+
+    # Coerce this list into a frozen set for subsequent constant-time lookup.
+    HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
     # The "Generic" superclass is explicitly equivalent under PEP 484 to the
     # "Generic[Any]" subscription and thus valid as a standard class sign.
@@ -295,7 +310,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add these signs to the superclass set of all sign uniquely identifying
     # PEP-compliant type hints originating from an origin type.
     data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(
-        _HINT_PEP484_SIGNS_TYPE_ORIGIN)
+        HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
     # ..................{ SETS ~ signs : subtype            }..................
     data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((

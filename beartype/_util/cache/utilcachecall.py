@@ -56,6 +56,7 @@ flattened tuple of all parameters passed to the decorated callable.
 #  1. A placeholder sentinel object after all positional and keyword arguments.
 #  2. Those variadic parameters.
 
+#FIXME: Revise documentation and testing.
 def callable_cached(func):
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
@@ -98,12 +99,10 @@ def callable_cached(func):
 
     Caveats
     ----------
-    **All parameters passed to the decorated callable must be hashable** (i.e.,
-    immutable). Ergo, this decorator *cannot* memoize callables either
-    accepting or returning mutable containers (e.g., `list`, `dict`).
-
     **No parameters accepted by the decorated callable may be variadic** (i.e.,
-    either variadic positional or keyword arguments).
+    either variadic positional or keyword arguments). While memoizing variadic
+    parameters would of course be feasible, this decorator has yet to implement
+    support for memoizing variadic parameters.
 
     **Order of keyword arguments passed to the decorated callable is
     significant.** This decorator recaches return values produced by calls to
@@ -112,13 +111,32 @@ def callable_cached(func):
     muh_kw=0)``, cached as two distinct calls by this decorator despite these
     calls ultimately receiving the same arguments).
 
-    **Maximize efficiency by only calling the decorated callable with
-    positional arguments.** While calling this callable with keyword arguments
-    is supported, doing so reduces the efficiency of the memoization performed
-    by this decorator -- which is the whole point of this decorator, after all.
-
-    Details
+    Efficiency
     ----------
+    For efficiency, consider calling the decorated callable with only:
+
+    * **Positional arguments.** While technically supported, every call to the
+      decorated callable passed one or more keyword arguments reduces both the
+      space and time efficiency of the memoization performed by that callable.
+    * **Hashable** (i.e., immutable) arguments. While technically supported,
+      every call to the decorated callable passed one or more unhashable
+      arguments (e.g., mutable containers like lists and dictionaries) will
+      *not* be memoized. Equivalently, only calls passed only hashable
+      arguments will be memoized. This flexibility enables decorated callables
+      to accept unhashable PEP-compliant type hints. Although *all*
+      PEP-noncompliant and *most* PEP-compliant type hints are hashable, some
+      sadly are not. These include:
+
+      * `PEP 585`_-compliant type hints subscripted by one or more unhashable
+        objects (e.g., ``collections.abc.Callable[[], str]``, the `PEP
+        585`_-compliant type hint annotating piths accepting callables
+        accepting no parameters and returning strings).
+      * :func:`typing.Annotated` subscripted by one or more unhashable objects
+        (e.g., ``typing.Annotated[typing.Any, []]``, the :attr:`typing.Any`
+        singleton annotated by an empty list).
+      * :func:`typing.Literal` subscripted by an unhashable object (e.g.,
+        ``typing.Literal[[]]``, a literal empty list).
+
     **This decorator is intentionally not implemented in terms of the stdlib**
     :func:`functools.lru_cache` **decorator,** as that decorator is inefficient
     in the special case of unbounded caching with ``maxsize=None``, mostly as
@@ -128,7 +146,8 @@ def callable_cached(func):
     for optional caching), the callable parameters and return values cached by
     this package are sufficiently small in size to render bounding irrelevant.
 
-    Consider the :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_class_typing`
+    Consider the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_class_typing`
     function, for example. Each call to that function only accepts a single
     class and returns a boolean. Under conservative assumptions of 4 bytes of
     storage per class reference and 4 byte of storage per boolean reference,
@@ -147,7 +166,7 @@ def callable_cached(func):
     Raises
     ----------
     _BeartypeUtilCachedCallableException
-        If any parameter passed to this callable is **variadic**: i.e., either
+        If any parameter passed to this callable is **variadic**, including:
 
         * A variadic positional argument resembling ``*args``.
         * A variadic keyword argument resembling ``**kwargs``.
@@ -155,15 +174,18 @@ def callable_cached(func):
     Returns
     ----------
     CallableTypes
-        Closure wrapping this callable with memoization..
+        Closure wrapping this callable with memoization.
+
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
     '''
-    assert callable(func), '{!r} not callable.'.format(func)
+    assert callable(func), f'{repr(func)} not callable.'
 
     # Avoid circular import dependencies.
     from beartype._util.utilobject import SENTINEL
 
     # Human-readable name of this function for use in exceptions.
-    func_name = '@callable_cached {}()'.format(func.__name__)
+    func_name = f'@callable_cached {func.__name__}()'
 
     # Signature of the decorated callable.
     func_sig = inspect.signature(func)
@@ -173,8 +195,9 @@ def callable_cached(func):
     for param in func_sig.parameters.values():
         if param.kind in _PARAM_KINDS_UNSUPPORTED:
             raise _BeartypeUtilCachedCallableException(
-                ' {}() parameter {} kind {!r} unsupported.'.format(
-                    func_name, param.name, param.kind))
+                f'{func_name} parameter {param.name} kind '
+                f'{repr(param.kind)} unsupported.'
+            )
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
@@ -194,8 +217,8 @@ def callable_cached(func):
 
     @wraps(func)
     def _callable_cached(*args, **kwargs):
-        '''
-        Memoized variant of the {}() callable.
+        f'''
+        Memoized variant of the {func.__name__}() callable.
 
         Raises
         ----------
@@ -207,7 +230,7 @@ def callable_cached(func):
         ----------
         :func:`callable_cached`
             Further details.
-        '''.format(func.__name__)
+        '''
 
         # Flatten the passed tuple of positional arguments and dictionary of
         # keyword arguments into a single tuple containing both positional and
@@ -255,46 +278,53 @@ def callable_cached(func):
         else:
             params_flat = args
 
-        # Exception raised by a prior call to the decorated callable when
-        # passed these parameters *OR* the sentinel placeholder otherwise
-        # (i.e., if this callable either has yet to be called with these
-        # parameters *OR* has but failed to raise an exception).
-        #
-        # Note that this call raises a "TypeError" exception if any item of
-        # this flattened tuple is unhashable.
-        exception = params_flat_to_exception_get(params_flat, SENTINEL)
-
-        # If this callable previously raised an exception when called with
-        # these parameters, re-raise the same exception.
-        if exception is not SENTINEL:
-            raise exception
-        # Else, this callable either has yet to be called with these parameters
-        # *OR* has but failed to raise an exception.
-
-        # Value returned by a prior call to the decorated callable when passed
-        # these parameters *OR* the sentinel placeholder otherwise (i.e., if
-        # this callable has yet to be called with these parameters).
-        return_value = params_flat_to_return_value_get(params_flat, SENTINEL)
-
-        # If this callable has already been called with these parameters,
-        # return the value returned by that prior call.
-        if return_value is not SENTINEL:
-            return return_value
-        # Else, this callable has yet to be called with these parameters.
-
         # Attempt to...
         try:
-            # Call this parameter with these parameters and cache the value
-            # returned by this call to these parameters.
-            return_value = params_flat_to_return_value[params_flat] = func(
-                *args, **kwargs)
-        # If this call raises an exception...
-        except Exception as exception:
-            # Cache this exception to these parameters.
-            params_flat_to_exception[params_flat] = exception
+            # Exception raised by a prior call to the decorated callable when
+            # passed these parameters *OR* the sentinel placeholder otherwise
+            # (i.e., if this callable either has yet to be called with these
+            # parameters *OR* has but failed to raise an exception).
+            #
+            # Note that this call raises a "TypeError" exception if any item of
+            # this flattened tuple is unhashable.
+            exception = params_flat_to_exception_get(params_flat, SENTINEL)
 
-            # Re-raise this exception.
-            raise exception
+            # If this callable previously raised an exception when called with
+            # these parameters, re-raise the same exception.
+            if exception is not SENTINEL:
+                raise exception
+            # Else, this callable either has yet to be called with these parameters
+            # *OR* has but failed to raise an exception.
+
+            # Value returned by a prior call to the decorated callable when passed
+            # these parameters *OR* the sentinel placeholder otherwise (i.e., if
+            # this callable has yet to be called with these parameters).
+            return_value = params_flat_to_return_value_get(params_flat, SENTINEL)
+
+            # If this callable has already been called with these parameters,
+            # return the value returned by that prior call.
+            if return_value is not SENTINEL:
+                return return_value
+            # Else, this callable has yet to be called with these parameters.
+
+            # Attempt to...
+            try:
+                # Call this parameter with these parameters and cache the value
+                # returned by this call to these parameters.
+                return_value = params_flat_to_return_value[params_flat] = func(
+                    *args, **kwargs)
+            # If this call raises an exception...
+            except Exception as exception:
+                # Cache this exception to these parameters.
+                params_flat_to_exception[params_flat] = exception
+
+                # Re-raise this exception.
+                raise exception
+        # If one or more objects either passed to *OR* returned from this call
+        # are unhashable, perform this call as is *WITHOUT* memoization. While
+        # non-ideal, stability is better than raising a fatal exception.
+        except TypeError:
+            return_value = func(*args, **kwargs)
 
         # Return this value.
         return return_value

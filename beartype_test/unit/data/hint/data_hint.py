@@ -50,7 +50,18 @@ Tuple of various objects that are unhashable and thus unsupported by the
 :func:`beartype.beartype` decorator as valid type hints.
 
 Since sets *cannot* by design contain unhashable objects, this container is
-defined as a tuple rather than set.
+defined as a tuple rather than a set.
+'''
+
+
+NOT_HINTS = tuple(NOT_HINTS_HASHABLE) + NOT_HINTS_UNHASHABLE
+'''
+Tuple of various objects unsupported by the :func:`beartype.beartype` decorator
+as valid type hints, including both hashable and unhashable unsupported
+objects.
+
+Since sets *cannot* by design contain unhashable objects, this container is
+defined as a tuple rather than a set.
 '''
 
 # ....................{ NON-PEP ~ classes                 }....................

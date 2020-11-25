@@ -203,8 +203,8 @@ def add_data(data_module: 'ModuleType') -> None:
         hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    # assert HINT_PEP_SIGNS_TYPE, (
-    #     'Set global "HINT_PEP_SIGNS_TYPE" empty.')
+    assert HINT_PEP_SIGNS_TYPE, (
+        'Set global "HINT_PEP_SIGNS_TYPE" empty.')
     assert HINT_PEP_BASES_FORWARDREF, (
         'Set global "HINT_BASES_FORWARDREF" empty.')
     assert HINT_PEP_SIGNS_SUPPORTED_DEEP, (

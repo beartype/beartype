@@ -41,8 +41,7 @@ def test_is_hint_nonpep() -> None:
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(TypeError):
-            is_hint_nonpep(non_hint_unhashable)
+        assert is_hint_nonpep(non_hint_unhashable) is False
 
 
 def test_die_unless_hint_nonpep() -> None:
@@ -69,5 +68,5 @@ def test_die_unless_hint_nonpep() -> None:
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(TypeError):
+        with raises_uncached(BeartypeDecorHintNonPepException):
             die_unless_hint_nonpep(non_hint_unhashable)

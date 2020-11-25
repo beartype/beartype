@@ -10,7 +10,7 @@ This submodule declares lower-level metadata classes instantiated by the
 higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
 '''
 
-# ....................{ CLASSES ~ hint                    }....................
+# ....................{ CLASSES ~ hint : superclass       }....................
 class PepHintMetadata(object):
     '''
     **PEP-compliant type hint metadata** (i.e., dataclass whose instance
@@ -19,17 +19,6 @@ class PepHintMetadata(object):
 
     Attributes
     ----------
-    pep_sign : object
-        **Unsubscripted** :mod:`typing` **attribute** (i.e., public attribute of
-        the :mod:`typing` module uniquely identifying this PEP-compliant type
-        hint, stripped of all subscripted arguments but *not* default type
-        variables) if this hint is uniquely identified by such an attribute
-        *or* ``None`` otherwise. Examples of PEP-compliant type hints *not*
-        uniquely identified by such attributes include those reducing to
-        standard builtins on instantiation such as:
-
-        * :class:`typing.NamedTuple` reducing to :class:`tuple`.
-        * :class:`typing.TypedDict` reducing to :class:`dict`.
     is_ignorable : bool
         ``True`` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to ``False``.
@@ -51,6 +40,17 @@ class PepHintMetadata(object):
 
         * If ``is_pep585`` is ``True``, ``False``.
         * Else, ``False``.
+    pep_hint : object
+        PEP-compliant type hint.
+    pep_sign : object
+        **Sign** (i.e., arbitrary object uniquely identifying this
+        PEP-compliant type hint) if this hint is uniquely identified by such a
+        sign *or* ``None`` otherwise. Examples of PEP-compliant type hints
+        *not* uniquely identified by such attributes include those reducing to
+        standard builtins on instantiation such as:
+
+        * :class:`typing.NamedTuple` reducing to :class:`tuple`.
+        * :class:`typing.TypedDict` reducing to :class:`dict`.
     piths_satisfied_meta : Tuple[PepHintPithSatisfiedMetadata]
         Tuple of zero or more :class:`_PepHintPithSatisfiedMetadata` instances,
         each describing an object satisfying this hint when either passed as a
@@ -77,6 +77,8 @@ class PepHintMetadata(object):
         pep_sign: object,
 
         # Optional parameters.
+        #FIXME: Make this mandatory, please. See "PepHintMetadataUnhashable".
+        pep_hint: object = None,
         is_ignorable: bool = False,
         is_supported: bool = True,
         is_typevared: bool = False,
@@ -109,14 +111,6 @@ class PepHintMetadata(object):
             f'{repr(piths_unsatisfied_meta)} not tuple of '
             f'"PepHintPithUnsatisfiedMetadata" instances.')
 
-        #FIXME: Excise if no longer desired.
-        # If the caller did not explicitly pass the "type_origin" parameter
-        # *AND* this is a PEP 585-compliant type hint, initialize this
-        # parameter to this hint's sign. By definition, the type origins of
-        # *ALL* PEP 585-compliant type hints are simply their signs.
-        # if type_origin is None and is_pep585:
-        #     type_origin = pep_sign
-
         # If the caller did not explicitly pass the "is_typing" parameter,
         # initialize this parameter to the negation of the "is_585" parameter.
         # By definition, PEP 585-compliant type hints are *NOT* defined by the
@@ -140,6 +134,7 @@ class PepHintMetadata(object):
         )
 
         # Classify all passed parameters.
+        self.pep_hint = pep_hint
         self.pep_sign = pep_sign
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
@@ -154,6 +149,7 @@ class PepHintMetadata(object):
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
+            f'    pep_hint={self.pep_hint},',
             f'    pep_sign={self.pep_sign},',
             f'    is_ignorable={self.is_ignorable},',
             f'    is_supported={self.is_supported},',
@@ -166,7 +162,8 @@ class PepHintMetadata(object):
             f')',
         ))
 
-
+# ....................{ CLASSES ~ hint : subclass         }....................
+#FIXME: Rename to "PepHintMetadataNonsigned" for orthogonality.
 class PepHintNonsignedMetadata(PepHintMetadata):
     '''
     **PEP-compliant unsigned type hint metadata** (i.e.,
@@ -191,6 +188,26 @@ class PepHintNonsignedMetadata(PepHintMetadata):
 
         # Initialize our superclass.
         super().__init__(*args, **kwargs)
+
+
+#FIXME: We should probably just refactor everything to use
+#"PepHintMetadataUnhashable" rather than "PepHintMetadata", now that
+#increasingly many PEP-compliant type hints are unhashable. Naturally, that
+#will mean also refactoring everything currently using "HINTS_PEP_TO_META" to
+#use "HINTS_PEP_UNHASHABLE" instead. We should do this, though.
+class PepHintMetadataUnhashable(PepHintMetadata):
+    '''
+    **Unhashable PEP-compliant type hint metadata** (i.e.,
+    dataclass whose instance variables describe a PEP-compliant type hint *not*
+    hashable by the :func:`hash` builtin and thus impermissible for use as
+    dictionary keys and set members).
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, pep_hint: object, *args, **kwargs) -> None:
+
+        # Initialize our superclass.
+        super().__init__(pep_hint=pep_hint, *args, **kwargs)
 
 # ....................{ CLASSES ~ hint : [un]satisfied    }....................
 class PepHintPithSatisfiedMetadata(object):

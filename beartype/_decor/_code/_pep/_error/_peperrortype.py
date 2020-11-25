@@ -104,8 +104,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
         # subtyping, describe this protocol.
         if is_hint_pep544_protocol(sleuth.hint):
             classname = (
-                f'structural (i.e., duck-typed) instance of '
-                f'<protocol "{classname}">'
+                f'structural duck-typed instance of <protocol "{classname}">'
             )
         # Else if this class is a standard abstract base class (ABC) defined by
         # a stdlib submodule also known to support structural subtyping (e.g.,
@@ -121,7 +120,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
             classname.startswith('contextlib.')
         ):
             classname = (
-                f'structural (i.e., duck-typed) instance of '
+                f'structural duck-typed instance of '
                 f'<protocol ABC "{classname}">'
             )
         # Else, this is a standard class. In this case, describe this class.
@@ -152,7 +151,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 
     # Origin type originating this hint if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint_sign)
+    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin is None:

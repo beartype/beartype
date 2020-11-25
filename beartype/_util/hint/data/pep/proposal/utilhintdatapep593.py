@@ -45,6 +45,4 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ SETS ~ signs                      }..................
     # Register the version-specific signs introduced in this version.
-    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Annotated)
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Annotated)
-    data_module.HINT_PEP_SIGNS_TYPE.add(Annotated)

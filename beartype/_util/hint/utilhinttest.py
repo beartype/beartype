@@ -209,10 +209,15 @@ def is_hint_ignorable(hint: object) -> bool:
         dictionaries and sets). All supported type hints are hashable.
     '''
 
-    # If this hint is shallowly ignorable, return true.
-    if hint in HINTS_IGNORABLE_SHALLOW:
-        return True
-    # Else, this hint is *NOT* shallowly ignorable.
+    # Attempt to...
+    try:
+        # If this hint is shallowly ignorable, return true.
+        if hint in HINTS_IGNORABLE_SHALLOW:
+            return True
+        # Else, this hint is *NOT* shallowly ignorable.
+    # If this hint is unhashable, hint is *NOT* shallowly ignorable.
+    except TypeError:
+        pass
 
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):

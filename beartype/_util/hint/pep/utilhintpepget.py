@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.cave import HintPep585Type
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
@@ -34,7 +33,6 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585)
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from typing import Generic, NewType, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -397,10 +395,14 @@ def get_hint_pep_sign(hint: object) -> dict:
         return Generic
     # Else, this hint is *NOT* a generic.
     #
-    # If this hint is PEP 585-compliant type hint, return the origin type
+    # If this hint is a PEP 585-compliant type hint, return the origin type
     # originating this hint (e.g., "list" for "list[str]").
+    #
+    # Note that the get_hint_pep_type_origin() getter is intentionally *NOT*
+    # called here. Why? Because doing so would induce an infinite recursive
+    # loop, since that function internally calls this function. *sigh*
     elif is_hint_pep585(hint):
-        return get_hint_pep_type_origin(hint)
+        return hint.__origin__
     # Else, this hint is *NOT* a PEP 585-compliant type hint.
     #
     # If this hint is...
@@ -425,8 +427,8 @@ def get_hint_pep_sign(hint: object) -> dict:
         # exception.
         if hint not in HINT_PEP_SIGNS_TYPE:
             raise BeartypeDecorHintPepSignException(
-                f'PEP-compliant type hint {repr(hint)} invalid as sign '
-                f'(i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
+                f'Unsubscripted non-generic class {repr(hint)} invalid as '
+                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
             )
         # Else, this class is explicitly allowed as a sign.
 
@@ -614,14 +616,27 @@ if IS_PYTHON_AT_LEAST_3_7:
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
 
-        # Return either...
-        return (
-            # If this sign originates from an origin type, that type.
-            hint_sign.__origin__
-            if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
-            # Else, "None".
-            None
-        )
+        # If this sign originates from an origin type...
+        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN:
+            # Return either...
+            return (
+                # If this hint is PEP 585-compliant type hint, this sign. By
+                # definition, the sign uniquely identifying any PEP
+                # 585-compliant type hint is the origin type originating this
+                # hint (e.g., "list" for "list[str]").
+                hint_sign
+                if is_hint_pep585(hint) else
+                # Else, this hint is *NOT* a PEP 585-compliant type hint. By
+                # elimination, this hint *MUST* be a PEP 484-compliant type
+                # hint. In this case, return the origin type originating this
+                # hint (e.g., "list" for "typing.List[str]").
+                hint.__origin__
+            )
+
+        # Else, this sign does *NOT* originate from an origin type. In this
+        # case, return "None".
+        return None
+
 #FIXME: Drop this like hot lead after dropping Python 3.6 support.
 # Else, the active Python interpreter targets Python 3.6. In this case...
 #

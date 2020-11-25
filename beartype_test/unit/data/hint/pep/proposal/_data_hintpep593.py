@@ -14,6 +14,7 @@
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
+    PepHintMetadataUnhashable,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
@@ -105,4 +106,24 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
         # The "Annotated" class as is does *NOT* constitute a valid type hint.
         Annotated,
+    ))
+
+    # ..................{ LISTS                             }..................
+    data_module.HINTS_PEP_UNHASHABLE.append((
+        # Unhashable annotated of a non-"typing" type annotated by an
+        # unhashable mutable container.
+        PepHintMetadataUnhashable(
+            pep_hint=Annotated[str, []],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant.
+                PepHintPithSatisfiedMetadata(
+                    'Papally Ľust‐besmirched Merchet laws'),
+            ),
+            piths_unsatisfied_meta=(
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
+            ),
+        ),
     ))

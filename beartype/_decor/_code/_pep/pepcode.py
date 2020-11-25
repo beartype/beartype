@@ -81,8 +81,8 @@ callables).
 # ....................{ CODERS                            }....................
 def pep_code_check_param(
     data: BeartypeData,
-    func_arg: Parameter,
-    func_arg_index: int,
+    func_param: Parameter,
+    func_param_index: int,
 ) -> 'Tuple[str, bool]':
     '''
     Python code type-checking the parameter with the passed signature and index
@@ -94,9 +94,9 @@ def pep_code_check_param(
     ----------
     data : BeartypeData
         Decorated callable to be type-checked.
-    func_arg : Parameter
+    func_param : Parameter
         :mod:`inspect`-specific object describing this parameter.
-    func_arg_index : int
+    func_param_index : int
         0-based index of this parameter in this callable's signature.
 
     Returns
@@ -115,14 +115,14 @@ def pep_code_check_param(
     # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-    assert isinstance(func_arg, Parameter), (
-        f'{repr(func_arg)} not parameter metadata.')
-    assert isinstance(func_arg_index, int), (
-        f'{repr(func_arg_index)} not integer.')
+    assert isinstance(func_param, Parameter), (
+        f'{repr(func_param)} not parameter metadata.')
+    assert isinstance(func_param_index, int), (
+        f'{repr(func_param_index)} not integer.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
-    get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_arg.kind, None)
+    get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_param.kind, None)
 
     # If this kind of parameter is unsupported...
     #
@@ -135,22 +135,22 @@ def pep_code_check_param(
 
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name)
+            func=data.func, param_name=func_param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            f'{hint_label} kind {repr(func_arg.kind)} unsupported.')
+            f'{hint_label} kind {repr(func_param.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # PEP-compliant type hint annotating this parameter.
-    param_hint = func_arg.annotation
+    param_hint = func_param.annotation
 
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation...
     if param_hint is NoReturn:
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name)
+            func=data.func, param_name=func_param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPep484Exception(
@@ -176,7 +176,7 @@ def pep_code_check_param(
             # This placeholder substring cached into this code with...
             PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this parameter's name.
-            repr(func_arg.name),
+            repr(func_param.name),
         )
 
         # If this code contains one or more relative forward reference
@@ -196,7 +196,7 @@ def pep_code_check_param(
     except Exception as exception:
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name) + ' PEP type hint'
+            func=data.func, param_name=func_param.name) + ' PEP type hint'
 
         # Reraise this cached exception's memoized parameter-agnostic message
         # into an unmemoized parameter-specific message.
@@ -208,7 +208,7 @@ def pep_code_check_param(
         (
             # Localize this parameter *AND*...
             get_arg_code_template.format(
-                arg_name=func_arg.name, arg_index=func_arg_index) +
+                arg_name=func_param.name, arg_index=func_param_index) +
             # Type-check this parameter.
             func_code
         ),

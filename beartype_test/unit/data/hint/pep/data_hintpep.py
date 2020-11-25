@@ -13,6 +13,9 @@ unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import sys
+from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+    PepHintMetadataUnhashable,
+)
 from beartype_test.unit.data.hint.pep.proposal import (
     data_hintpep484,
     _data_hintpep544,
@@ -73,6 +76,15 @@ Frozen set of **invalid non-generic classes** (i.e., classes declared by the
 themselves invalid as PEP-compliant type hints).
 '''
 
+# ....................{ TUPLES                            }....................
+# Initialized by the _init() function below.
+HINTS_PEP_UNHASHABLE = []
+'''
+Tuple of **unhashable PEP-compliant type hints** (i.e.,
+PEP-compliant type hints that are *not* hashable by the :func:`hash` builtin
+and thus impermissible for use as dictionary keys or set members).
+'''
+
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
     '''
@@ -83,7 +95,8 @@ def _init() -> None:
     global \
         HINTS_PEP, \
         HINTS_PEP_IGNORABLE_DEEP, \
-        HINTS_PEP_INVALID_TYPE_NONGENERIC
+        HINTS_PEP_INVALID_TYPE_NONGENERIC, \
+        HINTS_PEP_UNHASHABLE
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -108,12 +121,25 @@ def _init() -> None:
     assert HINTS_PEP_INVALID_TYPE_NONGENERIC, (
         'Set global "HINTS_PEP_INVALID_TYPE_NONGENERIC" empty.')
 
+    # Assert the "HINTS_PEP_UNHASHABLE" tuple global to contain *ONLY*
+    # instances of the "PepHintMetadataUnhashable" dataclass. Note that this
+    # global is intentionally *NOT* asserted to have been initialized, as this
+    # global is empty under older major Python versions failing to comply with
+    # PEPs that enable unhashable PEP-compliant type hints.
+    assert (
+        isinstance(hint_pep_unhashable, PepHintMetadataUnhashable)
+        for hint_pep_unhashable in HINTS_PEP_UNHASHABLE
+    ), (
+        f'{repr(HINTS_PEP_UNHASHABLE)} not iterable of '
+        f'"PepHintMetadataUnhashable" instances.')
+
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
     HINTS_PEP = frozenset(HINT_PEP_TO_META.keys())
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
         HINTS_PEP_INVALID_TYPE_NONGENERIC)
+    HINTS_PEP_UNHASHABLE = tuple(HINTS_PEP_UNHASHABLE)
 
 
 # Initialize this submodule.

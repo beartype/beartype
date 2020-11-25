@@ -27,7 +27,7 @@ def test_callable_cached_pass() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachecall import callable_cached
 
-    # Function memoized by this decorator.
+    # Callable memoized by this decorator.
     @callable_cached
     def still_i_rise(bitter, twisted, lies):
         # If an arbitrary condition, raise an exception whose value depends on
@@ -79,6 +79,18 @@ def test_callable_cached_pass() -> None:
        still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is not
        still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
 
+    # Assert that passing one or more unhashable parameters to this callable
+    # succeeds with the expected return value.
+    assert still_i_rise(
+        ('Just', 'like', 'moons',),
+        ('and', 'like', 'suns',),
+        ('With the certainty of tides',),
+    ) == (
+        'Just', 'like', 'moons',
+        'and', 'like', 'suns',
+        'With the certainty of tides',
+    )
+
 
 def test_callable_cached_fail() -> None:
     '''
@@ -89,20 +101,6 @@ def test_callable_cached_fail() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachecall import callable_cached
     from beartype.roar import _BeartypeUtilCachedCallableException
-
-    # Function memoized by this decorator.
-    @callable_cached
-    def still_i_rise(moons, suns, tides):
-        return moons | suns | tides
-
-    # Assert that attempting to memoize one or more unhashable parameters
-    # fails with the expected exception.
-    with raises(TypeError):
-        still_i_rise(
-            frozenset('Just', 'like', 'moons',),
-            frozenset('and', 'like', 'suns',),
-            frozenset('With the certainty of tides',),
-        )
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic positional parameters fails with the expected exception.

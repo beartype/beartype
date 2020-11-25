@@ -1699,27 +1699,26 @@ def pep_code_check_hint(hint: object) -> (
             elif (
                 # Is not yet deeply supported by this function *OR*...
                 hint_curr_sign not in HINT_PEP_SIGNS_SUPPORTED_DEEP or
-                # Is deeply supported by this function but is its own
-                # unsubscripted "typing" attribute (e.g., "typing.List" rather
-                # than "typing.List[str]") and is thus subscripted by *NO*
-                # child hints...
+                # Is deeply supported by this function but is its own sign
+                # (e.g., "typing.List" rather than "typing.List[str]") and is
+                # thus subscripted by *NO* child hints...
                 hint_curr is hint_curr_sign
             ):
             # Then generate trivial code shallowly type-checking the current
-            # pith as an instance of the non-"typing" origin class originating
-            # this unsubscripted "typing" attribute (e.g., "list" for attribute
-            # "typing.List" identifying hint "typing.List[int]").
+            # pith as an instance of the non-"typing" origin type originating
+            # this sign (e.g., "list" for the sign "typing.List" identifying
+            # hint "typing.List[int]").
 
-                # Code type-checking the current pith against this class.
+                # Code type-checking the current pith against this origin type.
                 func_curr_code = PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                     pith_curr_expr=pith_curr_expr,
-                    # Python expression evaluating to this class when accessed
-                    # via the private "__beartypistry" parameter.
+                    # Python expression evaluating to this origin type when
+                    # accessed via the private "__beartypistry" parameter.
                     hint_curr_expr=register_typistry_type(
-                        # Origin type of this attribute if any *OR* raise an
+                        # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
-                        # attribute was validated above to be supported.
-                        get_hint_pep_type_origin(hint_curr_sign)),
+                        # hint was validated above to be supported.
+                        get_hint_pep_type_origin(hint_curr)),
                 )
             # Else, this hint is *NOT* its own unsubscripted "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -1756,7 +1755,7 @@ def pep_code_check_hint(hint: object) -> (
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_pep_type_origin(hint_curr_sign))
+                    get_hint_pep_type_origin(hint_curr))
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").

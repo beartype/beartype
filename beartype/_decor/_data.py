@@ -180,11 +180,8 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-
         # Machine-readable name of the wrapper function to be generated.
-        self.func_wrapper_name = '__beartyped_' + func.__name__
+        self.func_wrapper_name = f'__beartyped_{func.__name__}'
 
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).

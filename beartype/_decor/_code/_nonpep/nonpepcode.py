@@ -40,8 +40,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ CODERS                            }....................
 def nonpep_code_check_param(
     data: BeartypeData,
-    func_arg: Parameter,
-    func_arg_index: int,
+    func_param: Parameter,
+    func_param_index: int,
 ) -> str:
     '''
     Python code type-checking the parameter with the passed signature and index
@@ -62,9 +62,9 @@ def nonpep_code_check_param(
     ----------
     data : BeartypeData
         Decorated callable to be type-checked.
-    func_arg : Parameter
+    func_param : Parameter
         :mod:`inspect`-specific object describing this parameter.
-    func_arg_index : int
+    func_param_index : int
         0-based index of this parameter in this callable's signature.
 
     Returns
@@ -76,14 +76,14 @@ def nonpep_code_check_param(
     # (e.g., by explicitly calling the die_unless_hint_nonpep() function). By
     # design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-    assert isinstance(func_arg, Parameter), (
-        f'{repr(func_arg)} not parameter metadata.')
-    assert isinstance(func_arg_index, int), (
-        f'{repr(func_arg_index)} not integer.')
+    assert isinstance(func_param, Parameter), (
+        f'{repr(func_param)} not parameter metadata.')
+    assert isinstance(func_param_index, int), (
+        f'{repr(func_param_index)} not integer.')
 
     # Python code template type-checking this parameter if this kind of
     # parameter is supported *OR* "None" otherwise.
-    param_code_template = PARAM_KIND_TO_NONPEP_CODE.get(func_arg.kind, None)
+    param_code_template = PARAM_KIND_TO_NONPEP_CODE.get(func_param.kind, None)
 
     # If this kind of parameter is unsupported...
     #
@@ -96,27 +96,27 @@ def nonpep_code_check_param(
 
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name)
+            func=data.func, param_name=func_param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintNonPepException(
-            f'{hint_label} kind {repr(func_arg.kind)} unsupported.')
+            f'{hint_label} kind {repr(func_param.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Python code evaluating to this hint.
-    hint_expr = NONPEP_CODE_PARAM_HINT.format(func_arg.name)
+    hint_expr = NONPEP_CODE_PARAM_HINT.format(func_param.name)
 
     # Human-readable label describing this hint.
     hint_label = (
         label_callable_decorated_param(
-            func=data.func, param_name=func_arg.name) + ' non-PEP type hint')
+            func=data.func, param_name=func_param.name) + ' non-PEP type hint')
 
     # Return Python code...
     return (
         # Resolving all forward references (i.e., stringified classnames) in
         # this hint to their referents *AND*...
         _nonpep_code_resolve_refs(
-            hint=func_arg.annotation,
+            hint=func_param.annotation,
             hint_expr=hint_expr,
             hint_label=hint_label,
         ) +
@@ -124,8 +124,8 @@ def nonpep_code_check_param(
         # Type-checking this parameter against this hint.
         param_code_template.format(
             func_name=data.func_name,
-            arg_name=func_arg.name,
-            arg_index=func_arg_index,
+            arg_name=func_param.name,
+            arg_index=func_param_index,
             hint_expr=hint_expr,
         )
     )

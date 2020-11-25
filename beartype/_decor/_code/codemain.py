@@ -138,8 +138,8 @@ from beartype._decor._code._nonpep.nonpepcode import (
 from beartype._decor._code._pep.pepcode import (
     pep_code_check_param, pep_code_check_return)
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.utilhinttest import die_unless_hint, is_hint_ignorable
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+from beartype._util.hint.utilhinttest import die_unless_hint, is_hint_ignorable
 from inspect import Parameter, Signature
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -367,58 +367,53 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
     # For the name of each parameter accepted by this callable and the
     # "Parameter" instance encapsulating this parameter (in declaration
     # order)...
-    for func_arg_index, func_arg in enumerate(
+    for func_param_index, func_param in enumerate(
         data.func_sig.parameters.values()):
+        # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
+        # otherwise (i.e., if this parameter is unannotated).
+        func_param_annotation = func_param.annotation
+
         # If this parameter is unannotated, continue to the next parameter.
-        if func_arg.annotation is _PARAM_HINT_EMPTY:
+        if func_param_annotation is _PARAM_HINT_EMPTY:
             continue
         # Else, this parameter is annotated.
 
-        # If this parameter's type hint is unsupported, raise an exception.
-        die_unless_hint(func_arg.annotation)
+        # If this hint is unsupported, raise an exception.
+        die_unless_hint(func_param_annotation)
         # Else, this hint is guaranteed to be supported and thus hashable.
 
         # If this callable redefines a parameter initialized to a default value
         # by this wrapper, raise an exception. Permitting this unlikely edge
         # case would permit unsuspecting users to accidentally override these
         # defaults.
-        if func_arg.name.startswith('__bear'):
+        if func_param.name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
                 f'{data.func_name} parameter '
-                f'"{func_arg.name}" reserved by @beartype.'
+                f'"{func_param.name}" reserved by @beartype.'
             )
 
         # If either this hint *OR* the type of this parameter is silently
         # ignorable, continue to the next parameter.
-        #
-        # Note the "in" operator when applied to a set() object requires that
-        # the first operand (i.e., "func_arg_hint" and "func_arg_kind") to be
-        # hashable. Since:
-        #
-        # * "func_arg.annotation" is guaranteed to be hashable by the prior
-        #   call to the die_unless_hint() validator.
-        # * "func_arg_kind" derives from the stdlib "inspect" module, this
-        #   should *ALWAYS* be the case for that object.
         if (
-            is_hint_ignorable(func_arg.annotation) or
-            func_arg.kind in _PARAM_KINDS_IGNORABLE
+            is_hint_ignorable(func_param_annotation) or
+            func_param.kind in _PARAM_KINDS_IGNORABLE
         ):
             continue
         # Else, this parameter is non-ignorable.
         #
         # If this non-ignorable parameter either may or must be passed
         # positionally, note this fact.
-        elif func_arg.kind is Parameter.POSITIONAL_OR_KEYWORD:
+        elif func_param.kind is Parameter.POSITIONAL_OR_KEYWORD:
             is_params_positional = True
 
         # If this is a PEP-compliant hint...
-        if is_hint_pep(func_arg.annotation):
+        if is_hint_pep(func_param_annotation):
             # Python code snippet type-checking the current parameter.
             func_code_param, is_func_code_param_needs_random_int = (
                 pep_code_check_param(
                     data=data,
-                    func_arg=func_arg,
-                    func_arg_index=func_arg_index,
+                    func_param=func_param,
+                    func_param_index=func_param_index,
                 ))
 
             # Append code type-checking this parameter against this hint.
@@ -435,8 +430,8 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         else:
             func_code += nonpep_code_check_param(
                 data=data,
-                func_arg=func_arg,
-                func_arg_index=func_arg_index,
+                func_param=func_param,
+                func_param_index=func_param_index,
             )
 
     # Return all metadata required by higher-level callers, including...
@@ -505,15 +500,15 @@ def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # and localizing a pseudo-random integer.
     is_func_code_needs_random_int = False
 
-    # Type hint annotating this callable's return value if any *OR*
-    # "Signature.Empty" otherwise.
+    # Type hint annotating this callable's return if any *OR*
+    # "_RETURN_HINT_EMPTY" otherwise (i.e., if this return is unannotated).
     func_return_hint = data.func_sig.return_annotation
 
-    # If this return value is unannotated, generate code calling this callable
+    # If this return is unannotated, generate code calling this callable
     # unchecked and returning this value from this wrapper.
     if func_return_hint is _RETURN_HINT_EMPTY:
         func_code = CODE_RETURN_UNCHECKED
-    # Else, this return value is annotated.
+    # Else, this return is annotated.
     else:
         # If this hint is unsupported, raise an exception.
         die_unless_hint(func_return_hint)

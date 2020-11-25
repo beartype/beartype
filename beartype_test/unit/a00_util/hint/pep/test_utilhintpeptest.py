@@ -78,9 +78,7 @@ def test_is_hint_pep_supported() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE,
-        NOT_HINTS_PEP,
-    )
+        NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester:
@@ -95,8 +93,7 @@ def test_is_hint_pep_supported() -> None:
 
     # Assert this tester rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(TypeError):
-            is_hint_pep_supported(non_hint_unhashable)
+        assert is_hint_pep_supported(non_hint_unhashable) is False
 
 
 def test_die_unless_hint_pep_supported() -> None:
@@ -114,9 +111,7 @@ def test_die_unless_hint_pep_supported() -> None:
     from beartype._util.hint.pep.utilhintpeptest import (
         die_if_hint_pep_unsupported)
     from beartype_test.unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE,
-        NOT_HINTS_PEP,
-    )
+        NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
     from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
 
     # Assert this tester...
@@ -136,7 +131,7 @@ def test_die_unless_hint_pep_supported() -> None:
 
     # Assert this tester rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(TypeError):
+        with raises(BeartypeDecorHintPepException):
             die_if_hint_pep_unsupported(non_hint_unhashable)
 
 

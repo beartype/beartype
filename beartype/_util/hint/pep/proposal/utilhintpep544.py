@@ -48,7 +48,16 @@ if IS_PYTHON_AT_LEAST_3_8:
 
 
     def is_hint_pep544_io_generic(hint: object) -> bool:
-        return hint in _HINT_PEP544_IO_GENERIC_TO_PROTOCOL
+
+        # Attempt to...
+        try:
+            # Return true only if this hint is a PEP 484-compliant IO generic
+            # base class.
+            return hint in _HINT_PEP544_IO_GENERIC_TO_PROTOCOL
+        # If this hint is unhashable, this hint is by definition *NOT* a PEP
+        # 484-compliant IO generic base class. In this case, return false.
+        except TypeError:
+            return False
 
 
     def is_hint_pep544_protocol(hint: object) -> None:

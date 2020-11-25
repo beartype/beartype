@@ -18,6 +18,7 @@ This submodule unit tests `PEP 585`_ support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ type                      }....................
 def test_pep585() -> None:

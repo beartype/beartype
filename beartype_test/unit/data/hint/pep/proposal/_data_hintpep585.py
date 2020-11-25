@@ -16,6 +16,7 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
+    PepHintMetadataUnhashable,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
@@ -45,6 +46,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
     import re
+    from beartype.cave import IntType
     from collections.abc import (
         ByteString,
         Callable,
@@ -66,6 +68,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Any,
         Generic,
         TypeVar,
+        Union,
     )
 
     #FIXME: Remove *AFTER* implementing PEP 585 support.
@@ -243,53 +246,46 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 585-specific test type hints to this dictionary global.
     data_module.HINT_PEP_TO_META.update({
         # ................{ BYTESTRING                        }................
-        # # Byte string of "bytes" instances.
-        # ByteString[bytes]: PepHintMetadata(
-        #     pep_sign=ByteString,
-        #     type_origin=ByteString,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Byte string constant.
-        #         PepHintPithSatisfiedMetadata(b'Ingratiatingly'),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('For an Ǽeons’ æon.'),
-        #     ),
-        # ),
+        # Byte string of integer constants satisfying the builtin "int" type.
+        #
+        # Note that *ALL* byte strings necessarily contain only integer
+        # constants, regardless of whether those byte strings are instantiated
+        # as "bytes" or "bytearray" instances. Ergo, subscripting
+        # "collections.abc.ByteString" by any class other than those satisfying
+        # the standard integer protocol raises a runtime error from @beartype.
+        # Yes, this means that subscripting "collections.abc.ByteString"
+        # conveys no information and is thus nonsensical. Welcome to PEP 585.
+        ByteString[int]: PepHintMetadata(
+            pep_sign=ByteString,
+            type_origin=ByteString,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Byte string constant.
+                PepHintPithSatisfiedMetadata(b'Ingratiatingly'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('For an Ǽeons’ æon.'),
+            ),
+        ),
 
-        # # Byte string of "bytearray" instances.
-        # ByteString[bytearray]: PepHintMetadata(
-        #     pep_sign=ByteString,
-        #     type_origin=ByteString,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Byte array initialized from a byte string constant.
-        #         PepHintPithSatisfiedMetadata(bytearray(b'Cutting Wit')),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Of birch‐rut, smut‐smitten papers and'),
-        #     ),
-        # ),
-        #
-        # # ................{ CALLABLE                          }................
-        # # Callable accepting no parameters and returning a string.
-        # Callable[[], str]: PepHintMetadata(
-        #     pep_sign=Callable,
-        #     type_origin=Callable,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Lambda function returning a string constant.
-        #         PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('...grant we heal'),
-        #     ),
-        # ),
-        #
+        # Byte string of integer constants satisfying the stdlib
+        # "numbers.Integral" protocol.
+        ByteString[IntType]: PepHintMetadata(
+            pep_sign=ByteString,
+            type_origin=ByteString,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Byte array initialized from a byte string constant.
+                PepHintPithSatisfiedMetadata(bytearray(b'Cutting Wit')),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Of birch‐rut, smut‐smitten papers and'),
+            ),
+        ),
+
         # # ................{ CONTEXTMANAGER                    }................
         # # Context manager yielding strings.
         # AbstractContextManager[str]: PepHintMetadata(
@@ -878,3 +874,29 @@ def add_data(data_module: 'ModuleType') -> None:
         #     ),
         # ),
     })
+
+    # ..................{ LISTS                             }..................
+    data_module.HINTS_PEP_UNHASHABLE.append((
+        # ................{ CALLABLE                          }................
+        # Unhashable callable accepting no parameters and returning a string.
+        #
+        # Note that PEP 585-compliant type hints implement hashing
+        # fundamentally differently from PEP 484-compliant type hints: e.g.,
+        # * The PEP 484-compliant hint "typing.Callable[[], str]" is hashable.
+        # * The PEP 585-compliant hint "typing.Callable[[], str]" is
+        #   unhashable. To circumvent this, a hashable tuple rather than
+        PepHintMetadataUnhashable(
+            pep_hint=Callable[(), str],
+            pep_sign=Callable,
+            type_origin=Callable,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Lambda function returning a string constant.
+                PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('...grant we heal'),
+            ),
+        ),
+    ))

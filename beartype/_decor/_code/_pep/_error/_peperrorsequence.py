@@ -55,7 +55,7 @@ def get_cause_or_none_sequence_standard(
         f'multiple arguments.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_pep_type_origin(sleuth.hint_sign)
+    hint_type_origin = get_hint_pep_type_origin(sleuth.hint)
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
