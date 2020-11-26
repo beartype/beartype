@@ -29,8 +29,9 @@ def test_pep585() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this tester accepts only PEP 585-compliant type hints.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep585(hint_pep) is hint_pep_meta.is_pep585
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep585(hint_pep_meta.pep_hint) is (
+            hint_pep_meta.is_pep585)

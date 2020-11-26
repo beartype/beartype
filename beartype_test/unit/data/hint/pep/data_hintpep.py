@@ -13,8 +13,10 @@ unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import sys
+from beartype._util.utilobject import is_object_hashable
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
-    PepHintMetadataUnhashable,
+    PepHintMetadata,
+    PepHintMetadataNonsigned,
 )
 from beartype_test.unit.data.hint.pep.proposal import (
     data_hintpep484,
@@ -23,35 +25,13 @@ from beartype_test.unit.data.hint.pep.proposal import (
     _data_hintpep593,
 )
 
-# ....................{ METADATA ~ dict : attr            }....................
-# Initialized by the _init() function below.
-HINT_PEP_TO_META = {}
-'''
-Dictionary mapping various PEP-compliant type hints to :class:`PepHintMetadata`
-instances describing those hints with metadata applicable to testing scenarios.
-'''
-
-
-# Initialized by the _init() function below.
-HINT_PEP_CLASSED_TO_META = {}
-'''
-Dictionary mapping various PEP-compliant type hints implemented by the
-:mod:`typing` module as standard classes indistinguishable from
-non-:mod:`typing` classes to :class:`PepHintNonsignedMetadata` instances
-describing those hints with metadata applicable to testing scenarios.
-
-These hints do *not* conform to standard expectations for PEP-compliant type
-hints and must thus be segregated from those that do conform (which is most of
-them) to avoid spurious issues throughout downstream unit tests. In particular,
-these hints are *not* uniquely identified by unsubscripted :mod:`typing`
-attributes.
-'''
-
 # ....................{ SETS                              }....................
 # Initialized by the _init() function below.
-HINTS_PEP = None
+HINTS_PEP_HASHABLE = None
 '''
-Frozen set of PEP-compliant type hints exercising well-known edge cases.
+Frozen set of **hashable PEP-compliant type hints** (i.e., PEP-compliant type
+hints accepted by the builtin :func:`hash` function *without* raising an
+exception and thus usable in hash-based containers like dictionaries and sets).
 '''
 
 
@@ -78,11 +58,38 @@ themselves invalid as PEP-compliant type hints).
 
 # ....................{ TUPLES                            }....................
 # Initialized by the _init() function below.
-HINTS_PEP_UNHASHABLE = []
+HINTS_PEP_META = []
 '''
-Tuple of **unhashable PEP-compliant type hints** (i.e.,
-PEP-compliant type hints that are *not* hashable by the :func:`hash` builtin
-and thus impermissible for use as dictionary keys or set members).
+Tuple of **PEP-compliant type hint metadata** (i.e., :class:`PepHintMetadata`
+instances describing test-specific PEP-compliant type hints with metadata
+leveraged by various testing scenarios).
+
+Design
+----------
+This tuple was initially designed as a dictionary mapping from PEP-compliant
+type hints to :class:`PepHintMetadata` instances describing those hints, until
+:mod:`beartype` added support for PEPs enabling unhashable PEP-compliant type
+hints (e.g., ``collections.abc.Callable[[], str]`` under `PEP 585`_)
+impermissible for use as dictionary keys or set members.
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+
+# Initialized by the _init() function below.
+HINTS_PEP_META_NONSIGNED = []
+'''
+Tuple of **non-signed PEP-compliant type hint metadata** (i.e.,
+:class:`PepHintMetadataNonsigned` instances describing test-specific
+PEP-compliant type hints implemented by the :mod:`typing` module as standard
+classes indistinguishable from non-:mod:`typing` classes with metadata
+leveraged by various testing scenarios).
+
+These hints do *not* conform to standard expectations for PEP-compliant type
+hints and must thus be segregated from those that do conform (which is most of
+them) to avoid spurious issues throughout downstream unit tests. In particular,
+these hints are *not* uniquely identifiable by signs.
 '''
 
 # ....................{ INITIALIZERS                      }....................
@@ -93,10 +100,11 @@ def _init() -> None:
 
     # Submodule globals to be redefined below.
     global \
-        HINTS_PEP, \
+        HINTS_PEP_HASHABLE, \
         HINTS_PEP_IGNORABLE_DEEP, \
         HINTS_PEP_INVALID_TYPE_NONGENERIC, \
-        HINTS_PEP_UNHASHABLE
+        HINTS_PEP_META, \
+        HINTS_PEP_META_NONSIGNED
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -115,31 +123,38 @@ def _init() -> None:
         data_hint_pep_submodule.add_data(CURRENT_SUBMODULE)
 
     # Assert these global to have been initialized by these private submodules.
-    assert HINT_PEP_TO_META, 'Dictionary global "HINT_PEP_TO_META" empty.'
     assert HINTS_PEP_IGNORABLE_DEEP, (
         'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
     assert HINTS_PEP_INVALID_TYPE_NONGENERIC, (
         'Set global "HINTS_PEP_INVALID_TYPE_NONGENERIC" empty.')
+    assert HINTS_PEP_META, 'Tuple global "HINTS_PEP_META" empty.'
+    assert HINTS_PEP_META_NONSIGNED, (
+        'Tuple global "HINTS_PEP_META_NONSIGNED" empty.')
 
-    # Assert the "HINTS_PEP_UNHASHABLE" tuple global to contain *ONLY*
-    # instances of the "PepHintMetadataUnhashable" dataclass. Note that this
-    # global is intentionally *NOT* asserted to have been initialized, as this
-    # global is empty under older major Python versions failing to comply with
-    # PEPs that enable unhashable PEP-compliant type hints.
+    # Assert these globals to contain only instances of their respectively
+    # expected dataclasses.
     assert (
-        isinstance(hint_pep_unhashable, PepHintMetadataUnhashable)
-        for hint_pep_unhashable in HINTS_PEP_UNHASHABLE
-    ), (
-        f'{repr(HINTS_PEP_UNHASHABLE)} not iterable of '
-        f'"PepHintMetadataUnhashable" instances.')
+        isinstance(hint_pep_meta, PepHintMetadata)
+        for hint_pep_meta in HINTS_PEP_META
+    ), f'{repr(HINTS_PEP_META)} not iterable of "PepHintMetadata" instances.'
+    assert (
+        isinstance(hint_pep_meta, PepHintMetadataNonsigned)
+        for hint_pep_meta in HINTS_PEP_META_NONSIGNED
+    ), (f'{repr(HINTS_PEP_META_NONSIGNED)} not iterable of '
+        f'"PepHintMetadataNonsigned" instances.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    HINTS_PEP = frozenset(HINT_PEP_TO_META.keys())
+    HINTS_PEP_HASHABLE = frozenset(
+        hint_pep_meta.pep_hint
+        for hint_pep_meta in HINTS_PEP_META
+        if is_object_hashable(hint_pep_meta.pep_hint)
+    )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
         HINTS_PEP_INVALID_TYPE_NONGENERIC)
-    HINTS_PEP_UNHASHABLE = tuple(HINTS_PEP_UNHASHABLE)
+    HINTS_PEP_META = tuple(HINTS_PEP_META)
+    HINTS_PEP_META_NONSIGNED = tuple(HINTS_PEP_META_NONSIGNED)
 
 
 # Initialize this submodule.

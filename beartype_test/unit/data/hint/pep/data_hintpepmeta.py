@@ -74,11 +74,10 @@ class PepHintMetadata(object):
         self,
 
         # Mandatory parameters.
+        pep_hint: object,
         pep_sign: object,
 
         # Optional parameters.
-        #FIXME: Make this mandatory, please. See "PepHintMetadataUnhashable".
-        pep_hint: object = None,
         is_ignorable: bool = False,
         is_supported: bool = True,
         is_typevared: bool = False,
@@ -163,8 +162,7 @@ class PepHintMetadata(object):
         ))
 
 # ....................{ CLASSES ~ hint : subclass         }....................
-#FIXME: Rename to "PepHintMetadataNonsigned" for orthogonality.
-class PepHintNonsignedMetadata(PepHintMetadata):
+class PepHintMetadataNonsigned(PepHintMetadata):
     '''
     **PEP-compliant unsigned type hint metadata** (i.e.,
     dataclass whose instance variables describe a PEP-compliant type hint
@@ -188,26 +186,6 @@ class PepHintNonsignedMetadata(PepHintMetadata):
 
         # Initialize our superclass.
         super().__init__(*args, **kwargs)
-
-
-#FIXME: We should probably just refactor everything to use
-#"PepHintMetadataUnhashable" rather than "PepHintMetadata", now that
-#increasingly many PEP-compliant type hints are unhashable. Naturally, that
-#will mean also refactoring everything currently using "HINTS_PEP_TO_META" to
-#use "HINTS_PEP_UNHASHABLE" instead. We should do this, though.
-class PepHintMetadataUnhashable(PepHintMetadata):
-    '''
-    **Unhashable PEP-compliant type hint metadata** (i.e.,
-    dataclass whose instance variables describe a PEP-compliant type hint *not*
-    hashable by the :func:`hash` builtin and thus impermissible for use as
-    dictionary keys and set members).
-    '''
-
-    # ..................{ INITIALIZERS                      }..................
-    def __init__(self, pep_hint: object, *args, **kwargs) -> None:
-
-        # Initialize our superclass.
-        super().__init__(pep_hint=pep_hint, *args, **kwargs)
 
 # ....................{ CLASSES ~ hint : [un]satisfied    }....................
 class PepHintPithSatisfiedMetadata(object):

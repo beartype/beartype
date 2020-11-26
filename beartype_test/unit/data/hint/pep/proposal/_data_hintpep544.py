@@ -123,12 +123,20 @@ def add_data(data_module: 'ModuleType') -> None:
         def __int__(self) -> int:
             return 42
 
-    # ..................{ MAPPINGS                          }..................
+    # ..................{ SETS                              }..................
+    # Add PEP 484-specific deeply ignorable test type hints to that set global.
+    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+        # Parametrizations of the "typing.Protocol" abstract base class (ABC).
+        Protocol[S, T],
+    ))
+
+    # ..................{ TUPLES                            }..................
     # Add PEP 544-specific test type hints to this dictionary global.
-    data_module.HINT_PEP_TO_META.update({
+    data_module.HINTS_PEP_META.extend((
         # ................{ GENERICS ~ io                     }................
         # Unsubscripted "IO" abstract base class (ABC).
-        IO: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=IO,
             pep_sign=Generic,
             is_typevared=True,
             piths_satisfied_meta=(
@@ -146,7 +154,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "BinaryIO" abstract base class (ABC).
-        BinaryIO: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=BinaryIO,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Open read-only binary file handle to this submodule.
@@ -163,7 +172,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "TextIO" abstract base class (ABC).
-        TextIO: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=TextIO,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Open read-only text file handle to this submodule.
@@ -181,7 +191,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ PROTOCOLS ~ supports              }................
         # Unsubscripted "SupportsAbs" abstract base class (ABC).
-        SupportsAbs: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsAbs,
             pep_sign=Generic,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
@@ -197,7 +208,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsBytes" abstract base class (ABC).
-        SupportsBytes: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsBytes,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Platform-agnostic filesystem path object constant.
@@ -239,7 +251,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # ),
 
         # Unsubscripted "SupportsFloat" abstract base class (ABC).
-        SupportsFloat: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsFloat,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Integer constant.
@@ -253,7 +266,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsIndex" abstract base class (ABC) first
         # introduced by Python 3.8.0.
-        SupportsIndex: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsIndex,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Integer constant.
@@ -266,7 +280,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsInt" abstract base class (ABC).
-        SupportsInt: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsInt,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Floating-point number constant.
@@ -280,7 +295,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsRound" abstract base class (ABC).
-        SupportsRound: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsRound,
             pep_sign=Generic,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
@@ -298,7 +314,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ PROTOCOLS ~ supports : user       }................
         # Predefined "typing" protocol.
-        SupportsInt: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=SupportsInt,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Structurally subtyped instance.
@@ -320,7 +337,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # Python >= 3.4 or so.
 
         # User-defined protocol parametrized by *NO* type variables.
-        ProtocolCustomUntypevared: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=ProtocolCustomUntypevared,
             pep_sign=Generic,
             is_typing=False,
             piths_satisfied_meta=(
@@ -333,7 +351,8 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # User-defined protocol parametrized by a type variable.
-        ProtocolCustomTypevared: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=ProtocolCustomTypevared,
             pep_sign=Generic,
             is_typevared=True,
             is_typing=False,
@@ -345,10 +364,4 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata('Machist-'),
             ),
         ),
-    })
-
-    # Add PEP 484-specific deeply ignorable test type hints to that set global.
-    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-        # Parametrizations of the "typing.Protocol" abstract base class (ABC).
-        Protocol[S, T],
     ))

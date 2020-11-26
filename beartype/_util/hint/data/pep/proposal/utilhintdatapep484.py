@@ -82,6 +82,15 @@ arguments into a disjunctive set union of these arguments).
     https://www.python.org/dev/peps/pep-0484
 '''
 
+# ....................{ HINTS                             }....................
+HINT_PEP484_TUPLE_EMPTY = Tuple[()]
+'''
+`PEP 484`_-compliant empty fixed-length tuple type hint.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
 # ....................{ SIGNS ~ sets                      }....................
 # Initialized by the add_data() function below.
 HINT_PEP484_SIGNS_TYPE_ORIGIN = None

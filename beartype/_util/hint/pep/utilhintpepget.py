@@ -518,7 +518,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # invokes a world-shattering paradox, raise an exception
     if not sign_name.startswith('typing.'):
         raise BeartypeDecorHintPepSignException(
-            f'PEP 484-compliant type hint {repr(hint)} '
+            f'PEP 484 type hint {repr(hint)} '
             f'representation "{sign_name}" not prefixed by "typing.".'
         )
 
@@ -556,7 +556,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # If this "typing" attribute does *NOT* exist...
     if sign is None:
         raise BeartypeDecorHintPepSignException(
-            f'PEP 484-compliant type hint {repr(hint)} '
+            f'PEP 484 type hint {repr(hint)} '
             f'attribute "typing.{sign_name}" not found.'
         )
     # Else, this "typing" attribute exists.
@@ -621,8 +621,8 @@ if IS_PYTHON_AT_LEAST_3_7:
             # Return either...
             return (
                 # If this hint is PEP 585-compliant type hint, this sign. By
-                # definition, the sign uniquely identifying any PEP
-                # 585-compliant type hint is the origin type originating this
+                # definition, the sign uniquely identifying *EVERY* PEP
+                # 585-compliant type hint is the origin type originating that
                 # hint (e.g., "list" for "list[str]").
                 hint_sign
                 if is_hint_pep585(hint) else

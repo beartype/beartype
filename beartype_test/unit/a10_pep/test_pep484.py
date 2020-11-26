@@ -41,20 +41,22 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
         get_hint_pep484_generic_bases_unerased_or_none)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_class_typing
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this getter returns...
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+    for hint_pep_meta in HINTS_PEP_META:
         # One or more unerased pseudo-superclasses for PEP 484-compliant
         # generics.
         if hint_pep_meta.pep_sign is Generic:
-            hint_pep_bases = get_hint_pep484_generic_bases_unerased_or_none(hint_pep)
+            hint_pep_bases = get_hint_pep484_generic_bases_unerased_or_none(
+                hint_pep_meta.pep_hint)
             assert isinstance(hint_pep_bases, tuple)
             assert hint_pep_bases
         # *NO* unerased pseudo-superclasses for concrete PEP-compliant type
         # hints *NOT* defined by the "typing" module.
-        elif not is_hint_pep_class_typing(hint_pep):
-            assert get_hint_pep484_generic_bases_unerased_or_none(hint_pep) is None
+        elif not is_hint_pep_class_typing(hint_pep_meta.pep_hint):
+            assert get_hint_pep484_generic_bases_unerased_or_none(
+                hint_pep_meta.pep_hint) is None
         # Else, this hint is defined by the "typing" module. In this case, this
         # hint may or may not be implemented as a generic conditionally
         # depending on the current Python version -- especially under the
@@ -67,7 +69,8 @@ def test_get_hint_pep484_generic_bases_or_none() -> None:
     # Assert this getter returns *NO* unerased pseudo-superclasses for
     # non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep484_generic_bases_unerased_or_none(not_hint_pep) is None
+        assert get_hint_pep484_generic_bases_unerased_or_none(
+            not_hint_pep) is None
 
 # ....................{ TESTS ~ testers                   }....................
 def test_is_hint_pep484_generic() -> None:
@@ -81,13 +84,13 @@ def test_is_hint_pep484_generic() -> None:
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
         is_hint_pep484_generic)
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert is_hint_pep484_generic(hint_pep) is (
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep484_generic(hint_pep_meta.pep_hint) is (
             hint_pep_meta.pep_sign is Generic)
 
     # Assert this tester rejects non-"typing" types.

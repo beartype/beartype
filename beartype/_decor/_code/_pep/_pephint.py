@@ -353,6 +353,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_generic_bases_unerased_or_none,
@@ -376,12 +377,12 @@ from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
+    is_hint_pep_tuple_empty,
     is_hint_pep_typing,
 )
-from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
-from typing import Generic, NewType, NoReturn
+from typing import Generic, NoReturn, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -674,11 +675,12 @@ def pep_code_check_hint(hint: object) -> (
     # hint of the currently visited parent hint.
     # hint_child_expr = None
 
+    #FIXME: Excise us up.
     # Origin type (i.e., non-"typing" superclass suitable for shallowly
     # type-checking the current pith against the currently visited hint by
     # passing both to the isinstance() builtin) of the currently iterated child
     # hint of the currently visited parent hint.
-    hint_child_type_origin = None
+    # hint_child_type_origin = None
 
     #FIXME: Excise us up.
     # Python code snippet evaluating to the current (possibly nested) object of
@@ -1095,9 +1097,9 @@ def pep_code_check_hint(hint: object) -> (
             #    defined as an iterable of regular expressions matching
             #    substrings of the "func_wrapper.__beartype_wrapper_code"
             #    attribute that are expected to exist.
-            #  * For most "HINT_PEP_TO_META" entries, default this field to
+            #  * For most "HINTS_PEP_META" entries, default this field to
             #    merely the empty tuple.
-            #  * For deeply nested "HINT_PEP_TO_META" entries, define this
+            #  * For deeply nested "HINTS_PEP_META" entries, define this
             #    field as follows:
             #        code_str_match_regexes=(r'\s+:=\s+',)
             #* In the "beartype_test.unit.pep.p484.test_p484" submodule:
@@ -1813,6 +1815,18 @@ def pep_code_check_hint(hint: object) -> (
             # If this hint is a tuple, this tuple is *NOT* of the variadic form
             # and *MUST* thus be of the fixed-length form.
             #
+            # Note that if this hint is a:
+            # * PEP 484-compliant "typing.Tuple"-based hint, this hint is
+            #   guaranteed to contain one or more child hints. Moreover, if
+            #   this hint contains exactly one child hint that is the empty
+            #   tuple, this hint is the empty fixed-length form
+            #   "typing.Tuple[()]".
+            # * PEP 585-compliant "tuple"-based hint, this hint is *NOT*
+            #   guaranteed to contain one or more child hints. If this hint
+            #   contains *NO* child hints, this hint is equivalent to the empty
+            #   fixed-length PEP 484-compliant form "typing.Tuple[()]". Yes,
+            #   PEP 585 even managed to violate PEP 484-compliance. UUUURGH!
+            #
             # While tuples are sequences, the "typing.Tuple" singleton that
             # types tuples violates the syntactic norms established for other
             # standard sequences by concurrently supporting two different
@@ -1829,31 +1843,31 @@ def pep_code_check_hint(hint: object) -> (
             #
             # This is what happens when non-human-readable APIs are promoted.
             elif hint_curr_sign in HINT_PEP_SIGNS_TUPLE:
-                # Assert this tuple was subscripted by at least one argument.
-                # Note that the "typing" module should have already guaranteed
-                # this on our behalf. Trust is for the weak.
-                assert hint_childs, (
-                    f'{hint_child_label} PEP fixed-length tuple '
+                # Assert this tuple was subscripted by at least one child hint
+                # if this tuple is PEP 484-compliant. Note that the "typing"
+                # module should have already guaranteed this on our behalf.
+                # Trust is for the weak. See above for further commentary.
+                assert hint_curr_sign is tuple or hint_childs, (
+                    f'{hint_child_label} PEP 484 fixed-length tuple hint '
                     f'{repr(hint_curr)} empty.')
 
                 # Assert this tuple is *NOT* of the syntactic form
                 # "typing.Tuple[{typename}, ...]" handled by prior logic.
                 assert (
-                    hint_childs_len == 1 or
+                    hint_childs_len <= 1 or
                     hint_childs[1] is not Ellipsis
                 ), (
-                    f'{hint_child_label} PEP variadic tuple '
+                    f'{hint_child_label} PEP variadic tuple hint '
                     f'{repr(hint_curr)} unhandled.')
 
                 # Initialize the code type-checking the current pith against
                 # this tuple to the substring prefixing all such code.
                 func_curr_code = PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
 
-                # If this hint is subscripted by exactly one child hint *AND*
-                # this child hint is the empty tuple, generate and append code
-                # type-checking the current pith to also be the empty tuple.
-                # Yes, this is a ridiculous edge case. Welcome to PEP 484.
-                if hint_childs_len == 1 and hint_childs[0] == ():
+                # If this hint is the empty fixed-length tuple, generate and
+                # append code type-checking the current pith to be the empty
+                # tuple. Yes, this edge case constitutes a code smell.
+                if is_hint_pep_tuple_empty(hint_curr):
                     func_curr_code += (
                         PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format(
                             pith_curr_assigned_expr=pith_curr_assigned_expr))

@@ -49,8 +49,11 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_SUPPORTED,
-)
+    HINT_PEP_SIGNS_SUPPORTED)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_TUPLE_EMPTY)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
+    HINT_PEP585_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
@@ -58,13 +61,11 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilhintpep585 import (
-    is_hint_pep585)
+from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import get_object_class_unless_class
-from beartype._util.py.utilpymodule import (
-    get_object_module_name, get_object_class_module_name_or_none)
+from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
 # from warnings import warn
@@ -124,7 +125,7 @@ def die_if_hint_pep(
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to
-        ``"Annotation"``.
+        ``"Type hint"``.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintPepException`.
@@ -169,7 +170,7 @@ def die_unless_hint_pep(
         Object to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
+        exception message raised by this function. Defaults to ``"Type hint"``.
 
     Raises
     ----------
@@ -180,7 +181,6 @@ def die_unless_hint_pep(
     # If this hint is *NOT* PEP-compliant, raise an exception.
     if not is_hint_pep(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
-
         raise BeartypeDecorHintPepException(
             f'{hint_label} {repr(hint)} not PEP-compliant '
             f'(e.g., not "typing" type).')
@@ -263,7 +263,7 @@ def die_if_hint_pep_unsupported(
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
-        f'{hint_label} PEP type hint {repr(hint)} '
+        f'{hint_label} PEP type hint "{repr(hint)}" '
         f'currently unsupported by @beartype.'
     )
 
@@ -273,7 +273,7 @@ def die_if_hint_pep_sign_unsupported(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Unsubscripted "typing" attribute',
+    hint_label: str = 'Annotation sign',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant supported
@@ -590,13 +590,12 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Else, this hint is PEP-compliant.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_sign)
+    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
 
-    # Unsubscripted "typing" attribute uniquely identifying this hint.
+    # Sign uniquely identifying this hint.
     hint_pep_sign = get_hint_pep_sign(hint)
 
-    # Return true only if this attribute is supported.
+    # Return true only if this sign is supported.
     return is_hint_pep_sign_supported(hint_pep_sign)
 
 
@@ -780,6 +779,71 @@ is_hint_pep_class_typing.__doc__ = '''
         * Else, the class of this object is defined by the :mod:`typing`
           module.
     '''
+
+# ....................{ TESTERS ~ subtype : tuple         }....................
+def is_hint_pep_tuple_empty(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a PEP-compliant **empty fixed-length
+    tuple hint** (i.e., PEP-compliant type hint constraining piths to be the
+    empty tuple).
+
+    This tester r
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as this tester is only called under
+    fairly uncommon edge cases.
+
+    Motivation
+    ----------
+    Since type variables are not themselves types but rather placeholders
+    dynamically replaced with types by type checkers according to various
+    arcane heuristics, both type variables and types parametrized by type
+    variables warrant special-purpose handling.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a type variable.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # Return true only if this hint resembles either the PEP 484- or
+    # 585-compliant fixed-length empty tuple type hint. Since there only exist
+    # two such hints *AND* comparison against these hints is mostly fast, this
+    # test is efficient in the general case.
+    #
+    # Note that this test may also be inefficiently performed by explicitly
+    # obtaining this hint's sign and then subjecting this hint to specific
+    # tests conditionally depending on which sign and thus PEP this hint
+    # complies with: e.g.,
+    #     # Return true only if this hint is either...
+    #     return true (
+    #         # A PEP 585-compliant "tuple"-based hint subscripted by no
+    #         # child hints *OR*...
+    #         (
+    #             hint_curr_sign is tuple and
+    #             hint_childs_len == 0
+    #         ) or
+    #         # A PEP 484-compliant "typing.Tuple"-based hint subscripted
+    #         # by exactly one child hint *AND* this child hint is the
+    #         # empty tuple,..
+    #         (
+    #             hint_curr_sign is Tuple and
+    #             hint_childs_len == 1 and
+    #             hint_childs[0] == ()
+    #         )
+    #     )
+    return (
+        hint == HINT_PEP585_TUPLE_EMPTY or
+        hint == HINT_PEP484_TUPLE_EMPTY
+    )
 
 # ....................{ TESTERS ~ subtype : typevar       }....................
 def is_hint_pep_typevar(hint: object) -> bool:

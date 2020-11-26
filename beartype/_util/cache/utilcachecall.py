@@ -324,7 +324,7 @@ def callable_cached(func):
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.
         except TypeError:
-            return_value = func(*args, **kwargs)
+            return func(*args, **kwargs)
 
         # Return this value.
         return return_value

@@ -92,10 +92,8 @@ def die_unless_hint_nonpep(
     # subsequent logic raises an exception specific to the passed parameters.
     #
     # Note that the prior call has already validated "is_str_valid".
-    assert isinstance(hint_label, str), (
-        f'{repr(hint_label)} not string.')
-    assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not type.')
+    assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with both:

@@ -14,7 +14,6 @@
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
-    PepHintMetadataUnhashable,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
@@ -50,42 +49,6 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.9-specific imports.
     from typing import Annotated
 
-    # ..................{ MAPPINGS                          }..................
-    # Add PEP 593-specific test type hints to this dictionary global.
-    data_module.HINT_PEP_TO_META.update({
-        # ................{ ANNOTATED                         }................
-        # Annotated of a non-"typing" type.
-        Annotated[str, int]: PepHintMetadata(
-            pep_sign=Annotated,
-            piths_satisfied_meta=(
-                # String constant.
-                PepHintPithSatisfiedMetadata(
-                    'Towards a timely, wines‐enticing gate'),
-            ),
-            piths_unsatisfied_meta=(
-                # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
-                    'Of languished anger’s sap‐spated rushings',]),
-            ),
-        ),
-
-        # Annotated of a "typing" type.
-        Annotated[List[str], int]: PepHintMetadata(
-            pep_sign=Annotated,
-            piths_satisfied_meta=(
-                # List of string constants.
-                PepHintPithSatisfiedMetadata([
-                    'MINERVA‐unnerving, verve‐sapping enervations',
-                    'Of a magik-stoned Shinto rivery',
-                ]),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata('Of a Spicily sated',),
-            ),
-        ),
-    })
-
     # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
@@ -108,11 +71,30 @@ def add_data(data_module: 'ModuleType') -> None:
         Annotated,
     ))
 
-    # ..................{ LISTS                             }..................
-    data_module.HINTS_PEP_UNHASHABLE.append((
+    # ..................{ TUPLES                            }..................
+    # Add PEP 593-specific test type hints to this dictionary global.
+    data_module.HINTS_PEP_META.extend((
+        # ................{ ANNOTATED                         }................
+        # Hashable annotated of a non-"typing" type annotated by an arbitrary
+        # hashable object.
+        PepHintMetadata(
+            pep_hint=Annotated[str, int],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant.
+                PepHintPithSatisfiedMetadata(
+                    'Towards a timely, wines‐enticing gate'),
+            ),
+            piths_unsatisfied_meta=(
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    'Of languished anger’s sap‐spated rushings',]),
+            ),
+        ),
+
         # Unhashable annotated of a non-"typing" type annotated by an
         # unhashable mutable container.
-        PepHintMetadataUnhashable(
+        PepHintMetadata(
             pep_hint=Annotated[str, []],
             pep_sign=Annotated,
             piths_satisfied_meta=(
@@ -124,6 +106,23 @@ def add_data(data_module: 'ModuleType') -> None:
                 # List of string constants.
                 PepHintPithUnsatisfiedMetadata([
                     "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
+            ),
+        ),
+
+        # Annotated of a "typing" type.
+        PepHintMetadata(
+            pep_hint=Annotated[List[str], int],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # List of string constants.
+                PepHintPithSatisfiedMetadata([
+                    'MINERVA‐unnerving, verve‐sapping enervations',
+                    'Of a magik-stoned Shinto rivery',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Of a Spicily sated',),
             ),
         ),
     ))

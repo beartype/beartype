@@ -26,12 +26,13 @@ def test_get_hint_pep_sign_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this getter returns the expected unsubscripted "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert get_hint_pep_sign(hint_pep) == hint_pep_meta.pep_sign
+    for hint_pep_meta in HINTS_PEP_META:
+        assert get_hint_pep_sign(hint_pep_meta.pep_hint) == (
+            hint_pep_meta.pep_sign)
 
 
 def test_get_hint_pep_sign_fail() -> None:
@@ -74,19 +75,19 @@ def test_get_hint_pep_type_origin() -> None:
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_type_origin)
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this getter...
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+    for hint_pep_meta in HINTS_PEP_META:
         # Returns the expected type origin for all PEP-compliant type hints
         # originating from an origin type.
         if hint_pep_meta.type_origin is not None:
-            assert get_hint_pep_type_origin(hint_pep) is (
+            assert get_hint_pep_type_origin(hint_pep_meta.pep_hint) is (
                 hint_pep_meta.type_origin)
         # Raises the expected exception for all other hints.
         else:
             with raises(BeartypeDecorHintPepException):
-                get_hint_pep_type_origin(hint_pep)
+                get_hint_pep_type_origin(hint_pep_meta.pep_hint)
 
     # Assert this getter raises the expected exception for non-PEP-compliant
     # type hints.
@@ -107,12 +108,12 @@ def test_get_hint_pep_type_origin_or_none() -> None:
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_type_origin_or_none)
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this getter returns the expected type origin for all PEP-compliant
     # type hints.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert get_hint_pep_type_origin_or_none(hint_pep) is (
+    for hint_pep_meta in HINTS_PEP_META:
+        assert get_hint_pep_type_origin_or_none(hint_pep_meta.pep_hint) is (
             hint_pep_meta.type_origin)
 
     # Assert this getter raises the expected exception for non-PEP-compliant
@@ -132,18 +133,18 @@ def test_get_hint_pep_typevars() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this getter returns...
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+    for hint_pep_meta in HINTS_PEP_META:
         # One or more type variables for typevared PEP-compliant type hints.
         if hint_pep_meta.is_typevared:
-            hint_pep_typevars = get_hint_pep_typevars(hint_pep)
+            hint_pep_typevars = get_hint_pep_typevars(hint_pep_meta.pep_hint)
             assert isinstance(hint_pep_typevars, tuple)
             assert hint_pep_typevars
         # *NO* type variables for untypevared PEP-compliant type hints.
         else:
-            assert get_hint_pep_typevars(hint_pep) == ()
+            assert get_hint_pep_typevars(hint_pep_meta.pep_hint) == ()
 
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:

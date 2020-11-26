@@ -33,21 +33,21 @@ def test_die_unless_hint() -> None:
     )
     from beartype._util.hint.utilhinttest import die_unless_hint
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS, HINTS_NONPEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
         die_unless_hint(nonhint_pep)
 
     # Assert this function...
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
+    for hint_pep_meta in HINTS_PEP_META:
         # Accepts supported PEP-compliant type hints.
         if hint_pep_meta.is_supported:
-            die_unless_hint(hint_pep)
+            die_unless_hint(hint_pep_meta.pep_hint)
         # Rejects unsupported PEP-compliant type hints.
         else:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint(hint_pep)
+                die_unless_hint(hint_pep_meta.pep_hint)
 
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
@@ -64,7 +64,7 @@ def test_is_hint() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.utilhinttest import is_hint
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS, HINTS_NONPEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
@@ -73,8 +73,8 @@ def test_is_hint() -> None:
     # Assert this function:
     # * Accepts supported PEP-compliant type hints.
     # * Rejects unsupported PEP-compliant type hints.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert is_hint(hint_pep) is hint_pep_meta.is_supported
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint(hint_pep_meta.pep_hint) is hint_pep_meta.is_supported
 
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
@@ -96,7 +96,7 @@ def test_is_hint_ignorable() -> None:
         HINTS_IGNORABLE,
         HINTS_NONPEP_UNIGNORABLE,
     )
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINT_PEP_TO_META
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this function accepts ignorable type hints.
     for hint_ignorable in HINTS_IGNORABLE:
@@ -109,5 +109,6 @@ def test_is_hint_ignorable() -> None:
     # Assert this function:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep, hint_pep_meta in HINT_PEP_TO_META.items():
-        assert is_hint_ignorable(hint_pep) is hint_pep_meta.is_ignorable
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_ignorable(hint_pep_meta.pep_hint) is (
+            hint_pep_meta.is_ignorable)

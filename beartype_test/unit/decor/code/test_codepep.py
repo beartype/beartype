@@ -57,25 +57,21 @@ def test_pep() -> None:
     )
     from beartype._util.utilobject import is_object_context_manager
     from beartype_test.unit.data.hint.pep.data_hintpep import (
-        HINT_PEP_TO_META,
-        HINT_PEP_CLASSED_TO_META,
-    )
+        HINTS_PEP_META, HINTS_PEP_META_NONSIGNED)
     from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
         PepHintPithSatisfiedMetadata,
         PepHintPithUnsatisfiedMetadata,
     )
 
-    # Dictionary mapping various PEP-compliant type hints to "_PepHintMetadata"
-    # instances detailing those hints with metadata applicable to testing
-    # scenarios -- regardless of whether those hints are uniquely identified by
-    # unsubscripted "typing" attributes or not.
-    HINT_PEP_ALL_TO_META = ChainMap(HINT_PEP_TO_META, HINT_PEP_CLASSED_TO_META)
+    # Tuple of all PEP-compliant type hint metadata to be tested -- regardless
+    # of whether those hints are uniquely identifiable by a sign or not.
+    HINT_PEP_META_ALL = HINTS_PEP_META + HINTS_PEP_META_NONSIGNED
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
     RANGE_2 = (None, None)
 
     # For each predefined PEP-compliant type hint and associated metadata...
-    for hint_pep, hint_pep_meta in HINT_PEP_ALL_TO_META.items():
+    for hint_pep_meta in HINT_PEP_META_ALL:
         # If this hint is currently unsupported, continue to the next.
         if not hint_pep_meta.is_supported:
             continue
@@ -89,7 +85,8 @@ def test_pep() -> None:
             # and returning a value annotated by this hint whose implementation
             # trivially reduces to the identity function.
             @beartype
-            def hint_peped(hint_peped_param: hint_pep) -> hint_pep:
+            def hint_peped(hint_peped_param: hint_pep_meta.pep_hint) -> (
+                hint_pep_meta.pep_hint):
                 return hint_peped_param
 
             # Type of exception raised by this wrapper on type-check failures.

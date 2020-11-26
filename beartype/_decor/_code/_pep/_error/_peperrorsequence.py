@@ -20,6 +20,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TUPLE,
 )
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_type_origin
+from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import get_object_representation
 
@@ -108,11 +109,10 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
     # {typenameN}]", typing a tuple accepting a fixed number of items each
     # satisfying a unique child hint.
     #
-    # If this hint is subscripted by exactly one child hint *AND* this child
-    # hint is the empty tuple, validate this pith to be the empty tuple. Ugh!
-    elif len(sleuth.hint_childs) == 1 and sleuth.hint_childs[0] == ():
-        # If this pith is a non-empty tuple and thus fails to satisfy this
-        # hint...
+    # If this hint is the empty fixed-length tuple, validate this pith to be
+    # the empty tuple.
+    elif is_hint_pep_tuple_empty(sleuth.hint):
+        # If this pith is non-empty and thus fails to satisfy this hint...
         if sleuth.pith:
             # Truncated representation of this tuple.
             pith_repr = get_object_representation(sleuth.pith)

@@ -14,9 +14,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobject import Iota
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ HINTS                             }....................
+HINT_PEP585_TUPLE_EMPTY = tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota()
+'''
+`PEP 585`_-compliant empty fixed-length tuple type hint if the active Python
+interpreter supports at least Python 3.9 and thus `PEP 585`_ *or* a unique
+placeholder object otherwise to guarantee failure when comparing arbitrary
+objects against this object via equality tests.
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -94,6 +107,7 @@ def add_data(data_module: 'ModuleType') -> None:
         list,
         set,
         tuple,
+        type,
         AbstractAsyncContextManager,
         AbstractContextManager,
         AsyncGenerator,

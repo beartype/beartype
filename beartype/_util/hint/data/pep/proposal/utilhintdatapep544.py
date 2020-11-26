@@ -135,7 +135,8 @@ def add_data(data_module: 'ModuleType') -> None:
         runtime_checkable,
     )
 
-    # Global classes to be redefined below.
+    # ..................{ GLOBALS                           }..................
+    # Global attributes to be redefined below.
     global \
         _HINT_PEP544_IO_GENERIC_TO_PROTOCOL, \
         _Pep544BinaryIO, \

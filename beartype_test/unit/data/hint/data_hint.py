@@ -15,7 +15,7 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 from beartype import cave
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype_test.unit.data.hint.pep.data_hintpep import (
-    HINTS_PEP,
+    HINTS_PEP_HASHABLE,
     HINTS_PEP_IGNORABLE_DEEP,
 )
 
@@ -131,10 +131,10 @@ NOT_HINTS_NONPEP = frozenset((
     {
         # Tuple containing a PEP-compliant type hint.
         (int, hint_pep, cave.NoneType,)
-        for hint_pep in HINTS_PEP
+        for hint_pep in HINTS_PEP_HASHABLE
     } |
-    # PEP-compliant type hints.
-    HINTS_PEP |
+    # Hashable PEP-compliant type hints.
+    HINTS_PEP_HASHABLE |
     # Hashable objects invalid as type hints (e.g., scalars).
     NOT_HINTS_HASHABLE
 ))

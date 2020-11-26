@@ -16,7 +16,6 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
-    PepHintMetadataUnhashable,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
@@ -58,6 +57,7 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from contextlib import (
         AbstractContextManager,
+        contextmanager,
     )
     from re import (
         Match,
@@ -87,6 +87,7 @@ def add_data(data_module: 'ModuleType') -> None:
     '''
 
     # ..................{ CALLABLES                         }..................
+    @contextmanager
     def _make_context_manager(obj: object) -> AbstractContextManager[object]:
         '''
         Create and return a context manager trivially yielding the passed
@@ -244,7 +245,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ MAPPINGS                          }..................
     # Add PEP 585-specific test type hints to this dictionary global.
-    data_module.HINT_PEP_TO_META.update({
+    data_module.HINTS_PEP_META.extend((
         # ................{ BYTESTRING                        }................
         # Byte string of integer constants satisfying the builtin "int" type.
         #
@@ -255,7 +256,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # the standard integer protocol raises a runtime error from @beartype.
         # Yes, this means that subscripting "collections.abc.ByteString"
         # conveys no information and is thus nonsensical. Welcome to PEP 585.
-        ByteString[int]: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=ByteString[int],
             pep_sign=ByteString,
             type_origin=ByteString,
             is_pep585=True,
@@ -271,7 +273,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Byte string of integer constants satisfying the stdlib
         # "numbers.Integral" protocol.
-        ByteString[IntType]: PepHintMetadata(
+        PepHintMetadata(
+            pep_hint=ByteString[IntType],
             pep_sign=ByteString,
             type_origin=ByteString,
             is_pep585=True,
@@ -286,86 +289,148 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # # ................{ CONTEXTMANAGER                    }................
-        # # Context manager yielding strings.
-        # AbstractContextManager[str]: PepHintMetadata(
-        #     pep_sign=AbstractContextManager,
-        #     type_origin=AbstractContextManager,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Context manager.
-        #         PepHintPithSatisfiedMetadata(
-        #             pith=lambda: _make_context_manager(
-        #                 'We were mysteries, unwon'),
-        #             is_context_manager=True,
-        #             is_pith_factory=True,
-        #         ),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('We donned apportionments'),
-        #     ),
-        # ),
+        # ................{ CALLABLE                          }................
+        # Callable accepting no parameters and returning a string.
+        PepHintMetadata(
+            pep_hint=Callable[[], str],
+            pep_sign=Callable,
+            type_origin=Callable,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Lambda function returning a string constant.
+                PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('...grant we heal'),
+            ),
+        ),
+
+        # ................{ CONTEXTMANAGER                    }................
+        # Context manager yielding strings.
+        PepHintMetadata(
+            pep_hint=AbstractContextManager[str],
+            pep_sign=AbstractContextManager,
+            type_origin=AbstractContextManager,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Context manager.
+                PepHintPithSatisfiedMetadata(
+                    pith=lambda: _make_context_manager(
+                        'We were mysteries, unwon'),
+                    is_context_manager=True,
+                    is_pith_factory=True,
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('We donned apportionments'),
+            ),
+        ),
+
+        # ................{ DICT                              }................
+        # Flat dictionary.
+        PepHintMetadata(
+            pep_hint=dict[int, str],
+            pep_sign=dict,
+            type_origin=dict,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Dictionary mapping integer keys to string values.
+                PepHintPithSatisfiedMetadata({
+                    1: 'For taxing',
+                    2: "To a lax and golden‐rendered crucifixion, affix'd",
+                }),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'To that beep‐prattling, LED‐ and lead-rattling crux'),
+            ),
+        ),
+
+        # Generic dictionary.
+        PepHintMetadata(
+            pep_hint=dict[S, T],
+            pep_sign=dict,
+            type_origin=dict,
+            is_typevared=True,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Dictionary mapping string keys to integer values.
+                PepHintPithSatisfiedMetadata({
+                    'Less-ons"-chastened': 2,
+                    'Chanson': 1,
+                }),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Swansong.'),
+            ),
+        ),
+
+        # ................{ GENERATOR                         }................
+        # Flat generator.
+        PepHintMetadata(
+            pep_hint=Generator[int, float, str],
+            pep_sign=Generator,
+            type_origin=Generator,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Generator yielding integers, accepting floating-point numbers
+                # sent to this generator by the caller, and returning strings.
+                PepHintPithSatisfiedMetadata(
+                    _make_generator_yield_int_send_float_return_str()),
+            ),
+            piths_unsatisfied_meta=(
+                # Lambda function returning a string constant.
+                PepHintPithUnsatisfiedMetadata(lambda: 'Cessation'),
+            ),
+        ),
+
+        # ................{ GENERICS ~ user                   }................
+        #FIXME: Right. So, unsurprisingly, PEP 585-compliant user-defined
+        #generics have utterly *NO* commonality with PEP 484-compliant
+        #user-defined generics. While the latter are trivially detectable as
+        #subclassing "typing.Generic" after type erasure, the former are *NOT*.
+        #The only means of deterministically deciding whether or not any given
+        #class is a PEP 585-compliant user-defined generic, after extensive
+        #testing, appears to be as follows:
+        #* That class defines both the __class_getitem__() dunder method *AND*
+        #  the "__orig_bases__" instance variable. Note that this condition in
+        #  and of itself is insufficient to decide PEP 585-compliance as a
+        #  user-defined generic. Why? Because these dunder attributes have been
+        #  standardized under various PEPs and may thus be implemented by *ANY*
+        #  arbitrary classes.
+        #* The "__orig_bases__" instance variable is a non-empty tuple.
+        #* One or more objects listed in this tuple satisfy this test:
+        #  any(
+        #      is_hint_pep585(hint_base_erased)
+        #      for hint_base_erased in hint.__orig_bases__
+        #  )
         #
-        # # ................{ DICT                              }................
-        # # Flat dictionary.
-        # dict[int, str]: PepHintMetadata(
-        #     pep_sign=dict,
-        #     type_origin=dict,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Dictionary mapping integer keys to string values.
-        #         PepHintPithSatisfiedMetadata({
-        #             1: 'For taxing',
-        #             2: "To a lax and golden‐rendered crucifixion, affix'd",
-        #         }),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'To that beep‐prattling, LED‐ and lead-rattling crux'),
-        #     ),
-        # ),
+        #This suggests we'll need to define:
+        #* A new is_hint_pep585_generic() tester (and probably various related
+        #  getters for obtaining bases, which should just reduce to returning
+        #  "hint.__orig_bases__" as is) in "utilhintpep585".
+        #* A new is_hint_pep_generic() tester in "utilhintpeptest": e.g.,
+        #     def is_hint_pep_generic(hint: object) -> bool:
+        #         return (
+        #             is_hint_pep484_generic(hint) or
+        #             is_hint_pep585_generic(hint)
+        #         )
+        #* Refactor all existing external calls to is_hint_pep484_generic() to
+        #  call is_hint_pep_generic() instead.
+        #* Likewise, refactor all existing external calls to the family of
+        #  get_hint_pep484_generic_base*() functions to call higher-level
+        #  PEP-agnostic getters we'll need to define as well. *sigh*
         #
-        # # Generic dictionary.
-        # dict[S, T]: PepHintMetadata(
-        #     pep_sign=dict,
-        #     type_origin=dict,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Dictionary mapping string keys to integer values.
-        #         PepHintPithSatisfiedMetadata({
-        #             'Less-ons"-chastened': 2,
-        #             'Chanson': 1,
-        #         }),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Swansong.'),
-        #     ),
-        # ),
-        #
-        # # ................{ GENERATOR                         }................
-        # # Flat generator.
-        # Generator[int, float, str]: PepHintMetadata(
-        #     pep_sign=Generator,
-        #     type_origin=Generator,
-        #     piths_satisfied_meta=(
-        #         # Generator yielding integers, accepting floating-point numbers
-        #         # sent to this generator by the caller, and returning strings.
-        #         PepHintPithSatisfiedMetadata(
-        #             _make_generator_yield_int_send_float_return_str()),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # Lambda function returning a string constant.
-        #         PepHintPithUnsatisfiedMetadata(lambda: 'Cessation'),
-        #     ),
-        # ),
-        #
-        # # ................{ GENERICS ~ user                   }................
+        #In short, this is a tedious pain. It's certainly feasible, but it's a
+        #bit wearing on our patience. Curmudgeonly grimdarkness!
+
         # # Generic subclassing a single unparametrized builtin type.
-        # Pep585GenericUntypevaredSingle: PepHintMetadata(
+        # PepHintMetadata(
+        #     pep_hint=Pep585GenericUntypevaredSingle,
         #     pep_sign=Generic,
         #     is_pep585=True,
         #     piths_satisfied_meta=(
@@ -389,7 +454,8 @@ def add_data(data_module: 'ModuleType') -> None:
         #
         # # Generic subclassing multiple unparametrized "collection.abc" abstract
         # # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
-        # Pep585GenericUntypevaredMultiple: PepHintMetadata(
+        # PepHintMetadata(
+        #     pep_hint=Pep585GenericUntypevaredMultiple,
         #     pep_sign=Generic,
         #     is_pep585=True,
         #     piths_satisfied_meta=(
@@ -412,7 +478,8 @@ def add_data(data_module: 'ModuleType') -> None:
         #
         # # Generic subclassing multiple parametrized "collections.abc" abstract
         # # base classes (ABCs).
-        # Pep585GenericTypevaredShallowMultiple: PepHintMetadata(
+        # PepHintMetadata(
+        #     pep_hint=Pep585GenericTypevaredShallowMultiple,
         #     pep_sign=Generic,
         #     is_typevared=True,
         #     is_pep585=True,
@@ -434,7 +501,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # # Generic subclassing multiple indirectly parametrized
         # # "collections.abc" abstract base classes (ABCs) *AND* an
         # # unparametrized "collections.abc" ABC.
-        # Pep585GenericTypevaredDeepMultiple: PepHintMetadata(
+        # PepHintMetadata(
+        #     pep_hint=Pep585GenericTypevaredDeepMultiple,
         #     pep_sign=Generic,
         #     is_typevared=True,
         #     is_pep585=True,
@@ -461,7 +529,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # ),
         #
         # # Nested list of PEP 585-compliant generics.
-        # list[Pep585GenericUntypevaredMultiple]: PepHintMetadata(
+        # PepHintMetadata(
+        #     pep_hint=list[Pep585GenericUntypevaredMultiple],
         #     pep_sign=list,
         #     type_origin=list,
         #     is_pep585=True,
@@ -492,411 +561,399 @@ def add_data(data_module: 'ModuleType') -> None:
         #         ]),
         #     ),
         # ),
-        #
-        # # ................{ LIST                              }................
-        # # List of ignorable objects.
-        # list[object]: PepHintMetadata(
-        #     pep_sign=list,
-        #     type_origin=list,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Empty list, which satisfies all hint arguments by definition.
-        #         PepHintPithSatisfiedMetadata([]),
-        #         # List of arbitrary objects.
-        #         PepHintPithSatisfiedMetadata([
-        #             'Of philomathematically bliss‐postulating Seas',
-        #             'Of actuarial postponement',
-        #             23.75,
-        #         ]),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Of actual change elevating alleviation — that'),
-        #     ),
-        # ),
-        #
-        # # List of non-"typing" objects.
-        # list[str]: PepHintMetadata(
-        #     pep_sign=list,
-        #     type_origin=list,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Empty list, which satisfies all hint arguments by definition.
-        #         PepHintPithSatisfiedMetadata([]),
-        #         # List of strings.
-        #         PepHintPithSatisfiedMetadata([
-        #             'Ously overmoist, ov‐ertly',
-        #             'Deverginating vertigo‐originating',
-        #         ]),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
-        #         # List containing exactly one integer. Since list items are only
-        #         # randomly type-checked, only a list of exactly one item enables us
-        #         # to match the explicit index at fault below.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=[73,],
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Declares the index of this list's problematic item.
-        #                 r'\s[Ll]ist item 0\s',
-        #                 # Double-quotes the value of this item.
-        #                 r'\s"73"\s',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Generic list.
-        # list[T]: PepHintMetadata(
-        #     pep_sign=list,
-        #     type_origin=list,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Empty list, which satisfies all hint arguments by definition.
-        #         PepHintPithSatisfiedMetadata([]),
-        #         # List of strings.
-        #         PepHintPithSatisfiedMetadata([
-        #             'Lesion this ice-scioned',
-        #             'Legion',
-        #         ]),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Lest we succumb, indelicately, to'),
-        #     ),
-        # ),
-        #
-        # # ................{ REGEX ~ match                     }................
-        # # Regular expression match of only strings.
-        # Match[str]: PepHintMetadata(
-        #     pep_sign=Match,
-        #     type_origin=Match,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Regular expression match of one or more string constants.
-        #         PepHintPithSatisfiedMetadata(re.search(
-        #             r'\b[a-z]+itiat[a-z]+\b',
-        #             'Vitiating novitiate Succubæ – a',
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Into Elitistly'),
-        #     ),
-        # ),
-        #
-        # # ................{ REGEX ~ pattern                   }................
-        # # Regular expression pattern of only strings.
-        # Pattern[str]: PepHintMetadata(
-        #     pep_sign=Pattern,
-        #     type_origin=Pattern,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Regular expression string pattern.
-        #         PepHintPithSatisfiedMetadata(
-        #             re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Obsessing men'),
-        #     ),
-        # ),
-        #
-        # # ................{ TUPLE ~ fixed                     }................
-        # # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal with
-        # # standard sequence syntax, which supports no comparable notion of an
-        # # "empty {insert-standard-sequence-here}" (e.g., empty list). For example:
-        # #     >>> import typing
-        # #     >>> List[()]
-        # #     TypeError: Too few parameters for List; actual 0, expected 1
-        # #     >>> List[[]]
-        # #     TypeError: Parameters to generic types must be types. Got [].
-        # tuple[()]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Empty tuple.
-        #         PepHintPithSatisfiedMetadata(()),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # Non-empty tuple containing arbitrary items.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=(
-        #                 'They shucked',
-        #                 '(Or huckstered, knightly rupturing veritas)',
-        #             ),
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Identify this tuple as non-empty.
-        #                 r'\bnon-empty\b',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Fixed-length tuple of only ignorable child hints.
-        # tuple[Any, object,]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing arbitrary items.
-        #         PepHintPithSatisfiedMetadata((
-        #             'Surseance',
-        #             'Of sky, the God, the surly',
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # Tuple containing fewer items than required.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=('Obeisance',),
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Compare this tuple's length to the expected length.
-        #                 r'\b1 not 2\b',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Fixed-length tuple of at least one ignorable child hint.
-        # tuple[float, Any, str,]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing a floating-point number, string, and integer
-        #         # (in that exact order).
-        #         PepHintPithSatisfiedMetadata((
-        #             20.09,
-        #             'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
-        #             "Nightly tolled, pindololy, ol'",
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Jangling (brinkmanship “Ironside”) jingoisms'),
-        #         # Tuple containing fewer items than required.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=(
-        #                 999.888,
-        #                 'Obese, slipshodly muslin‐shod priests had maudlin solo',
-        #             ),
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Compare this tuple's length to the expected length.
-        #                 r'\b2 not 3\b',
-        #             ),
-        #         ),
-        #         # Tuple containing a floating-point number, a string, and a
-        #         # boolean (in that exact order).
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=(
-        #                 75.83,
-        #                 'Unwholesome gentry ventings',
-        #                 False,
-        #             ),
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Declares the index and expected type of this tuple's
-        #                 # problematic item.
-        #                 r'\s[Tt]uple item 2\s',
-        #                 r'\bstr\b',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Nested fixed-length tuple of at least one ignorable child hint.
-        # tuple[tuple[float, Any, str,], ...]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing tuples containing a floating-point number,
-        #         # string, and integer (in that exact order).
-        #         PepHintPithSatisfiedMetadata((
-        #             (
-        #                 90.02,
-        #                 'Father — "Abstracted, OH WE LOVE YOU',
-        #                 'Farther" — that',
-        #             ),
-        #             (
-        #                 2.9,
-        #                 'To languidly Ent‐wine',
-        #                 'Towards a timely, wines‐enticing gate',
-        #             ),
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # Tuple containing a tuple containing fewer items than required.
-        #         PepHintPithUnsatisfiedMetadata((
-        #             (
-        #                 888.999,
-        #                 'Oboes‐obsoleting tines',
-        #             ),
-        #         )),
-        #         # Tuple containing a tuple containing a floating-point number,
-        #         # string, and boolean (in that exact order).
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=(
-        #                 (
-        #                     75.83,
-        #                     'Vespers’ hymnal seance, invoking',
-        #                     True,
-        #                 ),
-        #             ),
-        #             # Match that the exception message raised for this object...
-        #             exception_str_match_regexes=(
-        #                 # Declares the index and expected type of this tuple's
-        #                 # problematic item.
-        #                 r'\s[Tt]uple item 0 tuple item 2\s',
-        #                 r'\bstr\b',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Generic fixed-length tuple.
-        # tuple[S, T]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing a floating-point number and string (in that
-        #         # exact order).
-        #         PepHintPithSatisfiedMetadata((
-        #             33.77,
-        #             'Legal indiscretions',
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Leisurely excreted by'),
-        #         # Tuple containing fewer items than required.
-        #         PepHintPithUnsatisfiedMetadata((
-        #             'Market states‐created, stark abscess',
-        #         )),
-        #     ),
-        # ),
-        #
-        # # ................{ TUPLE ~ variadic                  }................
-        # # Variadic tuple.
-        # tuple[str, ...]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing arbitrarily many string constants.
-        #         PepHintPithSatisfiedMetadata((
-        #             'Of a scantly raptured Overture,'
-        #             'Ur‐churlishly',
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Of Toll‐descanted grant money'),
-        #         # Tuple containing exactly one integer. Since tuple items are
-        #         # only randomly type-checked, only a tuple of exactly one item
-        #         # enables us to match the explicit index at fault below.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             pith=((53,)),
-        #             # Match that the exception message raised for this
-        #             # object...
-        #             exception_str_match_regexes=(
-        #                 # Declares the index and expected type of this tuple's
-        #                 # problematic item.
-        #                 r'\s[Tt]uple item 0\s',
-        #                 r'\bstr\b',
-        #             ),
-        #         ),
-        #     ),
-        # ),
-        #
-        # # Generic variadic tuple.
-        # tuple[T, ...]: PepHintMetadata(
-        #     pep_sign=tuple,
-        #     type_origin=tuple,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Tuple containing arbitrarily many string constants.
-        #         PepHintPithSatisfiedMetadata((
-        #             'Loquacious s‐age, salaciously,',
-        #             'Of regal‐seeming, freemen‐sucking Hovels, a',
-        #         )),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Concubine enthralling contractually novel'),
-        #     ),
-        # ),
-        #
-        # # ................{ TYPE                              }................
-        # # Builtin type.
-        # type[dict]: PepHintMetadata(
-        #     pep_sign=type,
-        #     type_origin=type,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Builtin "dict" class itself.
-        #         PepHintPithSatisfiedMetadata(dict),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Namely,'),
-        #     ),
-        # ),
-        #
-        # # Generic type.
-        # type[T]: PepHintMetadata(
-        #     pep_sign=type,
-        #     type_origin=type,
-        #     is_pep585=True,
-        #     is_typevared=True,
-        #     piths_satisfied_meta=(
-        #         # Builtin "int" class itself.
-        #         PepHintPithSatisfiedMetadata(int),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Obligation, and'),
-        #     ),
-        # ),
-    })
 
-    # ..................{ LISTS                             }..................
-    data_module.HINTS_PEP_UNHASHABLE.append((
-        # ................{ CALLABLE                          }................
-        # Unhashable callable accepting no parameters and returning a string.
-        #
-        # Note that PEP 585-compliant type hints implement hashing
-        # fundamentally differently from PEP 484-compliant type hints: e.g.,
-        # * The PEP 484-compliant hint "typing.Callable[[], str]" is hashable.
-        # * The PEP 585-compliant hint "typing.Callable[[], str]" is
-        #   unhashable. To circumvent this, a hashable tuple rather than
-        PepHintMetadataUnhashable(
-            pep_hint=Callable[(), str],
-            pep_sign=Callable,
-            type_origin=Callable,
+        # ................{ LIST                              }................
+        # List of ignorable objects.
+        PepHintMetadata(
+            pep_hint=list[object],
+            pep_sign=list,
+            type_origin=list,
             is_pep585=True,
             piths_satisfied_meta=(
-                # Lambda function returning a string constant.
-                PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
+                # Empty list, which satisfies all hint arguments by definition.
+                PepHintPithSatisfiedMetadata([]),
+                # List of arbitrary objects.
+                PepHintPithSatisfiedMetadata([
+                    'Of philomathematically bliss‐postulating Seas',
+                    'Of actuarial postponement',
+                    23.75,
+                ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('...grant we heal'),
+                PepHintPithUnsatisfiedMetadata(
+                    'Of actual change elevating alleviation — that'),
+            ),
+        ),
+
+        # List of non-"typing" objects.
+        PepHintMetadata(
+            pep_hint=list[str],
+            pep_sign=list,
+            type_origin=list,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Empty list, which satisfies all hint arguments by definition.
+                PepHintPithSatisfiedMetadata([]),
+                # List of strings.
+                PepHintPithSatisfiedMetadata([
+                    'Ously overmoist, ov‐ertly',
+                    'Deverginating vertigo‐originating',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
+                # List containing exactly one integer. Since list items are only
+                # randomly type-checked, only a list of exactly one item enables us
+                # to match the explicit index at fault below.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=[73,],
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares the index of this list's problematic item.
+                        r'\s[Ll]ist item 0\s',
+                        # Double-quotes the value of this item.
+                        r'\s"73"\s',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic list.
+        PepHintMetadata(
+            pep_hint=list[T],
+            pep_sign=list,
+            type_origin=list,
+            is_typevared=True,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Empty list, which satisfies all hint arguments by definition.
+                PepHintPithSatisfiedMetadata([]),
+                # List of strings.
+                PepHintPithSatisfiedMetadata([
+                    'Lesion this ice-scioned',
+                    'Legion',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Lest we succumb, indelicately, to'),
+            ),
+        ),
+
+        # ................{ REGEX ~ match                     }................
+        # Regular expression match of only strings.
+        PepHintMetadata(
+            pep_hint=Match[str],
+            pep_sign=Match,
+            type_origin=Match,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Regular expression match of one or more string constants.
+                PepHintPithSatisfiedMetadata(re.search(
+                    r'\b[a-z]+itiat[a-z]+\b',
+                    'Vitiating novitiate Succubæ – a',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Into Elitistly'),
+            ),
+        ),
+
+        # ................{ REGEX ~ pattern                   }................
+        # Regular expression pattern of only strings.
+        PepHintMetadata(
+            pep_hint=Pattern[str],
+            pep_sign=Pattern,
+            type_origin=Pattern,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Regular expression string pattern.
+                PepHintPithSatisfiedMetadata(
+                    re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Obsessing men'),
+            ),
+        ),
+
+        # ................{ TUPLE ~ fixed                     }................
+        # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal with
+        # standard sequence syntax, which supports no comparable notion of an
+        # "empty {insert-standard-sequence-here}" (e.g., empty list). For example:
+        #     >>> import typing
+        #     >>> List[()]
+        #     TypeError: Too few parameters for List; actual 0, expected 1
+        #     >>> List[[]]
+        #     TypeError: Parameters to generic types must be types. Got [].
+        PepHintMetadata(
+            pep_hint=tuple[()],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Empty tuple.
+                PepHintPithSatisfiedMetadata(()),
+            ),
+            piths_unsatisfied_meta=(
+                # Non-empty tuple containing arbitrary items.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=(
+                        'They shucked',
+                        '(Or huckstered, knightly rupturing veritas)',
+                    ),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Identify this tuple as non-empty.
+                        r'\bnon-empty\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Fixed-length tuple of only ignorable child hints.
+        PepHintMetadata(
+            pep_hint=tuple[Any, object,],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing arbitrary items.
+                PepHintPithSatisfiedMetadata((
+                    'Surseance',
+                    'Of sky, the God, the surly',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # Tuple containing fewer items than required.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=('Obeisance',),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Compare this tuple's length to the expected length.
+                        r'\b1 not 2\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Fixed-length tuple of at least one ignorable child hint.
+        PepHintMetadata(
+            pep_hint=tuple[float, Any, str,],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing a floating-point number, string, and integer
+                # (in that exact order).
+                PepHintPithSatisfiedMetadata((
+                    20.09,
+                    'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
+                    "Nightly tolled, pindololy, ol'",
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Jangling (brinkmanship “Ironside”) jingoisms'),
+                # Tuple containing fewer items than required.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=(
+                        999.888,
+                        'Obese, slipshodly muslin‐shod priests had maudlin solo',
+                    ),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Compare this tuple's length to the expected length.
+                        r'\b2 not 3\b',
+                    ),
+                ),
+                # Tuple containing a floating-point number, a string, and a
+                # boolean (in that exact order).
+                PepHintPithUnsatisfiedMetadata(
+                    pith=(
+                        75.83,
+                        'Unwholesome gentry ventings',
+                        False,
+                    ),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares the index and expected type of this tuple's
+                        # problematic item.
+                        r'\s[Tt]uple item 2\s',
+                        r'\bstr\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Nested fixed-length tuple of at least one ignorable child hint.
+        PepHintMetadata(
+            pep_hint=tuple[tuple[float, Any, str,], ...],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing tuples containing a floating-point number,
+                # string, and integer (in that exact order).
+                PepHintPithSatisfiedMetadata((
+                    (
+                        90.02,
+                        'Father — "Abstracted, OH WE LOVE YOU',
+                        'Farther" — that',
+                    ),
+                    (
+                        2.9,
+                        'To languidly Ent‐wine',
+                        'Towards a timely, wines‐enticing gate',
+                    ),
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # Tuple containing a tuple containing fewer items than required.
+                PepHintPithUnsatisfiedMetadata((
+                    (
+                        888.999,
+                        'Oboes‐obsoleting tines',
+                    ),
+                )),
+                # Tuple containing a tuple containing a floating-point number,
+                # string, and boolean (in that exact order).
+                PepHintPithUnsatisfiedMetadata(
+                    pith=(
+                        (
+                            75.83,
+                            'Vespers’ hymnal seance, invoking',
+                            True,
+                        ),
+                    ),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares the index and expected type of this tuple's
+                        # problematic item.
+                        r'\s[Tt]uple item 0 tuple item 2\s',
+                        r'\bstr\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic fixed-length tuple.
+        PepHintMetadata(
+            pep_hint=tuple[S, T],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_typevared=True,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing a floating-point number and string (in that
+                # exact order).
+                PepHintPithSatisfiedMetadata((
+                    33.77,
+                    'Legal indiscretions',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Leisurely excreted by'),
+                # Tuple containing fewer items than required.
+                PepHintPithUnsatisfiedMetadata((
+                    'Market states‐created, stark abscess',
+                )),
+            ),
+        ),
+
+        # ................{ TUPLE ~ variadic                  }................
+        # Variadic tuple.
+        PepHintMetadata(
+            pep_hint=tuple[str, ...],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing arbitrarily many string constants.
+                PepHintPithSatisfiedMetadata((
+                    'Of a scantly raptured Overture,'
+                    'Ur‐churlishly',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Of Toll‐descanted grant money'),
+                # Tuple containing exactly one integer. Since tuple items are
+                # only randomly type-checked, only a tuple of exactly one item
+                # enables us to match the explicit index at fault below.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=((53,)),
+                    # Match that the exception message raised for this
+                    # object...
+                    exception_str_match_regexes=(
+                        # Declares the index and expected type of this tuple's
+                        # problematic item.
+                        r'\s[Tt]uple item 0\s',
+                        r'\bstr\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic variadic tuple.
+        PepHintMetadata(
+            pep_hint=tuple[T, ...],
+            pep_sign=tuple,
+            type_origin=tuple,
+            is_typevared=True,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Tuple containing arbitrarily many string constants.
+                PepHintPithSatisfiedMetadata((
+                    'Loquacious s‐age, salaciously,',
+                    'Of regal‐seeming, freemen‐sucking Hovels, a',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Concubine enthralling contractually novel'),
+            ),
+        ),
+
+        # ................{ TYPE                              }................
+        # Builtin type.
+        PepHintMetadata(
+            pep_hint=type[dict],
+            pep_sign=type,
+            type_origin=type,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # Builtin "dict" class itself.
+                PepHintPithSatisfiedMetadata(dict),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Namely,'),
+            ),
+        ),
+
+        # Generic type.
+        PepHintMetadata(
+            pep_hint=type[T],
+            pep_sign=type,
+            type_origin=type,
+            is_pep585=True,
+            is_typevared=True,
+            piths_satisfied_meta=(
+                # Builtin "int" class itself.
+                PepHintPithSatisfiedMetadata(int),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Obligation, and'),
             ),
         ),
     ))

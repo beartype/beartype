@@ -103,10 +103,13 @@ Let's type-check like `greased lightning`_:
    # Import the core @beartype decorator.
    from beartype import beartype
 
-   # Import PEP-compliant types for use with @beartype.
+   # Import PEP 585-compliant types to annotate callables with.
+   from collections.abc import MutableSequence
+
+   # Import PEP 484-compliant types to annotate callables with, too.
    from typing import List, Optional, Tuple, Union
 
-   # Import beartype-specific types for use with @beartype, too.
+   # Import beartype-specific types to annotate callables with, too.
    from beartype.cave import (
        AnyType,
        BoolType,
@@ -140,27 +143,29 @@ Let's type-check like `greased lightning`_:
        # matches all instances of both this class and subclasses of this class.
        param_must_satisfy_user_type: MyClass,
 
-       # Annotate PEP-compliant objects predefined by the "typing" module.
-       param_must_satisfy_pep_hint: List[int],
+       # Annotate PEP 585-compliant builtin container types, subscripted by the
+       # types of items these containers are required to contain.
+       param_must_satisfy_pep585_builtin: list[str],
 
-       # Annotate PEP-compliant unions of types.
-       param_must_satisfy_pep_union: Union[dict, Tuple[MyClass, ...], int],
+       # Annotate PEP 585-compliant standard collection types, subscripted too.
+       param_must_satisfy_pep585_collection: MutableSequence[str],
 
-       # Annotate PEP-compliant optional types.
-       param_must_satisfy_pep_optional: Optional[float] = None,
+       # Annotate PEP 484-compliant non-standard container types defined by the
+       # "typing" module, optionally subscripted and only usable as type hints.
+       param_must_satisfy_pep484_typing: List[int],
 
-       # Annotate PEP-compliant optional unions of types.
-       param_must_satisfy_pep_tuple_optional: Optional[
-           Union[float, int]]) = None,
+       # Annotate PEP 484-compliant unions of types.
+       param_must_satisfy_pep484_union: Union[dict, Tuple[MyClass, ...], int],
 
-       # Annotate PEP-compliant relative forward references dynamically
+       # Annotate PEP 484-compliant relative forward references dynamically
        # resolved at call time as unqualified classnames relative to the
        # current user-defined submodule. Note this class is defined below.
-       param_must_satisfy_pep_relative_forward_ref: 'MyCrassClass',
+       param_must_satisfy_pep484_relative_forward_ref: 'MyCrassClass',
 
-       # Annotate PEP-compliant objects predefined by the "typing" module
+       # Annotate PEP 484-compliant objects predefined by the "typing" module
        # subscripted by PEP-compliant relative forward references.
-       param_must_satisfy_pep_hint_relative_forward_ref: List['MyCrassClass'],
+       param_must_satisfy_pep484_hint_relative_forward_ref: (
+           List['MyCrassClass']),
 
        # Annotate beartype-specific types predefined by the beartype cave.
        param_must_satisfy_beartype_type_from_cave: NumberType,
@@ -183,6 +188,13 @@ Let's type-check like `greased lightning`_:
        # Annotate beartype-specific forward references in unions of types, too.
        param_must_satisfy_beartype_union_with_forward_ref: (
            IterableType, 'my_package.my_module.MyOtherClass', NoneType),
+
+       # Annotate PEP 484-compliant optional types.
+       param_must_satisfy_pep484_optional: Optional[float] = None,
+
+       # Annotate PEP 484-compliant optional unions of types.
+       param_must_satisfy_pep484_optional_union: Optional[
+           Union[float, int]]) = None,
 
        # Annotate beartype-specific optional types.
        param_must_satisfy_beartype_type_optional: NoneTypeOr[float] = None,
@@ -563,8 +575,8 @@ Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
 negligible constant factors) guarantee <Nobody Believes You_>`__.
 
-Usage
-=====
+Tutorial
+========
 
 The ``@beartype`` decorator provided by the ``beartype`` package transparently
 supports two fundamentally different types of callable type hints – each with
