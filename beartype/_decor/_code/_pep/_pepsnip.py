@@ -252,6 +252,62 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
+# ....................{ HINT ~ generic                    }....................
+PEP_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
+{indent_curr}    # True only if this pith is an instance of this generic.
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
+**generic** (i.e., PEP-compliant type hint subclassing a combination of one or
+more of the :mod:`typing.Generic` superclass, the :mod:`typing.Protocol`
+superclass, and/or other :mod:`typing` non-class objects).
+
+Caveats
+----------
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent type has been generated.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+'''
+
+
+PEP_CODE_CHECK_HINT_GENERIC_SUFFIX = '''
+{indent_curr})'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the current pith
+against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
+generic.
+
+.. _PEP 484:
+   https://www.python.org/dev/peps/pep-0484
+'''
+
+
+PEP_CODE_CHECK_HINT_GENERIC_CHILD = '''
+{{indent_curr}}    # True only if this pith deeply satisfies this unerased
+{{indent_curr}}    # pseudo-superclass of this generic.
+{{indent_curr}}    {hint_child_placeholder} and'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+unerased pseudo-superclass subclassed by a `PEP 484`_-compliant generic.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" and"`` after
+applying this snippet to the last unerased pseudo-superclass of such a generic.
+While there exist alternate and more readable means of accomplishing this, this
+approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent type has been generated.
+'''
+
 # ....................{ HINT ~ sequence : standard        }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
 {indent_curr}    # True only if this pith shallowly satisfies this hint.
@@ -383,62 +439,6 @@ PEP-compliant Python expression yielding the value of the currently indexed
 item of the current pith (which, by definition, *must* be a tuple).
 '''
 
-# ....................{ HINT ~ pep484 : generic           }....................
-PEP484_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
-{indent_curr}    # True only if this pith is an instance of this generic.
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
-'''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
-**generic** (i.e., PEP-compliant type hint subclassing a combination of one or
-more of the :mod:`typing.Generic` superclass, the :mod:`typing.Protocol`
-superclass, and/or other :mod:`typing` non-class objects).
-
-Caveats
-----------
-The ``{indent_curr}`` format variable is intentionally brace-protected to
-efficiently defer its interpolation until the complete PEP-compliant code
-snippet type-checking the current pith against *all* subscripted arguments of
-this parent type has been generated.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-'''
-
-
-PEP484_CODE_CHECK_HINT_GENERIC_SUFFIX = '''
-{indent_curr})'''
-'''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
-generic.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-'''
-
-
-PEP484_CODE_CHECK_HINT_GENERIC_CHILD = '''
-{{indent_curr}}    # True only if this pith deeply satisfies this unerased
-{{indent_curr}}    # pseudo-superclass of this generic.
-{{indent_curr}}    {hint_child_placeholder} and'''
-'''
-PEP-compliant code snippet type-checking the current pith against the current
-unerased pseudo-superclass subclassed by a `PEP 484`_-compliant generic.
-
-Caveats
-----------
-The caller is required to manually slice the trailing suffix ``" and"`` after
-applying this snippet to the last unerased pseudo-superclass of such a generic.
-While there exist alternate and more readable means of accomplishing this, this
-approach is the optimally efficient.
-
-The ``{indent_curr}`` format variable is intentionally brace-protected to
-efficiently defer its interpolation until the complete PEP-compliant code
-snippet type-checking the current pith against *all* subscripted arguments of
-this parent type has been generated.
-'''
-
 # ....................{ HINT ~ pep484 : union             }....................
 PEP484_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''
@@ -495,8 +495,8 @@ See Also
 # Bound format methods of string globals imported above.
 PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
     PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
-PEP484_CODE_CHECK_HINT_GENERIC_CHILD_format = (
-    PEP484_CODE_CHECK_HINT_GENERIC_CHILD.format)
+PEP_CODE_CHECK_HINT_GENERIC_CHILD_format = (
+    PEP_CODE_CHECK_HINT_GENERIC_CHILD.format)
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (

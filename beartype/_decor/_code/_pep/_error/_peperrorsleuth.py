@@ -15,7 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_bases_unerased_or_none,
     get_hint_pep484_newtype_class,
     is_hint_pep484_newtype,
 )
@@ -29,10 +28,13 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 )
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
+    get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
+    is_hint_pep_generic,
+    is_hint_pep_tuple_empty,
     is_hint_pep_typevar,
 )
 from beartype._util.hint.utilhinttest import (
@@ -183,17 +185,18 @@ class CauseSleuth(object):
 
         # If this hint is PEP-compliant...
         if is_hint_pep(self.hint):
-            # Unsubscripted "typing" attribute identifying this hint.
+            # Arbitrary object uniquely identifying this hint.
             self.hint_sign = get_hint_pep_sign(self.hint)
 
-            # Tuple of the one or more unerased pseudo-superclasses subclassed
-            # by this hint if this hint is a generic *OR* "None" otherwise.
-            self.hint_childs = get_hint_pep484_generic_bases_unerased_or_none(self.hint)
-
-            # If this hint is *NOT* a generic, generalize this variable to the
-            # possibly empty tuple of all arguments subscripting this hint.
-            if self.hint_childs is None:
-                self.hint_childs = get_hint_pep_args(self.hint)
+            # Tuple of either...
+            self.hint_childs = (
+                # If this hint is a generic, the one or more unerased
+                # pseudo-superclasses originally subclassed by this hint.
+                get_hint_pep_generic_bases_unerased(self.hint)
+                if is_hint_pep_generic(self.hint) else
+                # Else, the zero or more arguments subscripting this hint.
+                get_hint_pep_args(self.hint)
+            )
 
     # ..................{ GETTERS                           }..................
     def get_cause_or_none(self) -> 'Optional[str]':
@@ -307,6 +310,10 @@ class CauseSleuth(object):
             if not (
                 # Subscripted by no child hints *NOR*...
                 self.hint_childs or
+                # An empty fixed-length tuple hint, whose PEP 585 (but *NOT*
+                # PEP 484)-compliant implementation is subscripted by no child
+                # hints *NOR*...
+                is_hint_pep_tuple_empty(self.hint) or
                 # A forward reference nor type variable, whose designs reside
                 # well outside the standard "typing" dunder variable API and
                 # are thus *NEVER* subscripted by child hints...
@@ -316,7 +323,7 @@ class CauseSleuth(object):
             # Then this hint should have been subscripted by one or more child
             # hints but wasn't. In this case, raise an exception.
                 raise _BeartypeCallHintPepRaiseException(
-                    f'{self.exception_label} argumentative PEP type hint '
+                    f'{self.exception_label} PEP type hint '
                     f'{repr(self.hint)} unsubscripted.'
                 )
             # Else, thus subscripted by one or more child hints (e.g.,

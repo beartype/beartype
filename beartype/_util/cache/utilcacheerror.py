@@ -160,11 +160,9 @@ def reraise_exception_cached(
         beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (
-        '{!r} not exception.'.format(exception))
-    assert isinstance(source_str, str), (
-        'Source substring {!r} not string.'.format(source_str))
-    assert isinstance(target_str, str), (
-        'Target substring {!r} not string.'.format(target_str))
+        f'{repr(exception)} not exception.')
+    assert isinstance(source_str, str), f'{repr((source_str))} not string.'
+    assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
     # If...
     if (

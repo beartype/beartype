@@ -130,10 +130,10 @@ NOT_HINTS_NONPEP = frozenset((
     # PEP-compliant type hints are invalid and thus unsupported.
     {
         # Tuple containing a PEP-compliant type hint.
-        (int, hint_pep, cave.NoneType,)
-        for hint_pep in HINTS_PEP_HASHABLE
+        (int, hint_pep_hashable, cave.NoneType,)
+        for hint_pep_hashable in HINTS_PEP_HASHABLE
     } |
-    # Hashable PEP-compliant type hints.
+    # Set comprehension of hashable PEP-compliant non-class type hints.
     HINTS_PEP_HASHABLE |
     # Hashable objects invalid as type hints (e.g., scalars).
     NOT_HINTS_HASHABLE

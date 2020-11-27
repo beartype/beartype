@@ -26,13 +26,18 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_AT_LEAST_3_9,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    is_hint_pep484_generic,
+    get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype,
 )
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
-    is_hint_pep585)
+    get_hint_pep585_generic_bases_unerased,
+    get_hint_pep585_generic_typevars,
+    is_hint_pep585,
+    is_hint_pep585_generic,
+)
 from typing import Generic, NewType, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -152,11 +157,35 @@ get_hint_pep_args.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ typevars                }....................
-# If the active Python interpreter targets at least Python >= 3.7, implement
-# this function to access the standard "__parameters__" dunder instance
-# variable.
-if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_typevars(hint: object) -> tuple:
+# If the active Python interpreter targets at least Python >= 3.9, implement
+# this function to perform cray-cray logic. *sigh*
+if IS_PYTHON_AT_LEAST_3_9:
+    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
+
+        # Value of the "__parameters__" dunder attribute on this object if this
+        # object defines this attribute *OR* "None" otherwise.
+        hint_pep_typevars = getattr(hint, '__parameters__', None)
+
+        # If this object defines *NO* such attribute...
+        if hint_pep_typevars is None:
+            # Return either...
+            return (
+                # If this hint is a PEP 585-compliant generic, the tuple of all
+                # typevars declared on pseudo-superclasses of this generic.
+                get_hint_pep585_generic_typevars(hint)
+                if is_hint_pep585_generic(hint) else
+                # Else, the empty tuple.
+                ()
+            )
+        # Else, this object defines this attribute.
+
+        # Return this attribute.
+        return hint_pep_typevars
+
+# Else if the active Python interpreter targets Python 3.7 or 3.8, implement
+# this function to access the "__parameters__" dunder instance variable.
+elif IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
 
         # Value of the "__parameters__" dunder attribute on this object if this
         # object defines this attribute *OR* the empty tuple otherwise. Note:
@@ -174,7 +203,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 #
 # Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
-    def get_hint_pep_typevars(hint: object) -> tuple:
+    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
@@ -235,7 +264,7 @@ get_hint_pep_typevars.__doc__ = '''
 
     Returns
     ----------
-    tuple
+    Tuple[TypeVar]
         Either:
 
         * If this object defines a ``__parameters__`` dunder attribute, the
@@ -361,7 +390,10 @@ def get_hint_pep_sign(hint: object) -> dict:
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_forwardref
     from beartype._util.hint.pep.utilhintpeptest import (
-        die_unless_hint_pep, is_hint_pep_typevar)
+        die_unless_hint_pep,
+        is_hint_pep_generic,
+        is_hint_pep_typevar,
+    )
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     #
@@ -371,27 +403,32 @@ def get_hint_pep_sign(hint: object) -> dict:
     die_unless_hint_pep(hint)
     # Else, this hint is PEP-compliant.
 
-    # If this hint is a PEP 484-compliant generic (i.e., class subclassing one
-    # or more "typing" pseudo-superclasses), return the "typing.Generic" ABC
-    # generically (...get it?) identifying multiple-inherited generics.
-    #
-    # Note that the "typing" module guarantees *ALL* generics to subclass this
-    # ABC regardless of whether those generics originally did so explicitly.
-    # How? By type erasure, the gift that keeps on giving:
+    # If this hint is a PEP-compliant generic (i.e., class
+    # superficially subclassing at least one non-class PEP-compliant object),
+    # return the "typing.Generic" abstract base class (ABC) generically -- get
+    # it? -- identifying PEP-compliant generics. Note that:
+    # * *ALL* PEP 484-compliant generics and PEP 544-compliant protocols are
+    #   guaranteed by the "typing" module to subclass this ABC regardless of
+    #   whether those generics originally did so explicitly. How? By type
+    #   erasure, the gift that keeps on giving:
     #     >>> import typing as t
     #     >>> class MuhList(t.List): pass
     #     >>> MuhList.__orig_bases__
     #     (typing.List)
     #     >>> MuhList.__mro__
     #     (__main__.MuhList, list, typing.Generic, object)
+    # * *NO* PEP 585-compliant generics subclass this ABC unless those generics
+    #   are also either PEP 484- or 544-compliant. Indeed, PEP 585-compliant
+    #   generics subclass *NO* common superclass.
     #
-    # Ergo, this ABC uniquely identifies *ALL* generics and thus serves as a
-    # sufficient and complete unsubscripted "typing" attribute.
+    # Ergo, this ABC uniquely identifies many but *NOT* all generics. Although
+    # non-ideal, the failure of PEP 585-compliant generics to subclass a common
+    # superclass leaves us with little alternative.
     #
     # Note that generics *CANNOT* be detected by the general-purpose logic
     # performed below, as this ABC does *NOT* define a __repr__() dunder method
     # returning a string prefixed by the "typing." substring.
-    if is_hint_pep484_generic(hint):
+    if is_hint_pep_generic(hint):
         return Generic
     # Else, this hint is *NOT* a generic.
     #
@@ -495,10 +532,6 @@ def get_hint_pep_sign(hint: object) -> dict:
         return getattr(typing, hint.name)
     # Else, this hint *MUST* be a standard PEP 484-compliant type hint defined
     # by the "typing" module.
-
-    #FIXME: Consider shifting this PEP 484-specific logic as well as the above
-    #"if is_hint_pep484_generic(hint):" branch into a new
-    #utilhintpep484.get_hint_pep484_sign() function for maintainability.
 
     # Machine-readable string representation of this hint also serving as the
     # fully-qualified name of the public "typing" attribute uniquely associated
@@ -744,3 +777,205 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
         >>> typing.Union[int, str].__origin__
         typing.Union
     '''
+
+# ....................{ GETTERS ~ subtype : generic       }....................
+def get_hint_pep_generic_bases_unerased(hint: object) -> 'Tuple[object]':
+    '''
+    Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
+    originally listed as superclasses prior to their implicit type erasure
+    under `PEP 560`_) of the passed PEP-compliant **generic** (i.e., class
+    superficially subclassing at least one non-class PEP-compliant object) if
+    this object is a generic *or* raise an exception otherwise (i.e., if this
+    object is either not a class *or* is a class subclassing no non-class
+    PEP-compliant objects).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Caveats
+    ----------
+    **This function should always be called in lieu of attempting to directly
+    access the low-level** ``__orig_bases__`` **dunder instance variable.**
+    Most PEP-compliant type hints fail to declare that variable, guaranteeing
+    :class:`AttributeError` exceptions from all general-purpose logic
+    attempting to directly access that variable. Thus this function, which
+    "fills in the gaps" by implementing this oversight.
+
+    **This function returns tuples possibly containing a mixture of actual
+    superclasses and pseudo-superclasses superficially masquerading as actual
+    superclasses subscripted by one or more PEP-compliant child hints,**
+    including type variables (e.g., ``(typing.Iterable[T], typing.Sized[T])``).
+    In particular, most public attributes of the :mod:`typing` module used as
+    superclasses are *not* actually types but singleton objects devilishly
+    masquerading as types. Most actual :mod:`typing` superclasses are private,
+    fragile, and prone to alteration or even removal between Python versions.
+
+    Motivation
+    ----------
+    `PEP 560`_ (i.e., "Core support for typing module and generic types)
+    formalizes the ``__orig_bases__`` dunder attribute first informally
+    introduced by the :mod:`typing` module's implementation of `PEP 484`_.
+    Naturally, `PEP 560`_ remains as unusable as `PEP 484`_ itself. Ideally,
+    `PEP 560`_ would have generalized the core intention of preserving each
+    original user-specified subclass tuple of superclasses as a full-blown
+    ``__orig_mro__`` dunder attribute listing the original method resolution
+    order (MRO) of that subclass had that tuple *not* been modified.
+
+    Naturally, `PEP 560`_ did no such thing. The original MRO remains
+    obfuscated and effectively inaccessible. While computing that MRO would
+    technically be feasible, doing so would also be highly non-trivial,
+    expensive, and fragile. Instead, this function retrieves *only* the tuple
+    of :mod:`typing`-specific pseudo-superclasses that this object's class
+    originally attempted (but failed) to subclass.
+
+    You are probably now agitatedly cogitating to yourself in the darkness:
+    "But @leycec: what do you mean `PEP 560`_? Wasn't `PEP 560`_ released
+    *after* `PEP 484`_? Surely no public API defined by the Python stdlib would
+    be so malicious as to silently alter the tuple of base classes listed by a
+    user-defined subclass?"
+
+    As we've established both above and elsewhere throughout the codebase,
+    everything developed for `PEP 484` -- including `PEP 560`_, which derives
+    its entire raison d'etre from `PEP 484`_ -- are fundamentally insane. In
+    this case, `PEP 484`_ is insane by subjecting parametrized :mod:`typing`
+    types employed as base classes to "type erasure," because:
+
+         ...it is common practice in languages with generics (e.g. Java,
+         TypeScript).
+
+    Since Java and TypeScript are both terrible languages, blindly
+    recapitulating bad mistakes baked into such languages is an equally bad
+    mistake. In this case, "type erasure" means that the :mod:`typing` module
+    *intentionally* destroys runtime type information for nebulous and largely
+    unjustifiable reasons (i.e., Big Daddy Java and TypeScript do it, so it
+    must be unquestionably good).
+
+    Specifically, the :mod:`typing` module intentionally munges :mod:`typing`
+    types listed as base classes in user-defined subclasses as follows:
+
+    * All base classes whose origin is a builtin container (e.g.,
+      ``typing.List[T]``) are reduced to that container (e.g.,
+      :class:`list`).
+    * All base classes derived from an abstract base class declared by the
+      :mod:`collections.abc` subpackage (e.g., ``typing.Iterable[T]``) are
+      reduced to that abstract base class (e.g.,
+      ``collections.abc.Iterable``).
+    * All surviving base classes that are parametrized (e.g.,
+      ``typing.Generic[S, T]``) are stripped of that parametrization (e.g.,
+      :class:`typing.Generic`).
+
+    Since there exists no counterpart to the :class:`typing.Generic`
+    superclass, the :mod:`typing` module preserves that superclass in
+    unparametrized form. Naturally, this is useless, as an unparametrized
+    :class:`typing.Generic` superclass conveys no meaningful type annotation.
+    All other superclasses are reduced to their non-:mod:`typing`
+    counterparts: e.g.,
+
+        .. code-block:: python
+
+        >>> from typing import TypeVar, Generic, Iterable, List
+        >>> T = TypeVar('T')
+        >>> class UserDefinedGeneric(List[T], Iterable[T], Generic[T]): pass
+        # This is type erasure.
+        >>> UserDefinedGeneric.__mro__
+        (list, collections.abc.Iterable, Generic)
+        # This is type preservation -- except the original MRO is discarded.
+        # So, it's not preservation; it's reduction! We take what we can get.
+        >>> UserDefinedGeneric.__orig_bases__
+        (typing.List[T], typing.Iterable[T], typing.Generic[T])
+        # Guess which we prefer?
+
+    So, we prefer the generally useful ``__orig_bases__`` dunder tuple over
+    the generally useless ``__mro__`` dunder tuple. Note, however, that the
+    latter *is* still occasionally useful and thus occasionally returned by
+    this getter. For inexplicable reasons, **single-inherited protocols**
+    (i.e., classes directly subclassing *only* the `PEP 544`_-compliant
+    :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to
+    type erasure and thus constitute a notable exception to this heuristic:
+
+        .. code-block:: python
+
+        >>> from typing import Protocol
+        >>> class UserDefinedProtocol(Protocol): pass
+        >>> UserDefinedProtocol.__mro__
+        (__main__.UserDefinedProtocol, typing.Protocol, typing.Generic, object)
+        >>> UserDefinedProtocol.__orig_bases__
+        AttributeError: type object 'UserDefinedProtocol' has no attribute '__orig_bases__'
+
+    Welcome to :mod:`typing` hell, where even :mod:`typing` types lie broken
+    and misshapen on the killing floor of overzealous theory-crafting purists.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Tuple[object]
+        Tuple of the one or more unerased pseudo-superclasses of this
+        PEP-compliant generic.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this hint is either:
+
+        * *Not* a PEP-compliant generic.
+        * Is a PEP-compliant generic subclassing *no* pseudo-superclasses.
+
+    Examples
+    ----------
+        >>> import typing
+        >>> from beartype._util.hint.pep.utilhintpepget import (
+        ...     get_hint_pep_generic_bases_unerased)
+        >>> get_hint_pep_generic_bases_unerased(
+        ...     typing.Union[str, typing.List[int]])
+        ()
+        >>> T = typing.TypeVar('T')
+        >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
+        >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
+        (typing.Iterable[~T], typing.Container[~T])
+        >>> MuhIterable.__mro__
+        (MuhIterable,
+         collections.abc.Iterable,
+         collections.abc.Container,
+         typing.Generic,
+         object)
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    .. _PEP 560:
+       https://www.python.org/dev/peps/pep-0560
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
+    '''
+
+    # Tuple of either...
+    #
+    # Note this implicitly raises a "BeartypeDecorHintPepException" if this
+    # object is *NOT* a PEP-compliant generic. Ergo, we need not explicitly
+    # validate that above.
+    hint_pep_generic_bases_unerased = (
+        # If this is a PEP 585-compliant generic, all unerased
+        # pseudo-superclasses of this PEP 585-compliant generic.
+        get_hint_pep585_generic_bases_unerased(hint)
+        if is_hint_pep585_generic(hint) else
+        # Else, this *MUST* be a PEP 484-compliant generic. In this case, all
+        # unerased pseudo-superclasses of this PEP 484-compliant generic.
+        get_hint_pep484_generic_bases_unerased(hint)
+    )
+
+    # If this generic subclasses *NO* pseudo-superclass, raise an exception.
+    #
+    # Note this should have already been guaranteed on our behalf by:
+    # * If this generic is PEP 484-compliant, the "typing" module.
+    # * If this generic is PEP 585-compliant, CPython or PyPy itself.
+    if not hint_pep_generic_bases_unerased:
+        raise BeartypeDecorHintPepException(
+            f'PEP generic {repr(hint)} subclasses no superclasses.')
+    # Else, this generic subclasses one or more pseudo-superclasses.
+
+    # Return this tuple of these pseudo-superclasses.
+    return hint_pep_generic_bases_unerased

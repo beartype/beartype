@@ -71,9 +71,6 @@ def add_data(data_module: 'ModuleType') -> None:
         Union,
     )
 
-    #FIXME: Remove *AFTER* implementing PEP 585 support.
-    # return
-
     # ..................{ TYPEVARS                          }..................
     S = TypeVar('S')
     '''
@@ -389,178 +386,144 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ GENERICS ~ user                   }................
-        #FIXME: Right. So, unsurprisingly, PEP 585-compliant user-defined
-        #generics have utterly *NO* commonality with PEP 484-compliant
-        #user-defined generics. While the latter are trivially detectable as
-        #subclassing "typing.Generic" after type erasure, the former are *NOT*.
-        #The only means of deterministically deciding whether or not any given
-        #class is a PEP 585-compliant user-defined generic, after extensive
-        #testing, appears to be as follows:
-        #* That class defines both the __class_getitem__() dunder method *AND*
-        #  the "__orig_bases__" instance variable. Note that this condition in
-        #  and of itself is insufficient to decide PEP 585-compliance as a
-        #  user-defined generic. Why? Because these dunder attributes have been
-        #  standardized under various PEPs and may thus be implemented by *ANY*
-        #  arbitrary classes.
-        #* The "__orig_bases__" instance variable is a non-empty tuple.
-        #* One or more objects listed in this tuple satisfy this test:
-        #  any(
-        #      is_hint_pep585(hint_base_erased)
-        #      for hint_base_erased in hint.__orig_bases__
-        #  )
-        #
-        #This suggests we'll need to define:
-        #* A new is_hint_pep585_generic() tester (and probably various related
-        #  getters for obtaining bases, which should just reduce to returning
-        #  "hint.__orig_bases__" as is) in "utilhintpep585".
-        #* A new is_hint_pep_generic() tester in "utilhintpeptest": e.g.,
-        #     def is_hint_pep_generic(hint: object) -> bool:
-        #         return (
-        #             is_hint_pep484_generic(hint) or
-        #             is_hint_pep585_generic(hint)
-        #         )
-        #* Refactor all existing external calls to is_hint_pep484_generic() to
-        #  call is_hint_pep_generic() instead.
-        #* Likewise, refactor all existing external calls to the family of
-        #  get_hint_pep484_generic_base*() functions to call higher-level
-        #  PEP-agnostic getters we'll need to define as well. *sigh*
-        #
-        #In short, this is a tedious pain. It's certainly feasible, but it's a
-        #bit wearing on our patience. Curmudgeonly grimdarkness!
+        # Note that PEP 585-compliant generics are *NOT* explicitly detected as
+        # PEP 585-compliant due to idiosyncrasies in the CPython implementation
+        # of these generics. Ergo, we intentionally do *NOT* set
+        # "is_pep585=True," below.
 
-        # # Generic subclassing a single unparametrized builtin type.
-        # PepHintMetadata(
-        #     pep_hint=Pep585GenericUntypevaredSingle,
-        #     pep_sign=Generic,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Subclass-specific generic list of string constants.
-        #         PepHintPithSatisfiedMetadata(Pep585GenericUntypevaredSingle((
-        #             'Forgive our Vocation’s vociferous publications',
-        #             'Of',
-        #         ))),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'Hourly sybaritical, pub sabbaticals'),
-        #         # List of string constants.
-        #         PepHintPithUnsatisfiedMetadata([
-        #             'Materially ostracizing, itinerant‐',
-        #             'Anchoretic digimonks initiating',
-        #         ]),
-        #     ),
-        # ),
-        #
-        # # Generic subclassing multiple unparametrized "collection.abc" abstract
-        # # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
-        # PepHintMetadata(
-        #     pep_hint=Pep585GenericUntypevaredMultiple,
-        #     pep_sign=Generic,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Subclass-specific generic 2-tuple of string constants.
-        #         PepHintPithSatisfiedMetadata(Pep585GenericUntypevaredMultiple((
-        #             'Into a viscerally Eviscerated eras’ meditative hallways',
-        #             'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
-        #         ))),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Initiations'),
-        #         # 2-tuple of string constants.
-        #         PepHintPithUnsatisfiedMetadata((
-        #             "Into a fat mendicant’s",
-        #             'Endgame‐defendant, dedicate rants',
-        #         )),
-        #     ),
-        # ),
-        #
-        # # Generic subclassing multiple parametrized "collections.abc" abstract
-        # # base classes (ABCs).
-        # PepHintMetadata(
-        #     pep_hint=Pep585GenericTypevaredShallowMultiple,
-        #     pep_sign=Generic,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Subclass-specific generic iterable of string constants.
-        #         PepHintPithSatisfiedMetadata(
-        #             Pep585GenericTypevaredShallowMultiple((
-        #                 "Of foliage's everliving antestature —",
-        #                 'In us, Leviticus‐confusedly drunk',
-        #             )),
-        #         ),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
-        #     ),
-        # ),
-        #
-        # # Generic subclassing multiple indirectly parametrized
-        # # "collections.abc" abstract base classes (ABCs) *AND* an
-        # # unparametrized "collections.abc" ABC.
-        # PepHintMetadata(
-        #     pep_hint=Pep585GenericTypevaredDeepMultiple,
-        #     pep_sign=Generic,
-        #     is_typevared=True,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # Subclass-specific generic iterable of 2-tuples of string
-        #         # constants.
-        #         PepHintPithSatisfiedMetadata(
-        #             Pep585GenericTypevaredDeepMultiple((
-        #                 (
-        #                     'Inertially tragicomipastoral, pastel anticandour —',
-        #                     'remanding undemanding',
-        #                 ),
-        #                 (
-        #                     'Of a',
-        #                     '"hallow be Thy nameless',
-        #                 ),
-        #             )),
-        #         ),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Invitations'),
-        #     ),
-        # ),
-        #
-        # # Nested list of PEP 585-compliant generics.
-        # PepHintMetadata(
-        #     pep_hint=list[Pep585GenericUntypevaredMultiple],
-        #     pep_sign=list,
-        #     type_origin=list,
-        #     is_pep585=True,
-        #     piths_satisfied_meta=(
-        #         # List of subclass-specific generic 2-tuples of string
-        #         # constants.
-        #         PepHintPithSatisfiedMetadata([
-        #             Pep585GenericUntypevaredMultiple((
-        #                 'Stalling inevit‐abilities)',
-        #                 'For carbined',
-        #             )),
-        #             Pep585GenericUntypevaredMultiple((
-        #                 'Power-over (than',
-        #                 'Power-with)',
-        #             )),
-        #         ]),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata(
-        #             'that forced triforced, farcically carcinogenic Obelisks'),
-        #         # List of 2-tuples of string constants.
-        #         PepHintPithUnsatisfiedMetadata([
-        #             (
-        #                 'Obliterating their literate decency',
-        #                 'Of a cannabis‐enthroning regency',
-        #             ),
-        #         ]),
-        #     ),
-        # ),
+        # Generic subclassing a single unparametrized builtin container.
+        PepHintMetadata(
+            pep_hint=Pep585GenericUntypevaredSingle,
+            pep_sign=Generic,
+            is_pep585_generic=True,
+            piths_satisfied_meta=(
+                # Subclass-specific generic list of string constants.
+                PepHintPithSatisfiedMetadata(Pep585GenericUntypevaredSingle((
+                    'Forgive our Vocation’s vociferous publications',
+                    'Of',
+                ))),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Hourly sybaritical, pub sabbaticals'),
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    'Materially ostracizing, itinerant‐',
+                    'Anchoretic digimonks initiating',
+                ]),
+            ),
+        ),
+
+        # Generic subclassing multiple unparametrized "collection.abc" abstract
+        # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
+        PepHintMetadata(
+            pep_hint=Pep585GenericUntypevaredMultiple,
+            pep_sign=Generic,
+            is_pep585_generic=True,
+            piths_satisfied_meta=(
+                # Subclass-specific generic 2-tuple of string constants.
+                PepHintPithSatisfiedMetadata(Pep585GenericUntypevaredMultiple((
+                    'Into a viscerally Eviscerated eras’ meditative hallways',
+                    'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
+                ))),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Initiations'),
+                # 2-tuple of string constants.
+                PepHintPithUnsatisfiedMetadata((
+                    "Into a fat mendicant’s",
+                    'Endgame‐defendant, dedicate rants',
+                )),
+            ),
+        ),
+
+        # Generic subclassing multiple parametrized "collections.abc" abstract
+        # base classes (ABCs).
+        PepHintMetadata(
+            pep_hint=Pep585GenericTypevaredShallowMultiple,
+            pep_sign=Generic,
+            is_typevared=True,
+            is_pep585_generic=True,
+            piths_satisfied_meta=(
+                # Subclass-specific generic iterable of string constants.
+                PepHintPithSatisfiedMetadata(
+                    Pep585GenericTypevaredShallowMultiple((
+                        "Of foliage's everliving antestature —",
+                        'In us, Leviticus‐confusedly drunk',
+                    )),
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
+            ),
+        ),
+
+        # Generic subclassing multiple indirectly parametrized
+        # "collections.abc" abstract base classes (ABCs) *AND* an
+        # unparametrized "collections.abc" ABC.
+        PepHintMetadata(
+            pep_hint=Pep585GenericTypevaredDeepMultiple,
+            pep_sign=Generic,
+            is_typevared=True,
+            is_pep585_generic=True,
+            piths_satisfied_meta=(
+                # Subclass-specific generic iterable of 2-tuples of string
+                # constants.
+                PepHintPithSatisfiedMetadata(
+                    Pep585GenericTypevaredDeepMultiple((
+                        (
+                            'Inertially tragicomipastoral, pastel anticandour —',
+                            'remanding undemanding',
+                        ),
+                        (
+                            'Of a',
+                            '"hallow be Thy nameless',
+                        ),
+                    )),
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata('Invitations'),
+            ),
+        ),
+
+        # Nested list of PEP 585-compliant generics.
+        PepHintMetadata(
+            pep_hint=list[Pep585GenericUntypevaredMultiple],
+            pep_sign=list,
+            type_origin=list,
+            is_pep585=True,
+            piths_satisfied_meta=(
+                # List of subclass-specific generic 2-tuples of string
+                # constants.
+                PepHintPithSatisfiedMetadata([
+                    Pep585GenericUntypevaredMultiple((
+                        'Stalling inevit‐abilities)',
+                        'For carbined',
+                    )),
+                    Pep585GenericUntypevaredMultiple((
+                        'Power-over (than',
+                        'Power-with)',
+                    )),
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'that forced triforced, farcically carcinogenic Obelisks'),
+                # List of 2-tuples of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    (
+                        'Obliterating their literate decency',
+                        'Of a cannabis‐enthroning regency',
+                    ),
+                ]),
+            ),
+        ),
 
         # ................{ LIST                              }................
         # List of ignorable objects.

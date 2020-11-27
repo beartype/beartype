@@ -26,78 +26,9 @@ See Also
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test.util.pyterror import raises_uncached
-from typing import Generic, List, NoReturn
+from typing import List, NoReturn
 
-# ....................{ TESTS ~ getters                   }....................
-def test_get_hint_pep484_generic_bases_or_none() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep484.get_hint_pep484_generic_bases_unerased_or_none`
-    getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        get_hint_pep484_generic_bases_unerased_or_none)
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_class_typing
-    from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
-
-    # Assert this getter returns...
-    for hint_pep_meta in HINTS_PEP_META:
-        # One or more unerased pseudo-superclasses for PEP 484-compliant
-        # generics.
-        if hint_pep_meta.pep_sign is Generic:
-            hint_pep_bases = get_hint_pep484_generic_bases_unerased_or_none(
-                hint_pep_meta.pep_hint)
-            assert isinstance(hint_pep_bases, tuple)
-            assert hint_pep_bases
-        # *NO* unerased pseudo-superclasses for concrete PEP-compliant type
-        # hints *NOT* defined by the "typing" module.
-        elif not is_hint_pep_class_typing(hint_pep_meta.pep_hint):
-            assert get_hint_pep484_generic_bases_unerased_or_none(
-                hint_pep_meta.pep_hint) is None
-        # Else, this hint is defined by the "typing" module. In this case, this
-        # hint may or may not be implemented as a generic conditionally
-        # depending on the current Python version -- especially under the
-        # Python < 3.7.0 implementations of the "typing" module, where
-        # effectively *EVERYTHING* was internally implemented as a generic.
-        # While we could technically correct for this conditionality, doing so
-        # would render the resulting code less maintainable for no useful gain.
-        # Ergo, we quietly ignore this edge case and get on with actual coding.
-
-    # Assert this getter returns *NO* unerased pseudo-superclasses for
-    # non-"typing" hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep484_generic_bases_unerased_or_none(
-            not_hint_pep) is None
-
-# ....................{ TESTS ~ testers                   }....................
-def test_is_hint_pep484_generic() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep484.is_hint_pep484_generic`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        is_hint_pep484_generic)
-    from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
-
-    # Assert this tester:
-    # * Accepts generic PEP 484-compliant generics.
-    # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep484_generic(hint_pep_meta.pep_hint) is (
-            hint_pep_meta.pep_sign is Generic)
-
-    # Assert this tester rejects non-"typing" types.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep484_generic(not_hint_pep) is False
-
-# ....................{ TESTS ~ hints                     }....................
+# ....................{ TESTS ~ hint                      }....................
 def test_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
@@ -224,7 +155,7 @@ def test_pep484_hint_sequence_standard_cached() -> None:
         '  In the pebbles of the holy streams.'
         'All the sun long it was running, it was lovely, the hay')
 
-# ....................{ TESTS ~ hints : invalid           }....................
+# ....................{ TESTS ~ hint : invalid            }....................
 def test_pep484_hint_invalid_types_nongeneric() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against **invalid non-generic

@@ -201,7 +201,7 @@ def raise_pep_call_exception(
     # If type hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(
         hint=hint,
-        hint_label=f'{pith_label} PEP type hint {repr(hint)}',
+        hint_label=f'{pith_label} PEP type hint "{repr(hint)}"',
     )
     # Else, this type hint is PEP-compliant.
 

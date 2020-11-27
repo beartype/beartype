@@ -61,7 +61,10 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    is_hint_pep585,
+    is_hint_pep585_generic,
+)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.utilobject import get_object_class_unless_class
@@ -444,11 +447,11 @@ def is_hint_pep(hint: object) -> bool:
         is_hint_pep_class_typing(hint_type) or
         # This hint is a PEP 585-compliant type hint.
         is_hint_pep585(hint) or
-        # This hint is a PEP 484-compliant generic. Although a small subset of
+        # This hint is a PEP-compliant generic. Although a small subset of
         # generics are directly defined by the "typing" module (e.g.,
-        # "typing.IO"), most generics are user-defined subclasses defined by
-        # user-defined modules residing elsewhere.
-        is_hint_pep484_generic(hint) or
+        # "typing.SupportsInt"), most generics are user-defined subclasses
+        # defined by user-defined modules residing elsewhere.
+        is_hint_pep_generic(hint) or
         # This hint is a forward reference type hint.
         #
         # Note this unconditionally matches *ALL* forward references, including
@@ -779,6 +782,56 @@ is_hint_pep_class_typing.__doc__ = '''
         * Else, the class of this object is defined by the :mod:`typing`
           module.
     '''
+
+# ....................{ TESTERS ~ subtype : generic       }....................
+def is_hint_pep_generic(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **generic** (i.e., class
+    superficially subclassing at least one non-class PEP-compliant object).
+
+    Specifically, this tester returns ``True`` only if this object is a class
+    that is either:
+
+    * A `PEP 585`_-compliant generic as tested by the lower-level
+      :func:`is_hint_pep585_generic` function.
+    * A `PEP 484`_-compliant generic as tested by the lower-level
+      :func:`is_hint_pep484_generic` function.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a generic.
+
+    See Also
+    ----------
+    :func:`is_hint_pep_typevared`
+        Commentary on the relation between generics and parametrized hints.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
+    '''
+
+    # Return true only if this hint is...
+    return (
+        # A class that is either...
+        isinstance(hint, type) and (
+            # A PEP 585-compliant generic *OR*...
+            is_hint_pep585_generic(hint) or
+            # A PEP 484-compliant generic.
+            is_hint_pep484_generic(hint)
+        )
+    )
 
 # ....................{ TESTERS ~ subtype : tuple         }....................
 def is_hint_pep_tuple_empty(hint: object) -> bool:

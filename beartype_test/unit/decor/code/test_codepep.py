@@ -89,19 +89,6 @@ def test_pep() -> None:
                 hint_pep_meta.pep_hint):
                 return hint_peped_param
 
-            # Type of exception raised by this wrapper on type-check failures.
-            exception_cls = (
-                # If this hint is uniquely identified by an unsubscripted
-                # "typing" attribute, this wrapper raises PEP-compliant
-                # exceptions.
-                BeartypeCallHintPepException
-                if hint_pep_meta.pep_sign is not None else
-                # Else, this hint reduces to a builtin type and is thus
-                # detected as a PEP-noncompliant type hint. In this case, this
-                # wrapper raises PEP-noncompliant exceptions.
-                BeartypeCallHintNonPepException
-            )
-
             # For each pith satisfying this hint...
             for pith_satisfied_meta in hint_pep_meta.piths_satisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
@@ -143,6 +130,18 @@ def test_pep() -> None:
                     # object.
                     assert hint_peped(pith) is pith
 
+            # Type of exception raised by this wrapper on type-check failures.
+            EXCEPTION_CLS = (
+                # If this hint is uniquely identified by a sign, this wrapper
+                # raises PEP-compliant exceptions.
+                BeartypeCallHintPepException
+                if hint_pep_meta.pep_sign is not None else
+                # Else, this hint reduces to a builtin type and is thus
+                # detected as a PEP-noncompliant type hint. In this case, this
+                # wrapper raises PEP-noncompliant exceptions.
+                BeartypeCallHintNonPepException
+            )
+
             # For each pith *NOT* satisfying this hint...
             for pith_unsatisfied_meta in hint_pep_meta.piths_unsatisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
@@ -164,12 +163,22 @@ def test_pep() -> None:
 
                 # Assert this wrapper function raises the expected exception
                 # when type-checking this pith against this hint.
-                with raises_uncached(exception_cls) as exception_info:
+                with raises_uncached(EXCEPTION_CLS) as exception_info:
                     hint_peped(pith_unsatisfied_meta.pith)
 
                 # Exception message raised by this wrapper function.
                 exception_str = str(exception_info.value)
                 # print('exception message: {}'.format(exception_str))
+
+                # Exception type localized for debuggability. Sadly, the
+                # pytest.ExceptionInfo.__repr__() dunder method fails to
+                # usefully describe its exception metadata.
+                exception_type = exception_info.type
+
+                # Assert this exception metadata describes the expected
+                # exception as a sanity check against upstream pytest issues
+                # and/or issues with our raises_uncached() context manager.
+                assert issubclass(exception_type, EXCEPTION_CLS)
 
                 # For each uncompiled regular expression expected to match this
                 # message, assert this expression actually does so.

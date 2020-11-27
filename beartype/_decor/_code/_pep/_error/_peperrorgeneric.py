@@ -18,6 +18,7 @@ from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
+from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 from typing import Generic
 
@@ -62,11 +63,11 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> 'Optional[str]':
             continue
         # Else, this pseudo-superclass is *NOT* an actual class.
         #
-        # If this pseudo-superclass is *NOT* defined by the "typing" module
-        # (and is thus user-defined), reduce this pseudo-superclass to a real
-        # superclass originating this pseudo-superclass. See related commentary
-        # in the "_pephint" submodule.
-        elif not is_hint_pep_typing(hint_base):
+        # If this pseudo-superclass is neither a PEP 585-compliant type hint
+        # *NOR* a PEP-compliant type hint defined by the "typing" module,
+        # reduce this pseudo-superclass to a real superclass originating this
+        # pseudo-superclass. See commentary in the "_pephint" submodule.
+        elif not (is_hint_pep585(hint_base) and is_hint_pep_typing(hint_base)):
             hint_base = get_hint_pep484_generic_base_erased_from_unerased(
                 hint_base)
         # Else, this pseudo-superclass is defined by the "typing" module.

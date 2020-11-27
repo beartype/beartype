@@ -29,9 +29,14 @@ from beartype_test.unit.data.hint.pep.proposal import (
 # Initialized by the _init() function below.
 HINTS_PEP_HASHABLE = None
 '''
-Frozen set of **hashable PEP-compliant type hints** (i.e., PEP-compliant type
-hints accepted by the builtin :func:`hash` function *without* raising an
-exception and thus usable in hash-based containers like dictionaries and sets).
+Frozen set of **hashable PEP-compliant non-class type hints** (i.e.,
+PEP-compliant type hints that are *not* classes but *are* accepted by the
+builtin :func:`hash` function *without* raising an exception and thus usable in
+hash-based containers like dictionaries and sets).
+
+Hashable PEP-compliant class type hints (e.g., generics, protocols) are largely
+indistinguishable from PEP-noncompliant class type hints and thus useless for
+testing purposes.
 '''
 
 
@@ -148,7 +153,10 @@ def _init() -> None:
     HINTS_PEP_HASHABLE = frozenset(
         hint_pep_meta.pep_hint
         for hint_pep_meta in HINTS_PEP_META
-        if is_object_hashable(hint_pep_meta.pep_hint)
+        if (
+            # not isinstance(hint_pep_meta.pep_hint, type) and
+            is_object_hashable(hint_pep_meta.pep_hint)
+        )
     )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
