@@ -55,50 +55,51 @@ PARAM_KIND_TO_NONPEP_CODE = {
     # Snippet type-checking any standard positional or keyword parameter both
     # by lookup in the wrapper function's variadic "**kwargs" dictionary *AND*
     # by index into the wrapper function's variadic "*args" tuple.
-    Parameter.POSITIONAL_OR_KEYWORD: '''
+    Parameter.POSITIONAL_OR_KEYWORD: f'''
     # If this positional or keyword parameter was passed, type-check this
     # parameter against this PEP-noncompliant type hint.
     if not (
-        isinstance(args[{arg_index}], {hint_expr})
-        if __beartype_args_len > {arg_index} else
-        isinstance(kwargs[{arg_name!r}], {hint_expr})
-        if {arg_name!r} in kwargs else True
+        isinstance(args[{{param_index}}], {{hint_expr}})
+        if __beartype_args_len > {{param_index}} else
+        isinstance(kwargs[{{param_name!r}}], {{hint_expr}})
+        if {{param_name!r}} in kwargs else True
     ):
-        raise __beartype_nonpep_param_exception(
-            '{func_name} parameter {arg_name}={{}} not {{!r}}.'.format(
-                __beartype_trim(
-                    args[{arg_index}] if __beartype_args_len > {arg_index} else
-                    kwargs[{arg_name!r}]
-                ),
-                {hint_expr},
-            )
+        __beartype_raise_nonpep_call_exception(
+            func={PARAM_NAME_FUNC},
+            pith_name={{param_name!r}},
+            pith_value=(
+                args[{{param_index}}] if __beartype_args_len > {{param_index}} else
+                kwargs[{{param_name!r}}]
+            ),
         )
 ''',
 
     # Snippet type-checking any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper function's variadic "**kwargs" dictionary.
-    Parameter.KEYWORD_ONLY: '''
+    Parameter.KEYWORD_ONLY: f'''
     # If this keyword-only parameter was passed, type-check this parameter
     # against this PEP-noncompliant type hint.
-    if {arg_name!r} in kwargs and not isinstance(
-        kwargs[{arg_name!r}], {hint_expr}):
-        raise __beartype_nonpep_param_exception(
-            '{func_name} keyword-only parameter '
-            '{arg_name}={{}} not {{!r}}.'.format(
-                __beartype_trim(kwargs[{arg_name!r}]), {hint_expr}))
+    if {{param_name!r}} in kwargs and not isinstance(
+        kwargs[{{param_name!r}}], {{hint_expr}}):
+        __beartype_raise_nonpep_call_exception(
+            func={PARAM_NAME_FUNC},
+            pith_name={{param_name!r}},
+            pith_value=kwargs[{{param_name!r}}],
+        )
 ''',
 
     # Snippet type-checking any variadic positional pseudo-parameter (e.g.,
     # "*args") by iteratively checking all relevant parameters.
-    Parameter.VAR_POSITIONAL: '''
+    Parameter.VAR_POSITIONAL: f'''
     # Type-check all passed positional variadic parameters against this
     # PEP-noncompliant type hint.
-    for __beartype_arg in args[{arg_index!r}:]:
-        if not isinstance(__beartype_arg, {hint_expr}):
-            raise __beartype_nonpep_param_exception(
-                '{func_name} positional variadic parameter '
-                '{{}} not {{!r}}.'.format(
-                    __beartype_trim(__beartype_arg), {hint_expr}))
+    for __beartype_arg in args[{{param_index!r}}:]:
+        if not isinstance(__beartype_arg, {{hint_expr}}):
+            __beartype_raise_nonpep_call_exception(
+                func={PARAM_NAME_FUNC},
+                pith_name={{param_name!r}},
+                pith_value=__beartype_arg,
+            )
 ''',
 }
 '''
@@ -114,9 +115,11 @@ NONPEP_CODE_RETURN_CHECKED = f'''
     # return this value only if this check succeeds.
     __beartype_return_value = {PARAM_NAME_FUNC}(*args, **kwargs)
     if not isinstance(__beartype_return_value, {{hint_expr}}):
-        raise __beartype_nonpep_return_exception(
-            '{{func_name}} return value {{{{}}}} not {{{{!r}}}}.'.format(
-                __beartype_trim(__beartype_return_value), {{hint_expr}}))
+        __beartype_raise_nonpep_call_exception(
+            func={PARAM_NAME_FUNC},
+            pith_name='return',
+            pith_value=__beartype_return_value,
+        )
     return __beartype_return_value'''
 '''
 PEP-noncompliant code snippet type-checking the return value if any.

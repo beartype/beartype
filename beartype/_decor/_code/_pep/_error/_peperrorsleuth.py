@@ -302,10 +302,6 @@ class CauseSleuth(object):
         # Else, this PEP-compliant hint is *NOT* its own unsubscripted "typing"
         # attribute. In this case...
         else:
-            # Avoid circular import dependencies.
-            from beartype._decor._code._pep._error.peperror import (
-                _TYPING_ATTR_TO_GETTER)
-
             # If this hint is neither...
             if not (
                 # Subscripted by no child hints *NOR*...
@@ -331,9 +327,13 @@ class CauseSleuth(object):
             #
             # Else, this hint is subscripted by one or more child hints.
 
+            # Avoid circular import dependencies.
+            from beartype._decor._code._pep._error.peperror import (
+                PEP_HINT_SIGN_TO_GET_CAUSE_FUNC)
+
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
-            get_cause_or_none = _TYPING_ATTR_TO_GETTER.get(
+            get_cause_or_none = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
                 self.hint_sign, None)
 
             # If no such function has been implemented to handle this attribute

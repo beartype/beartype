@@ -54,6 +54,17 @@ from typing import Generic
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
+# ....................{ MAPPINGS                          }....................
+# Initialized by the _init() method below.
+PEP_HINT_SIGN_TO_GET_CAUSE_FUNC = {}
+'''
+Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
+PEP-compliant type) to a private getter function defined by this submodule
+whose signature matches that of the :func:`_get_cause_or_none` function and
+which is dynamically dispatched by that function to describe type-checking
+failures specific to that unsubscripted :mod:`typing` attribute.,
+'''
+
 # ....................{ CONSTANTS                         }....................
 # Assuming a line length of 80 characters, this magic number truncates
 # arbitrary object representations to 100 lines (i.e., 8000/80), which seems
@@ -64,19 +75,6 @@ Maximum length of arbitrary object representations suffixing human-readable
 strings returned by the :func:`_get_cause_or_none` getter function, intended to
 be sufficiently long to assist in identifying type-check failures but not so
 excessively long as to prevent human-readability.
-'''
-
-
-# Note this dictionary is initialized by the _init() method defined and
-# unconditionally called below at module scope.
-_TYPING_ATTR_TO_GETTER = {}
-'''
-Dictionary mapping each **unsubscripted typing attribute** (i.e., public
-attribute of the :mod:`typing` module uniquely identifying a PEP-compliant type
-hints without arguments) to a private getter function defined by this submodule
-whose signature matches that of the :func:`_get_cause_or_none` function and
-which is dynamically dispatched by that function to describe type-checking
-failures specific to that unsubscripted :mod:`typing` attribute.,
 '''
 
 # ....................{ RAISERS                           }....................
@@ -139,8 +137,7 @@ def raise_pep_call_exception(
     BeartypeCallHintPepReturnException
         If the object failing to satisfy this hint is a return value.
     BeartypeDecorHintPepException
-        If this pith is annotated by an object that is *not* a PEP-compliant
-        type hint.
+        If the type hint annotating this object is *not* PEP-compliant.
     _BeartypeCallHintPepRaiseException
         If the parameter or return value with the passed name is unannotated.
     _BeartypeCallHintPepRaiseDesynchronizationException
@@ -256,26 +253,26 @@ def _init() -> None:
     # *BEFORE* mapping any other attributes. This is merely a generalized
     # fallback subsequently replaced by attribute-specific getters.
     for pep_sign_type_origin in HINT_PEP_SIGNS_TYPE_ORIGIN:
-        _TYPING_ATTR_TO_GETTER[pep_sign_type_origin] = (
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
             get_cause_or_none_type_origin)
 
     # Map each standard sequence "typing" attribute to the appropriate getter.
     for pep_sign_sequence_standard in HINT_PEP_SIGNS_SEQUENCE_STANDARD:
-        _TYPING_ATTR_TO_GETTER[pep_sign_sequence_standard] = (
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_standard] = (
             get_cause_or_none_sequence_standard)
 
     # Map each tuple "typing" attribute to the appropriate getter.
     for pep_sign_tuple in HINT_PEP_SIGNS_TUPLE:
-        _TYPING_ATTR_TO_GETTER[pep_sign_tuple] = get_cause_or_none_tuple
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_tuple] = get_cause_or_none_tuple
 
     # Map each unifying "typing" attribute to the appropriate getter.
     for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:
-        _TYPING_ATTR_TO_GETTER[pep_sign_type_union] = (
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
             get_cause_or_none_union)
 
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
-    _TYPING_ATTR_TO_GETTER.update({
+    PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
         HINT_PEP484_BASE_FORWARDREF: get_cause_or_none_forwardref,
         Generic: get_cause_or_none_generic,
     })

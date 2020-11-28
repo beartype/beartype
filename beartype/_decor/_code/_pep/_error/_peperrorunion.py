@@ -20,7 +20,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed, uppercase_char_first)
 from beartype._util.text.utiltextrepr import get_object_representation
@@ -48,8 +48,8 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
     # Subset of all classes shallowly associated with these child hints (i.e.,
     # by being either these child hints in the case of non-"typing" classes
     # *OR* the classes originating these child hints in the case of
-    # PEP-compliant type hints) that this pith does *NOT* shallowly satisfy.
-    hint_types_unsatisfied = set()
+    # PEP-compliant type hints) that this pith fails to shallowly satisfy.
+    hint_classes_unsatisfied = set()
 
     # List of all human-readable strings describing the failure of this pith to
     # satisfy each of these child hints.
@@ -80,11 +80,11 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
                 hint_child_type_origin is not None and
                 # This pith is *NOT* an instance of this class...
                 not isinstance(sleuth.pith, hint_child_type_origin)
-            ):
             # Then this pith fails to satisfy this child hint. In this case...
+            ):
                 # Add this class to the subset of all classes this pith does
                 # *NOT* satisfy.
-                hint_types_unsatisfied.add(hint_child_type_origin)
+                hint_classes_unsatisfied.add(hint_child_type_origin)
 
                 # Continue to the next child hint.
                 continue
@@ -127,27 +127,15 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
             # Else, this pith is *NOT* an instance of this class, implying this
             # pith to *NOT* satisfy this hint. In this case, add this class to
             # the subset of all classes this pith does *NOT* satisfy.
-            hint_types_unsatisfied.add(hint_child)
+            hint_classes_unsatisfied.add(hint_child)
 
-    # If this pith does *NOT* shallowly satisfy one or more classes,
-    # concatenate these failures onto a single discrete bullet-prefixed line.
-    if hint_types_unsatisfied:
-        # If this pith does *NOT* shallowly satisfy exactly one class...
-        if len(hint_types_unsatisfied) == 1:
-            # This class, destructively removed from this set for simplicity.
-            hint_type_unsatisfied = hint_types_unsatisfied.pop()
-
-            # Name of this class.
-            cause_types_unsatisfied = hint_type_unsatisfied.__name__
-        # Else, this pith does *NOT* shallowly satisfy two or more classes. In
-        # this case...
-        else:
-            # Human-readable comma-delimited disjunction of the names of these
-            # classes (e.g., "bool, float, int, or str").
-            cause_types_unsatisfied = join_delimited_disjunction(tuple(
-                hint_type_unsatisfied.__name__
-                for hint_type_unsatisfied in hint_types_unsatisfied
-            ))
+    # If this pith fails to shallowly satisfy one or more classes, concatenate
+    # these failures onto a discrete bullet-prefixed line.
+    if hint_classes_unsatisfied:
+        # Human-readable comma-delimited disjunction of the names of these
+        # classes (e.g., "bool, float, int, or str").
+        cause_types_unsatisfied = join_delimited_disjunction_classes(
+            hint_classes_unsatisfied)
 
         # Prepend this cause as a discrete bullet-prefixed line.
         #

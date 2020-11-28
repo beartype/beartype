@@ -16,9 +16,29 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Reduce @beartype to a noop if the passed callable was decorated by the
-#@typing.no_type_check decorator, which we can trivially detect at runtime via
-#the "__no_type_check__" dunder attribute set on that callable set to True.
+#FIXME: [FEATURE] Define the following supplementary decorators:
+#* @beartype.beartype_O1(), identical to the current @beartype.beartype()
+#  decorator but provided for disambiguity. This decorator only type-checks
+#  exactly one item from each container for each call rather than all items.
+#* @beartype.beartype_Ologn(), type-checking log(n) random items from each
+#  container of "n" items for each call.
+#* @beartype.beartype_On(), type-checking all items from each container for
+#  each call. We have various ideas littered about GitHub on how to optimize
+#  this for various conditions, but this is never going to be ideal and should
+#  thus never be the default.
+#
+#To differentiate between these three strategies, consider:
+#* Declare an enumeration in "beartype._decor._data" resembling:
+#    from enum import Enum
+#    BeartypeStrategyKind = Enum('BeartypeStrategyKind ('O1', 'Ologn', 'On',))
+#* Define a new "BeartypeData.strategy_kind" instance variable.
+#* Set this variable to the corresponding "BeartypeStrategyKind" enumeration
+#  member based on which of the three decorators listed above was called.
+#* Explicitly pass the value of the "BeartypeData.strategy_kind" instance
+#  variable to the beartype._decor._code._pep._pephint.pep_code_check_hint()
+#  function as a new memoized "strategy_kind" parameter.
+#* Conditionally generate type-checking code throughout that function depending
+#  on the value of that parameter.
 
 #FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
 #are called with purely positional rather than keyword arguments. Currently, we
@@ -36,19 +56,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  it, but there's little sense in destroying something beautiful.
 #* Globally replace all existing "@callable_cached" substrings with
 #  "@callable_cached_positional". Voila!
-
-#FIXME: Refactor all calls the outrageously slow str.format() method embedded
-#throughout the codebase with outrageously fast Python >= 3.6-specific
-#f-strings: e.g.,
-#    # Rather than this...
-#    "{}/{}".format(root, output)
-#    # ...do this everywhere.
-#    f"{root}/{output}".
-#
-#Note that the f-string approach requires format variables and external
-#variables to share the same names. Ergo, as a necessary precondition to making
-#this happen, we'll need to grep through the codebase and ensure this is the
-#case for all existing str.format() calls.
 
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely
@@ -81,7 +88,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #* Detecting static type checking is trivial, as PEP 563 standardizes the newly
 #  declared "typing.TYPE_CHECKING" boolean constant to be true only if static
-#  type checking is currently occurring.
+#  type checking is currently occurring. Note that @beartype supports this now.
 #* Detecting whether static type checking just occurred is clearly less
 #  trivial and possibly even infeasible. We're unclear what exactly separates
 #  the "static type checking" phase from the runtime phase performed by static
@@ -89,33 +96,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  probably attempt to detect whether the basename of the command invoked by
 #  the parent process matches "(Pyre|mypy|pyright|pytype)" or... something. Of
 #  course, that itself is non-trivial due to Windows, so here we are. *sigh*
-
-#FIXME: [FEATURE] Add support for unqualified classnames, referred to as
-#"forward references" in PEP 484 jargon: e.g.,
-#    @beartype
-#    def testemall(ride: 'Lightning') -> 'Lightning': return ride
-#    class Lightning(object): pass
-#To do so, note that the fully-qualified name of the decorated callable is
-#trivially obtainable as "func.__module__". So, this should be trivial --
-#except that there exists a common edge case: *BUILTIN TYPES* (e.g., "dict"),
-#which are also unqualified but signify something completely different.
-#
-#Fortunately, differentiating these two cases isn't terribly arduous. Note that
-#the trivial expression "set(dir(builtins))", which yields a set of the names
-#of all builtins, *NEARLY* gets us there. Since that set contains the names of
-#builtins that are *NOT* types (e.g., sum(), super()), however, we then need to
-#filter that expression for all types: e.g., something resembling:
-#
-#    import builtins
-#    _BUILTIN_TYPE_NAMES = set(
-#        getattr(builtins, builtin_name)
-#        for builtin_name in dir(builtins)
-#        if isinstance(getattr(builtins, builtin_name), type)
-#    )
-#
-#I can confirm that works, but it also calls getattr() excessively. Perhaps
-#there's an "inspect" function that yields not simply the names but also the
-#objects defined by a passed module. *shrug*
 
 #FIXME: Emit one non-fatal warning for each annotated type that is either:
 #
@@ -129,16 +109,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Validate all tuple annotations to be non-empty *EXCLUDING*
 #"beartype.cave.UnavailableTypes", which is intentionally empty.
 #FIXME: Unit test the above edge case.
-
-#FIXME: Reduce tuples containing only one item to those items as is for
-#efficiency: e.g.,
-#
-#    # This...
-#    @beartype
-#    def slowerfunc(dumbedgecase: (int,))
-#
-#    # ...should be exactly as efficient as this.
-#    def fasterfunc(idealworld: int)
 
 #FIXME: Add support for all possible kinds of parameters. @beartype currently
 #supports most but *NOT* all types. Specifically:
@@ -156,59 +126,29 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "_PARAM_KIND_IGNORABLE" set.
 #* Remove the "_PARAM_KIND_IGNORABLE" set entirely.
 
-#FIXME: [FEATURE] Add support for PEP 544. First, note that this PEP defines
-#protocol types as classes *DIRECTLY* subclassing the new "typing.Protocol"
-#abstract base class. Classes *INDIRECTLY* subclassing that class through
-#transitivity are not detected as protocols. That's nice.
-#
-#Second, thanks to the obscure magic of abstract base classes as implemented by
-#the "ABCMeta" metaclass, all classes with the "ABCMeta" metaclass provide
-#highly efficient __instancecheck__() and __subclasscheck__() dunder method
-#implementations by default that successfully test arbitrary objects as
-#implicitly implementing an abstract base class if those objects implement all
-#abstract methods declared by that base class -- even for objects whose types
-#do *NOT* explicitly subclass that base class.
-#
-#In theory, this means that testing whether an arbitrary object "a" satisfies
-#an arbitrary protocol "B" should reduce to simply:
-#
-#    # Yup. Really.
-#    isinstance(a, B)
-
-#FIXME: [FEATURE] Define the following supplementary decorators:
-#* @beartype.beartype_O1(), identical to the current @beartype.beartype()
-#  decorator but provided for disambiguity. This decorator only type-checks
-#  exactly one item from each container for each call rather than all items.
-#* @beartype.beartype_On(), type-checking all items from each container for
-#  each call. We have various ideas littered about GitHub on how to optimize
-#  this for various conditions, but this is never going to be ideal and should
-#  thus never be the default.
-
 # ....................{ IMPORTS                           }....................
 import functools, random
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
-    BeartypeCallHintNonPepParamException,
-    BeartypeCallHintNonPepReturnException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
 from beartype._decor._code.codemain import (
-    generate_code,
     PARAM_NAME_FUNC,
     PARAM_NAME_TYPISTRY,
+    generate_code,
 )
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import bear_typistry
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
-    die_unless_hint_nonpep)
+from beartype._decor._code._nonpep._nonpeperror import (
+    raise_nonpep_call_exception)
 from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.text.utiltextmunge import number_lines
-from beartype._util.text.utiltextrepr import get_object_representation
-from beartype._util.utilobject import get_object_name
+from typing import TYPE_CHECKING
+# from beartype._util.utilobject import get_object_name
 # from types import FunctionType
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -216,19 +156,13 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
 _GLOBAL_ATTRS = {
-    '__beartype_die_unless_hint_nonpep': die_unless_hint_nonpep,
     '__beartype_getrandbits': random.getrandbits,
     #FIXME: This is currently only required for the outlier edge case of
     #callables annotated by PEP-noncompliant tuples containing fully-qualified
     #forward references referring to non-existent types. *sigh*
-    '__beartype_forward_ref_exception': (
-        BeartypeCallHintForwardRefException),
-    '__beartype_nonpep_param_exception': (
-        BeartypeCallHintNonPepParamException),
-    '__beartype_nonpep_return_exception': (
-        BeartypeCallHintNonPepReturnException),
+    '__beartype_forward_ref_exception': BeartypeCallHintForwardRefException,
+    '__beartype_raise_nonpep_call_exception': raise_nonpep_call_exception,
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
-    '__beartype_trim': get_object_representation,
 }
 '''
 Dictionary mapping from the name to value of all attributes internally
@@ -335,6 +269,9 @@ def beartype(func):
     if (
         # This callable is unannotated *OR*...
         not func.__annotations__ or
+        # This callable is decorated by the @typing.no_type_check decorator
+        # defining this dunder instance variable on this callable *OR*...
+        getattr(func, '__no_type_check__', False) is True or
         # This callable is a @beartype-specific wrapper previously generated by
         # this decorator...
         hasattr(func, '__beartype_wrapper')
@@ -473,7 +410,7 @@ def beartype(func):
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print('\n@beartyped {}() wrapper\n\n{}\n'.format(func_data.func_name, func_code))
+        # print('\n@beartyped {} wrapper:\n\n{}\n'.format(func_data.func_name, number_lines(func_code)))
         exec(func_code, _GLOBAL_ATTRS, local_attrs)
 
         #FIXME: See above.
@@ -530,20 +467,30 @@ def beartype(func):
     return func_wrapper
 
 # ....................{ OPTIMIZATION                      }....................
-# If the active Python interpreter is optimized (e.g., option "-O" was passed
-# to this interpreter), unconditionally disable type checking across the entire
+# If the active Python interpreter is either...
+if (
+    # Optimized (e.g., option "-O" was passed to this interpreter) *OR*...
+    not __debug__ or
+    # Running under an external static type checker -- in which case there is
+    # no benefit to attempting runtime type-checking whatsoever...
+    #
+    # Note that this test is largely pointless. By definition, static type
+    # checkers should *NOT* actually run any code -- merely parse and analyze
+    # that code. Ergo, this boolean constant should *ALWAYS* be false from the
+    # runtime context under which @beartype is only ever run. Nonetheless, this
+    # test is only performed once per process and is thus effectively free.
+    TYPE_CHECKING
+):
+# Then unconditionally disable @beartype-based type-checking across the entire
 # codebase by reducing the @beartype decorator to the identity decorator.
-#
 # Ideally, this would have been implemented at the top rather than bottom of
 # this submodule as a conditional resembling:
-#
 #     if __debug__:
 #         def beartype(func: CallableTypes) -> CallableTypes:
 #             return func
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-if not __debug__:
     def beartype(func):
         '''
         Identity decorator.

@@ -467,6 +467,7 @@ values annotated with these typing_ types:
 * typing.Annotated_.
 * typing.Any_.
 * typing.ByteString_.
+* typing.ForwardRef_.
 * typing.Hashable_.
 * typing.List_.
 * typing.MutableSequence_.
@@ -502,6 +503,15 @@ values annotated with these typing_ types:
   to be defined).
 * **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
   one or more `forward references <relative forward references_>`__).
+
+``beartype`` also fully supports callables decorated by these typing_
+decorators:
+
+* `@typing.no_type_check`_.
+
+Lastly, ``beartype`` fully supports these typing_ constants:
+
+* typing.TYPE_CHECKING_.
 
 Partial Compliance
 ------------------
@@ -1117,7 +1127,11 @@ Let's chart current and prospective new features for future generations:
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | typing.ValuesView_                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `typing.TYPE_CHECKING`_             | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
++-------------+-------------------------------------+-------------------------------+---------------------------+
 |             | `@typing.final`_                    | *none*                        | *none*                    |
++-------------+-------------------------------------+-------------------------------+---------------------------+
+|             | `@typing.no_type_check`_            | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
 | PEP         | `484 <PEP 484_>`__                  | **0.2.0**\ —\ *current*       | *none*                    |
 +-------------+-------------------------------------+-------------------------------+---------------------------+
@@ -1512,6 +1526,10 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.Final
 .. _@typing.final:
    https://docs.python.org/3/library/typing.html#typing.final
+.. _@typing.no_type_check:
+   https://docs.python.org/3/library/typing.html#typing.no_type_check
+.. _typing.TYPE_CHECKING:
+   https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
 
 .. # ------------------( LINKS ~ py : test                  )------------------
 .. _pytest:

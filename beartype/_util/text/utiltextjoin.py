@@ -107,7 +107,7 @@ def join_delimited(
     # Return these two substrings, delimited appropriately.
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
-
+# ....................{ JOINERS ~ disjunction             }....................
 def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas
@@ -138,9 +138,37 @@ def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
         Disjunctive concatenation of these strings.
     '''
 
+    # He will join us or die, master.
     return join_delimited(
         strs=strs,
         delimiter_if_two=' or ',
         delimiter_if_three_or_more_nonlast=', ',
         delimiter_if_three_or_more_last=', or '
     )
+
+
+def join_delimited_disjunction_classes(classes: 'Iterable[type]') -> str:
+    '''
+    Concatenate the human-readable classname of each class in the passed
+    iterable delimited by commas and/or the conjunction "or" (conditionally
+    depending on both the length of this iterable and index of each string in
+    this iterable), yielding a human-readable string listing arbitrarily many
+    classnames disjunctively.
+
+    Parameters
+    ----------
+    strs : Iterable[type]
+        Iterable of all classes whose human-readable classnames are to be
+        concatenated disjunctively.
+
+    Returns
+    ----------
+    str
+        Disjunctive concatenation of these classnames.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextlabel import label_class
+
+    # Make it so, ensign.
+    return join_delimited_disjunction(label_class(cls) for cls in classes)

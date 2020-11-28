@@ -85,31 +85,35 @@ def nonpep_code_check_param(
     # parameter is supported *OR* "None" otherwise.
     param_code_template = PARAM_KIND_TO_NONPEP_CODE.get(func_param.kind, None)
 
+    #FIXME: Generalize this label to embed the kind of parameter as well
+    #(e.g., "positional-only", "keyword-only", "variadic positional"),
+    #probably by defining a new label_callable_decorated_param_kind().
+
+    # Human-readable label describing this parameter.
+    hint_label = label_callable_decorated_param(
+        func=data.func, param_name=func_param.name)
+
     # If this kind of parameter is unsupported...
     #
     # Note this edge case should *NEVER* occur, as the parent function should
     # have simply ignored this parameter.
     if param_code_template is None:
-        #FIXME: Generalize this label to embed the kind of parameter as well
-        #(e.g., "positional-only", "keyword-only", "variadic positional"),
-        #probably by defining a new label_callable_decorated_param_kind().
-
-        # Human-readable label describing this parameter.
-        hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_param.name)
-
         # Raise an exception embedding this label.
         raise BeartypeDecorHintNonPepException(
             f'{hint_label} kind {repr(func_param.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
+    #FIXME: Refactor this to use standard beartypistry notation instead if and
+    #only if this hint is anything *OTHER* than a tuple containing one or more
+    #forward references (which still requires the current approach).
+    #Thankfully, this should be trivial.
+    #FIXME: Refactor nonpep_code_check_return() similarly.
+
     # Python code evaluating to this hint.
     hint_expr = NONPEP_CODE_PARAM_HINT.format(func_param.name)
 
     # Human-readable label describing this hint.
-    hint_label = (
-        label_callable_decorated_param(
-            func=data.func, param_name=func_param.name) + ' non-PEP type hint')
+    hint_label = f'{hint_label} non-PEP type hint'
 
     # Return Python code...
     return (
@@ -124,8 +128,8 @@ def nonpep_code_check_param(
         # Type-checking this parameter against this hint.
         param_code_template.format(
             func_name=data.func_name,
-            arg_name=func_param.name,
-            arg_index=func_param_index,
+            param_name=func_param.name,
+            param_index=func_param_index,
             hint_expr=hint_expr,
         )
     )
@@ -253,7 +257,7 @@ def _nonpep_code_resolve_refs(
 
     # If this annotation is a tuple containing one or more classnames...
     if isinstance(hint, tuple):
-        # Tuple of the indices of all classnames in this annotation.
+        # Tuple of the 0-based indices of all classnames in this annotation.
         hint_type_name_indices = tuple(
             subhint_index
             for subhint_index, subhint in enumerate(hint)

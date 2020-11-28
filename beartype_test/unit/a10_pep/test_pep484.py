@@ -26,9 +26,35 @@ See Also
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test.util.pyterror import raises_uncached
-from typing import List, NoReturn
+from typing import List, NoReturn, no_type_check
 
-# ....................{ TESTS ~ hint                      }....................
+# ....................{ TESTS ~ decor : no_type_check     }....................
+def test_pep484_decor_no_type_check() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator against all edge cases of the
+    `PEP 484`_-compliant :attr:`typing.no_type_check` decorator.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+
+    # Callable decorated by @typing.no_type_check whose otherwise PEP-compliant
+    # type hints *SHOULD* be subsequently ignored by @beartype.
+    @no_type_check
+    def of_beechen_green(and_shadows_numberless: List[str]) -> str:
+        return and_shadows_numberless[-1]
+
+    # The same callable additionally decorated by @beartype.
+    of_beechen_green_beartyped = beartype(of_beechen_green)
+
+    # Assert these two callables to be the same, implying @beartype silently
+    # reduced to a noop by returning this callable undecorated.
+    assert of_beechen_green is of_beechen_green_beartyped
+
+# ....................{ TESTS ~ hint : noreturn           }....................
 def test_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
@@ -98,7 +124,7 @@ def test_pep484_hint_noreturn() -> None:
         def makes_gaps(abreast: List[NoReturn]):
             return 'And makes gaps even two can pass abreast.'
 
-
+# ....................{ TESTS ~ hint : sequence           }....................
 def test_pep484_hint_sequence_standard_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`

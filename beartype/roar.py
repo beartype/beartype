@@ -584,16 +584,47 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
     pass
 
 # ....................{ PRIVATE ~ util : call               }..................
-class _BeartypeCallHintPepRaiseException(_BeartypeUtilException):
+class _BeartypeCallHintRaiseException(
+    _BeartypeUtilException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype human-readable exception raiser
+    exceptions.**
+
+    Instances of subclasses of this exception are raised by private utility
+    **exception raiser functions** (i.e., functions raising human-readable
+    exceptions from wrapper functions when either passed a parameter or
+    returning a value annotated by a type hint fails the runtime type-check
+    required by that hint) when an unexpected failure occurs.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ util : call : non-pep     }..................
+class _BeartypeCallHintNonPepRaiseException(_BeartypeCallHintRaiseException):
+    '''
+    **Beartype PEP-noncompliant human-readable exception raiser exception.**
+
+    This exception is raised by the
+    :func:`beartype._decor._code._nonpep._nonpeperror.raise_nonpep_call_exception`
+    exception raiser function when an unexpected failure occurs.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ util : call : pep         }..................
+class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     '''
     **Beartype PEP-compliant human-readable exception raiser exception.**
 
     This exception is raised by the
     :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
-    function (which raises human-readable exceptions from wrapper functions
-    when either passed a parameter or returning a value annotated by a
-    PEP-compliant type hint fails the runtime type-check required by that hint)
-    when an unexpected failure occurs.
+    exception raiser function when an unexpected failure occurs.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
