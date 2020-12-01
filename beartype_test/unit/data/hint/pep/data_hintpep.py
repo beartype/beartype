@@ -16,7 +16,7 @@ import sys
 from beartype._util.utilobject import is_object_hashable
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
-    PepHintMetadataNonsigned,
+    NonPepHintMetadata,
 )
 from beartype_test.unit.data.hint.pep.proposal import (
     data_hintpep484,
@@ -82,11 +82,12 @@ impermissible for use as dictionary keys or set members.
 '''
 
 
+#FIXME: Shift into a new "beartype_test.unit.data.hint.data_hintnonpep" submodule.
 # Initialized by the _init() function below.
-HINTS_PEP_META_NONSIGNED = []
+HINTS_NONPEP_META = []
 '''
 Tuple of **non-signed PEP-compliant type hint metadata** (i.e.,
-:class:`PepHintMetadataNonsigned` instances describing test-specific
+:class:`NonPepHintMetadata` instances describing test-specific
 PEP-compliant type hints implemented by the :mod:`typing` module as standard
 classes indistinguishable from non-:mod:`typing` classes with metadata
 leveraged by various testing scenarios).
@@ -109,7 +110,7 @@ def _init() -> None:
         HINTS_PEP_IGNORABLE_DEEP, \
         HINTS_PEP_INVALID_TYPE_NONGENERIC, \
         HINTS_PEP_META, \
-        HINTS_PEP_META_NONSIGNED
+        HINTS_NONPEP_META
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -133,8 +134,8 @@ def _init() -> None:
     assert HINTS_PEP_INVALID_TYPE_NONGENERIC, (
         'Set global "HINTS_PEP_INVALID_TYPE_NONGENERIC" empty.')
     assert HINTS_PEP_META, 'Tuple global "HINTS_PEP_META" empty.'
-    assert HINTS_PEP_META_NONSIGNED, (
-        'Tuple global "HINTS_PEP_META_NONSIGNED" empty.')
+    assert HINTS_NONPEP_META, (
+        'Tuple global "HINTS_NONPEP_META" empty.')
 
     # Assert these globals to contain only instances of their respectively
     # expected dataclasses.
@@ -143,26 +144,26 @@ def _init() -> None:
         for hint_pep_meta in HINTS_PEP_META
     ), f'{repr(HINTS_PEP_META)} not iterable of "PepHintMetadata" instances.'
     assert (
-        isinstance(hint_pep_meta, PepHintMetadataNonsigned)
-        for hint_pep_meta in HINTS_PEP_META_NONSIGNED
-    ), (f'{repr(HINTS_PEP_META_NONSIGNED)} not iterable of '
-        f'"PepHintMetadataNonsigned" instances.')
+        isinstance(hint_pep_meta, NonPepHintMetadata)
+        for hint_pep_meta in HINTS_NONPEP_META
+    ), (f'{repr(HINTS_NONPEP_META)} not iterable of '
+        f'"NonPepHintMetadata" instances.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
     HINTS_PEP_HASHABLE = frozenset(
-        hint_pep_meta.pep_hint
+        hint_pep_meta.hint
         for hint_pep_meta in HINTS_PEP_META
         if (
-            # not isinstance(hint_pep_meta.pep_hint, type) and
-            is_object_hashable(hint_pep_meta.pep_hint)
+            # not isinstance(hint_pep_meta.hint, type) and
+            is_object_hashable(hint_pep_meta.hint)
         )
     )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
         HINTS_PEP_INVALID_TYPE_NONGENERIC)
     HINTS_PEP_META = tuple(HINTS_PEP_META)
-    HINTS_PEP_META_NONSIGNED = tuple(HINTS_PEP_META_NONSIGNED)
+    HINTS_NONPEP_META = tuple(HINTS_NONPEP_META)
 
 
 # Initialize this submodule.

@@ -43,11 +43,11 @@ def test_die_unless_hint() -> None:
     for hint_pep_meta in HINTS_PEP_META:
         # Accepts supported PEP-compliant type hints.
         if hint_pep_meta.is_supported:
-            die_unless_hint(hint_pep_meta.pep_hint)
+            die_unless_hint(hint_pep_meta.hint)
         # Rejects unsupported PEP-compliant type hints.
         else:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_unless_hint(hint_pep_meta.pep_hint)
+                die_unless_hint(hint_pep_meta.hint)
 
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
@@ -74,7 +74,7 @@ def test_is_hint() -> None:
     # * Accepts supported PEP-compliant type hints.
     # * Rejects unsupported PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint(hint_pep_meta.pep_hint) is hint_pep_meta.is_supported
+        assert is_hint(hint_pep_meta.hint) is hint_pep_meta.is_supported
 
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
@@ -110,5 +110,5 @@ def test_is_hint_ignorable() -> None:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_ignorable(hint_pep_meta.pep_hint) is (
+        assert is_hint_ignorable(hint_pep_meta.hint) is (
             hint_pep_meta.is_ignorable)

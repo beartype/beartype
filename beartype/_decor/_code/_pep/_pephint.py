@@ -301,7 +301,7 @@ from beartype._decor._typistry import (
     register_typistry_type,
     register_typistry_tuple,
 )
-from beartype._decor._code._codesnip import CODE_INDENT_1, CODE_INDENT_2
+from beartype._decor._code.codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_ROOT,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,

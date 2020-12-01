@@ -26,11 +26,11 @@ def _eval_registered_expr(hint_expr: str) -> (type, tuple):
     :func:`beartype._decor._typistry.register_typistry_tuple` functions) *and*
     return the resulting value (assumed to either be a type or tuple of types).
     '''
-    assert isinstance(hint_expr, str), '{!r} not string.'.format(hint_expr)
+    assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
 
     # Defer heavyweight imports.
     from beartype._decor._typistry import bear_typistry
-    from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
+    from beartype._decor._code.codesnip import PARAM_NAME_TYPISTRY
 
     # Dictionary of all local variables required to evaluate this expression.
     eval_locals = {PARAM_NAME_TYPISTRY: bear_typistry}

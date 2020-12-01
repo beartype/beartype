@@ -10,7 +10,19 @@ This submodule declares lower-level metadata classes instantiated by the
 higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
 '''
 
+#FIXME: Rename submodule to "beartype_test.unit.data.hint.data_hintmeta".
+
 # ....................{ CLASSES ~ hint : superclass       }....................
+#FIXME: Refactor as follows:
+#* *LOCALLY* rename to "NonPepHintMetadata".
+#* *LOCALLY* rename "NonPepHintMetadata" to "PepHintMetadata".
+#* Shift all PEP-specific attributes from this class to "PepHintMetadata",
+#  including:
+#  * "is_pep585".
+#  * "is_pep585_generic".
+#  * "is_typing".
+#  * "pep_sign".
+#  * "type_origin".
 class PepHintMetadata(object):
     '''
     **PEP-compliant type hint metadata** (i.e., dataclass whose instance
@@ -43,7 +55,7 @@ class PepHintMetadata(object):
 
         * If ``is_pep585`` is ``True``, ``False``.
         * Else, ``False``.
-    pep_hint : object
+    hint : object
         PEP-compliant type hint.
     pep_sign : object
         **Sign** (i.e., arbitrary object uniquely identifying this
@@ -77,7 +89,7 @@ class PepHintMetadata(object):
         self,
 
         # Mandatory parameters.
-        pep_hint: object,
+        hint: object,
         pep_sign: object,
 
         # Optional parameters.
@@ -140,7 +152,7 @@ class PepHintMetadata(object):
         )
 
         # Classify all passed parameters.
-        self.pep_hint = pep_hint
+        self.hint = hint
         self.pep_sign = pep_sign
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
@@ -156,7 +168,7 @@ class PepHintMetadata(object):
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    pep_hint={self.pep_hint},',
+            f'    hint={self.hint},',
             f'    pep_sign={self.pep_sign},',
             f'    is_ignorable={self.is_ignorable},',
             f'    is_supported={self.is_supported},',
@@ -171,7 +183,7 @@ class PepHintMetadata(object):
         ))
 
 # ....................{ CLASSES ~ hint : subclass         }....................
-class PepHintMetadataNonsigned(PepHintMetadata):
+class NonPepHintMetadata(PepHintMetadata):
     '''
     **PEP-compliant unsigned type hint metadata** (i.e.,
     dataclass whose instance variables describe a PEP-compliant type hint

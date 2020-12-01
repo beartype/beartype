@@ -21,22 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
    https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Refactor *ALL* calls below (and probably elsewhere throughout the
-#codebase) to call a newly defined
-#beartype._util.text.utiltextmunge.replace_str_substrs() function whose
-#signature resembles:
-#    def replace_str_substrs(text: str, substr: str) -> str:
-#
-#The body of this function should:
-#* If the passed string does *NOT* contain at least one instance of the passed
-#  substring, raise an exception.
-#* Else, return:
-#      str.replace(text, substr)
-#
-#Why? Because the builtin str.replace() method performs *NO* such validation,
-#inviting non-human-readable exceptions when we inevitably muck things up.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -59,13 +43,14 @@ from beartype._util.cache.utilcacheerror import reraise_exception_cached
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj,
 )
+from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
 )
 from collections.abc import Iterable
 from inspect import Parameter
-from typing import NoReturn
+from typing import NoReturn, Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -77,6 +62,59 @@ Object representation of the magic string implying a return value in various
 Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
 callables).
 '''
+
+# ....................{ GETTERS                           }....................
+def get_hint_pep(hint: object, hint_label: str) -> object:
+    '''
+    PEP-compliant type hint converted from the passed PEP-noncompliant type
+    hint if this hint is PEP-noncompliant, this hint as is if this hint is
+    PEP-compliant, *or* raise an exception otherwise (i.e., if this hint is
+    neither PEP-compliant nor -noncompliant and thus invalid as a type hint).
+
+    This getter is *not* memoized, due to being only called once per decorated
+    callable parameter or return value.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be rendered PEP-compliant.
+    hint_label : str
+        Human-readable label describing this hint.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this hint is PEP-noncompliant, PEP-compliant type hint converted
+          from this hint.
+        * If this hint is PEP-compliant, hint unmodified as is.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonPepException
+        If this object is neither:
+
+        * A PEP-noncompliant type hint.
+        * A supported PEP-compliant type hint.
+    '''
+
+    # If this object is neither a PEP-noncompliant type hint *NOR* supported
+    # PEP-compliant type hint, raise an exception.
+    die_unless_hint(hint=hint, hint_label=hint_label)
+    # Else, this object is either a PEP-noncompliant type hint *OR* supported
+    # PEP-compliant type hint.
+
+    # If this hint is a PEP-noncompliant tuple union, coerce this hint into the
+    # equivalent PEP-compliant union subscripted by the same child hints. By
+    # definition, PEP-compliant unions are a strict superset of
+    # PEP-noncompliant tuple unions and thus accept all child hints accepted by
+    # the latter.
+    if isinstance(hint, tuple):
+        hint = Union.__getitem__(hint)
+
+    # Return this hint.
+    return hint
 
 # ....................{ CODERS                            }....................
 def pep_code_check_param(
@@ -122,7 +160,8 @@ def pep_code_check_param(
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
-    get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(func_param.kind, None)
+    get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(
+        func_param.kind, None)
 
     # If this kind of parameter is unsupported...
     #

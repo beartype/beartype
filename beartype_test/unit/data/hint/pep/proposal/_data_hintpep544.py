@@ -136,7 +136,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ GENERICS ~ io                     }................
         # Unsubscripted "IO" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=IO,
+            hint=IO,
             pep_sign=Generic,
             is_typevared=True,
             piths_satisfied_meta=(
@@ -155,7 +155,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "BinaryIO" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=BinaryIO,
+            hint=BinaryIO,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Open read-only binary file handle to this submodule.
@@ -173,7 +173,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "TextIO" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=TextIO,
+            hint=TextIO,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Open read-only text file handle to this submodule.
@@ -192,7 +192,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ PROTOCOLS ~ supports              }................
         # Unsubscripted "SupportsAbs" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=SupportsAbs,
+            hint=SupportsAbs,
             pep_sign=Generic,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
@@ -209,7 +209,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsBytes" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=SupportsBytes,
+            hint=SupportsBytes,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Platform-agnostic filesystem path object constant.
@@ -252,7 +252,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsFloat" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=SupportsFloat,
+            hint=SupportsFloat,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Integer constant.
@@ -267,7 +267,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unsubscripted "SupportsIndex" abstract base class (ABC) first
         # introduced by Python 3.8.0.
         PepHintMetadata(
-            pep_hint=SupportsIndex,
+            hint=SupportsIndex,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Integer constant.
@@ -281,7 +281,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsInt" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=SupportsInt,
+            hint=SupportsInt,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Floating-point number constant.
@@ -296,7 +296,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsRound" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=SupportsRound,
+            hint=SupportsRound,
             pep_sign=Generic,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
@@ -315,7 +315,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ PROTOCOLS ~ supports : user       }................
         # Predefined "typing" protocol.
         PepHintMetadata(
-            pep_hint=SupportsInt,
+            hint=SupportsInt,
             pep_sign=Generic,
             piths_satisfied_meta=(
                 # Structurally subtyped instance.
@@ -338,7 +338,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # User-defined protocol parametrized by *NO* type variables.
         PepHintMetadata(
-            pep_hint=ProtocolCustomUntypevared,
+            hint=ProtocolCustomUntypevared,
             pep_sign=Generic,
             is_typing=False,
             piths_satisfied_meta=(
@@ -352,7 +352,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # User-defined protocol parametrized by a type variable.
         PepHintMetadata(
-            pep_hint=ProtocolCustomTypevared,
+            hint=ProtocolCustomTypevared,
             pep_sign=Generic,
             is_typevared=True,
             is_typing=False,

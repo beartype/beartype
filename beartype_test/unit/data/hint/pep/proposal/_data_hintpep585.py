@@ -254,7 +254,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Yes, this means that subscripting "collections.abc.ByteString"
         # conveys no information and is thus nonsensical. Welcome to PEP 585.
         PepHintMetadata(
-            pep_hint=ByteString[int],
+            hint=ByteString[int],
             pep_sign=ByteString,
             type_origin=ByteString,
             is_pep585=True,
@@ -271,7 +271,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Byte string of integer constants satisfying the stdlib
         # "numbers.Integral" protocol.
         PepHintMetadata(
-            pep_hint=ByteString[IntType],
+            hint=ByteString[IntType],
             pep_sign=ByteString,
             type_origin=ByteString,
             is_pep585=True,
@@ -289,7 +289,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ CALLABLE                          }................
         # Callable accepting no parameters and returning a string.
         PepHintMetadata(
-            pep_hint=Callable[[], str],
+            hint=Callable[[], str],
             pep_sign=Callable,
             type_origin=Callable,
             is_pep585=True,
@@ -306,7 +306,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ CONTEXTMANAGER                    }................
         # Context manager yielding strings.
         PepHintMetadata(
-            pep_hint=AbstractContextManager[str],
+            hint=AbstractContextManager[str],
             pep_sign=AbstractContextManager,
             type_origin=AbstractContextManager,
             is_pep585=True,
@@ -328,7 +328,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ DICT                              }................
         # Flat dictionary.
         PepHintMetadata(
-            pep_hint=dict[int, str],
+            hint=dict[int, str],
             pep_sign=dict,
             type_origin=dict,
             is_pep585=True,
@@ -348,7 +348,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic dictionary.
         PepHintMetadata(
-            pep_hint=dict[S, T],
+            hint=dict[S, T],
             pep_sign=dict,
             type_origin=dict,
             is_typevared=True,
@@ -369,7 +369,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ GENERATOR                         }................
         # Flat generator.
         PepHintMetadata(
-            pep_hint=Generator[int, float, str],
+            hint=Generator[int, float, str],
             pep_sign=Generator,
             type_origin=Generator,
             is_pep585=True,
@@ -393,7 +393,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic subclassing a single unparametrized builtin container.
         PepHintMetadata(
-            pep_hint=Pep585GenericUntypevaredSingle,
+            hint=Pep585GenericUntypevaredSingle,
             pep_sign=Generic,
             is_pep585_generic=True,
             piths_satisfied_meta=(
@@ -418,7 +418,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple unparametrized "collection.abc" abstract
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         PepHintMetadata(
-            pep_hint=Pep585GenericUntypevaredMultiple,
+            hint=Pep585GenericUntypevaredMultiple,
             pep_sign=Generic,
             is_pep585_generic=True,
             piths_satisfied_meta=(
@@ -442,7 +442,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple parametrized "collections.abc" abstract
         # base classes (ABCs).
         PepHintMetadata(
-            pep_hint=Pep585GenericTypevaredShallowMultiple,
+            hint=Pep585GenericTypevaredShallowMultiple,
             pep_sign=Generic,
             is_typevared=True,
             is_pep585_generic=True,
@@ -465,7 +465,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # "collections.abc" abstract base classes (ABCs) *AND* an
         # unparametrized "collections.abc" ABC.
         PepHintMetadata(
-            pep_hint=Pep585GenericTypevaredDeepMultiple,
+            hint=Pep585GenericTypevaredDeepMultiple,
             pep_sign=Generic,
             is_typevared=True,
             is_pep585_generic=True,
@@ -493,7 +493,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested list of PEP 585-compliant generics.
         PepHintMetadata(
-            pep_hint=list[Pep585GenericUntypevaredMultiple],
+            hint=list[Pep585GenericUntypevaredMultiple],
             pep_sign=list,
             type_origin=list,
             is_pep585=True,
@@ -528,7 +528,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ LIST                              }................
         # List of ignorable objects.
         PepHintMetadata(
-            pep_hint=list[object],
+            hint=list[object],
             pep_sign=list,
             type_origin=list,
             is_pep585=True,
@@ -551,7 +551,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # List of non-"typing" objects.
         PepHintMetadata(
-            pep_hint=list[str],
+            hint=list[str],
             pep_sign=list,
             type_origin=list,
             is_pep585=True,
@@ -585,7 +585,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic list.
         PepHintMetadata(
-            pep_hint=list[T],
+            hint=list[T],
             pep_sign=list,
             type_origin=list,
             is_typevared=True,
@@ -609,7 +609,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ REGEX ~ match                     }................
         # Regular expression match of only strings.
         PepHintMetadata(
-            pep_hint=Match[str],
+            hint=Match[str],
             pep_sign=Match,
             type_origin=Match,
             is_pep585=True,
@@ -629,7 +629,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ REGEX ~ pattern                   }................
         # Regular expression pattern of only strings.
         PepHintMetadata(
-            pep_hint=Pattern[str],
+            hint=Pattern[str],
             pep_sign=Pattern,
             type_origin=Pattern,
             is_pep585=True,
@@ -654,7 +654,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     >>> List[[]]
         #     TypeError: Parameters to generic types must be types. Got [].
         PepHintMetadata(
-            pep_hint=tuple[()],
+            hint=tuple[()],
             pep_sign=tuple,
             type_origin=tuple,
             is_pep585=True,
@@ -680,7 +680,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Fixed-length tuple of only ignorable child hints.
         PepHintMetadata(
-            pep_hint=tuple[Any, object,],
+            hint=tuple[Any, object,],
             pep_sign=tuple,
             type_origin=tuple,
             is_pep585=True,
@@ -706,7 +706,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
-            pep_hint=tuple[float, Any, str,],
+            hint=tuple[float, Any, str,],
             pep_sign=tuple,
             type_origin=tuple,
             is_pep585=True,
@@ -756,7 +756,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
-            pep_hint=tuple[tuple[float, Any, str,], ...],
+            hint=tuple[tuple[float, Any, str,], ...],
             pep_sign=tuple,
             type_origin=tuple,
             is_pep585=True,
@@ -807,7 +807,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic fixed-length tuple.
         PepHintMetadata(
-            pep_hint=tuple[S, T],
+            hint=tuple[S, T],
             pep_sign=tuple,
             type_origin=tuple,
             is_typevared=True,
@@ -833,7 +833,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TUPLE ~ variadic                  }................
         # Variadic tuple.
         PepHintMetadata(
-            pep_hint=tuple[str, ...],
+            hint=tuple[str, ...],
             pep_sign=tuple,
             type_origin=tuple,
             is_pep585=True,
@@ -867,7 +867,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic variadic tuple.
         PepHintMetadata(
-            pep_hint=tuple[T, ...],
+            hint=tuple[T, ...],
             pep_sign=tuple,
             type_origin=tuple,
             is_typevared=True,
@@ -889,7 +889,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TYPE                              }................
         # Builtin type.
         PepHintMetadata(
-            pep_hint=type[dict],
+            hint=type[dict],
             pep_sign=type,
             type_origin=type,
             is_pep585=True,
@@ -905,7 +905,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic type.
         PepHintMetadata(
-            pep_hint=type[T],
+            hint=type[T],
             pep_sign=type,
             type_origin=type,
             is_pep585=True,

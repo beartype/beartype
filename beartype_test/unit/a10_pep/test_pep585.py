@@ -33,7 +33,7 @@ def test_is_hint_pep585() -> None:
 
     # Assert this tester accepts only PEP 585-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep585(hint_pep_meta.pep_hint) is (
+        assert is_hint_pep585(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585)
 
 # ....................{ TESTS ~ subtype : generic         }....................
@@ -51,7 +51,7 @@ def test_is_hint_pep585_generic() -> None:
 
     # Assert this tester accepts only PEP 585-compliant generics.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep585_generic(hint_pep_meta.pep_hint) is (
+        assert is_hint_pep585_generic(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_generic)
 
 
@@ -74,7 +74,7 @@ def test_get_hint_pep585_generic_typevars() -> None:
         if hint_pep_meta.is_pep585_generic:
             # Tuple of all tupe variables returned by this function.
             hint_pep_typevars = get_hint_pep585_generic_typevars(
-                hint_pep_meta.pep_hint)
+                hint_pep_meta.hint)
 
             # Returns one or more type variables for typevared PEP
             # 585-compliant generics.
@@ -87,4 +87,4 @@ def test_get_hint_pep585_generic_typevars() -> None:
         # Raises an exception for objects *NOT* PEP 585-compliant generics.
         else:
             with raises(BeartypeDecorHintPep585Exception):
-                get_hint_pep585_generic_typevars(hint_pep_meta.pep_hint)
+                get_hint_pep585_generic_typevars(hint_pep_meta.hint)

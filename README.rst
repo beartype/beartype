@@ -588,34 +588,7 @@ negligible constant factors) guarantee <Nobody Believes You_>`__.
 Tutorial
 ========
 
-The ``@beartype`` decorator provided by the ``beartype`` package transparently
-supports two fundamentally different types of callable type hints – each with
-its own tradeoffs, tribal dogmas, religious icons, and zealous code
-inquisitors:
-
-* `PEP-compliant type hints <Compliance_>`__, which:
-
-  * Are capable of deeply type-checking the contents, attributes, items,
-    metadata, structure, and other aspects of passed parameters and returned
-    values. (\ *That's good.*\ )
-  * Are usually a bit less performant in space and time. (\ *That's bad.*\ )
-  * Are *mostly* fully supported by ``beartype``. (\ *That's mostly good.*\ )
-  * Comply with community standards. (\ *That's good.*\ )
-
-* `Beartype-specific type hints <Unions of Types_>`__, which:
-
-  * Are incapable of deeply type-checking the contents, attributes, items,
-    metadata, structure, or other aspects of passed parameters and returned
-    values. (\ *That's bad.*\ )
-  * Are highly performant in both space and time. (\ *That's good.*\ )
-    Efficiency is our raison d'être and modus operandi, after all.
-  * Are fully supported by ``beartype``. (\ *That's good.*\ )
-  * Do *not* comply with community standards. (\ *That's bad, arguably.*\ )
-
-Callers may freely intermingle these two types and thus obtain "the best of
-both worlds" when annotating parameters and return values. This is simpler than
-it sounds. Would we lie? Instead of answering that, let's begin with the
-simplest type of type-checking supported by ``@beartype``.
+Let's begin with the simplest type of type-checking supported by ``@beartype``.
 
 Builtin Types
 -------------

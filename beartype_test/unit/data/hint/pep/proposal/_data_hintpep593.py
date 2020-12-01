@@ -78,7 +78,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Hashable annotated of a non-"typing" type annotated by an arbitrary
         # hashable object.
         PepHintMetadata(
-            pep_hint=Annotated[str, int],
+            hint=Annotated[str, int],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # String constant.
@@ -95,7 +95,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unhashable annotated of a non-"typing" type annotated by an
         # unhashable mutable container.
         PepHintMetadata(
-            pep_hint=Annotated[str, []],
+            hint=Annotated[str, []],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # String constant.
@@ -111,7 +111,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a "typing" type.
         PepHintMetadata(
-            pep_hint=Annotated[List[str], int],
+            hint=Annotated[List[str], int],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # List of string constants.

@@ -19,10 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #which are the optimal means of performing string formatting.
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code._codesnip import (
-    PARAM_NAME_FUNC,
-    PARAM_NAME_TYPISTRY,
-)
+from beartype._decor._code.codesnip import (
+    PARAM_NAME_FUNC, PARAM_NAME_TYPISTRY)
 from inspect import Parameter
 
 # ....................{ PITH                              }....................

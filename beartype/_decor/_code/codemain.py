@@ -20,6 +20,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Refactor *ALL* calls to str.replace() throughout the codebase to call a
+#newly defined beartype._util.text.utiltextmunge.replace_str_substrs() function
+#whose signature should resemble:
+#    def replace_str_substrs(text: str, substr: str) -> str:
+#
+#The body of this function should:
+#* If the passed string does *NOT* contain at least one instance of the passed
+#  substring, raise an exception.
+#* Else, return:
+#      str.replace(text, substr)
+#
+#Why? Because the builtin str.replace() method performs *NO* such validation,
+#inviting non-human-readable exceptions when we inevitably muck things up.
+
 #FIXME: Major optimization: duplicate the signature of the decorated callable
 #as the signature of our wrapper function. Why? Because doing so obviates the
 #need to explicitly test whether each possible parameter was passed and how
@@ -123,23 +137,23 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
-from beartype._decor._code._codesnip import (
+from beartype._decor._code.codesnip import (
     CODE_INIT_PARAMS_POSITIONAL_LEN,
     CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
-
-    # Attributes imported purely for public usage outside this subpackage.
-    PARAM_NAME_FUNC,
-    PARAM_NAME_TYPISTRY,
 )
-from beartype._decor._code._nonpep.nonpepcode import (
-    nonpep_code_check_param, nonpep_code_check_return)
 from beartype._decor._code._pep.pepcode import (
-    pep_code_check_param, pep_code_check_return)
+    get_hint_pep,
+    pep_code_check_param,
+    pep_code_check_return,
+)
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-from beartype._util.hint.utilhinttest import die_unless_hint, is_hint_ignorable
+from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextlabel import (
+    label_callable_decorated_param,
+    label_callable_decorated_return,
+)
 from inspect import Parameter, Signature
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -194,9 +208,6 @@ def generate_code(data: BeartypeData) -> None:
     ----------
     data : BeartypeData
         Decorated callable to be type-checked.
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
 
     Returns
     ----------
@@ -253,6 +264,9 @@ def generate_code(data: BeartypeData) -> None:
         If any type hint annotating any parameter of this callable is
         **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
         function and thus unusable in hash-based containers like dictionaries).
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
@@ -334,14 +348,8 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
     BeartypeDecorHintNonPepException
         If any type hint annotating any parameter of this callable is neither:
 
-        * **PEP-compliant** (i.e., :mod:`beartype`-agnostic hint compliant with
-          annotation-centric PEPs).
-        * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
-          compliant with annotation-centric PEPs)).
-    TypeError
-        If any type hint annotating any parameter of this callable is
-        **unhashable** (i.e., *not* hashable by the builtin :func:`hash`
-        function and thus unusable in hash-based containers like dictionaries).
+        * A PEP-noncompliant type hint.
+        * A supported PEP-compliant type hint.
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
@@ -350,6 +358,13 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
 
     # Python code snippet type-checking the current parameter.
     func_code_param = ''
+
+    # Human-readable label describing the current parameter.
+    pith_label = None
+
+    # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
+    # otherwise (i.e., if this parameter is unannotated).
+    hint = None
 
     # True only if type-checking for these parameters requires a higher-level
     # caller to prefix the body of this wrapper function with code generating
@@ -371,33 +386,25 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         data.func_sig.parameters.values()):
         # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
         # otherwise (i.e., if this parameter is unannotated).
-        func_param_annotation = func_param.annotation
+        hint = func_param.annotation
 
         # If this parameter is unannotated, continue to the next parameter.
-        if func_param_annotation is _PARAM_HINT_EMPTY:
+        if hint is _PARAM_HINT_EMPTY:
             continue
         # Else, this parameter is annotated.
 
-        # If this hint is unsupported, raise an exception.
-        die_unless_hint(func_param_annotation)
-        # Else, this hint is guaranteed to be supported and thus hashable.
+        # Human-readable labels describing the current parameter and type
+        # hint annotating this parameter.
+        pith_label = label_callable_decorated_param(data.func, func_param.name)
 
-        # If this callable redefines a parameter initialized to a default value
-        # by this wrapper, raise an exception. Permitting this unlikely edge
-        # case would permit unsuspecting users to accidentally override these
-        # defaults.
+        # If this parameter's name is reserved for use by the @beartype
+        # decorator, raise an exception.
         if func_param.name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
-                f'{data.func_name} parameter '
-                f'"{func_param.name}" reserved by @beartype.'
-            )
-
-        # If either this hint *OR* the type of this parameter is silently
-        # ignorable, continue to the next parameter.
-        if (
-            is_hint_ignorable(func_param_annotation) or
-            func_param.kind in _PARAM_KINDS_IGNORABLE
-        ):
+                f'{pith_label} reserved by @beartype.')
+        # If either the type of this parameter is silently ignorable, continue
+        # to the next parameter.
+        elif func_param.kind in _PARAM_KINDS_IGNORABLE:
             continue
         # Else, this parameter is non-ignorable.
         #
@@ -406,33 +413,37 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         elif func_param.kind is Parameter.POSITIONAL_OR_KEYWORD:
             is_params_positional = True
 
-        # If this is a PEP-compliant hint...
-        if is_hint_pep(func_param_annotation):
-            # Python code snippet type-checking the current parameter.
-            func_code_param, is_func_code_param_needs_random_int = (
-                pep_code_check_param(
-                    data=data,
-                    func_param=func_param,
-                    func_param_index=func_param_index,
-                ))
+        # PEP-compliant type hint converted from this PEP-noncompliant type
+        # hint if this hint is PEP-noncompliant, this hint as is if this hint
+        # is PEP-compliant, *OR* raise an exception otherwise.
+        hint = get_hint_pep(hint=hint, hint_label=f'{pith_label} type hint')
 
-            # Append code type-checking this parameter against this hint.
-            func_code += func_code_param
+        # If this hint is ignorable, continue to the next parameter.
+        #
+        # Note that this is intentionally tested *AFTER* this hint has been
+        # coerced into a PEP-compliant type hint to implicitly ignore
+        # PEP-noncompliant type hints as well (e.g., "(object, int, str)").
+        if is_hint_ignorable(hint):
+            continue
+        # Else, this hint is unignorable.
 
-            # If type-checking this parameter requires first localizing a
-            # pseudo-random integer, note that.
-            is_func_code_needs_random_int = (
-                is_func_code_needs_random_int or
-                is_func_code_param_needs_random_int
-            )
-        # Else, this is a PEP-noncompliant hint. In this case, append Python
-        # code type-checking this parameter against this hint.
-        else:
-            func_code += nonpep_code_check_param(
+        # Python code snippet type-checking this parameter against this hint.
+        func_code_param, is_func_code_param_needs_random_int = (
+            pep_code_check_param(
                 data=data,
                 func_param=func_param,
                 func_param_index=func_param_index,
-            )
+            ))
+
+        # Append code type-checking this parameter against this hint.
+        func_code += func_code_param
+
+        # If type-checking this parameter requires first localizing a
+        # pseudo-random integer, note that.
+        is_func_code_needs_random_int = (
+            is_func_code_needs_random_int or
+            is_func_code_param_needs_random_int
+        )
 
     # Return all metadata required by higher-level callers, including...
     return (
@@ -502,33 +513,31 @@ def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
 
     # Type hint annotating this callable's return if any *OR*
     # "_RETURN_HINT_EMPTY" otherwise (i.e., if this return is unannotated).
-    func_return_hint = data.func_sig.return_annotation
+    hint = data.func_sig.return_annotation
 
     # If this return is unannotated, generate code calling this callable
     # unchecked and returning this value from this wrapper.
-    if func_return_hint is _RETURN_HINT_EMPTY:
+    if hint is _RETURN_HINT_EMPTY:
         func_code = CODE_RETURN_UNCHECKED
     # Else, this return is annotated.
     else:
-        # If this hint is unsupported, raise an exception.
-        die_unless_hint(func_return_hint)
-        # Else, this hint is guaranteed to be supported and thus hashable.
+        # PEP-compliant type hint converted from this PEP-noncompliant type
+        # hint if this hint is PEP-noncompliant, this hint as is if this hint
+        # is PEP-compliant, *OR* raise an exception otherwise.
+        hint = get_hint_pep(
+            hint=hint,
+            hint_label=(
+                f'{label_callable_decorated_return(data.func)} type hint'),
+        )
 
-        # If this hint is silently ignorable, generate code calling this
-        # callable unchecked and returning this value from this wrapper.
-        if is_hint_ignorable(func_return_hint):
+        # If this hint is ignorable, generate code calling this callable
+        # unchecked and returning that return value from this wrapper.
+        if is_hint_ignorable(hint):
             func_code = CODE_RETURN_UNCHECKED
-        # Else, this hint is *NOT* ignorable.
-        #
-        # If this is a PEP-compliant hint, generate Python code type-checking
-        # this return value against this hint.
-        elif is_hint_pep(func_return_hint):
-            func_code, is_func_code_needs_random_int = (
-                pep_code_check_return(data))
-        # Else, this is a PEP-noncompliant hint. In this case, generate Python
-        # code type-checking this return value against this hint.
-        else:
-            func_code = nonpep_code_check_return(data)
+        # Else, this hint is unignorable.
+
+        # Python code snippet type-checking this return against this hint.
+        func_code, is_func_code_needs_random_int = pep_code_check_return(data)
 
     # Return all metadata required by higher-level callers, including...
     return (

@@ -129,21 +129,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import functools, random
 from beartype.roar import (
-    BeartypeCallHintForwardRefException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
-from beartype._decor._code.codemain import (
-    PARAM_NAME_FUNC,
-    PARAM_NAME_TYPISTRY,
-    generate_code,
-)
+from beartype._decor._code.codemain import generate_code
+from beartype._decor._code.codesnip import (
+    PARAM_NAME_FUNC, PARAM_NAME_TYPISTRY)
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import bear_typistry
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
-from beartype._decor._code._nonpep._nonpeperror import (
-    raise_nonpep_call_exception)
 from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.text.utiltextmunge import number_lines
@@ -157,11 +152,6 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ CONSTANTS                         }....................
 _GLOBAL_ATTRS = {
     '__beartype_getrandbits': random.getrandbits,
-    #FIXME: This is currently only required for the outlier edge case of
-    #callables annotated by PEP-noncompliant tuples containing fully-qualified
-    #forward references referring to non-existent types. *sigh*
-    '__beartype_forward_ref_exception': BeartypeCallHintForwardRefException,
-    '__beartype_raise_nonpep_call_exception': raise_nonpep_call_exception,
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
 }
 '''
@@ -172,7 +162,7 @@ decorator.
 
 The names of these attributes are embedded in one or more string global
 constants declared by one or more snippet submodules (e.g.,
-:mod:`beartype._decor._code._codesnip`). To avoid colliding with the names of
+:mod:`beartype._decor._code.codesnip`). To avoid colliding with the names of
 arbitrary caller-defined parameters, these names *must* be aliased under
 alternate names prefixed by ``__beartype_``.
 

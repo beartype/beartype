@@ -28,7 +28,7 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     _BeartypeDecorBeartypistryException,
 )
-from beartype._decor._code.codemain import PARAM_NAME_TYPISTRY
+from beartype._decor._code.codesnip import PARAM_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)

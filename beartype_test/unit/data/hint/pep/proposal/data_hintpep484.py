@@ -24,7 +24,7 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
     PepHintMetadata,
-    PepHintMetadataNonsigned,
+    NonPepHintMetadata,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
@@ -310,7 +310,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # permissible *ONLY* as a return annotation and *MUST* thus be
         # exercised independently with special-purposed unit tests.
         PepHintMetadata(
-            pep_hint=Any,
+            hint=Any,
             pep_sign=Any,
             is_ignorable=True,
         ),
@@ -323,7 +323,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # at all, really), this non-orthogonality remains inexplicable,
         # frustrating, and utterly unsurprising.
         PepHintMetadata(
-            pep_hint=ByteString,
+            hint=ByteString,
             pep_sign=ByteString,
             type_origin=collections_abc.ByteString,
             piths_satisfied_meta=(
@@ -344,7 +344,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ UNSUBSCRIPTED ~ typevar           }................
         # Generic type variable.
         PepHintMetadata(
-            pep_hint=T,
+            hint=T,
             pep_sign=TypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
@@ -360,7 +360,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # String type variable.
         PepHintMetadata(
-            pep_hint=AnyStr,
+            hint=AnyStr,
             pep_sign=TypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
@@ -385,7 +385,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ CALLABLE                          }................
         # Callable accepting no parameters and returning a string.
         PepHintMetadata(
-            pep_hint=Callable[[], str],
+            hint=Callable[[], str],
             pep_sign=Callable,
             type_origin=collections_abc.Callable,
             piths_satisfied_meta=(
@@ -401,7 +401,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ CONTEXTMANAGER                    }................
         # Context manager yielding strings.
         PepHintMetadata(
-            pep_hint=ContextManager[str],
+            hint=ContextManager[str],
             pep_sign=ContextManager,
             type_origin=contextlib.AbstractContextManager,
             piths_satisfied_meta=(
@@ -422,7 +422,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ DICT                              }................
         # Unsubscripted "Dict" attribute.
         PepHintMetadata(
-            pep_hint=Dict,
+            hint=Dict,
             pep_sign=Dict,
             is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=dict,
@@ -444,7 +444,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Flat dictionary.
         PepHintMetadata(
-            pep_hint=Dict[int, str],
+            hint=Dict[int, str],
             pep_sign=Dict,
             type_origin=dict,
             piths_satisfied_meta=(
@@ -463,7 +463,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic dictionary.
         PepHintMetadata(
-            pep_hint=Dict[S, T],
+            hint=Dict[S, T],
             pep_sign=Dict,
             is_typevared=True,
             type_origin=dict,
@@ -483,7 +483,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ GENERATOR                         }................
         # Flat generator.
         PepHintMetadata(
-            pep_hint=Generator[int, float, str],
+            hint=Generator[int, float, str],
             pep_sign=Generator,
             type_origin=collections_abc.Generator,
             piths_satisfied_meta=(
@@ -501,7 +501,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ GENERICS ~ user                   }................
         # Generic subclassing a single unparametrized "typing" type.
         PepHintMetadata(
-            pep_hint=Pep484GenericUntypevaredSingle,
+            hint=Pep484GenericUntypevaredSingle,
             pep_sign=Generic,
             is_typing=False,
             piths_satisfied_meta=(
@@ -525,7 +525,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic subclassing a single parametrized "typing" type.
         PepHintMetadata(
-            pep_hint=Pep484GenericTypevaredSingle,
+            hint=Pep484GenericTypevaredSingle,
             pep_sign=Generic,
             is_typevared=True,
             is_typing=False,
@@ -545,7 +545,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=Pep484GenericUntypevaredMultiple,
+            hint=Pep484GenericUntypevaredMultiple,
             pep_sign=Generic,
             is_typing=False,
             piths_satisfied_meta=(
@@ -568,7 +568,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic subclassing multiple parametrized "typing" types.
         PepHintMetadata(
-            pep_hint=Pep484GenericTypevaredShallowMultiple,
+            hint=Pep484GenericTypevaredShallowMultiple,
             pep_sign=Generic,
             is_typevared=True,
             is_typing=False,
@@ -590,7 +590,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple indirectly parametrized "typing" types
         # *AND* a non-"typing" abstract base class (ABC).
         PepHintMetadata(
-            pep_hint=Pep484GenericTypevaredDeepMultiple,
+            hint=Pep484GenericTypevaredDeepMultiple,
             pep_sign=Generic,
             is_typevared=True,
             is_typing=False,
@@ -618,7 +618,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested list of PEP 484-compliant generics.
         PepHintMetadata(
-            pep_hint=List[Pep484GenericUntypevaredMultiple],
+            hint=List[Pep484GenericUntypevaredMultiple],
             pep_sign=List,
             type_origin=list,
             piths_satisfied_meta=(
@@ -652,7 +652,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ LIST                              }................
         # Unsubscripted "List" attribute.
         PepHintMetadata(
-            pep_hint=List,
+            hint=List,
             pep_sign=List,
             is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=list,
@@ -680,7 +680,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # List of ignorable objects.
         PepHintMetadata(
-            pep_hint=List[object],
+            hint=List[object],
             pep_sign=List,
             type_origin=list,
             piths_satisfied_meta=(
@@ -702,7 +702,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # List of non-"typing" objects.
         PepHintMetadata(
-            pep_hint=List[str],
+            hint=List[str],
             pep_sign=List,
             type_origin=list,
             piths_satisfied_meta=(
@@ -735,7 +735,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic list.
         PepHintMetadata(
-            pep_hint=List[T],
+            hint=List[T],
             pep_sign=List,
             is_typevared=True,
             type_origin=list,
@@ -758,7 +758,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ NEWTYPE                           }................
         # New type aliasing a non-ignorable type.
         PepHintMetadata(
-            pep_hint=NewType('TotallyNotAStr', str),
+            hint=NewType('TotallyNotAStr', str),
             pep_sign=NewType,
             # New types are merely pure-Python functions of the standard
             # pure-Python function type, which is *NOT* defined by the "typing"
@@ -781,7 +781,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ REGEX ~ match                     }................
         # Regular expression match of either strings or byte strings.
         PepHintMetadata(
-            pep_hint=Match,
+            hint=Match,
             pep_sign=Match,
             type_origin=RegexMatchType,
             is_typevared=_IS_SIGN_TYPEVARED,
@@ -801,7 +801,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Regular expression match of only strings.
         PepHintMetadata(
-            pep_hint=Match[str],
+            hint=Match[str],
             pep_sign=Match,
             type_origin=RegexMatchType,
             piths_satisfied_meta=(
@@ -820,7 +820,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ REGEX ~ pattern                   }................
         # Regular expression pattern of either strings or byte strings.
         PepHintMetadata(
-            pep_hint=Pattern,
+            hint=Pattern,
             pep_sign=Pattern,
             type_origin=RegexCompiledType,
             is_typevared=_IS_SIGN_TYPEVARED,
@@ -837,7 +837,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Regular expression pattern of only strings.
         PepHintMetadata(
-            pep_hint=Pattern[str],
+            hint=Pattern[str],
             pep_sign=Pattern,
             type_origin=RegexCompiledType,
             piths_satisfied_meta=(
@@ -857,7 +857,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # unlike most other unsubscripted "typing" attributes originating from
         # container types. Non-orthogonality, thy name is the "typing" module.
         PepHintMetadata(
-            pep_hint=Tuple,
+            hint=Tuple,
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -886,7 +886,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     >>> List[[]]
         #     TypeError: Parameters to generic types must be types. Got [].
         PepHintMetadata(
-            pep_hint=Tuple[()],
+            hint=Tuple[()],
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -911,7 +911,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Fixed-length tuple of only ignorable child hints.
         PepHintMetadata(
-            pep_hint=Tuple[Any, object,],
+            hint=Tuple[Any, object,],
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -936,7 +936,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
-            pep_hint=Tuple[float, Any, str,],
+            hint=Tuple[float, Any, str,],
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -985,7 +985,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
-            pep_hint=Tuple[Tuple[float, Any, str,], ...],
+            hint=Tuple[Tuple[float, Any, str,], ...],
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -1035,7 +1035,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic fixed-length tuple.
         PepHintMetadata(
-            pep_hint=Tuple[S, T],
+            hint=Tuple[S, T],
             pep_sign=Tuple,
             is_typevared=True,
             type_origin=tuple,
@@ -1060,7 +1060,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TUPLE ~ variadic                  }................
         # Variadic tuple.
         PepHintMetadata(
-            pep_hint=Tuple[str, ...],
+            hint=Tuple[str, ...],
             pep_sign=Tuple,
             type_origin=tuple,
             piths_satisfied_meta=(
@@ -1093,7 +1093,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic variadic tuple.
         PepHintMetadata(
-            pep_hint=Tuple[T, ...],
+            hint=Tuple[T, ...],
             pep_sign=Tuple,
             is_typevared=True,
             type_origin=tuple,
@@ -1114,7 +1114,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ TYPE                              }................
         # Unsubscripted "Type" singleton.
         PepHintMetadata(
-            pep_hint=Type,
+            hint=Type,
             pep_sign=Type,
             is_typevared=_IS_SIGN_TYPEVARED,
             type_origin=type,
@@ -1132,7 +1132,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Builtin type.
         PepHintMetadata(
-            pep_hint=Type[dict],
+            hint=Type[dict],
             pep_sign=Type,
             type_origin=type,
             piths_satisfied_meta=(
@@ -1147,7 +1147,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic type.
         PepHintMetadata(
-            pep_hint=Type[T],
+            hint=Type[T],
             pep_sign=Type,
             is_typevared=True,
             type_origin=type,
@@ -1180,7 +1180,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Ignorable unsubscripted "Union" attribute.
         PepHintMetadata(
-            pep_hint=Union,
+            hint=Union,
             pep_sign=Union,
             is_ignorable=True,
         ),
@@ -1190,7 +1190,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # exceptions describing the failure of passed parameters or returned
         # values to satisfy this union.
         PepHintMetadata(
-            pep_hint=Union[int, Sequence[str]],
+            hint=Union[int, Sequence[str]],
             pep_sign=Union,
             piths_satisfied_meta=(
                 # Integer constant.
@@ -1246,7 +1246,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # exceptions describing the failure of passed parameters or returned
         # values to satisfy this union.
         PepHintMetadata(
-            pep_hint=Union[dict, float, int,
+            hint=Union[dict, float, int,
                 Sequence[Union[dict, float, int, MutableSequence[str]]]],
             pep_sign=Union,
             piths_satisfied_meta=(
@@ -1334,7 +1334,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Union of one non-"typing" type and one concrete generic.
         PepHintMetadata(
-            pep_hint=Union[str, Iterable[Tuple[S, T]]],
+            hint=Union[str, Iterable[Tuple[S, T]]],
             pep_sign=Union,
             is_typevared=True,
         ),
@@ -1345,7 +1345,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of multiple non-"typing" types.
         PepHintMetadata(
-            pep_hint=List[Union[int, str,]],
+            hint=List[Union[int, str,]],
             pep_sign=List,
             type_origin=list,
             piths_satisfied_meta=(
@@ -1394,7 +1394,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of one non-"typing" type and one "typing" type.
         PepHintMetadata(
-            pep_hint=Sequence[Union[str, ByteString]],
+            hint=Sequence[Union[str, ByteString]],
             pep_sign=Sequence,
             type_origin=collections_abc.Sequence,
             piths_satisfied_meta=(
@@ -1441,7 +1441,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of no non-"typing" type and multiple "typing" types.
         PepHintMetadata(
-            pep_hint=MutableSequence[Union[ByteString, Callable]],
+            hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=MutableSequence,
             type_origin=collections_abc.MutableSequence,
             piths_satisfied_meta=(
@@ -1491,14 +1491,14 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ UNION ~ optional                  }................
         # Ignorable unsubscripted "Optional" attribute.
         PepHintMetadata(
-            pep_hint=Optional,
+            hint=Optional,
             pep_sign=Optional,
             is_ignorable=True,
         ),
 
         # Optional isinstance()-able "typing" type.
         PepHintMetadata(
-            pep_hint=Optional[Sequence[str]],
+            hint=Optional[Sequence[str]],
             # Subscriptions of the "Optional" attribute reduce to
             # fundamentally different unsubscripted typing attributes depending
             # on Python version. Specifically, under:
@@ -1555,7 +1555,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
             # Unsubscripted "Hashable" attribute.
             PepHintMetadata(
-                pep_hint=typing.Hashable,
+                hint=typing.Hashable,
                 pep_sign=Hashable,
                 piths_satisfied_meta=(
                     # String constant.
@@ -1579,7 +1579,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
             # Unsubscripted "Sized" attribute.
             PepHintMetadata(
-                pep_hint=typing.Sized,
+                hint=typing.Sized,
                 pep_sign=Sized,
                 piths_satisfied_meta=(
                     # String constant.
@@ -1598,12 +1598,12 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ))
 
-    data_module.HINTS_PEP_META_NONSIGNED.extend((
+    data_module.HINTS_NONPEP_META.extend((
         # ................{ NAMEDTUPLE                        }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
-        PepHintMetadataNonsigned(
-            pep_hint=NamedTupleType,
+        NonPepHintMetadata(
+            hint=NamedTupleType,
             piths_satisfied_meta=(
                 # Named tuple containing correctly typed items.
                 PepHintPithSatisfiedMetadata(
