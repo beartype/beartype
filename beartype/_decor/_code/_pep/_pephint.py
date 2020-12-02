@@ -16,16 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Emit non-fatal warnings for each "typing" object deprecated by PEP 585
-#when used under Python >= 3.9 (e.g., "typing.AbstractSet", "typing.Tuple"). To
-#quote PEP 585:
-#   "Importing those from typing is deprecated. Due to PEP 563 and the
-#    intention to minimize the runtime impact of typing, this deprecation will
-#    not generate DeprecationWarnings. Instead, type checkers may warn about
-#    such deprecated usage when the target version of the checked program is
-#    signalled to be Python 3.9 or newer. It's recommended to allow for those
-#    warnings to be silenced on a project-wide basis."
-
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
@@ -380,6 +370,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_tuple_empty,
     is_hint_pep_typing,
+    warn_if_hint_pep_sign_deprecated,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
@@ -578,6 +569,12 @@ def pep_code_check_hint(hint: object) -> (
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
 
+    Raises
+    ----------
+    BeartypeDecorHintPepDeprecatedWarning
+        If one or more PEP-compliant type hints annotating the currently
+        decorated callable are deprecated.
+
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
     '''
@@ -590,7 +587,7 @@ def pep_code_check_hint(hint: object) -> (
     del hint
 
     # Human-readable label describing the root hint in exception messages.
-    hint_root_label = f'{EXCEPTION_CACHED_PLACEHOLDER} {repr(hint_root)}'
+    hint_root_label = f'{EXCEPTION_CACHED_PLACEHOLDER}'
 
     # Python code snippet evaluating to the current passed parameter or return
     # value to be type-checked against the root hint.
@@ -607,6 +604,15 @@ def pep_code_check_hint(hint: object) -> (
     # Python expression evaluating to an isinstance()-able class (e.g., origin
     # type) associated with the currently visited type hint if any.
     hint_curr_expr = None
+
+    # Human-readable label prefixing the machine-readable representation of the
+    # currently visited type hint in exception and warning messages.
+    hint_curr_label = None
+
+    # Human-readable label prefixing the machine-readable representation of the
+    # currently visited type hint if this hint is nested (i.e., any hint
+    # *except* the root type hint) in exception and warning messages.
+    hint_curr_label_nested = f'{hint_root_label} {repr(hint_root)} child'
 
     #FIXME: Excise us up.
     # Origin type (i.e., non-"typing" superclass suitable for shallowly
@@ -648,15 +654,6 @@ def pep_code_check_hint(hint: object) -> (
     # Current unsubscripted typing attribute associated with this hint (e.g.,
     # "Union" if "hint_child == Union[int, str]").
     # hint_child_sign = None
-
-    # Human-readable label prefixing the representations of child hints of this
-    # root hint in exception messages.
-    #
-    # Note that this label intentionally only describes the root and currently
-    # iterated child hints rather than the root hint, the currently iterated
-    # child hint, and all interim child hints leading from the former to the
-    # latter. The latter approach would be non-human-readable and insane.
-    hint_child_label = hint_root_label + ' child'
 
     # Placeholder string to be globally replaced in the Python code snippet to
     # be returned (i.e., "func_code") by a Python code snippet type-checking
@@ -967,6 +964,20 @@ def pep_code_check_hint(hint: object) -> (
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
+        # Human-readable label prefixing the machine-readable representation of
+        # the currently visited type hint in exception and warning messages.
+        #
+        # Note that this label intentionally only describes the root and
+        # currently iterated child hints rather than the root hint, the
+        # currently iterated child hint, and all interim child hints leading
+        # from the former to the latter. The latter approach would be
+        # non-human-readable and insane.
+        hint_curr_label = (
+            hint_root_label
+            if hints_meta_index_curr == 0 else
+            hint_curr_label_nested
+        )
+
         # ................{ REDUCTION                         }................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the
@@ -1004,15 +1015,11 @@ def pep_code_check_hint(hint: object) -> (
         #requires a linear search over the entire code and is thus costly.
         # assert hint_curr_placeholder in func_code, (
         #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
-        #         hint_child_label, hint, hint_curr_placeholder, func_code))
+        #         hint_curr_label, hint, hint_curr_placeholder, func_code))
 
         # ................{ PEP                               }................
         # If this hint is PEP-compliant...
         if is_hint_pep(hint_curr):
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAVEATS: Synchronize changes here with "ANNOTATED" below.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
             #FIXME: Refactor to call warn_if_hint_pep_unsupported() instead.
             #Actually...wait. This is probably still a valid test here. We'll
             #need to instead augment the is_hint_ignorable() function to
@@ -1023,7 +1030,7 @@ def pep_code_check_hint(hint: object) -> (
             #FIXME: Actually, in that case, we can simply reduce the following
             #two calls to simply:
             #    die_if_hint_pep_ignorable(
-            #        hint=hint_curr, hint_label=hint_child_label)
+            #        hint=hint_curr, hint_label=hint_curr_label)
             #Of course, this implies we want to refactor the
             #die_if_hint_pep_unsupported() function into
             #die_if_hint_pep_ignorable()... probably.
@@ -1036,7 +1043,7 @@ def pep_code_check_hint(hint: object) -> (
             # the above call to the same function, this call is guaranteed to
             # *NEVER* raise an exception for that hint.
             die_if_hint_pep_unsupported(
-                hint=hint_curr, hint_label=hint_child_label)
+                hint=hint_curr, hint_label=hint_curr_label)
             # Else, this hint is supported.
 
             # Assert that this hint is unignorable. Iteration below generating
@@ -1046,13 +1053,13 @@ def pep_code_check_hint(hint: object) -> (
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                f'{hint_child_label} PEP type hint '
+                f'{hint_curr_label} PEP type hint '
                 f'{repr(hint_curr)} ignorable.')
 
-            # Unsubscripted "typing" attribute uniquely identifying this hint.
+            # Sign uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
 
-            # If this attribute is currently unsupported, raise an exception.
+            # If this sign is currently unsupported, raise an exception.
             #
             # Note the human-readable label prefixing the representations of
             # child PEP-compliant type hints is unconditionally passed. Since
@@ -1060,8 +1067,17 @@ def pep_code_check_hint(hint: object) -> (
             # above call to the die_if_hint_pep_unsupported() function, this
             # call is guaranteed to *NEVER* raise exceptions for the root hint.
             die_if_hint_pep_sign_unsupported(
-                hint=hint_curr_sign, hint_label=hint_child_label)
+                hint_sign=hint_curr_sign, hint_label=hint_curr_label)
             # Else, this attribute is supported.
+
+            # If this sign and thus this hint is deprecated, emit a non-fatal
+            # warning warning users of this deprecation.
+            # print(f'Testing {hint_curr_label} hint {repr(hint_curr)} for deprecation...')
+            warn_if_hint_pep_sign_deprecated(
+                hint=hint_curr,
+                hint_sign=hint_curr_sign,
+                hint_label=hint_curr_label,
+            )
 
             # Tuple of all arguments subscripting this hint if any *OR* the
             # empty tuple otherwise (e.g., if this hint is its own unsubscripted
@@ -1316,7 +1332,7 @@ def pep_code_check_hint(hint: object) -> (
                 #       >>> typing.Union[()]
                 #       TypeError: Cannot take a Union of no types.
                 assert hint_childs, (
-                    f'{hint_child_label} PEP union '
+                    f'{hint_curr_label} PEP union type hint '
                     f'{repr(hint_curr)} unsubscripted.')
                 # Else, this union is subscripted by two or more arguments. Why
                 # two rather than one? Because the "typing" module reduces
@@ -1350,7 +1366,7 @@ def pep_code_check_hint(hint: object) -> (
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
                     assert hint_child not in HINTS_IGNORABLE_SHALLOW, (
-                        f'{hint_child_label} ignorable PEP union '
+                        f'{hint_curr_label} ignorable PEP union type hint '
                         f'{repr(hint_curr)} not ignored.')
 
                     # If this child hint is PEP-compliant...
@@ -1406,31 +1422,34 @@ def pep_code_check_hint(hint: object) -> (
                             # arguments when accessed via the private
                             # "__beartypistry" parameter.
                             #
-                            # Note that we would ideally avoid coercing this
-                            # set into a tuple when this set only contains one
-                            # type by passing that type directly to the
-                            # register_typistry_type() function. Sadly, the
-                            # "set" class defines no convenient or efficient
-                            # means of retrieving the only item of a 1-set.
-                            # Indeed, the most efficient means of doing so is
-                            # to iterate over that set and immediately break:
+                            # Note that:
+                            # * We would ideally avoid coercing this set into a
+                            #   tuple when this set only contains one type by
+                            #   passing that type directly to the
+                            #   register_typistry_type() function. Sadly, the
+                            #   "set" class defines no convenient or efficient
+                            #   means of retrieving the only item of a 1-set.
+                            #   Indeed, the most efficient means of doing so is
+                            #   to iterate over that set and immediately break:
                             #     for first_item in muh_set: break
-                            #
-                            # While we *COULD* technically leverage that
-                            # approach here, doing so would also mandate adding
-                            # a number of intermediate tests, which would
-                            # certainly reduce any performance gains.
-                            # Ultimately, we avoid doing so by falling back to
-                            # the standard approach. See also this relevant
-                            # self-StackOverflow post:
-                            #     https://stackoverflow.com/a/40054478/2809027
+                            #   While we *COULD* technically leverage that
+                            #   approach here, doing so would also mandate
+                            #   adding a number of intermediate tests, which
+                            #   would certainly reduce any performance gains.
+                            #   Ultimately, we avoid doing so by falling back
+                            #   to the standard approach. See also this
+                            #   relevant self-StackOverflow post:
+                            #       https://stackoverflow.com/a/40054478/2809027
+                            # * These parameters are intentionally passed as
+                            #   positional rather than keyword arguments for
+                            #   optimal memoization efficiency.
                             hint_curr_expr=register_typistry_tuple(
-                                hint=tuple(hint_childs_nonpep),
+                                tuple(hint_childs_nonpep),
                                 # Inform this function it needn't attempt to
                                 # uselessly omit duplicates, since the "typing"
                                 # module already does so for all "Union"
                                 # arguments. Well, that's nice.
-                                is_types_unique=True,
+                                True,
                             )
                         ))
 
@@ -1514,7 +1533,7 @@ def pep_code_check_hint(hint: object) -> (
             elif hint_curr_sign is Generic:
                 # Assert this hint is a class.
                 assert isinstance(hint_curr, type), (
-                    f'{hint_child_label} PEP generic '
+                    f'{hint_curr_label} PEP generic type hint '
                     f'{repr(hint_curr)} not class.')
 
                 # Tuple of the one or more unerased pseudo-superclasses
@@ -1654,7 +1673,7 @@ def pep_code_check_hint(hint: object) -> (
                     # when accessed via the private "__beartypistry" parameter.
                     hint_curr_expr=register_typistry_type(hint_curr),
                 )
-                # print(f'{hint_child_label} PEP generic {repr(hint)} handled.')
+                # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
 
             # ..............{ FORWARDREF                        }..............
@@ -1714,7 +1733,7 @@ def pep_code_check_hint(hint: object) -> (
             # this singleton to be invalid here.
             elif hint_curr is NoReturn:
                 raise BeartypeDecorHintPep484Exception(
-                    f'{hint_child_label} PEP type hint '
+                    f'{hint_curr_label} PEP type hint '
                     f'{repr(hint_curr)} nesting "typing.NoReturn" invalid '
                     f'(i.e., as "typing.NoReturn" valid only as a '
                     f'non-nested return annotation).'
@@ -1795,8 +1814,8 @@ def pep_code_check_hint(hint: object) -> (
                     hint_childs_len == 1 or
                     hint_curr_sign in HINT_PEP_SIGNS_TUPLE
                 ), (
-                    f'{hint_child_label} PEP sequence {repr(hint_curr)} '
-                    f'subscripted by multiple arguments.')
+                    f'{hint_curr_label} PEP sequence type hint '
+                    f'{repr(hint_curr)} subscripted by multiple arguments.')
 
                 # Lone child hint of this parent hint.
                 hint_child = hint_childs[0]
@@ -1873,7 +1892,7 @@ def pep_code_check_hint(hint: object) -> (
                 # module should have already guaranteed this on our behalf.
                 # Trust is for the weak. See above for further commentary.
                 assert hint_curr_sign is tuple or hint_childs, (
-                    f'{hint_child_label} PEP 484 fixed-length tuple hint '
+                    f'{hint_curr_label} PEP 484 fixed-length tuple type hint '
                     f'{repr(hint_curr)} empty.')
 
                 # Assert this tuple is *NOT* of the syntactic form
@@ -1882,7 +1901,7 @@ def pep_code_check_hint(hint: object) -> (
                     hint_childs_len <= 1 or
                     hint_childs[1] is not Ellipsis
                 ), (
-                    f'{hint_child_label} PEP variadic tuple hint '
+                    f'{hint_curr_label} PEP variadic tuple type hint '
                     f'{repr(hint_curr)} unhandled.')
 
                 # Initialize the code type-checking the current pith against
@@ -1952,7 +1971,7 @@ def pep_code_check_hint(hint: object) -> (
             # triggered. Nonetheless, raise an exception for safety.
             else:
                 raise BeartypeDecorHintPepUnsupportedException(
-                    f'{hint_child_label} PEP type hint '
+                    f'{hint_curr_label} PEP type hint '
                     f'{repr(hint_curr)} unsupported but '
                     f'erroneously detected as supported.'
                 )
@@ -2007,7 +2026,7 @@ def pep_code_check_hint(hint: object) -> (
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{hint_child_label} hint {repr(hint_curr)} not PEP-compliant '
+                f'{hint_curr_label} hint {repr(hint_curr)} not PEP-compliant '
                 f'(e.g., neither "typing" object nor non-"typing" class).'
             )
 
@@ -2039,7 +2058,7 @@ def pep_code_check_hint(hint: object) -> (
     # absolutely should have... but may not have, which is why we're testing.
     if func_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{hint_root_label} not type-checked.')
+            f'{hint_root_label} {repr(hint_root)} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
 
     # Tuple of the unqualified classnames referred to by all relative forward

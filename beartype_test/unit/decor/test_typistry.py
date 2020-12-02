@@ -138,8 +138,7 @@ def test_typistry_register_tuple_pass() -> None:
     # Assert that tuples guaranteed to contain *NO* duplicate types are
     # registrable via the same function.
     hint = NoneTypeOr[CallableTypes]
-    hint_cached = _eval_registered_expr(
-        register_typistry_tuple(hint=hint, is_types_unique=True))
+    hint_cached = _eval_registered_expr(register_typistry_tuple(hint, True))
     assert hint == hint_cached
 
     #FIXME: Disable this until we drop Python 3.6 support. While Python >= 3.7

@@ -60,10 +60,10 @@ def test_reraise_exception_cached() -> None:
     def portend_high_level_winter() -> None:
         try:
             # Call the low-level memoized callable without raising exceptions.
-            print(portend_low_level_winter(is_winter_coming=False))
+            print(portend_low_level_winter(False))
 
             # Call the low-level memoized callable with raising exceptions.
-            print(portend_low_level_winter(is_winter_coming=True))
+            print(portend_low_level_winter(True))
         except CachedException as exception:
             # print('exception.args: {!r} ({!r})'.format(exception.args, type(exception.args)))
             reraise_exception_cached(

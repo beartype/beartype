@@ -19,10 +19,7 @@ parameters are satisfied (e.g., the importability of the passed module name).
 
 import platform, pytest, sys
 from beartype_test.util.mark import pytmark
-from collections.abc import (
-    Mapping as Mapping,
-    Sequence as Sequence,
-)
+from collections.abc import Mapping, Sequence
 from types import FunctionType
 
 # Sadly, the following imports require private modules and packages.
@@ -149,7 +146,7 @@ def skip_if_python_version_less_than(minimum_version: str):
         Similar logic performed at :mod:`beartype` importation time.
     '''
     assert isinstance(minimum_version, str), (
-        '"{!r}" not string.'.format(minimum_version))
+        f'{repr(minimum_version)} not string.')
 
     # Defer heavyweight imports.
     from beartype.meta import _convert_version_str_to_tuple
@@ -160,19 +157,61 @@ def skip_if_python_version_less_than(minimum_version: str):
     # Skip this test if the current Python version is less than this minimum.
     return skip_if(
         _PYTHON_VERSION_TUPLE < minimum_version_tuple,
-        reason='Python {} < {}.'.format(_PYTHON_VERSION_STR, minimum_version))
+        reason=f'Python {_PYTHON_VERSION_STR} < {minimum_version}.')
 
 # ....................{ SKIP ~ py : module                }....................
-def skip_unless_module(module_name: str, minimum_version: str = None):
+def skip_unless_package(
+    package_name: str, minimum_version: 'Optional[str]' = None):
+    '''
+    Skip the decorated test or fixture if the package with the passed name is
+    **unsatisfied** (i.e., either dynamically unimportable *or* importable but
+    of a version less than the passed minimum version if non-``None``).
+
+    Parameters
+    ----------
+    package_name : str
+        Fully-qualified name of the package to be skipped.
+    minimum_version : Optional[str]
+        Optional minimum version of this package as a dot-delimited string
+        (e.g., ``0.4.0``) to be tested for if any *or* ``None`` otherwise, in
+        which case any version is acceptable. Defaults to ``None``.
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator describing these requirements if unmet *or* the identity
+        decorator reducing to a noop otherwise.
+    '''
+    assert isinstance(package_name, str), (
+        f'{repr(package_name)} not string.')
+
+    # Skip the decorated test or fixture unless the requisite dunder submodule
+    # declared by this package satisfies these requirements.
+    return skip_unless_module(
+        module_name=f'{package_name}.__init__',
+        minimum_version=minimum_version,
+    )
+
+
+def skip_unless_module(
+    module_name: str, minimum_version: 'Optional[str]' = None):
     '''
     Skip the decorated test or fixture if the module with the passed name is
-    unimportable *or* importable but of a version less than the passed minimum
-    version if non-``None``.
+    **unsatisfied** (i.e., either dynamically unimportable *or* importable but
+    of a version less than the passed minimum version if non-``None``).
+
+    Caveats
+    ----------
+    **This decorator should never be passed the fully-qualified name of a
+    package.** Consider calling the :func:`skip_unless_package` decorator
+    instead to skip unsatisfied packages. Calling this decorator with package
+    names guarantees those packages to be skipped, as packages are *not*
+    directly importable as modules.
 
     Parameters
     ----------
     module_name : str
-        Fully-qualified name of the module to be tested for.
+        Fully-qualified name of the module to be skipped.
     minimum_version : Optional[str]
         Optional minimum version of this module as a dot-delimited string
         (e.g., ``0.4.0``) to be tested for if any *or* ``None`` otherwise, in
@@ -185,9 +224,9 @@ def skip_unless_module(module_name: str, minimum_version: str = None):
         decorator reducing to a noop otherwise.
     '''
     assert isinstance(module_name, str), (
-        '"{!r}" not string.'.format(module_name))
+        f'{repr(module_name)} not string.')
     assert isinstance(minimum_version, (str, _NoneType)), (
-        '"{!r}" not string.'.format(minimum_version))
+        f'{repr(minimum_version)} neither string nor "None".')
 
     return _skip_if_callable_raises_exception(
         exception_type=Skipped,
@@ -202,8 +241,8 @@ def _skip_if_callable_raises_exception(
     func: FunctionType,
 
     # Optional parameters.
-    args: (Sequence, _NoneType) = None,
-    kwargs: (Mapping, _NoneType) = None,
+    args: 'Optional[Sequence]' = None,
+    kwargs: 'Optional[Mapping]' = None,
 ):
     '''
     Skip the decorated test or fixture if calling the passed callable with the
@@ -222,10 +261,10 @@ def _skip_if_callable_raises_exception(
         Type of exception expected to be raised by this callable.
     func : FunctionType
         Callable to be called.
-    args : (Sequence, _NoneType)
+    args : Optional[Sequence]
         Sequence of all positional arguments to unconditionally pass to the
         passed callable if any *or* ``None`` otherwise. Defaults to ``None``.
-    kwargs : (Mapping, _NoneType)
+    kwargs : Optional[Mapping]
         Mapping of all keyword arguments to unconditionally pass to the passed
         callable if any *or* ``None`` otherwise. Defaults to ``None``.
 
@@ -241,12 +280,13 @@ def _skip_if_callable_raises_exception(
         args = ()
     if kwargs is None:
         kwargs = {}
+
+    # Validate *AFTER* defaulting these arguments.
     assert isinstance(exception_type, type), (
-        '"{!r}" not a type.'.format(exception_type))
-    assert isinstance(func, FunctionType), (
-        '"{!r}" not a function.'.format(func))
-    assert isinstance(args, Sequence), '"{!r}" not a sequence.'.format(args)
-    assert isinstance(kwargs, Mapping), '"{!r}" not a mapping.'.format(kwargs)
+        f'{repr((exception_type))} not type.')
+    assert callable(func), '{repr()} uncallable.'
+    assert isinstance(args, Sequence), '{repr(args)} not sequence.'
+    assert isinstance(kwargs, Mapping), '{repr(kwargs)} not mapping.'
 
     # Attempt to call this callable with these arguments.
     try:

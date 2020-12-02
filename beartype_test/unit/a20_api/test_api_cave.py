@@ -16,7 +16,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import argparse, functools, re, sys, weakref
-from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_module
+from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal
@@ -702,7 +702,7 @@ def test_api_cave_tuple_nonetypeor() -> None:
     assert NoneTypeOr[CallableTypes] == CallableTypes + (NoneType,)
 
 # ....................{ TESTS ~ lib                       }....................
-@skip_unless_module('numpy')
+@skip_unless_package('numpy')
 def test_api_cave_lib_numpy() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule
@@ -805,7 +805,7 @@ def test_api_cave_lib_numpy() -> None:
     )
 
 
-@skip_unless_module('pkg_resources')
+@skip_unless_package('pkg_resources')
 def test_api_cave_lib_setuptools() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule

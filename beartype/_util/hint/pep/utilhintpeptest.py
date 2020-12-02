@@ -43,15 +43,20 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
+    BeartypeDecorHintPepDeprecatedWarning,
     BeartypeDecorHintPepUnsupportedException,
     # BeartypeDecorHintPepIgnorableDeepWarning,
     # BeartypeDecorHintPepUnsupportedWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
-    HINT_PEP_SIGNS_SUPPORTED)
+    HINT_PEP_SIGNS_DEPRECATED,
+    HINT_PEP_SIGNS_SUPPORTED,
+)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_TUPLE_EMPTY)
+    HINT_PEP484_SIGNS_TYPE_ORIGIN,
+    HINT_PEP484_TUPLE_EMPTY,
+)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -71,7 +76,7 @@ from beartype._util.utilobject import get_object_class_unless_class
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import TypeVar
-# from warnings import warn
+from warnings import warn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -273,17 +278,15 @@ def die_if_hint_pep_unsupported(
 
 def die_if_hint_pep_sign_unsupported(
     # Mandatory parameters.
-    hint: object,
+    hint_sign: object,
 
     # Optional parameters.
     hint_label: str = 'Annotation sign',
 ) -> None:
     '''
-    Raise an exception unless the passed object is a **PEP-compliant supported
-    unsubscripted typing attribute** (i.e., public attribute of the
-    :mod:`typing` module without arguments uniquely identifying a category of
-    PEP-compliant type hints currently supported by the
-    :func:`beartype.beartype` decorator).
+    Raise an exception unless the passed object is a **supported PEP-compliant
+    sign** (i.e., arbitrary object uniquely identifying PEP-compliant type
+    hints currently supported by the :func:`beartype.beartype` decorator).
 
     This validator is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -308,14 +311,78 @@ def die_if_hint_pep_sign_unsupported(
 
     # If this hint is *NOT* a supported unsubscripted "typing" attribute, raise
     # an exception.
-    if not is_hint_pep_sign_supported(hint):
+    if not is_hint_pep_sign_supported(hint_sign):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} PEP sign {repr(hint)} '
+            f'{hint_label} PEP sign {repr(hint_sign)} '
             f'currently unsupported by @beartype.'
         )
 
 # ....................{ WARNINGS                          }....................
+def warn_if_hint_pep_sign_deprecated(
+    # Mandatory parameters.
+    hint: object,
+    hint_sign: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotated',
+) -> bool:
+    '''
+    Emit a non-fatal warning only if the passed PEP-compliant sign uniquely
+    identifying the passed PEP-compliant type hint is **deprecated** (e.g., due
+    to this outdated PEP-compliant type hint having since been obsoleted by one
+    or more recent PEPs).
+
+    This validator is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        PEP-compliant type hint to be validated.
+    hint_sign : object
+        Arbitrary object uniquely identifying this hint.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        warning message emitted by this function. Defaults to ``"Annotated"``.
+
+    Warns
+    ----------
+    BeartypeDecorHintPepDeprecatedWarning
+        If this sign is deprecated.
+    '''
+
+    # If this sign is deprecated...
+    if hint_sign in HINT_PEP_SIGNS_DEPRECATED:
+        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+
+        # Warning message to be emitted.
+        warning_message = f'{hint_label} PEP type hint {repr(hint)} deprecated'
+
+        # If this sign uniquely identifies PEP 484-compliant type hints
+        # originating from origin types (e.g., "typing.List[int]"), this sign
+        # has been deprecated by the equivalent PEP 585-compliant sign (e.g.,
+        # "list[int]"). In this case, suffix this warning message with
+        # pragmatic suggestions for resolving this deprecation.
+        if hint_sign in HINT_PEP484_SIGNS_TYPE_ORIGIN:
+            warning_message += (
+                ' by PEP 585. To resolve this, globally replace this hint by '
+                'the equivalent PEP 585 type hint '
+                '(e.g., "typing.List[int]" by "list[int]"). See also:\n'
+                '    https://www.python.org/dev/peps/pep-0585'
+            )
+        # Else, this sign is of unknown deprecation. In this case, simply
+        # terminate this unterminated sentence fragment as is.
+        else:
+            warning_message += '.'
+
+        # Emit this warning.
+        # print(f'Emitting {hint_label} hint {repr(hint)} deprecation warning...')
+        warn(warning_message, BeartypeDecorHintPepDeprecatedWarning)
+    # Else, this sign is *NOT* deprecated. In this case, reduce to a noop.
+
+
 #FIXME: Unit test us up.
 #FIXME: Actually use us in place of die_if_hint_pep_unsupported().
 #FIXME: Actually, it's unclear whether we still require or desire this. See

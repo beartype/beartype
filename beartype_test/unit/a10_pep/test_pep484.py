@@ -26,7 +26,7 @@ See Also
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test.util.pyterror import raises_uncached
-from typing import List, NoReturn, no_type_check
+from typing import NoReturn, Union, no_type_check
 
 # ....................{ TESTS ~ decor : no_type_check     }....................
 def test_pep484_decor_no_type_check() -> None:
@@ -44,8 +44,8 @@ def test_pep484_decor_no_type_check() -> None:
     # Callable decorated by @typing.no_type_check whose otherwise PEP-compliant
     # type hints *SHOULD* be subsequently ignored by @beartype.
     @no_type_check
-    def of_beechen_green(and_shadows_numberless: List[str]) -> str:
-        return and_shadows_numberless[-1]
+    def of_beechen_green(and_shadows_numberless: Union[int, str]) -> str:
+        return and_shadows_numberless
 
     # The same callable additionally decorated by @beartype.
     of_beechen_green_beartyped = beartype(of_beechen_green)
@@ -121,7 +121,7 @@ def test_pep484_hint_noreturn() -> None:
     # 484-compliant type hint incorrectly subscripted by "NoReturn".
     with raises_uncached(BeartypeDecorHintPep484Exception):
         @beartype
-        def makes_gaps(abreast: List[NoReturn]):
+        def makes_gaps(abreast: Union[str, NoReturn]):
             return 'And makes gaps even two can pass abreast.'
 
 # ....................{ TESTS ~ hint : sequence           }....................
@@ -145,41 +145,42 @@ def test_pep484_hint_sequence_standard_cached() -> None:
 
     # Callable annotated by an arbitrary PEP 484 standard sequence type hint.
     @beartype
-    def fern_hill(prince_of_the_apple_towns: List[str]) -> str:
-        return prince_of_the_apple_towns[0]
+    def fern_hill(prince_of_the_apple_towns: Union[int, str]) -> str:
+        return prince_of_the_apple_towns
 
     # A different callable annotated by the same hint and another arbitrary
     # non-"typing" type hint.
     @beartype
     def apple_boughs(
-        famous_among_the_barns: List[str], first_spinning_place: str) -> str:
-        return famous_among_the_barns[-1] + first_spinning_place
+        famous_among_the_barns: Union[int, str],
+        first_spinning_place: str
+    ) -> str:
+        return famous_among_the_barns + first_spinning_place
 
     # Validate that these callables behave as expected.
-    assert fern_hill([
-        'Now as I was young and easy under the apple boughs',
+    assert fern_hill(
+        'Now as I was young and easy under the apple boughs'
         'About the lilting house and happy as the grass was green,'
-        '  The night above the dingle starry,',
-        '    Time let me hail and climb',
-        '  Golden in the heydays of his eyes,',
-        'And honoured among wagons I was prince of the apple towns',
-        'And once below a time I lordly had the trees and leaves',
-        '    Trail with daisies and barley',
-        '  Down the rivers of the windfall light. ',
-    ]) == 'Now as I was young and easy under the apple boughs'
-    assert apple_boughs([
-        'And as I was green and carefree, famous among the barns',
-        'About the happy yard and singing as the farm was home,',
-        '  In the sun that is young once only,',
-        '    Time let me play and be',
-        '  Golden in the mercy of his means,',
-        'And green and golden I was huntsman and herdsman, the calves',
-        'Sang to my horn, the foxes on the hills barked clear and cold,',
-        '    And the sabbath rang slowly',
-        '  In the pebbles of the holy streams.',
-    ], 'All the sun long it was running, it was lovely, the hay') == (
+        '  The night above the dingle starry,'
+        '    Time let me hail and climb'
+        '  Golden in the heydays of his eyes,'
+        'And honoured among wagons I was prince of the apple towns'
+        'And once below a time I lordly had the trees and leaves'
+        '    Trail with daisies and barley'
+        '  Down the rivers of the windfall light. '
+    ).startswith('Now as I was young and easy under the apple boughs')
+    assert apple_boughs((
+        'And as I was green and carefree, famous among the barns'
+        'About the happy yard and singing as the farm was home,'
+        '  In the sun that is young once only,'
+        '    Time let me play and be'
+        '  Golden in the mercy of his means,'
+        'And green and golden I was huntsman and herdsman, the calves'
+        'Sang to my horn, the foxes on the hills barked clear and cold,'
+        '    And the sabbath rang slowly'
         '  In the pebbles of the holy streams.'
-        'All the sun long it was running, it was lovely, the hay')
+    ), 'All the sun long it was running, it was lovely, the hay').startswith(
+        'And as I was green and carefree, famous among the barns')
 
 # ....................{ TESTS ~ hint : invalid            }....................
 def test_pep484_hint_invalid_types_nongeneric() -> None:

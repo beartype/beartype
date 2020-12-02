@@ -438,19 +438,42 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     pass
 
 # ....................{ WARNINGS ~ decor : hint : pep     }....................
-#FIXME: Consider removal.
-# class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
-#     '''
-#     Abstract base class of all **beartype decorator PEP-compliant type hint
-#     warnings.**
-#
-#     Instances of subclasses of this warning are emitted at decoration time from
-#     the :func:`beartype.beartype` decorator on receiving a callable annotated
-#     by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
-#     warranting non-fatal warnings *without* raising fatal exceptions.
-#     '''
-#
-#     pass
+class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype decorator PEP-compliant type hint
+    warnings.**
+
+    Instances of subclasses of this warning are emitted at decoration time from
+    the :func:`beartype.beartype` decorator on receiving a callable annotated
+    by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
+    warranting non-fatal warnings *without* raising fatal exceptions.
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
+    '''
+    **Beartype decorator deprecated PEP-compliant type hint warning.**
+
+    This warning is emitted at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more **deprecated PEP-compliant type hints** (i.e., type hints
+    compliant with outdated PEPs that have since been obsoleted by recent
+    PEPs), including:
+
+    * If the active Python interpreter targets at least Python >= 3.9 and thus
+      supports `PEP 585`_, outdated `PEP 484`_-compliant type hints (e.g.,
+      ``typing.List[int]``) that have since been obsoleted by the equivalent
+      `PEP 585`_-compliant type hints (e.g., ``list[int]``).
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
+    '''
+
+    pass
 
 
 #FIXME: Consider removal.
@@ -620,7 +643,7 @@ class _BeartypeUtilCachedException(_BeartypeUtilException, metaclass=_ABCMeta):
     pass
 
 
-class _BeartypeUtilCachedCallableException(_BeartypeUtilCachedException):
+class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     '''
     **Beartype memoization exception.**
 
@@ -664,6 +687,24 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ warnings : util         }....................
+class _BeartypeUtilCallableCachedKwargsWarning(BeartypeWarning):
+    '''
+    **Beartype decorator memoization decorator keyword argument warnings.**
+
+    This warning is emitted from callables memoized by the
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator on
+    calls receiving one or more keyword arguments. Memoizing keyword arguments
+    is substantially more space- and time-intensive than memoizing the
+    equivalent positional arguments, partially defeating the purpose of
+    memoization in the first place.
+
+    This warning denotes a critical internal issue and should thus *never* be
+    emitted to end users.
     '''
 
     pass

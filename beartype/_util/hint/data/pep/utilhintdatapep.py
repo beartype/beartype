@@ -22,7 +22,18 @@ from beartype._util.hint.data.pep.proposal import (
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ SIGNS ~ type                      }....................
+# ....................{ SIGNS                             }....................
+HINT_PEP_SIGNS_DEPRECATED = set()
+'''
+Frozen set of all **deprecated signs** (i.e., arbitrary objects uniquely
+identifying outdated PEP-compliant type hints that have since been obsoleted by
+recent PEPs).
+
+This set is intended to be tested against typing attributes returned by the
+:func:`get_hint_pep_sign` getter function.
+'''
+
+
 HINT_PEP_SIGNS_IGNORABLE = set()
 '''
 Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
@@ -176,14 +187,15 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Submodule globals to be redefined below.
     global \
-        HINT_PEP_SIGNS_TYPE, \
         HINT_PEP_BASES_FORWARDREF, \
+        HINT_PEP_SIGNS_DEPRECATED, \
         HINT_PEP_SIGNS_IGNORABLE, \
         HINT_PEP_SIGNS_SEQUENCE_STANDARD, \
         HINT_PEP_SIGNS_SUPPORTED, \
         HINT_PEP_SIGNS_SUPPORTED_DEEP, \
         HINT_PEP_SIGNS_SUPPORTED_SHALLOW, \
         HINT_PEP_SIGNS_TUPLE, \
+        HINT_PEP_SIGNS_TYPE, \
         HINT_PEP_SIGNS_TYPE_ORIGIN
 
     # Current submodule, obtained via the standard idiom. See also:
@@ -226,7 +238,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
-    HINT_PEP_SIGNS_TYPE = frozenset(HINT_PEP_SIGNS_TYPE)
+    HINT_PEP_SIGNS_DEPRECATED = frozenset(HINT_PEP_SIGNS_DEPRECATED)
     HINT_PEP_SIGNS_IGNORABLE = frozenset(HINT_PEP_SIGNS_IGNORABLE)
     HINT_PEP_SIGNS_SEQUENCE_STANDARD = frozenset(
         HINT_PEP_SIGNS_SEQUENCE_STANDARD)
@@ -234,6 +246,7 @@ def add_data(data_module: 'ModuleType') -> None:
     HINT_PEP_SIGNS_SUPPORTED_SHALLOW = frozenset(
         HINT_PEP_SIGNS_SUPPORTED_SHALLOW)
     HINT_PEP_SIGNS_TUPLE = frozenset(HINT_PEP_SIGNS_TUPLE)
+    HINT_PEP_SIGNS_TYPE = frozenset(HINT_PEP_SIGNS_TYPE)
     HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
 
     # Frozen sets defined *AFTER* defining all other frozen sets above.

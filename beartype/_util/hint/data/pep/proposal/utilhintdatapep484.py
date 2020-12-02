@@ -17,6 +17,7 @@ import typing
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_9,
 )
 from typing import (
     AbstractSet,
@@ -320,6 +321,17 @@ def add_data(data_module: 'ModuleType') -> None:
     # PEP-compliant type hints originating from an origin type.
     data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(
         HINT_PEP484_SIGNS_TYPE_ORIGIN)
+
+    # If the active Python interpreter targets at least Python >= 3.9 and thus
+    # supports PEP 585, add all signs uniquely identifying outdated PEP
+    # 484-compliant type hints (e.g., "typing.List[int]") that have since been
+    # obsoleted by the equivalent PEP 585-compliant type hints (e.g.,
+    # "list[int]"). Happily, this is exactly the set of all PEP 484-compliant
+    # signs uniquely identifying PEP 484-compliant type hints originating from
+    # origin types.
+    if IS_PYTHON_AT_LEAST_3_9:
+        data_module.HINT_PEP_SIGNS_DEPRECATED.update(
+            HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
     # ..................{ SETS ~ signs : subtype            }..................
     data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((

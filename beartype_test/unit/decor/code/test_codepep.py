@@ -25,7 +25,7 @@ See Also
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pyterror import raises_uncached
-from typing import Any, List, Union
+from typing import Any, Union
 
 # ....................{ TESTS ~ pass : param : kind       }....................
 def test_pep_param_kind_positional_or_keyword_pass() -> None:
@@ -44,7 +44,7 @@ def test_pep_param_kind_positional_or_keyword_pass() -> None:
     # Decorated callable to be exercised.
     @beartype
     def special_plan(
-        finally_gone: Union[str, List[Any]],
+        finally_gone: Union[list, str],
         finally_done: str,
     ) -> Union[bool, int, str]:
         return ''.join(finally_gone) + finally_done
