@@ -187,7 +187,7 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
 # For further details, see http://semver.org.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-VERSION = '0.5.0'
+VERSION = '0.5.1'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
