@@ -10,78 +10,43 @@ This submodule declares lower-level metadata classes instantiated by the
 higher-level :mod:`beartype_test.unit.data.hint.pep.data_hintpep` submodule.
 '''
 
-#FIXME: Rename submodule to "beartype_test.unit.data.hint.data_hintmeta".
-
 # ....................{ CLASSES ~ hint : superclass       }....................
-#FIXME: Refactor as follows:
-#* *LOCALLY* rename to "NonPepHintMetadata".
-#* *LOCALLY* rename "NonPepHintMetadata" to "PepHintMetadata".
-#* Shift all PEP-specific attributes from this class to "PepHintMetadata",
-#  including:
-#  * "is_pep585".
-#  * "is_pep585_generic".
-#  * "is_typing".
-#  * "pep_sign".
-#  * "type_origin".
-class PepHintMetadata(object):
+class NonPepHintMetadata(object):
     '''
-    **PEP-compliant type hint metadata** (i.e., dataclass whose instance
-    variables describe a PEP-compliant type hint with metadata applicable to
-    various testing scenarios).
+    **PEP-noncompliant type hint metadata** (i.e., dataclass whose instance
+    variables describe a type hint that is either PEP-noncompliant or *mostly*
+    indistinguishable from a PEP-noncompliant type hint with metadata
+    applicable to various testing scenarios).
+
+    Examples of PEP-compliant type hints *mostly* indistinguishable from
+    PEP-noncompliant type hints include:
+
+    * :func:`typing.NamedTuple`, a high-level factory function deferring to the
+      lower-level :func:`collections.namedtuple` factory function creating and
+      returning :class:`tuple` instances annotated by PEP-compliant type hints.
+    * :func:`typing.TypedDict`, a high-level factory function creating and
+      returning :class:`dict` instances annotated by PEP-compliant type hints.
 
     Attributes
     ----------
+    hint : object
+        Type hint to be tested.
     is_ignorable : bool
         ``True`` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to ``False``.
     is_supported : bool
         ``True`` only if this hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to ``True``.
-    is_typevared : bool
-        ``True`` only if this hint is parametrized by one or more **type
-        variables** (i.e., :class:`typing.TypeVar` instances).
-        Defaults to ``False``.
-    is_pep585 : bool
-        ``True`` only if this hint is `PEP 585`-compliant (i.e., instance of
-        the :class:`beartype.cave.HintPep585Type` class). If ``True``, then
-        ``is_typing`` *must* be ``False``. Defaults to ``False``.
-    is_pep585_generic : bool
-        ``True`` only if this hint is a `PEP 585`-compliant generic. Defaults
-        to ``False``.
-    is_typing : bool
-        ``True`` only if this hint's class is defined by the :mod:`typing`
-        module. If ``True``, then ``is_pep585`` *must* be ``False``. Defaults
-        to either:
-
-        * If ``is_pep585`` is ``True``, ``False``.
-        * Else, ``False``.
-    hint : object
-        PEP-compliant type hint.
-    pep_sign : object
-        **Sign** (i.e., arbitrary object uniquely identifying this
-        PEP-compliant type hint) if this hint is uniquely identified by such a
-        sign *or* ``None`` otherwise. Examples of PEP-compliant type hints
-        *not* uniquely identified by such attributes include those reducing to
-        standard builtins on instantiation such as:
-
-        * :class:`typing.NamedTuple` reducing to :class:`tuple`.
-        * :class:`typing.TypedDict` reducing to :class:`dict`.
     piths_satisfied_meta : Tuple[PepHintPithSatisfiedMetadata]
-        Tuple of zero or more :class:`_PepHintPithSatisfiedMetadata` instances,
+        Tuple of zero or more :class:`PepHintPithSatisfiedMetadata` instances,
         each describing an object satisfying this hint when either passed as a
         parameter *or* returned as a value annotated by this hint. Defaults to
         the empty tuple.
     piths_unsatisfied_meta : Tuple[PepHintPithUnsatisfiedMetadata]
-        Tuple of zero or more :class:`_PepHintPithUnsatisfiedMetadata`
+        Tuple of zero or more :class:`PepHintPithUnsatisfiedMetadata`
         instances, each describing an object *not* satisfying this hint when
         either passed as a parameter *or* returned as a value annotated by this
         hint. Defaults to the empty tuple.
-    type_origin : Optional[type]
-        **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
-        satisfying this hint are instances of this class) originating this hint
-        if this hint originates from a non-:mod:`typing` class *or* ``None``
-        otherwise (i.e., if this hint does *not* originate from such a class).
-        Defaults to ``None``.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -90,29 +55,17 @@ class PepHintMetadata(object):
 
         # Mandatory parameters.
         hint: object,
-        pep_sign: object,
 
         # Optional parameters.
         is_ignorable: bool = False,
         is_supported: bool = True,
-        is_typevared: bool = False,
-        is_pep585: bool = False,
-        is_pep585_generic: bool = False,
-        is_typing: bool = None,
         piths_satisfied_meta: 'Tuple[PepHintPithSatisfiedMetadata]' = (),
         piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
-        type_origin: 'Optional[type]' = None,
     ) -> None:
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
-        assert isinstance(is_pep585, bool), (
-            f'{repr(is_pep585)} not bool.')
-        assert isinstance(is_pep585_generic, bool), (
-            f'{repr(is_pep585_generic)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(is_typevared, bool), (
-            f'{repr(is_typevared)} not bool.')
         assert isinstance(piths_unsatisfied_meta, tuple), (
             f'{repr(piths_unsatisfied_meta)} not tuple.')
         assert all(
@@ -127,6 +80,98 @@ class PepHintMetadata(object):
         ), (
             f'{repr(piths_unsatisfied_meta)} not tuple of '
             f'"PepHintPithUnsatisfiedMetadata" instances.')
+
+        # Classify all passed parameters.
+        self.hint = hint
+        self.is_ignorable = is_ignorable
+        self.is_supported = is_supported
+        self.piths_satisfied_meta = piths_satisfied_meta
+        self.piths_unsatisfied_meta = piths_unsatisfied_meta
+
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    hint={self.hint},',
+            f'    is_ignorable={self.is_ignorable},',
+            f'    is_supported={self.is_supported},',
+            f'    piths_satisfied_meta={self.piths_satisfied_meta},',
+            f'    piths_unsatisfied_meta={self.piths_unsatisfied_meta},',
+            f')',
+        ))
+
+# ....................{ CLASSES ~ hint : subclass         }....................
+class PepHintMetadata(NonPepHintMetadata):
+    '''
+    **PEP-compliant type hint metadata** (i.e., dataclass whose instance
+    variables describe a PEP-compliant type hint with metadata applicable to
+    various testing scenarios).
+
+    Attributes
+    ----------
+    is_typevared : bool
+        ``True`` only if this hint is parametrized by one or more **type
+        variables** (i.e., :class:`typing.TypeVar` instances).
+        Defaults to ``False``.
+    is_pep585 : bool
+        ``True`` only if this hint is `PEP 585`-compliant (i.e., instance of
+        the :class:`beartype.cave.HintPep585Type` class). If ``True``, then
+        ``is_typing`` *must* be ``False``. Defaults to ``False``.
+    is_pep585_generic : bool
+        ``True`` only if this hint is a `PEP 585`-compliant generic. Defaults
+        to ``False``.
+    is_typing : Optional[bool]
+        ``True`` only if this hint's class is defined by the :mod:`typing`
+        module. If ``True``, then ``is_pep585`` *must* be ``False``. Defaults
+        to either:
+
+        * If either ``is_pep585`` *or* ``is_pep585_generic`` are ``True``,
+          ``False``.
+        * Else, ``True``.
+    pep_sign : object
+        **Sign** (i.e., arbitrary object uniquely identifying this
+        PEP-compliant type hint) if this hint is uniquely identified by such a
+        sign *or* ``None`` otherwise. Examples of PEP-compliant type hints
+        *not* uniquely identified by such attributes include those reducing to
+        standard builtins on instantiation such as:
+
+        * :class:`typing.NamedTuple` reducing to :class:`tuple`.
+        * :class:`typing.TypedDict` reducing to :class:`dict`.
+    type_origin : Optional[type]
+        **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
+        satisfying this hint are instances of this class) originating this hint
+        if this hint originates from a non-:mod:`typing` class *or* ``None``
+        otherwise (i.e., if this hint does *not* originate from such a class).
+        Defaults to ``None``.
+
+    All remaining keyword arguments are passed as is to the superclass
+    :meth:`NonPepHintMetadata.__init__` method.
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        pep_sign: object,
+
+        # Optional parameters.
+        is_typevared: bool = False,
+        is_pep585: bool = False,
+        is_pep585_generic: bool = False,
+        is_typing: 'Optional[bool]' = None,
+        type_origin: 'Optional[type]' = None,
+        **kwargs
+    ) -> None:
+        assert isinstance(is_pep585, bool), (
+            f'{repr(is_pep585)} not bool.')
+        assert isinstance(is_pep585_generic, bool), (
+            f'{repr(is_pep585_generic)} not bool.')
+        assert isinstance(is_typevared, bool), (
+            f'{repr(is_typevared)} not bool.')
+
+        # Initialize our superclass with all passed keyword arguments.
+        super().__init__(**kwargs)
 
         # If the caller did not explicitly pass the "is_typing" parameter,
         # initialize this parameter to the negation of the PEP 585-compliant
@@ -152,16 +197,11 @@ class PepHintMetadata(object):
         )
 
         # Classify all passed parameters.
-        self.hint = hint
         self.pep_sign = pep_sign
-        self.is_ignorable = is_ignorable
-        self.is_supported = is_supported
         self.is_typevared = is_typevared
         self.is_pep585 = is_pep585
         self.is_pep585_generic = is_pep585_generic
         self.is_typing = is_typing
-        self.piths_satisfied_meta = piths_satisfied_meta
-        self.piths_unsatisfied_meta = piths_unsatisfied_meta
         self.type_origin = type_origin
 
     # ..................{ STRINGIFIERS                      }..................
@@ -182,39 +222,12 @@ class PepHintMetadata(object):
             f')',
         ))
 
-# ....................{ CLASSES ~ hint : subclass         }....................
-class NonPepHintMetadata(PepHintMetadata):
-    '''
-    **PEP-compliant unsigned type hint metadata** (i.e.,
-    dataclass whose instance variables describe a PEP-compliant type hint
-    uniquely identifiable by *no* arbitrary object, typically due to being
-    implemented as a conventional class indistinguishable from
-    non-:mod:`typing` classes).
-    '''
-
-    # ..................{ INITIALIZERS                      }..................
-    def __init__(self, *args, **kwargs) -> None:
-        assert 'pep_sign' not in kwargs, (
-            f'Keyword argument "pep_sign"={repr(kwargs["pep_sign"])} passed.')
-
-        # Coerce the unsubscripted "typing" attribute identifying this hint to
-        # be "None" *BEFORE* initializing our superclass. This hint is
-        # implemented by the "typing" module as a normal class whose
-        # machine-readable representation is the standard class representation
-        # "<class '{self.__class__.__name__}'>" rather than the non-standard
-        # "typing" representation prefixed by "typing.".
-        kwargs['pep_sign'] = None
-
-        # Initialize our superclass.
-        super().__init__(*args, **kwargs)
-
 # ....................{ CLASSES ~ hint : [un]satisfied    }....................
 class PepHintPithSatisfiedMetadata(object):
     '''
-    **PEP-compliant type hint satisfied pith metadata** (i.e., dataclass whose
-    instance variables describe an object satisfying a PEP-compliant type hint
-    when either passed as a parameter *or* returned as a value annotated by
-    that hint).
+    **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
+    variables describe an object satisfying a type hint when either passed as a
+    parameter *or* returned as a value annotated by that hint).
 
     Attributes
     ----------
@@ -275,10 +288,9 @@ class PepHintPithSatisfiedMetadata(object):
 
 class PepHintPithUnsatisfiedMetadata(object):
     '''
-    **PEP-compliant type hint unsatisfied pith metadata** (i.e., dataclass
-    whose instance variables describe an object *not* satisfying a
-    PEP-compliant type hint when either passed as a parameter *or* returned as
-    a value annotated by that hint).
+    **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
+    variables describe an object *not* satisfying a type hint when either
+    passed as a parameter *or* returned as a value annotated by that hint).
 
     Attributes
     ----------

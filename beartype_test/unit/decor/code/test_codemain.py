@@ -42,27 +42,26 @@ def test_codemain() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import (
-        BeartypeCallHintPepException,
-        BeartypeCallHintNonPepException,
-    )
+    from beartype.roar import BeartypeCallHintPepException
     from beartype._util.utilobject import is_object_context_manager
-    from beartype_test.unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_META, HINTS_NONPEP_META)
-    from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+    from beartype_test.unit.data.hint.data_hintmeta import (
+        PepHintMetadata,
         PepHintPithSatisfiedMetadata,
         PepHintPithUnsatisfiedMetadata,
     )
+    from beartype_test.unit.data.hint.nonpep.data_hintnonpep import (
+        HINTS_NONPEP_META)
+    from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Tuple of all PEP-compliant type hint metadata to be tested -- regardless
     # of whether those hints are uniquely identifiable by a sign or not.
-    HINT_ALL = HINTS_PEP_META + HINTS_NONPEP_META
+    HINTS_META = HINTS_PEP_META + HINTS_NONPEP_META
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
     RANGE_2 = (None, None)
 
     # For each predefined PEP-compliant type hint and associated metadata...
-    for hint_meta in HINT_ALL:
+    for hint_meta in HINTS_META:
         # If this hint is currently unsupported, continue to the next.
         if not hint_meta.is_supported:
             continue
@@ -120,18 +119,6 @@ def test_codemain() -> None:
                     # object.
                     assert typed(pith) is pith
 
-            # Type of exception raised by this wrapper on type-check failures.
-            EXCEPTION_CLS = (
-                # If this hint is uniquely identified by a sign, this wrapper
-                # raises PEP-compliant exceptions.
-                BeartypeCallHintPepException
-                if hint_meta.pep_sign is not None else
-                # Else, this hint reduces to a builtin type and is thus
-                # detected as a PEP-noncompliant type hint. In this case, this
-                # wrapper raises PEP-noncompliant exceptions.
-                BeartypeCallHintNonPepException
-            )
-
             # For each pith *NOT* satisfying this hint...
             for pith_unsatisfied_meta in hint_meta.piths_unsatisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
@@ -153,7 +140,8 @@ def test_codemain() -> None:
 
                 # Assert this wrapper function raises the expected exception
                 # when type-checking this pith against this hint.
-                with raises_uncached(EXCEPTION_CLS) as exception_info:
+                with raises_uncached(BeartypeCallHintPepException) as (
+                    exception_info):
                     typed(pith_unsatisfied_meta.pith)
 
                 # Exception message raised by this wrapper function.
@@ -168,7 +156,7 @@ def test_codemain() -> None:
                 # Assert this exception metadata describes the expected
                 # exception as a sanity check against upstream pytest issues
                 # and/or issues with our raises_uncached() context manager.
-                assert issubclass(exception_type, EXCEPTION_CLS)
+                assert issubclass(exception_type, BeartypeCallHintPepException)
 
                 # For each uncompiled regular expression expected to match this
                 # message, assert this expression actually does so.

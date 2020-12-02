@@ -48,7 +48,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
 )
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from inspect import Parameter
 from typing import NoReturn, Union
 
@@ -63,19 +63,46 @@ Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
 callables).
 '''
 
-# ....................{ GETTERS                           }....................
-def get_hint_pep(hint: object, hint_label: str) -> object:
+# ....................{ COERCERS                          }....................
+def coerce_hint_pep(
+    func: Callable,
+    pith_name: str,
+    hint: object,
+    hint_label: str,
+) -> object:
     '''
-    PEP-compliant type hint converted from the passed PEP-noncompliant type
-    hint if this hint is PEP-noncompliant, this hint as is if this hint is
-    PEP-compliant, *or* raise an exception otherwise (i.e., if this hint is
-    neither PEP-compliant nor -noncompliant and thus invalid as a type hint).
+    Coerce the passed type hint annotating the parameter or return with the
+    passed name of the passed callable into the corresponding PEP-compliant
+    type hint if needed.
+
+    Specifically, this function:
+
+    * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
+      more standard classes and forward references to standard classes):
+
+      * Coerces this tuple union into the equivalent `PEP 484`_-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this `PEP 484`_-compliant union.
+      * Returns this `PEP 484`_-compliant union.
+
+    * Else if this hint is already PEP-compliant, preserves and returns this
+      hint unmodified as is.
+    * Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
+      thus invalid as a type hint), raise an exception.
 
     This getter is *not* memoized, due to being only called once per decorated
     callable parameter or return value.
 
     Parameters
     ----------
+    func : Callable
+        Callable
+    pith_name : str
+        Either:
+
+        * If this hint annotates a parameter, the name of that parameter.
+        * If this hint annotates the return, ``"return"``.
     hint : object
         Type hint to be rendered PEP-compliant.
     hint_label : str
@@ -97,7 +124,22 @@ def get_hint_pep(hint: object, hint_label: str) -> object:
 
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
+
+    # If this hint is a PEP-noncompliant tuple union, coerce this union into
+    # the equivalent PEP-compliant union subscripted by the same child hints.
+    # By definition, PEP-compliant unions are a strict superset of
+    # PEP-noncompliant tuple unions and thus accept all child hints accepted by
+    # the latter.
+    if isinstance(hint, tuple):
+        assert callable(func), f'{repr(func)} not callable.'
+        assert isinstance(pith_name, str), f'{pith_name} not string.'
+
+        hint = func.__annotations__[pith_name] = Union.__getitem__(hint)
+    # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.
@@ -105,22 +147,15 @@ def get_hint_pep(hint: object, hint_label: str) -> object:
     # Else, this object is either a PEP-noncompliant type hint *OR* supported
     # PEP-compliant type hint.
 
-    # If this hint is a PEP-noncompliant tuple union, coerce this hint into the
-    # equivalent PEP-compliant union subscripted by the same child hints. By
-    # definition, PEP-compliant unions are a strict superset of
-    # PEP-noncompliant tuple unions and thus accept all child hints accepted by
-    # the latter.
-    if isinstance(hint, tuple):
-        hint = Union.__getitem__(hint)
-
     # Return this hint.
     return hint
 
 # ....................{ CODERS                            }....................
 def pep_code_check_param(
     data: BeartypeData,
-    func_param: Parameter,
-    func_param_index: int,
+    hint: object,
+    param: Parameter,
+    param_index: int,
 ) -> 'Tuple[str, bool]':
     '''
     Python code type-checking the parameter with the passed signature and index
@@ -132,9 +167,11 @@ def pep_code_check_param(
     ----------
     data : BeartypeData
         Decorated callable to be type-checked.
-    func_param : Parameter
+    hint : object
+        PEP-compliant type hint annotating this parameter.
+    param : Parameter
         :mod:`inspect`-specific object describing this parameter.
-    func_param_index : int
+    param_index : int
         0-based index of this parameter in this callable's signature.
 
     Returns
@@ -153,15 +190,15 @@ def pep_code_check_param(
     # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-    assert isinstance(func_param, Parameter), (
-        f'{repr(func_param)} not parameter metadata.')
-    assert isinstance(func_param_index, int), (
-        f'{repr(func_param_index)} not integer.')
+    assert isinstance(param, Parameter), (
+        f'{repr(param)} not parameter metadata.')
+    assert isinstance(param_index, int), (
+        f'{repr(param_index)} not integer.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     get_arg_code_template = PARAM_KIND_TO_PEP_CODE_GET.get(
-        func_param.kind, None)
+        param.kind, None)
 
     # If this kind of parameter is unsupported...
     #
@@ -174,27 +211,24 @@ def pep_code_check_param(
 
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_param.name)
+            func=data.func, param_name=param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            f'{hint_label} kind {repr(func_param.kind)} unsupported.')
+            f'{hint_label} kind {repr(param.kind)} unsupported.')
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
-
-    # PEP-compliant type hint annotating this parameter.
-    param_hint = func_param.annotation
 
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation...
-    if param_hint is NoReturn:
+    if hint is NoReturn:
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_param.name)
+            func=data.func, param_name=param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPep484Exception(
             f'{hint_label} PEP return hint '
-            f'{repr(param_hint)} invalid as parameter annotation.'
+            f'{repr(hint)} invalid as parameter annotation.'
         )
     # Else, this is a standard PEP-compliant type hint.
 
@@ -206,7 +240,7 @@ def pep_code_check_param(
             func_code,
             is_func_code_needs_random_int,
             hints_forwardref_class_basename,
-        ) = pep_code_check_hint(param_hint)
+        ) = pep_code_check_hint(hint)
 
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact parameter by globally replacing in this parameter-agnostic
@@ -215,7 +249,7 @@ def pep_code_check_param(
             # This placeholder substring cached into this code with...
             PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this parameter's name.
-            repr(func_param.name),
+            repr(param.name),
         )
 
         # If this code contains one or more relative forward reference
@@ -223,19 +257,18 @@ def pep_code_check_param(
         # by globally resolving these placeholders relative to the currently
         # decorated callable.
         if hints_forwardref_class_basename:
-            func_code = (
-                resolve_pep_code_hints_forwardref_class_basename(
-                    data=data,
-                    func_code=func_code,
-                    hints_forwardref_class_basename=(
-                        hints_forwardref_class_basename),
-                ))
+            func_code = resolve_pep_code_hints_forwardref_class_basename(
+                data=data,
+                func_code=func_code,
+                hints_forwardref_class_basename=(
+                    hints_forwardref_class_basename),
+            )
     # If the prior call to the memoized _pep_code_check() function raises a
     # cached exception...
     except Exception as exception:
         # Human-readable label describing this parameter.
         hint_label = label_callable_decorated_param(
-            func=data.func, param_name=func_param.name) + ' PEP type hint'
+            func=data.func, param_name=param.name) + ' PEP type hint'
 
         # Reraise this cached exception's memoized parameter-agnostic message
         # into an unmemoized parameter-specific message.
@@ -247,7 +280,7 @@ def pep_code_check_param(
         (
             # Localize this parameter *AND*...
             get_arg_code_template.format(
-                arg_name=func_param.name, arg_index=func_param_index) +
+                arg_name=param.name, arg_index=param_index) +
             # Type-check this parameter.
             func_code
         ),
@@ -257,7 +290,10 @@ def pep_code_check_param(
     )
 
 
-def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
+def pep_code_check_return(
+    data: BeartypeData,
+    hint: object,
+) -> 'Tuple[str, bool]':
     '''
     Python code type-checking the return value annotated with a **PEP-compliant
     type hint** (e.g., :mod:`beartype`-agnostic annotation compliant with
@@ -267,6 +303,8 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     ----------
     data : BeartypeData
         Decorated callable to be type-checked.
+    hint : object
+        PEP-compliant type hint annotating this return.
 
     Returns
     ----------
@@ -294,13 +332,10 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
     # and localizing a pseudo-random integer.
     is_func_code_needs_random_int = False
 
-    # PEP-compliant type hint annotating this parameter.
-    param_hint = data.func_sig.return_annotation
-
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation, prefer pregenerated code type-checking
     # this peculiar type hint against this hint.
-    if param_hint is NoReturn:
+    if hint is NoReturn:
         func_code = PEP484_CODE_CHECK_NORETURN
     # Else, this is a standard PEP-compliant type hint. In this case...
     else:
@@ -311,20 +346,19 @@ def pep_code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
                 func_code,
                 is_func_code_needs_random_int,
                 hints_forwardref_class_basename,
-            ) = pep_code_check_hint(param_hint)
+            ) = pep_code_check_hint(hint)
 
             # If this code contains one or more relative forward reference
             # placeholder substrings memoized into this code, unmemoize this
             # code by globally resolving these placeholders relative to the
             # currently decorated callable.
             if hints_forwardref_class_basename:
-                func_code = (
-                    resolve_pep_code_hints_forwardref_class_basename(
-                        data=data,
-                        func_code=func_code,
-                        hints_forwardref_class_basename=(
-                            hints_forwardref_class_basename),
-                    ))
+                func_code = resolve_pep_code_hints_forwardref_class_basename(
+                    data=data,
+                    func_code=func_code,
+                    hints_forwardref_class_basename=(
+                        hints_forwardref_class_basename),
+                )
 
             # Python code to:
             # * Call the decorated callable and localize its return value

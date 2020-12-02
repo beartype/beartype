@@ -30,7 +30,7 @@ def test_raise_pep_call_exception() -> None:
     from beartype.roar import (
         BeartypeCallHintPepParamException,
         BeartypeCallHintPepReturnException,
-        BeartypeDecorHintPepException,
+        BeartypeDecorHintNonPepException,
         _BeartypeCallHintPepRaiseException,
     )
     from beartype._decor._code._pep._error.peperror import (
@@ -39,7 +39,8 @@ def test_raise_pep_call_exception() -> None:
     def forest_unknown(
         secret_orchard: typing.List[str],
         achromatic_voice,
-        amaranth_symbol: str,
+        to_bid_you_farewell: str,
+        amaranth_symbol: 42,
     ) -> typing.Union[int, typing.Tuple[str, ...]]:
         return achromatic_voice
 
@@ -53,6 +54,19 @@ def test_raise_pep_call_exception() -> None:
             pith_value=(
                 'You are in a forest unknown:',
                 'The secret orchard.',
+            ),
+        )
+
+    # Assert this function raises the expected exception when passed a
+    # parameter annotated by a PEP-noncompliant type hint failing to satisfy
+    # this type hint.
+    with raises(BeartypeCallHintPepParamException):
+        raise_pep_call_exception(
+            func=forest_unknown,
+            pith_name='to_bid_you_farewell',
+            pith_value=(
+                b'Once it came you lied,'
+                b"Embracing us over autumn's proud treetops."
             ),
         )
 
@@ -82,14 +96,15 @@ def test_raise_pep_call_exception() -> None:
         )
 
     # Assert this function raises the expected exception when passed a
-    # parameter annotated by an object that is *not* a PEP-compliant type hint.
-    with raises(BeartypeDecorHintPepException):
+    # parameter annotated by an object that is unsupported as a type hint
+    # (i.e., is neither PEP-compliant nor -noncompliant).
+    with raises(BeartypeDecorHintNonPepException):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='amaranth_symbol',
             pith_value=(
                 'I have kept it,'
-                'The Amaranth symbol,',
+                'The Amaranth symbol,'
                 'Hidden inside the golden shrine'
                 'Until we rejoice in the meadow'
                 'Of the end.'

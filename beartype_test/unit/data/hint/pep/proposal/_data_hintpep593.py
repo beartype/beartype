@@ -12,7 +12,7 @@
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+from beartype_test.unit.data.hint.data_hintmeta import (
     PepHintMetadata,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
@@ -66,7 +66,7 @@ def add_data(data_module: 'ModuleType') -> None:
     ))
 
     # Add PEP 593-specific invalid non-generic types to that set global.
-    data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+    data_module.HINTS_PEP_INVALID_CLASS_NONGENERIC.update((
         # The "Annotated" class as is does *NOT* constitute a valid type hint.
         Annotated,
     ))

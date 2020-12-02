@@ -566,9 +566,9 @@ def pep_code_check_hint(hint: object) -> (
           prefixes the body of this wrapper function with code generating such
           an integer.
         * ``hints_forwardref_class_basename`` is the tuple of the unqualified
-          classnames of PEP 484-compliant relative forward references visitable
-          from this root hint (e.g., ``('MuhClass', 'YoClass')`` given the root
-          hint ``Union['MuhClass', List['YoClass']]``).
+          classnames of `PEP 484`_-compliant relative forward references
+          visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
+          given the root hint ``Union['MuhClass', List['YoClass']]``).
 
     Raises
     ----------
@@ -577,6 +577,9 @@ def pep_code_check_hint(hint: object) -> (
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
     '''
 
     # ..................{ HINT ~ root                       }..................

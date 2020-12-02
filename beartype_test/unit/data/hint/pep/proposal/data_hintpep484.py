@@ -6,6 +6,24 @@
 '''
 **Beartype** `PEP 484`_**-compliant type hint test data.**
 
+Caveats
+----------
+Note that:
+
+* The `PEP 484`_-compliant annotated builtin containers created and returned by
+  the :func:`typing.NamedTuple` and :func:`typing.TypedDict` factory functions
+  are *mostly* indistinguishable from PEP-noncompliant types and thus
+  intentionally tested in the
+  :mod:`beartype_test.unit.data.hint.pep.proposal._data_hintpep544` submodule
+  rather than here despite being specified by `PEP 484`_.
+* The ``typing.Supports*`` family of abstract base classes (ABCs) are
+  intentionally tested in the
+  :mod:`beartype_test.unit.data.hint.pep.proposal._data_hintpep544` submodule
+  rather than here despite being specified by `PEP 484`_ and available under
+  Python < 3.8. Why? Because the implementation of these ABCs under Python <
+  3.8 is unusable at runtime, which is nonsensical and awful, but that's
+  :mod:`typing` for you. What you goin' do?
+
 .. _PEP 484:
     https://www.python.org/dev/peps/pep-0484
 '''
@@ -22,20 +40,13 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
-from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+from beartype_test.unit.data.hint.data_hintmeta import (
     PepHintMetadata,
-    NonPepHintMetadata,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
 from collections import abc as collections_abc
 from contextlib import contextmanager
-
-# Note that the "typing.Supports*" family of abstract base classes (ABCs) are
-# intentionally tested in the "_data_hintpep544" submodule rather than here
-# despite being specified by PEP 484 and available under Python < 3.8.0. Why?
-# Because the implementation of these ABCs under Python < 3.8.0 is unusable at
-# runtime, which is nonsensical and awful, but that's "typing" for you.
 from typing import (
     Any,
     AnyStr,
@@ -51,7 +62,6 @@ from typing import (
     List,
     Match,
     MutableSequence,
-    NamedTuple,
     NewType,
     Pattern,
     Sequence,
@@ -241,14 +251,6 @@ def _make_generator_yield_int_send_float_return_str() -> (
     # Return a string constant.
     return 'Unmarred, scarred revanent remnants'
 
-# ....................{ COLLECTIONS                       }....................
-NamedTupleType = NamedTuple(
-    'NamedTupleType', [('fumarole', str), ('enrolled', int)])
-'''
-PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
-PEP-compliant annotations.
-'''
-
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
@@ -293,8 +295,8 @@ def add_data(data_module: 'ModuleType') -> None:
         Union[complex, int, object,],
     ))
 
-    # Add PEP 484-specific invalid non-generic types to that set global.
-    data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+    # Add PEP 484-specific invalid non-generic classes to that set global.
+    data_module.HINTS_PEP_INVALID_CLASS_NONGENERIC.update((
         # The "TypeVar" class as is does *NOT* constitute a valid type hint.
         TypeVar,
 
@@ -1162,9 +1164,11 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ UNION                             }................
-        # Note that unions of one arguments (e.g., "Union[str]") *CANNOT* be
-        # listed here, as the "typing" module implicitly reduces these unions to
-        # only that argument (e.g., "str") on our behalf. Thanks. Thanks alot.
+        # Note that unions of one argument (e.g., "Union[str]") *CANNOT* be
+        # listed here, as the "typing" module implicitly reduces these unions
+        # to only that argument (e.g., "str") on our behalf.
+        #
+        # Thanks. Thanks alot, "typing".
         #
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: The Python < 3.7.0-specific implementations of "Union"
@@ -1597,38 +1601,3 @@ def add_data(data_module: 'ModuleType') -> None:
                 type_origin=collections_abc.Sized,
             ),
         ))
-
-    data_module.HINTS_NONPEP_META.extend((
-        # ................{ NAMEDTUPLE                        }................
-        # "NamedTuple" instances transparently reduce to standard tuples and
-        # *MUST* thus be handled as non-"typing" type hints.
-        NonPepHintMetadata(
-            hint=NamedTupleType,
-            piths_satisfied_meta=(
-                # Named tuple containing correctly typed items.
-                PepHintPithSatisfiedMetadata(
-                    NamedTupleType(fumarole='Leviathan', enrolled=37)),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
-
-                #FIXME: Uncomment after implementing "NamedTuple" support.
-                # # Named tuple containing incorrectly typed items.
-                # PepHintPithUnsatisfiedMetadata(
-                #     pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
-                #     # Match that the exception message raised for this object...
-                #     exception_str_match_regexes=(
-                #         # Declares the name of this tuple's problematic item.
-                #         r'\s[Ll]ist item 0\s',
-                #     ),
-                # ),
-            ),
-            type_origin=tuple,
-        ),
-
-        # ................{ COLLECTIONS ~ typeddict           }................
-        # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that "TypeDict" was first
-        #introduced with Python 3.8.
-    ))

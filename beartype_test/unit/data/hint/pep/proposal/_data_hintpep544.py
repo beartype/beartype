@@ -19,7 +19,7 @@
 import pathlib
 from abc import abstractmethod
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype_test.unit.data.hint.pep.data_hintpepmeta import (
+from beartype_test.unit.data.hint.data_hintmeta import (
     PepHintMetadata,
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,

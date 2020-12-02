@@ -194,11 +194,11 @@ def test_pep484_hint_invalid_types_nongeneric() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPepSignException
     from beartype_test.unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_INVALID_TYPE_NONGENERIC)
+        HINTS_PEP_INVALID_CLASS_NONGENERIC)
 
     # Assert that decorating a callable annotated by a non-generic class raises
     # the expected exception.
-    for type_nongeneric in HINTS_PEP_INVALID_TYPE_NONGENERIC:
+    for type_nongeneric in HINTS_PEP_INVALID_CLASS_NONGENERIC:
         with raises_uncached(BeartypeDecorHintPepSignException):
             @beartype
             def childe_roland(to_the_dark_tower_came: type_nongeneric) -> (

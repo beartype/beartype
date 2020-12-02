@@ -42,7 +42,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
+from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
     label_callable_decorated_return_value,
@@ -195,12 +195,9 @@ def raise_pep_call_exception(
         raise _BeartypeCallHintPepRaiseException(f'{pith_label} unannotated.')
     # Else, this parameter or return value is annotated.
 
-    # If type hint is *NOT* PEP-compliant, raise an exception.
-    die_unless_hint_pep(
-        hint=hint,
-        hint_label=f'{pith_label} PEP type hint "{repr(hint)}"',
-    )
-    # Else, this type hint is PEP-compliant.
+    # If type hint is *NOT* a supported type hint, raise an exception.
+    die_unless_hint(hint=hint, hint_label=f'{pith_label} type hint')
+    # Else, this type hint is supported.
 
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
@@ -221,7 +218,7 @@ def raise_pep_call_exception(
 
         # Raise an exception of the desired class embedding this cause.
         raise exception_cls(
-            f'{pith_label} violates PEP type hint '
+            f'{pith_label} violates type hint '
             f'{repr(hint)}, as {exception_cause_suffixed}'
         )
 
@@ -234,7 +231,7 @@ def raise_pep_call_exception(
     pith_value_repr = get_object_representation(
         obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
     raise _BeartypeCallHintPepRaiseDesynchronizationException(
-        f'{pith_label} violates PEP type hint {repr(hint)}, '
+        f'{pith_label} violates type hint {repr(hint)}, '
         f'but utility function raise_pep_call_exception() '
         f'suggests this object satisfies this hint. '
         f'Please report this desynchronization failure to '
@@ -263,7 +260,8 @@ def _init() -> None:
 
     # Map each tuple "typing" attribute to the appropriate getter.
     for pep_sign_tuple in HINT_PEP_SIGNS_TUPLE:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_tuple] = get_cause_or_none_tuple
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_tuple] = (
+            get_cause_or_none_tuple)
 
     # Map each unifying "typing" attribute to the appropriate getter.
     for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:

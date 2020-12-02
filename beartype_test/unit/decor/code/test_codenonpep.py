@@ -84,7 +84,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintNonPepParamException
+    from beartype.roar import BeartypeCallHintPepParamException
 
     # Decorated callable to be exercised.
     @beartype
@@ -94,7 +94,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
-    with raises(BeartypeCallHintNonPepParamException):
+    with raises(BeartypeCallHintPepParamException):
         imperium_of_man(
             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 
@@ -109,9 +109,9 @@ def test_nonpep_pass_param_tuple() -> None:
     from beartype import beartype
 
     # Function to be type-checked. For completeness, test both an actual class
-    # *AND* a the fully-qualified name of a class in this tuple annotation.
+    # *AND* a forward reference to an actual class in this tuple annotation.
     @beartype
-    def genestealer(tyranid: str, hive_fleet: (str, 'int')) -> str:
+    def genestealer(tyranid: str, hive_fleet: (str, 'builtins.int')) -> str:
         return tyranid + str(hive_fleet)
 
     # Call this function with each of the two types listed in the above tuple.
@@ -151,7 +151,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintNonPepParamException
+    from beartype.roar import BeartypeCallHintPepParamException
 
     # Annotated function to be type-checked.
     @beartype
@@ -160,7 +160,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with raises(BeartypeCallHintNonPepParamException):
+    with raises(BeartypeCallHintPepParamException):
         eldar('Mother of the Eldar', 100.100)
 
 # ....................{ TESTS ~ fail : param : hint       }....................
@@ -190,7 +190,7 @@ def test_nonpep_fail_return_call() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintNonPepReturnException
+    from beartype.roar import BeartypeCallHintPepReturnException
 
     # Annotated function to be type-checked.
     @beartype
@@ -198,7 +198,7 @@ def test_nonpep_fail_return_call() -> None:
         return 60e6
 
     # Call this function and assert the expected exception.
-    with raises(BeartypeCallHintNonPepReturnException):
+    with raises(BeartypeCallHintPepReturnException):
         necron("C'tan", 'Elder Thing')
 
 
