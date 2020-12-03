@@ -15,25 +15,59 @@ beartype —[ …the bare-metal type checker ]—
                            — `The Jungle Book`_.
 
 **Beartype** is an open-source pure-Python `PEP-compliant <Compliance_>`__
-runtime type checker emphasizing efficiency, portability, and thrilling puns.
+``O(1)`` `constant-time <Timings_>`__ runtime type checker emphasizing
+efficiency, portability, and thrilling puns.
 
-Unlike comparable static type checkers operating at the coarse-grained
-application level (e.g., Pyre_, mypy_, pyright_, pytype_), beartype operates
-exclusively at the fine-grained callable level of pure-Python functions and
-methods via the standard decorator design pattern. This renders beartype
-natively compatible with *all* interpreters and compilers targeting the Python
-language – including CPython_, PyPy_, Numba_, and Nuitka_.
+Like comparable static type checkers operating at the coarse-grained
+application level through ad-hoc heuristic type inference (e.g., Pyre_, mypy_,
+pyright_, pytype_), beartype `effectively imposes no runtime overhead
+<Timings_>`__. Unlike static type checkers:
+
+* Beartype operates exclusively at the fine-grained callable level of
+  pure-Python functions and methods via the standard decorator design pattern.
+  This renders beartype natively compatible with *all* interpreters and
+  compilers targeting the Python language – including PyPy_, Numba_, Nuitka_,
+  and (of course) CPython_ itself.
+* Beartype enjoys deterministic Turing-complete access to the actual objects
+  and types being type-checked. This enables beartype to solve type-checking
+  problems decidable only at runtime, including type-checking of arbitrary
+  objects whose:
+
+  * Metaclasses `dynamically customize instance and subclass checks
+    <_isinstancecheck>`__ by implementing the ``__instancecheck__()`` and/or
+    ``__subclasscheck__()`` dunder methods, including:
+
+    * `PEP 3119`_-compliant metaclasses (e.g., `abc.ABCMeta_`).
+
+  * Pseudo-superclasses `dynamically customize the method resolution order
+    (MRO) of subclasses <_mro_entries>`__ by implementing the
+    ``__mro_entries__()`` dunder method, including:
+
+    * `PEP 560`_-compliant pseudo-superclasses.
+
+  * Superclasses dynamically register themselves with abstract base classes
+    (ABCs), including:
+
+    * `PEP 3119`_-compliant third-party virtual base classes.
+    * `PEP 3141`_-compliant third-party virtual number classes (e.g., SymPy_).
+
+  * Classes are dynamically constructed or modified at runtime, including by:
+
+    * Class decorators.
+    * Class factory functions and methods.
+    * Metaclasses.
 
 Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
-beartype wraps decorated callables with dynamically generated wrappers
-efficiently type-checking those specific callables. Since "performance by
-default" is our first-class concern, these wrappers are guaranteed to:
+beartype decorates callables with dynamically generated wrappers efficiently
+type-checking each parameter passed to and value returned from those callables
+in constant time. Since "performance by default" is beartype's first-class
+concern, generated wrappers are guaranteed to:
 
 * Exhibit `O(1) time complexity with negligible constant factors <Nobody
   Believes You_>`__.
 * Be either more efficient (in the common case) or exactly as efficient minus
-  the cost of an additional stack frame (in the worst case) as equivalent
-  type-checking implemented by hand, *which no one should ever do.*
+  the cost of an additional stack frame (in the worst case) as semantically
+  equivalent type-checking implemented by hand, *which no one should ever do.*
 
 Beartype thus brings Rust_- and `C++`_-inspired `zero-cost abstractions
 <zero-cost abstraction_>`__ into the lawless world of pure Python.
@@ -1387,7 +1421,11 @@ application stack at tool rather than Python runtime) include:
 .. _pip:
    https://pip.pypa.io
 
-.. # ------------------( LINKS ~ py : implementation        )------------------
+.. # ------------------( LINKS ~ py : data model            )------------------
+.. _isinstancecheck:
+   https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks
+
+.. # ------------------( LINKS ~ py : interpreter           )------------------
 .. _CPython:
    https://github.com/python/cpython
 .. _Nuitka:
@@ -1414,8 +1452,6 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
    https://www.python.org/dev/peps/pep-0544
-.. _PEP 560:
-   https://www.python.org/dev/peps/pep-0560
 .. _PEP 563:
    https://www.python.org/dev/peps/pep-0563
 .. _PEP 570:
@@ -1435,17 +1471,35 @@ application stack at tool rather than Python runtime) include:
 .. _PEP 3141:
    https://www.python.org/dev/peps/pep-3141
 
+.. # ------------------( LINKS ~ py : pep : 3119            )------------------
+.. _PEP 3119:
+   https://www.python.org/dev/peps/pep-3119
+.. _virtual base classes:
+   https://www.python.org/dev/peps/pep-3119/#id33
+
 .. # ------------------( LINKS ~ py : pep : 484             )------------------
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
 .. _relative forward references:
    https://www.python.org/dev/peps/pep-0484/#id28
 
+.. # ------------------( LINKS ~ py : pep : 560             )------------------
+.. _PEP 560:
+   https://www.python.org/dev/peps/pep-0560
+.. _mro_entries:
+   https://www.python.org/dev/peps/pep-0560/#id20
+
 .. # ------------------( LINKS ~ py : service               )------------------
 .. _Anaconda:
    https://docs.conda.io/en/latest/miniconda.html
 .. _PyPI:
    https://pypi.org
+
+.. # ------------------( LINKS ~ py : stdlib : builtins     )------------------
+.. _abc:
+   https://docs.python.org/3/library/abc.html
+.. _abc.ABCMeta:
+   https://docs.python.org/3/library/abc.html#abc.ABCMeta
 
 .. # ------------------( LINKS ~ py : stdlib : builtins     )------------------
 .. _builtins:

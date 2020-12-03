@@ -82,6 +82,13 @@ jobs:
           python -m site
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade numpy virtualenv tox tox-gh-actions
+      # Note that:
+      #
+      # * "--skip-missing-interpreters=false" disables the corresponding
+      #   "skip_missing_interpreters = true" setting globally enabled by our
+      #   top-level "tox.ini" configuration, forcing CI failures for
+      #   unavailable Python environments. See also:
+      #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
         run: |
-          python -m tox
+          python -m tox --skip-missing-interpreters=false
