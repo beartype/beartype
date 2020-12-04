@@ -21,12 +21,12 @@ portability, and thrilling puns.
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of dynamically-typed pure Python.
 
-Beartype is `portably implemented <codebase_>`__ in `pure Python 3
-<Python_>`__, `continuously stress-tested <tests_>`__ via `GitHub Actions`_
-**+** tox_ **+** pytest_, and `permissively distributed <license_>`__ under the
-`MIT license`_. Beartype has no runtime dependencies, `only one test-time
-dependency <pytest_>`__, and supports `all Python 3.x releases still in active
-development <Python status_>`__.
+Beartype is `portably implemented <codebase_>`__ in `Python 3 <Python_>`__,
+`continuously stress-tested <tests_>`__ via `GitHub Actions`_ **+** tox_ **+**
+pytest_, and `permissively distributed <beartype license_>`__ under the `MIT
+license`_. Beartype has no runtime dependencies, `only one test-time dependency
+<pytest_>`__, and supports `all Python 3.x releases still in active development
+<Python status_>`__.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -79,28 +79,28 @@ the computational nuclear option:
 Overview
 ============
 
-Beartype imposes no developer constraints (beyond `importation and usage of a
-configuration-free decorator <Cheatsheet_>`__), trivializing integration with
-new and existing applications, frameworks, modules, packages, scripts, and
+Beartype imposes no developer constraints beyond `importation and usage of a
+single configuration-free decorator <Cheatsheet_>`__, trivializing integration
+with new and existing applications, frameworks, modules, packages, scripts, and
 stacks. Beartype stresses zero-cost strategies at both:
 
 * **Installation time.** Beartype has no install-time or runtime dependencies,
-  supports `standard Python package managers <Installation_>`__, and happily
+  `supports standard Python package managers <Installation_>`__, and happily
   coexists with competing static type checkers and other runtime type checkers.
 * **Runtime.** Thanks to aggressive memoization and code generation at
   decoration time, beartype guarantees `O(1) constant-time runtime complexity
   with negligible constant factors <Timings_>`__.
 
 Like competing static type checkers operating at the coarse-grained application
-level through ad-hoc heuristic type inference (e.g., Pyre_, mypy_, pyright_,
-pytype_), beartype `effectively imposes no runtime overhead <Timings_>`__.
+level via ad-hoc heuristic type inference (e.g., Pyre_, mypy_, pyright_,
+pytype_), beartype effectively `imposes no runtime overhead <Timings_>`__.
 Unlike static type checkers:
 
 * Beartype operates exclusively at the fine-grained callable level of
   pure-Python functions and methods via the standard decorator design pattern.
   This renders beartype natively compatible with *all* interpreters and
   compilers targeting the Python language – including PyPy_, Numba_, Nuitka_,
-  and (*wait for it*) CPython_ itself.
+  and (wait for it) CPython_ itself.
 * Beartype enjoys deterministic Turing-complete access to the actual callables,
   objects, and types being type-checked. This enables beartype to solve dynamic
   problems decidable only at runtime – including type-checking of arbitrary
@@ -110,7 +110,7 @@ Unlike static type checkers:
     <_isinstancecheck>`__ by implementing the ``__instancecheck__()`` and/or
     ``__subclasscheck__()`` dunder methods, including:
 
-    * `PEP 3119`_-compliant metaclasses (e.g., `abc.ABCMeta_`).
+    * `PEP 3119`_-compliant metaclasses (e.g., `abc.ABCMeta`_).
 
   * Pseudo-superclasses `dynamically customize the method resolution order
     (MRO) of subclasses <_mro_entries>`__ by implementing the
@@ -124,7 +124,7 @@ Unlike static type checkers:
     * `PEP 3119`_-compliant third-party virtual base classes.
     * `PEP 3141`_-compliant third-party virtual number classes (e.g., SymPy_).
 
-  * Classes are dynamically constructed or modified, including by:
+  * Classes are dynamically constructed or altered, including by:
 
     * Class decorators.
     * Class factory functions and methods.
@@ -134,14 +134,14 @@ Unlike static type checkers:
 Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
 beartype decorates callables with dynamically generated wrappers efficiently
 type-checking each parameter passed to and value returned from those callables
-in constant time. Since "performance by default" is beartype's first-class
-concern, generated wrappers are guaranteed to:
+in constant time. Since "performance by default" is our first-class concern,
+generated wrappers are guaranteed to:
 
 * Exhibit `O(1) constant-time complexity with negligible constant factors
   <Timings_>`__.
 * Be either more efficient (in the common case) or exactly as efficient minus
-  the cost of an additional stack frame (in the worst case) as semantically
-  equivalent type-checking implemented by hand, *which no one should ever do.*
+  the cost of an additional stack frame (in the worst case) as equivalent
+  type-checking implemented by hand, *which no one should ever do.*
 
 Cheatsheet
 ==========
@@ -1303,62 +1303,63 @@ Let's chart current and prospective new features for future generations:
 Developers
 ==========
 
-Let's contribute `pull requests`_ to ``beartype`` for the good of Pythonistas
-everywhere! The [primary author of ``beartype`` is a friendly beardless
-Canadian fellow](github.com/leycec) who guarantees that he will *always* be
-nice and congenial and promptly merge all requests that pass continuous
-integration (CI) tests.
+Let's contribute `pull requests`_ to ``beartype`` for the good of Python. The
+`primary maintainer of this repository is a friendly beardless Canadian guy
+<leycec_>`__ who guarantees that he will *always* be nice and congenial and
+promptly merge all requests that pass continuous integration (CI) tests.
 
-And thanks for merely reading this section. Like all open-source software,
-``beartype`` thrives on community contributions, interest, and activity. That
-means **you,** stalwart GitHub hero.
+And thanks for merely reading this section! Like all open-source software,
+``beartype`` thrives on community contributions, activity, and interest. *That
+means you, stalwart GitHub hero.*
 
-The current codebase has two main areas of focused need for volunteer
-development, listed in decreasing order of importance and increasing order of
-complexity.
+The current codebase has two main areas of need for volunteer development,
+listed in decreasing order of importance and increasing order of complexity. In
+simpler words, start with the first.
 
 Deep Checking
 -------------
 
 So, you want to help ``beartype`` deeply type-check even *more* type hints than
-it already does. Let us help you help us, because you are awesome.
+it already does? Let us help you help us, because you are awesome.
 
 First, an egregious lore dump. It's commonly assumed that ``beartype`` only
 internally implements a single type-checker. After all, every *other* static
 and runtime type-checker only internally implements a single type-checker.
-Why would a type-checker implement multiple divergent overlapping type-checkers
-and... what would that even mean?
+Why would a type-checker internally implement several divergent overlapping
+type-checkers and... what would that even mean?
 
-While sensible, this assumption is actually *not* the case for ``beartype``.
+While sensible, that assumption is actually *not* the case for ``beartype``.
 Externally, of course, ``beartype`` presents itself as a single type-checker.
-Internally, however, ``beartype`` implements itself as a two-pass series of
-orthogonal type-checkers. Why? Because efficiency, which is the reason we are
-all here. These checkers are (in the order in which callables decorated by
+Internally, ``beartype`` is implemented as a two-phase series of orthogonal
+type-checkers. Why? Because efficiency, which is the reason we are all here.
+These type-checkers are (in the order in which callables decorated by
 ``beartype`` perform them at runtime):
 
 #. **Testing phase.** In this fast first pass, each callable decorated by
    ``@beartype`` only *tests* whether all parameters passed to and values
    returned from the current call to that callable satisfy all type hints
    annotating that callable. This phase does *not* raise human-readable
-   exceptions in the event that one or more parameters or return values fails
-   to satisfy a type hint annotating that callable. ``@beartype`` highly
-   optimizes this phase by dynamically generating one wrapper function wrapping
-   each decorated callable with unique pure-Python performing these tests in
-   O(1) constant-time. This phase is *always* unconditionally performed by:
+   exceptions (in the event that one or more parameters or return values fails
+   to satisfy these hints). ``@beartype`` highly optimizes this phase by
+   dynamically generating one wrapper function wrapping each decorated callable
+   with unique pure-Python performing these tests in O(1) constant-time. This
+   phase is *always* unconditionally performed by code dynamically generated
+   and returned by:
 
-   * The fast-as-lightning ``pep_code_check_hint()`` function defined by the
-     `"beartype._decor._code._pep._pephint" <beartype pephint_>`__ submodule,
+   * The fast-as-lightning ``pep_code_check_hint()`` function declared in the
+     `"beartype._decor._code._pep._pephint" submodule <beartype pephint_>`__,
      which generates memoized O(1) code type-checking an arbitrary object
      against an arbitrary PEP-compliant type hint by iterating over all child
      hints nested in that hint with a highly optimized breadth-first search
-     (BFS) exploiting extreme caching.
+     (BFS) leveraging extreme caching, fragile cleverness, and other salacious
+     micro-optimizations.
 
 #. **Error phase.** In this slow second pass, each call to a callable decorated
-   by ``@beartype`` that fails the fast first pass (i.e., due to one or more
-   parameters or return values failing to satisfy a type hint annotating that
-   callable) recursively discovers the underlying exact cause of this failure
-   and raises a human-readable exception detailing this cause. ``@beartype``
-   does *not* highly optimize this phase. Whereas the implementation of the
+   by ``@beartype`` that fails the fast first pass (due to one or more
+   parameters or return values failing to satisfy these hints) recursively
+   discovers the exact underlying cause of that failure and raises a
+   human-readable exception precisely detailing that cause. ``@beartype`` does
+   *not* optimize this phase whatsoever. Whereas the implementation of the
    first phase is uniquely specific to each decorated callable and constrained
    to O(1) constant-time non-recursive operation, the implementation of the
    second phase is generically shared between all decorated callables and
@@ -1367,22 +1368,22 @@ all here. These checkers are (in the order in which callables decorated by
    language and doubly slow in dynamically-typed (and mostly interpreted)
    languages like Python, which means that performance is mostly a non-concern
    in "cold" code paths guaranteed to raise exceptions. This phase is only
-   *conditionally* performed when the first phase fails (i.e., when one or more
-   parameters or return values fail a type-check) by:
+   *conditionally* performed when the first phase fails by:
 
-   * The slow-as-molasses ``raise_pep_call_exception()`` function defined by
-     the `"beartype._decor._code._pep._error.peperror" <beartype peperror_>`__
-     submodule, which generates human-readable exceptions after performing
-     unmemoized O(n) type-checking of an arbitrary object against an arbitrary
+   * The slow-as-molasses ``raise_pep_call_exception()`` function declared in
+     the `"beartype._decor._code._pep._error.peperror" submodule <beartype
+     peperror_>`__, which generates human-readable exceptions after performing
+     unmemoized O(n) type-checking of an arbitrary object against a
      PEP-compliant type hint by recursing over all child hints nested in that
-     hint with a highly unoptimized recursive algorithm prioritizing
-     debuggability, readability, and maintainability.
+     hint with an unoptimized recursive algorithm prioritizing debuggability,
+     readability, and maintainability.
 
-The separation of concerns between performant O(1) *testing* on the one hand
-and perfect O(n) *error handling* on the other preserves runtime performance
-and readable errors (at a cost of developer pain). This is good!
+This separation of concerns between performant O(1) *testing* on the one hand
+and perfect O(n) *error handling* on the other preserves both runtime
+performance and readable errors at a cost of developer pain. This is good!
+:sup:`...what?`
 
-Secondly, this same separation of concerns also complicates the development of
+Secondly, the same separation of concerns also complicates the development of
 ``@beartype``. This is bad. Since ``@beartype`` internally implements two
 divergent type-checkers, deeply type-checking a new category of type hint
 requires adding that support to (wait for it) two divergent type-checkers –
@@ -1396,54 +1397,54 @@ Thirdly, this needs to be tested. After surmounting the above roadblocks by
 deeply type-checking that new category of type hint in *both* type-checkers,
 you'll now add one or more unit tests exhaustively exercising that checking.
 Thankfully, we already did all of the swole lifting for you. All *you* need to
-do is add at least one PEP-compliant type hint, object satisfying that hint,
-and object *not* satisfying that hint to:
+do is add at least one PEP-compliant type hint, one object satisfying that
+hint, and one object *not* satisfying that hint to:
 
 * A new ``PepHintMetadata`` object in the existing tuple passed to the
   ``data_module.HINTS_PEP_META.extend(...)`` call in the existing test data
   submodule for this PEP residing under the
-  `"beartype_test.unit.data.hint.pep.proposal" <beartype test data pep_>`__
-  subpackage. For example, if this is a `PEP 484`_-compliant type hint, that
-  hint and associated metadata should be added to the 
-  `"beartype_test.unit.data.hint.pep.proposal.data_hintpep484" <beartype test
-  data pep 484_>`__ submodule.
+  `"beartype_test.unit.data.hint.pep.proposal" subpackage <beartype test data
+  pep_>`__. For example, if this is a `PEP 484`_-compliant type hint, add that
+  hint and associated metadata to the
+  `"beartype_test.unit.data.hint.pep.proposal.data_hintpep484" submodule
+  <beartype test data pep 484_>`__.
 
-You're done! Praise Guido.
+You're done! *Praise Guido.*
 
 PEP Compliance
 --------------
 
 So, you want to help ``beartype`` improve compliance with even *more* `Python
-Enhancement Proposals (PEPs) <PEP 0_>`__ than it currently does. Let us help
-you help us, because you are brave.
+Enhancement Proposals (PEPs) <PEP 0_>`__ than it already does? Let us help you
+help us, because you are brave.
 
 You will need a spare life to squander. A clone would be most handy. In short,
 you will want to at least:
 
 * Define a new utility submodule for this PEP residing under the
-  `"beartype._util.hint.pep.proposal" <beartype util pep_>`__ subpackage
+  `"beartype._util.hint.pep.proposal" subpackage <beartype util pep_>`__
   implementing general-purpose validators, testers, getters, and other
   ancillary utility functions required to detect and handle *all* type hints
   compliant with this PEP. For efficiency, utility functions performing
   iteration or other expensive operations should be memoized via our internal
-  @callable_cached_ decorator.
+  `@callable_cached`_ decorator.
 * Define a new data utility submodule for this PEP residing under the
-  `"beartype._util.hint.data.pep.proposal" <beartype util data pep_>`__
-  subpackage adding various **signs** (i.e., arbitrary objects uniquely
-  identifying type hints compliant with this PEP) to various global variables
-  defined by the parent `"beartype._util.hint.data.pep.utilhintdatapep"
-  <_beartype util data pep parent>`__ submodule.
+  `"beartype._util.hint.data.pep.proposal" subpackage <beartype util data
+  pep_>`__ adding various signs (i.e., arbitrary objects uniquely identifying
+  type hints compliant with this PEP) to various global variables defined by
+  the parent `"beartype._util.hint.data.pep.utilhintdatapep" submodule
+  <_beartype util data pep parent>`__.
 * Define a new test data submodule for this PEP residing under the
-  `"beartype_test.unit.data.hint.pep.proposal" <beartype test data pep_>`__
-  subpackage.
+  `"beartype_test.unit.data.hint.pep.proposal" subpackage <beartype test data
+  pep_>`__.
 
 You're probably not done by a long shot! But the above should at least get you
-fitfully started. Praise Cleese.
+fitfully started, though long will you curse our names. *Praise Cleese.*
 
 License
 =======
 
-``beartype`` is `open-source software released <license_>`__ under the
+``beartype`` is `open-source software released <beartype license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
 Funding
@@ -1490,7 +1491,7 @@ application stack at tool rather than Python runtime) include:
    :alt: GitHub Actions status
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
-.. _license:
+.. _beartype license:
    LICENSE
 
 .. # ------------------( LINKS ~ beartype : local : module  )------------------
@@ -1673,7 +1674,7 @@ application stack at tool rather than Python runtime) include:
 .. _PyPI:
    https://pypi.org
 
-.. # ------------------( LINKS ~ py : stdlib : builtins     )------------------
+.. # ------------------( LINKS ~ py : stdlib : abc          )------------------
 .. _abc:
    https://docs.python.org/3/library/abc.html
 .. _abc.ABCMeta:
@@ -1942,3 +1943,7 @@ application stack at tool rather than Python runtime) include:
    https://github.com/google/pytype
 .. _pyright:
    https://github.com/Microsoft/pyright
+
+.. # ------------------( LINKS ~ users                      )------------------
+.. _leycec:
+   https://github.com/leycec
