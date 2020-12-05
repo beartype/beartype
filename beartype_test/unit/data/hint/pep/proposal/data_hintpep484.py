@@ -283,8 +283,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Parametrizations of the "typing.Generic" abstract base class (ABC).
         Generic[S, T],
 
-        # New type aliasing an ignorable type.
-        NewType('TotallyNotAnObjeect', object),
+        # New type aliasing any ignorable type hint.
+        NewType('TotallyNotAny', Any),
+        NewType('TotallyNotObject', object),
 
         # Optionals containing any ignorable type hint.
         Optional[Any],

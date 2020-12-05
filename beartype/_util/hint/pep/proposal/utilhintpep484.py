@@ -55,9 +55,9 @@ def is_hint_pep484_ignorable_or_none(
          T = TypeVar('T')
          def noop(param_hint_ignorable: Generic[T]) -> T: pass
 
-    * The :func:`NewType` closure factory function passed the ignorable
-      :class:`object` type. Unlike most :mod:`typing` constructs, this function
-      does *not* cache the objects it returns: e.g.,
+    * The :func:`NewType` closure factory function passed an ignorable child
+      type hint. Unlike most :mod:`typing` constructs, that function does *not*
+      cache the objects it returns: e.g.,
 
       .. code-block:: python
 
@@ -142,10 +142,10 @@ def is_hint_pep484_ignorable_or_none(
         # "Generic". Ergo, this generic could still be an ignorable protocol.
     # Else, this hint is *NOT* a generic.
     #
-    # If this hint is a new type, return true only if this new type aliases the
-    # ignorable root superclass "object".
+    # If this hint is a new type, return true only if this new type aliases an
+    # ignorable child type hint.
     elif hint_sign is NewType:
-        return get_hint_pep484_newtype_class(hint) is object
+        return is_hint_ignorable(get_hint_pep484_newtype_class(hint))
     # Else, this hint is *NOT* a new type.
     #
     # If this hint is a union, return true only if one or more child hints of

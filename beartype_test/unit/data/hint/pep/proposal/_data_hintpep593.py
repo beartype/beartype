@@ -17,12 +17,6 @@ from beartype_test.unit.data.hint.data_hintmeta import (
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
-from typing import (
-    Any,
-    List,
-    Optional,
-    Union,
-)
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -47,7 +41,13 @@ def add_data(data_module: 'ModuleType') -> None:
     # thus supports PEP 593.
 
     # Defer Python >= 3.9-specific imports.
-    from typing import Annotated
+    from typing import (
+        Annotated,
+        Any,
+        NewType,
+        Optional,
+        Union,
+    )
 
     # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
@@ -63,6 +63,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unions and optionals of ignorable annotateds.
         Union[complex, int, Annotated[Any, int]],
         Optional[Annotated[object, int]],
+
+        # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
+        # exercising numerous edge cases broken under prior releases.
+        Union[str, list[int], NewType('MetaType', Annotated[object, 53])],
     ))
 
     # Add PEP 593-specific invalid non-generic types to that set global.
@@ -111,7 +115,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a "typing" type.
         PepHintMetadata(
-            hint=Annotated[List[str], int],
+            hint=Annotated[list[str], int],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # List of string constants.

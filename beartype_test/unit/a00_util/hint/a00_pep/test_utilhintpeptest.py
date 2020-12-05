@@ -16,7 +16,6 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
-from typing import Generic, List
 
 # ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
@@ -189,6 +188,7 @@ def test_is_hint_pep484_generic() -> None:
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
     from beartype_test.unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from typing import Generic
 
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
@@ -212,13 +212,14 @@ def test_is_hint_typing_typevar() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
     from beartype_test.unit.data.hint.pep.proposal.data_hintpep484 import T
+    from typing import Optional
 
     # Assert that type variables are type variables.
     assert is_hint_pep_typevar(T) is True
 
     # Assert that "typing" types parametrized by type variables are *NOT* type
     # variables.
-    assert is_hint_pep_typevar(List[T]) is False
+    assert is_hint_pep_typevar(Optional[T]) is False
 
 
 def test_is_hint_typing_typevared() -> None:

@@ -122,12 +122,13 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
+    from beartype._util.hint.data.pep.utilhintdatapepsign import (
+        HINT_PEP_SIGN_LIST)
     from typing import (
         Any,
         AnyStr,
         BinaryIO,
         IO,
-        List,
         Optional,
         Protocol,
         Union,
@@ -195,7 +196,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pass
 
         @abstractmethod
-        def readlines(self, hint: int = -1) -> List[AnyStr]:
+        def readlines(self, hint: int = -1) -> HINT_PEP_SIGN_LIST[AnyStr]:
             pass
 
         @abstractmethod
@@ -223,7 +224,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pass
 
         @abstractmethod
-        def writelines(self, lines: List[AnyStr]) -> None:
+        def writelines(self, lines: HINT_PEP_SIGN_LIST[AnyStr]) -> None:
             pass
 
         @abstractmethod

@@ -18,7 +18,6 @@ This submodule unit tests `PEP 593`_ support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from typing import List
 
 # ....................{ TESTS ~ type                      }....................
 def test_pep593() -> None:
@@ -31,12 +30,13 @@ def test_pep593() -> None:
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype._util.hint.pep.proposal.utilhintpep593 import (
         is_hint_pep593)
+    from typing import Optional
 
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 593, assert this function accepts annotated type hints.
     if IS_PYTHON_AT_LEAST_3_9:
         from typing import Annotated
-        assert is_hint_pep593(Annotated[List[str], int]) is True
+        assert is_hint_pep593(Annotated[Optional[str], int]) is True
 
     # Assert this function rejects unannotated type hints in either case.
-    assert is_hint_pep593(List[str]) is False
+    assert is_hint_pep593(Optional[str]) is False

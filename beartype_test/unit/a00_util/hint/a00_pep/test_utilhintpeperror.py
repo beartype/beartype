@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-import typing
 from pytest import raises
 
 # ....................{ TESTS                             }....................
@@ -35,13 +34,18 @@ def test_raise_pep_call_exception() -> None:
     )
     from beartype._decor._code._pep._error.peperror import (
         raise_pep_call_exception)
+    from beartype._util.hint.data.pep.utilhintdatapepsign import (
+        HINT_PEP_SIGN_LIST,
+        HINT_PEP_SIGN_TUPLE,
+    )
+    from typing import Union
 
     def forest_unknown(
-        secret_orchard: typing.List[str],
+        secret_orchard: HINT_PEP_SIGN_LIST[str],
         achromatic_voice,
         to_bid_you_farewell: str,
         amaranth_symbol: 42,
-    ) -> typing.Union[int, typing.Tuple[str, ...]]:
+    ) -> Union[int, HINT_PEP_SIGN_TUPLE[str, ...]]:
         return achromatic_voice
 
     # Assert this function raises the expected exception when passed a
