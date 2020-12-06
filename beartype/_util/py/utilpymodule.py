@@ -16,22 +16,6 @@ from beartype.roar import _BeartypeUtilModuleException
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                          }....................
-MODULE_NAME_BUILTINS = 'builtins'
-'''
-Fully-qualified name of the module declaring all **builtins** (i.e., objects
-defined by the standard :mod:`builtins` module and thus globally available by
-default *without* requiring explicit importation).
-'''
-
-
-MODULE_NAME_BUILTINS_DOTTED = f'{MODULE_NAME_BUILTINS}.'
-'''
-Fully-qualified name of the module declaring all builtins followed by a ``.``,
-defined purely as a trivial optimization for the frequently accessed
-:class:`beartype._decor._typistry.Beartypistry.__setitem__` dunder method.
-'''
-
 # ....................{ VALIDATORS                        }....................
 def die_unless_module_attr_name(
     # Mandatory parameters.

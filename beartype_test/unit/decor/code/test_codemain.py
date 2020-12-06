@@ -50,7 +50,7 @@ def test_codemain() -> None:
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintPepException,
-        BeartypeDecorHintPepDeprecatedWarning,
+        # BeartypeDecorHintPepDeprecatedWarning,
     )
     from beartype._util.utilobject import is_object_context_manager
     from beartype._util.hint.data.pep.utilhintdatapep import (
@@ -63,7 +63,6 @@ def test_codemain() -> None:
     from beartype_test.unit.data.hint.nonpep.data_hintnonpep import (
         HINTS_NONPEP_META)
     from beartype_test.unit.data.hint.pep.data_hintpep import HINTS_PEP_META
-    from beartype_test.util.pytcontext import noop_context_manager
 
     # Tuple of all PEP-compliant type hint metadata to be tested -- regardless
     # of whether those hints are uniquely identifiable by a sign or not.

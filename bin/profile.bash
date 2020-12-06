@@ -43,7 +43,8 @@ set -e
 VERSION='0.0.2'
 
 # Basename of the Python command to be invoked below.
-PYTHON_COMMAND_BASENAME='python3'
+# PYTHON_COMMAND_BASENAME='python3'
+PYTHON_COMMAND_BASENAME='python3.9'
 # PYTHON_COMMAND_BASENAME='python3.8'
 # PYTHON_COMMAND_BASENAME='pypy3'
 
@@ -377,6 +378,7 @@ profile_callable 'Union[int, str]' \
 NUM_LIST_ITEMS=1000
 profile_callable "List[int] of ${NUM_LIST_ITEMS} items" "
 from typing import List
+List = list
 TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN = list(range(${NUM_LIST_ITEMS}))" \
     'def gun_teams(elephants: List[int]) -> List[int]:
     return elephants' \
@@ -385,6 +387,8 @@ TEN_FOOT_TEAMS_OF_THE_FORTY_POUNDER_TRAIN = list(range(${NUM_LIST_ITEMS}))" \
 NUM_SEQUENCE_ITEMS_EACH=10
 profile_callable "List[Sequence[MutableSequence[int]]] of ${NUM_SEQUENCE_ITEMS_EACH} items each" "
 from typing import List, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
+List = list
 WAY_OF_THE_WAR_HORSE = list(
     tuple(
         list(range(${NUM_SEQUENCE_ITEMS_EACH}))

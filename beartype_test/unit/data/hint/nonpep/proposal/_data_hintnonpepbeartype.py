@@ -110,10 +110,16 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\bstr\b',
                     ),
                     # Match that the exception message raised for this pith
-                    # does *NOT* contain a newline or bullet delimiter.
+                    # does *NOT* contain...
                     exception_str_not_match_regexes=(
+                        # A newline.
                         r'\n',
+                        # A bullet delimiter.
                         r'\*',
+                        # Descriptive terms applied only to non-builtin types.
+                        r'\bprotocol\b',
+                        # The double-quoted name of this builtin type.
+                        r'"str"',
                     ),
                 ),
             ),

@@ -86,11 +86,11 @@ def test_typistry_register_type_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar import _BeartypeUtilClassException
     from beartype._decor._typistry import register_typistry_type
 
     # Assert that non-types are *NOT* registrable via the same function.
-    with raises(_BeartypeDecorBeartypistryException):
+    with raises(_BeartypeUtilClassException):
         register_typistry_type((
             'The best lack all conviction,',
             'while the worst',

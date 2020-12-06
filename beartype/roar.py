@@ -535,6 +535,20 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 
+class _BeartypeUtilClassException(_BeartypeUtilException):
+    '''
+    **Beartype class utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilclass` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeUtilModuleException(_BeartypeUtilException):
     '''
     **Beartype module utility exception.**

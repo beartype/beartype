@@ -15,6 +15,7 @@ unit test submodules.
 import sys
 from beartype_test.unit.data.hint.data_hintmeta import NonPepHintMetadata
 from beartype_test.unit.data.hint.nonpep.proposal import (
+    _data_hintnonpepbeartype,
     _data_hintnonpep484,
 )
 
@@ -42,6 +43,7 @@ def _init() -> None:
 
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_NONPEP_SUBMODULES = (
+        _data_hintnonpepbeartype,
         _data_hintnonpep484,
     )
 

@@ -12,7 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.utilclass import is_classname_builtin
+from beartype._util.utilobject import get_object_classname
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -143,6 +144,9 @@ def label_callable_decorated_param_value(
     '''
     assert isinstance(param_name, str), f'{repr(param_name)} not string.'
 
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextrepr import get_object_representation
+
     # Create and return this label.
     return (
         f'{label_callable_decorated(func)} parameter '
@@ -192,6 +196,9 @@ def label_callable_decorated_return_value(
         Human-readable label describing this return value.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextrepr import get_object_representation
+
     # Create and return this label.
     return (
         f'{label_callable_decorated_return(func)} '
@@ -218,7 +225,6 @@ def label_class(cls: type) -> str:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         is_hint_pep544_protocol)
-    from beartype._util.utilobject import get_object_classname
 
     # Label to be returned, initialized to this class' fully-qualified name.
     classname = get_object_classname(cls)
@@ -228,13 +234,18 @@ def label_class(cls: type) -> str:
     # self-explanatory, this name requires no additional labelling. In this
     # case, return this name as is.
     if '.' not in classname:
-        return classname
+        pass
+    # If this name is that of a builtin type uselessly prefixed by the name of
+    # the module declaring all builtin types (e.g., "builtins.list"), reduce
+    # this name to the unqualified basename of this type (e.g., "list").
+    elif is_classname_builtin(classname):
+        classname = cls.__name__
     # Else, this is a non-builtin class. Non-builtin classes are *NOT*
     # well-known and thus benefit from additional labelling.
-
+    #
     # If this class is a PEP 544-compliant protocol supporting structural
     # subtyping, label this protocol.
-    if is_hint_pep544_protocol(cls):
+    elif is_hint_pep544_protocol(cls):
         classname = f'<protocol "{classname}">'
     # Else if this class is a standard abstract base class (ABC) defined by a
     # stdlib submodule also known to support structural subtyping (e.g.,

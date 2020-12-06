@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype module utility unit tests.**
+**Beartype object utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.py.utilpymodule` submodule.
+:mod:`beartype._util.utilobject` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................

@@ -67,34 +67,55 @@ def test_pep544() -> None:
     with raises(TypeError):
         times_of_old(TwoTreesStructural())
 
-# ....................{ TESTS ~ callable                  }....................
-def test_is_hint_pep484_generic() -> None:
+# ....................{ TESTS ~ protocol                  }....................
+def test_is_hint_pep544_protocol() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep484_generic`
+    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep544_protocol`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
-        is_hint_pep544_io_generic)
+        is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from typing import BinaryIO, IO, TextIO, Union
+    from beartype_test.unit.data.data_class import CLASSES_BUILTIN
+    from typing import (
+        SupportsAbs,
+        SupportsBytes,
+        SupportsComplex,
+        SupportsFloat,
+        SupportsInt,
+        SupportsRound,
+        Union,
+    )
 
-    # Set of all PEP 484-compliant "typing" IO generic base classes.
-    TYPING_IO_GENERICS = {BinaryIO, IO, TextIO}
+    # Set of all PEP 544-compliant "typing" protocols.
+    TYPING_PROTOCOLS = {
+        SupportsAbs,
+        SupportsBytes,
+        SupportsComplex,
+        SupportsFloat,
+        SupportsInt,
+        SupportsRound,
+    }
 
-    for typing_io_generic in TYPING_IO_GENERICS:
-        # Assert this function accepts these classes *ONLY* if the active
-        # Python interpreter targets at least Python >= 3.8 and thus supports
-        # PEP 544.
-        assert is_hint_pep544_io_generic(typing_io_generic) is (
+    # Assert this tester accepts these classes *ONLY* if the active Python
+    # interpreter targets at least Python >= 3.8 and thus supports PEP 544.
+    for typing_protocol in TYPING_PROTOCOLS:
+        assert is_hint_pep544_protocol(typing_protocol) is (
             IS_PYTHON_AT_LEAST_3_8)
 
-    # Assert this function rejects standard type hints in either case.
-    assert is_hint_pep544_io_generic(Union[int, str]) is False
+    # Assert this tester rejects all builtin types. For unknown reasons, some
+    # but *NOT* all builtin types (e.g., "int") erroneously present themselves
+    # to be PEP 544-compliant protocols. *sigh*
+    for class_builtin in CLASSES_BUILTIN:
+        assert is_hint_pep544_protocol(class_builtin) is False
 
+    # Assert this tester rejects standard type hints in either case.
+    assert is_hint_pep544_protocol(Union[int, str]) is False
 
+# ....................{ TESTS ~ io generic                }....................
 def test_is_hint_pep544_io_generic() -> None:
     '''
     Test the
@@ -111,14 +132,13 @@ def test_is_hint_pep544_io_generic() -> None:
     # Set of all PEP 484-compliant "typing" IO generic base classes.
     TYPING_IO_GENERICS = {BinaryIO, IO, TextIO}
 
+    # Assert this tester accepts these classes *ONLY* if the active Python
+    # interpreter targets at least Python >= 3.8 and thus supports PEP 544.
     for typing_io_generic in TYPING_IO_GENERICS:
-        # Assert this function accepts these classes *ONLY* if the active
-        # Python interpreter targets at least Python >= 3.8 and thus supports
-        # PEP 544.
         assert is_hint_pep544_io_generic(typing_io_generic) is (
             IS_PYTHON_AT_LEAST_3_8)
 
-    # Assert this function rejects standard type hints in either case.
+    # Assert this tester rejects standard type hints in either case.
     assert is_hint_pep544_io_generic(Union[int, str]) is False
 
 

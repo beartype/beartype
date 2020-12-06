@@ -17,6 +17,7 @@ from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
     _HINT_PEP544_IO_GENERIC_TO_PROTOCOL)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.utilclass import is_class_builtin
 from beartype._util.utilobject import is_object_subclass
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -61,7 +62,25 @@ if IS_PYTHON_AT_LEAST_3_8:
 
 
     def is_hint_pep544_protocol(hint: object) -> None:
-        return is_object_subclass(hint, Protocol)
+
+        # Return true only if this hint is...
+        return (
+            # A PEP 544-compliant protocol *AND*...
+            is_object_subclass(hint, Protocol) and
+            # *NOT* a builtin type. For unknown reasons, some but *NOT* all
+            # builtin types erroneously present themselves to be PEP
+            # 544-compliant protocols under Python >= 3.8: e.g.,
+            #     >>> from typing import Protocol
+            #     >>> isinstance(str, Protocol)
+            #     False        # <--- this makes sense
+            #     >>> isinstance(int, Protocol)
+            #     True         # <--- this makes no sense whatsoever
+            #
+            # Since builtin types are obviously *NOT* PEP 544-compliant
+            # protocols, explicitly exclude all such types. Why, Guido? Why?
+            not (isinstance(hint, type) and is_class_builtin(hint))
+        )
+
 
 # Else, the active Python interpreter targets at most Python < 3.8 and thus
 # fails to support PEP 544. In this case, fallback to declaring this function

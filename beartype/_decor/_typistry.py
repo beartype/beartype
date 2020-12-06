@@ -33,11 +33,13 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
 from beartype._util.py.utilpymodule import (
-    MODULE_NAME_BUILTINS,
-    MODULE_NAME_BUILTINS_DOTTED,
     die_unless_module_attr_name,
-    get_object_class_module_name_or_none,
     import_module_attr,
+)
+from beartype._util.utilclass import (
+    die_unless_class,
+    is_class_builtin,
+    is_classname_builtin,
 )
 from beartype._util.utilobject import (
     get_object_classname,
@@ -176,56 +178,26 @@ def register_typistry_type(hint: type) -> str:
     '''
 
     # If this object is *NOT* a type, raise an exception.
-    if not isinstance(hint, type):
-        raise _BeartypeDecorBeartypistryException(
-            f'Beartypistry type {repr(hint)} not type.')
+    die_unless_class(hint)
     # Else, this object is a type.
     #
     # Note that we defer all further validation of this type to the
-    # Beartypistry.__setitem__() method, implicitly invoked on subsequently
-    # assigning a "bear_typistry" key-value pair.
+    # Beartypistry.__setitem__() method implicitly invoked on subsequently
+    # assigning this type as a "bear_typistry" key.
 
-    # Unqualified name of this type.
-    hint_basename = get_object_class_basename(hint)
-
-    # Fully-qualified name of the module defining this class if this class is
-    # defined by a module *OR* "None" otherwise.
-    hint_module_name = get_object_class_module_name_or_none(hint)
-
-    # If...
-    if (
-        # This type is a builtin (i.e., is defined by the pseudo "builtins"
-        # module whose attributes are globally available by default) *AND*...
-        hint_module_name == MODULE_NAME_BUILTINS and
-        # This type is *NOT* the type of the "None" singleton. Unlike all other
-        # builtin types, the type of the "None" singleton is *NOT* globally
-        # accessible despite being declared to be builtin.
-        #     >>> import builtins
-        #     >>> type(None).__name__
-        #     'NoneType'
-        #     >>> type(None).__module__
-        #     'builtins'
-        #     >>> NoneType
-        #     NameError: name 'NoneType' is not defined   <---- this is balls
-        #
-        # This inconsistency almost certainly constitutes a bug in the CPython
-        # interpreter, but it seems doubtful that anyone else would see it that
-        # way and almost certain that everyone else would attempt to defend
-        # this edge case. In short, we have no choice but to register this type
-        # as if it were a normal type. (Hardly the worst thing to happen.)
-        hint_basename != 'NoneType'
-    # ...then this type does *NOT* require registration. In this case, return
-    # the unqualified name of this type as is.
-    ):
-        return hint_basename
+    # If this type is a builtin (i.e., globally accessible C-based type
+    # requiring *no* explicit importation), this type requires no registration.
+    # In this case, return the unqualified basename of this type as is.
+    if is_class_builtin(hint):
+        return get_object_class_basename(hint)
     # Else, this type is *NOT* a builtin and thus requires registration.
     # assert hint_basename != 'NoneType'
 
     # Fully-qualified name of this type.
-    hint_classname = f'{hint_module_name}.{hint_basename}'
+    hint_classname = get_object_classname(hint)
 
-    # If this type has *NOT* yet been registered with the beartypistry
-    # singleton, do so.
+    # If this type has yet to be registered with the beartypistry singleton, do
+    # so.
     #
     # Note that the beartypistry singleton's __setitem__() dunder method
     # intentionally raises exceptions on attempts to re-register the same
@@ -525,7 +497,7 @@ class Beartypistry(dict):
         # If this hint is a class...
         #
         # Note that although *MOST* classes are PEP-noncompliant (e.g., the
-        # builtin "str" type), *SOME* classes are PEP-compliant (e.g., the
+        # builtin "str" type), some classes are PEP-compliant (e.g., the
         # stdlib "typing.SupportsInt" protocol). Since both PEP-noncompliant
         # and -compliant classes are shallowly type-checkable via the
         # isinnstance() builtin, there exists no demonstrable benefit to
@@ -544,7 +516,7 @@ class Beartypistry(dict):
                 # unqualified basenames (e.g., "list" rather than
                 # "builtins.list") for runtime efficiency, a core optimization
                 # requiring manual whitelisting here.
-                not hint_clsname.startswith(MODULE_NAME_BUILTINS_DOTTED)
+                not is_classname_builtin(hint_clsname)
             # Then raise an exception.
             ):
                 raise _BeartypeDecorBeartypistryException(
