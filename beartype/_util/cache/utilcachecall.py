@@ -289,7 +289,9 @@ def callable_cached(func):
         # Else, only positional arguments are passed.
         #
         # If passed only one positional argument, minimize space consumption by
-        # flattening this tuple of only that argument into that argument.
+        # flattening this tuple of only that argument into that argument. Since
+        # tuple items are necessarily hashable, this argument is necessarily
+        # hashable as well and thus permissible as a dictionary key below.
         elif len(args) == 1:
             params_flat = args[0]
         # Else, one or more positional arguments are passed. In this case,

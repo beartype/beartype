@@ -28,6 +28,11 @@ license`_. Beartype has no runtime dependencies, `only one test-time dependency
 <pytest_>`__, and supports `all Python 3.x releases still in active development
 <Python status_>`__.
 
+    We even have a `roadmap forward to our first major version release
+    <beartype 1.0.0_>`__: **beartype 1.0.0,** expected to be published by late
+    2021. Join the detailed but enticing conversation and be a part of the
+    spiciest runtime type-checking scene that `goes up to eleven`_!
+
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
 .. # table of contents heading from the prior paragraph by less than a single
@@ -894,7 +899,16 @@ types:
 * contextlib.AbstractContextManager_.
 * re.Match_.
 * re.Pattern_.
+* typing.AbstractSet_.
+* typing.AnyStr_.
+* typing.AsyncContextManager_.
+* typing.AsyncGenerator_.
+* typing.AsyncIterable_.
+* typing.AsyncIterator_.
+* typing.Callable_.
+* typing.Collection_.
 * typing.Container_.
+* typing.ContextManager_.
 * typing.Coroutine_.
 * typing.Counter_.
 * typing.DefaultDict_.
@@ -902,7 +916,6 @@ types:
 * typing.Dict_.
 * typing.FrozenSet_.
 * typing.Generator_.
-* typing.IO_.
 * typing.ItemsView_.
 * typing.Iterable_.
 * typing.Iterator_.
@@ -913,7 +926,9 @@ types:
 * typing.MutableMapping_.
 * typing.MutableSet_.
 * typing.NamedTuple_.
+* typing.OrderedDict_.
 * typing.Pattern_.
+* typing.Reversible_.
 * typing.Set_.
 * typing.Type_.
 * typing.TypedDict_.
@@ -2047,6 +2062,8 @@ application stack at tool rather than Python runtime) include:
    https://pypi.org/project/beartype
 
 .. # ------------------( LINKS ~ beartype : remote          )------------------
+.. _beartype 1.0.0:
+   https://github.com/beartype/beartype/issues/7
 .. _codebase:
    https://github.com/beartype/beartype/tree/master/beartype
 .. _profiler suite:
@@ -2087,8 +2104,12 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
 .. # ------------------( LINKS ~ meme                       )------------------
+.. _goes up to eleven:
+   https://www.youtube.com/watch?v=uMSV4OteqBE
 .. _greased lightning:
    https://www.youtube.com/watch?v=H-kL8A4RNQ8
+.. _ludicrous speed:
+   https://www.youtube.com/watch?v=6tTvklMXeFE
 .. _the gripping hand:
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
