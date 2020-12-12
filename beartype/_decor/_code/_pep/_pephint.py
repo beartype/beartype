@@ -16,6 +16,208 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
+#surprisingly non-trivial.
+#
+#First, note that the user-defined literal object defined by a "typing.Literal"
+#hint is available as "hint.__args__[0]". That is, such hints *ALWAYS* have
+#exactly one child hint which is the user-defined literal object.
+#
+#Second, note that mutable objects are *NOT* hashable. So, registering these
+#objects with the "beartypistry" is *NOT* a valid generic solution. That said,
+#we *COULD* technically still do so for the subset of literal objects that are
+#hashable -- which will probably be most of them, actually. To do so, we would
+#then define a new beartype._decor._typistry.register_hashable() function
+#registering a generic hashable. This would then necessitate a new prefix
+#unique to hashables (e.g., "h"). In short, this actually entails quite a bit
+#of work and fails in the general case. So, we might simply avoid this for now.
+#
+#Third, note that one approach would be to augment the breadth-first search
+#performed below to record the "hint_path" used to access the currently visited
+#and possibly nested hint from the universally accessible
+#"__beartype_func.__annotations__[{param_name}]". This is obviously *NOT* the
+#optimally efficient approach, as this will entail multiple dictionary lookups
+#to type-check each literal object. Nonetheless, this is absolutely the
+#simplest approach and thus probably the one we should at least initially
+#pursue. Why? Because literal objects are unlikely to be used much (if at all)
+#in practical real-world applications. We certainly can't think of a single
+#valid use case ourselves. Literal objects are an obvious "code smell." If your
+#callable unconditionally accepts or returns an object, why even go to the
+#trouble of accepting or returning that object in the first place, right? So,
+#efficiency is *ABSOLUTELY* not a concern here.
+#
+#The issue, of course, is that we currently do *NOT* record the "hint_path"
+#used to access the currently visited and possibly nested hint from the
+#universally accessible "__beartype_func.__annotations__[{param_name}]". Doing
+#so will probably prove annoying and possibly non-trivial. Since we might need
+#to refactor quite a bit to do that and would increase the space complexity of
+#this algorithm by a little bit as well, we might consider alternatives.
+#
+#The obvious alternative is to refactor the pep_code_check_hint() function to
+#instead return the 3-tuple "Tuple[str, bool, Tuple[object]]" rather than the
+#2-tuple "Tuple[str, bool]" as we currently do. The new third item of that
+#3-tuple "Tuple[object]" is, of course, the tuple listing all user-defined
+#literal objects (i.e., "hint.__args__[0]" objects) such that the 0-based index
+#in this list of each such object is the breadth-first visitation order in
+#which this submodule discovers that object. Consider the callable with
+#signature:
+#      def muh_func(muh_param: Union[
+#          Literal[True],
+#          Tuple[str, List[Literal['ok']]],
+#          Sequence[Literal[5]],
+#      ]) -> Literal[23.35]: pass
+#
+#The third item of the tuple returned by the pep_code_check_hint() function
+#would then be the following tuple:
+#      (True, 5, 'ok',)
+#
+#Note the unexpected breadth-first ordering and omission of the "23.35" return
+#value literal. In any case, parent functions would then be responsible for
+#aggregating all literal object tuples returned by all calls to the
+#pep_code_check_hint() function for the decorated callable into a new
+#"data.func.__beartype_param_name_to_literals" dictionary mapping from the
+#name of each passed parameter as well as "return" for the return value to the
+#tuple returned by the pep_code_check_hint() function for that parameter.
+#
+#Given that, the pep_code_check_hint() function may then safely and reasonably
+#efficiently access each parameter-specific literal in breadth-first visitation
+#order with a placeholder expression resembling:
+#
+#    PEP586_CODE_PARAM_LITERAL_EXPR = (
+#        '''__beartype_func.__beartype_param_name_to_literals[PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER][{literal_curr_index}]''')
+#    '''
+#    `PEP 586`_-compliant Python expression yielding the literal object subscripting
+#    a possibly nested :attr:`typing.Literal` type hint annotated by the current
+#    parameter or return value.
+#
+#    .. _PEP 586:
+#       https://www.python.org/dev/peps/pep-0586
+#    '''
+#
+#This works, because "PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER" will be
+#globally replaced by the caller with the code-safe name of this parameter or
+#return value. Pretty sweet, yah? There's basically *NO* other way to
+#reasonably render literal objects accessible. This is sufficiently efficient
+#for these bizarre edge-case objects that this will suffice for all time.
+#FIXME: Oh, boy. So, we were *REALLY* overthinking things above -- all of which
+#should simply be ignored. Adding "typing.Literal" is actually trivial. Why?
+#Because object identifiers are both unique and trivially hashable. This means
+#the hashability of literal objects themselves is irrelevant. We only need to
+#map the object identifiers for literal objects to those objects. That's it.
+#Now, there are numerous valid ways to go about that, including:
+#* Registering literal objects with the beartypistry, presumably in a format
+#  resembling f'l{literal_id}'. Technically, this works. But it's also
+#  suboptimal, because it requires:
+#  * Polluting the beartypistry with even less relevant keys, which impacts
+#    runtime performance for other unrelated objects accessed via the
+#    beartypistry.
+#  * At least one more dictionary lookup than necessary.
+#* One new default parameter passed to the decorated callable for each literal
+#  object annotating that callable with name formatted for uniqueness ala
+#  f'__beartype_literal_{literal_id}'. This is, of course, feasible. Note,
+#  however, that we'd eventually like to entirely obsolete *ALL* usage of
+#  beartype-specific default parameters. Why? Because:
+#  * They're incompatible with parameter-preservation. We'd eventually like the
+#    function wrappers generated by @beartype to perfectly masquerade as their
+#    decorated callables, which mostly means perfectly replicating the original
+#    signature of those decorated callables.
+#  * They obstruct runtime introspection. Imagine attempting to dynamically
+#    call function wrappers generated by @beartype with clever automation.
+#    Currently, that basically can't happen. That's bad. Quite bad, actually.
+#  * They enable callers to maliciously override beartype-specific default
+#    parameters. Of course, it's unclear why anyone would want to do that --
+#    but the mere fact that they can should be enough to make anyone
+#    uncomfortable with the current approach.
+#  * They possibly impose a non-negligible space and time cost. Currently, we
+#    only pass two default parameters; that's probably negligible. But as soon
+#    as we start scaling that up to an arbitrary number of default parameters,
+#    it becomes likely that non-negligible space and time costs will appear.
+#* One new global variable defined in the global scope specific to the
+#  decorated callable for each literal object annotating that callable with
+#  name formatted for uniqueness ala f'__beartype_literal_{literal_id}'. *THIS
+#  IS THE WAY FORWARD.* In fact, this is the way forward for literally (pun!)
+#  everything, including:
+#  * The decorated callable. We currently pass the decorated callable as the
+#    "__beartype_func" default parameter. Instead, that callable be should be
+#    declared as a "__beartype_func" global variable.
+#  * The beartypistry itself, for identical reasons. This declaration should be
+#    made conditional on whether the function wrapper actually requires the
+#    beartypistry. Callables annotated only by builtin types (e.g., int, str),
+#    do *NOT* require the beartypistry, for example.
+#  * Types and tuples of types currently registered with the beartypistry.
+#    Eventually, the only remaining use for the beartypistry will be forward
+#    references. There's really no other reasonable way to support forward
+#    references, which is fine. It would sadden us to kill off the beartypistry
+#    entirely, given the effort we've invested in it. Note that:
+#    * Types should be declared as "__beartype_type_{class_id}" global
+#      variables, where "{class_id}" is the object id of that class. Note this
+#      trivially circumvents ambiguity issues with fully-qualified classnames
+#      that would otherwise clash (e.g., "org.MuhType" versus "org_MuhType").
+#    * Tuples of types should pursue a hybrid approach and:
+#      * Continue to be *REGISTERED* (basically, cached) at decoration time
+#        with the beartypistry as they currently are. The reason for this, of
+#        course, is to minimize space consumption for tuples auto-coerced from
+#        the same "Union" type hints nested at different nesting levels. No
+#        such issue exists for classes, of course.
+#      * Declared and accessed at call time as "__beartype_tuple_{tuple_id}"
+#        global variables, where "{tuple_id}" is the object id of that tuple.
+#        This maximizes call time efficiency by avoiding dictionary lookups.
+#  Implementing this will require refactoring not only this function but the
+#  entire tree of function calls leading to this function. Why? Because we'll
+#  need to percolate up the tree the following additional metadata as
+#  additional return values:
+#      global_var_name_to_value: Dict[str, object]
+#
+#  Obviously, that is a dictionary mapping from the unique name to value of
+#  each callable-specific global variable that should be declared by the
+#  top-level @beartype() decorator function generating the wrapper function.
+#  Specifically:
+#
+#  * The pep_code_check_hint() function below should be refactored to:
+#    * Locally declare a new "global_var_name_to_value" local dictionary,
+#      initialized to the empty dictionary. Although this local *COULD* also be
+#      initialized to "None", that would be a bit silly and complicate
+#      everything in the common case, as most calls to this function will be
+#      adding one or more globals to this dictionary. Oh, wait... perhaps it
+#      should be initialized to "None" after all, to minimize space consumption
+#      due to memoization. Sure. Whatevahs! In that case, we want to also
+#      define:
+#      * A new local _register_type() closure resembling the current
+#        _typistry.register_type() function.
+#      * A new local _register_tuple() closure resembling the current
+#        _typistry.register_tuple() function. Tuples of types are particularly
+#        complicated, thanks to continued caching under the beartypistry.
+#    * Return this dictionary as yet another return value.
+#  * The beartype._decor.main.beartype() function should be refactored to:
+#    * Define these new local variables:
+#      * "global_attrs", the dictionary mapping from the names to values of all
+#        global variables required by the decorated callable. Initialized to
+#        either "None" or the empty dictionary.
+#      * "global_attrs_func", the dictionary mapping from the names to values
+#        of all global variables conditionally required by this decorated
+#        callable specifically. Note that it is explicitly permissible for this
+#        dictionary to be empty (e.g., when type hints annotating the decorated
+#        callable are all builtin types).
+#    * Set "global_attrs_func" to the "global_var_name_to_value" value returned
+#      by the generate_code() function.
+#    * Set "global_attrs" to the dynamic merger of the "_GLOBAL_ATTRS" global
+#      dictionary constant with the "global_attrs_func" dictionary local. We
+#      probably want to code this mildly carefully. Efficiency is slightly less
+#      critical here than robustness, as this is decoration time. In
+#      particular, we'll want to ensure that:
+#      * The "_GLOBAL_ATTRS" and "global_attrs_func" dictionaries do *NOT*
+#        collide (i.e., have no keys in common). An exception should be raised
+#        when this is the case, as that would indicate a critical low-level
+#        @beartype issue.
+#      * The "__beartype_func" global variable be added to either the
+#        "global_attrs_func" *OR* "global_attrs" dictionaries. It doesn't
+#        particularly matter which, so whichever is easier and faster is it.
+#    * Pass "global_attrs" rather than "_GLOBAL_ATTRS" to the exec() call.
+#
+#That's it! We'll be hitting two birds with one stone here, so that makes this
+#a fairly fun step forwards -- even if "typing.Literal" itself is rather
+#inconsequential in the grand scheme of things. Yum.
+
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
 #"__beartypistry" parameter unconditionally passed to all wrapper functions
@@ -79,6 +281,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #singleton dictionary to reduce space consumption for different tuple objects
 #containing the same types, but that we should no longer look those tuples up
 #in that dictionary at runtime from within wrapper functions.
+#FIXME: Most of the prior "FIXME:" is now obsolete. See the "typing.Literal"
+#discussion for the real optimal approach: callable-specific global variables.
 
 #FIXME: Note that there exist four possible approaches to random item selection
 #for arbitrary containers depending on container type. Either the actual pith
@@ -195,90 +399,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  enable that class to be subscripted with "typing"-style types ala:
 #     def muh_func(muh_mapping: BeartypeDict[str, int]) -> None: pass
 #In short, we'll need to conduct considerably more research here.
-
-#FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
-#surprisingly non-trivial.
-#
-#First, note that the user-defined literal object defined by a "typing.Literal"
-#hint is available as "hint.__args__[0]". That is, such hints *ALWAYS* have
-#exactly one child hint which is the user-defined literal object.
-#
-#Second, note that mutable objects are *NOT* hashable. So, registering these
-#objects with the "beartypistry" is *NOT* a valid generic solution. That said,
-#we *COULD* technically still do so for the subset of literal objects that are
-#hashable -- which will probably be most of them, actually. To do so, we would
-#then define a new beartype._decor._typistry.register_hashable() function
-#registering a generic hashable. This would then necessitate a new prefix
-#unique to hashables (e.g., "h"). In short, this actually entails quite a bit
-#of work and fails in the general case. So, we might simply avoid this for now.
-#
-#Third, note that one approach would be to augment the breadth-first search
-#performed below to record the "hint_path" used to access the currently visited
-#and possibly nested hint from the universally accessible
-#"__beartype_func.__annotations__[{param_name}]". This is obviously *NOT* the
-#optimally efficient approach, as this will entail multiple dictionary lookups
-#to type-check each literal object. Nonetheless, this is absolutely the
-#simplest approach and thus probably the one we should at least initially
-#pursue. Why? Because literal objects are unlikely to be used much (if at all)
-#in practical real-world applications. We certainly can't think of a single
-#valid use case ourselves. Literal objects are an obvious "code smell." If your
-#callable unconditionally accepts or returns an object, why even go to the
-#trouble of accepting or returning that object in the first place, right? So,
-#efficiency is *ABSOLUTELY* not a concern here.
-#
-#The issue, of course, is that we currently do *NOT* record the "hint_path"
-#used to access the currently visited and possibly nested hint from the
-#universally accessible "__beartype_func.__annotations__[{param_name}]". Doing
-#so will probably prove annoying and possibly non-trivial. Since we might need
-#to refactor quite a bit to do that and would increase the space complexity of
-#this algorithm by a little bit as well, we might consider alternatives.
-#
-#The obvious alternative is to refactor the pep_code_check_hint() function to
-#instead return the 3-tuple "Tuple[str, bool, Tuple[object]]" rather than the
-#2-tuple "Tuple[str, bool]" as we currently do. The new third item of that
-#3-tuple "Tuple[object]" is, of course, the tuple listing all user-defined
-#literal objects (i.e., "hint.__args__[0]" objects) such that the 0-based index
-#in this list of each such object is the breadth-first visitation order in
-#which this submodule discovers that object. Consider the callable with
-#signature:
-#      def muh_func(muh_param: Union[
-#          Literal[True],
-#          Tuple[str, List[Literal['ok']]],
-#          Sequence[Literal[5]],
-#      ]) -> Literal[23.35]: pass
-#
-#The third item of the tuple returned by the pep_code_check_hint() function
-#would then be the following tuple:
-#      (True, 5, 'ok',)
-#
-#Note the unexpected breadth-first ordering and omission of the "23.35" return
-#value literal. In any case, parent functions would then be responsible for
-#aggregating all literal object tuples returned by all calls to the
-#pep_code_check_hint() function for the decorated callable into a new
-#"data.func.__beartype_param_name_to_literals" dictionary mapping from the
-#name of each passed parameter as well as "return" for the return value to the
-#tuple returned by the pep_code_check_hint() function for that parameter.
-#
-#Given that, the pep_code_check_hint() function may then safely and reasonably
-#efficiently access each parameter-specific literal in breadth-first visitation
-#order with a placeholder expression resembling:
-#
-#    PEP586_CODE_PARAM_LITERAL_EXPR = (
-#        '''__beartype_func.__beartype_param_name_to_literals[PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER][{literal_curr_index}]''')
-#    '''
-#    `PEP 586`_-compliant Python expression yielding the literal object subscripting
-#    a possibly nested :attr:`typing.Literal` type hint annotated by the current
-#    parameter or return value.
-#
-#    .. _PEP 586:
-#       https://www.python.org/dev/peps/pep-0586
-#    '''
-#
-#This works, because "PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER" will be
-#globally replaced by the caller with the code-safe name of this parameter or
-#return value. Pretty sweet, yah? There's basically *NO* other way to
-#reasonably render literal objects accessible. This is sufficiently efficient
-#for these bizarre edge-case objects that this will suffice for all time.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (

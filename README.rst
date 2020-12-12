@@ -28,10 +28,11 @@ license`_. Beartype has no runtime dependencies, `only one test-time dependency
 <pytest_>`__, and supports `all Python 3.x releases still in active development
 <Python status_>`__.
 
-    We even have a `roadmap forward to our first major version release
-    <beartype 1.0.0_>`__: **beartype 1.0.0,** expected to be published by late
-    2021. Join the detailed but enticing conversation and be a part of the
-    spiciest runtime type-checking scene that `goes up to eleven`_!
+    Beartype has a `roadmap forward to our first major milestone <beartype
+    1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
+    with all annotation standards by late 2021. :sup:`...in theory` Join `the
+    strangely enticing conversation <beartype 1.0.0_>`__ and be a part of the
+    spicy runtime type-checker that `goes up to eleven`_.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
