@@ -15,18 +15,22 @@ beartype —[ …the bare-metal type checker ]—
                            — `The Jungle Book`_.
 
 **Beartype** is an open-source pure-Python `PEP-compliant <Compliance_>`__
-`O(1) constant-time <Timings_>`__ runtime type checker emphasizing efficiency,
-portability, and thrilling puns.
+`constant-time <Timings_>`__ `runtime type checker <Usage_>`__ emphasizing
+efficiency, portability, and thrilling puns.
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
-abstraction_>`__ into the lawless world of dynamically-typed pure Python.
+abstraction_>`__ into the lawless world of dynamically-typed Python by
+`enforcing type safety of arbitrary objects at the granular level of functions
+and methods <Usage_>`__ in `O(1) non-amortized worst-case time with negligible
+constant factors <Timings_>`__.
 
 Beartype is `portably implemented <codebase_>`__ in `Python 3 <Python_>`__,
 `continuously stress-tested <tests_>`__ via `GitHub Actions`_ **+** tox_ **+**
 pytest_, and `permissively distributed <beartype license_>`__ under the `MIT
 license`_. Beartype has no runtime dependencies, `only one test-time dependency
-<pytest_>`__, and supports `all Python 3.x releases still in active development
-<Python status_>`__.
+<pytest_>`__, supports `all Python 3.x releases still in active development
+<Python status_>`__, and complies with *almost* `all type hint annotations
+standardized by the Python community <Compliance_>`__.
 
     Beartype has a `roadmap forward to our first major milestone <beartype
     1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
@@ -85,17 +89,28 @@ the computational nuclear option:
 Overview
 ========
 
-Beartype imposes no developer constraints beyond `importation and usage of a
-single configuration-free decorator <Cheatsheet_>`__ – trivializing integration
-with new and existing applications, frameworks, modules, packages, and scripts.
-Beartype stresses zero-cost strategies at both:
+Beartype is a novel first line of defense. In Python's vast arsenal of
+`software quality assurance (SQA) <SQA_>`__, beartype holds the `shield wall`_
+against breaches in type safety by improper parameter and return values
+violating developer expectations.
+
+Beartype is unopinionated. Beartype inflicts *no* developer constraints
+beyond `importation and usage of a single configuration-free decorator
+<Cheatsheet_>`__. Beartype is trivially integrated into new and existing
+applications, stacks, modules, and scripts already annotating callables with
+`PEP-compliant industry-standard type hints <Compliance_>`__.
+
+Beartype is zero-cost. Beartype inflicts *no* harmful developer tradeoffs,
+instead stressing expense-free strategies at both:
 
 * **Installation time.** Beartype has no install-time or runtime dependencies,
   `supports standard Python package managers <Installation_>`__, and happily
   coexists with competing static type checkers and other runtime type checkers.
-* **Runtime.** Thanks to aggressive memoization and code generation at
-  decoration time, beartype guarantees `O(1) constant-time runtime complexity
-  with negligible constant factors <Timings_>`__.
+* **Runtime.** Thanks to aggressive memoization and dynamic code generation at
+  decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
+  complexity with negligible constant factors <Timings_>`__.
+
+## Versus Static Type Checkers
 
 Like competing static type checkers operating at the coarse-grained application
 level with ad-hoc heuristic type inference (e.g., Pyre_, mypy_, pyright_,
@@ -137,17 +152,180 @@ Unlike static type checkers:
     * Metaclasses.
     * Monkey patches.
 
+## Versus Runtime Type Checkers
+
 Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
 beartype decorates callables with dynamically generated wrappers efficiently
 type-checking each parameter passed to and value returned from those callables
 in constant time. Since "performance by default" is our first-class concern,
 generated wrappers are guaranteed to:
 
-* Exhibit `O(1) constant-time complexity with negligible constant factors
-  <Timings_>`__.
+* Exhibit `O(1) non-amortized worst-case time complexity with negligible
+  constant factors <Timings_>`__.
 * Be either more efficient (in the common case) or exactly as efficient minus
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*
+
+Usage
+=====
+
+Beartype makes type-checking painless, portable, and transparent. Just:
+
+    Decorate functions and methods annotated by `standard type hints <PEP
+    484_>`__ with the ``@beartype.beartype`` decorator, which wraps those
+    functions and methods in performant type-checking dynamically generated
+    on-the-fly.
+
+Toy Example
+-----------
+
+Let's see what that looks like for a "Hello, Jungle!" toy example. Just:
+
+#. Import the ``@beartype.beartype`` decorator:
+
+   .. code-block:: python
+   
+      from beartype import beartype
+
+#. Decorate any annotated function with that decorator:
+
+   .. code-block:: python
+
+      from sys import stderr, stdout
+      from typing import TextIO
+   
+      @beartype
+      def hello_jungle(
+          sep: str = ' ',
+          end: str = '\n',
+          file: TextIO = stdout,
+          flush: bool = False,
+      ):
+          '''
+          Print "Hello, Jungle!" to a stream, or to sys.stdout by default.
+
+          Optional keyword arguments:
+          file:  a file-like object (stream); defaults to the current sys.stdout.
+          sep:   string inserted between values, default a space.
+          end:   string appended after the last value, default a newline.
+          flush: whether to forcibly flush the stream.
+          '''
+
+          print('Hello, Jungle!', sep, end, file, flush)
+
+#. Call that function with valid parameters and relish as everything works:
+
+   .. code-block:: python
+
+      >>> hello_jungle(sep='...ROOOAR!!!!', end='uhoh.', file=stderr, flush=True)
+      Hello, Jungle! ...ROOOAR!!!! uhoh.
+
+#. Call that function with invalid parameters and cringe as everything blows up
+   with a human-readable exception exhibiting the single cause of failure:
+
+   .. code-block:: python
+
+      >>> hello_jungle(sep=b"What? Haven't you ever seen a byte-string separator before?")
+      BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
+      sep="b"What? Haven't you ever seen a byte-string separator before?""
+      violates type hint <class 'str'>, as value "b"What? Haven't you ever seen
+      a byte-string separator before?"" not str.
+
+      >>> hello_jungle(file="I know this looks bad, but I swear I'm a file. Would I lie?")
+      BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
+      file="I know this looks bad, but I swear I'm a file. Would I lie?"
+      violates type hint <class 'typing.TextIO'>, as value "I know this looks
+      bad, but I swear I'm a file. Would I lie?" not <protocol
+      "beartype._util.hint.data.pep.proposal.utilhintdatapep544._Pep544TextIO">.
+
+Industrial Example
+------------------
+
+Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
+with beartype-based runtime type checking, *just 'cause*:
+
+   .. code-block:: python
+
+      from beartype import beartype
+      from collections.abc import Sequence
+      from numpy import dtype, empty_like, ndarray
+      from typing import Optional, Union
+
+      @beartype
+      def empty_like_bear(
+          prototype: object,
+          dtype: Optional[dtype] = None,
+          order: str = 'K',
+          subok: bool = True,
+          shape: Optional[Union[int, Sequence[int]]] = None,
+      ) -> ndarray:
+          return empty_like(prototype, dtype, order, subok, shape)
+
+Beartype supports arbitrarily nested type hints compliant with different PEPs.
+Internally, beartype non-recursively iterates over type hints *only* at
+decoration time via a micro-optimized and memoized breadth-first search (BFS).
+
+Note the non-trivial hint for the optional ``shape`` parameter, synthesized
+from a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP
+484-compliant union <typing.Union_>`__ of a builtin type and a `PEP
+585-compliant subscripted abstract base class (ABC)
+<collections.abc.Sequence_>`__, accepting as valid either:
+
+* The ``None`` singleton.
+* An integer.
+* A sequence of integers.
+
+Let's call that wrapper with both valid and invalid parameters:
+
+      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
+      array([[94447336794963,              0],
+             [             7,             -1]])
+      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, {2}))
+      BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
+      shape=(2, {2}) violates type hint
+      typing.Union[int, collections.abc.Sequence, NoneType], as (2, {2}):
+      * Not <class "builtins.NoneType"> or int.
+      * Tuple item 1 value {2} not int.
+
+Note the human-readable message of the raised exception, embedding a bulleted
+list enumerating the various ways this invalid parameter fails to satisfy its
+type hint, including the types and indices of the first container item failing
+to satisfy the nested ``Sequence[int]`` hint.
+
+See the Decoration_ section for a low-level exhibition of code dynamically
+generated by beartype for non-trivial use cases resembling the above. It's fun!
+
+Would You Like to Know More?
+----------------------------
+
+If you know `type hints <PEP 484_>`__, you know beartype. Since beartype is
+driven entirely by `tool-agnostic community standards declared elsewhere <PEP
+0_>`__, beartype's public API is simply the summation of those standards. As
+the end user, all you need to know is that decorated callables magically begin
+raising human-readable exceptions when you pass parameter or return values that
+violate the type hints annotating those parameter or return values.
+
+If you don't know `type hints <PEP 484_>`__, this is your moment to go deep on
+the hardest hammer in Python's SQA_ toolbox. Here are a few friendly primers to
+guide you on your maiden voyage through the misty archipelagos of type hinting:
+
+* `Python Type Checking (Guide) <RealPython_>`__, a comprehensive third-party
+  introduction to the subject. Like most existing articles, this guide predates
+  `O(1)` runtime type checkers and thus discusses only static type checking.
+  Thankfully, the underlying syntax and semantics cleanly translate to runtime
+  type checking as well.
+* `PEP 484 -- Type Hints <PEP 484_>`__, the defining standard, holy grail, and
+  first testament of type hinting `personally authored by Python's former
+  Benevolent Dictator for Life (BDFL) himself, Guido van Rossum <Guido van
+  Rossum_>`__. Since it's surprisingly approachable and covers all the core
+  conceits in detail, we recommend reading at least a few sections of interest.
+  Since it's really a doctoral thesis by another name, we can't recommend
+  reading it in entirety. *So it goes.*
+  
+.. #FIXME: Concatenate the prior list item with this when I am no exhausted.
+.. #  Instead, here's the highlights reel:
+.. #
+.. #  * `typing.Union`_, enabling .
 
 Cheatsheet
 ==========
@@ -186,7 +364,7 @@ Let's type-check like `greased lightning`_:
        VersionTypes,
    )
 
-   # Import user-defined types for use with @beartype, three.
+   # Import user-defined classes for use with @beartype, too.
    from my_package.my_module import MyClass
 
    # Decorate functions with @beartype and...
@@ -2090,11 +2268,43 @@ application stack at tool rather than Python runtime) include:
 .. _Tufts University:
    https://www.tufts.edu
 
+.. # ------------------( LINKS ~ github                     )------------------
+.. _GitHub Actions:
+   https://github.com/features/actions
+
+.. # ------------------( LINKS ~ github : user              )------------------
+.. _leycec:
+   https://github.com/leycec
+
+.. # ------------------( LINKS ~ idea                       )------------------
+.. _Denial-of-Service:
+   https://en.wikipedia.org/wiki/Denial-of-service_attack
+.. _DRY:
+   https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
+.. _SQA:
+   https://en.wikipedia.org/wiki/Software_quality_assurance
+.. _amortized analysis:
+   https://en.wikipedia.org/wiki/Amortized_analysis
+.. _shield wall:
+   https://en.wikipedia.org/wiki/Shield_wall
+.. _zero-cost abstraction:
+   https://boats.gitlab.io/blog/post/zero-cost-abstractions
+
 .. # ------------------( LINKS ~ kipling                    )------------------
 .. _The Jungle Book:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
 .. _Shere Khan:
    https://en.wikipedia.org/wiki/Shere_Khan
+
+.. # ------------------( LINKS ~ lang                       )------------------
+.. _C++:
+   https://en.wikipedia.org/wiki/C%2B%2B
+.. _Rust:
+   https://www.rust-lang.org
+
+.. # ------------------( LINKS ~ license                    )------------------
+.. _MIT license:
+   https://opensource.org/licenses/MIT
 
 .. # ------------------( LINKS ~ math                       )------------------
 .. _Euler–Mascheroni constant:
@@ -2114,31 +2324,9 @@ application stack at tool rather than Python runtime) include:
 .. _the gripping hand:
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
-.. # ------------------( LINKS ~ non-py                     )------------------
-.. _Denial-of-Service:
-   https://en.wikipedia.org/wiki/Denial-of-service_attack
-.. _DRY:
-   https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
-.. _zero-cost abstraction:
-   https://boats.gitlab.io/blog/post/zero-cost-abstractions
-
-.. # ------------------( LINKS ~ non-py : lang              )------------------
-.. _C++:
-   https://en.wikipedia.org/wiki/C%2B%2B
-.. _Rust:
-   https://www.rust-lang.org
-
-.. # ------------------( LINKS ~ non-py : os : linux        )------------------
+.. # ------------------( LINKS ~ os : linux                 )------------------
 .. _Gentoo:
    https://www.gentoo.org
-
-.. # ------------------( LINKS ~ service                    )------------------
-.. _GitHub Actions:
-   https://github.com/features/actions
-
-.. # ------------------( LINKS ~ standard                   )------------------
-.. _MIT license:
-   https://opensource.org/licenses/MIT
 
 .. # ------------------( LINKS ~ py                         )------------------
 .. _Python:
@@ -2147,6 +2335,12 @@ application stack at tool rather than Python runtime) include:
    https://devguide.python.org/#status-of-python-branches
 .. _pip:
    https://pip.pypa.io
+
+.. # ------------------( LINKS ~ py : article               )------------------
+.. _Guido van Rossum:
+   https://en.wikipedia.org/wiki/Guido_van_Rossum
+.. _RealPython:
+   https://realpython.com/python-type-checking
 
 .. # ------------------( LINKS ~ py : cli                   )------------------
 .. _-O:
@@ -2171,10 +2365,14 @@ application stack at tool rather than Python runtime) include:
    https://www.pypy.org
 
 .. # ------------------( LINKS ~ py : package               )------------------
-.. _NumPy:
-   https://numpy.org
 .. _SymPy:
    https://www.sympy.org
+
+.. # ------------------( LINKS ~ py : package : numpy       )------------------
+.. _NumPy:
+   https://numpy.org
+.. _numpy.empty_like:
+   https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
 
 .. # ------------------( LINKS ~ py : pep                   )------------------
 .. _PEP 0:
@@ -2509,7 +2707,3 @@ application stack at tool rather than Python runtime) include:
    https://github.com/google/pytype
 .. _pyright:
    https://github.com/Microsoft/pyright
-
-.. # ------------------( LINKS ~ users                      )------------------
-.. _leycec:
-   https://github.com/leycec

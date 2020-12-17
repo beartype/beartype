@@ -172,7 +172,7 @@ def label_callable_decorated_return(func: 'CallableTypes') -> str:
     '''
 
     # Create and return this label.
-    return f'{label_callable_decorated(func)} return value'
+    return f'{label_callable_decorated(func)} return '
 
 
 def label_callable_decorated_return_value(

@@ -16,6 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Add support for "None", which we sadly neglected. *sigh* To quote:
+#    When used in a type hint, the expression None is considered equivalent to
+#    type(None).
+
 #FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
 #surprisingly non-trivial.
 #
@@ -217,6 +221,53 @@ This private submodule is *not* intended for importation by downstream callers.
 #That's it! We'll be hitting two birds with one stone here, so that makes this
 #a fairly fun step forwards -- even if "typing.Literal" itself is rather
 #inconsequential in the grand scheme of things. Yum.
+
+#FIXME: Resurrect memoization support. To do so, we'll probably need to
+#abandon the @callable_cached decorator employed below in favour of a manually
+#implemented dictionary cache resembling:
+#
+#    _PEP_HINT_REPR_TO_CODE_CHECK = {}
+#    '''
+#    Dictionary mapping from the machine-readable representation of each
+#    PEP-compliant type hint previously passed to a call of the
+#    :func:`pep_code_check_hint` function to the tuple returned from that call.
+#    '''
+#
+#Why? Because PEP 585 fails to internally cache PEP 585-compliant type hints,
+#unlike *MOST* PEP 484-compliant type hints: e.g.,
+#
+#     >>> import typing as t
+#     >>> list[int] is list[int]
+#     False
+#     >>> t.List[int] is t.List[int]
+#     True
+#
+#This means that brute-force memoization fails. Happily, the __repr__() dunder
+#method still exists to uniquely identify type hints. While calling that
+#method will impose a non-negligible runtime cost, that cost will absolutely be
+#*MUCH* smaller than that imposed by the pep_code_check_hint().
+#
+#The pep_code_check_hint() function will then need to be refactored as follows:
+#* Drop the @callable_cached decorator.
+#* Before doing *ANYTHING* else in the body of that function:
+#  1. Get the passed hint's repr().
+#  2. If that repr() is a key of "_PEP_HINT_REPR_TO_CODE_CHECK",
+#     immediately return the corresponding value of that dictionary.
+#  3. Else, continue as normal.
+#* At the very end of that function, cache that repr() and the generated
+#  code as a new key-value pair of that dictionary.
+#
+#Note that this can probably be optimized a bit by noting that *SOME* (but
+#probably not *ALL*) "typing" hints are cached. That means we can directly
+#cache the id() rather than repr() for those hints, which is substantially
+#faster to compute. The issue, of course, is deciding the subset of "typing"
+#hints that are reliably cached. To compound matters, we need to do this across
+#all supported Python versions.
+#
+#Under Python 3.9, this appears to be trivially decidable. Since the private
+#@typing._tp_cache decorator performs this caching, we only need to find all
+#methods decorated by this decorator and then work backward to the public
+#"typing" hints bound to those methods.
 
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private

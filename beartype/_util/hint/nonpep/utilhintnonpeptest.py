@@ -132,13 +132,18 @@ def die_unless_hint_nonpep(
     if is_str_valid:
         raise exception_cls(
             f'{hint_label} {repr(hint)} '
-            f'neither type, string, nor tuple of types and strings.'
+            f'neither PEP-compliant nor -noncompliant '
+            f'(e.g., standard class, forward reference, or '
+            f'tuple of standard classes and forward references).'
         )
     # Else, forward references are unsupported. In this case, raise an
     # exception noting that.
     else:
         raise exception_cls(
-            f'{hint_label} {repr(hint)} neither type nor tuple of types.')
+            f'{hint_label} {repr(hint)} '
+            f'neither PEP-compliant nor -noncompliant '
+            f'(e.g., standard class or tuple of standard classes).'
+        )
 
 
 def die_unless_hint_nonpep_tuple(
