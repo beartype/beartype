@@ -20,6 +20,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    When used in a type hint, the expression None is considered equivalent to
 #    type(None).
 
+#FIXME: Byte string values aren't displayed properly in messages: e.g.,
+#    ...as value "b"What? Haven't you ever seen a byte-string separator
+#    before?"" not str.
+
 #FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
 #surprisingly non-trivial.
 #

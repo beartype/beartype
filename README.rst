@@ -113,10 +113,10 @@ instead stressing expense-free strategies at both:
 Versus Static Type Checkers
 ---------------------------
 
-Like competing static type checkers operating at the coarse-grained application
-level with ad-hoc heuristic type inference (e.g., Pyre_, mypy_, pyright_,
-pytype_), beartype effectively `imposes no runtime overhead <Timings_>`__.
-Unlike static type checkers:
+Like `competing static type checkers <See Also_>`__ operating at the
+coarse-grained application level via ad-hoc heuristic type inference (e.g.,
+Pyre_, mypy_, pyright_, pytype_), beartype effectively `imposes no runtime
+overhead <Timings_>`__. Unlike static type checkers:
 
 * Beartype operates exclusively at the fine-grained callable level of
   pure-Python functions and methods via the standard decorator design pattern.
@@ -156,11 +156,11 @@ Unlike static type checkers:
 Versus Runtime Type Checkers
 ----------------------------
 
-Unlike comparable runtime type checkers (e.g., enforce_, pytypes_, typeguard_),
-beartype decorates callables with dynamically generated wrappers efficiently
-type-checking each parameter passed to and value returned from those callables
-in constant time. Since "performance by default" is our first-class concern,
-generated wrappers are guaranteed to:
+Unlike `comparable runtime type checkers <See Also_>`__ (e.g., enforce_,
+pytypes_, typeguard_), beartype decorates callables with dynamically generated
+wrappers efficiently type-checking each parameter passed to and value returned
+from those callables in constant time. Since "performance by default" is our
+first-class concern, generated wrappers are guaranteed to:
 
 * Exhibit `O(1) non-amortized worst-case time complexity with negligible
   constant factors <Timings_>`__.
@@ -231,22 +231,15 @@ Let's see what that looks like for a "Hello, Jungle!" toy example. Just:
       ...     b"What? Haven't you ever seen a byte-string separator before?"))
       BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
       sep="b"What? Haven't you ever seen a byte-string separator before?""
-      violates type hint <class 'str'>, as value "b"What? Haven't you ever seen
-      a byte-string separator before?"" not str.
-
-      >>> hello_jungle(file=(
-      ...     "I know this looks bad, but I swear I'm a file. Would I lie?"))
-      BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
-      file="I know this looks bad, but I swear I'm a file. Would I lie?"
-      violates type hint <class 'typing.TextIO'>, as value "I know this looks
-      bad, but I swear I'm a file. Would I lie?" not <protocol
-      "beartype._util.hint.data.pep.proposal.utilhintdatapep544._Pep544TextIO">.
+      violates type hint <class 'str'>, as value b"What? Haven't you ever seen
+      a byte-string separator before?" not str.
 
 Industrial Example
 ------------------
 
 Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
-with beartype-based runtime type checking, *just 'cause*:
+with automated runtime type checking to demonstrate beartype's support for
+non-trivial combinations of nested type hints compliant with different PEPs: 
 
    .. code-block:: python
 
@@ -265,15 +258,11 @@ with beartype-based runtime type checking, *just 'cause*:
       ) -> ndarray:
           return empty_like(prototype, dtype, order, subok, shape)
 
-Beartype supports arbitrarily nested type hints compliant with different PEPs.
-Internally, beartype non-recursively iterates over type hints *only* at
-decoration time with a micro-optimized and memoized breadth-first search (BFS).
-
 Note the non-trivial hint for the optional ``shape`` parameter, synthesized
 from a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP
 484-compliant union <typing.Union_>`__ of a builtin type and a `PEP
 585-compliant subscripted abstract base class (ABC)
-<collections.abc.Sequence_>`__ accepting as valid either:
+<collections.abc.Sequence_>`__, accepting as valid either:
 
 * The ``None`` singleton.
 * An integer.
@@ -284,17 +273,17 @@ Let's call that wrapper with both valid and invalid parameters:
       >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
       array([[94447336794963,              0],
              [             7,             -1]])
-      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, {2}))
+      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
       BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
-      shape=(2, {2}) violates type hint
-      typing.Union[int, collections.abc.Sequence, NoneType], as (2, {2}):
+      shape=([2], [2]) violates type hint
+      typing.Union[int, collections.abc.Sequence, NoneType], as ([2], [2]):
       * Not <class "builtins.NoneType"> or int.
-      * Tuple item 1 value {2} not int.
+      * Tuple item 0 value [2] not int.
 
-Note the human-readable message of the raised exception embeds a bulleted list
-enumerating the various ways this invalid parameter fails to satisfy its type
-hint, including the types and indices of the first container item failing to
-satisfy the nested ``Sequence[int]`` hint.
+Note the human-readable message of the raised exception, containing a bulleted
+list enumerating the various ways this invalid parameter fails to satisfy its
+type hint, including the types and indices of the first container item failing
+to satisfy the nested ``Sequence[int]`` hint.
 
 See the `"Decoration" section <Decoration_>`__ for actual code dynamically
 generated by beartype for real-world use cases resembling those above. Fun!
@@ -330,6 +319,112 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #  Instead, here's the highlights reel:
 .. #
 .. #  * `typing.Union`_, enabling .
+
+How Much Does All This Cost?
+----------------------------
+
+Beartype dynamically generates functions wrapping decorated callables with
+constant-time runtime type-checking. This separation of concerns means that
+beartype exhibits different cost profiles at decoration and call time. Whereas
+standard runtime type-checking decorators are fast at decoration time and slow
+at call time, beartype is the exact opposite.
+
+At call time, wrapper functions generated by the ``@beartype`` decorator are
+guaranteed to unconditionally run in **O(1) non-amortized worst-case time with
+negligible constant factors** regardless of type hint complexity or nesting.
+This is *not* an amortized average-case analysis. Wrapper functions really are
+``O(1)`` time in the best, average, and worst cases.  
+
+At decoration time, performance is slightly worse. Internally, beartype
+non-recursively iterates over type hints at decoration time with a
+micro-optimized breadth-first search (BFS). Since this BFS is memoized, its
+cost is paid exactly once per type hint per process; subsequent references to
+the same hint over different parameters and returns of different callables in
+the same process reuse the results of the previously memoized BFS for that
+hint. The ``@beartype`` decorator thus runs in:
+
+* **O(1) amortized average-case time.**
+* **O(k) non-amortized worst-case time** for ``k`` the number of child type
+  hints nested in a parent type hint and including that parent.
+
+Since we generally expect a callable to be decorated only once but called
+multiple times per process, we might expect the cost of decoration to be
+ignorable in the aggregate. Interestingly, `this is not the case <Timings_>`.
+Although only paid once and obviated through memoization, `decoration time is
+sufficiently expensive and call time sufficiently inexpensive that beartype
+spends most of its wall-clock merely decorating callables <Timings_>`. The
+actual function wrappers dynamically generated by ``@beartype`` consume
+comparatively little wall-clock, even when repeatedly called many times.
+
+See the `"Timings" section <Timings_>`__ for further discussion and real-world
+profiling of beartype against linear runtime type checkers. More fun!
+
+That's Some Catch, That Catch-22
+--------------------------------
+
+Beartype's greatest strength is that it checks types in constant time.
+
+Beartype's greatest weakness is that it checks types in constant time.
+
+Only so many type-checks can be stuffed into a constant slice of time with
+negligible constant factors. In this subsection, we introduce exactly what (and
+why) beartype stuffs into its well-bounded slice of the CPU pie.
+
+Conventional runtime type checkers naïvely brute-force the issue by
+type-checking *all* child objects transitively reachable from parent objects
+passed to and returned from callables in ``O(n)`` linear time for ``n`` such
+objects. This approach avoids false positives (i.e., raising exceptions for
+valid objects) *and* false negatives (i.e., failing to raise exceptions for
+invalid objects), which is good. But this approach also duplicates work when
+those objects remain unchanged over multiple calls to those callables, which is
+bad.
+
+Beartype circumvents that badness by generating code at decoration time
+performing a one-way random tree walk over the expected nested structure of
+those objects at call time. For each expected nesting level of each container
+passed to or returned from each callable decorated by ``@beartype`` starting at
+that container and ending either when a check fails *or* all checks succeed,
+that callable performs these checks (in order):
+
+#. A **shallow type-check** that the current possibly nested container is an
+   instance of the type given by the current possibly nested type hint.
+#. A **deep type-check** that an item randomly selected from that container 
+   itself satisfies the first check.
+
+For example, given a parameter type hint ``list[tuple[Sequence[str]]]``,
+beartype generates code at decoration time performing these checks at call time
+(in order):
+
+#. A check that the object passed as this parameter is a list.
+#. A check that an item randomly selected from this list is a tuple.
+#. A check that an item randomly selected from this tuple is a sequence.
+#. A check that an item randomly selected from this sequence is a string.
+
+Beartype thus performs one check for each possibly nested type hint for each
+annotated parameter or return object for each call to each decorated callable.
+This deep randomness gives us soft statistical expectations as to the number of
+calls needed to check everything. Specifically, `it can be shown that beartype
+on average type-checks <Nobody Expects the Linearithmic Time_>`__ *all* child
+objects transitively reachable from parent objects passed to and returned from
+callables in ``O(n log n)`` calls to those callables for ``n`` such objects.
+Praise RNGesus_!
+
+Beartype avoids false positives and rarely duplicates work when those objects
+remain unchanged over multiple calls to those callables, which is good. Sadly,
+beartype also invites false negatives, because this approach only checks a
+vertical slice of the full container structure each call, which is bad.
+
+We claim without evidence that false negatives are unlikely under the
+optimistic assumption that most real-world containers are **homogenous** (i.e.,
+contain only items of the same type) rather than **heterogenous** (i.e.,
+contain items of differing types). Examples of homogenous containers include
+(byte-)strings, `ranges <range_>`__, `streams <io_>`__, `memory views
+<memoryview_>`__, `method resolution orders (MROs) <mro_>`__, `generic alias
+parameters`_, lists returned by the dir_ builtin, iterables generated by the
+os.walk_ function, standard NumPy_ arrays, Pandas_ `DataFrame` columns,
+PyTorch_ tensors, NetworkX_ graphs, and really all third-party containers ever.
+
+Onward to the cheats!
 
 Cheatsheet
 ==========
@@ -2289,6 +2384,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Software_quality_assurance
 .. _amortized analysis:
    https://en.wikipedia.org/wiki/Amortized_analysis
+.. _random walk:
+   https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
 .. _zero-cost abstraction:
@@ -2319,6 +2416,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
 .. # ------------------( LINKS ~ meme                       )------------------
+.. _RNGesus:
+   https://knowyourmeme.com/memes/rngesus
 .. _goes up to eleven:
    https://www.youtube.com/watch?v=uMSV4OteqBE
 .. _greased lightning:
@@ -2353,8 +2452,12 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
 
 .. # ------------------( LINKS ~ py : data model            )------------------
+.. _generic alias parameters:
+   https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
 .. _isinstancecheck:
    https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks
+.. _mro:
+   https://docs.python.org/3/library/stdtypes.html#class.__mro__
 .. _object:
    https://docs.python.org/3/reference/datamodel.html#basic-customization
 
@@ -2369,6 +2472,12 @@ application stack at tool rather than Python runtime) include:
    https://www.pypy.org
 
 .. # ------------------( LINKS ~ py : package               )------------------
+.. _NetworkX:
+   https://networkx.org
+.. _Pandas:
+   https://pandas.pydata.org
+.. _PyTorch:
+   https://pytorch.org
 .. _SymPy:
    https://www.sympy.org
 
@@ -2443,10 +2552,16 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/stdtypes.html
 .. _dict:
    https://docs.python.org/3/library/stdtypes.html#mapping-types-dict
+.. _dir:
+   https://docs.python.org/3/library/functions.html#dir
 .. _frozenset:
    https://docs.python.org/3/library/stdtypes.html#set-types-set-frozenset
 .. _list:
    https://docs.python.org/3/library/stdtypes.html#lists
+.. _memoryview:
+   https://docs.python.org/3/library/stdtypes.html#memory-views
+.. _range:
+   https://docs.python.org/3/library/stdtypes.html#typesseq-range
 .. _set:
    https://docs.python.org/3/library/stdtypes.html#set-types-set-frozenset
 .. _tuple:
@@ -2525,6 +2640,16 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/contextlib.html#contextlib.AbstractAsyncContextManager
 .. _contextlib.AbstractContextManager:
    https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
+
+.. # ------------------( LINKS ~ py : stdlib : io           )------------------
+.. _io:
+   https://docs.python.org/3/library/io.html
+
+.. # ------------------( LINKS ~ py : stdlib : os           )------------------
+.. _os:
+   https://docs.python.org/3/library/os.html
+.. _os.walk:
+   https://docs.python.org/3/library/os.html#os.walk
 
 .. # ------------------( LINKS ~ py : stdlib : random       )------------------
 .. _random:
