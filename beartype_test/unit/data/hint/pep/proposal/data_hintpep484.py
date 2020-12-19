@@ -31,6 +31,7 @@ Note that:
 # ....................{ IMPORTS                           }....................
 import contextlib, re, typing
 from beartype.cave import (
+    NoneType,
     RegexMatchType,
     RegexCompiledType,
 )
@@ -312,19 +313,39 @@ def add_data(data_module: 'ModuleType') -> None:
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
         # exercised independently with special-purposed unit tests.
+
+        # Unsubscripted "Any" singleton.
         PepHintMetadata(
             hint=Any,
             pep_sign=Any,
             is_ignorable=True,
         ),
 
+        # Unsubscripted "None" singleton. While not explicitly defined by the
+        # "typing" module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        PepHintMetadata(
+            hint=None,
+            pep_sign=NoneType,
+            is_typing=False,
+            piths_satisfied_meta=(
+                # "None" singleton.
+                PepHintPithSatisfiedMetadata(None),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Betossing Bilious libidos, and'),
+            ),
+        ),
+
         # Unsubscripted "ByteString" singleton. Bizarrely, note that:
         # * "collections.abc.ByteString" is subscriptable under PEP 585.
         # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
-        #
         # Since neither PEP 484 nor 585 comment on "ByteString" in detail (or
         # at all, really), this non-orthogonality remains inexplicable,
-        # frustrating, and utterly unsurprising.
+        # frustrating, and utterly unsurprising. We decide to just shrug.
         PepHintMetadata(
             hint=ByteString,
             pep_sign=ByteString,

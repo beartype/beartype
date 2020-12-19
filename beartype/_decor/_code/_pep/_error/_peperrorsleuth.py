@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import NoneType
 from beartype.roar import _BeartypeCallHintPepRaiseException
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_newtype_class,
@@ -157,15 +158,23 @@ class CauseSleuth(object):
         # CAVEATS: Synchronize changes here with the corresponding block of the
         # beartype._decor._code._pep._pephint.pep_code_check_hint() function.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #
         # This logic reduces the currently visited hint to an arbitrary object
         # associated with this hint when this hint conditionally satisfies any
         # of various conditions.
         #
         # ................{ REDUCTION ~ pep 484               }................
+        # If this is the PEP 484-compliant "None" singleton, reduce this hint
+        # to the type of that singleton. While not explicitly defined by the
+        # "typing" module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        if self.hint is None:
+            self.hint = NoneType
         # If this is a PEP 484-compliant new type hint, reduce this hint to the
         # user-defined class aliased by this hint. Although this logic could
         # also be performed below, doing so here simplifies matters.
-        if is_hint_pep484_newtype(self.hint):
+        elif is_hint_pep484_newtype(self.hint):
             self.hint = get_hint_pep484_newtype_class(self.hint)
         # ................{ REDUCTION ~ pep 544               }................
         # If this is a PEP 484-compliant IO generic base class *AND* the active
@@ -173,6 +182,12 @@ class CauseSleuth(object):
         # PEP 544-compliant protocols, reduce this functionally useless hint to
         # the corresponding functionally useful beartype-specific PEP
         # 544-compliant protocol implementing this hint.
+        #
+        # Note that PEP 484-compliant IO generic base classes are technically
+        # usable under Python < 3.8 (e.g., by explicitly subclassing those
+        # classes from third-party classes). Ergo, we can neither safely emit
+        # warnings nor raise exceptions on visiting these classes under *ANY*
+        # Python version.
         elif is_hint_pep544_io_generic(self.hint):
             self.hint = get_hint_pep544_io_protocol_from_generic(self.hint)
         # ................{ REDUCTION ~ pep 593               }................

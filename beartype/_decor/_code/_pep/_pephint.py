@@ -16,10 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Add support for "None", which we sadly neglected. *sigh* To quote:
-#    When used in a type hint, the expression None is considered equivalent to
-#    type(None).
-
 #FIXME: Byte string values aren't displayed properly in messages: e.g.,
 #    ...as value "b"What? Haven't you ever seen a byte-string separator
 #    before?"" not str.
@@ -456,6 +452,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #In short, we'll need to conduct considerably more research here.
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import NoneType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
@@ -549,7 +546,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from itertools import count
-from typing import Generic, NoReturn, Tuple
+from typing import Generic, NoReturn
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -1156,18 +1153,26 @@ def pep_code_check_hint(hint: object) -> (
         # ................{ REDUCTION                         }................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the
-        # beartype._decor._code._pep._error._peperrorsleuth.CauseSleuth__init__()
+        # beartype._decor._code._pep._error._peperrorsleuth.CauseSleuth.__init__()
         # method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #
         # This logic reduces the currently visited hint to an arbitrary object
         # associated with this hint when this hint conditionally satisfies any
         # of various conditions.
         #
         # ................{ REDUCTION ~ pep 484               }................
+        # If this is the PEP 484-compliant "None" singleton, reduce this hint
+        # to the type of that singleton. While not explicitly defined by the
+        # "typing" module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        if hint_curr is None:
+            hint_curr = NoneType
         # If this is a PEP 484-compliant new type hint, reduce this hint to the
         # user-defined class aliased by this hint. Although this logic could
         # also be performed below, doing so here simplifies matters.
-        if is_hint_pep484_newtype(hint_curr):
+        elif is_hint_pep484_newtype(hint_curr):
             hint_curr = get_hint_pep484_newtype_class(hint_curr)
         # ................{ REDUCTION ~ pep 544               }................
         # If this is a PEP 484-compliant IO generic base class *AND* the active
@@ -1175,6 +1180,12 @@ def pep_code_check_hint(hint: object) -> (
         # PEP 544-compliant protocols, reduce this functionally useless hint to
         # the corresponding functionally useful beartype-specific PEP
         # 544-compliant protocol implementing this hint.
+        #
+        # Note that PEP 484-compliant IO generic base classes are technically
+        # usable under Python < 3.8 (e.g., by explicitly subclassing those
+        # classes from third-party classes). Ergo, we can neither safely emit
+        # warnings nor raise exceptions on visiting these classes under *ANY*
+        # Python version.
         elif is_hint_pep544_io_generic(hint_curr):
             hint_curr = get_hint_pep544_io_protocol_from_generic(hint_curr)
         # ................{ REDUCTION ~ pep 593               }................

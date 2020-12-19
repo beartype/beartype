@@ -514,6 +514,8 @@ def is_hint_pep(hint: object) -> bool:
         is_hint_pep_class_typing(hint_type) or
         # This hint is a PEP 585-compliant type hint.
         is_hint_pep585(hint) or
+        # This hint is the PEP 484-compliant "None" singleton.
+        hint is None or
         # This hint is a PEP-compliant generic. Although a small subset of
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.SupportsInt"), most generics are user-defined subclasses

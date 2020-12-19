@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
+from beartype.cave import NoneType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
@@ -403,6 +404,16 @@ def get_hint_pep_sign(hint: object) -> dict:
     die_unless_hint_pep(hint)
     # Else, this hint is PEP-compliant.
 
+    # Note that these tests are intentionally ordered in descending specificity
+    # (i.e., ascending genericity) rather than descending likelihood of a
+    # match, which would return erroneous signs in common cases.
+    #
+    # If this hint is the PEP 484-compliant "None" singleton, return the type
+    # of that singleton.
+    if hint is None:
+        return NoneType
+    # Else, this hint is *NOT* the PEP 484-compliant "None" singleton.
+    #
     # If this hint is a PEP-compliant generic (i.e., class
     # superficially subclassing at least one non-class PEP-compliant object),
     # return the "typing.Generic" abstract base class (ABC) generically -- get
@@ -428,7 +439,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # Note that generics *CANNOT* be detected by the general-purpose logic
     # performed below, as this ABC does *NOT* define a __repr__() dunder method
     # returning a string prefixed by the "typing." substring.
-    if is_hint_pep_generic(hint):
+    elif is_hint_pep_generic(hint):
         return Generic
     # Else, this hint is *NOT* a generic.
     #
@@ -632,7 +643,7 @@ def get_hint_pep_type_origin(hint: object) -> type:
     if hint_type_origin is None:
         raise BeartypeDecorHintPepException(
             f'PEP type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from a lower-level class).'
+            f'(i.e., does not originate from external class).'
         )
     # Else, this type exists.
 

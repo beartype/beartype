@@ -180,20 +180,18 @@ def raise_pep_call_exception(
             param_value=pith_value,
         )
 
-    # PEP-compliant type hint annotating this parameter or return value if any
-    # *OR* "None" otherwise (i.e., if this parameter or return value is
-    # unannotated).
-    hint = func.__annotations__.get(pith_name, None)
-
     # If this parameter or return value is unannotated, raise an exception.
     #
     # Note that this should *NEVER* occur, as the caller guarantees this
     # parameter or return value to be annotated. Nonetheless, since callers
     # could deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
-    if hint is None:
+    if pith_name not in func.__annotations__:
         raise _BeartypeCallHintPepRaiseException(f'{pith_label} unannotated.')
     # Else, this parameter or return value is annotated.
+
+    # PEP-compliant type hint annotating this parameter or return value.
+    hint = func.__annotations__[pith_name]
 
     # If type hint is *NOT* a supported type hint, raise an exception.
     die_unless_hint(hint=hint, hint_label=f'{pith_label} type hint')

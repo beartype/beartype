@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
+from beartype.cave import NoneType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
@@ -214,6 +215,11 @@ def add_data(data_module: 'ModuleType') -> None:
         NoReturn,
         TypeVar,
         HINT_PEP484_BASE_FORWARDREF,
+
+        # PEP 484 explicitly supports the "None" singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        NoneType,
     ))
     data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
         Generic,
