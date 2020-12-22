@@ -41,36 +41,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #localize "__beartype_args_len" and so on. In short, this is a massive win.
 #Again, see the third-party "makefun" package, which purports to already do so.
 
-#FIXME: Remove duplicates from tuple annotations for efficiency: e.g.,
-#
-#    # This...
-#    @beartype
-#    def slowerfunc(dumbedgecase: (int, int, int, int, int, int, int, int))
-#
-#    # ...should be exactly as efficient as this.
-#    def fasterfunc(idealworld: int)
-#
-#Note that most types are *NOT* hashable and thus *NOT* addable to a set -- so,
-#the naive heuristic of "tuple(set(hint_tuple))" generally fails.
-#Instead, we'll need to implement some sort of manual pruning algorithm
-#optimized for the general case of a tuple containing *NO* duplicates.
-#FIXME: Ah! Actually, the following should mostly work (untested, of course):
-#   tuple_uniquified = tuple({id(item): item for item in tuple}.values()}
-#Mildly clever, though I'm sure I'm the one millionth coder to reinvent that
-#wheel. The core idea here is that object IDs are guaranteed to be hashable,
-#even if arbitrary objects aren't. Ergo, we dynamically construct a dictionary
-#mapping from object ID to object via a dictionary comprehension over possibly
-#duplicate tuple items and then construct a new tuple given the guaranteeably
-#unique values of that dictionary. Bam! Done.
-#FIXME: Actually, we have utterly no idea why we wrote "Note that most types
-#are *NOT* hashable and thus *NOT* addable to a set." Classes are obviously
-#hashable; ergo, "tuple(frozenset(hint_tuple))" would seem to suffice. Sets
-#are mutable and thus *NOT* hashable, of course. But "frozenset" objects
-#certainly are.
-#FIXME: Actually, just refactor tuple usage to access the beartypistry instead,
-#which now optimally supports tuples in a manner implicitly eliminating all
-#duplicates from tuples registered with that singleton. Sweetness!
-
 #FIXME: Cray-cray optimization: don't crucify us here, folks, but eliminating
 #the innermost call to the original callable in the generated wrapper may be
 #technically feasible. It's probably a BadIdea™, but the idea goes like this:
@@ -105,35 +75,191 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the original callable in the wrapper. See the third-party "makefun" package,
 #  which purports to already do so. So, this is mostly a solved problem --
 #  albeit still non-trivial, as "beartype" will never have dependencies.
-#* Preventing local attributes defined by this wrapper as well as global
-#  attributes imported into this wrapper's namespace from polluting the
-#  namespace expected by the original callable. The former is trivial; simply
-#  explicitly "del {attr_name1},...,{attr_nameN}" immediately before embedding
-#  the source code for that callable. The latter is tricky; we'd probably want
-#  to stop passing "globals()" to exec() below and instead pass a much smaller
-#  list of attributes explicitly required by this wrapper. Even then, though,
-#  there's probably no means of perfectly insulating the original code from all
-#  wrapper-specific global attributes.
-#* Rewriting return values and yielded values. Oh, boy. That's the killer,
-#  honestly. Regular expression-based parsing only gets us so far. We could try
-#  analyzing the AST for that code, but... yikes. Each "return" and "yield"
-#  statement would need to be replaced by a beartype-specific "return" or
-#  "yield" statement checking the types of the values to be returned or
-#  yielded. We can guarantee that that rapidly gets cray-cray, especially when
-#  implementing non-trivial PEP 484-style type checking requiring multiple
-#  Python statements and local variables and... yeah. I suppose we could
-#  gradually roll out support by:
-#  * Initially only optimizing callables returning and yielding nothing by
-#    falling back to the unoptimized approach for callables that do so.
-#  * Then optimizing callables terminating in a single "return" or "yield"
-#    statement.
-#  * Then optimizing callables containing multiple such statements.
+#* Don't bother reading any of this. Just skip to the synopsis below:
+#  * Preventing local attributes defined by this wrapper as well as global
+#    attributes imported into this wrapper's namespace from polluting the
+#    namespace expected by the original callable. The former is trivial; simply
+#    explicitly "del {attr_name1},...,{attr_nameN}" immediately before
+#    embedding the source code for that callable. The latter is tricky; we'd
+#    probably want to stop passing "globals()" to exec() below and instead pass
+#    a much smaller list of attributes explicitly required by this wrapper.
+#    Even then, though, there's probably no means of perfectly insulating the
+#    original code from all wrapper-specific global attributes. Or:
+#    * Perhaps this isn't an issue? After all, *ALL* locals and globals exposed
+#      to decorated callables are now guaranteed to be "__bear"-prefixed. This
+#      implies that searching the body of the decorated callable for the
+#      substring "\b__bear" and then raising an exception if any such
+#      substrings are found should suffice to prevent name collision.
+#  * Rewriting return values and yielded values. Oh, boy. That's the killer,
+#    honestly. Regular expression-based parsing only gets us so far. We could
+#    try analyzing the AST for that code, but... yikes. Each "return" and
+#    "yield" statement would need to be replaced by a beartype-specific
+#    "return" or "yield" statement checking the types of the values to be
+#    returned or
+#    yielded. We can guarantee that that rapidly gets cray-cray, especially
+#    when implementing non-trivial PEP 484-style type checking requiring
+#    multiple Python statements and local variables and... yeah. Actually:
+#    * Why *CAN'T* regex-based parsing suffice? Python's Backus-Naur form (BNF)
+#      is almost certainly quite constrained. We'll have to check where exactly
+#      "return" and "yield" statements are permissible, but we're fairly sure
+#      they're permissible only after newlines followed by sufficient
+#      indentation.
+#    * Note that the objects produced by Python's standard "ast" *AND* "dis"
+#      modules contain line number attributes yielding the line numbers on
+#      which those syntactic object were parsed. Ergo, whichever of these is
+#      the more efficient almost certainly the simplest (and possibly even)
+#      fastest approach. Is this worth benchmarking? Perhaps we should simply
+#      adopt the "ast" approach, as that's likely to be substantially more
+#      robust *AND* generalize to the case of annotated local variables, where
+#      naive regexes (and probably "dis" as well) fall down. Of course, "dis"
+#      is likely to be *MUCH* more space- and time-performant than "ast".
+#    * *SIGH.* Yes, absolutely use the standard "ast" module. Absolutely do
+#      *NOT* use either hand-rolled regexes or the standard "dis" module. Why?
+#      Because:
+#      * The low-level internals of the "ast" module are implemented in C. That
+#        means it's likely to be fast enough for our purposes.
+#      * CPython *ALREADY* has to do all (or at least, enough) of the AST
+#        analysis performed by the "ast" module. Since that cost has to be paid
+#        anyway, we'd might as well avoid paying additional regex or "dis"
+#        costs by reusing "ast" with @beartype. Oh, wait... No, that's not how
+#        things work at all. You basically can't reverse-engineer an AST from a
+#        callable code object. Since Python doesn't preserve the AST it
+#        internally produces to generate byte-code for a callable on that
+#        callable, we have no choice but to:
+#        * Get the source for that callable (e.g., with dill.source.getsource()
+#          or inspect.getsource()).
+#        * Pass that source string to ast.parse(). Man, that sure blows chunks.
+#      * So, ignore the prior point. The only additional meaningful point is
+#        that, unlike the "dis" module, the "ast" module makes it trivial to:
+#        * Transform the produced AST by injecting additional nodes (e.g.,
+#          dynamically generated statements) into the AST.
+#        * Compile that AST down into a code object.
+#      Does any of the above help us? Maybe not. All we really need from "ast"
+#      and "dis" are line numbers and the ability to crudely identify:
+#      * "return" statements. "dis" trivially does this.
+#      * "yield" statements. "dis" trivially does this.
+#      * Local annotated variable assignments. "dis" *PROBABLY* does not
+#        trivially do this. Indeed, it's not necessarily clear that "ast" does
+#        this either. Actually, that's absolutely *NOT* true. "ast" appears to
+#        trivially detect local annotated variable assignments, which is nice.
+#       Hilariously, regexes *DO* trivially detect local annotated variable
+#       assignments, because that's just a search for
+#       r"\n\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:". Like, seriously. That's by far the
+#       easiest way to do that. Detecting "return" and "yield" statements is
+#       similarly trivial (we think, anyway) with regexes.
+#       *WAIT.* Regexes may vary well detect the *START* of a local annotated
+#       variable assignment, but they clearly fail to detect the *END*, as that
+#       requires context-free parsing. Welp. That's the death-knell for both
+#       regexes and "dis", then. "ast" is it!
+#
+#In synopsis, don't bother reading the above. Just know that parsing "return"
+#and "yield" statements as well as annotated local variable assignments
+#unsurprisingly requires use of the standard "ast" module. Specifically:
+#* Get the source for the decorated callable. Ideally, we'll want to do so by
+#  implementing our own get_callable_source() utility getter inspired by the
+#  third-party "dill" implementation at dill.source.getsource() rather than the
+#  standard inspect.getsource().
+#* Pass that source string to ast.parse().
+#* Search the resulting AST for any nodes referencing an object name (e.g.,
+#  variable, callable, class) prefixed by "__bear" and raise an exception on
+#  the first such node to prevent name collision.
+#* Munge that AST as required.
+#* Compile that AST -- ideally directly into a callable (but possibly first
+#  indirectly into a code object into then that directly into a callable).
+#
+#I suppose we could gradually roll out support by:
+#* Initially only optimizing callables returning and yielding nothing by
+#  falling back to the unoptimized approach for callables that do so.
+#* Then optimizing callables terminating in a single "return" or "yield"
+#  statement that *DIRECTLY* return a local or global variable. This is the
+#  easy common case, as we can then immediately precede that statement with a
+#  type-check on that variable.
+#* Then optimizing callables terminating in a single "return" or "yield"
+#  statement that return an arbitrary expression. If that expression is *NOT* a
+#  local or global variable, we need to capture that expression into a new
+#  local variable *BEFORE* type-checking that variable *BEFORE* returning that
+#  variable. So it goes.
+#* Then optimizing callables containing multiple such statements.
 #
 #Note lastly that the third-party "dill" package provides a
 #dill.source.getsource() function with the same API as the stdlib
 #inspect.getsource() function but augmented in various favourable ways. *shrug*
 #
 #Although this will probably never happen, it's still mildly fun to ponder.
+#FIXME: Actually, this should probably happen -- but not necessarily for the
+#reasons stipulated above. Don't get us wrong; optimizing away the additional
+#stack frame by embedding the body of the decorated callable directly into the
+#wrapper function wrapping that callable is a clever (albeit highly
+#non-trivial) optimization.
+#
+#The *REAL* tangible benefit, however, is in type-checking annotated local
+#variables. Currently, neither @beartype nor any other runtime type checker has
+#the means to check annotated local variables: e.g.,
+#    @beartype
+#    def muh_func(muh_list: list[int]) -> int:
+#        list_item: int = list[0]    # <- can't check this
+#        return list_item
+#
+#The reason, of course, is that those variables and thus variable annotations
+#are effectively "locked" behind the additional stack frame separating the
+#decorated callable from its wrapper function. Integrating the former into the
+#latter, however, trivially dissolves this barrier; indeed, since Python
+#currently has no notion of a variable decorator and prohibits function return
+#values from being assigned to as l-values, there is no pragmatic alternative.
+#
+#The idea here is that we could augment the body of the decorated callable when
+#merged into its wrapper function as follows:
+#* Iteratively search that body for local annotated variable declarations.
+#* For each such declaration:
+#  * Inject one or more statements after each such declaration type-checking
+#    that variable against its annotation.
+#
+#The issue here then becomes: *WHERE* after each such declaration? This is a
+#pertinent question, because we could type-check a variable immediately after
+#its declaration, only to have a subsequent assignment to that variable later
+#in the body of the decorated callable silently invalidate the prior
+#type-check. Technically, since @beartype is an O(1) type-checker, we could
+#re-perform type-checks after each assignment to an annotated local variable.
+#But that seems a bit heavy-handed. Perhaps we should simply inject that code
+#at the last possible moment -- which is to say, immediately *BEFORE* each
+#"return" or "yield" statement in that callable. We have to inject code there
+#anyway to type-check that "return" or "yield" statement, so we'd be hitting
+#two birds with one beating stick to additionally type-check annotated local
+#variables there as well.
+#
+#Note that the answer to where we type-check local variables has a profound
+#impact on whether we adopt a regex- or "ast"-based solution. If we type-check
+#everything before "return" or "yield" statements, regex suffices. If we check
+#variables immediately after their declaration or assignment, however, only
+#"ast" suffices. This is, of course, yet another point in favour of checking
+#everything before "return" or "yield" statements, as regex is likely to be
+#substantially faster and more portable (due to changes in "ast" design and
+#implementation across Python versions) than the "ast"-based approach.
+#
+#For example, this regex should (in theory) suffice to detect all annotated
+#local variable declarations in a callable: r"\n\s+[a-zA-Z_][a-zA-Z0-9_]*\s*:".
+#Oh... wait. No. Even that doesn't generalize. Why? Literal triple-quoted
+#strings, obviously. Welp. "ast" it is, then! No point in beating around that
+#context-free bush then, is there? Consider using the third-party "astor"
+#package if available, which purportedly improves upon the standard "ast"
+#module in various ways and is internally leveraged by "pylint" to perform its
+#magic. In any case, Relevant articles include:
+#* "Static Modification of Python With Python: The AST Module", a well-written
+#  introduction to the topic:
+#  https://dzone.com/articles/static-modification-python
+#FIXME: Lastly, note that the above is likely to make beartype's
+#decoration-time cost prohibitive under CPython, regardless of the call-time
+#improvements due to stack frame compaction. Ergo, we may want to adopt the
+#following defaults:
+#* Under PyPy, *ENABLE* AST modification by default.
+#* Under all other interpreters (especially including CPython), *DISABLE* AST
+#  modification by default.
+#
+#Naturally, profile this to decide what we should do. To facilitate choice,
+#we'll need to refactor the @beartype decorator to support a new optional
+#"is_ast_modify" parameter defaulting to something resembling these defaults.
+#When this parameter is false, @beartype defaults to the current approach;
+#else, @beartype modifies the AST of decorated callables as above.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException

@@ -397,13 +397,14 @@ Let's type-check like `greased lightning`_:
        # Annotate PEP 585-compliant standard collection types, indexed too.
        param_must_satisfy_pep585_collection: MutableSequence[str],
 
-       # Annotate PEP 544-compliant protocols, indexed too.
-       param_must_satisfy_pep544: MyProtocol[str],
+       # Annotate PEP 544-compliant protocols, either unindexed or indexed by
+       # one or more type variables.
+       param_must_satisfy_pep544: MyProtocol[T],
 
        # Annotate PEP 484-compliant non-standard container types defined by the
        # "typing" module, optionally indexed and only usable as type hints.
-       # Note that this type has been deprecated by PEP 585 under Python ≥ 3.9.
-       # See also: https://docs.python.org/3/library/typing.html
+       # Note that these types have all been deprecated by PEP 585 under Python
+       # ≥ 3.9. See also: https://docs.python.org/3/library/typing.html
        param_must_satisfy_pep484_typing: List[int],
 
        # Annotate PEP 484-compliant unions of arbitrary types, including
@@ -508,14 +509,14 @@ Let's type-check like `greased lightning`_:
    # User-defined PEP 585-compliant generic referenced above in type hints.
    # Note this requires Python ≥ 3.9.
    class MyPep585Generic(tuple[int, float]):
-       # Decorate static class methods as below without annotating "cls".
+       # Decorate static class methods as above without annotating "cls".
        @beartype
        def __new__(cls, integer: int, real: float) -> tuple[int, float]:
            return tuple.__new__(cls, (integer, real))
 
    # User-defined PEP 484-compliant generic referenced above in type hints.
    class MyPep484Generic(Tuple[str, ...]):
-       # Decorate static class methods as below without annotating "cls".
+       # Decorate static class methods as above without annotating "cls".
        @beartype
        def __new__(cls, *args: str) -> Tuple[str, ...]:
            return tuple.__new__(cls, args)
@@ -818,41 +819,67 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 Timings
 =======
 
-Let's run our `profiler suite <profiler suite_>`__ timing ``beartype`` and
-fellow runtime type-checkers against a battery of surely fair, impartial, and
-unbiased use cases:
+Let's profile ``beartype`` against other runtime type-checkers with `a battery
+of surely fair, impartial, and unbiased use cases <profiler suite_>`__:
 
 .. code-block:: shell-session
 
+   $ bin/profile.bash
+
    beartype profiler [version]: 0.0.2
-
-   python    [version]: Python 3.7.8
-   beartype  [version]: 0.3.0
+   
+   python    [basename]: python3.9
+   python    [version]: Python 3.9.0
+   beartype  [version]: 0.5.2
    typeguard [version]: 2.9.1
-
-   ========================== str (100 calls each loop) ==========================
-   decoration         [none     ]: 100 loops, best of 3: 366 nsec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 346 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 13.4 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 16.4 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 480 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 7 msec per loop
-
-   ==================== Union[int, str] (100 calls each loop) ====================
-   decoration         [none     ]: 100 loops, best of 3: 2.97 usec per loop
-   decoration         [beartype ]: 100 loops, best of 3: 363 usec per loop
-   decoration         [typeguard]: 100 loops, best of 3: 16.7 usec per loop
-   decoration + calls [none     ]: 100 loops, best of 3: 20.4 usec per loop
-   decoration + calls [beartype ]: 100 loops, best of 3: 543 usec per loop
-   decoration + calls [typeguard]: 100 loops, best of 3: 11.1 msec per loop
-
-   ================ List[int] of 1000 items (7485 calls each loop) ================
-   decoration         [none     ]: 1 loop, best of 1: 41.7 usec per loop
-   decoration         [beartype ]: 1 loop, best of 1: 1.33 msec per loop
-   decoration         [typeguard]: 1 loop, best of 1: 82.2 usec per loop
-   decoration + calls [none     ]: 1 loop, best of 1: 1.4 msec per loop
-   decoration + calls [beartype ]: 1 loop, best of 1: 22.5 msec per loop
-   decoration + calls [typeguard]: 1 loop, best of 1: 124 sec per loop
+   
+   ===================================== str =====================================
+   profiling regime:
+      number of meta-loops:      3
+      number of loops:           100
+      number of calls each loop: 100
+   decoration         [none     ]: 100 loops, best of 3: 359 nsec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 389 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 13.5 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 14.8 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 514 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 6.34 msec per loop
+   
+   =============================== Union[int, str] ===============================
+   profiling regime:
+      number of meta-loops:      3
+      number of loops:           100
+      number of calls each loop: 100
+   decoration         [none     ]: 100 loops, best of 3: 1.83 usec per loop
+   decoration         [beartype ]: 100 loops, best of 3: 433 usec per loop
+   decoration         [typeguard]: 100 loops, best of 3: 15.6 usec per loop
+   decoration + calls [none     ]: 100 loops, best of 3: 17.7 usec per loop
+   decoration + calls [beartype ]: 100 loops, best of 3: 572 usec per loop
+   decoration + calls [typeguard]: 100 loops, best of 3: 10 msec per loop
+   
+   =========================== List[int] of 1000 items ===========================
+   profiling regime:
+      number of meta-loops:      1
+      number of loops:           1
+      number of calls each loop: 7485
+   decoration         [none     ]: 1 loop, best of 1: 10.1 usec per loop
+   decoration         [beartype ]: 1 loop, best of 1: 1.3 msec per loop
+   decoration         [typeguard]: 1 loop, best of 1: 41.1 usec per loop
+   decoration + calls [none     ]: 1 loop, best of 1: 1.24 msec per loop
+   decoration + calls [beartype ]: 1 loop, best of 1: 18.3 msec per loop
+   decoration + calls [typeguard]: 1 loop, best of 1: 104 sec per loop
+   
+   ============ List[Sequence[MutableSequence[int]]] of 10 items each ============
+   profiling regime:
+      number of meta-loops:      1
+      number of loops:           1
+      number of calls each loop: 7485
+   decoration         [none     ]: 1 loop, best of 1: 11.8 usec per loop
+   decoration         [beartype ]: 1 loop, best of 1: 1.77 msec per loop
+   decoration         [typeguard]: 1 loop, best of 1: 48.9 usec per loop
+   decoration + calls [none     ]: 1 loop, best of 1: 1.19 msec per loop
+   decoration + calls [beartype ]: 1 loop, best of 1: 81.2 msec per loop
+   decoration + calls [typeguard]: 1 loop, best of 1: 17.3 sec per loop
 
 .. note::
    * ``sec`` = seconds.
@@ -913,7 +940,7 @@ micro-optimized breadth-first search (BFS). Since this BFS is memoized, its
 cost is paid exactly once per type hint per process; subsequent references to
 the same hint over different parameters and returns of different callables in
 the same process reuse the results of the previously memoized BFS for that
-hint. The ``@beartype`` decorator thus runs in:
+hint. The ``@beartype`` decorator itself thus runs in:
 
 * **O(1) amortized average-case time.**
 * **O(k) non-amortized worst-case time** for ``k`` the number of child type
@@ -921,12 +948,12 @@ hint. The ``@beartype`` decorator thus runs in:
 
 Since we generally expect a callable to be decorated only once but called
 multiple times per process, we might expect the cost of decoration to be
-ignorable in the aggregate. Interestingly, `this is not the case <Timings_>`.
-Although only paid once and obviated through memoization, `decoration time is
-sufficiently expensive and call time sufficiently inexpensive that beartype
-spends most of its wall-clock merely decorating callables <Timings_>`. The
-actual function wrappers dynamically generated by ``@beartype`` consume
-comparatively little wall-clock, even when repeatedly called many times.
+ignorable in the aggregate. Interestingly, this is not the case. Although only
+paid once and obviated through memoization, decoration time is sufficiently
+expensive and call time sufficiently inexpensive that beartype spends most of
+its wall-clock merely decorating callables. The actual function wrappers
+dynamically generated by ``@beartype`` consume comparatively little wall-clock,
+even when repeatedly called many times.
 
 That's Some Catch, That Catch-22
 --------------------------------
@@ -936,17 +963,16 @@ Beartype's greatest strength is that it checks types in constant time.
 Beartype's greatest weakness is that it checks types in constant time.
 
 Only so many type-checks can be stuffed into a constant slice of time with
-negligible constant factors. In this subsection, we introduce exactly what (and
-why) beartype stuffs into its well-bounded slice of the CPU pie.
+negligible constant factors. Let's detail exactly what (and why) beartype
+stuffs into its well-bounded slice of the CPU pie.
 
-Conventional runtime type checkers naïvely brute-force the issue by
-type-checking *all* child objects transitively reachable from parent objects
-passed to and returned from callables in ``O(n)`` linear time for ``n`` such
-objects. This approach avoids false positives (i.e., raising exceptions for
-valid objects) *and* false negatives (i.e., failing to raise exceptions for
-invalid objects), which is good. But this approach also duplicates work when
-those objects remain unchanged over multiple calls to those callables, which is
-bad.
+Standard runtime type checkers naïvely brute-force the problem by type-checking
+*all* child objects transitively reachable from parent objects passed to and
+returned from callables in ``O(n)`` linear time for ``n`` such objects. This
+approach avoids false positives (i.e., raising exceptions for valid objects)
+*and* false negatives (i.e., failing to raise exceptions for invalid objects),
+which is good. But this approach also duplicates work when those objects remain
+unchanged over multiple calls to those callables, which is bad.
 
 Beartype circumvents that badness by generating code at decoration time
 performing a one-way random tree walk over the expected nested structure of
@@ -960,7 +986,7 @@ that callable performs these checks (in order):
 #. A **deep type-check** that an item randomly selected from that container
    itself satisfies the first check.
 
-For example, given a parameter type hint ``list[tuple[Sequence[str]]]``,
+For example, given a parameter's type hint ``list[tuple[Sequence[str]]]``,
 beartype generates code at decoration time performing these checks at call time
 (in order):
 
@@ -973,7 +999,7 @@ Beartype thus performs one check for each possibly nested type hint for each
 annotated parameter or return object for each call to each decorated callable.
 This deep randomness gives us soft statistical expectations as to the number of
 calls needed to check everything. Specifically, `it can be shown that beartype
-on average type-checks <Nobody Expects the Linearithmic Time_>`__ *all* child
+type-checks on average <Nobody Expects the Linearithmic Time_>`__ *all* child
 objects transitively reachable from parent objects passed to and returned from
 callables in ``O(n log n)`` calls to those callables for ``n`` such objects.
 Praise RNGesus_!
