@@ -20,6 +20,102 @@ This private submodule is *not* intended for importation by downstream callers.
 #    ...as value "b"What? Haven't you ever seen a byte-string separator
 #    before?"" not str.
 
+#FIXME: Resurrect memoization support. To do so, we'll probably need to
+#abandon the @callable_cached decorator employed below in favour of a manually
+#implemented dictionary cache resembling:
+#
+#    _PEP_HINT_REPR_TO_CODE_CHECK = {}
+#    '''
+#    Dictionary mapping from the machine-readable representation of each
+#    PEP-compliant type hint previously passed to a call of the
+#    :func:`pep_code_check_hint` function to the tuple returned from that call.
+#    '''
+#
+#Why? Because PEP 585 fails to internally cache PEP 585-compliant type hints,
+#unlike *MOST* PEP 484-compliant type hints: e.g.,
+#
+#     >>> import typing as t
+#     >>> list[int] is list[int]
+#     False
+#     >>> t.List[int] is t.List[int]
+#     True
+#
+#This means that brute-force memoization fails. Happily, the __repr__() dunder
+#method still exists to uniquely identify type hints. While calling that
+#method will impose a non-negligible runtime cost, that cost will absolutely be
+#*MUCH* smaller than that imposed by the pep_code_check_hint().
+#
+#The pep_code_check_hint() function will then need to be refactored as follows:
+#* Drop the @callable_cached decorator.
+#* Before doing *ANYTHING* else in the body of that function:
+#  1. Get the passed hint's repr().
+#  2. If that repr() is a key of "_PEP_HINT_REPR_TO_CODE_CHECK",
+#     immediately return the corresponding value of that dictionary.
+#  3. Else, continue as normal.
+#* At the very end of that function, cache that repr() and the generated
+#  code as a new key-value pair of that dictionary.
+#
+#Note that this can probably be optimized a bit by noting that *SOME* (but
+#probably not *ALL*) "typing" hints are cached. That means we can directly
+#cache the id() rather than repr() for those hints, which is substantially
+#faster to compute. The issue, of course, is deciding the subset of "typing"
+#hints that are reliably cached. To compound matters, we need to do this across
+#all supported Python versions.
+#
+#Under Python 3.9, this appears to be trivially decidable. Since the private
+#@typing._tp_cache decorator performs this caching, we only need to find all
+#methods decorated by this decorator and then work backward to the public
+#"typing" hints bound to those methods.
+#
+#Actually, for simplicity, let's just assume for now that all type hints
+#*OTHER* than PEP 585-compliant type hints are internally cached. This is
+#probably a close enough approximation to the truth to suffice for now.
+#FIXME: If one considers it, the situation actually a bit worse than that
+#described above. *ALL* memoized functions accepting type hints currently
+#suffer the same issue, which means that manually correcting the
+#pep_code_check_hint() function alone fails to generalize. Instead, we need to:
+#
+#* Refactor the existing @callable_cached decorator to *STOP* supporting
+#  keyword arguments. There's absolutely *NO* reason to emit non-fatal warnings
+#  as we currently do. Instead, just drop keyword argument support entirely.
+#  For robustness, this decorator should be augmented to internally perform the
+#  following additional operation:
+#  * In the outer decorator:
+#    * If the decorated callable accepts a parameter named "hint", raise an
+#      exception.
+#* Define a new @callable_cached_hintable decorator copied from the existing
+#  @callable_cached. For efficiency, this decorator *MUST* be augmented to
+#  internally perform the following additional operations:
+#  * In the outer decorator:
+#    * If the decorated callable does *NOT* accept a mandatory parameter named
+#      "hint", raise an exception. Note the emphasis on *MANDATORY.* We believe
+#      that all "hint" parameters are mandatory, which simplifies things.
+#    * Since this decorator will only accept positional arguments, the 0-based
+#      index of the "hint" parameter will be known at decoration time in the
+#      outer decorator. Localize this index as a closure constant accessible to
+#      the inner wrapper function returned by the outer decorator.
+#  * In the inner wrapper function:
+#    * Test whether the passed mandatory "hint" parameter (trivially accessible
+#      via this closure constant providing its 0-based index in "*args") is an
+#      instance of "beartype.cave.HintPep585Type". Do *NOT* bother calling the
+#      higher-level is_hint_pep585() tester. Speed is of the essence here.
+#    * If so, replace this parameter in the "*args" tuple with the repr() for
+#      this parameter. Naturally, this (probably) requires inefficiently
+#      reconstructing the entire "*args" tuple. What can you do? Note that this
+#      has the significant advantage of making unhashable hints hashable.
+#    * Else, behave as normal.
+#* Hmmm. Actually, the prior note brings up a salient point: using the repr()
+#  for hints rather than actual hints trivially resolves hashability concerns.
+#  Rather than the current conditional approach, it might actually be faster to
+#  refactor the @callable_cached_hintable decorator to:
+#  * Drop all support for unhashable parameters.
+#  * Unconditionally replace the value of the passed mandatory "hint" parameter
+#    in "*args" with its repr() for purposes of memoization. Obviously, the
+#    actual value should still be passed to the decorated callable.
+#* Grep the codebase for all existing uses of the @callable_cached decorator.
+#* For use such use, if the decorated callable accepts a "hint" parameter,
+#  refactor that callable to use @callable_cached_hintable instead.
+
 #FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
 #surprisingly non-trivial.
 #
@@ -221,53 +317,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #That's it! We'll be hitting two birds with one stone here, so that makes this
 #a fairly fun step forwards -- even if "typing.Literal" itself is rather
 #inconsequential in the grand scheme of things. Yum.
-
-#FIXME: Resurrect memoization support. To do so, we'll probably need to
-#abandon the @callable_cached decorator employed below in favour of a manually
-#implemented dictionary cache resembling:
-#
-#    _PEP_HINT_REPR_TO_CODE_CHECK = {}
-#    '''
-#    Dictionary mapping from the machine-readable representation of each
-#    PEP-compliant type hint previously passed to a call of the
-#    :func:`pep_code_check_hint` function to the tuple returned from that call.
-#    '''
-#
-#Why? Because PEP 585 fails to internally cache PEP 585-compliant type hints,
-#unlike *MOST* PEP 484-compliant type hints: e.g.,
-#
-#     >>> import typing as t
-#     >>> list[int] is list[int]
-#     False
-#     >>> t.List[int] is t.List[int]
-#     True
-#
-#This means that brute-force memoization fails. Happily, the __repr__() dunder
-#method still exists to uniquely identify type hints. While calling that
-#method will impose a non-negligible runtime cost, that cost will absolutely be
-#*MUCH* smaller than that imposed by the pep_code_check_hint().
-#
-#The pep_code_check_hint() function will then need to be refactored as follows:
-#* Drop the @callable_cached decorator.
-#* Before doing *ANYTHING* else in the body of that function:
-#  1. Get the passed hint's repr().
-#  2. If that repr() is a key of "_PEP_HINT_REPR_TO_CODE_CHECK",
-#     immediately return the corresponding value of that dictionary.
-#  3. Else, continue as normal.
-#* At the very end of that function, cache that repr() and the generated
-#  code as a new key-value pair of that dictionary.
-#
-#Note that this can probably be optimized a bit by noting that *SOME* (but
-#probably not *ALL*) "typing" hints are cached. That means we can directly
-#cache the id() rather than repr() for those hints, which is substantially
-#faster to compute. The issue, of course, is deciding the subset of "typing"
-#hints that are reliably cached. To compound matters, we need to do this across
-#all supported Python versions.
-#
-#Under Python 3.9, this appears to be trivially decidable. Since the private
-#@typing._tp_cache decorator performs this caching, we only need to find all
-#methods decorated by this decorator and then work backward to the public
-#"typing" hints bound to those methods.
 
 #FIXME: Significant optimizations still remain... when we have sufficient time.
 #Notably, we can replace most existing usage of the generic private
