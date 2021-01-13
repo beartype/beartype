@@ -480,6 +480,178 @@ This private submodule is *not* intended for importation by downstream callers.
 #though the result is the above call to "next(mapping.__beartype_items_iter)"
 #raising a "RuntimeError". Who cares? Whenever an exception occurs, we just
 #restart iteration over from the beginning and carry on. *GOOD 'NUFF.*
+#FIXME: *YIKES.* So, as expected, the above approach fundamentally fails on
+#builtin dicts and sets. Why? Because *ALL* builtin types prohibit
+#monkey-patching, which the above technically is. Instead, we need a
+#fundamentally different approach.
+#
+#That approach is to globally (but thread-safely, obviously) cache *STRONG*
+#references to iterators over dictionary "ItemsView" objects. Note that we
+#can't cache weak references, as the garbage collector would almost certainly
+#immediately dispose of them, entirely defeating the point. Of course, these
+#references implicitly prevent garbage collection of the underlying
+#dictionaries, which means we *ALSO* need a means of routinely removing these
+#references from our global cache when these references are the only remaining
+#references to the underlying dictionaries. Can we do any of this? We can.
+#
+#First, note that we can trivially obtain the number of live references to any
+#arbitrary object by calling "sys.getrefcount(obj)". Note, however, that the
+#count returned by this function is mildly non-deterministic. In particular,
+#off-by-one issues are not merely edge cases but commonplace. Ergo:
+#
+#    from sys import getrefcount
+#
+#    def is_obj_nearly_dead(obj: object) -> bool:
+#        '''
+#        ``True`` only if there only exists one external strong reference to
+#        the passed object.
+#        '''
+#
+#        # Note that the integer returned by this getter is intentionally *NOT*
+#        # tested for equality with "1". Why? Because:
+#        # * The "obj" parameter passed to this tester is an ignorable strong
+#        #   reference to this object.
+#        # * The "obj" parameter passed to the getrefcount() getter is yet
+#        #   another strong reference to this object.
+#        return getrefcount(obj) <= 3
+#
+#Second, note that neither the iterator API nor the "ItemsView" API provide a
+#public means of obtaining a strong reference to the underlying dictionary.
+#This means we *MUST* necessarily maintain for each dictionary a 2-tuple
+#"(mapping, mapping_iter)", where:
+#* "mapping" is a strong reference to that dictionary.
+#* "mapping_iter" is an iterator over that dictionary's "ItemsView" object.
+#
+#This implies that we want to:
+#* Define a new "beartype._util.cache.utilcachemapiter" submodule.
+#* In that submodule:
+#  * Define a new global variable resembling:
+#      # Note that this is unbounded. There's probably no reasonable reason to
+#      # use an LRU-style bounded cache here... or maybe there is for safety to
+#      # avoid exhausting memory. Right.
+#      #
+#      # So, this should obviously be LRU-bounded at some point. Since Python's
+#      # standard @lru decorator is inefficient, we'll need to build that our
+#      # ourselves, which means this is *NOT* an immediate priority.
+#      _MAP_ITER_CACHE = {}
+#      '''
+#      Mapping from mapping identifiers to 2-tuples
+#      ``(mapping: Mapping, mapping_iter: Iterator)``,
+#      where ``mapping`` is a strong reference to the mapping whose key is that
+#      mapping's identifier and ``mapping_iter`` is an iterator over that
+#      mapping's ``ItemsView`` object.
+#      '''
+#  * Define a new asynchronous cleanup_cache() function. See the
+#    cleanup_beartype() function defined below for inspiration.
+#* Extensively unit test that submodule.
+#
+#Third, note that this means the above is_obj_nearly_dead() fails to apply to
+#this edge case. In our case, a cached dictionary is nearly dead if and only if
+#the following condition applies:
+#
+#    def is_cached_mapping_nearly_dead(mapping: Mapping) -> bool:
+#        '''
+#        ``True`` only if there only exists one external strong reference to
+#        the passed mapping internally cached by the :mod:`beartype.beartype`
+#        decorator.
+#        '''
+#
+#        # Note that the integer returned by this getter is intentionally *NOT*
+#        # tested for equality with "1". Why? Because ignorable strong
+#        # references to this mapping include:
+#        # * The "mapping" parameter passed to this tester.
+#        # * The "mapping" parameter passed to the getrefcount() getter.
+#        # * This mapping cached by the beartype-specific global container
+#        #   caching these mappings.
+#        # * The iterator over this mapping cached by the same container.
+#        return getrefcount(mapping) <= 5   # <--- yikes!
+#
+#Fourth, note that there are many different means of routinely removing these
+#stale references from our global cache (i.e., references that are the only
+#remaining references to the underlying dictionaries). For example, we could
+#routinely iterate over our entire cache, find all stale references, and remove
+#them. This is the brute-force approach. Of course, this approach is both slow
+#and invites needlessly repeated work across repeated routine iterations. Ergo,
+#rather than routinely iterating *ALL* cache entries, we instead only want to
+#routinely inspect a single *RANDOM* cache entry on each scheduled callback of
+#our cleanup routine. This is the O(1) beartype approach and still eventually
+#gets us where we want to go (i.e., complete cleanup of all stale references)
+#with minimal costs. A random walk wins yet again.
+#
+#Fifth, note that there are many different means of routinely scheduling work.
+#We ignore the existence of the GIL throughout the following discussion, both
+#because we have no choice *AND* because the randomized cleanup we need to
+#perform on each scheduled callback is an O(1) operation with negligible
+#constant factors and thus effectively instantaneous rather than CPU- or
+#IO-bound. The antiquated approach is "threading.Timer". The issue with the
+#entire "threading" module is that it is implemented with OS-level threads,
+#which are ludicrously expensive and thus fail to scale. Our usage of the
+#"threading" module in beartype would impose undue costs on downstream apps by
+#needlessly consuming a precious thread, preventing apps from doing so. That's
+#bad. Instead, we *MUST* use coroutines, which are implemented in Python itself
+#rather than exposed to the OS and thus suffer no such scalability concerns,
+#declared as either:
+#* Old-school coroutines via the @asyncio.coroutine decorator. Yielding under
+#  this approach is trivial (and possibly more efficient): e.g.,
+#       yield
+#* New-school coroutines via the builtin "async def" syntax. Yielding under
+#  this approach is non-trivial (and possibly less efficient): e.g.,
+#       await asyncio.sleep_ms(0)
+#
+#In general, the "async def" approach is strongly favoured by the community.
+#Note that yielding control in the "async def" approach is somewhat more
+#cumbersome and possibly less efficient than simply performing a "yield".
+#Clearly, a bit of research here is warranted. Note this online commentary:
+#    In performance-critical code yield does offer a small advantage. There are
+#    other tricks such as yielding an integer (number of milliseconds to
+#    pause). In the great majority of cases code clarity trumps the small
+#    performance gain achieved by these hacks. In my opinion, of course.
+#
+#In either case, we declare an asynchronous coroutine. We then need to schedule
+#that coroutine with the global event loop (if any). The canonical way of doing
+#this is to:
+#* Pass our "async def" function to the asyncio.create_task() function.
+#  Although alternatives exist (e.g., futures), this function is officially
+#  documented as being the preferred approach:
+#    create_task() (added in Python 3.7) is the preferable way for spawning new
+#    tasks.
+#  Of course, note this requires Python >= 3.7. We could care less. *shrug*
+#* Pass that task to the asyncio.run() function... or something, something.
+#  Clearly, we still need to research how to routinely schedule that task with
+#  "asyncio" rather than running it only once. In theory, that'll be trivial.
+#
+#Here's a simple example:
+#
+#    async def cleanup_beartype(event_loop):
+#        # Disregard how simple this is, it's just for example
+#        s = await asyncio.create_subprocess_exec("ls", loop=event_loop)
+#
+#    def schedule_beartype_cleanup():
+#        event_loop = asyncio.get_event_loop()
+#        event_loop.run_until_complete(asyncio.wait_for(
+#            cleanup_beartype(event_loop), 1000))
+#
+#The above example was culled from this StackOverflow post:
+#    https://stackoverflow.com/questions/45010178/how-to-use-asyncio-event-loop-in-library-function
+#Unlike the asyncio.create_task() approach, that works on Python >= 3.6.
+#Anyway, extensive research is warranted here.
+#
+#Sixthly, note that the schedule_beartype_cleanup() function should be called
+#only *ONCE* per active Python process by the first call to the @beartype
+#decorator passed a callable annotated by one or more "dict" or
+#"typing.Mapping" type hints. We don't pay these costs unless we have to. In
+#particular, do *NOT* unconditionally call the schedule_beartype_cleanup()
+#function on the first importation of the "beartype" package.
+#
+#Lastly, note there technically exists a trivial alternative to the above
+#asynchronous approach: the "gc.callbacks" list, which allows us to schedule
+#arbitrary user-defined standard non-asynchronous callback functions routinely
+#called by the garbage collector either immediately before or after each
+#collection. So what's the issue? Simple: end users are free to either
+#explicitly disable the garbage collector *OR* compile or interpreter their
+#apps under a non-CPython executable that does not perform garbage collection.
+#Ergo, this alternative fails to generalize and is thus largely useless.
+
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
 #of both keys and values. Note that:

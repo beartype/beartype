@@ -80,6 +80,17 @@ This private submodule is *not* intended for importation by downstream callers.
 #      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
 #* Oh, and note that our defined wrapper function must also be preceded by the
 #  "async " keyword. So, we'll also need to augment "CODE_SIGNATURE".
+#FIXME: As a counterargument to the above approach, note this commentary I
+#stumbled across while researching an entirely separate topic:
+#    "...trying to automatically detect whether a function is sync or async
+#    it’s almost always a bad idea, because it’s very difficult to do reliably.
+#    Instead it’s almost always better to make the user say explicitly which
+#    one they mean, for example by having two versions of a decorator and
+#    telling the user to use @mydecorator_sync on sync functions and
+#    @mydecorator_async on async functions."
+#Is this actually the case? Clearly, we'll need to research just how
+#deterministic the inspect.isawaitable() tester is. Does that tester fall down
+#(i.e., return false negatives or positives) in well-known edge cases?
 #FIXME: Unit test this extensively, please.
 
 #FIXME: Non-critical optimization: if the active Python interpreter is already
