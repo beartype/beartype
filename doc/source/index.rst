@@ -1,20 +1,27 @@
-.. beartype documentation master file, created by
-   sphinx-quickstart on Thu Jan 14 01:22:28 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+==========================================
+beartype —[ the bare-metal type checker ]—
+==========================================
 
-Welcome to beartype's documentation!
-====================================
+.. parsed-literal::
+
+   Look for the bare necessities,
+     the simple bare necessities.
+   Forget about your worries and your strife.
+
+                           — `The Jungle Book`_.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   :caption: Package
 
+   changes
+   reference
 
+.. toctree::
+   :hidden:
+   :caption: Guide
 
-Indices and tables
-==================
+   tutorial
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. _The Jungle Book:
+   https://www.gutenberg.org/files/236/236-h/236-h.htm
