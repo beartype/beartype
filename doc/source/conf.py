@@ -76,6 +76,9 @@ extensions = [
     # each of this project's Python modules and linking external references to
     # those modules to these listings.
     'sphinx.ext.viewcode',
+
+    # 3rd party Read The Docs HTML theme for neat and mobile-friendly doc site
+    'sphinx_rtd_theme',
 ]
 
 # ....................{ EXTENSIONS ~ napoleon             }....................
@@ -95,7 +98,7 @@ napoleon_google_docstring = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
