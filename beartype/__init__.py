@@ -43,7 +43,7 @@ from beartype.meta import VERSION_PARTS as __version_info__
 # ....................{ GLOBALS                           }....................
 # Document all global variables imported into this namespace above.
 
-__version__
+__version__ = __version__
 '''
 Human-readable package version as a ``.``-delimited string.
 
@@ -52,7 +52,7 @@ rather than that of a typical global (e.g., ``VERSION_STR``).
 '''
 
 
-__version_info__
+__version_info__ = __version_info__
 '''
 Machine-readable package version as a tuple of integers.
 
