@@ -44,27 +44,33 @@ license`_. Beartype has no runtime dependencies, `only one test-time dependency
 <Python status_>`__, and complies with *almost* `all type hint annotations
 standardized by the Python community <Compliance_>`__.
 
-tl;dr
-=====
+.. # Ideally, this heading would actually be formatted as a proper heading
+.. # (e.g., underlined by "=" characters). Since doing so causes the table of
+.. # contents that follows to be silently ignored, we fallback to a simple
+.. # block quote -- which technically suffices but is rather lame. So it goes!
 
-#. `Install beartype <Installation_>`__.
-
-   .. code-block:: shell-session
+.. topic:: **tl;dr:**
+    
+   #. `Install beartype <Installation_>`__:
    
-      pip3 install beartype
-
-#. `Decorate functions and methods annotated by PEP-compliant type hints with
-   the @beartype.beartype decorator. <Usage_>`__
-
-   .. code-block:: python
-
-      from beartype import beartype
-      from collections.abc import Iterable
-      from typing import Optional
-
-      @beartype
-      def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
-          print('\n'.join(messages))
+      .. code-block:: shell-session
+      
+         pip3 install beartype
+   
+   #. `Decorate functions and methods annotated by PEP-compliant type hints with
+      the @beartype.beartype decorator <Usage_>`__:
+   
+      .. code-block:: python
+   
+         from beartype import beartype
+         from collections.abc import Iterable
+         from typing import Optional
+   
+         @beartype
+         def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
+             print('\n'.join(messages))
+   
+   Quality assurance has now been assured.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -88,9 +94,10 @@ News
 
 Beartype has a `roadmap forward to our first major milestone <beartype
 1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
-with all annotation standards by late 2021. :sup:`...in theory` Join `the
-strangely enticing conversation <beartype 1.0.0_>`__ and be a part of the spicy
-runtime type-checker that `goes up to eleven`_.
+with all annotation standards by late 2021. :sup:`...in theory`
+
+Join `the strangely enticing conversation <beartype 1.0.0_>`__ and be a part of
+the spicy runtime type-checker that `goes up to eleven`_.
 
 Installation
 ============
