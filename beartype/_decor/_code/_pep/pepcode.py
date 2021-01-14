@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2020 Cecil Curry.
+# Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -92,7 +92,7 @@ def coerce_hint_pep(
       thus invalid as a type hint), raise an exception.
 
     This getter is *not* memoized, due to being only called once per decorated
-    callable parameter or return value.
+    callable parameter or return value and being efficient in any case.
 
     Parameters
     ----------

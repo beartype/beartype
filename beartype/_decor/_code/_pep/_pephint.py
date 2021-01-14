@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2020 Cecil Curry.
+# Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -651,6 +651,30 @@ This private submodule is *not* intended for importation by downstream callers.
 #explicitly disable the garbage collector *OR* compile or interpreter their
 #apps under a non-CPython executable that does not perform garbage collection.
 #Ergo, this alternative fails to generalize and is thus largely useless.
+#FIXME: Actually... let's not do the "asyncio" approach -- at least not
+#initially. Why? The simplest reason is that absolutely no one expects a
+#low-level decorator to start adding scheduled asynchronous tasks to the global
+#event loop. The less simple reason is that doing so would probably have
+#negative side effects to at least one downstream consumer, the likes of which
+#we could never possibly predict.
+#
+#So, what can we do instead? Simple. We do this by:
+#* If garbage collection is enabled, registering a new cleanup callback with
+#  "gc.callbacks".
+#* Else, we get creative. First, note that garbage collection is really only
+#  ever disabled in the real world when compiling Python to a lower-level
+#  language (typically, C). Ergo, efficiency isn't nearly as much of a concern
+#  in this currently uncommon edge case. So, here's what we do:
+#  * After the first call to the @beartype decorator passed a callable
+#    annotated by one or more mapping or set type hints, globally set a private
+#    "beartype" boolean -- say, "WAS_HINT_CLEANABLE" -- noting this to have
+#    been the case.
+#  * In the _code_check_params() function generating code type-checking *ALL*
+#    annotated non-ignorable parameters:
+#    * If "WAS_HINT_CLEANABLE" is True, conditionally append code calling our
+#      cleanup routine *AFTER* code type-checking these parameters. While
+#      mildly inefficient, function calls incur considerably less overhead
+#      when compiled away from interpreted Python bytecode.
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright 2014-2020 by Cecil Curry.
+# Copyright 2014-2021 by Cecil Curry.
 # See "LICENSE" for further details.
 
 '''

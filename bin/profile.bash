@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2020 Cecil Curry.
+# Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                          )--------------------

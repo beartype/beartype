@@ -1,3 +1,15 @@
+.. # ------------------( SEO                                )------------------
+.. # Metadata converted into HTML-specific meta tags parsed by search engines.
+.. # Note that:
+.. # * The "description" should be no more than 300 characters and ideally no
+.. #   more than 150 characters, as search engines may silently truncate this
+.. #   description to 150 characters in edge cases.
+
+.. meta::
+   :description lang=en:
+     Beartype is an open-source pure-Python PEP-compliant constant-time runtime
+     type checker emphasizing efficiency and portability.
+
 .. # ------------------( SYNOPSIS                           )------------------
 
 ==========================================
@@ -32,11 +44,27 @@ license`_. Beartype has no runtime dependencies, `only one test-time dependency
 <Python status_>`__, and complies with *almost* `all type hint annotations
 standardized by the Python community <Compliance_>`__.
 
-    Beartype has a `roadmap forward to our first major milestone <beartype
-    1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
-    with all annotation standards by late 2021. :sup:`...in theory` Join `the
-    strangely enticing conversation <beartype 1.0.0_>`__ and be a part of the
-    spicy runtime type-checker that `goes up to eleven`_.
+tl;dr
+=====
+
+#. `Install beartype <Installation_>`__.
+
+   .. code-block:: shell-session
+   
+      pip3 install beartype
+
+#. `Decorate functions and methods annotated by PEP-compliant type hints with
+   the @beartype.beartype decorator. <Usage_>`__
+
+   .. code-block:: python
+
+      from beartype import beartype
+      from collections.abc import Iterable
+      from typing import Optional
+
+      @beartype
+      def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
+          print('\n'.join(messages))
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -54,6 +82,15 @@ standardized by the Python community <Compliance_>`__.
    :local:
 
 .. # ------------------( DESCRIPTION                        )------------------
+
+News
+====
+
+Beartype has a `roadmap forward to our first major milestone <beartype
+1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
+with all annotation standards by late 2021. :sup:`...in theory` Join `the
+strangely enticing conversation <beartype 1.0.0_>`__ and be a part of the spicy
+runtime type-checker that `goes up to eleven`_.
 
 Installation
 ============
@@ -1062,6 +1099,9 @@ Then:
 .. #     https://marketplace.visualstudio.com/items?itemName=MeowTeam.vscode-math-to-image
 .. # See also this long-standing GitHub issue:
 .. #     https://github.com/github/markup/issues/83
+.. #FIXME: Actually, we'll be leveraging Sphinx's MathJax extension to render
+.. # this, which means the currently disabled "math::" directives below should
+.. # now work out-of-the-box. If so, remove the corresponding images, please.
 
 .. #FIXME: Uncomment after GitHub resolves LaTeX math rendering.
 .. # .. math:: E(T) = n \log n + \gamma n + \frac{1}{2} + O\left(\frac{1}{n}\right)

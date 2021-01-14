@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2020 Cecil Curry.
+# Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 
 '''
@@ -187,7 +187,7 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
 # For further details, see http://semver.org.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-VERSION = '0.5.2'
+VERSION = '0.6.0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
