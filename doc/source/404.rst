@@ -1,0 +1,8 @@
+========
+Beartype
+========
+Oops! The page you are looking for was not found.
+Maybe you'll find what you're looking for by searching the documentation
+or returning to the `home page <rtd_>`_.
+
+.. _rtd: https://beartype.rtfd.org
