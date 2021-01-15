@@ -161,7 +161,7 @@ def reraise_exception_cached(
     '''
     assert isinstance(exception, Exception), (
         f'{repr(exception)} not exception.')
-    assert isinstance(source_str, str), f'{repr((source_str))} not string.'
+    assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
     # If...
@@ -179,6 +179,12 @@ def reraise_exception_cached(
     ):
         # Munged exception message globally replacing all instances of this
         # source substring with this target substring.
+        #
+        # Note that we intentionally call the lower-level str.replace() method
+        # rather than the higher-level
+        # beartype._util.text.utiltextmunge.replace_str_substrs() function
+        # here, as the latter unnecessarily requires this exception message to
+        # contain one or more instances of this source substring.
         exception_message = exception.args[0].replace(source_str, target_str)
 
         # If doing so actually changed this message...

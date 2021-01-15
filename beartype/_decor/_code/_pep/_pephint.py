@@ -790,6 +790,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     warn_if_hint_pep_sign_deprecated,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.text.utiltextmunge import replace_str_substrs
 from itertools import count
 from typing import Generic, NoReturn
 
@@ -2463,7 +2464,8 @@ def pep_code_check_hint(hint: object) -> (
 
         # ................{ CLEANUP                           }................
         # Inject this code into the body of this wrapper.
-        func_code = func_code.replace(hint_curr_placeholder, func_curr_code)
+        func_code = replace_str_substrs(
+            text=func_code, old=hint_curr_placeholder, new=func_curr_code)
 
         # Nullify the metadata describing the previously visited hint in this
         # list for safety.

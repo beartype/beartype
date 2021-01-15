@@ -48,6 +48,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
 )
+from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Callable, Iterable
 from inspect import Parameter
 from typing import NoReturn, Union
@@ -245,11 +246,12 @@ def pep_code_check_param(
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact parameter by globally replacing in this parameter-agnostic
         # code...
-        func_code = func_code.replace(
+        func_code = replace_str_substrs(
+            text=func_code,
             # This placeholder substring cached into this code with...
-            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+            old=PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this parameter's name.
-            repr(param.name),
+            new=repr(param.name),
         )
 
         # If this code contains one or more relative forward reference
@@ -386,11 +388,12 @@ def pep_code_check_return(
         # Generate unmemoized parameter-specific Python code type-checking this
         # exact return value by globally replacing in this return-agnostic
         # code...
-        func_code.replace(
+        replace_str_substrs(
+            text=func_code,
             # This placeholder substring cached into this code with...
-            PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+            old=PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
             # This object representation of this return value,
-            _RETURN_REPR,
+            new=_RETURN_REPR,
         ),
         # Boolean true only if type-checking this return value requires first
         # localizing a pseudo-random integer.
@@ -439,16 +442,17 @@ def resolve_pep_code_hints_forwardref_class_basename(
     for hint_forwardref_class_basename in hints_forwardref_class_basename:
         # Generate unmemoized callable-specific Python code type-checking this
         # class by globally replacing in this callable-agnostic code...
-        func_code = func_code.replace(
+        func_code = replace_str_substrs(
+            text=func_code,
             # This placeholder substring cached into this code with...
-            (
+            old=(
                 f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
                 f'{hint_forwardref_class_basename}'
                 f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
             ),
             # Python expression evaluating to this class when accessed
             # via the private "__beartypistry" parameter.
-            register_typistry_forwardref(
+            new=register_typistry_forwardref(
                 # Fully-qualified classname referred to by this forward
                 # reference relative to the decorated callable.
                 get_hint_forwardref_classname_relative_to_obj(

@@ -20,20 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Refactor *ALL* calls to str.replace() throughout the codebase to call a
-#newly defined beartype._util.text.utiltextmunge.replace_str_substrs() function
-#whose signature should resemble:
-#    def replace_str_substrs(text: str, substr: str) -> str:
-#
-#The body of this function should:
-#* If the passed string does *NOT* contain at least one instance of the passed
-#  substring, raise an exception.
-#* Else, return:
-#      str.replace(text, substr)
-#
-#Why? Because the builtin str.replace() method performs *NO* such validation,
-#inviting non-human-readable exceptions when we inevitably muck things up.
-
 #FIXME: Major optimization: duplicate the signature of the decorated callable
 #as the signature of our wrapper function. Why? Because doing so obviates the
 #need to explicitly test whether each possible parameter was passed and how
