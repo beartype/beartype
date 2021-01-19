@@ -51,7 +51,7 @@ standardized by the Python community <Compliance_>`__.
 
 .. topic:: **tl;dr:**
     
-   #. `Install beartype <Installation_>`__:
+   #. `Install beartype <Install_>`__:
    
       .. code-block:: shell-session
       
@@ -99,8 +99,8 @@ with all annotation standards by late 2021. :sup:`...in theory`
 Join `the strangely enticing conversation <beartype 1.0.0_>`__ and be a part of
 the spicy runtime type-checker that `goes up to eleven`_.
 
-Installation
-============
+Install
+=======
 
 Let's install ``beartype`` with pip_, because community standards are good:
 
@@ -116,11 +116,25 @@ Let's install ``beartype`` with Anaconda_, because corporate standards are
    conda config --add channels conda-forge
    conda install beartype
 
+macOS
+-----
+
+Let's install ``beartype`` with MacPorts_ on macOS_, because HomeBrew_ `hates
+packaging Python packages <HomeBrew Python packaging_>`__, because they
+secretly want you to use MacPorts_ instead – which you should do:
+
+.. code-block:: shell-session
+
+   sudo port install py-beartype
+
+Thanks to `MacPorts maintainer @harens <harens_>`__ for `packaging beartype for
+our macOS audience <beartype MacPorts_>`__!
+
 Linux
 -----
 
-Let's install ``beartype`` with Gentoo_, because source-based Linux distros are
-the computational nuclear option:
+Let's install ``beartype`` with ``emerge`` on Gentoo_, because source-based
+Linux distributions are the CPU-bound nuclear option:
 
 .. code-block:: shell-session
 
@@ -148,7 +162,7 @@ Beartype is zero-cost. Beartype inflicts *no* harmful developer tradeoffs,
 instead stressing expense-free strategies at both:
 
 * **Installation time.** Beartype has no install-time or runtime dependencies,
-  `supports standard Python package managers <Installation_>`__, and happily
+  `supports standard Python package managers <Install_>`__, and happily
   coexists with competing static type checkers and other runtime type checkers.
 * **Runtime.** Thanks to aggressive memoization and dynamic code generation at
   decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
@@ -847,7 +861,9 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `Anaconda <beartype Anaconda_>`__       | **0.1.0**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | `Gentoo <beartype Gentoo_>`__           | **0.2.0**\ —\ *current*       | —                         |
+|                  | `Gentoo Linux <beartype Gentoo_>`__     | **0.2.0**\ —\ *current*       | —                         |
++------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                  | `macOS MacPorts <beartype MacPorts_>`__ | **0.5.1**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 | Python           | 3.5                                     | **0.1.0**\ —\ **0.3.0**       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2391,6 +2407,39 @@ existed*) include:
    award`_ from the `Paul G. Allen Frontiers Group`_ through its parent
    applications – the multiphysics biology simulators BETSE_ and BETSEE_.
 
+Authors
+=======
+
+``beartype`` is developed with the grateful assistance of a volunteer community
+of boundless enthusiasts, including (*in chronological order of issue or pull
+request*):
+
+#. `Cecil Curry (@leycec) <leycec_>`__. :superscript:`Hi! It's me.` From
+   ``beartype``'s early gestation as a nondescript ``@type_check`` decorator
+   sequestered in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__
+   to its general-audience release as a `public package supported across
+   multiple Python and platform-specific package managers <Install_>`__, I
+   continue to shepherd the fastest, hardest, and deepest runtime type-checking
+   solution in any dynamically-typed language into the well-typed future of
+   PEP-compliance and limitless quality assurance. *Cue epic taiko drumming.*
+#. `Felix Hildén (@felix-hilden) <felix-hilden_>`__, the Finnish `computer
+   vision`_ expert world-renowned for his effulgent, fun-loving disposition
+   *and*:
+
+   * `Branding beartype with the Logo of the Decade <beartype felix-hilden
+     branding_>`__, say nine out of ten Finnish brown bears. "The remaining
+     bears are just jelly," claims Felix.
+   * `Documenting beartype with its first Sphinx-based directory structure
+     <beartype felix-hilden docs structure_>`__.
+   * `Configuring that structure for Read The Docs (RTD)-friendly rendering
+     <beartype felix-hilden docs RTD confs_>`__.
+
+#. `@harens <harens_>`__, the boisterous London developer acclaimed for his
+   defense of British animals that quack pridefully as they peck you in city
+   parks *as well as* `maintaining our first third-party package, a
+   macOS-specific MacPorts Portfile estimated to solve all your problems
+   <beartype harens MacPorts_>`__.
+
 See Also
 ========
 
@@ -2444,11 +2493,23 @@ application stack at tool rather than Python runtime) include:
 .. _beartype util pep:
    beartype/_util/hint/pep/proposal
 
+.. # ------------------( LINKS ~ beartype : contributions   )------------------
+.. _beartype felix-hilden branding:
+   https://github.com/beartype/beartype/issues/8#issuecomment-760103474
+.. _beartype felix-hilden docs structure:
+   https://github.com/beartype/beartype/pull/8
+.. _beartype felix-hilden docs RTD confs:
+   https://github.com/beartype/beartype/pull/9
+.. _beartype harens MacPorts:
+   https://github.com/beartype/beartype/issues/12
+
 .. # ------------------( LINKS ~ beartype : package         )------------------
 .. _beartype Anaconda:
    https://anaconda.org/conda-forge/beartype
 .. _beartype Gentoo:
    https://github.com/leycec/raiagent
+.. _beartype MacPorts:
+   https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
    https://pypi.org/project/beartype
 
@@ -2485,6 +2546,10 @@ application stack at tool rather than Python runtime) include:
    https://github.com/features/actions
 
 .. # ------------------( LINKS ~ github : user              )------------------
+.. _felix-hilden:
+   https://github.com/felix-hilden
+.. _harens:
+   https://github.com/harens
 .. _leycec:
    https://github.com/leycec
 
@@ -2497,6 +2562,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Software_quality_assurance
 .. _amortized analysis:
    https://en.wikipedia.org/wiki/Amortized_analysis
+.. _computer vision:
+   https://en.wikipedia.org/wiki/Computer_vision
 .. _random walk:
    https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
@@ -2543,6 +2610,16 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ os : linux                 )------------------
 .. _Gentoo:
    https://www.gentoo.org
+
+.. # ------------------( LINKS ~ os : macos                 )------------------
+.. _macOS:
+   https://en.wikipedia.org/wiki/MacOS
+.. _HomeBrew:
+   https://brew.sh
+.. _HomeBrew Python packaging:
+   https://github.com/numpy/numpy/issues/11454#issuecomment-401423500
+.. _MacPorts:
+   https://www.macports.org
 
 .. # ------------------( LINKS ~ py                         )------------------
 .. _Python:
