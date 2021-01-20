@@ -106,8 +106,7 @@ class KeyPool(object):
                from beartype.cave import HashableType
                def item_maker(key: HashableType) -> object: ...
         '''
-        assert callable(item_maker), (
-            '{!r} not callable.'.format(item_maker))
+        assert callable(item_maker), f'{repr(item_maker)} not callable.'
 
         # Classify these parameters as instance variables.
         self._pool_item_maker = item_maker

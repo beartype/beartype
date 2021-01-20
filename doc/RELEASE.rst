@@ -504,7 +504,7 @@ When in doubt, bump only the minor version and reset only the patch version.
 
 .. # ------------------( LINKS ~ beartype                   )------------------
 .. _readme:
-   https://github.com/beartype/beartype/blob/master/README.rst
+   https://github.com/beartype/beartype/blob/main/README.rst
 .. _tarballs:
    https://github.com/beartype/beartype/releases
 .. _PyPI beartype:

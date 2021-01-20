@@ -2411,24 +2411,23 @@ Authors
 =======
 
 ``beartype`` is developed with the grateful assistance of a volunteer community
-of boundless enthusiasts, including (*in chronological order of issue or pull
-request*):
+of enthusiasts, including (*in chronological order of issue or pull request*):
 
 #. `Cecil Curry (@leycec) <leycec_>`__. :superscript:`Hi! It's me.` From
-   ``beartype``'s early gestation as a nondescript ``@type_check`` decorator
-   sequestered in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__
-   to its general-audience release as a `public package supported across
-   multiple Python and platform-specific package managers <Install_>`__, I
-   continue to shepherd the fastest, hardest, and deepest runtime type-checking
-   solution in any dynamically-typed language into the well-typed future of
-   PEP-compliance and limitless quality assurance. *Cue epic taiko drumming.*
+   beartype's early gestation as a nondescript ``@type_check`` decorator
+   in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__ to its
+   general-audience release as a `public package supported across multiple
+   Python and platform-specific package managers <Install_>`__, I shepherd the
+   fastest, hardest, and deepest runtime type-checking solution in any
+   dynamically-typed language towards a well-typed future of PEP-compliance and
+   boundless quality assurance. *Cue epic taiko drumming.*
 #. `Felix Hildén (@felix-hilden) <felix-hilden_>`__, the Finnish `computer
-   vision`_ expert world-renowned for his effulgent, fun-loving disposition
+   vision`_ expert world-renowned for his effulgent fun-loving disposition
    *and*:
 
    * `Branding beartype with the Logo of the Decade <beartype felix-hilden
-     branding_>`__, say nine out of ten Finnish brown bears. "The remaining
-     bears are just jelly," claims Felix.
+     branding_>`__, say nine out of ten Finnish brown bears. "The other bears
+     are just jelly," claims Hildén.
    * `Documenting beartype with its first Sphinx-based directory structure
      <beartype felix-hilden docs structure_>`__.
    * `Configuring that structure for Read The Docs (RTD)-friendly rendering
@@ -2517,9 +2516,9 @@ application stack at tool rather than Python runtime) include:
 .. _beartype 1.0.0:
    https://github.com/beartype/beartype/issues/7
 .. _codebase:
-   https://github.com/beartype/beartype/tree/master/beartype
+   https://github.com/beartype/beartype/tree/main/beartype
 .. _profiler suite:
-   https://github.com/beartype/beartype/blob/master/bin/profile.bash
+   https://github.com/beartype/beartype/blob/main/bin/profile.bash
 .. _pull requests:
    https://github.com/beartype/beartype/pulls
 .. _tests:
