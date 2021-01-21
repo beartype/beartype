@@ -9,6 +9,35 @@
 # ....................{ TODO                              }....................
 #FIXME: Also define a top-level ".readthedocs.yml" file. See:
 #    https://docs.readthedocs.io/en/stable/config-file/v2.html?
+#
+#This file should initially resemble:
+#
+#    version: 2
+#
+#    python:
+#      install:
+#        - doc/requirement.txt
+#        - method: pip
+#          path: .
+#          extra_requirements:
+#            - doc
+#      system_packages: true
+#
+#RTD could then install beartype as:
+#$ pip install .[docs]
+#
+#This is kinda nice, because it enables end users to do the same. Maybe someone
+#wants that? Who knows! But I'd like to give them that installation
+#convenience, if we can. To facilitate this, I'll need to do a bit of
+#additional legwork on my end. But that's fine. I have legs, so legwork is
+#feasible. This includes:
+#* Defining a new "beartype.meta.LIBS_DOCTIME_MANDATORY" tuple resembling:
+#    LIBS_DOCTIME_MANDATORY = {
+#        'sphinx >=3.4.3',
+#        'sphinx-rtd-theme >=0.5.1',
+#    }
+#* Defining a new 'extras_require' key-value pair in setup resembling:
+#        'doc': meta.LIBS_DOCTIME_MANDATORY,
 
 # ....................{ IMPORTS                           }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we
@@ -77,6 +106,22 @@ extensions = [
     # those modules to these listings.
     'sphinx.ext.viewcode',
 
+    #FIXME: For improved flexibility and compatibility, refactor this mandatory
+    #dependency into an optional dependency. Specifically:
+    #* Append the following logic *AFTER* this list assignment:
+    #    try:
+    #        import sphinx_rtd_theme
+    #
+    #        # 3rd party Read The Docs HTML theme for neat and mobile-friendly
+    #        # doc site.
+    #        extensions.append('sphinx_rtd_theme')
+    #
+    #        # The theme to use for HTML and HTML Help pages.  See the
+    #        # documentation for a list of builtin themes.
+    #        html_theme = 'sphinx_rtd_theme'
+    #    except:
+    #        pass
+
     # 3rd party Read The Docs HTML theme for neat and mobile-friendly doc site
     'sphinx_rtd_theme',
 ]
@@ -97,7 +142,6 @@ napoleon_google_docstring = False
 # ....................{ BUILD ~ html                      }....................
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,

@@ -32,17 +32,19 @@ efficiency, portability, and thrilling puns.
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of dynamically-typed Python by
-`enforcing type safety of arbitrary objects at the granular level of functions
-and methods <Usage_>`__ in `O(1) non-amortized worst-case time with negligible
+`enforcing type safety at the granular level of functions and methods
+<Usage_>`__ against `type hints standardized by the Python community
+<Compliance_>`__ in `O(1) non-amortized worst-case time with negligible
 constant factors <Timings_>`__.
 
 Beartype is `portably implemented <codebase_>`__ in `Python 3 <Python_>`__,
 `continuously stress-tested <tests_>`__ via `GitHub Actions`_ **+** tox_ **+**
 pytest_, and `permissively distributed <beartype license_>`__ under the `MIT
-license`_. Beartype has no runtime dependencies, `only one test-time dependency
-<pytest_>`__, supports `all Python 3.x releases still in active development
-<Python status_>`__, and complies with *almost* `all type hint annotations
-standardized by the Python community <Compliance_>`__.
+license`_. Beartype has *no* runtime dependencies, `only one test-time
+dependency <pytest_>`__, and `only one documentation-time dependency
+<Sphinx_>`__. Beartype supports `all actively developed Python versions
+<Python status_>`__, `all Python package managers <Install_>`__, and `multiple
+platform-specific package managers <Install_>`__.
 
 .. # Ideally, this heading would actually be formatted as a proper heading
 .. # (e.g., underlined by "=" characters). Since doing so causes the table of
@@ -2401,11 +2403,13 @@ Funding
 which is to say, it's unfinanced. Prior funding sources (*yes, they once
 existed*) include:
 
-#. Over the period 2015—2018 preceding the untimely death of `Paul Allen`_,
-   beartype was graciously associated with the `Paul Allen Discovery Center`_
-   at `Tufts University`_ and grant-funded by a `Paul Allen Discovery Center
-   award`_ from the `Paul G. Allen Frontiers Group`_ through its parent
-   applications – the multiphysics biology simulators BETSE_ and BETSEE_.
+#. A `Paul Allen Discovery Center award`_ from the `Paul G. Allen Frontiers
+   Group`_ under the administrative purview of the `Paul Allen Discovery
+   Center`_ at `Tufts University`_ over the period 2015—2018 preceding the
+   untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
+   which ``beartype`` was maintained as the private ``@type_check`` decorator
+   in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__.
+   :superscript:`Phew!`
 
 Authors
 =======
@@ -2667,6 +2671,8 @@ application stack at tool rather than Python runtime) include:
    https://pandas.pydata.org
 .. _PyTorch:
    https://pytorch.org
+.. _Sphinx:
+   https://www.sphinx-doc.org/en/master
 .. _SymPy:
    https://www.sympy.org
 
@@ -2675,6 +2681,12 @@ application stack at tool rather than Python runtime) include:
    https://numpy.org
 .. _numpy.empty_like:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
+
+.. # ------------------( LINKS ~ py : package : test        )------------------
+.. _pytest:
+   https://docs.pytest.org
+.. _tox:
+   https://tox.readthedocs.io
 
 .. # ------------------( LINKS ~ py : pep                   )------------------
 .. _PEP 0:
@@ -3001,12 +3013,6 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.no_type_check
 .. _typing.TYPE_CHECKING:
    https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
-
-.. # ------------------( LINKS ~ py : test                  )------------------
-.. _pytest:
-   https://docs.pytest.org
-.. _tox:
-   https://tox.readthedocs.io
 
 .. # ------------------( LINKS ~ py : type : runtime        )------------------
 .. _enforce:
