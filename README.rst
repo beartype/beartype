@@ -12,9 +12,10 @@
 
 .. # ------------------( SYNOPSIS                           )------------------
 
-==========================================
-beartype —[ the bare-metal type checker ]—
-==========================================
+===============
+|beartype-logo|
+===============
+—[ the bare-metal type checker ]—
 
 |GitHub Actions badge|
 
@@ -2470,6 +2471,10 @@ application stack at tool rather than Python runtime) include:
 * pytype_, published by Google.
 
 .. # ------------------( IMAGES                             )------------------
+.. |beartype-logo| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo-small.png
+   :target: https://beartype.rtfd.org
+   :alt: Beartype logo
+
 .. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=tests
    :alt: GitHub Actions status

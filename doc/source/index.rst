@@ -1,6 +1,7 @@
-==========================================
-beartype —[ the bare-metal type checker ]—
-==========================================
+===============
+|beartype-logo|
+===============
+—[ the bare-metal type checker ]—
 
 .. parsed-literal::
 
@@ -25,3 +26,8 @@ beartype —[ the bare-metal type checker ]—
 
 .. _The Jungle Book:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
+
+.. |beartype-logo| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
+   :width: 510 px
+   :target: https://beartype.rtfd.org
+   :alt: Beartype logo
