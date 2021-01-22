@@ -12,12 +12,11 @@
 
 .. # ------------------( SYNOPSIS                           )------------------
 
-===============
-|beartype-logo|
-===============
-—[ the bare-metal type checker ]—
+=================
+|beartype-banner|
+=================
 
-|GitHub Actions badge|
+|ci-badge|
 
 .. parsed-literal::
 
@@ -2471,13 +2470,12 @@ application stack at tool rather than Python runtime) include:
 * pytype_, published by Google.
 
 .. # ------------------( IMAGES                             )------------------
-.. |beartype-logo| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo-small.png
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo-small.png
    :target: https://beartype.rtfd.org
-   :alt: Beartype logo
-
-.. |GitHub Actions badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
+   :alt: beartype —[ the bare-metal type checker ]—
+.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=tests
-   :alt: GitHub Actions status
+   :alt: beartype continuous integration (CI) status
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
 .. _beartype license:

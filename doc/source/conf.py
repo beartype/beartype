@@ -1,43 +1,14 @@
 #!/usr/bin/env python3
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Cecil Curry.
+# See "LICENSE" for further details.
+#
 # --------------------( SYNOPSIS                          )--------------------
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# ....................{ TODO                              }....................
-#FIXME: Also define a top-level ".readthedocs.yml" file. See:
-#    https://docs.readthedocs.io/en/stable/config-file/v2.html?
-#
-#This file should initially resemble:
-#
-#    version: 2
-#
-#    python:
-#      install:
-#        - doc/requirement.txt
-#        - method: pip
-#          path: .
-#          extra_requirements:
-#            - doc
-#      system_packages: true
-#
-#RTD could then install beartype as:
-#$ pip install .[docs]
-#
-#This is kinda nice, because it enables end users to do the same. Maybe someone
-#wants that? Who knows! But I'd like to give them that installation
-#convenience, if we can. To facilitate this, I'll need to do a bit of
-#additional legwork on my end. But that's fine. I have legs, so legwork is
-#feasible. This includes:
-#* Defining a new "beartype.meta.LIBS_DOCTIME_MANDATORY" tuple resembling:
-#    LIBS_DOCTIME_MANDATORY = {
-#        'sphinx >=3.4.3',
-#        'sphinx-rtd-theme >=0.5.1',
-#    }
-#* Defining a new 'extras_require' key-value pair in setup resembling:
-#        'doc': meta.LIBS_DOCTIME_MANDATORY,
+# --------------------( SEE ALSO                          )--------------------
+# * https://www.sphinx-doc.org/en/master/usage/configuration.html
+#   List of all options supported in this file.
 
 # ....................{ IMPORTS                           }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we

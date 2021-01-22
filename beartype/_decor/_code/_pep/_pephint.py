@@ -675,6 +675,66 @@ This private submodule is *not* intended for importation by downstream callers.
 #      cleanup routine *AFTER* code type-checking these parameters. While
 #      mildly inefficient, function calls incur considerably less overhead
 #      when compiled away from interpreted Python bytecode.
+#FIXME: As for LRU caching, we succinctly solved this while cross-country
+#skiing today: just use an "OrderedDict". While obsolete for most purposes
+#under Python >= 3.7 (whose builtin "dict" type now guarantees insertion-order
+#iteration), the pure-Python "collections.OrderedDict" implementation is
+#magically *PERFECT* for implementing a dict-style LRU cache. Why? Because this
+#implementation actually leverages a double-linked list under-the-hood, which
+#is exactly the data structure required to implement all standard LRU cache
+#operations in O(1) time with only minimal space overhead. Unsurprisingly,
+#there even already exists a clever Gist leveraging this solution at:
+#    https://gist.github.com/davesteele/44793cd0348f59f8fadd49d7799bd306
+#Obviously, we should certainly cite this Gist as inspiration. We should *NOT*,
+#however, copy-and-paste this solution as is into beartype. Why? Because it's
+#still suboptimal. Although O(1), associated constants are non-negligible
+#because this solution internally defers to superclass methods. The entire
+#point of caching is to be as optimally efficient as feasible; if you don't do
+#that, there's no point in caching. So, we optimize this to the hilt.
+#
+#Perhaps more importantly, the "OrderedDict" class is considered deprecated and
+#will thus likely disappear at some point. That point may not necessarily be
+#today, tomorrow, or even this decade, but it will almost certainly happen.
+#So, we avoid direct usage of "OrderedDict".
+#
+#Specifically, we:
+#
+#* Define a new "beartype._util.cache.utilcachelru" submodule.
+#* In this submodule:
+#  * Define a new "LRUCache" class. Note that this class should *NOT*:
+#    * Satisfy the "collections.abc.MutableMapping" API, at least not
+#      initially. Why? Because we don't require most of that API. We're fairly
+#      convinced we only require the standard __delitem__(), __getitem__(), and
+#      __setitem__() dunder methods. That's it. No pop(). No __reversed__().
+#    * Subclass the "collections.OrderedDict" class. Instead, this class:
+#      * Subclasses the builtin "dict" type, just like "OrderedDict". That
+#        said, we honestly have *NO* idea why "OrderedDict" even bothers
+#        subclassing "dict", since "OrderedDict" appears to redefine *ALL* of
+#        the standard "dict" methods with its own implementations. Initially,
+#        we should consider instead just:
+#        * Defining a new "LRUCache._dict" instance variable. Oh, wait. We
+#          think we see. Subclassing "dict" appears to purely be an efficiency
+#          optimization. By doing so, methods are then able to efficiently call
+#          superclass "dict" methods *WITHOUT* dictionary lookups via this
+#          clever calling convention leveraging default parameters:
+#              def __setitem__(
+#                  self, key, value,
+#                  dict_setitem=dict.__setitem__, proxy=_proxy, Link=_Link):
+#          *YEAH.* We like that. Micro-optimization is our bag, so let's forego
+#          a new "LRUCache._dict" instance variable and embrace the hacky (but
+#          stupidly fast) "dict" superclass approach instead.
+#      * Uses the "OrderedDict" implementation as inspiration for our own
+#        LRU-specific implementation. We don't require most of the
+#        functionality of the "OrderedDict" class -- only the exact subset
+#        required to selectively implement an LRU cache. This means at least
+#        these standard dunder methods:
+#        * OrderedDict.__getitem__().
+#        * OrderedDict.__setitem__().
+#        * OrderedDict.move_to_end(), but privatized as _move_item_to_tail().
+#          This method will be internally called by our __getitem__() and
+#          __setitem__() implementations.
+#        * OrderedDict.__delitem__(). Heck, we may not even need *THIS.* In
+#          fact, we're fairly certain we don't. Phew! One less thing, right?
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
