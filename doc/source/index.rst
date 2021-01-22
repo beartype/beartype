@@ -38,10 +38,10 @@
    tutorial
 
 .. # ------------------( IMAGES                             )------------------
-.. |beartype-logo| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
-   :width: 510 px
-   :target: https://beartype.rtfd.org
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
+   :target: https://github.com/beartype/beartype
    :alt: beartype —[ the bare-metal type checker ]—
+   :width: 510 px
 
 .. # ------------------( LINKS ~ kipling                    )------------------
 .. _The Jungle Book:

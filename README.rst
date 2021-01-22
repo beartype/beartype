@@ -16,7 +16,7 @@
 |beartype-banner|
 =================
 
-|ci-badge|
+|ci-badge| |rtd-badge|
 
 .. parsed-literal::
 
@@ -2471,11 +2471,14 @@ application stack at tool rather than Python runtime) include:
 
 .. # ------------------( IMAGES                             )------------------
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo-small.png
-   :target: https://beartype.rtfd.org
+   :target: https://beartype.rtfd.io
    :alt: beartype —[ the bare-metal type checker ]—
 .. |ci-badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=tests
    :alt: beartype continuous integration (CI) status
+.. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
+   :target: https://beartype.readthedocs.io/en/latest/?badge=latest
+   :alt: beartype Read The Docs (RTD) status
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
 .. _beartype license:
