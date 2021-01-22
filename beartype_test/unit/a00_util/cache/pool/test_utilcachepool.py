@@ -27,6 +27,7 @@ def test_key_pool_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
+    from beartype.roar import _BeartypeUtilKeyPoolException
 
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
@@ -66,18 +67,18 @@ def test_key_pool_pass() -> None:
     windows_stringio.write('I throw in my lungs which have spent four hundred years\n')
     windows_stringio.write('sucking in good faith on peace pipes.')
 
-    # Assert that this buffer implicitly converted all POSIX- to Windows-style
+    # Verify the buffer implicitly converted all POSIX- to Windows-style
     # newlines in the resulting string.
     assert (
         windows_stringio.getvalue() == THE_DEAD_SHALL_BE_RAISED_INCORRUPTIBLE)
-
+    
     # Release this buffer back to its parent pool.
     key_pool.release(key='\r\n', item=windows_stringio)
 
-    # Reacquire the same buffer again.
+    # Reacquire the same buffer.
     windows_stringio_too = key_pool.acquire(key='\r\n')
 
-    # Assert this to be the same buffer.
+    # Confirm the release-require cycle returns the same object
     assert windows_stringio is windows_stringio_too
 
     # Acquire another new "StringIO" buffer writing Windows-style newlines.
@@ -93,14 +94,20 @@ def test_key_pool_pass() -> None:
     windows_stringio_new.write('so that his eyes can’t close, for regret\n')
     windows_stringio_new.write('is like tears seeping through closed eyelids.')
 
-    # Assert that this new buffer also implicitly converted all POSIX- to
+    # Confirm the new buffer also implicitly converted all POSIX- to
     # Windows-style newlines in the resulting string.
     assert windows_stringio_new.getvalue() == BOOK_OF_NIGHTMARES
 
     # Release these buffers back to their parent pools (in acquisition order).
     key_pool.release(key='\r\n', item=windows_stringio)
     key_pool.release(key='\r\n', item=windows_stringio_new)
-
+    
+    # Verify the above object is recorded as released
+    assert key_pool._object_ids_acquired.get(id(windows_stringio_new)) is False
+    
+    # Confirm releasing an already released object elicits a roar
+    with raises(_BeartypeUtilKeyPoolException):
+        key_pool.release(key='\r\n', item=windows_stringio_new)
 
 def test_key_pool_fail() -> None:
     '''
@@ -110,11 +117,16 @@ def test_key_pool_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
-
+    from beartype.roar import _BeartypeUtilKeyPoolException
+    
     # Key pool to be tested, seeding empty pools with the identity function.
     key_pool = KeyPool(item_maker=lambda key: key)
 
-    # Assert that attempting to acquire a new object with an unhashable key
-    # raises the expected exception.
+    # Verify using an unhashable key to acquire a new object throws a TypeError
     with raises(TypeError):
         key_pool.acquire(['Lieutenant!', 'This corpse will not stop burning!'])
+        
+    # Verify releasing a non-existent object elicits a roar
+    with raises(_BeartypeUtilKeyPoolException):
+        key_pool.release(key="I should roar", item=object())
+

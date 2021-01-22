@@ -580,6 +580,19 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
 
     pass
 
+class _BeartypeUtilKeyPoolException(_BeartypeUtilException):
+    '''
+    **Beartype key pool exception.**
+
+    This exception is raised by private functions of the private
+    :mod:`beartype._util.cache.pool.utilcachepool` subpackage when attempting
+    to call :meth:`release` on a non-existent object.
+
+    This exception denotes ...
+    '''
+    pass
+
+
 # ....................{ PRIVATE ~ util : call               }..................
 class _BeartypeCallHintRaiseException(
     _BeartypeUtilException, metaclass=_ABCMeta):
