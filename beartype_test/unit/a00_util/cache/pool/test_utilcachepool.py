@@ -102,10 +102,8 @@ def test_key_pool_pass() -> None:
     key_pool.release(key='\r\n', item=windows_stringio)
     key_pool.release(key='\r\n', item=windows_stringio_new)
     
-    # Verify the above object is recorded as released
-    assert key_pool._object_ids_acquired.get(id(windows_stringio_new)) is False
-    
-    # Confirm releasing an already released object elicits a roar
+    # Confirm the above object is released AND that releasing an already
+	# released object elicits a roar. 
     with raises(_BeartypeUtilKeyPoolException):
         key_pool.release(key='\r\n', item=windows_stringio_new)
 
