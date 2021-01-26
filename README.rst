@@ -2442,6 +2442,13 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
    parks *as well as* `maintaining our first third-party package, a
    macOS-specific MacPorts Portfile estimated to solve all your problems
    <beartype harens MacPorts_>`__.
+#. `@Heliotrop3 <Heliotrop3_>`__, the `perennial flowering plant genus from
+   Peru <heliotrope_>`__ whose "primal drive for ruthless efficiency makes
+   overcoming these opportunities for growth [*and incoming world conquest*]
+   inevitable" as well as:
+
+   * `Improving quality assurance across internal caching data structures
+     <beartype Heliotrop3 caching QA_>`__.
 
 See Also
 ========
@@ -2502,7 +2509,19 @@ application stack at tool rather than Python runtime) include:
 .. _beartype util pep:
    beartype/_util/hint/pep/proposal
 
-.. # ------------------( LINKS ~ beartype : contributions   )------------------
+.. # ------------------( LINKS ~ beartype : user            )------------------
+.. _Heliotrop3:
+   https://github.com/Heliotrop3
+.. _felix-hilden:
+   https://github.com/felix-hilden
+.. _harens:
+   https://github.com/harens
+.. _leycec:
+   https://github.com/leycec
+
+.. # ------------------( LINKS ~ beartype : user : PRs      )------------------
+.. _beartype Heliotrop3 caching QA:
+   https://github.com/beartype/beartype/pull/15
 .. _beartype felix-hilden branding:
    https://github.com/beartype/beartype/issues/8#issuecomment-760103474
 .. _beartype felix-hilden docs structure:
@@ -2553,14 +2572,6 @@ application stack at tool rather than Python runtime) include:
 .. # ------------------( LINKS ~ github                     )------------------
 .. _GitHub Actions:
    https://github.com/features/actions
-
-.. # ------------------( LINKS ~ github : user              )------------------
-.. _felix-hilden:
-   https://github.com/felix-hilden
-.. _harens:
-   https://github.com/harens
-.. _leycec:
-   https://github.com/leycec
 
 .. # ------------------( LINKS ~ idea                       )------------------
 .. _Denial-of-Service:
@@ -2629,6 +2640,10 @@ application stack at tool rather than Python runtime) include:
    https://github.com/numpy/numpy/issues/11454#issuecomment-401423500
 .. _MacPorts:
    https://www.macports.org
+
+.. # ------------------( LINKS ~ other                      )------------------
+.. _heliotrope:
+   https://en.wikipedia.org/wiki/Heliotropium
 
 .. # ------------------( LINKS ~ py                         )------------------
 .. _Python:

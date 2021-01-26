@@ -101,8 +101,10 @@ class BeartypeData(object):
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
-    # Slot *ALL* instance variables defined on this object to minimize space
-    # and time complexity across frequently called @beartype decorations.
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently
+    # called @beartype decorations. Slotting has been shown to reduce read and
+    # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'func',
         'func_sig',

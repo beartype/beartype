@@ -11,13 +11,11 @@ the same list are typically of the same type).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-
 # ....................{ IMPORTS                           }....................
+from beartype.roar import _BeartypeUtilKeyPoolException
 from collections import defaultdict
 from threading import Lock
 
-from beartype.roar import _BeartypeUtilKeyPoolException
 # ....................{ CLASSES                           }....................
 class KeyPool(object):
     '''
@@ -30,13 +28,23 @@ class KeyPool(object):
 
     Attributes
     ----------
-    _key_to_pool : dict
-        Dictionary mapping from **arbitrary keys** (i.e., hashable objects) to
-        lists of zero or more arbitrary objects cached under those keys. For
-        both efficiency and simplicity, this dictionary is defined as a
+    _key_to_pool : defaultdict
+        Dictionary mapping from an **arbitrary key** (i.e., hashable objects)
+        to a corresponding **pool** (i.e., list of zero or more arbitrary
+        objects referred to as "pool items" cached under that key). For both
+        efficiency and simplicity, this dictionary is defined as a
         :class:`defaultdict` implicitly initializing missing keys on initial
         access to the empty list.
-    _pool_item_maker : CallableTypes
+    _pool_item_id_to_is_acquired : dict
+        Dictionary mapping from the unique object identifier of a **pool item**
+        (i.e., arbitrary object cached under a pool of the :attr:`_key_to_pool`
+        ditionary) to a boolean that is either:
+
+        * `True` if that item is currently **acquired** (i.e., most recently
+          returned by a call to the :meth:`acquire` method).
+        * `False` if that item is currently **released** (i.e., most recently
+          passed to a call to the :meth:`release` method).
+    _pool_item_maker : Callable
         Caller-defined factory callable internally called by the
         :meth:`acquire` method on attempting to acquire a non-existent object
         from an **empty pool. See :meth:`__init__` for further details.
@@ -49,28 +57,31 @@ class KeyPool(object):
         Lock (GIL), CPython still coercively preempts long-running threads at
         arbitrary execution points. Ergo, multithreading concerns are *not*
         safely ignorable -- even under CPython.
-    _object_ids_acquired : dict
-        Dict mapping from **arbitrary keys** (i.e, hashable objects) to a
-        boolean indicating whether the object is currently acquired.
-        For efficiency and simplicity, this dictionary is defined as a 
-        :class: `defaultdict` implicitly initializing missing keys on initial
-        access to True.
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
-    # Slot *ALL* instance variables defined on this object to minimize space
-    # and time complexity across frequently called @beartype decorations.
-    __slots__ = ('_key_to_pool', '_pool_item_maker', '_thread_lock',
-            '_object_ids_acquired')
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently
+    # called @beartype decorations. Slotting has been shown to reduce read and
+    # write costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_key_to_pool',
+        '_pool_item_id_to_is_acquired',
+        '_pool_item_maker',
+        '_thread_lock',
+    )
 
     # ..................{ INITIALIZER                       }..................
-    def __init__(self, item_maker: 'CallableTypes') -> None:
+    def __init__(
+        self,
+        item_maker: 'collections.abc.Callable[(HashableType,), Any]',
+    ) -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
         Parameters
         ----------
-        item_maker : CallableTypes
+        item_maker : collections.abc.Callable[(HashableType,), Any]
             Caller-defined factory callable internally called by the
             :meth:`acquire` method on attempting to acquire a non-existent
             object from an **empty pool** (i.e., either a missing key *or* an
@@ -102,8 +113,8 @@ class KeyPool(object):
         #     >>> dd['ee']
         #     KeyError: 'ee'
         self._key_to_pool = defaultdict(list)
+        self._pool_item_id_to_is_acquired = {}
         self._thread_lock = Lock()
-        self._object_ids_acquired = defaultdict(bool)
 
     # ..................{ METHODS                           }..................
     def acquire(self, key: 'HashableType' = None) -> object:
@@ -155,24 +166,27 @@ class KeyPool(object):
             # efficient than our explicitly validating this constraint.
             pool = self._key_to_pool[key]
 
-            # Arbitrary object associated with this key, defined as either...
+            # Pool item associated with this key, defined as either...
             pool_item = (
-                # A new object associated with this key...
-                self._pool_item_maker(key)
-                # If the list associated with this key is empty (i.e., this
-                # method has been called more frequently than the corresponding
-                # release() method for this key)...
-                if not pool
-                # Else, the list associated with this key is non-empty (i.e.,
-                # this method has been called less frequently than the
+                # The last item popped (i.e., removed) from this list...
+                pool.pop()
+                # If the list associated with this key is non-empty (i.e., this
+                # method has been called less frequently than the corresponding
+                # release() method for this key);
+                if pool else
+                # Else, the list associated with this key is empty (i.e.,
+                # this method has been called more frequently than the
                 # corresponding release() method for this key). In this case,
-                # pop (i.e., remove) and return the last item from this list.
-                else pool.pop()
+                # an arbitrary object associated with this key.
+                self._pool_item_maker(key)
             )
 
-            self._object_ids_acquired[id(pool_item)] = True
+            # Record this item to have now been acquired.
+            self._pool_item_id_to_is_acquired[id(pool_item)] = True
 
+            # Return this item.
             return pool_item
+
 
     def release(self, item: object, key: 'HashableType' = None) -> None:
         '''
@@ -196,20 +210,25 @@ class KeyPool(object):
         Raises
         ----------
         TypeError
-            Occurs if the key is unhashable (i.e. *not* a key).
+            If this key is unhashable (i.e. *not* a key).
         _BeartypeUtilKeyPoolException
-            Occurs if the object is not acquired and thus ineligible for release
+            If this pool item was *not* acquired (i.e., returned by a prior
+            call to the :meth:`acquire` method) and thus ineligible for
+            release.
         '''
 
-        if not self._object_ids_acquired.get(id(item)):
-            raise _BeartypeUtilKeyPoolException(
-                    f"Attempted release of an unacquired object")
-        
         # In a thread-safe manner...
-        #
-        # The best things in life are free or two-liners. This is the latter.
         with self._thread_lock:
-            # Append this object to the list associated with this key.
+            # Integer uniquely identifying this previously acquired pool item.
+            item_id = id(item)
+
+            # If this item was *NOT* previously acquired, raise an exception.
+            if not self._pool_item_id_to_is_acquired.get(item_id, False):
+                raise _BeartypeUtilKeyPoolException(
+                    f'Key pool unacquired item {repr(item)} not releasable.')
+
+            # Record this item to have now been released.
+            self._pool_item_id_to_is_acquired[item_id] = False
+
+            # Append this item to the pool associated with this key.
             self._key_to_pool[key].append(item)
-        
-        self._object_ids_acquired[id(item)] = False
