@@ -12,39 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: Consider improving the safety of the "KeyPool" class. The current
-#implementation is overly naive. For both simplicity and efficiency, we avoid
-#explicitly validating various conditions on passed objects. For example, the
-#object passed to the KeyPool.release() method is assumed -- but *NOT*
-#validated -- to have been previously returned from a call to the
-#KeyPool.acquire() method.
-#
-#If this ever becomes a demonstrable issue, validation can be implemented with
-#only mild space and time costs as follows:
-#
-#* Define a new "KeyPool._pool_item_ids_acquired" set instance variable,
-#  containing the object IDs of all pool items returned by prior calls to the
-#  acquire() method that have yet to be passed to the release() method.
-#* Define a new "KeyPool._pool_item_ids_released" set instance variable,
-#  containing the object IDs of all pool items passed to prior calls to the
-#  release() method that have yet to be returned from the acquire() method.
-#* Refactor the acquire() method to (in order):
-#  * Validate that the pool item to be returned is in the
-#    "_pool_item_ids_released" set but *NOT* the "_pool_item_ids_acquired" set.
-#  * Remove this item from the "_pool_item_ids_released" set.
-#  * Add this item from the "_pool_item_ids_acquired" set.
-#  * Note that the above procedure fails to account for the edge case of newly
-#    created pool items, which should reside in *NEITHER* set. </sigh>
-#* Refactor the release() method to (in order):
-#  * Validate that the passed pool item is in the
-#    "_pool_item_ids_acquired" set but *NOT* the "_pool_item_ids_released" set.
-#  * Remove this item from the "_pool_item_ids_acquired" set.
-#  * Add this item from the "_pool_item_ids_released" set.
 
 # ....................{ IMPORTS                           }....................
 from collections import defaultdict
 from threading import Lock
 
+from beartype.roar import _BeartypeUtilKeyPoolException
 # ....................{ CLASSES                           }....................
 class KeyPool(object):
     '''
@@ -76,12 +49,19 @@ class KeyPool(object):
         Lock (GIL), CPython still coercively preempts long-running threads at
         arbitrary execution points. Ergo, multithreading concerns are *not*
         safely ignorable -- even under CPython.
+    _object_ids_acquired : dict
+        Dict mapping from **arbitrary keys** (i.e, hashable objects) to a
+        boolean indicating whether the object is currently acquired.
+        For efficiency and simplicity, this dictionary is defined as a 
+        :class: `defaultdict` implicitly initializing missing keys on initial
+        access to True.
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
     # Slot *ALL* instance variables defined on this object to minimize space
     # and time complexity across frequently called @beartype decorations.
-    __slots__ = ('_key_to_pool', '_pool_item_maker', '_thread_lock')
+    __slots__ = ('_key_to_pool', '_pool_item_maker', '_thread_lock',
+            '_object_ids_acquired')
 
     # ..................{ INITIALIZER                       }..................
     def __init__(self, item_maker: 'CallableTypes') -> None:
@@ -123,6 +103,7 @@ class KeyPool(object):
         #     KeyError: 'ee'
         self._key_to_pool = defaultdict(list)
         self._thread_lock = Lock()
+        self._object_ids_acquired = defaultdict(bool)
 
     # ..................{ METHODS                           }..................
     def acquire(self, key: 'HashableType' = None) -> object:
@@ -136,11 +117,12 @@ class KeyPool(object):
         exists no such list or such a list exists but is empty), this method
         effectively (in order):
 
-        #. If no such list exists, creates a new empty list associated with
+        #. If no such list exists, create a new empty list associated with
            this key.
-        #. Creates a new object to be returned by calling the user-defined
+        #. Create a new object to be returned by calling the user-defined
            :meth:`_pool_item_maker` factory callable.
-        #. Appends this object to this list.
+        #. Append this object to this list.
+        #. Add/Update acquisition state of the object to True
         #. Returns this object.
 
         Parameters
@@ -173,8 +155,8 @@ class KeyPool(object):
             # efficient than our explicitly validating this constraint.
             pool = self._key_to_pool[key]
 
-            # Return either...
-            return (
+            # Arbitrary object associated with this key, defined as either...
+            pool_item = (
                 # A new object associated with this key...
                 self._pool_item_maker(key)
                 # If the list associated with this key is empty (i.e., this
@@ -188,6 +170,9 @@ class KeyPool(object):
                 else pool.pop()
             )
 
+            self._object_ids_acquired[id(pool_item)] = True
+
+            return pool_item
 
     def release(self, item: object, key: 'HashableType' = None) -> None:
         '''
@@ -211,12 +196,20 @@ class KeyPool(object):
         Raises
         ----------
         TypeError
-            If this key is unhashable and thus *not* a key.
+            Occurs if the key is unhashable (i.e. *not* a key).
+        _BeartypeUtilKeyPoolException
+            Occurs if the object is not acquired and thus ineligible for release
         '''
 
+        if not self._object_ids_acquired.get(id(item)):
+            raise _BeartypeUtilKeyPoolException(
+                    f"Attempted release of an unacquired object")
+        
         # In a thread-safe manner...
         #
         # The best things in life are free or two-liners. This is the latter.
         with self._thread_lock:
             # Append this object to the list associated with this key.
             self._key_to_pool[key].append(item)
+        
+        self._object_ids_acquired[id(item)] = False
