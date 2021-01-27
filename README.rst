@@ -37,14 +37,14 @@ abstraction_>`__ into the lawless world of dynamically-typed Python by
 <Compliance_>`__ in `O(1) non-amortized worst-case time with negligible
 constant factors <Timings_>`__.
 
-Beartype is `portably implemented <codebase_>`__ in `Python 3 <Python_>`__,
-`continuously stress-tested <tests_>`__ via `GitHub Actions`_ **+** tox_ **+**
-pytest_, and `permissively distributed <beartype license_>`__ under the `MIT
-license`_. Beartype has *no* runtime dependencies, `only one test-time
-dependency <pytest_>`__, and `only one documentation-time dependency
-<Sphinx_>`__. Beartype supports `all actively developed Python versions
-<Python status_>`__, `all Python package managers <Install_>`__, and `multiple
-platform-specific package managers <Install_>`__.
+Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
+<Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
+Actions`_ **+** tox_ **+** pytest_, and `permissively distributed <beartype
+license_>`__ under the `MIT license`_. Beartype has *no* runtime dependencies,
+`only one test-time dependency <pytest_>`__, and `only one documentation-time
+dependency <Sphinx_>`__. Beartype supports `all actively developed Python
+versions <Python status_>`__, `all Python package managers <Install_>`__, and
+`multiple platform-specific package managers <Install_>`__.
 
 .. # Ideally, this heading would actually be formatted as a proper heading
 .. # (e.g., underlined by "=" characters). Since doing so causes the table of
@@ -140,8 +140,9 @@ beartype for our Apple-appreciating audience <beartype MacPorts_>`__!
 Linux
 -----
 
-Let's install ``beartype`` with ``emerge`` on Gentoo_, because source-based
-Linux distributions are the CPU-bound nuclear option:
+Let's install ``beartype`` with ``emerge`` on Gentoo_ courtesy `a third-party
+overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
+CPU-bound nuclear option:
 
 .. code-block:: shell-session
 
@@ -889,7 +890,7 @@ Timings
 =======
 
 Let's profile ``beartype`` against other runtime type-checkers with `a battery
-of surely fair, impartial, and unbiased use cases <profiler suite_>`__:
+of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
 
 .. code-block:: shell-session
 
@@ -2258,10 +2259,11 @@ the higher-level perspective of architecture and internal API design.
 Developers
 ==========
 
-Let's contribute `pull requests`_ to ``beartype`` for the good of typing_. The
-`primary maintainer of this repository is a friendly beardless Canadian guy
-<leycec_>`__ who guarantees that he will *always* be nice and congenial and
-promptly merge all requests that pass continuous integration (CI) tests.
+Let's contribute `pull requests <beartype pulls_>`__ to ``beartype`` for the
+good of typing_. The `primary maintainer of this repository is a friendly
+beardless Canadian guy <leycec_>`__ who guarantees that he will *always* be
+nice and congenial and promptly merge all requests that pass continuous
+integration (CI) tests.
 
 And thanks for merely reading this! Like all open-source software, ``beartype``
 thrives on community contributions, activity, and interest. *This means you,
@@ -2274,9 +2276,81 @@ benefit from a volunteer army of good GitHub Samaritans.
 Workflow
 --------
 
- Let's take this from the top.
+Let's take this from the top.
 
-#. Create a [GitHub user account]().
+#. Create a `GitHub user account <GitHub account signup_>`__.
+#. Login to `GitHub with that account <GitHub account signin_>`__.
+#. **Click the "Fork" button** in the upper right-hand corner of `the
+   "beartype/beartype" repository page <beartype_>`__.
+#. **Click the "Code" button** in the upper right-hand corner of your fork page
+   that appears.
+#. **Copy the URL** that appears. 
+#. **Open a terminal.**
+#. **Change to the parent directory** to clone your fork into.
+#. **Clone your fork,** replacing ``{URL}`` with the previously copied URL.
+
+   .. code-block:: shell-session
+   
+      git clone {URL}
+
+#. **Add a new upstream remote** referring to this master repository.
+
+   .. code-block:: shell-session
+   
+      git remote add upstream https://github.com/beartype/beartype.git
+
+#. **Uninstall all previously installed versions** of ``beartype``. For
+   example, if you previously installed ``beartype`` with ``pip``, manually
+   uninstall ``beartype`` with ``pip``.
+
+   .. code-block:: shell-session
+   
+      pip uninstall beartype
+
+#. Install ``beartype`` with ``pip`` in **editable mode** to synchronize local
+   changes made to your fork against the ``beartype`` package imported from
+   Python. Note the ``[dev]`` extra installs developer-specific mandatory
+   dependencies required at test or documentation time.
+
+   .. code-block:: shell-session
+   
+      pip3 install -e .[dev]
+
+#. **Create a new local branch** to isolate changes to, replacing
+   ``{branch_name}`` with the desired name.
+
+   .. code-block:: shell-session
+   
+      git checkout -b {branch_name}
+
+#. **Make changes to this branch** in your favourite `Integrated Development
+   Environment (IDE) <IDE_>`__. Of course, this means Vim_.
+#. **Stage these changes.**
+
+   .. code-block:: shell-session
+   
+      git add -a
+
+#. **Commit these changes.**
+
+   .. code-block:: shell-session
+   
+      git commit
+
+#. **Push these changes** to your GitHub-hosted fork.
+
+   .. code-block:: shell-session
+   
+      git push
+
+#. **Click the "Create pull request" button** in the upper right-hand corner of
+   your fork page.
+#. Afterward, **routinely pull upstream changes** to avoid desynchronization
+   with `the "beartype/beartype" repository <beartype_>`__.
+
+   .. code-block:: shell-session
+   
+      git checkout main && git pull upstream main
 
 Moar Depth
 ----------
@@ -2501,6 +2575,22 @@ application stack at tool rather than Python runtime) include:
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
 
+.. # ------------------( LINKS ~ beartype : funding         )------------------
+.. _BETSE:
+   https://gitlab.com/betse/betse
+.. _BETSEE:
+   https://gitlab.com/betse/betsee
+.. _Paul Allen:
+   https://en.wikipedia.org/wiki/Paul_Allen
+.. _Paul Allen Discovery Center:
+   http://www.alleninstitute.org/what-we-do/frontiers-group/discovery-centers/allen-discovery-center-tufts-university
+.. _Paul Allen Discovery Center award:
+   https://www.alleninstitute.org/what-we-do/frontiers-group/news-press/press-resources/press-releases/paul-g-allen-frontiers-group-announces-allen-discovery-center-tufts-university
+.. _Paul G. Allen Frontiers Group:
+   https://www.alleninstitute.org/what-we-do/frontiers-group
+.. _Tufts University:
+   https://www.tufts.edu
+
 .. # ------------------( LINKS ~ beartype : local           )------------------
 .. _beartype license:
    LICENSE
@@ -2522,6 +2612,32 @@ application stack at tool rather than Python runtime) include:
    beartype/_util/hint/data/pep/utilhintdatapep.py
 .. _beartype util pep:
    beartype/_util/hint/pep/proposal
+
+.. # ------------------( LINKS ~ beartype : package         )------------------
+.. _beartype Anaconda:
+   https://anaconda.org/conda-forge/beartype
+.. _beartype Gentoo:
+   https://github.com/leycec/raiagent
+.. _beartype Homebrew:
+   github.com/beartype/homebrew-beartype
+.. _beartype MacPorts:
+   https://ports.macports.org/port/py-beartype
+.. _beartype PyPI:
+   https://pypi.org/project/beartype
+
+.. # ------------------( LINKS ~ beartype : remote          )------------------
+.. _beartype:
+   https://github.com/beartype/beartype
+.. _beartype 1.0.0:
+   https://github.com/beartype/beartype/issues/7
+.. _beartype codebase:
+   https://github.com/beartype/beartype/tree/main/beartype
+.. _beartype profiler:
+   https://github.com/beartype/beartype/blob/main/bin/profile.bash
+.. _beartype pulls:
+   https://github.com/beartype/beartype/pulls
+.. _beartype tests:
+   https://github.com/beartype/beartype/actions?workflow=tests
 
 .. # ------------------( LINKS ~ beartype : user            )------------------
 .. _Heliotrop3:
@@ -2545,57 +2661,25 @@ application stack at tool rather than Python runtime) include:
 .. _beartype harens MacPorts:
    https://github.com/beartype/beartype/issues/12
 
-.. # ------------------( LINKS ~ beartype : package         )------------------
-.. _beartype Anaconda:
-   https://anaconda.org/conda-forge/beartype
-.. _beartype Gentoo:
-   https://github.com/leycec/raiagent
-.. _beartype Homebrew:
-   github.com/beartype/homebrew-beartype
-.. _beartype MacPorts:
-   https://ports.macports.org/port/py-beartype
-.. _beartype PyPI:
-   https://pypi.org/project/beartype
-
-.. # ------------------( LINKS ~ beartype : remote          )------------------
-.. _beartype 1.0.0:
-   https://github.com/beartype/beartype/issues/7
-.. _codebase:
-   https://github.com/beartype/beartype/tree/main/beartype
-.. _profiler suite:
-   https://github.com/beartype/beartype/blob/main/bin/profile.bash
-.. _pull requests:
-   https://github.com/beartype/beartype/pulls
-.. _tests:
-   https://github.com/beartype/beartype/actions?workflow=tests
-
-.. # ------------------( LINKS ~ beartype : funding         )------------------
-.. _BETSE:
-   https://gitlab.com/betse/betse
-.. _BETSEE:
-   https://gitlab.com/betse/betsee
-.. _Paul Allen:
-   https://en.wikipedia.org/wiki/Paul_Allen
-.. _Paul Allen Discovery Center:
-   http://www.alleninstitute.org/what-we-do/frontiers-group/discovery-centers/allen-discovery-center-tufts-university
-.. _Paul Allen Discovery Center award:
-   https://www.alleninstitute.org/what-we-do/frontiers-group/news-press/press-resources/press-releases/paul-g-allen-frontiers-group-announces-allen-discovery-center-tufts-university
-.. _Paul G. Allen Frontiers Group:
-   https://www.alleninstitute.org/what-we-do/frontiers-group
-.. _Tufts University:
-   https://www.tufts.edu
-
 .. # ------------------( LINKS ~ github                     )------------------
 .. _GitHub Actions:
    https://github.com/features/actions
+.. _GitHub account signin:
+   https://github.com/login
+.. _GitHub account signup:
+   https://github.com/join
 
 .. # ------------------( LINKS ~ idea                       )------------------
 .. _Denial-of-Service:
    https://en.wikipedia.org/wiki/Denial-of-service_attack
 .. _DRY:
    https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
+.. _IDE:
+   https://en.wikipedia.org/wiki/Integrated_development_environment
 .. _SQA:
    https://en.wikipedia.org/wiki/Software_quality_assurance
+.. _Vim:
+   https://www.vim.org
 .. _amortized analysis:
    https://en.wikipedia.org/wiki/Amortized_analysis
 .. _computer vision:
