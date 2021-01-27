@@ -121,16 +121,21 @@ Let's install ``beartype`` with Anaconda_, because corporate standards are
 macOS
 -----
 
-Let's install ``beartype`` with MacPorts_ on macOS_, because HomeBrew_ `hates
-packaging Python packages <HomeBrew Python packaging_>`__, because they
-secretly want you to use MacPorts_ instead – which you should do:
+Let's install ``beartype`` with Homebrew_ on macOS_ courtesy `our third-party
+tap <beartype Homebrew_>`__:
+
+.. code-block:: shell-session
+
+   brew install beartype/beartype/beartype
+
+Let's install ``beartype`` with MacPorts_ on macOS_:
 
 .. code-block:: shell-session
 
    sudo port install py-beartype
 
-Thanks to `MacPorts maintainer @harens <harens_>`__ for `packaging beartype for
-our macOS audience <beartype MacPorts_>`__!
+Thanks to `macOS package maintainer @harens <harens_>`__ for `packaging
+beartype for our Apple-appreciating audience <beartype MacPorts_>`__!
 
 Linux
 -----
@@ -864,6 +869,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 |                  | `Anaconda <beartype Anaconda_>`__       | **0.1.0**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `Gentoo Linux <beartype Gentoo_>`__     | **0.2.0**\ —\ *current*       | —                         |
++------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                  | `macOS Homebrew <beartype Homebrew_>`__ | **0.5.1**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `macOS MacPorts <beartype MacPorts_>`__ | **0.5.1**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2260,9 +2267,16 @@ And thanks for merely reading this! Like all open-source software, ``beartype``
 thrives on community contributions, activity, and interest. *This means you,
 stalwart Python hero.*
 
-``beartype`` has two problem spots (listed below in order of decreasing
-importance and increasing complexity) that could *always* benefit from a
-volunteer army of good GitHub Samaritans. Let's take this from the top.
+``beartype`` has `two problem spots (listed below in order of decreasing
+importance and increasing complexity) <Moar Depth_>`__ that could *always*
+benefit from a volunteer army of good GitHub Samaritans.
+
+Workflow
+--------
+
+ Let's take this from the top.
+
+#. Create a [GitHub user account]().
 
 Moar Depth
 ----------
@@ -2536,6 +2550,8 @@ application stack at tool rather than Python runtime) include:
    https://anaconda.org/conda-forge/beartype
 .. _beartype Gentoo:
    https://github.com/leycec/raiagent
+.. _beartype Homebrew:
+   github.com/beartype/homebrew-beartype
 .. _beartype MacPorts:
    https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
@@ -2636,8 +2652,6 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/MacOS
 .. _HomeBrew:
    https://brew.sh
-.. _HomeBrew Python packaging:
-   https://github.com/numpy/numpy/issues/11454#issuecomment-401423500
 .. _MacPorts:
    https://www.macports.org
 

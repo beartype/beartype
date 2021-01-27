@@ -39,11 +39,6 @@ are both subjective but *should* cover 99.9999% of use cases in this codebase.
 '''
 
 # ....................{ CLASSES                           }....................
-#FIXME: Override the superclass:
-#
-#* __reduce_ex__() dunder method to pickle this fixed list. Avoid defining the
-#  __reduce__() dunder method, which has been entirely obsoleted by
-#  __reduce_ex__().
 class FixedList(list):
     '''
     **Fixed list** (i.e., :class:`list` constrained to a fixed length defined
@@ -63,8 +58,10 @@ class FixedList(list):
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
-    # Slot *ALL* instance variables defined on this object to minimize space
-    # and time complexity across frequently called @beartype decorations.
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently
+    # called @beartype decorations. Slotting has been shown to reduce read and
+    # write costs by approximately ~10%, which is non-trivial.
     __slots__ = ()
 
     # ..................{ INITIALIZER                       }..................
