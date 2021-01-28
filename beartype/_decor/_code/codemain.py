@@ -332,15 +332,18 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: *AH HA!* We just realized that the prior AST approach can be
 #significantly optimized to a degree that might make this reasonably tractable
 #under CPython as well. How? As follows (in order):
-#* Dynamically the *PRELIMINARY* body of the wrapper function from (in order):
+#* Dynamically synthesize the *PRELIMINARY* body of the wrapper function from
+#  (in order):
 #  * Code declaring the signature of the wrapper function. Note that we
-#    *SHOULD* (in theory) be able to trivially extract *WITHOUT* needing to
-#    programmatically generate this ourselves this by performing a preliminary
-#    walk over the AST of the decorated callable for the node(s) responsible
-#    for declaring that callable's signature. Hopefully trivial. That said...
-#    we probably already need to programmatically generate signatures ourselves
-#    for the common edge case in which the decorated callable isn't annotated
-#    by a return type hint. So, who knows!
+#    *SHOULD* (in theory) be able to trivially extract this *WITHOUT* needing
+#    to programmatically generate this ourselves this by performing a
+#    preliminary walk over the AST of the decorated callable for the node(s)
+#    responsible for declaring that callable's signature. Hopefully trivial.
+#    Why? Because AST nodes provide line number ranges, which leads directly to
+#    trivial extraction of callable signatures. That said... we probably
+#    already need to programmatically generate signatures ourselves for the
+#    common edge case in which the decorated callable is *NOT* annotated by a
+#    return type hint. So, who knows!
 #  * Code typing-checking all parameters, as above.
 #  * Code typing-checking the "return" value. Don't worry about "yield"
 #    statements for now. *YES,* we are intentionally type-checking the "return"
@@ -354,8 +357,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #            raise {code_raising_beartype_pith_0_exception_here}
 #    This is, of course, valid code that should generate valid AST nodes.
 #  * The body of the decorated callable.
-#* Parse that preliminary body of the wrapper function through the
-#  ast.parse() function, producing an AST.
+#* Parse that preliminary body of the wrapper function through the ast.parse()
+#  function, producing an AST.
 #* Transform that AST as follows:
 #  * Iteratively walk that AST until finding a node assigning "True" to
 #    "__beartype_pith_0". This shouldn't be troublesome.
@@ -366,10 +369,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * Iteratively walk the remainder of the AST until finding a node performing
 #    a return.
 #  * Inject the two previously extracted nodes into that node position.
+#  * Repeat until all "return" statements have been transformed.
 #  * Voila!
 #* Compile that AST directly into a code object by calling the ast.compile()
 #  function.
-#* Evaluate that code object by calling eithher the exec() or eval() builtin to
+#* Evaluate that code object by calling either the exec() or eval() builtin to
 #  produce the actual wrapper function.
 #
 #Note that there is a significant annoyance associated with AST
@@ -383,10 +387,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #well (e.g., ast.increment_lineno()), but that those functions are almost
 #certainly inefficient and inapplicable for us.
 #
-#Note that the ast.copy_location() appears to already do a *BIT* of what we
-#need. Since we need cutting instead of copying, however, we'll probably just
-#want to use that function's implementation as inspiration rather than directly
-#calling that function.
+#Note that the ast.copy_location() function appears to already do a *BIT* of
+#what we need. Since we need cutting instead of copying, however, we'll
+#probably just want to use that function's implementation as inspiration rather
+#than directly calling that function.
 #
 #And... don't get us wrong. This is absolutely still going to be expensive. But
 #the fact that we can flow directly from:
@@ -404,6 +408,161 @@ This private submodule is *not* intended for importation by downstream callers.
 #   as it implies that we then no longer need to iteratively search the body of
 #   the decorated callable for local variables with conflicting names, which
 #   due to strings we can't reliably do without "ast"- or "dis"-style parsing.
+#FIXME: *GENERALIZATION:* All of the above would seem to pertain to a
+#prospective higher-level package, which has yet to be officially named but
+#which we are simply referring to as "beartypecache" for now. "beartypecache"
+#has one dependency: unsurprisingly, this is "beartype". The principal goal of
+#"beartypecache" is *NOT* to perform AST translations as detailed above,
+#although that certainly is a laudable secondary goal.
+#
+#The principal goal of "beartypecache" is, as the name suggests, to cache
+#wrapper functions dynamically generated by the @beartype decorator across
+#Python processes. This goal succinctly ties in to the above AST transform
+#concepts, because the *ONLY* sane means of performing these transforms (even
+#under PyPy and similarly fast Python environments) is to cache the results of
+#these transformations across Python processes.
+#
+#The underlying idea here is that the @beartype decorator only needs to be
+#applied once to each version of a callable. If that callable has not changed
+#since the last application of @beartype to that decorator (or since @beartype
+#itself has changed, obviously), then the previously cached application of
+#@beartype to the current version of that callable suffices. Naturally, of
+#course, there exists *NO* efficient means of deciding when a callable has
+#changed over multiple Python invocations. There does, however, exist an
+#efficient means of deciding when an on-disk module defining standard callables
+#has changed: the "__pycache__" directory formalized by "PEP 3147 -- PYC
+#Repository Directories" at:
+#    https://www.python.org/dev/peps/pep-3147
+#
+#Ergo, we soften the above idea to the following: "The @beartype decorator only
+#needs to be applied once to each callable defined by each version of a
+#module." If this sounds like import hooks, you would not be wrong. Sadly,
+#there currently exists no public API in the stdlib for generically applying
+#AST transformations via import hooks. But all is not lost, since we'll simply
+#do it ourselves. In fact, unsurprisingly, this is a sufficiently useful
+#concept that it's already been done by a number of third-party projects -- the
+#most significant of which is "MacroPy3":
+#    https://github.com/lihaoyi/macropy
+#
+#The "MacroPy3" synopsis reads:
+#    "MacroPy provides a mechanism for user-defined functions (macros) to
+#    perform transformations on the abstract syntax tree (AST) of a Python
+#    program at import time."
+#
+#...which is exactly what we need. We certainly are *NOT* going to depend upon
+#"MacroPy3" as a mandatory dependency, however. Like "beartype" before it,
+#"beartypecache" should ideally only depend upon "beartype" as a mandatory
+#dependency. Ideology aside, however, there exists a more significant reason:
+#"beartypecache" is intended to be brutally fast. That's what the "cache"
+#means. "MacroPy3" is undoubtedly slow by compare to a highly micro-optimized
+#variant of that package, because no in the Python world cares about
+#efficiency -- perhaps justifiably, but perhaps not. Moreover, generalization
+#itself incurs space and time efficiency costs. We can eliminate those costs by
+#developing our own internal, private, ad-hoc AST-transform-on-import-hook
+#implementation micro-optimized for our specific use case.
+#
+#Amusingly, even the abandoned prominently references "MacroPy3":
+#    The MacroPy project uses an import hook: it adds its own module finder in
+#    sys.meta_path to hook its AST transformer.
+#
+#Note that "sys.meta_path" is *NOT* necessarily the optimum approach for
+#"beartypecache". Since the @beartype decorator can only, by definition, be
+#applied to third-party user-defined modules, "sys.meta_path" is might or might
+#not be overkill for us, because "sys.meta_path" even applies to builtin
+#stdlib modules. In any case, what we principally care about is the capacity to
+#directly feed low-level *CODE OBJECTS* (rather than high-level *SOURCE CODE*)
+#from our AST transformations into some sort of import hook machinery.
+#
+#Note this relevant StackOverflow answer:
+#    https://stackoverflow.com/a/43573798/2809027
+#The synopsis of that answer reads:
+#    You will also need to examine if you want to use a MetaPathFinder or a
+#    PathEntryFinder as the system to invoke them is different. That is, the
+#    meta path finder goes first and can override builtin modules, whereas the
+#    path entry finder works specifically for modules found on sys.path.
+#That answer then goes on to succinctly define example implementations of both,
+#which is ludicrously helpful. Again, we should adopt whichever allows us to
+#most efficiently generate low-level *CODE OBJECTS* from AST transformations.
+#
+#Note that the public importlib.util.source_from_cache(path) function trivially
+#enables us to obtain the absolute filename of the previously cached byte code
+#file if any from the absolute filename of any arbitrary Python module. That's
+#nice. Additionally, note this preamble to PEP 3147:
+#
+#    Byte code files [in "__pycache__" directories] contain two 32-bit
+#    big-endian numbers followed by the marshaled code object. The 32-bit
+#    numbers represent a magic number and a timestamp. The magic number changes
+#    whenever Python changes the byte code format, e.g. by adding new byte
+#    codes to its virtual machine. This ensures that pyc files built for
+#    previous versions of the VM won't cause problems. The timestamp is used to
+#    make sure that the pyc file match the py file that was used to create it.
+#    When either the magic number or timestamp do not match, the py file is
+#    recompiled and a new pyc file is written.
+#
+#Presumably, there exists some efficient programmatic means of deciding from
+#pure Python whether "the magic number or timestamp do not match" for the byte
+#code file cached for an arbitrary module.
+#
+#We're almost there. We then need some efficient means of deciding whether an
+#arbitrary byte code file has been instrumented by "beartypecache" yet.
+#That's... a much tougher nut to crack. We can think of two possible approaches
+#here, both equally valid but one probably easier to implement than the other.
+#For each byte code file cached in a "__pycache__" directory, the
+#"beartypecache" package should either:
+#* The easiest way *BY FAR* is probably to just emit one 0-byte
+#  "beartypecache"-specific file named
+#  "__pycache__/{module_name}.{python_name}.beartypecache" or something.
+#  There's *NO* way any other package is writing that sort of file, so filename
+#  collisions should in theory be infeasible. Given such a file, the "mtime" of
+#  this file should coincide with that of the source module from which this
+#  file is generated. Indeed, this approach suggests we don't even need to
+#  extract the magic number and timestamp from the byte code file. Nice! So,
+#  this is the way... probably.
+#* The harder way *BY FAR* is probably to suffix the contents of this file by a
+#  superfluous byte code statement specific to "beartypecache", effectively the
+#  equivalent of:
+#      __beartypecache_is_cached = True
+#  That's more-or-less a noop and more-or-less trivially generated during our
+#  AST transformation of this source module from an import hook. Given that,
+#  we'd then just to need to compare the end of this file with the expected
+#  byte sequence. This *DOES* entail some I/O overhead and considerably more
+#  complexity than the prior approach, however.
+#
+#In any case, the above then enables us to efficiently cache @beartype
+#decorations and AST transformations across an entire codebase as follows:
+#
+#* The root "__init__.py" module of the top-level package for downstream
+#  third-party consumers should contain the following import:
+#      import beartypecache.all
+#  As a side effect, the "beartypecache.all" submodule then installs an import
+#  hook globally decorating all callables across all subsequently imported
+#  modules with @beartype as well as applying AST transformations. This is the
+#  default approach. Of course, subsequent revisions could then provide some
+#  degree of configurability via different submodules or subpackages.
+#* This "beartypecache.all" import hook then confines itself to each
+#  user-defined submodule *OF THE CALLING PACKAGE THAT IMPORTED*
+#  "beartypecache.all". This is critical. We can't simply globally apply the
+#  "beartypecache.all" import hook to *EVERYTHING*, because many callables will
+#  neither be intended nor able to support decoration by @beartype, which has
+#  rather firm views on PEP-compliant type hints and so on.
+#* For each user-defined submodule of the calling package, this
+#  "beartypecache.all" import hook then performs the following:
+#  * Decide whether the previously cached byte code file for this submodule is
+#    still synchronized with this submodule and has been previously
+#    instrumented by "beartypecache", using one of the above approaches.
+#  * If so, avoid uselessly re-instrumenting this file.
+#  * Else, instrument this file as detailed above. As a first draft
+#    implementation, "beartypecache" should simply:
+#    * Replace the name of each function and method defined in this source
+#      submodule by "__beartype_wrapped_{func_name}". Note this will require a
+#      trivial sort of AST instrumentation. We can't avoid that.
+#    * Define the replacement wrapper function with the name "{func_name}",
+#      thus replacing the original callable with our decorated callable.
+#    This draft implementation efficiently caches @beartype decorations across
+#    the entire codebase, thus serving as a pragmatically useful demonstration
+#    of the underlying concept.
+#
+#All in all, this requires funding. Technically feasible, but cray-cray.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException

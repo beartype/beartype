@@ -10,6 +10,20 @@
 # * https://www.sphinx-doc.org/en/master/usage/configuration.html
 #   List of all options supported in this file.
 
+# ....................{ TODO                              }....................
+#FIXME: Add one or more pytest-based functional tests exercising this
+#configuration. This is slightly less trivial than I'd like, largely as the
+#Sphinx team has yet to properly document their "sphinx.testing" system. See
+#this pending issue for working code examples:
+#    https://github.com/sphinx-doc/sphinx/issues/7008
+#
+#At the least, we probably need to add the following line to our top-level
+#"conftest.py" file:
+#    pytest_plugins = 'sphinx.testing.fixtures'
+#FIXME: Additionally, we should similarly add a single pytest-based functional
+#test exercising the correctness of our top-level "README.rst" file -- ideally
+#by invoking "checkdocs" somehow if conditionally available.
+
 # ....................{ IMPORTS                           }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we
 # import our package-specific version specifier for reuse below. See also:
@@ -44,15 +58,15 @@ release = VERSION
 templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
+# directories to ignore when looking for source files. This pattern also
+# affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-# ....................{ EXTENSIONS                        }....................
+# ....................{ EXTENSIONS ~ mandatory            }....................
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    # ..................{ BUILTIN                           }..................
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
@@ -77,27 +91,30 @@ extensions = [
     # those modules to these listings.
     'sphinx.ext.viewcode',
 
-    #FIXME: For improved flexibility and compatibility, refactor this mandatory
-    #dependency into an optional dependency. Specifically:
-    #* Append the following logic *AFTER* this list assignment:
-    #    try:
-    #        import sphinx_rtd_theme
-    #
-    #        # 3rd party Read The Docs HTML theme for neat and mobile-friendly
-    #        # doc site.
-    #        extensions.append('sphinx_rtd_theme')
-    #
-    #        # The theme to use for HTML and HTML Help pages.  See the
-    #        # documentation for a list of builtin themes.
-    #        html_theme = 'sphinx_rtd_theme'
-    #    except:
-    #        pass
-
-    # 3rd party Read The Docs HTML theme for neat and mobile-friendly doc site
-    'sphinx_rtd_theme',
+    # ..................{ THIRD-PARTY                       }..................
+    # Third-party Sphinx extensions required to be externally installed.
 ]
 
-# ....................{ EXTENSIONS ~ napoleon             }....................
+# ....................{ EXTENSIONS ~ optional             }....................
+# Third-party Sphinx extensions conditionally used if externally installed.
+
+# Attempt to optionally...
+try:
+    # Import "sphinx_rtd_theme", a third-party Sphinx extension providing the
+    # official Read The Docs (RTD) HTML theme. This theme is preferable where
+    # available for improved mobile-friendly rendering.
+    import sphinx_rtd_theme
+
+    # Register the fully-qualified name of this extension.
+    extensions.append('sphinx_rtd_theme')
+
+    # Set the HTML theme to this theme.
+    html_theme = 'sphinx_rtd_theme'
+# If this theme extension is unavailable, fallback to the default HTML theme.
+except ImportError:
+    pass
+
+# ....................{ EXTENSIONS ~ conf : napoleon      }....................
 # 'sphinx.ext.napoleon'-specific settings. See also:
 # * https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 #   Official documentation.
@@ -111,10 +128,6 @@ napoleon_google_docstring = False
 # napoleon_use_ivar = True
 
 # ....................{ BUILD ~ html                      }....................
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
-
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

@@ -4,12 +4,21 @@
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                          )--------------------
-# Bash shell script wrapping this project's pytest-based test suite such that
-# all passed arguments are passed as is to the "pytest" command.
+# Bash shell script wrapping this project's pytest-based test suite, passing
+# sane default options suitable for interactive terminal testing and otherwise
+# passing all passed arguments as is to the "pytest" command.
 #
 # This script is defined as a Bash rather than Bourne script purely for the
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
+#
+# --------------------( CAVEATS                           )--------------------
+# *THE HIGHER-LEVEL "tox" COMMAND SHOULD TYPICALLY BE RUN INSTEAD.* This
+# lower-level script only exercises this project against the single Python
+# interpreter associated with the "pytest" command and is thus suitable *ONLY*
+# as a rapid sanity check. Meanwhile, the higher-level "tox" command exercises
+# this project against all installed Python interpreters and is thus suitable
+# as a full-blown correctness check (e.g., before submitting pull requests).
 
 # ....................{ PATHS                             }....................
 # str canonicalize_path(str pathname)

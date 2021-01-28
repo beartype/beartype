@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Bash shell script wrapping this project's Sphinx-based documentation build
+# system, passing sane default options suitable for interactive terminal
+# building and otherwise passing all passed arguments as is to the
+# "sphinx-build" command via the "SPHINXOPTS" environment variable.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+
+# ....................{ PATHS                             }....................
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
+# option would be preferable but is unsupported by macOS's NetBSD-specific
+# version of "readlink". Instead, just defer to Python for portability.
+function canonicalize_path() {
+    python -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+}
+
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                              }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}/doc" >/dev/null
+
+# Build this project's documentation with all passed arguments. Dismantled,
+# this is:
+# 
+# * "-n", enabling "nit-picky mode" generating one warning for each broken
+#   reference (e.g., interdocument or intrasection link).
+# * "-W", converting non-fatal warnings into fatal errors for safety.
+# * "--keep-going", collecting *ALL* warnings before failing rather than
+#   immediately failing on the first warning.
+#
+# Bizarrely, note that these Sphinx options are *ONLY* available in the short
+# and long forms listed here. (This is us collectively shrugging.)
+command make html SPHINXOPTS="-n -W --keep-going"
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}

@@ -261,15 +261,20 @@ Optional runtime dependencies for this package defined as a tuple of
   version comparison operators. As well as standard mathematical comparison
   operators (e.g., ``==``, ``>=``, ``<``), :mod:`setuptools` also supports the
   PEP 440-compliant "compatible release" operator ``~=`` more commonly denoted
-  by ``^`` in modern package managers (e.g., :mod:`poetry`, ``npm``); this
-  operator enables forward compatibility with all future versions of this
-  dependency known *not* to break backward compatibility, but should only be
-  applied to dependencies strictly following the semantic versioning contract.
+  by ``^`` in modern package managers (e.g., poetry, npm); this operator
+  enables forward compatibility with all future versions of this dependency
+  known *not* to break backward compatibility, but should only be applied to
+  dependencies strictly following the semantic versioning contract.
 * ``{version1}`` and ``{version1}`` are arbitrary version strings (e.g.,
   ``2020.2.16``, ``0.75a2``).
 '''
 
 
+#FIXME: Consider defining this as well:
+#    LIBS_TESTTIME_OPTIONAL = (
+#        'checkdocs',
+#    )
+#That would probably be used in a new "[dev]" extra.
 LIBS_TESTTIME_MANDATORY = (
     # pytest should ideally remain the only hard dependency for testing on
     # local machines. While our testing regime optionally leverages third-party

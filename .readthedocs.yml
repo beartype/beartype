@@ -30,3 +30,8 @@ python:
         - doc-rtd
 
   system_packages: true
+
+# ....................{ SPHINX                            }....................
+sphinx:
+  # For safety, convert non-fatal Sphinx warnings into fatal errors.
+  fail_on_warning: true

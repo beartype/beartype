@@ -2286,14 +2286,14 @@ Let's take this from the top.
    that appears.
 #. **Copy the URL** that appears. 
 #. **Open a terminal.**
-#. **Change to the parent directory** to clone your fork into.
+#. **Change to the desired parent directory** of your local fork.
 #. **Clone your fork,** replacing ``{URL}`` with the previously copied URL.
 
    .. code-block:: shell-session
    
       git clone {URL}
 
-#. **Add a new upstream remote** referring to this master repository.
+#. **Add a new remote** referring to this upstream repository.
 
    .. code-block:: shell-session
    
@@ -2307,8 +2307,8 @@ Let's take this from the top.
    
       pip uninstall beartype
 
-#. Install ``beartype`` with ``pip`` in **editable mode** to synchronize local
-   changes made to your fork against the ``beartype`` package imported from
+#. Install ``beartype`` with ``pip`` in **editable mode.** This synchronizes
+   changes made to your fork against the ``beartype`` package imported in
    Python. Note the ``[dev]`` extra installs developer-specific mandatory
    dependencies required at test or documentation time.
 
@@ -2316,8 +2316,8 @@ Let's take this from the top.
    
       pip3 install -e .[dev]
 
-#. **Create a new local branch** to isolate changes to, replacing
-   ``{branch_name}`` with the desired name.
+#. **Create a new branch** to isolate changes to, replacing ``{branch_name}``
+   with the desired name.
 
    .. code-block:: shell-session
    
@@ -2337,7 +2337,7 @@ Let's take this from the top.
    
       git commit
 
-#. **Push these changes** to your GitHub-hosted fork.
+#. **Push these changes** to your remote fork.
 
    .. code-block:: shell-session
    
@@ -2565,7 +2565,7 @@ application stack at tool rather than Python runtime) include:
 * pytype_, published by Google.
 
 .. # ------------------( IMAGES                             )------------------
-.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo-small.png
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://beartype.rtfd.io
    :alt: beartype —[ the bare-metal type checker ]—
 .. |ci-badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
@@ -2619,7 +2619,7 @@ application stack at tool rather than Python runtime) include:
 .. _beartype Gentoo:
    https://github.com/leycec/raiagent
 .. _beartype Homebrew:
-   github.com/beartype/homebrew-beartype
+   https://github.com/beartype/homebrew-beartype
 .. _beartype MacPorts:
    https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
