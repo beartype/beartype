@@ -35,13 +35,24 @@ class BeartypeTestException(BeartypeException, metaclass=_ABCMeta):
 
     pass
 
-# ....................{ MARK                              }....................
+
 class BeartypeTestMarkException(BeartypeTestException):
     '''
     **Beartype test mark exceptions.**
 
     This exception is raised at test time from decorators defined by the
-    :mod:`beartype_test.util.mark` submodule.
+    :mod:`beartype_test.util.mark` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeTestPathException(BeartypeTestException):
+    '''
+    **Beartype test path exceptions.**
+
+    This exception is raised at test time from utility functions defined by the
+    :mod:`beartype_test.util.pytpath` submodule.
     '''
 
     pass

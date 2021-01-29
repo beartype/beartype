@@ -207,6 +207,13 @@ By PyPI design, this string must *not* span multiple lines or paragraphs.
 '''
 
 # ....................{ METADATA ~ authors                }....................
+AUTHOR_EMAIL = 'leycec@gmail.com'
+'''
+Email address of the principal corresponding author (i.e., the principal author
+responding to public correspondence).
+'''
+
+
 AUTHORS = 'Cecil Curry, et al.'
 '''
 Human-readable list of all principal authors of this package as a
@@ -214,14 +221,18 @@ comma-delimited string.
 
 For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
-attribution, see the top-level `AUTHORS.md` file.
+attribution, see the top-level ``AUTHORS.md`` file.
 '''
 
 
-AUTHOR_EMAIL = 'leycec@gmail.com'
+COPYRIGHT = '2014-2021 Cecil Curry'
 '''
-Email address of the principal corresponding author (i.e., the principal author
-responding to public correspondence).
+Legally binding copyright line excluding the license-specific prefix (e.g.,
+``"Copyright (c)"``).
+
+For brevity, this string *only* lists authors explicitly assigned copyrights.
+For the list of all contributors regardless of copyright assignment or
+attribution, see the top-level ``AUTHORS.md`` file.
 '''
 
 # ....................{ METADATA ~ urls                   }....................

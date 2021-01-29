@@ -30,7 +30,9 @@
 # * https://protips.readthedocs.io/git-tag-version.html
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
-from beartype.meta import VERSION
+from beartype.meta import AUTHORS, COPYRIGHT, NAME, VERSION
+from beartype.roar import BeartypeDependencyOptionalMissingWarning
+from warnings import warn
 
 # ....................{ IMPORTS ~ kludge                  }....................
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -46,11 +48,10 @@ from beartype.meta import VERSION
 # sys.path.insert(0, os.path.abspath('..'))
 
 # ....................{ METADATA                          }....................
-project = 'beartype'
-copyright = '2014-2021 Cecil Curry'
-author = 'Cecil Curry, et al.'
-
-# The full version, including alpha/beta/rc tags
+# Metadata programmatically defined by this package.
+project = NAME
+author = AUTHORS
+copyright = COPYRIGHT
 release = VERSION
 
 # ....................{ SETTINGS                          }....................
@@ -92,7 +93,9 @@ extensions = [
     'sphinx.ext.viewcode',
 
     # ..................{ THIRD-PARTY                       }..................
-    # Third-party Sphinx extensions required to be externally installed.
+    # Third-party Sphinx extensions required to be externally installed. For
+    # usability, this block should typically be empty. Third-party Sphinx
+    # extensions should ideally be optionally enabled. See below.
 ]
 
 # ....................{ EXTENSIONS ~ optional             }....................
@@ -110,9 +113,17 @@ try:
 
     # Set the HTML theme to this theme.
     html_theme = 'sphinx_rtd_theme'
-# If this theme extension is unavailable, fallback to the default HTML theme.
+# If this theme extension is unavailable, fallback to the default HTML theme...
 except ImportError:
-    pass
+    # Emit a non-fatal warning to warn callers of the performance
+    # pitfalls associated with memoizing keyword arguments.
+    warn(
+        (
+            'Optional Sphinx extension "sphinx_rtd_theme" unimportable; '
+            'falling back to default Sphinx HTML theme.'
+        ),
+        BeartypeDependencyOptionalMissingWarning
+    )
 
 # ....................{ EXTENSIONS ~ conf : napoleon      }....................
 # 'sphinx.ext.napoleon'-specific settings. See also:
