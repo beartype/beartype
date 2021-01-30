@@ -328,6 +328,7 @@ def beartype(func):
         PARAM_NAME_TYPISTRY: bear_typistry,
     }
 
+    #FIXME: Uncomment after uncommenting the corresponding logic below.
     # Fully-qualified name of this undecorated callable to be decorated.
     # func_name_qualified = get_object_name(func)
 
@@ -364,8 +365,14 @@ def beartype(func):
     #FIXME: Actually, we absolutely *DO* want to leverage the example
     #documented below of leveraging the compile() builtin. We want to do so
     #explicitly to pass something other than "<string>" here -- ideally,
-    #"func.__code__.co_filename", ensuring that this wrapper function
-    #shares the same absolute filename as that of the original function.
+    #"func.__code__.co_filename", ensuring that this wrapper function shares
+    #the same absolute filename as that of the original function. To do so:
+    #
+    #* Implement the
+    #  beartype._util.utilcallable.get_callable_filename_or_placeholder()
+    #  getter.
+    #* Call that function here to obtain that filename.
+    #
     #Note that a similar example (also leveraging the exec() builtin, which
     #frankly seems excessive) is also given by:
     #    https://stackoverflow.com/a/42478041/2809027

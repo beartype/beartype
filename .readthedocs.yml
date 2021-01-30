@@ -32,6 +32,8 @@ python:
   system_packages: true
 
 # ....................{ SPHINX                            }....................
-sphinx:
-  # For safety, convert non-fatal Sphinx warnings into fatal errors.
-  fail_on_warning: true
+#FIXME: Uncomment the following *AFTER* eliminating all warnings across our
+#documentation. Since we have yet to do so, this remains commented. It is sad.
+# sphinx:
+#   # For safety, convert non-fatal Sphinx warnings into fatal errors.
+#   fail_on_warning: true

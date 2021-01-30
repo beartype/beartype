@@ -134,8 +134,9 @@ Let's install ``beartype`` with MacPorts_ on macOS_:
 
    sudo port install py-beartype
 
-Thanks to `macOS package maintainer @harens <harens_>`__ for `packaging
-beartype for our Apple-appreciating audience <beartype MacPorts_>`__!
+A big bear hug to `our official macOS package maintainer @harens <harens_>`__
+for `packaging beartype for our Apple-appreciating audience <beartype
+MacPorts_>`__.
 
 Linux
 -----
@@ -1382,6 +1383,189 @@ typing_ types:
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
 negligible constant factors) guarantee <Timings_>`__.
+
+FAQ
+===
+
+It's Q&A time with your host, @leycec.
+
+.. # FIXME: Remove formatting from titles. Probably. Investigate.
+
+What is beartype?
+-----------------
+
+Why, it's the world's first ``O(1)`` runtime type checker in any
+dynamically-typed lang... oh, forget it.
+
+You know typeguard_? Then you know ``beartype``. Mostly. ``beartype`` is
+typeguard_'s younger, faster, and slightly sketchier brother who routinely
+ingests performance-enhancing anabolic nootropics.
+
+What is typeguard?
+------------------
+
+**Okay.** Work with us here, people.
+
+You know how in low-level statically-typed `memory-unsafe <memory safety_>`__
+languages that no one should use like C_ and C++__ the compiler validates at
+compilation time the types of all values passed to and returned from all
+functions and methods across the entire codebase? *Right.*
+
+.. code-block:: shell-session
+
+   $ gcc -Werror=int-conversion -xc - <<EOL
+   #include <stdio.h>
+   int main() {
+       printf("Hello, world!");
+       return "Goodbye, world.";
+   }
+   EOL
+   <stdin>: In function ‘main’:
+   <stdin>:4:11: error: returning ‘char *’ from a function with return type
+   ‘int’ makes integer from pointer without a cast [-Werror=int-conversion]
+   cc1: some warnings being treated as errors
+
+You know how in high-level dynamically `duck-typed <duck typing_>`__ languages
+that everyone should use instead like Python_ and Ruby_ the interpreter
+performs no such validation at any interpretation phase but instead permits any
+arbitrary values to be passed to or returned from any function or method?
+*Right.*
+
+.. code-block:: shell-session
+
+   $ python3 - <<EOL
+   def main() -> int:
+       print("Hello, world!");
+       return "Goodbye, world.";
+   main()
+   EOL
+
+   Hello, world!
+
+Runtime type checkers like beartype_ and typeguard_ selectively shift the dial
+on type safety in Python from duck to static typing while still preserving all
+of the permissive benefits of the former as a default behaviour.
+
+.. code-block:: shell-session
+
+   $ python3 - <<EOL
+   from beartype import beartype
+   @beartype
+   def main() -> int:
+       print("Hello, world!");
+       return "Goodbye, world.";
+   main()
+   EOL
+
+   Hello, world!
+   Traceback (most recent call last):
+     File "<stdin>", line 6, in <module>
+     File "<string>", line 17, in __beartyped_main
+     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/peperror.py", line 218, in raise_pep_call_exception
+       raise exception_cls(
+   beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
+   'Goodbye, world.' violates type hint <class 'int'>, as value 'Goodbye,
+   world.' not int.
+
+When should I use beartype?
+---------------------------
+
+Consider ``beartype`` over other runtime type checkers whenever:
+
+* You have no to little control over callable parameters, including whenever:
+
+  * You are the author of a library intended to be reused by others.
+  * You are the author of an app accepting arbitrary (or at least sufficiently
+    large) input data, some of which will inevitably filter down into callable
+    parameters.
+
+Consider ``beartype`` over static type checkers whenever:
+
+* You want to JIT_ your Python under PyPy_ (which you should), which most
+  static type checkers are currently incompatible with.
+* You want to type-check `types decidable only at runtime <Versus Static Type
+  Checkers_>`__.
+
+Even where none of the prior apply, still consider ``beartype``. It's
+`cost-free at both installation- and runtime <Overview_>`__. Leverage
+``beartype`` until you find something that suites you better, because
+``beartype`` is *always* better than nothing. More on that next.
+
+Why should I use beartype?
+--------------------------
+
+The idea of ``beartype`` is that it never costs you anything. It might not do
+quite as much as you'd like, but it will always do *something* – which is more
+than Python's default behaviour, which is to do *nothing* and ignore type hints
+altogether. This means you can always safely add ``beartype`` to any Python
+package, module, app, or script regardless of size, scope, funding, or audience
+and never worry about your back-end Django_ server taking a nosedive on St.
+Patty's Day just because your front-end React_ client helpfully sent a 5MB JSON
+file serializing a doubly-nested list of integers.
+
+The idea of typeguard_ is that it does *everything.* If you annotate a function
+decorated by typeguard_ as accepting a triply-nested list of integers and then
+pass that function a list containing 1,000 nested lists each themselves
+containing 1,000 nested lists each themselves containing 1,000 integers,
+*every* call to that function will check *every* integer transitively nested in
+that list – even if that list never changes. Did we mention that list
+transitively contains 1,000,000,000 integers in total?
+
+.. code-block:: shell-session
+
+   $ python3 -m timeit -n 1 -r 1 -s '
+   from typeguard import typechecked
+   @typechecked
+   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
+       return len(the_great_destroyer_of_apps)
+   ' 'behold([[[0]*1000]*1000]*1000)'
+
+   1 loop, best of 1: 6.42e+03 sec per loop
+
+Yes, you read that correct: ``6.42e+03 sec per loop == 6420 seconds == 107
+minutes == 1 hour, 47 minutes`` to check a single list. Yes, it's an uncommonly
+large list, but it's still just a list. This is the worst-case cost of a single
+call to a function decorated by a naïve runtime type checker.
+
+What does beartype do?
+----------------------
+
+Generally, as little as it can get away with while still satisfying the rote
+definition of "runtime type checker."
+
+Specifically, ``beartype`` performs a `one-way random walk over the expected
+data structure of objects passed to and returned from @beartype-decorated
+functions and methods <That's Some Catch, That Catch-22_>`__.
+
+.. # FIXME: Link to the prior example.
+
+Consider `the prior example <Why should I use beartype?_>`__ of a function
+annotated as accepting a triply-nested list of integers and then passed a list
+containing 1,000 nested lists each themselves containing 1,000 nested lists
+each themselves containing 1,000 integers.
+
+When decorated by typeguard_, *every* call to that function checks *every*
+integer nested in that list.
+
+When decorated by ``beartype``, *every* call to the same function checks only a
+single random integer contained in a single random nested list contained in a
+single random nested list contained in that parent list. This is what we mean
+by the quaint phrase "one-way random walk over the expected data structure."
+
+.. code-block:: shell-session
+
+   $ python3 -m timeit -n 1024 -r 4 -s '     
+   from beartype import beartype
+   @beartype
+   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
+      return len(the_great_destroyer_of_apps)
+   ' 'behold([[[0]*1000]*1000]*1000)'
+                                                                      
+   1024 loops, best of 4: 13.8 usec per loop
+
+``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
+check a random integer nested in a single triply-nested list passed to each
+call of that function.
 
 Tutorial
 ========
@@ -2676,14 +2860,18 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 .. _IDE:
    https://en.wikipedia.org/wiki/Integrated_development_environment
+.. _JIT:
+   https://en.wikipedia.org/wiki/Just-in-time_compilation
 .. _SQA:
    https://en.wikipedia.org/wiki/Software_quality_assurance
-.. _Vim:
-   https://www.vim.org
 .. _amortized analysis:
    https://en.wikipedia.org/wiki/Amortized_analysis
 .. _computer vision:
    https://en.wikipedia.org/wiki/Computer_vision
+.. _duck typing:
+   https://en.wikipedia.org/wiki/Duck_typing
+.. _memory safety:
+   https://en.wikipedia.org/wiki/Memory_safety
 .. _random walk:
    https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
@@ -2696,16 +2884,6 @@ application stack at tool rather than Python runtime) include:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
 .. _Shere Khan:
    https://en.wikipedia.org/wiki/Shere_Khan
-
-.. # ------------------( LINKS ~ lang                       )------------------
-.. _C++:
-   https://en.wikipedia.org/wiki/C%2B%2B
-.. _Rust:
-   https://www.rust-lang.org
-
-.. # ------------------( LINKS ~ license                    )------------------
-.. _MIT license:
-   https://opensource.org/licenses/MIT
 
 .. # ------------------( LINKS ~ math                       )------------------
 .. _Euler–Mascheroni constant:
@@ -2784,6 +2962,8 @@ application stack at tool rather than Python runtime) include:
    https://www.pypy.org
 
 .. # ------------------( LINKS ~ py : package               )------------------
+.. _Django:
+   https://www.djangoproject.com
 .. _NetworkX:
    https://networkx.org
 .. _Pandas:
@@ -3152,3 +3332,25 @@ application stack at tool rather than Python runtime) include:
    https://github.com/google/pytype
 .. _pyright:
    https://github.com/Microsoft/pyright
+
+.. # ------------------( LINKS ~ soft : ide                 )------------------
+.. _Vim:
+   https://www.vim.org
+
+.. # ------------------( LINKS ~ soft : lang                )------------------
+.. _C:
+   https://en.wikipedia.org/wiki/C_(programming_language)
+.. _C++:
+   https://en.wikipedia.org/wiki/C%2B%2B
+.. _Ruby:
+   https://www.ruby-lang.org
+.. _Rust:
+   https://www.rust-lang.org
+
+.. # ------------------( LINKS ~ soft : license             )------------------
+.. _MIT license:
+   https://opensource.org/licenses/MIT
+
+.. # ------------------( LINKS ~ soft : web                 )------------------
+.. _React:
+   https://reactjs.org

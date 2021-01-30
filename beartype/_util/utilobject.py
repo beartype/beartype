@@ -95,7 +95,7 @@ def is_object_hashable(obj: object) -> bool:
     try:
         hash(obj)
     # If this object is unhashable, return false.
-    except Exception:
+    except:
         return False
 
     # Else, this object is hashable. Return true.
