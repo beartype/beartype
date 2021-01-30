@@ -1403,7 +1403,7 @@ What is typeguard?
 **Okay.** Work with us here, people.
 
 You know how in low-level `statically-typed <static typing_>`__ `memory-unsafe
-<memory safety_>`__ languages that no one should use like C_ and C++_, the
+<memory safety_>`__ languages that no one should use like C_ and `C++`_, the
 compiler validates at compilation time the types of all values passed to and
 returned from all functions and methods across the entire codebase?
 
@@ -1501,11 +1501,11 @@ file serializing a doubly-nested list of integers.
 
 The idea of typeguard_ is that it does *everything.* If you annotate a function
 decorated by typeguard_ as accepting a triply-nested list of integers and then
-pass that function a list containing 1,000 nested lists each themselves
-containing 1,000 nested lists each themselves containing 1,000 integers,
-*every* call to that function will check *every* integer transitively nested in
-that list – even if that list never changes. Did we mention that list
-transitively contains 1,000,000,000 integers in total?
+pass that function a list containing 1,000 nested lists each containing 1,000
+nested lists each containing 1,000 integers, *every* call to that function will
+check *every* integer transitively nested in that list – even if that list
+never changes. Did we mention that list transitively contains 1,000,000,000
+integers in total?
 
 .. code-block:: shell-session
 
@@ -1519,9 +1519,9 @@ transitively contains 1,000,000,000 integers in total?
    1 loop, best of 1: 6.42e+03 sec per loop
 
 Yes, ``6.42e+03 sec per loop == 6420 seconds == 107 minutes == 1 hour, 47
-minutes`` to check a single list. Yes, it's an uncommonly large list, but it's
-still just a list. This is the worst-case cost of a single call to a function
-decorated by a naïve runtime type checker.
+minutes`` to check a single list once. Yes, it's an uncommonly large list, but
+it's still just a list. This is the worst-case cost of a single call to a
+function decorated by a naïve runtime type checker.
 
 What does beartype do?
 ----------------------
@@ -1533,9 +1533,9 @@ from @beartype-decorated functions and methods <That's Some Catch, That
 Catch-22_>`__.
 
 Consider `the prior example of a function annotated as accepting a
-triply-nested list of integers and then passed a list containing 1,000 nested
-lists each themselves containing 1,000 nested lists each themselves containing
-1,000 integers <Why should I use beartype?_>`__.
+triply-nested list of integers passed a list containing 1,000 nested lists each
+containing 1,000 nested lists each containing 1,000 integers <Why should I use
+beartype?_>`__.
 
 When decorated by typeguard_, every call to that function checks every integer
 nested in that list.
@@ -1558,7 +1558,8 @@ by the quaint phrase "one-way random walk over the expected data structure."
 
 ``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
 check only a random integer nested in a single triply-nested list passed to
-each call of that function.
+each call of that function. This is the worst-case cost of a single call to a
+function decorated by an ``O(1)`` runtime type checker.
 
 Tutorial
 ========
