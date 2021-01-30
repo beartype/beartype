@@ -1387,17 +1387,13 @@ negligible constant factors) guarantee <Timings_>`__.
 FAQ
 ===
 
-It's Q&A time with your host, @leycec.
-
-.. # FIXME: Remove formatting from titles. Probably. Investigate.
-
 What is beartype?
 -----------------
 
 Why, it's the world's first ``O(1)`` runtime type checker in any
-dynamically-typed lang... oh, forget it.
+dynamically-typed lang... oh, *forget it.*
 
-You know typeguard_? Then you know ``beartype``. Mostly. ``beartype`` is
+You know typeguard_? Then you know ``beartype`` – mostly. ``beartype`` is
 typeguard_'s younger, faster, and slightly sketchier brother who routinely
 ingests performance-enhancing anabolic nootropics.
 
@@ -1406,10 +1402,10 @@ What is typeguard?
 
 **Okay.** Work with us here, people.
 
-You know how in low-level statically-typed `memory-unsafe <memory safety_>`__
-languages that no one should use like C_ and C++__ the compiler validates at
-compilation time the types of all values passed to and returned from all
-functions and methods across the entire codebase? *Right.*
+You know how in low-level `statically-typed <static typing_>`__ `memory-unsafe
+<memory safety_>`__ languages that no one should use like C_ and C++_, the
+compiler validates at compilation time the types of all values passed to and
+returned from all functions and methods across the entire codebase?
 
 .. code-block:: shell-session
 
@@ -1425,11 +1421,10 @@ functions and methods across the entire codebase? *Right.*
    ‘int’ makes integer from pointer without a cast [-Werror=int-conversion]
    cc1: some warnings being treated as errors
 
-You know how in high-level dynamically `duck-typed <duck typing_>`__ languages
-that everyone should use instead like Python_ and Ruby_ the interpreter
-performs no such validation at any interpretation phase but instead permits any
-arbitrary values to be passed to or returned from any function or method?
-*Right.*
+You know how in high-level `duck-typed <duck typing_>`__ languages that
+everyone should use instead like Python_ and Ruby_, the interpreter performs no
+such validation at any interpretation phase but instead permits any arbitrary
+values to be passed to or returned from any function or method?
 
 .. code-block:: shell-session
 
@@ -1443,8 +1438,9 @@ arbitrary values to be passed to or returned from any function or method?
    Hello, world!
 
 Runtime type checkers like beartype_ and typeguard_ selectively shift the dial
-on type safety in Python from duck to static typing while still preserving all
-of the permissive benefits of the former as a default behaviour.
+on type safety in Python from `duck <duck typing_>`__ to `static typing`_ while
+still preserving all of the permissive benefits of the former as a default
+behaviour.
 
 .. code-block:: shell-session
 
@@ -1476,7 +1472,7 @@ Consider ``beartype`` over other runtime type checkers whenever:
 
   * You are the author of a library intended to be reused by others.
   * You are the author of an app accepting arbitrary (or at least sufficiently
-    large) input data, some of which will inevitably filter down into callable
+    large) input data, some of which will invariably filter down into callable
     parameters.
 
 Consider ``beartype`` over static type checkers whenever:
@@ -1489,7 +1485,7 @@ Consider ``beartype`` over static type checkers whenever:
 Even where none of the prior apply, still consider ``beartype``. It's
 `cost-free at both installation- and runtime <Overview_>`__. Leverage
 ``beartype`` until you find something that suites you better, because
-``beartype`` is *always* better than nothing. More on that next.
+``beartype`` is *always* better than nothing.
 
 Why should I use beartype?
 --------------------------
@@ -1522,32 +1518,29 @@ transitively contains 1,000,000,000 integers in total?
 
    1 loop, best of 1: 6.42e+03 sec per loop
 
-Yes, you read that correct: ``6.42e+03 sec per loop == 6420 seconds == 107
-minutes == 1 hour, 47 minutes`` to check a single list. Yes, it's an uncommonly
-large list, but it's still just a list. This is the worst-case cost of a single
-call to a function decorated by a naïve runtime type checker.
+Yes, ``6.42e+03 sec per loop == 6420 seconds == 107 minutes == 1 hour, 47
+minutes`` to check a single list. Yes, it's an uncommonly large list, but it's
+still just a list. This is the worst-case cost of a single call to a function
+decorated by a naïve runtime type checker.
 
 What does beartype do?
 ----------------------
 
-Generally, as little as it can get away with while still satisfying the rote
-definition of "runtime type checker."
+Generally, as little as it can while still satisfying the accepted definition
+of "runtime type checker." Specifically, ``beartype`` performs a `one-way
+random walk over the expected data structure of objects passed to and returned
+from @beartype-decorated functions and methods <That's Some Catch, That
+Catch-22_>`__.
 
-Specifically, ``beartype`` performs a `one-way random walk over the expected
-data structure of objects passed to and returned from @beartype-decorated
-functions and methods <That's Some Catch, That Catch-22_>`__.
+Consider `the prior example of a function annotated as accepting a
+triply-nested list of integers and then passed a list containing 1,000 nested
+lists each themselves containing 1,000 nested lists each themselves containing
+1,000 integers <Why should I use beartype?_>`__.
 
-.. # FIXME: Link to the prior example.
+When decorated by typeguard_, every call to that function checks every integer
+nested in that list.
 
-Consider `the prior example <Why should I use beartype?_>`__ of a function
-annotated as accepting a triply-nested list of integers and then passed a list
-containing 1,000 nested lists each themselves containing 1,000 nested lists
-each themselves containing 1,000 integers.
-
-When decorated by typeguard_, *every* call to that function checks *every*
-integer nested in that list.
-
-When decorated by ``beartype``, *every* call to the same function checks only a
+When decorated by ``beartype``, every call to the same function checks only a
 single random integer contained in a single random nested list contained in a
 single random nested list contained in that parent list. This is what we mean
 by the quaint phrase "one-way random walk over the expected data structure."
@@ -1564,8 +1557,8 @@ by the quaint phrase "one-way random walk over the expected data structure."
    1024 loops, best of 4: 13.8 usec per loop
 
 ``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
-check a random integer nested in a single triply-nested list passed to each
-call of that function.
+check only a random integer nested in a single triply-nested list passed to
+each call of that function.
 
 Tutorial
 ========
@@ -2876,6 +2869,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
+.. _static typing:
+   https://en.wikipedia.org/wiki/Type_system
 .. _zero-cost abstraction:
    https://boats.gitlab.io/blog/post/zero-cost-abstractions
 
