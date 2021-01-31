@@ -52,15 +52,15 @@ versions <Python status_>`__, `all Python package managers <Install_>`__, and
 .. # block quote -- which technically suffices but is rather lame. So it goes!
 
 .. topic:: **tl;dr:**
-    
+
    #. `Install beartype <Install_>`__:
    
       .. code-block:: shell-session
       
          pip3 install beartype
    
-   #. `Decorate functions and methods annotated by PEP-compliant type hints with
-      the @beartype.beartype decorator <Usage_>`__:
+   #. `Decorate functions and methods annotated by PEP-compliant type hints
+      with the @beartype.beartype decorator <Usage_>`__:
    
       .. code-block:: python
    
@@ -1384,8 +1384,8 @@ Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
 negligible constant factors) guarantee <Timings_>`__.
 
-FAQ
-===
+Frequently Asked Questions (FAQ)
+================================
 
 What is beartype?
 -----------------
@@ -1466,21 +1466,30 @@ behaviour.
 When should I use beartype?
 ---------------------------
 
-Consider ``beartype`` over other runtime type checkers whenever:
+Use ``beartype`` to assure the quality of Python code beyond what tests alone
+can assure. If you have yet to test, do that first with a pytest_-based test
+suite, tox_ configuration, and `continuous integration (CI) <continuous
+integration_>`__ configuration. If you have any time or money left, `annotate
+callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
+callables with the @beartype.beartype decorator <Usage_>`__.
 
-* You have no to little control over callable parameters, including whenever:
+Prefer ``beartype`` over other runtime type checkers whenever you lack control
+over the objects passed to or returned from your callables – *especially*
+whenever you cannot limit the size of those objects. This includes common
+developer scenarios like:
 
-  * You are the author of a library intended to be reused by others.
-  * You are the author of an app accepting arbitrary (or at least sufficiently
-    large) input data, some of which will invariably filter down into callable
-    parameters.
+* You are the author of an open-source library intended to be reused by a
+  general audience.
+* You are the author of an open- or closed-source app either accepting as input
+  or generating as output arbitrary (or at least sufficiently large) data, some
+  of which invariably filters down into callable parameter and return values.
 
-Consider ``beartype`` over static type checkers whenever:
+Prefer ``beartype`` over static type checkers whenever:
 
-* You want to JIT_ your Python under PyPy_ (which you should), which most
-  static type checkers are currently incompatible with.
 * You want to type-check `types decidable only at runtime <Versus Static Type
   Checkers_>`__.
+* You want to JIT_ your Python under PyPy_ (which you should), which most
+  static type checkers are currently incompatible with.
 
 Even where none of the prior apply, still consider ``beartype``. It's
 `cost-free at both installation- and runtime <Overview_>`__. Leverage
@@ -1547,13 +1556,13 @@ by the quaint phrase "one-way random walk over the expected data structure."
 
 .. code-block:: shell-session
 
-   $ python3 -m timeit -n 1024 -r 4 -s '     
+   $ python3 -m timeit -n 1024 -r 4 -s '
    from beartype import beartype
    @beartype
    def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
       return len(the_great_destroyer_of_apps)
    ' 'behold([[[0]*1000]*1000]*1000)'
-                                                                      
+
    1024 loops, best of 4: 13.8 usec per loop
 
 ``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
@@ -2462,19 +2471,19 @@ Let's take this from the top.
    "beartype/beartype" repository page <beartype_>`__.
 #. **Click the "Code" button** in the upper right-hand corner of your fork page
    that appears.
-#. **Copy the URL** that appears. 
+#. **Copy the URL** that appears.
 #. **Open a terminal.**
 #. **Change to the desired parent directory** of your local fork.
 #. **Clone your fork,** replacing ``{URL}`` with the previously copied URL.
 
    .. code-block:: shell-session
-   
+
       git clone {URL}
 
 #. **Add a new remote** referring to this upstream repository.
 
    .. code-block:: shell-session
-   
+
       git remote add upstream https://github.com/beartype/beartype.git
 
 #. **Uninstall all previously installed versions** of ``beartype``. For
@@ -2482,7 +2491,7 @@ Let's take this from the top.
    uninstall ``beartype`` with ``pip``.
 
    .. code-block:: shell-session
-   
+
       pip uninstall beartype
 
 #. Install ``beartype`` with ``pip`` in **editable mode.** This synchronizes
@@ -2491,14 +2500,14 @@ Let's take this from the top.
    dependencies required at test or documentation time.
 
    .. code-block:: shell-session
-   
+
       pip3 install -e .[dev]
 
 #. **Create a new branch** to isolate changes to, replacing ``{branch_name}``
    with the desired name.
 
    .. code-block:: shell-session
-   
+
       git checkout -b {branch_name}
 
 #. **Make changes to this branch** in your favourite `Integrated Development
@@ -2506,19 +2515,19 @@ Let's take this from the top.
 #. **Stage these changes.**
 
    .. code-block:: shell-session
-   
+
       git add -a
 
 #. **Commit these changes.**
 
    .. code-block:: shell-session
-   
+
       git commit
 
 #. **Push these changes** to your remote fork.
 
    .. code-block:: shell-session
-   
+
       git push
 
 #. **Click the "Create pull request" button** in the upper right-hand corner of
@@ -2527,7 +2536,7 @@ Let's take this from the top.
    with `the "beartype/beartype" repository <beartype_>`__.
 
    .. code-block:: shell-session
-   
+
       git checkout main && git pull upstream main
 
 Moar Depth
@@ -2862,6 +2871,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Amortized_analysis
 .. _computer vision:
    https://en.wikipedia.org/wiki/Computer_vision
+.. _continuous integration:
+   https://en.wikipedia.org/wiki/Continuous_integration
 .. _duck typing:
    https://en.wikipedia.org/wiki/Duck_typing
 .. _memory safety:
