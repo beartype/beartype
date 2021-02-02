@@ -1469,7 +1469,7 @@ When should I use beartype?
 Use ``beartype`` to assure the quality of Python code beyond what tests alone
 can assure. If you have yet to test, do that first with a pytest_-based test
 suite, tox_ configuration, and `continuous integration (CI) <continuous
-integration_>`__ configuration. If you have any time or money left, `annotate
+integration_>`__. If you have any time, money, or motivation left, `annotate
 callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
 callables with the @beartype.beartype decorator <Usage_>`__.
 
@@ -1478,23 +1478,23 @@ over the objects passed to or returned from your callables – *especially*
 whenever you cannot limit the size of those objects. This includes common
 developer scenarios like:
 
-* You are the author of an open-source library intended to be reused by a
+* You are the author of an **open-source library** intended to be reused by a
   general audience.
-* You are the author of an open- or closed-source app either accepting as input
-  or generating as output arbitrary (or at least sufficiently large) data, some
-  of which invariably filters down into callable parameter and return values.
+* You are the author of a **public app** accepting as input or generating as
+  output sufficiently large data internally passed to or returned from app
+  callables.
 
 Prefer ``beartype`` over static type checkers whenever:
 
-* You want to type-check `types decidable only at runtime <Versus Static Type
+* You want to `check types decidable only at runtime <Versus Static Type
   Checkers_>`__.
-* You want to JIT_ your Python under PyPy_ (which you should), which most
-  static type checkers are currently incompatible with.
+* You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
+  which most static type checkers remain incompatible with.
 
-Even where none of the prior apply, still consider ``beartype``. It's
-`cost-free at both installation- and runtime <Overview_>`__. Leverage
-``beartype`` until you find something that suites you better, because
-``beartype`` is *always* better than nothing.
+Even where none of the above apply, still use ``beartype``. It's `free as in
+beer and speech <gratis versus libre_>`__ and `cost-free at installation- and
+runtime <Overview_>`__. Leverage ``beartype`` until you find something that
+suites you better, because ``beartype`` is *always* better than nothing.
 
 Why should I use beartype?
 --------------------------
@@ -2875,6 +2875,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Continuous_integration
 .. _duck typing:
    https://en.wikipedia.org/wiki/Duck_typing
+.. _gratis versus libre:
+   https://en.wikipedia.org/wiki/Gratis_versus_libre
 .. _memory safety:
    https://en.wikipedia.org/wiki/Memory_safety
 .. _random walk:

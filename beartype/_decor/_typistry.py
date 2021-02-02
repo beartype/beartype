@@ -28,7 +28,7 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     _BeartypeDecorBeartypistryException,
 )
-from beartype._decor._code.codesnip import PARAM_NAME_TYPISTRY
+from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
@@ -61,7 +61,7 @@ values are types from pairs whose values are tuples.
 '''
 
 # ....................{ CONSTANTS ~ code                  }....................
-_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = PARAM_NAME_TYPISTRY + '['
+_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = ARG_NAME_TYPISTRY + '['
 '''
 Substring prefixing a Python expression mapping from the subsequent string to
 an arbitrary object cached by the beartypistry singleton via the private

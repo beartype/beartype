@@ -20,7 +20,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._code.codesnip import (
-    PARAM_NAME_FUNC, PARAM_NAME_TYPISTRY)
+    ARG_NAME_FUNC,
+    ARG_NAME_TYPISTRY,
+    VAR_NAME_ARGS_LEN,
+    VAR_NAME_RANDOM_INT,
+)
 from inspect import Parameter
 
 # ....................{ PITH                              }....................
@@ -87,22 +91,22 @@ PARAM_KIND_TO_PEP_CODE_GET = {
     # Localize this positional or keyword parameter if passed *OR* to the
     # sentinel value "__beartypistry" guaranteed to never be passed otherwise.
     {PEP_CODE_PITH_ROOT_NAME} = (
-        args[{{arg_index}}] if __beartype_args_len > {{arg_index}} else
-        kwargs.get({{arg_name!r}}, {PARAM_NAME_TYPISTRY})
+        args[{{arg_index}}] if {VAR_NAME_ARGS_LEN} > {{arg_index}} else
+        kwargs.get({{arg_name!r}}, {ARG_NAME_TYPISTRY})
     )
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {PARAM_NAME_TYPISTRY}:''',
+    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_TYPISTRY}:''',
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     Parameter.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartypistry" guaranteed to never be passed otherwise.
-    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {PARAM_NAME_TYPISTRY})
+    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {ARG_NAME_TYPISTRY})
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {PARAM_NAME_TYPISTRY}:''',
+    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_TYPISTRY}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
     Parameter.VAR_POSITIONAL: f'''
@@ -119,7 +123,7 @@ that callable's next parameter to be type-checked.
 PEP_CODE_CHECK_RETURN_PREFIX = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {PEP_CODE_PITH_ROOT_NAME} = {PARAM_NAME_FUNC}(*args, **kwargs)
+    {PEP_CODE_PITH_ROOT_NAME} = {ARG_NAME_FUNC}(*args, **kwargs)
 
     # Noop required to artifically increase indentation level. Note that
     # CPython implicitly optimizes this conditional away - which is nice.
@@ -159,13 +163,13 @@ Note that this snippet intentionally terminates on a line containing only the
 PEP484_CODE_CHECK_NORETURN = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {PEP_CODE_PITH_ROOT_NAME} = {PARAM_NAME_FUNC}(*args, **kwargs)
+    {PEP_CODE_PITH_ROOT_NAME} = {ARG_NAME_FUNC}(*args, **kwargs)
 
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python
     # interpreter, unconditionally raise an exception.
     __beartype_raise_pep_call_exception(
-        func={PARAM_NAME_FUNC},
+        func={ARG_NAME_FUNC},
         pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
         pith_value={PEP_CODE_PITH_ROOT_NAME},
     )'''
@@ -218,27 +222,59 @@ caller-defined module declaring the currently decorated callable).
 '''
 
 # ....................{ HINT ~ pith : root                }....................
-PEP_CODE_CHECK_HINT_ROOT = f'''
+PEP_CODE_CHECK_HINT_ROOT_PREFIX = f'''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
-        if not {{hint_child_placeholder}}:
+        if not '''
+'''
+PEP-compliant code snippet prefixing all code type-checking the **root pith**
+(i.e., value of the current parameter or return value) against the root
+PEP-compliant type hint annotating that pith.
+
+This prefix is intended to be locally suffixed in the
+:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` function by:
+
+#. The value of the ``hint_child_placeholder`` local variable.
+#. The :data:`PEP_CODE_CHECK_HINT_ROOT_SUFFIX` suffix.
+'''
+
+
+PEP_CODE_CHECK_HINT_ROOT_SUFFIX = f''':
             __beartype_raise_pep_call_exception(
-                func={PARAM_NAME_FUNC},
+                func={ARG_NAME_FUNC},
                 pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
-                pith_value={PEP_CODE_PITH_ROOT_NAME},
+                pith_value={PEP_CODE_PITH_ROOT_NAME},{{random_int_if_any}}
             )
 '''
 '''
-PEP-compliant code snippet type-checking the **root pith** (i.e., value of the
-current parameter or return value) against the root PEP-compliant type hint
-annotating that pith.
+PEP-compliant code snippet suffixing all code type-checking the **root pith**
+(i.e., value of the current parameter or return value) against the root
+PEP-compliant type hint annotating that pith.
+
+This snippet expects to be formatted with these named interpolations:
+
+* ``{random_int_if_any}``, whose value is either:
+
+  * If type-checking the current type hint requires a pseudo-random integer,
+    :data:`PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT`.
+  * Else, the empty substring.
 
 Design
 ----------
 **This string is the only code snippet defined by this submodule to raise an
 exception.** All other such snippets only test the current pith against the
 current child PEP-compliant type hint and are thus intended to be dynamically
-embedded
+embedded in the conditional test initiated by the
+:data:`PEP_CODE_CHECK_HINT_ROOT_PREFIX` code snippet.
+'''
+
+
+PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT = f'''
+                random_int={VAR_NAME_RANDOM_INT},'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the **root pith**
+(i.e., value of the current parameter or return value) against the root
+PEP-compliant type hint annotating that pith.
 '''
 
 # ....................{ HINT ~ nonpep                     }....................
@@ -351,7 +387,7 @@ based on ternary conditional (albeit slightly less intuitive).
 
 
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
-    '''{pith_curr_assigned_expr}[__beartype_random_int % len({pith_curr_assigned_expr})]''')
+    f'''{{pith_curr_assigned_expr}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_assigned_expr}})]''')
 '''
 PEP-compliant Python expression yielding the value of a randomly indexed item
 of the current pith (which, by definition, *must* be a standard sequence).
@@ -495,6 +531,8 @@ PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
     PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
 PEP_CODE_CHECK_HINT_GENERIC_CHILD_format = (
     PEP_CODE_CHECK_HINT_GENERIC_CHILD.format)
+PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format = (
+    PEP_CODE_CHECK_HINT_ROOT_SUFFIX.format)
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (

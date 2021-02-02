@@ -770,7 +770,9 @@ from beartype._decor._typistry import (
 )
 from beartype._decor._code.codesnip import CODE_INDENT_1, CODE_INDENT_2
 from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_CHECK_HINT_ROOT,
+    PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
+    PEP_CODE_CHECK_HINT_GENERIC_SUFFIX,
+    PEP_CODE_CHECK_HINT_ROOT_PREFIX,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
@@ -779,21 +781,21 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_NAME_PREFIX,
     PEP_CODE_PITH_ROOT_NAME,
-    PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
-    PEP_CODE_CHECK_HINT_GENERIC_SUFFIX,
+    PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT,
     PEP484_CODE_CHECK_HINT_UNION_PREFIX,
     PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
 
     # Bound format methods.
     PEP_CODE_CHECK_HINT_NONPEP_TYPE_format,
+    PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format,
     PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
-    PEP_CODE_PITH_ASSIGN_EXPR_format,
     PEP_CODE_CHECK_HINT_GENERIC_CHILD_format,
+    PEP_CODE_PITH_ASSIGN_EXPR_format,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format,
 )
@@ -1404,8 +1406,8 @@ def pep_code_check_hint(hint: object) -> (
     # Python code snippet type-checking the root pith against the root hint,
     # localized separately from the "func_code" snippet to enable this function
     # to validate this code to be valid *BEFORE* returning this code.
-    func_root_code = PEP_CODE_CHECK_HINT_ROOT.format(
-        hint_child_placeholder=hint_child_placeholder)
+    func_root_code = (
+        f'{PEP_CODE_CHECK_HINT_ROOT_PREFIX}{hint_child_placeholder}')
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # subsequently replaced on the first iteration of the breadth-first search
@@ -1604,7 +1606,7 @@ def pep_code_check_hint(hint: object) -> (
             #    the source code for non-file-based modules) and possibly even
             #    go so far as to define a PEP 302-compatible beartype module
             #    loader. Clearly, that's out of scope. For now, this suffices.
-            #* In the "beartype_test.unit.data._data_hint_pep" submodule:
+            #* In the "beartype_test.a00_unit.data._data_hint_pep" submodule:
             #  * Add a new "_PepHintMetadata.code_str_match_regexes" field,
             #    defined as an iterable of regular expressions matching
             #    substrings of the "func_wrapper.__beartype_wrapper_code"
@@ -1614,7 +1616,7 @@ def pep_code_check_hint(hint: object) -> (
             #  * For deeply nested "HINTS_PEP_META" entries, define this
             #    field as follows:
             #        code_str_match_regexes=(r'\s+:=\s+',)
-            #* In the "beartype_test.unit.pep.p484.test_p484" submodule:
+            #* In the "beartype_test.a00_unit.pep.p484.test_p484" submodule:
             #  * Match the "pep_hinted.__beartype_wrapper_code" string against
             #    all regular expressions in the "code_str_match_regexes"
             #    iterable for the currently iterated "pep_hint_meta".
@@ -2553,6 +2555,19 @@ def pep_code_check_hint(hint: object) -> (
         raise BeartypeDecorHintPepException(
             f'{hint_root_label} {repr(hint_root)} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
+
+    # Suffix this code by a Python code snippet raising a human-readable
+    # exception when the root pith violates the root type hint.
+    func_code += PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format(
+        random_int_if_any=(
+            # If type-checking the root pith requires a pseudo-random integer,
+            # pass this integer to the function raising this exception.
+            PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT
+            if is_func_code_needs_random_int else
+            # Else, call that function *WITHOUT* passing that integer.
+            ''
+        ),
+    )
 
     # Tuple of the unqualified classnames referred to by all relative forward
     # references visitable from this root hint converted from this set to

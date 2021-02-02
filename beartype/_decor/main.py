@@ -145,7 +145,7 @@ from beartype.roar import (
 )
 from beartype._decor._code.codemain import generate_code
 from beartype._decor._code.codesnip import (
-    PARAM_NAME_FUNC, PARAM_NAME_TYPISTRY)
+    ARG_NAME_FUNC, ARG_NAME_TYPISTRY)
 from beartype._decor._data import BeartypeData
 from beartype._decor._typistry import bear_typistry
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
@@ -324,8 +324,8 @@ def beartype(func):
     # For the above reasons, the *ONLY* attribute that should be passed is the
     # wrapper-specific "__beartype_func" attribute.
     local_attrs = {
-        PARAM_NAME_FUNC: func,
-        PARAM_NAME_TYPISTRY: bear_typistry,
+        ARG_NAME_FUNC: func,
+        ARG_NAME_TYPISTRY: bear_typistry,
     }
 
     #FIXME: Uncomment after uncommenting the corresponding logic below.

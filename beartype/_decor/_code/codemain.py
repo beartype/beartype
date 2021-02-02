@@ -567,7 +567,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code.codesnip import (
-    CODE_INIT_PARAMS_POSITIONAL_LEN,
+    CODE_INIT_ARGS_LEN,
     CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
@@ -905,7 +905,7 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
             # If this callable accepts one or more positional parameters, this
             # snippet preceded by code localizing the number of these
             # parameters.
-            f'{CODE_INIT_PARAMS_POSITIONAL_LEN}{func_code}'
+            f'{CODE_INIT_ARGS_LEN}{func_code}'
             if is_params_positional else
             # Else, this callable accepts *NO* positional parameters. In this
             # case, this snippet as is.
