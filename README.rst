@@ -2512,6 +2512,30 @@ Let's take this from the top.
 
 #. **Make changes to this branch** in your favourite `Integrated Development
    Environment (IDE) <IDE_>`__. Of course, this means Vim_.
+#. **Test these changes.** Note this command assumes you have installed *all*
+   `major versions of both CPython and PyPy supported by the next stable
+   release of beartype you are hacking on <Features_>`__. If this is *not* the
+   case, install these versions with pyenv_. This is vital, as type hinting
+   support varies significantly between major versions of different Python
+   interpreters.
+
+   .. code-block:: shell-session
+
+      tox
+   
+   The resulting output should ideally be suffixed by a synopsis resembling:
+
+   :: 
+   
+       ________________________________ summary _______________________________
+       py36: commands succeeded
+       py37: commands succeeded
+       py38: commands succeeded
+       py39: commands succeeded
+       pypy36: commands succeeded
+       pypy37: commands succeeded
+       congratulations :)
+
 #. **Stage these changes.**
 
    .. code-block:: shell-session
@@ -2983,6 +3007,8 @@ application stack at tool rather than Python runtime) include:
    https://www.sphinx-doc.org/en/master
 .. _SymPy:
    https://www.sympy.org
+.. _pyenv:
+   https://operatingops.org/2020/10/24/tox-testing-multiple-python-versions-with-pyenv
 
 .. # ------------------( LINKS ~ py : package : numpy       )------------------
 .. _NumPy:

@@ -574,8 +574,9 @@ def add_data(data_module: 'ModuleType') -> None:
                     pith=[73,],
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index of this list's problematic item.
-                        r'\s[Ll]ist item 0\s',
+                        # Declares the index of a random list item *NOT*
+                        # satisfying this hint.
+                        r'\s[Ll]ist item \d+\s',
                         # Double-quotes the value of this item.
                         r'\s"73"\s',
                     ),
@@ -745,8 +746,8 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of this tuple's
-                        # problematic item.
+                        # Declares the index and expected type of a fixed
+                        # tuple item *NOT* satisfying this hint.
                         r'\s[Tt]uple item 2\s',
                         r'\bstr\b',
                     ),
@@ -796,9 +797,10 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of this tuple's
-                        # problematic item.
-                        r'\s[Tt]uple item 0 tuple item 2\s',
+                        # Declares the index and expected type of a random
+                        # tuple item of a fixed tuple item *NOT* satisfying
+                        # this hint.
+                        r'\s[Tt]uple item \d+ tuple item 2\s',
                         r'\bstr\b',
                     ),
                 ),

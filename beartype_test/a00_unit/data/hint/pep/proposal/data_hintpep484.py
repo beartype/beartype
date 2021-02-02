@@ -741,15 +741,16 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # String constant.
                 PepHintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
-                # List containing exactly one integer. Since list items are only
-                # randomly type-checked, only a list of exactly one item enables us
-                # to match the explicit index at fault below.
+                # List containing exactly one integer. Since list items are
+                # only randomly type-checked, only a list of exactly one item
+                # enables us to match the explicit index at fault below.
                 PepHintPithUnsatisfiedMetadata(
                     pith=[73,],
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index of this list's problematic item.
-                        r'\s[Ll]ist item 0\s',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\s[Ll]ist item \d+\s',
                         # Double-quotes the value of this item.
                         r'\s"73"\s',
                     ),
@@ -998,8 +999,8 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of this tuple's
-                        # problematic item.
+                        # Declares the index and expected type of this fixed
+                        # tuple item *NOT* satisfying this hint.
                         r'\s[Tt]uple item 2\s',
                         r'\bstr\b',
                     ),
@@ -1029,7 +1030,8 @@ def add_data(data_module: 'ModuleType') -> None:
                 )),
             ),
             piths_unsatisfied_meta=(
-                # Tuple containing a tuple containing fewer items than required.
+                # Tuple containing a tuple containing fewer items than
+                # required.
                 PepHintPithUnsatisfiedMetadata((
                     (
                         888.999,
@@ -1048,9 +1050,10 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of this tuple's
-                        # problematic item.
-                        r'\s[Tt]uple item 0 tuple item 2\s',
+                        # Declares the index and expected type of a rondom
+                        # tuple item of a fixed tuple item *NOT* satisfying
+                        # this hint.
+                        r'\s[Tt]uple item \d+ tuple item 2\s',
                         r'\bstr\b',
                     ),
                 ),
@@ -1106,9 +1109,9 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this
                     # object...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of this tuple's
-                        # problematic item.
-                        r'\s[Tt]uple item 0\s',
+                        # Declares the index and expected type of a random
+                        # tuple item *NOT* satisfying this hint.
+                        r'\s[Tt]uple item \d+\s',
                         r'\bstr\b',
                     ),
                 ),
@@ -1258,9 +1261,9 @@ def add_data(data_module: 'ModuleType') -> None:
                         # Contains a bullet point declaring the non-"typing"
                         # type *NOT* satisfied by this object.
                         r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of this
-                        # list's first item *NOT* satisfying this hint.
-                        r'\n\*\s.*\b[Tt]uple item 0\b',
+                        # Contains a bullet point declaring the index of the
+                        # random list item *NOT* satisfying this hint.
+                        r'\n\*\s.*\b[Tt]uple item \d+\b',
                     ),
                 ),
             ),
@@ -1329,9 +1332,9 @@ def add_data(data_module: 'ModuleType') -> None:
                         # Contains a bullet point declaring one of the
                         # non-"typing" types *NOT* satisfied by this object.
                         r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of this
-                        # list's first item *NOT* satisfying this hint.
-                        r'\n\*\s.*\b[Tt]uple item 0\b',
+                        # Contains a bullet point declaring the index of the
+                        # random list item *NOT* satisfying this hint.
+                        r'\n\*\s.*\b[Tt]uple item \d+\b',
                     ),
                 ),
 
@@ -1347,12 +1350,12 @@ def add_data(data_module: 'ModuleType') -> None:
                         # the non-"typing" types unsatisfied by this object.
                         r'\n\s+\*\s.*\bint\b',
                         # Contains an unindented bullet point declaring the
-                        # index of this tuple's first item *NOT* satisfying
+                        # index of the random tuple item *NOT* satisfying
                         # this hint.
-                        r'\n\*\s.*\b[Tt]uple item 0\b',
+                        r'\n\*\s.*\b[Tt]uple item \d+\b',
                         # Contains an indented bullet point declaring the index
-                        # of this list's first item *NOT* satisfying this hint.
-                        r'\n\s+\*\s.*\b[L]ist item 0\b',
+                        # of the random list item *NOT* satisfying this hint.
+                        r'\n\s+\*\s.*\b[L]ist item \d+\b',
                     ),
                 ),
             ),
@@ -1407,12 +1410,13 @@ def add_data(data_module: 'ModuleType') -> None:
                     ],
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by
-                        # this list's first problematic item.
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random list item *NOT* satisfying this hint.
                         r'\bint\b',
                         r'\bstr\b',
-                        # Declares the index of this list's first problem item.
-                        r'\b[Ll]ist item 0\b',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\b[Ll]ist item \d+\b',
                     ),
                 ),
             ),
@@ -1454,12 +1458,13 @@ def add_data(data_module: 'ModuleType') -> None:
                     pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by
-                        # this list's first problematic item.
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random tuple item *NOT* satisfying this hint.
                         r'\bByteString\b',
                         r'\bstr\b',
-                        # Declares the index of this list's first problem item.
-                        r'\b[Tt]uple item 0\b',
+                        # Declares the index of the random tuple item *NOT*
+                        # satisfying this hint.
+                        r'\b[Tt]uple item \d+\b',
                     ),
                 ),
             ),
@@ -1503,12 +1508,13 @@ def add_data(data_module: 'ModuleType') -> None:
                     ],
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by
-                        # this list's first problem item.
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random list item *NOT* satisfying this hint.
                         r'\bByteString\b',
                         r'\bCallable\b',
-                        # Declares the index of this list's first problem item.
-                        r'\b[Ll]ist item 0\b',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\b[Ll]ist item \d+\b',
                     ),
                 ),
             ),

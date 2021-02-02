@@ -20,6 +20,42 @@ This private submodule is *not* intended for importation by downstream callers.
 #    *ONLY* the sole index of the current container indicated by that
 #    parameter.
 #  * Else, continue to perform O(n)-style type-checking as we currently do.
+#FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
+#parameter accepted by the raise_pep_call_exception() function) that enables
+#O(1) rather than O(n) exception handling to containers that do *NOT* provide
+#efficient random access like mappings and sets will be highly non-trivial.
+#While there exist a number of alternative means of implementing that
+#generalization, the most reasonable *BY FAR* is probably to:
+#
+#* Embed additional assignment expressions in the type-checking tests generated
+#  by the pep_code_check_hint() function that uniquely store the value of each
+#  item, key, or value returned by each access of a non-indexable container
+#  iterator into a new unique local variable. Note this unavoidably requires:
+#  * Adding a new index to the ".hint_curr_meta" tuples internally created by
+#    that function -- named, say, "_HINT_META_INDEX_ITERATOR_VALUE". The value
+#    of the tuple item at this index should either be:
+#    * If the currently iterated type hint is a non-indexable container, the
+#      name of the new unique local variable assigned to by this assignment
+#      expression whose value is obtained from the iterator cached for that
+#      container.
+#    * Else, "None".
+#  * Python >= 3.8, but that's largely fine. Python 3.6 and 3.7 are
+#    increasingly obsolete in 2021.
+#* Add a new optional "iterator_values" parameter to the
+#  raise_pep_call_exception() function, accepting either:
+#  * If the current parameter or return of the parent wrapper function was
+#    annotated with one or more non-indexable container type hints, a *LIST* of
+#    the *VALUES* of all unique local variables assigned to by assignment
+#    expressions in that parent wrapper function. These values were obtained
+#    from the iterators cached for those containers. To enable these exception
+#    handlers to efficiently treat this list like a FIFO stack (e.g., with the
+#    list.pop() method), this list should be sorted in the reverse order that
+#    these assignment expressions are defined in.
+#* Refactor exception handlers to then preferentially retrieve non-indexable
+#  container items in O(1) time from this stack rather than simply iterating
+#  over all container items in O(n) brute-force time. Obviously, extreme care
+#  must be taken here to ensure that this exception handling algorithm visits
+#  containers in the exact same order as visited by our testing algorithm.
 
 # ....................{ IMPORTS                           }....................
 from beartype.cave import NoneTypeOr
@@ -244,6 +280,7 @@ def raise_pep_call_exception(
         hint=hint,
         cause_indent='',
         exception_label=pith_label,
+        random_int=random_int,
     ).get_cause_or_none()
 
     # If this pith does *NOT* satisfy this hint...

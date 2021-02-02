@@ -47,12 +47,12 @@ def get_cause_or_none_sequence_standard(
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
-        f'{repr(sleuth.hint)} not standard sequence.')
+        f'{repr(sleuth.hint)} not standard sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
     # the "typing" module should have already guaranteed this on our behalf.
     assert len(sleuth.hint_childs) == 1, (
-        f'Standard sequence {repr(sleuth.hint)} subscripted by '
+        f'Standard sequence hint {repr(sleuth.hint)} subscripted by '
         f'multiple arguments.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
@@ -86,16 +86,16 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE, (
-        f'{repr(sleuth.hint_sign)} not tuple.')
+        f'{repr(sleuth.hint_sign)} not tuple hint.')
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
     if not isinstance(sleuth.pith, tuple):
         return get_cause_or_none_type(sleuth.permute(hint=tuple))
 
-    # If this hint is...
+    # If this hint is a tuple...
     if (
-        # This tuple is subscripted by exactly two child hints *AND*...
+        # Subscripted by exactly two child hints *AND*...
         len(sleuth.hint_childs) == 2 and
         # The second child hint is just an unquoted ellipsis...
         sleuth.hint_childs[1] is Ellipsis
@@ -172,19 +172,25 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
 def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **PEP-compliant possibly non-standard sequence type
-    hint** (i.e., PEP-compliant type hint accepting one or more subscripted
-    type hint arguments constraining *all* items of this object, which
-    necessarily satisfies the :class:`collections.abc.Sequence` protocol with
-    guaranteed ``O(1)`` indexation across all sequence items) if this object
-    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
-    object satisfies this hint).
+    to satisfy the passed **PEP-compliant variadic sequence type hint** (i.e.,
+    PEP-compliant type hint accepting one or more subscripted type hint
+    arguments constraining *all* items of this object, which necessarily
+    satisfies the :class:`collections.abc.Sequence` protocol with guaranteed
+    ``O(1)`` indexation across all sequence items) if this object actually
+    fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
+    satisfies this hint).
 
     Parameters
     ----------
     sleuth : CauseSleuth
         Type-checking error cause sleuth.
     '''
+    # Assert this type hint to describe a variadic sequence. See the parent
+    # get_cause_or_none_sequence_standard() and get_cause_or_none_tuple()
+    # functions for derivative logic.
+    #
+    # Note that this pith need *NOT* be validated to be an instance of the
+    # expected variadic sequence, as the caller guarantees this to be the case.
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
         sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
@@ -192,38 +198,82 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis
         )
-    ), f'{repr(sleuth.hint)} neither standard sequence nor variadic tuple.'
+    ), (f'{repr(sleuth.hint)} neither '
+        f'standard sequence nor variadic tuple hint.')
 
-    # First child hint of this hint. All remaining child hints if any are
-    # ignorable. Specifically, if this hint is:
-    # * A standard sequence (e.g., "typing.List[str]"), this hint is
-    #   subscripted by only one child hint.
-    # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
-    #   subscripted by only two child hints the latter of which is ignorable
-    #   syntactic chuff.
-    hint_child = sleuth.hint_childs[0]
+    # If this sequence is non-empty...
+    if sleuth.pith:
+        # First child hint of this hint. All remaining child hints if any are
+        # ignorable. Specifically, if this hint is:
+        # * A standard sequence (e.g., "typing.List[str]"), this hint is
+        #   subscripted by only one child hint.
+        # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
+        #   subscripted by only two child hints the latter of which is
+        #   ignorable syntactic chuff.
+        hint_child = sleuth.hint_childs[0]
 
-    # If this child hint is *NOT* ignorable...
-    if not is_hint_ignorable(hint_child):
-        # For each enumerated item of this pith...
-        for pith_item_index, pith_item in enumerate(sleuth.pith):
-            # Human-readable string describing the failure of this item to
-            # satisfy this child hint if this item actually fails to satisfy
-            # this child hint *or* "None" otherwise.
-            pith_item_cause = sleuth.permute(
-                pith=pith_item, hint=hint_child).get_cause_or_none()
+        # If this child hint is *NOT* ignorable...
+        if not is_hint_ignorable(hint_child):
+            # Arbitrary iterator satisfying the enumerate() protocol, yielding
+            # zero or more 2-tuples of the form "(item_index, item)", where:
+            # * "item" is an arbitrary item of this sequence.
+            # * "item_index" is the 0-based index of this item.
+            pith_enumerator = None
+            
+            # If this sequence was indexed by the parent @beartype-generated
+            # wrapper function by a pseudo-random integer in O(1) time,
+            # type-check *ONLY* the same index of this sequence also in O(1)
+            # time. Since the current call to that function failed a
+            # type-check, either this index is the index responsible for that
+            # failure *OR* this sequence is valid and another container
+            # entirely is responsible for that failure. In either case, no
+            # other indices of this sequence need be checked.
+            if sleuth.random_int is not None:
+                # 0-based index of this item calculated from this random
+                # integer in the *SAME EXACT WAY* as in the parent
+                # @beartype-generated wrapper function.
+                pith_item_index = sleuth.random_int % len(sleuth.pith)
 
-            # If this item is the cause of this failure, return a substring
-            # describing this failure by embedding this failure (itself
-            # intended to be embedded in a longer string).
-            if pith_item_cause is not None:
-                return (
-                    f'{sleuth.pith.__class__.__name__} item '
-                    f'{pith_item_index} {pith_item_cause}')
-            # Else, this item is *NOT* the cause of this failure. Silently
-            # continue to the next.
-    # Else, this child hint is ignorable.
+                # Pseudo-random item with this index in this sequence.
+                pith_item = sleuth.pith[pith_item_index]
 
-    # Return "None", as all items of this pith are valid, implying this pith to
-    # deeply satisfy this hint.
+                # 2-tuple of this index and item in the same order as the
+                # 2-tuples returned by the enumerate() builtin.
+                pith_enumeratable = (pith_item_index, pith_item)
+
+                # Iterator yielding only this 2-tuple.
+                pith_enumerator = iter((pith_enumeratable,))
+                # print(f'Checking item {pith_item_index} in O(1) time!')
+            # Else, this sequence was iterated by the parent
+            # @beartype-generated wrapper function in O(n) time. In this case,
+            # type-check *ALL* indices of this sequence in O(n) time as well.
+            else:
+                # Iterator yielding all indices and items of this sequence.
+                pith_enumerator = enumerate(sleuth.pith)
+                # print('Checking sequence in O(n) time!')
+
+            # For each enumerated item of this (sub)sequence...
+            for pith_item_index, pith_item in pith_enumerator:
+                # Human-readable string describing the failure of this item
+                # to satisfy this child hint if this item actually fails to
+                # satisfy this child hint *or* "None" otherwise.
+                pith_item_cause = sleuth.permute(
+                    pith=pith_item, hint=hint_child).get_cause_or_none()
+
+                # If this item is the cause of this failure, return a
+                # substring describing this failure by embedding this
+                # failure (itself intended to be embedded in a longer
+                # string).
+                if pith_item_cause is not None:
+                    return (
+                        f'{sleuth.pith.__class__.__name__} item '
+                        f'{pith_item_index} {pith_item_cause}')
+                # Else, this item is *NOT* the cause of this failure.
+                # Silently continue to the next.
+        # Else, this child hint is ignorable.
+    # Else, this sequence is empty, in which case all items of this sequence
+    # (of which there are none) are valid. Just go with it, people.
+
+    # Return "None", as all items of this sequence are valid, implying this
+    # sequence to deeply satisfy this hint.
     return None
