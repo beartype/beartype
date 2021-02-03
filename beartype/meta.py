@@ -262,9 +262,9 @@ URL of this package's issue tracker.
 # ....................{ METADATA ~ libs                   }....................
 LIBS_RUNTIME_OPTIONAL = ()
 '''
-Optional runtime dependencies for this package defined as a tuple of
-:mod:`setuptools`-specific requirements strings of the format
-``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``, where:
+Optional runtime package dependencies as a tuple of :mod:`setuptools`-specific
+requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}``, where:
 
 * ``{project_name}`` is a :mod:`setuptools`-specific project name (e.g.,
   ``numpy``, ``scipy``).
@@ -281,27 +281,119 @@ Optional runtime dependencies for this package defined as a tuple of
 '''
 
 
-#FIXME: Consider defining this as well:
-#    LIBS_TESTTIME_OPTIONAL = (
-#        'checkdocs',
-#    )
-#That would probably be used in a new "[dev]" extra.
-LIBS_TESTTIME_MANDATORY = (
-    # pytest should ideally remain the only hard dependency for testing on
-    # local machines. While our testing regime optionally leverages third-party
-    # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
-    # dependencies are *NOT* required for simple testing.
-    #
-    # A relatively modern version of py.test is required.
+# ....................{ METADATA ~ libs                   }....................
+LIBS_TESTTIME_MANDATORY_TOX = (
+    # A relatively modern version of pytest is required.
     'pytest >=4.0.0',
 )
 '''
-Mandatory test-time dependencies for this package defined as a tuple of
-:mod:`setuptools`-specific requirements strings of the format
-``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
+**Mandatory tox test-time package dependencies** (i.e., dependencies required
+to test this package under :mod:`tox`) as a tuple of :mod:`setuptools`-specific
+requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}``.
 
 See Also
 ----------
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
 '''
+
+
+LIBS_TESTTIME_MANDATORY = LIBS_TESTTIME_MANDATORY_TOX + (
+    # pytest should ideally remain the only hard dependency for testing on
+    # local machines. While our testing regime optionally leverages third-party
+    # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
+    # dependencies are *NOT* required for simple testing.
+    #
+    # A relatively modern version of tox is required.
+    'tox >=3.20.1',
+)
+'''
+**Mandatory developer test-time package dependencies** (i.e., dependencies
+required to test this package with :mod:`tox` as a developer at the command
+line) as a tuple of :mod:`setuptools`-specific requirements strings of the
+format ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+
+# ....................{ METADATA ~ libs : doc             }....................
+_LIB_VERSION_MIN_SPHINX = '3.4.3'
+'''
+Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
+required to build package documentation.
+'''
+
+
+_LIB_VERSION_MIN_SPHINX_RTD_THEME = '0.5.1'
+'''
+Human-readable minimum version as a ``.``-delimited string of the **Read The
+Docs (RTD)-flavoured Sphinx theme** (i.e., :mod:`sphinx_rtd_theme`) optionally
+leveraged when building package documentation.
+'''
+
+
+LIBS_DOCTIME_MANDATORY = (
+    f'sphinx >={_LIB_VERSION_MIN_SPHINX}',
+)
+'''
+**Mandatory developer documentation build-time package dependencies** (i.e.,
+dependencies required to manually build documentation for this package as a
+developer at the command line) as a tuple of :mod:`setuptools`-specific
+requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}``.
+
+For flexibility, these dependencies are loosely relaxed to enable developers to
+build with *any* versions satisfying at least the bare minimum. For the same
+reason, optional documentation build-time package dependencies are omitted.
+Since our documentation build system emits a non-fatal warning for each missing
+optional dependency, omitting these optional dependencies here imposes no undue
+hardships while improving usability.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+
+
+LIBS_DOCTIME_MANDATORY_RTD = (
+    f'sphinx =={_LIB_VERSION_MIN_SPHINX}',
+    f'sphinx-rtd-theme =={_LIB_VERSION_MIN_SPHINX_RTD_THEME}',
+)
+'''
+**Mandatory Read The Docs (RTD) documentation build-time package dependencies**
+(i.e., dependencies required to automatically build documentation for this
+package from the third-party RTD hosting service) as a tuple of
+:mod:`setuptools`-specific requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}``.
+
+For consistency, these dependencies are strictly constrained to force RTD to
+build against a single well-tested configuration known to work reliably.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+
+# ....................{ METADATA ~ libs : dev             }....................
+LIBS_DEVELOPER_MANDATORY = LIBS_TESTTIME_MANDATORY + LIBS_DOCTIME_MANDATORY
+'''
+**Mandatory developer package dependencies** (i.e., dependencies required to
+develop and meaningfully contribute pull requests for this package) as a tuple
+of :mod:`setuptools`-specific requirements strings of the format
+``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
+
+This tuple includes all mandatory test- and documentation build-time package
+dependencies and is thus a convenient shorthand for those lower-level tuples.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+

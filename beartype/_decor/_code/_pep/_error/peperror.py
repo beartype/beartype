@@ -11,15 +11,6 @@ generated wrapper functions wrapping decorated callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-#FIXME: *WOOPS.* We tragically realize we need to significantly refactor this
-#entire package for O(1) behaviour, because... I mean, really. Consider large
-#nested lists, yes? That's all we need to say. Specifically:
-#
-#* Refactor all private submodules of this package as follows:
-#  * If the "random_int" parameter is non-"None", specifically type-check
-#    *ONLY* the sole index of the current container indicated by that
-#    parameter.
-#  * Else, continue to perform O(n)-style type-checking as we currently do.
 #FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
 #parameter accepted by the raise_pep_call_exception() function) that enables
 #O(1) rather than O(n) exception handling to containers that do *NOT* provide
@@ -31,17 +22,32 @@ This private submodule is *not* intended for importation by downstream callers.
 #  by the pep_code_check_hint() function that uniquely store the value of each
 #  item, key, or value returned by each access of a non-indexable container
 #  iterator into a new unique local variable. Note this unavoidably requires:
-#  * Adding a new index to the ".hint_curr_meta" tuples internally created by
-#    that function -- named, say, "_HINT_META_INDEX_ITERATOR_VALUE". The value
+#  * Adding a new index to the "hint_curr_meta" tuples internally created by
+#    that function -- named, say, "_HINT_META_INDEX_ITERATOR_NAME". The value
 #    of the tuple item at this index should either be:
 #    * If the currently iterated type hint is a non-indexable container, the
 #      name of the new unique local variable assigned to by this assignment
 #      expression whose value is obtained from the iterator cached for that
 #      container.
 #    * Else, "None".
+#    Actually... hmm. Perhaps we only need a new local variable
+#    "iterator_nonsequence_names" whose value is a cached "FixedList" of
+#    sufficiently large size (so, "SIZE_BIG"?). We could then simply
+#    iteratively insert the names of the wrapper-specific new unique local
+#    variables into this list.
+#    Actually... *WAIT.* Is all we need a single counter initialized to, say:
+#        iterators_nonsequence_len = 0
+#    We then both use that counter to:
+#    * Uniquify the names of these wrapper-specific new unique local variables
+#      during iteration over type hints.
+#    * Trivially generate a code snippet passing a list of these names to the
+#      "iterators_nonsequence" parameter of raise_pep_call_exception() function
+#      after iteration over type hints.
+#    Right. That looks like The Way, doesn't it? This would seem to be quite a
+#    bit easier than we'd initially thought, which is always nice. Oi!
 #  * Python >= 3.8, but that's largely fine. Python 3.6 and 3.7 are
 #    increasingly obsolete in 2021.
-#* Add a new optional "iterator_values" parameter to the
+#* Add a new optional "iterators_nonsequence" parameter to the
 #  raise_pep_call_exception() function, accepting either:
 #  * If the current parameter or return of the parent wrapper function was
 #    annotated with one or more non-indexable container type hints, a *LIST* of

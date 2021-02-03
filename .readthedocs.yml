@@ -14,21 +14,11 @@ python:
   install:
     - method: pip
       path: .
-
-      #FIXME: Actually define a new "doc-rtd" extra in "setup.py", please. To
-      #do so, let's convert the existing "doc/source/requirement.txt" file into
-      #our ad-hoc project-specific format to enable developers to manually
-      #mimic this exact RTD configuration. To facilitate this:
-      #* Define a new "beartype.meta.LIBS_DOCTIME_MANDATORY" tuple resembling:
-      #    LIBS_DOCTIME_MANDATORY = {
-      #        'sphinx >=3.4.3',
-      #        'sphinx-rtd-theme >=0.5.1',
-      #    }
-      #* Define a new 'extras_require' key-value pair in setup resembling:
-      #        'doc': meta.LIBS_DOCTIME_MANDATORY,
       extra_requirements:
         - doc-rtd
 
+  # Permit Read The Docs (RTD) to reuse Python packages installed by its
+  # system package manager, which mostly means the standard scientific stack.
   system_packages: true
 
 # ....................{ SPHINX                            }....................

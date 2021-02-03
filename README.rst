@@ -31,11 +31,13 @@
 efficiency, portability, and thrilling puns.
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
-abstraction_>`__ into the lawless world of dynamically-typed Python by
+abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods
 <Usage_>`__ against `type hints standardized by the Python community
 <Compliance_>`__ in `O(1) non-amortized worst-case time with negligible
-constant factors <Timings_>`__.
+constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
+`see our friendly and approachable FAQ for a human-readable synopsis
+<Frequently Asked Questions (FAQ)_>`__.
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
@@ -235,10 +237,196 @@ first-class concern, generated wrappers are guaranteed to:
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*
 
+Frequently Asked Questions (FAQ)
+================================
+
+What is beartype?
+-----------------
+
+Why, it's the world's first ``O(1)`` runtime type checker in any
+`dynamically-typed`_ lang... oh, *forget it.*
+
+You know typeguard_? Then you know ``beartype`` – more or less. ``beartype`` is
+typeguard_'s younger, faster, and slightly sketchier brother who routinely
+ingests performance-enhancing anabolic nootropics.
+
+What is typeguard?
+------------------
+
+**Okay.** Work with us here, people.
+
+You know how in low-level `statically-typed`_ `memory-unsafe <memory
+safety_>`__ languages that no one should use like C_ and `C++`_, the compiler
+validates at compilation time the types of all values passed to and returned
+from all functions and methods across the entire codebase?
+
+.. code-block:: shell-session
+
+   $ gcc -Werror=int-conversion -xc - <<EOL
+   #include <stdio.h>
+   int main() {
+       printf("Hello, world!");
+       return "Goodbye, world.";
+   }
+   EOL
+   <stdin>: In function ‘main’:
+   <stdin>:4:11: error: returning ‘char *’ from a function with return type
+   ‘int’ makes integer from pointer without a cast [-Werror=int-conversion]
+   cc1: some warnings being treated as errors
+
+You know how in high-level `duck-typed <duck typing_>`__ languages that
+everyone should use instead like Python_ and Ruby_, the interpreter performs no
+such validation at any interpretation phase but instead permits any arbitrary
+values to be passed to or returned from any function or method?
+
+.. code-block:: shell-session
+
+   $ python3 - <<EOL
+   def main() -> int:
+       print("Hello, world!");
+       return "Goodbye, world.";
+   main()
+   EOL
+
+   Hello, world!
+
+Runtime type checkers like beartype_ and typeguard_ selectively shift the dial
+on type safety in Python from `duck <duck typing_>`__ to `static typing
+<statically-typed_>`__ while still preserving all of the permissive benefits of
+the former as a default behaviour.
+
+.. code-block:: shell-session
+
+   $ python3 - <<EOL
+   from beartype import beartype
+   @beartype
+   def main() -> int:
+       print("Hello, world!");
+       return "Goodbye, world.";
+   main()
+   EOL
+
+   Hello, world!
+   Traceback (most recent call last):
+     File "<stdin>", line 6, in <module>
+     File "<string>", line 17, in __beartyped_main
+     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/peperror.py", line 218, in raise_pep_call_exception
+       raise exception_cls(
+   beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
+   'Goodbye, world.' violates type hint <class 'int'>, as value 'Goodbye,
+   world.' not int.
+
+When should I use beartype?
+---------------------------
+
+Use ``beartype`` to assure the quality of Python code beyond what tests alone
+can assure. If you have yet to test, do that first with a pytest_-based test
+suite, tox_ configuration, and `continuous integration (CI) <continuous
+integration_>`__. If you have any time, money, or motivation left, `annotate
+callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
+callables with the @beartype.beartype decorator <Usage_>`__.
+
+Prefer ``beartype`` over other runtime type checkers whenever you lack control
+over the objects passed to or returned from your callables – *especially*
+whenever you cannot limit the size of those objects. This includes common
+developer scenarios like:
+
+* You are the author of an **open-source library** intended to be reused by a
+  general audience.
+* You are the author of a **public app** accepting as input or generating as
+  output sufficiently large data internally passed to or returned from app
+  callables.
+
+Prefer ``beartype`` over static type checkers whenever:
+
+* You want to `check types decidable only at runtime <Versus Static Type
+  Checkers_>`__.
+* You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
+  which most static type checkers remain incompatible with.
+
+Even where none of the above apply, still use ``beartype``. It's `free as in
+beer and speech <gratis versus libre_>`__ and `cost-free at installation- and
+runtime <Overview_>`__. Leverage ``beartype`` until you find something that
+suites you better, because ``beartype`` is *always* better than nothing.
+
+Why should I use beartype?
+--------------------------
+
+The idea of ``beartype`` is that it never costs you anything. It might not do
+quite as much as you'd like, but it will always do *something* – which is more
+than Python's default behaviour, which is to do *nothing* and ignore type hints
+altogether. This means you can always safely add ``beartype`` to any Python
+package, module, app, or script regardless of size, scope, funding, or audience
+and never worry about your back-end Django_ server taking a nosedive on St.
+Patty's Day just because your front-end React_ client helpfully sent a 5MB JSON
+file serializing a doubly-nested list of integers.
+
+The idea of typeguard_ is that it does *everything.* If you annotate a function
+decorated by typeguard_ as accepting a triply-nested list of integers and then
+pass that function a list containing 1,000 nested lists each containing 1,000
+nested lists each containing 1,000 integers, *every* call to that function will
+check *every* integer transitively nested in that list – even if that list
+never changes. Did we mention that list transitively contains 1,000,000,000
+integers in total?
+
+.. code-block:: shell-session
+
+   $ python3 -m timeit -n 1 -r 1 -s '
+   from typeguard import typechecked
+   @typechecked
+   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
+       return len(the_great_destroyer_of_apps)
+   ' 'behold([[[0]*1000]*1000]*1000)'
+
+   1 loop, best of 1: 6.42e+03 sec per loop
+
+Yes, ``6.42e+03 sec per loop == 6420 seconds == 107 minutes == 1 hour, 47
+minutes`` to check a single list once. Yes, it's an uncommonly large list, but
+it's still just a list. This is the worst-case cost of a single call to a
+function decorated by a naïve runtime type checker.
+
+What does beartype do?
+----------------------
+
+Generally, as little as it can while still satisfying the accepted definition
+of "runtime type checker." Specifically, ``beartype`` performs a `one-way
+random walk over the expected data structure of objects passed to and returned
+from @beartype-decorated functions and methods <That's Some Catch, That
+Catch-22_>`__.
+
+Consider `the prior example of a function annotated as accepting a
+triply-nested list of integers passed a list containing 1,000 nested lists each
+containing 1,000 nested lists each containing 1,000 integers <Why should I use
+beartype?_>`__.
+
+When decorated by typeguard_, every call to that function checks every integer
+nested in that list.
+
+When decorated by ``beartype``, every call to the same function checks only a
+single random integer contained in a single random nested list contained in a
+single random nested list contained in that parent list. This is what we mean
+by the quaint phrase "one-way random walk over the expected data structure."
+
+.. code-block:: shell-session
+
+   $ python3 -m timeit -n 1024 -r 4 -s '
+   from beartype import beartype
+   @beartype
+   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
+      return len(the_great_destroyer_of_apps)
+   ' 'behold([[[0]*1000]*1000]*1000)'
+
+   1024 loops, best of 4: 13.8 usec per loop
+
+``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
+check only a random integer nested in a single triply-nested list passed to
+each call of that function. This is the worst-case cost of a single call to a
+function decorated by an ``O(1)`` runtime type checker.
+
 Usage
 =====
 
-Beartype makes type-checking painless, portable, and transparent. Just:
+Beartype makes type-checking painless, portable, and possibly fun. Just:
 
     Decorate functions and methods annotated by `standard type hints <PEP
     484_>`__ with the ``@beartype.beartype`` decorator, which wraps those
@@ -282,7 +470,7 @@ Let's see what that looks like for a "Hello, Jungle!" toy example. Just:
 
           print('Hello, Jungle!', sep, end, file, flush)
 
-#. Call that function with valid parameters and relish as things work:
+#. Call that function with valid parameters and caper as things work:
 
    .. code-block:: python
 
@@ -297,7 +485,7 @@ Let's see what that looks like for a "Hello, Jungle!" toy example. Just:
       >>> hello_jungle(sep=(
       ...     b"What? Haven't you ever seen a byte-string separator before?"))
       BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
-      sep="b"What? Haven't you ever seen a byte-string separator before?""
+      sep=b"What? Haven't you ever seen a byte-string separator before?"
       violates type hint <class 'str'>, as value b"What? Haven't you ever seen
       a byte-string separator before?" not str.
 
@@ -344,8 +532,8 @@ Let's call that wrapper with both valid and invalid parameters:
              [             7,             -1]])
       >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
       BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
-      shape=([2], [2]) violates type hint
-      typing.Union[int, collections.abc.Sequence, NoneType], as ([2], [2]):
+      shape=([2], [2]) violates type hint typing.Union[int,
+      collections.abc.Sequence, NoneType], as ([2], [2]):
       * Not <class "builtins.NoneType"> or int.
       * Tuple item 0 value [2] not int.
 
@@ -1383,192 +1571,6 @@ typing_ types:
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
 negligible constant factors) guarantee <Timings_>`__.
-
-Frequently Asked Questions (FAQ)
-================================
-
-What is beartype?
------------------
-
-Why, it's the world's first ``O(1)`` runtime type checker in any
-dynamically-typed lang... oh, *forget it.*
-
-You know typeguard_? Then you know ``beartype`` – mostly. ``beartype`` is
-typeguard_'s younger, faster, and slightly sketchier brother who routinely
-ingests performance-enhancing anabolic nootropics.
-
-What is typeguard?
-------------------
-
-**Okay.** Work with us here, people.
-
-You know how in low-level `statically-typed <static typing_>`__ `memory-unsafe
-<memory safety_>`__ languages that no one should use like C_ and `C++`_, the
-compiler validates at compilation time the types of all values passed to and
-returned from all functions and methods across the entire codebase?
-
-.. code-block:: shell-session
-
-   $ gcc -Werror=int-conversion -xc - <<EOL
-   #include <stdio.h>
-   int main() {
-       printf("Hello, world!");
-       return "Goodbye, world.";
-   }
-   EOL
-   <stdin>: In function ‘main’:
-   <stdin>:4:11: error: returning ‘char *’ from a function with return type
-   ‘int’ makes integer from pointer without a cast [-Werror=int-conversion]
-   cc1: some warnings being treated as errors
-
-You know how in high-level `duck-typed <duck typing_>`__ languages that
-everyone should use instead like Python_ and Ruby_, the interpreter performs no
-such validation at any interpretation phase but instead permits any arbitrary
-values to be passed to or returned from any function or method?
-
-.. code-block:: shell-session
-
-   $ python3 - <<EOL
-   def main() -> int:
-       print("Hello, world!");
-       return "Goodbye, world.";
-   main()
-   EOL
-
-   Hello, world!
-
-Runtime type checkers like beartype_ and typeguard_ selectively shift the dial
-on type safety in Python from `duck <duck typing_>`__ to `static typing`_ while
-still preserving all of the permissive benefits of the former as a default
-behaviour.
-
-.. code-block:: shell-session
-
-   $ python3 - <<EOL
-   from beartype import beartype
-   @beartype
-   def main() -> int:
-       print("Hello, world!");
-       return "Goodbye, world.";
-   main()
-   EOL
-
-   Hello, world!
-   Traceback (most recent call last):
-     File "<stdin>", line 6, in <module>
-     File "<string>", line 17, in __beartyped_main
-     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/peperror.py", line 218, in raise_pep_call_exception
-       raise exception_cls(
-   beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
-   'Goodbye, world.' violates type hint <class 'int'>, as value 'Goodbye,
-   world.' not int.
-
-When should I use beartype?
----------------------------
-
-Use ``beartype`` to assure the quality of Python code beyond what tests alone
-can assure. If you have yet to test, do that first with a pytest_-based test
-suite, tox_ configuration, and `continuous integration (CI) <continuous
-integration_>`__. If you have any time, money, or motivation left, `annotate
-callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
-callables with the @beartype.beartype decorator <Usage_>`__.
-
-Prefer ``beartype`` over other runtime type checkers whenever you lack control
-over the objects passed to or returned from your callables – *especially*
-whenever you cannot limit the size of those objects. This includes common
-developer scenarios like:
-
-* You are the author of an **open-source library** intended to be reused by a
-  general audience.
-* You are the author of a **public app** accepting as input or generating as
-  output sufficiently large data internally passed to or returned from app
-  callables.
-
-Prefer ``beartype`` over static type checkers whenever:
-
-* You want to `check types decidable only at runtime <Versus Static Type
-  Checkers_>`__.
-* You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
-  which most static type checkers remain incompatible with.
-
-Even where none of the above apply, still use ``beartype``. It's `free as in
-beer and speech <gratis versus libre_>`__ and `cost-free at installation- and
-runtime <Overview_>`__. Leverage ``beartype`` until you find something that
-suites you better, because ``beartype`` is *always* better than nothing.
-
-Why should I use beartype?
---------------------------
-
-The idea of ``beartype`` is that it never costs you anything. It might not do
-quite as much as you'd like, but it will always do *something* – which is more
-than Python's default behaviour, which is to do *nothing* and ignore type hints
-altogether. This means you can always safely add ``beartype`` to any Python
-package, module, app, or script regardless of size, scope, funding, or audience
-and never worry about your back-end Django_ server taking a nosedive on St.
-Patty's Day just because your front-end React_ client helpfully sent a 5MB JSON
-file serializing a doubly-nested list of integers.
-
-The idea of typeguard_ is that it does *everything.* If you annotate a function
-decorated by typeguard_ as accepting a triply-nested list of integers and then
-pass that function a list containing 1,000 nested lists each containing 1,000
-nested lists each containing 1,000 integers, *every* call to that function will
-check *every* integer transitively nested in that list – even if that list
-never changes. Did we mention that list transitively contains 1,000,000,000
-integers in total?
-
-.. code-block:: shell-session
-
-   $ python3 -m timeit -n 1 -r 1 -s '
-   from typeguard import typechecked
-   @typechecked
-   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
-       return len(the_great_destroyer_of_apps)
-   ' 'behold([[[0]*1000]*1000]*1000)'
-
-   1 loop, best of 1: 6.42e+03 sec per loop
-
-Yes, ``6.42e+03 sec per loop == 6420 seconds == 107 minutes == 1 hour, 47
-minutes`` to check a single list once. Yes, it's an uncommonly large list, but
-it's still just a list. This is the worst-case cost of a single call to a
-function decorated by a naïve runtime type checker.
-
-What does beartype do?
-----------------------
-
-Generally, as little as it can while still satisfying the accepted definition
-of "runtime type checker." Specifically, ``beartype`` performs a `one-way
-random walk over the expected data structure of objects passed to and returned
-from @beartype-decorated functions and methods <That's Some Catch, That
-Catch-22_>`__.
-
-Consider `the prior example of a function annotated as accepting a
-triply-nested list of integers passed a list containing 1,000 nested lists each
-containing 1,000 nested lists each containing 1,000 integers <Why should I use
-beartype?_>`__.
-
-When decorated by typeguard_, every call to that function checks every integer
-nested in that list.
-
-When decorated by ``beartype``, every call to the same function checks only a
-single random integer contained in a single random nested list contained in a
-single random nested list contained in that parent list. This is what we mean
-by the quaint phrase "one-way random walk over the expected data structure."
-
-.. code-block:: shell-session
-
-   $ python3 -m timeit -n 1024 -r 4 -s '
-   from beartype import beartype
-   @beartype
-   def behold(the_great_destroyer_of_apps: list[list[list[int]]]) -> int:
-      return len(the_great_destroyer_of_apps)
-   ' 'behold([[[0]*1000]*1000]*1000)'
-
-   1024 loops, best of 4: 13.8 usec per loop
-
-``13.8 usec per loop == 13.8 microseconds = 0.0000138 seconds`` to transitively
-check only a random integer nested in a single triply-nested list passed to
-each call of that function. This is the worst-case cost of a single call to a
-function decorated by an ``O(1)`` runtime type checker.
 
 Tutorial
 ========
@@ -2613,7 +2615,7 @@ perform them at runtime):
    second phase is generically shared between all decorated callables and
    generalized to O(n) linear-time recursive operation. Efficiency no longer
    matters when you're raising exceptions. Exception handling is slow in any
-   language and doubly slow in dynamically-typed (and mostly interpreted)
+   language and doubly slow in `dynamically-typed`_ (and mostly interpreted)
    languages like Python, which means that performance is mostly a non-concern
    in "cold" code paths guaranteed to raise exceptions. This phase is only
    *conditionally* performed when the first phase fails by:
@@ -2722,8 +2724,8 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
    general-audience release as a `public package supported across multiple
    Python and platform-specific package managers <Install_>`__, I shepherd the
    fastest, hardest, and deepest runtime type-checking solution in any
-   dynamically-typed language towards a well-typed future of PEP-compliance and
-   boundless quality assurance. *Cue epic taiko drumming.*
+   `dynamically-typed`_ language towards a well-typed future of PEP-compliance
+   and boundless quality assurance. *Cue epic taiko drumming.*
 #. `Felix Hildén (@felix-hilden) <felix-hilden_>`__, the Finnish `computer
    vision`_ expert world-renowned for his effulgent fun-loving disposition
    *and*:
@@ -2907,7 +2909,8 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
-.. _static typing:
+.. _dynamically-typed:
+.. _statically-typed:
    https://en.wikipedia.org/wiki/Type_system
 .. _zero-cost abstraction:
    https://boats.gitlab.io/blog/post/zero-cost-abstractions

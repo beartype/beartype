@@ -221,15 +221,26 @@ _SETUP_OPTIONS = {
         # All optional runtime dependencies.
         'all': meta.LIBS_RUNTIME_OPTIONAL,
 
-        # All mandatory testing dependencies, copied from the "tests_require"
-        # key below into an arbitrarily named extra. This is required *ONLY*
-        # for integration with the top-level "tox.ini" file. See the "extras"
-        # key in that file for further details.
-        'test': meta.LIBS_TESTTIME_MANDATORY,
+        # All mandatory developer dependencies (including all mandatory test-
+        # and documentation build-time dependencies) as referenced from
+        # external project documentation for developers.
+        'dev': meta.LIBS_DEVELOPER_MANDATORY,
+
+        # All mandatory Read The Docs (RTD)-specific documentation build-time
+        # dependencies an arbitrarily named extra. This is required *ONLY*
+        # for integration with the top-level ".readthedocs.yml" file. See the
+        # "python" key in that file for further details.
+        'doc-rtd': meta.LIBS_DOCTIME_MANDATORY_RTD,
+
+        # All mandatory tox-specific testing dependencies, copied from the
+        # "tests_require" key below into an arbitrarily named extra. This is
+        # required *ONLY* for integration with the top-level "tox.ini" file.
+        # See the "extras" key in that file for further details.
+        'test-tox': meta.LIBS_TESTTIME_MANDATORY_TOX,
     },
 
     # Mandatory testing dependencies.
-    'tests_require': meta.LIBS_TESTTIME_MANDATORY,
+    'tests_require': meta.LIBS_TESTTIME_MANDATORY_TOX,
 
     # ..................{ PACKAGES                          }..................
     # List of the fully-qualified names of all Python packages (i.e.,
