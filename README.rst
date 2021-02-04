@@ -2754,6 +2754,13 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
 See Also
 ========
 
+External ``beartype`` resources include:
+
+* `This list of all open-source PyPI-hosted dependents <beartype
+  dependents_>`__ (i.e., projects requiring ``beartype`` as a mandatory runtime
+  dependency), kindly provided by the `Libraries.io package registry
+  <Libraries.io_>`__.
+
 **Runtime type checkers** (i.e., third-party mostly pure-Python packages
 dynamically validating Python callable types at Python runtime, typically via
 decorators, explicit function calls, and import hooks) include:
@@ -2837,6 +2844,12 @@ application stack at tool rather than Python runtime) include:
    https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
    https://pypi.org/project/beartype
+
+.. # ------------------( LINKS ~ beartype : package : meta  )------------------
+.. _Libraries.io:
+   https://libraries.io
+.. _beartype dependents:
+   https://libraries.io/pypi/beartype/dependents
 
 .. # ------------------( LINKS ~ beartype : remote          )------------------
 .. _beartype:

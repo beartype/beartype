@@ -27,7 +27,7 @@ def test_key_pool_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
-    from beartype.roar import _BeartypeUtilKeyPoolException
+    from beartype.roar import _BeartypeUtilCachedKeyPoolException
 
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
@@ -104,7 +104,7 @@ def test_key_pool_pass() -> None:
     
     # Confirm the above object is released AND that releasing an already
 	# released object elicits a roar. 
-    with raises(_BeartypeUtilKeyPoolException):
+    with raises(_BeartypeUtilCachedKeyPoolException):
         key_pool.release(key='\r\n', item=windows_stringio_new)
 
 def test_key_pool_fail() -> None:
@@ -115,7 +115,7 @@ def test_key_pool_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
-    from beartype.roar import _BeartypeUtilKeyPoolException
+    from beartype.roar import _BeartypeUtilCachedKeyPoolException
     
     # Key pool to be tested, seeding empty pools with the identity function.
     key_pool = KeyPool(item_maker=lambda key: key)
@@ -125,6 +125,6 @@ def test_key_pool_fail() -> None:
         key_pool.acquire(['Lieutenant!', 'This corpse will not stop burning!'])
         
     # Verify releasing a non-existent object elicits a roar
-    with raises(_BeartypeUtilKeyPoolException):
+    with raises(_BeartypeUtilCachedKeyPoolException):
         key_pool.release(key="I should roar", item=object())
 

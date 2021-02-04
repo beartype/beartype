@@ -252,6 +252,13 @@ by :class:`functools.partial` is C-based or pure Python -- only that some
 callable of indeterminate origin is in fact wrapped.
 '''
 
+
+CallableCodeObjectType = type(_get_type_or_unavailable.__code__)
+'''
+Type of all **code objects** (i.e., C-based objects underlying all pure-Python 
+callables to which those callables are compiled for efficiency).
+'''
+
 # ....................{ TYPES ~ call : function           }....................
 FunctionType = _FunctionType
 '''

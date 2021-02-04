@@ -32,7 +32,8 @@ from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
 )
-from beartype._util.hint.nonpep.utilhintnonpeptest import die_unless_hint_nonpep
+from beartype._util.hint.nonpep.utilhintnonpeptest import (
+    die_unless_hint_nonpep)
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

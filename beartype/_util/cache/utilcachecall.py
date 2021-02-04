@@ -20,12 +20,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #  2. Those variadic parameters.
 
 # ....................{ IMPORTS                           }....................
-import inspect
 from beartype.roar import (
     _BeartypeUtilCallableCachedException,
     _BeartypeUtilCallableCachedKwargsWarning,
 )
-from beartype._util.utilobject import Iota
+from beartype._util.func.utilfuncarg import is_func_arg_variadic
+from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
 from inspect import Parameter
 from warnings import warn
@@ -61,7 +62,7 @@ flattened tuple of all parameters passed to the decorated callable.
 '''
 
 # ....................{ DECORATORS                        }....................
-def callable_cached(func):
+def callable_cached(func: 'Callable'):
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
     values of the passed callable as well as all previously raised exceptions
@@ -164,12 +165,12 @@ def callable_cached(func):
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Callable to be memoized.
 
     Returns
     ----------
-    CallableTypes
+    Callable
         Closure wrapping this callable with memoization.
 
     Raises
@@ -186,67 +187,15 @@ def callable_cached(func):
        https://www.python.org/dev/peps/pep-0586
     .. _PEP 593:
        https://www.python.org/dev/peps/pep-0593
-
-
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
-    # Avoid circular import dependencies.
-    from beartype._util.utilobject import SENTINEL
-
-    #FIXME: *UGH.* The stdlib "inspect" module is horrifyingly inefficient.
-    #Calling *ANY* functions of that module will be strictly prohibited at some
-    #point, so we'd might as well start now. Admittedly, this inefficiency is
-    #only paid at decoration time, but we call this decorator *A LOT*
-    #throughout the codebase. Instead, replace this call to the
-    #inspect.signature() function with iteration manually iterating over
-    #function arguments and deciding whether any such arguments are variadic.
-    #
-    #This is sufficiently general-purpose logic, however, that we should:
-    #* Define a new "beartype._util.func.utilfuncargs" submodule.
-    #* In that submodule:
-    #  * Define a new is_func_args_variadic() tester returning True if and only
-    #    if one or more arguments of the passed callable are either positional
-    #    or keyword variadic.
-    #  * Exercise this tester with unit tests.
-    #
-    #To implement this function, note that the
-    #inspect._signature_from_function() implements the core of the "inspect"
-    #module's callable introspection. Given this implementation, testing for
-    #variadicity is actually surprisingly trivial. Something resembling the
-    #following should suffice:
-    #
-    #def is_func_args_variadic(func: 'Callable') -> bool:
-    #
-    #    # Code object underlying the passed callable if any *OR* "None"
-    #    # otherwise.
-    #    func_code = getattr(func, '__code__', None)
-    #
-    #    # If *NO* code object underlies this callable, raise an exception.
-    #    if func_code is None:
-    #        raise ...
-    #
-    #    # We can't believe it's this simple, either. But it is.
-    #    return (
-    #        (func_code.co_flags & CO_VARARGS) or
-    #        (func_code.co_flags & CO_VARKEYWORDS)
-    #    )
-    #
-    #*YIKES.* That turns out to be a friggin' O(1) operation! This is why you
-    #never trust someone else's public API, people -- excluding ours, of
-    #course. Ours is awesome.
-
-    # Signature of the decorated callable.
-    func_sig = inspect.signature(func)
-
-    # If the decorated callable accepts one or more variadic arguments, raise
-    # an exception.
-    for param in func_sig.parameters.values():
-        if param.kind in _PARAM_KINDS_UNSUPPORTED:
-            raise _BeartypeUtilCallableCachedException(
-                f'@callable_cached {func.__name__}() parameter {param.name} '
-                f'kind {repr(param.kind)} unsupported.'
-            )
+    # If the decorated callable accepts variadic arguments, raise an exception.
+    if is_func_arg_variadic(func):
+        raise _BeartypeUtilCallableCachedException(
+            f'@callable_cached {label_callable(func)} '
+            f'variadic arguments not cacheable.'
+        )
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that

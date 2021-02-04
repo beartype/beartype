@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilKeyPoolException
+from beartype.roar import _BeartypeUtilCachedKeyPoolException
 from collections import defaultdict
 from threading import Lock
 
@@ -211,7 +211,7 @@ class KeyPool(object):
         ----------
         TypeError
             If this key is unhashable (i.e. *not* a key).
-        _BeartypeUtilKeyPoolException
+        _BeartypeUtilCachedKeyPoolException
             If this pool item was *not* acquired (i.e., returned by a prior
             call to the :meth:`acquire` method) and thus ineligible for
             release.
@@ -224,7 +224,7 @@ class KeyPool(object):
 
             # If this item was *NOT* previously acquired, raise an exception.
             if not self._pool_item_id_to_is_acquired.get(item_id, False):
-                raise _BeartypeUtilKeyPoolException(
+                raise _BeartypeUtilCachedKeyPoolException(
                     f'Key pool unacquired item {repr(item)} not releasable.')
 
             # Record this item to have now been released.

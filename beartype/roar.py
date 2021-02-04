@@ -563,6 +563,20 @@ class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 
+class _BeartypeUtilCallableException(_BeartypeUtilException):
+    '''
+    **Beartype callable utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilfunc` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeUtilClassException(_BeartypeUtilException):
     '''
     **Beartype class utility exception.**
@@ -606,20 +620,6 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
-
-
-class _BeartypeUtilKeyPoolException(_BeartypeUtilException):
-    '''
-    **Beartype key pool exception.**
-
-    This exception is raised by private functions of the private
-    :mod:`beartype._util.cache.pool.utilcachepool` subpackage on various fatal
-    edge cases.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
     pass
 
 # ....................{ PRIVATE ~ util : call               }..................
@@ -712,6 +712,21 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
+    pass
+
+
+# ....................{ PRIVATE ~ util : cache : pool       }..................
+class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
+    '''
+    **Beartype key pool exception.**
+
+    This exception is raised by private functions of the private
+    :mod:`beartype._util.cache.pool.utilcachepool` subpackage on various fatal
+    edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
     pass
 
 
