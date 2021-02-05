@@ -705,8 +705,8 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
 
     This exception is raised by the
     :func:`beartype._util.cache.utilcache.utilcachecall.callable_cached`
-    decorator when the signature of the callable being decorated is
-    unsupported.
+    decorator on various fatal errors (e.g., when the signature of the
+    decorated callable is unsupported).
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
@@ -714,6 +714,21 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
 
     pass
 
+
+class _BeartypeUtilLRUCacheException(_BeartypeUtilCachedException):
+    '''
+    **Beartype Least Recently Used (LRU) cache exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.cache.utilcache.utilcachelru.LRUCacheStrong` class
+    on various fatal errors (e.g., when the cache capacity is *not* a positive
+    integer).
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
 
 # ....................{ PRIVATE ~ util : cache : pool       }..................
 class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
