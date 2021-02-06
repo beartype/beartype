@@ -15,49 +15,76 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilLRUCacheException
+from threading import RLock
 
 # ....................{ CLASSES                           }....................
-#FIXME: This is currently completely untested. Add unit tests exhaustively
-#exercising this class to a new
-#"beartype_test.a00_unit.a00_util.cache.test_utilcachecall" submodule,
-#including these pertinent edge cases:
-#* Instantiating an "LRUCacheStrong(size=1)" and:
-#  * Setting an arbitrary key-value pair on this cache.
-#  * Setting another arbitrary key-value pair on this cache and validating that
-#    the first such key-value pair no longer exists in this cache.
-#  * Removing the last such key-value pair from this cache.
-#* Instantiating an "LRUCacheStrong(size=2)" and:
-#  * Setting two arbitrary key-value pairs on this cache: A and B.
-#  * Validating that the first key-value pair of this cache is A.
-#  * Setting another arbitrary key-value pair C on this cache.
-#  * Validating that key-value pair A no longer exists in this cache.
-#  * Validating that the first key-value pair of this cache is B.
-#  * Getting key-value pair B.
-#  * Validating that the first key-value pair of this cache is C.
-#  * Setting key-value pair D on this cache and validating that key-value pair
-#    C no longer exists in this cache.
-#  * Validating that the first key-value pair of this cache is B.
+#FIXME: This cache is currently *NOT* thread-safe. It could certainly be made
+#trivially thread-safe (e.g., by employing a "threading.Lock" object ala the
+#"beartype._util.cache.pool.utilcachepool" submodule), but there currently
+#exists little impetus to actually do so. Let's do so at some point, please.
 
 class LRUCacheStrong(dict):
     '''
-    **Strong Least Recently Used (LRU) cache** (i.e., a mapping from strong
-    references to arbitrary keys onto strong references to arbitrary values,
-    limited to some maximum positive number of key-value pairs by implicitly
-    removing the least recently accessed key-value pair from this mapping on
-    each attempt to set a new key-value pair on this mapping that would cause
-    this mapping's size to exceed this number).
+    **Thread-safe strong Least Recently Used (LRU) cache** (i.e., a mapping
+    from strong references to arbitrary keys onto strong references to
+    arbitrary values, limited to some maximum capacity of key-value pairs by
+    implicitly and thread-safely removing the least recently accessed key-value
+    pair from this mapping on any setting of a new key-value pair that would
+    cause the size of this mapping to exceed this capacity).
+
+    Design
+    ------
+    LRU cache implementations typically employ weak references for safety.
+    LRU cache implementations employing strong references invite memory leaks
+    by preventing stale cached keys and values that would otherwise be
+    garbage-collected from being garbage-collected.
+
+    Nonetheless, this cache intentionally employs strong references to persist
+    **cache-only objects** (i.e., objects *only* referenced by this cache)
+    across calls to callables decorated by the :func:`beartype.beartype`
+    decorator. Since cache-only objects are referenced only by this cache
+    rather than by both this cache and an external parent object, a cache-only
+    object cached under a weak reference would have *no* strong referents and
+    thus be immediately garbage-collected with all other short-lived objects in
+    the first generation (i.e., generation 0). The standard example of a
+    cache-only object is a container iterator (e.g., the items view returned by
+    the :meth:`dict.items` method).
+
+    Note that the equivalent LRU cache employing weak references to keys and/or
+    values may be trivially implemented by inheriting from the standard
+    :class:`weakref.WeakKeyDictionary` or :class:`weakref.WeakValueDictionary`
+    classes rather than the builtin :class:`dict` type instead.
 
     Attributes
     ----------
     _size : int
         **Cache capacity** (i.e., maximum positive number of key-value pairs
         persisted by this cache).
+    _thread_lock : Lock
+        **Reentrant instance-specific thread lock** (i.e., low-level thread
+        locking mechanism implemented as a highly efficient C extension,
+        defined as an instance variable for non-reentrant reuse by the public
+        API of this class). Although CPython, the canonical Python interpreter,
+        *does* prohibit conventional multithreading via its Global Interpreter
+        Lock (GIL), CPython still coercively preempts long-running threads at
+        arbitrary execution points. Ergo, multithreading concerns are *not*
+        safely ignorable -- even under CPython.
     '''
+
+    # ..................{ CLASS VARIABLES                   }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # cache dunder methods. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_size',
+        '_thread_lock',
+    )
 
     # ..................{ DUNDERS                           }..................
     def __init__(self, size: int) -> None:
         '''
-        Initialize this cache to the empty dictionary.
+        Initialize this cache to the empty cache with the passed capacity.
 
         Parameters
         ----------
@@ -81,7 +108,7 @@ class LRUCacheStrong(dict):
         # Else, this size is an integer.
         #
         # If this size is non-positive, raise an exception.
-        if size <= 0:
+        elif size <= 0:
             raise _BeartypeUtilLRUCacheException(
                 f'LRU cache capacity {size} not positive.')
         # Else, this size is positive.
@@ -91,6 +118,9 @@ class LRUCacheStrong(dict):
 
         # Classify this parameter.
         self._size = size
+
+        # Initialize all remaining instance variables.
+        self._thread_lock = RLock()
 
 
     def __getitem__(
@@ -135,17 +165,19 @@ class LRUCacheStrong(dict):
             If this key is unhashable.
         '''
 
-        # Value cached under this key if this key has already been cached *OR*
-        # raise the standard "KeyError" exception otherwise.
-        value = __dict_getitem(self, key)
+        # In a thread-safe manner...
+        with self._thread_lock:
+            # Value previously cached under this key if this key has already
+            # been cached *OR* raise the usual "KeyError" exception otherwise.
+            value = __dict_getitem(self, key)
 
-        # Prioritize this key by removing and re-adding this key back to the
-        # tail of this cache.
-        __dict_delitem(self, key)
-        __dict_setitem(self, key, value)
+            # Prioritize this key by removing and re-adding this key back to
+            # the end of this cache.
+            __dict_delitem(self, key)
+            __dict_setitem(self, key, value)
 
-        # Return this value.
-        return value
+            # Return this value.
+            return value
 
 
     def __setitem__(
@@ -185,16 +217,70 @@ class LRUCacheStrong(dict):
             If this key is unhashable.
         '''
 
-        # If this key has already been cached, prioritize this key by removing
-        # this key from this cache *BEFORE* re-adding this key back below.
-        if __dict_hasitem(self, key):
-            __dict_delitem(self, key)
+        # In a thread-safe manner...
+        with self._thread_lock:
+            # If this key has already been cached, prioritize this key by
+            # removing this key from this cache *BEFORE* re-adding this key.
+            if __dict_hasitem(self, key):
+                __dict_delitem(self, key)
 
-        # (Re-)add this key to the tail of this cache.
-        __dict_setitem(self, key, value)
+            # (Re-)add this key back to the end of this cache.
+            __dict_setitem(self, key, value)
 
-        # If adding this key caused this cache to exceed its maximum capacity,
-        # silently remove the first (and thus least recently used) key-value
-        # pair from this cache.
-        if __dict_len(self) > self._size:
-            __dict_delitem(self, next(__dict_iter(self)))
+            # If adding this key caused this cache to exceed its maximum
+            # capacity, silently remove the first (and thus least recently
+            # used) key-value pair from this cache.
+            if __dict_len(self) > self._size:
+                __dict_delitem(self, next(__dict_iter(self)))
+
+
+    def __contains__(
+        self,
+        key: 'Hashable',
+
+        # Superclass methods efficiently localized as default parameters.
+        __dict_contains = dict.__contains__,
+        __self_getitem__ = __getitem__,
+    ) -> bool:
+        '''
+        ``True`` only if the passed key has been recently cached.
+
+        Specifically, this method (in order):
+
+        * If this key has *not* been recently cached, returns ``False``.
+        * Else:
+
+          #. Gets the value previously cached under this key.
+          #. Prioritizes this key by removing and re-adding this key-value
+             pair back to the tail of this cache.
+          #. Returns ``True``.
+
+        Parameters
+        ----------
+        key : Hashable
+            Arbitrary hashable key to detect the existence of.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this key has been recently cached.
+
+        Raises
+        ----------
+        TypeError
+            If this key is unhashable.
+        '''
+
+        # In a thread-safe manner...
+        with self._thread_lock:
+            # If this key has *NOT* been recently cached, return false.
+            if not __dict_contains(self, key):
+                return False
+            # Else, this key has been recently cached.
+
+            # Prioritize this key by deferring to the __getitem__() dunder
+            # method.
+            __self_getitem__(self, key)
+
+            # Return true.
+            return True
