@@ -675,66 +675,150 @@ This private submodule is *not* intended for importation by downstream callers.
 #      cleanup routine *AFTER* code type-checking these parameters. While
 #      mildly inefficient, function calls incur considerably less overhead
 #      when compiled away from interpreted Python bytecode.
-#FIXME: As for LRU caching, we succinctly solved this while cross-country
-#skiing today: just use an "OrderedDict". While obsolete for most purposes
-#under Python >= 3.7 (whose builtin "dict" type now guarantees insertion-order
-#iteration), the pure-Python "collections.OrderedDict" implementation is
-#magically *PERFECT* for implementing a dict-style LRU cache. Why? Because this
-#implementation actually leverages a double-linked list under-the-hood, which
-#is exactly the data structure required to implement all standard LRU cache
-#operations in O(1) time with only minimal space overhead. Unsurprisingly,
-#there even already exists a clever Gist leveraging this solution at:
-#    https://gist.github.com/davesteele/44793cd0348f59f8fadd49d7799bd306
-#Obviously, we should certainly cite this Gist as inspiration. We should *NOT*,
-#however, copy-and-paste this solution as is into beartype. Why? Because it's
-#still suboptimal. Although O(1), associated constants are non-negligible
-#because this solution internally defers to superclass methods. The entire
-#point of caching is to be as optimally efficient as feasible; if you don't do
-#that, there's no point in caching. So, we optimize this to the hilt.
+
+#FIXME: Here's a reasonably clever idea for perfect O(1) tuple type-checking
+#guaranteed to check all n items of an arbitrary tuple in exactly n calls, with
+#each subsequent call performing *NO* type-checking by reducing to a noop. How?
+#Simple! We:
+#* Augment our existing "LRUCacheStrong" data structure to optionally accept a
+#  new initialization-time "value_maker" factory function defaulting to "None".
+#  If non-"None", "LRUCacheStrong" will implicitly call that function on each
+#  attempt to access a missing key by assigning the object returned by that
+#  call as the key of a new key-value pair -- or, in other words, by behaving
+#  exactly like "collections.defaultdict".
+#* Globally define a new "_LRU_CACHE_TUPLE_TO_COUNTER" cache somewhere as an
+#  instance of "LRUCacheStrong" whose "value_maker" factory function is
+#  initialized to a lambda function simply returning a new
+#  "collections.Counter" object that starts counting at 0. Since tuples
+#  themselves are hashable and thus permissible for direct use as dictionary
+#  keys, this cache maps from tuples (recently passed to or returned from
+#  @beartype-decorated callables) to either:
+#  * If that tuple has been type-checked to completion, "True" or any other
+#    arbitrary sentinel placeholder, really. "True" is simpler, however,
+#    because the resulting object needs to be accessible from dynamically
+#    generated wrapper functions.
+#  * Else, a counter such that the non-negative integer returned by
+#    "next(counter)" is the 0-based index of the next item of that tuple to be
+#    type-checked.
 #
-#Perhaps more importantly, the "OrderedDict" class is considered deprecated and
-#will thus likely disappear at some point. That point may not necessarily be
-#today, tomorrow, or even this decade, but it will almost certainly happen.
-#So, we avoid direct usage of "OrderedDict".
+#Given that low-level infrastructure, the pep_code_check_hint() function below
+#then generates code perfectly type-checking arbitrary tuples in O(1) time that
+#should ideally resemble (where "__beartype_pith_j" is the current pith
+#referring to this tuple):
+#    (
+#        _LRU_CACHE_TUPLE_TO_COUNTER[__beartype_pith_j] is True or
+#        {INSERT_CHILD_TYPE_CHECK_HERE}(
+#            __beartype_pith_k := __beartype_pith_j[
+#                next(_LRU_CACHE_TUPLE_TO_COUNTER[__beartype_pith_j])]
+#        )
+#    )
 #
-#Specifically, we:
+#Awesome, eh? The same concept trivially generalizes to immutable sequences
+#(i.e., "Sequence" type hints that are *NOT* "MutableSequence" type hints).
+#Sadly, since many users use "Sequence" to interchangeably denote both
+#immutable and mutable sequences, we probably have no means of reliably
+#distinguishing the two. So it goes! So, just tuples then in practice. *sigh*
+
+#FIXME: Huzzah! We finally invented a reasonably clever means of (more or less)
+#safely type-checking one-shot iterables like generators and iterators in O(1)
+#time without destroying those iterables. Yes, doing so requires proxying those
+#iterables with iterables of our own. Yes, this is non-ideal but not nearly as
+#bad as you might think. Why? Because *NO ONE CARES ABOUT ONE-SHOT ITERABLES.*
+#They're one-shot. By definition, you can't really care about them, because
+#they don't last long enough. You certainly can't cache them or stash them in
+#data structures or really do anything with them beside pass or return them
+#between callables until they inevitably get exhausted.
 #
-#* Define a new "beartype._util.cache.utilcachelru" submodule.
-#* In this submodule:
-#  * Define a new "LRUCache" class. Note that this class should *NOT*:
-#    * Satisfy the "collections.abc.MutableMapping" API, at least not
-#      initially. Why? Because we don't require most of that API. We're fairly
-#      convinced we only require the standard __delitem__(), __getitem__(), and
-#      __setitem__() dunder methods. That's it. No pop(). No __reversed__().
-#    * Subclass the "collections.OrderedDict" class. Instead, this class:
-#      * Subclasses the builtin "dict" type, just like "OrderedDict". That
-#        said, we honestly have *NO* idea why "OrderedDict" even bothers
-#        subclassing "dict", since "OrderedDict" appears to redefine *ALL* of
-#        the standard "dict" methods with its own implementations. Initially,
-#        we should consider instead just:
-#        * Defining a new "LRUCache._dict" instance variable. Oh, wait. We
-#          think we see. Subclassing "dict" appears to purely be an efficiency
-#          optimization. By doing so, methods are then able to efficiently call
-#          superclass "dict" methods *WITHOUT* dictionary lookups via this
-#          clever calling convention leveraging default parameters:
-#              def __setitem__(
-#                  self, key, value,
-#                  dict_setitem=dict.__setitem__, proxy=_proxy, Link=_Link):
-#          *YEAH.* We like that. Micro-optimization is our bag, so let's forego
-#          a new "LRUCache._dict" instance variable and embrace the hacky (but
-#          stupidly fast) "dict" superclass approach instead.
-#      * Uses the "OrderedDict" implementation as inspiration for our own
-#        LRU-specific implementation. We don't require most of the
-#        functionality of the "OrderedDict" class -- only the exact subset
-#        required to selectively implement an LRU cache. This means at least
-#        these standard dunder methods:
-#        * OrderedDict.__getitem__().
-#        * OrderedDict.__setitem__().
-#        * OrderedDict.move_to_end(), but privatized as _move_item_to_tail().
-#          This method will be internally called by our __getitem__() and
-#          __setitem__() implementations.
-#        * OrderedDict.__delitem__(). Heck, we may not even need *THIS.* In
-#          fact, we're fairly certain we don't. Phew! One less thing, right?
+#This means that proxying one-shot iterables is almost always safe. Moreover,
+#we devised a clever means of proxying that introduces negligible overhead
+#while preserving our O(1) guarantee. First, let's examine the standard
+#brute-force approach to proxying one-shot iterables:
+#
+#    class BeartypeIteratorProxy(object):
+#        def __init__(self, iterator: 'Iterator') -> None:
+#            self._iterator = iterator
+#
+#        def __next__(self) -> object:
+#            item_next = next(self._iterator)
+#
+#            if not {INSERT_TYPE_CHECKS_HERE}(item_next):
+#                raise SomeBeartypeException(f'Iterator {item_next} bad!')
+#
+#            return item_next
+#
+#That's bad, because that's an O(n) type-check run on every single iteration.
+#Instead, we do this:
+#
+#    class BeartypeIteratorProxy(object):
+#        def __init__(self, iterator: 'Iterator') -> None:
+#            self._iterator = iterator
+#
+#        def __next__(self) -> object:
+#            # Here is where the magic happens, folks.
+#            self.__next__ = self._iterator.__next__
+#
+#            item_next = self.__next__(self._iterator)
+#
+#            if not {INSERT_TYPE_CHECKS_HERE}(item_next):
+#                raise SomeBeartypeException(f'Iterator {item_next} bad!')
+#
+#            return item_next
+#
+#See what we did there? We dynamically monkey-patch away the
+#BeartypeIteratorProxy.__next__() method by replacing that method with the
+#underlying __next__() method of the proxied iterator immediately after
+#type-checking one and only one item of that iterator.
+#
+#The devil, of course, is in that details. Assuming a method can monkey-patch
+#itself away (we're pretty sure it can, as that's the basis of most efficient
+#decorators that cache property method results, *BUT WE SHOULD ABSOLUTELY
+#VERIFY THAT THIS IS THE CASE), the trick is then to gracefully handle
+#reentrancy. That is to say, although we have technically monkey-patched away
+#the BeartypeIteratorProxy.__next__() method, that object is still a live
+#object that *WILL BE RECREATED ON EACH CALL TO THE SAME* @beartype-decorated
+#callable. Yikes! So, clearly we yet again cache with an "LRUCacheStrong" cache
+#specific to iterators... or perhaps something like "LRUCacheStrong" that
+#provides a callback mechanism to enable arbitrary objects to remove themselves
+#from the cache. Yes! Perhaps just augment our existing "LRUCacheStrong" strong
+#with some sort of callback or hook support?
+#
+#In any case, the idea here is that the "BeartypeIteratorProxy" class defined
+#above should internally:
+#* Store a weak rather than strong reference to the underlying iterator.
+#* Register a callback with that weak reference such that:
+#  * When the underlying iterator is garbage-collected, the wrapping
+#    "BeartypeIteratorProxy" proxy removes itself from its "LRUCacheStrong"
+#    proxy.
+#
+#Of course, we're still not quite done yet. Why? Because we want to avoid
+#unnecessarily wrapping "BeartypeIteratorProxy" instances in
+#"BeartypeIteratorProxy" instances. This will happen whenever such an instance
+#is passed to a @beartype-decorated callable annotated as accepting or
+#returning an iterator. How can we avoid that? Simple. Whenever we detect that
+#an iterator to be type-checked is already a "BeartypeIteratorProxy" instance,
+#we just efficiently restore the __next__() method of that instance to its
+#pre-monkey-patched version: e.g.,
+#    (
+#        isinstance(__beartype_pith_n, BeartypeIteratorProxy) and
+#        # Unsure if this sort of assignment expression hack actually works.
+#        # It probably doesn't. So, this may need to be sealed away into a
+#        # utility function performing the same operation. *shrug*
+#        __beartype_pith_n.__next__ = BeartypeIteratorProxy.__next__
+#    )
+
+#FIXME: Huzzah! The prior commentary on type-checking iterators in O(1) time
+#also generalizes to most of the other non-trivial objects we had no idea how
+#to type-check -- notably, callables. How? Simple. *WE PROXY CALLABLES WITH
+#OBJECTS WHOSE* __call__() methods:
+#* Type-check parameters to be passed to the underlying callable.
+#* Call the underlying callable.
+#* Type-check the return value.
+#* Monkey-patch themselves away by replacing themselves (i.e., the __call__()
+#  methods of that object) with the underlying callable. The only issue here,
+#  and it might be a deal-breaker, is whether or not a bound method can simply
+#  be replaced with either an unbound function *OR* a bound method of another
+#  object entirely. Maybe it can? We suspect it can in both cases, but research
+#  will certainly be required here.
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
