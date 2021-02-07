@@ -19,11 +19,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #submodules lying around. Huzzah!
 
 # ....................{ IMPORTS                            }....................
-import sys
-import os.path
+from sys import modules
 
 from collections.abc import Callable
-from beartype.cave import ClassType, CallableCTypes
+from beartype.cave import ClassType, CallableCTypes, MethodBoundInstanceOrClassType
 
 from beartype.roar import _BeartypeUtilCallableException
 # ....................{ GETTERS                           }....................
@@ -58,29 +57,28 @@ def get_callable_filename_or_placeholder(func: Callable) -> str:
     '''
     if callable(func) is False:
         raise _BeartypeUtilCallableException(
-            f"Attempted to pass non-callable:{repr(func)}")
+            f"Attempted to pass non-callable: {repr(func)}")
+    
+    filename = '<string>'
 
-   # Grab location of the module declaring class
-    elif isinstance(func, type):
+    # Grab location of the module declaring class.
+    if isinstance(func, type):
 
+        func_module_name = func.__module__
+        
         # Check the Class has a module thats registered with the system.
-        if (getattr(func,"__module__", None) and
-            sys.modules.get(func.__module__) and
-            getattr(sys.modules.get(func.__module__),"__file__", None)):
-            filename = os.path.abspath(sys.modules.get(func.__module__).__file__)
-        # Class was dynamically declared.
-        else:
-            filename = "<string>"
+        if func_module_name:
+            filename = getattr(modules[func_module_name],'__file__', filename)
+
     else:
         # Built-in types are callables with no .py source file.
-        if isinstance(func,CallableCTypes):
+        if isinstance(func, CallableCTypes):
             filename = "<builtin>"
-        # Check the function/method contains a code object with the declaring filename.
-        elif (getattr(func, "__code__", None) and
-              getattr(func.__code__, "co_filename", None)):
-            filename = os.path.abspath(func.__code__.co_filename)
-        # Callable was dynamically declared.
+
         else:
-            filename = "<string>"
+            if isinstance(func, MethodBoundInstanceOrClassType):
+                func = func.__func__
+
+            filename = func.__code__.co_filename
 
     return filename
