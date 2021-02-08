@@ -676,6 +676,177 @@ This private submodule is *not* intended for importation by downstream callers.
 #      mildly inefficient, function calls incur considerably less overhead
 #      when compiled away from interpreted Python bytecode.
 
+#FIXME: *WOOPS.* The "LRUCacheStrong" class is absolutely awesome and we'll
+#absolutely be reusing that for various supplementary purposes across the
+#codebase (e.g., for perfect O(1) tuple type-checking below). However, this
+#class sadly doesn't get us where we need to be for full O(1) dictionary and
+#set type-checking. Why? Two main reasons:
+#* *ITERATIVE ACCESS.* Our routinely scheduled cleanup function needs to
+#  iteratively or randomly access arbitrary cache items for inspection to
+#  decide whether they need to be harvested or not.
+#* *VARIABLE OBJECT SIZES.* We gradually realized, given the plethora of
+#  related "FIXME:" comments below, that we'll eventually want to cache a
+#  variety of possible types of objects across different caches -- each cache
+#  caching a unique type of object. This makes less and less sense the more one
+#  considers, however. For example, why have an LRU cache of default size 256
+#  specific to iterators for a downstream consumer that only passes one
+#  iterator to a single @beartype-decorated callable?
+#
+#The solution to both is simple, but not: we define a new derivative
+#"LRUDuffleCacheStrong" class. The motivation for using the term "duffle" is
+#that, just like a duffle bag, a duffle cache:
+#* Provides random access.
+#* Elegantly stretches to contains a variable number of arbitrary objects of
+#  variable size.
+#
+#The "LRUDuffleCacheStrong" class satisfies both concerns by caching to a
+#maximum *OBJECT SIZE CAPACITY* rather than merely to an *OBJECT NUMBER
+#CAPACITY.* Whereas the "LRUCacheStrong" class treats all cached objects as
+#having a uniform size of 1, the "LRUDuffleCacheStrong" class instead assigns
+#each cached object an estimated abstract size (EAS) as a strictly positive
+#integer intended to reflect its actual transitive in-memory size -- where a
+#cached object of EAS 1 is likely to be the smallest object in that cache.
+#While estimating EAS will depend on object type, the following should apply:
+#* EAS estimators *MUST* run in O(1) time. That is, estimating the abstract
+#  size of an object *MUST* be implementable in constant time with negligible
+#  constant factors. This means that the standard approach of recursively
+#  inspecting the physical in-memory sizes of all objects visitable from the
+#  target object should *NOT* be employed.
+#* For containers:
+#  * Note that type hints provide us the expected height
+#    "sizeable_height" of any data structure, where "sizeable_height" is
+#    defined as the number of "[" braces in a type hint ignoring those that do
+#    *NOT* connote semantic depth (e.g., "Optional", "Union", "Annotated"). So:
+#    * The "sizeable_height" for a type hint "list[list[list[int]]]" is 3.
+#    * Since any unsubscripted type hint (e.g., "list") is implicitly
+#      subscripted by "[Any]", the "sizeable_height" for the type hints "list"
+#      and "list[int]" is both 1.
+#  * Note also that most containers satisfy the "collections.abc.Sizeable" ABC.
+#  * Given that, we can trivially estimate the EAS "sizeable_eas" of any
+#    type-hinted sizeable object "sizeable" as follows:
+#      sizeable_eas = len(sizeable) ** sizeable_height
+#  Ergo, a list of length 100 type-hinted as "list[list[int]]" has a size of:
+#      sizeable_eas = 100 ** 2 = 10,000
+#* For dictionaries, the "sizeable_eas" provided by the equation above should
+#  be multiplied by two to account for the increased space consumption due to
+#  storing key-value pairs.
+#
+#Here's then how the "LRUDuffleCacheStrong" class is implemented:
+#* The "LRUDuffleCacheStrong" class should *NOT* subclass the
+#  "LRUCacheStrong" class but copy-and-paste from the latter into the former.
+#  This is both for efficiency and maintainability; it's likely their
+#  implementations will mildly diverge.
+#* The LRUDuffleCacheStrong.__init__() method should be implemented like this:
+#      def __init__(
+#          self,
+#          eas_max: int,
+#          value_metadata_len: 'Optional[int]' = 0,
+#      )
+#          assert eas_max > 0
+#          assert value_metadata_len >= 0
+#
+#          # Classify all passed parameters as instance variables.
+#          self._EAS_MAX = eas_max
+#          self._FIXED_LIST_SIZE = value_metadata_len + 2
+#
+#          # Initialize all remaining instance variables.
+#          self._eas_cur = 0
+#          self._iter = None
+#* Note the above assignment of these new instance variables:
+#  * "_EAS_MAX", the maximum capacity of this LRU cache in EAS units. Note that
+#    this capacity should ideally default to something that *DYNAMICALLY SCALES
+#    WITH THE RAM OF THE LOCAL MACHINE.* Ergo, "_eas_max" should be
+#    significantly larger in a standard desktop system with 32GB RAM than it is 
+#    on a Raspberry Pi 2 with 1GB RAM: specifically, 32 times larger.
+#  * "_eas_cur", the current capacity of this LRU cache in EAS units.
+#  * "_FIXED_LIST_SIZE", the number of additional supplementary objects to
+#    be cached with each associated value of this LRU cache. The idea here is
+#    that each key-value pair of this cache is an arbitrary hashable object
+#    (the key) mapping to a "FixedList(size=self._FIXED_LIST_SIZE)"
+#    (the value) whose 0-based indices provide (in order):
+#    1. A strong reference to the primary object being cached under this key.
+#       For dictionaries and sets, this is an iterator over those dictionaries
+#       and sets.
+#    2. The EAS of that object. For completeness, we should also add to the
+#       "sizeable_eas" estimate given above the additional estimated cost of
+#       this "FixedList". Since the length of this "FixedList" is guaranteed to
+#       be exactly "self._value_metadata_len + 2", this then gives a final EAS
+#       of that object as:
+#         sizeable_eas = self._value_metadata_len + 2 + len(sizeable) ** sizeable_height
+#    3...self._value_metadata_len + 2: Additional supplementary objects to be
+#       cached along with that object. For dictionaries and sets, exactly one
+#       supplementary object must be cached, so this is:
+#       3. The underlying dictionary or set being iterated over, so we can
+#          lookup the number of existing strong references to that dictionary
+#          or set during cleanup and decide whether to uncache that or not.
+#  * "_iter", an iterator over this dictionary. Yes, we *COULD* implement
+#    random access (e.g., with a linked list or list), but doing so introduces
+#    extreme complications and inefficiencies in both space and time. Instead,
+#    persisting a simple iterator over this dictionary suffices.
+#* Allow any "LRUDuffleCacheStrong" instance to be trivially incremented
+#  (e.g., during garbage collection cleanup) as an iterator by also defining:
+#      def get_pair_next_or_none(
+#          self,
+#          __dict_len = dict.__len__,
+#      ) -> 'Optional[Tuple[Hashable, FixedList]]':
+#          '''
+#          Next most recently used key-value pair of this cache if this cache
+#          is non-empty *or* ``None`` otherwise (i.e., if this cache is empty).
+#
+#          The first call to this method returns the least recently used
+#          key-value pair of this cache. Each successive call returns the next
+#          least recently used key-value pair of this cache until finally
+#          returning the most recently used key-value pair of this cache, at
+#          which time the call following that call rewinds time by again
+#          returning the least recently used key-value pair of this cache.
+#          '''
+#
+#          #FIXME: Probably nest this in a "with self._thread_lock:" block.
+#
+#          # If this cache is empty, return None.
+#          if not __dict_len(self):
+#              return None
+#          # Else, this cache is non-empty.
+#
+#          # Attempt to...
+#          try:
+#              # Return the next recent key-value pair of this cache.
+#              return self._iter.__next__()
+#          # If doing so raises *ANY* exception, this iterator has become
+#          # desynchronized from this cache. In this case...
+#          #
+#          # Note this implicitly handles the initial edge case in which this
+#          # cache has yet to be iterated (i.e., "self._iter == None"). Since
+#          # this is *ONLY* the case for the first call to this method for the
+#          # entire lifetime of the active Python process, the negligible
+#          # overhead of handling this exception is preferable to violating DRY
+#          # by duplicating this logic with an explicit
+#          # "if self._iter == None:" block.
+#          except:
+#              # Reinitialize this iterator.
+#              self._iter = self.items()
+#
+#              # Return the least recent such pair.
+#              return self._iter.__next__()
+#* Refactor the __setitem__() method. Specifically, when caching a new
+#  key-value pair with EAS "eas_item" such that:
+#      while eas_item + self._eas_cur > self._eas_max:
+#  ...we need to iteratively remove the least recently used key-value pair of
+#  this cache (which, yes, technically has O(n) worst-case time, which is
+#  non-ideal, which may be why nobody does this, but that's sort-of okay here,
+#  since we're doing something monstrously productive each iteration by freeing
+#  up critical space and avoiding memory leaks, which seems more than worth the
+#  cost of iteration, especially as we expect O(1) average-case time) until
+#  this cache can fit that pair into itself. Once it does, we:
+#      # Bump the current EAS of this cache by the EAS of this pair.
+#      self._eas_cur += eas_item
+#
+#Seems sweet to us. We can store arbitrarily large nested containers in our
+#duffle cache without exhausting memory, which is actually more than the
+#brute-force LRU cache can say. We get trivial iteration persistence. We also
+#avoid a proliferation of different LRU caches, because a single
+#"LRUDuffleCacheStrong" instance can flexibly store heterogeneous types.
+
 #FIXME: Here's a reasonably clever idea for perfect O(1) tuple type-checking
 #guaranteed to check all n items of an arbitrary tuple in exactly n calls, with
 #each subsequent call performing *NO* type-checking by reducing to a noop. How?
@@ -819,6 +990,40 @@ This private submodule is *not* intended for importation by downstream callers.
 #  be replaced with either an unbound function *OR* a bound method of another
 #  object entirely. Maybe it can? We suspect it can in both cases, but research
 #  will certainly be required here.
+#
+#Again, cache such objects to avoid reentrancy issues. That said, there is a
+#significant complication here that one-shot iterables do *NOT* suffer:
+#proxying. Unlike one-shot iterables, callables are often expected to retain
+#their object identities. Proxying disrupts that. I still believe that we
+#should enable proxying across the board by default despite that, because less
+#than 1% of our users will manually enable an option enabling proxying, simply
+#because they'll never think to go look for it and when they do find it will be
+#understandably hesitant to enable it when everything else is working. Users
+#(including myself) typically only enable options when they encounter issues
+#requiring they do so. Ergo, proxy by default. But we *ABSOLUTELY* need to
+#allow users to conditionally disable proxying on a per-decoration basis --
+#especially when proxying callables.
+#
+#So we propose adding a new optional "is_proxying" parameter to the @beartype
+#decorator. Unfortunately, doing so in an efficient manner will prove highly
+#non-trivial. Why? Because the standard approach of doing so is *PROBABLY*
+#extremely inefficient. We need to test that hypothesis, of course, but the
+#standard approach to adding optional parameters to decorators is to nest a
+#closure in a closure in a function. We don't need the innermost closure, of
+#course, because we dynamically generate it at runtime. We would need the
+#outermost closure, though, to support optional decorator parameters under the
+#standard approach. That seems outrageously expensive, because each call to the
+#@beartype decorator would then internally generate and return a new closure!
+#Yikes. We can avoid that by instead, on each @beartype call:
+#* Create a new functools.partial()-based wrapper decorator passed our
+#  @beartype decorator and all options passed to the current @beartype call.
+#* Cache that wrapper decorator into a new private "LRUCacheStrong" instance.
+#* Return that decorator.
+#* Return the previously cached wrapper decorator on the next @beartype call
+#  passed the same options (rather than recreating that decorator).
+#
+#Naturally, this requires these options to be hashable. Certainly, booleans
+#are, so this smart approach supports a new optional "is_proxying" parameter.
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
