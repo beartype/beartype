@@ -19,39 +19,66 @@ This private submodule is *not* intended for importation by downstream callers.
 #submodules lying around. Huzzah!
 
 # ....................{ IMPORTS                            }....................
-# from collections.abc import Callable
+from sys import modules
 
+from collections.abc import Callable
+from beartype.cave import ClassType, CallableCTypes, MethodBoundInstanceOrClassType
+
+from beartype.roar import _BeartypeUtilCallableException
 # ....................{ GETTERS                           }....................
-#FIXME: Implement us up.
-#FIXME: Unit test us up.
-# def get_callable_filename_or_placeholder(func: Callable) -> str:
-#     '''
-#     Absolute filename of the uncompiled Python script or module physically
-#     declaring the passed callable if any *or* the placeholder string
-#     ``"<string>"`` implying this callable to have been dynamically declared
-#     in-memory otherwise.
-#
-#     Parameters
-#     ----------
-#     func : Callable
-#         Callable to be inspected.
-#
-#     Returns
-#     ----------
-#     str
-#         Either:
-#
-#         * If this callable is physically declared by an uncompiled Python
-#           script or module, the absolute filename of this script or module.
-#         * Else, the placeholder string ``"<string>"`` implying this callable to
-#           have been dynamically declared in-memory.
-#
-#     See Also
-#     ----------
-#     :func:`inspect.getsourcefile`
-#         Inefficient stdlib function strongly inspiring this implementation,
-#         which has been highly optimized for use by the performance-sensitive
-#         :func:`beartype.beartype` decorator.
-#     '''
-#
-#     pass
+def get_callable_filename_or_placeholder(func: Callable) -> str:
+    '''
+    Absolute filename of the uncompiled Python script or module physically
+    declaring the passed callable if any *or* the placeholder string
+    ``"<string>"`` implying this callable to have been dynamically declared
+    in-memory otherwise.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    ----------
+    str
+        Either:
+
+        * If this callable is physically declared by an uncompiled Python
+          script or module, the absolute filename of this script or module.
+        * Else, the placeholder string ``"<string>"`` implying this callable to
+          have been dynamically declared in-memory.
+
+    See Also
+    ----------
+    :func:`inspect.getsourcefile`
+        Inefficient stdlib function strongly inspiring this implementation,
+        which has been highly optimized for use by the performance-sensitive
+        :func:`beartype.beartype` decorator.
+    '''
+    if callable(func) is False:
+        raise _BeartypeUtilCallableException(
+            f"Attempted to pass non-callable: {repr(func)}")
+    
+    filename = '<string>'
+
+    # Grab location of the module declaring class.
+    if isinstance(func, type):
+
+        func_module_name = func.__module__
+        
+        # Check the Class has a module thats registered with the system.
+        if func_module_name:
+            filename = getattr(modules[func_module_name],'__file__', filename)
+
+    else:
+        # Built-in types are callables with no .py source file.
+        if isinstance(func, CallableCTypes):
+            filename = "<builtin>"
+
+        else:
+            if isinstance(func, MethodBoundInstanceOrClassType):
+                func = func.__func__
+
+            filename = func.__code__.co_filename
+
+    return filename

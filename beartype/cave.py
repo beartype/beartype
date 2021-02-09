@@ -1199,7 +1199,6 @@ class _UnavailableTypesTuple(tuple):
     under the active Python interpreter, typically due to insufficient Python
     version or non-installed third-party dependencies).
     '''
-
     pass
 
 
@@ -1656,6 +1655,15 @@ This tuple matches:
   and returned by the stdlib :func:`re.compile` function).
 * All **textual types** (i.e., types contained in the :class:`StrTypes`
   tuple).
+'''
+
+CallableCTypes = (FunctionOrMethodCType, MethodBoundInstanceDunderCType,
+        MethodUnboundInstanceDunderCType, MethodUnboundInstanceNondunderCType,
+        MethodUnboundClassCType,
+        )
+'''
+Tuple of all callable **C-based types** 
+(i.e. callable objects implemented in low-level C.
 '''
 
 # ....................{ TUPLES ~ post-init : version      }....................
