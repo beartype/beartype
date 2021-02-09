@@ -54,9 +54,11 @@ name: test
 # reducing consumption of scarce CI minutes for incidental feature branches.
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 # ....................{ MAIN                              }....................
 jobs:
@@ -151,17 +153,17 @@ jobs:
 
       # Note that:
       #
-      # * "set -xe" enables Bash:
-      #   * Reporting (i.e., "-x"), which implicitly prints each command to
-      #     stdout *BEFORE* running that command.
-      #   * Strictness (i.e., "-e").
+      # * This command *MUST* be platform-agnostic by running under both:
+      #   * POSIX-compliant platforms (e.g., Linux, macOS).
+      #   * POSIX-noncompliant platforms (e.g., Windows).
+      #   In particular, commands that assume a POSIX-compliant shell (e.g.,
+      #   Bash) *MUST* be avoided.
       # * Packaging dependencies (e.g., "pip") are upgraded *BEFORE* all
       #   remaining dependencies (e.g., "tox").
+      - name: 'Upgrading packager dependencies...'
+        run: python -m pip install --upgrade pip  #setuptools wheel
       - name: 'Installing package dependencies...'
-        run: |
-          set -xe
-          python -m pip install --upgrade pip  #setuptools wheel
-          python -m pip install --upgrade tox  #tox-gh-actions  #virtualenv 
+        run: python -m pip install --upgrade tox  #tox-gh-actions  #virtualenv 
 
       # Note that:
       #
@@ -171,5 +173,4 @@ jobs:
       #   unavailable Python environments. See also:
       #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
-        run: |
-          python -m tox --skip-missing-interpreters=false
+        run: python -m tox --skip-missing-interpreters=false
