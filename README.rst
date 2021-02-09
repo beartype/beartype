@@ -2523,7 +2523,7 @@ Let's take this from the top.
 
    .. code-block:: shell-session
 
-      tox
+      ./tox
    
    The resulting output should ideally be suffixed by a synopsis resembling:
 
@@ -2788,8 +2788,8 @@ application stack at tool rather than Python runtime) include:
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://beartype.rtfd.io
    :alt: beartype —[ the bare-metal type checker ]—
-.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
-   :target: https://github.com/beartype/beartype/actions?workflow=tests
+.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
+   :target: https://github.com/beartype/beartype/actions?workflow=test
    :alt: beartype continuous integration (CI) status
 .. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest

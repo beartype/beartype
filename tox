@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Bash shell script wrapping this project's tox-based test suite, passing
+# sane default options suitable for interactive terminal testing and otherwise
+# passing all passed arguments as is to the "tox" command.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+#
+# --------------------( CAVEATS                           )--------------------
+# *THE HIGHER-LEVEL "tox" SCRIPT SHOULD TYPICALLY BE RUN INSTEAD.* This
+# lower-level script only exercises this project against the single Python
+# interpreter associated with the "pytest" command and is thus suitable *ONLY*
+# as a rapid sanity check. Meanwhile, the higher-level "tox" command exercises
+# this project against all installed Python interpreters and is thus suitable
+# as a full-blown correctness check (e.g., before submitting pull requests).
+
+# ....................{ PATHS                             }....................
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
+# option would be preferable but is unsupported by macOS's NetBSD-specific
+# version of "readlink". Instead, just defer to Python for portability.
+function canonicalize_path() {
+    python -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+}
+
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                              }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}" >/dev/null
+
+# Run this project's tox-based test suite with all passed arguments.
+# Dismantled, this is:
+# * "tox -e", exercising only the passed comma-delimited list of environments.
+#   Note this implicitly disables the "envlist" default in "tox.ini".
+# * "tox -l", listing all environments defined by the "envlist" default.
+# * "grep linux", removing all duplicate platform-specific environments from
+#   that list.
+# * "paste ...", converting all newlines in that "grep" output into commas
+#   expected by the parent "tox -e" command.
+#
+# This pipeline is gratefully inspired by this StackOverflow answer:
+#     https://stackoverflow.com/a/56387013/2809027
+#command tox -e $(command tox -l | command grep linux | command paste -sd "," -)
+command tox
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}

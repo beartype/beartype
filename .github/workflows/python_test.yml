@@ -1,0 +1,175 @@
+---
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# GitHub-specific continuous integration (CI) configuration, enabling the usual
+# GitHub Actions workflow for pure-Python packages exercised by "tox".
+#
+# --------------------( CAVEATS                           )--------------------
+# *THIS CONFIGURATION SHOULD PERFORM ONLY THE BARE MINIMUM NUMBER OF TESTS.*
+# Regrettably, tests *NOT* safeguarding the quality of the core Python package
+# installed by this project should *NOT* be run. This includes:
+#
+# * Tests conditionally dependent on third-party packages such as:
+#    * The scientific stack (e.g., NumPy, SciPy, matplotlib). Scientific
+#      packages tend to be large and thus expensive to install, costing scarce
+#      CI minutes while contributing little of note.
+#    * The documentation stack (e.g., RTD, Sphinx, docutils). Documentation
+#      packages also tend to be large. Unlike the scientific stack, these
+#      packages are miserably slow at runtime -- presumably due to
+#      inefficiencies in the docutils reStructuredText (reST) parser. Moreover,
+#      since Read The Docs (RTD) already builds documentation and thus pays
+#      these costs on our behalf, we have little incentive to do so ourselves.
+#
+# GitHub currently only allots public repositories 2,000 GitHub Actions minutes
+# per month for an average of 66.66 minutes per day. While this test suite is
+# fast, it's also run under multiple CPython and PyPy versions. That is still
+# fast locally. Unfortunately, Azure (i.e., Microsoft's cloud computing
+# platform that unsurprisingly also hosts GitHub Actions) is slow.
+#
+# Each CI run triggered by this workflow currently costs this project ~5 free
+# GitHub Actions minutes on average despite running substantially faster on a
+# dual-core AMD Athlon(tm) II X2 240 manufactured before the auspicious birth
+# of Linus Torvalds. Since this project *MUST* support multiple CI runs per day
+# (e.g., to test pull requests), we are rapidly bumping up against real-world
+# business constraints.
+#
+# --------------------( SEE ALSO                          )--------------------
+# * https://hynek.me/articles/python-github-actions
+#   Well-authored blog post strongly inspiring this configuration.
+
+# ....................{ METADATA                          }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Changes to this name *MUST* be manually synchronized with:
+# * The "|GitHub Actions badge|" image URL in the top-level "README.rst".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Non-human-readable (i.e., machine-readable) label associated with this
+# GitHub Actions workflow.
+name: test
+
+# ....................{ TRIGGER                           }....................
+# Confine testing to only pushes and pull requests against the main branch,
+# reducing consumption of scarce CI minutes for incidental feature branches.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# ....................{ MAIN                              }....................
+jobs:
+  tests:
+    # ..................{ MATRIX                            }..................
+    strategy:
+      matrix:
+        #FIXME: If GitHub Actions either substantially increases our available
+        #CI minutes *OR* increases the speed of the Azure platform running our
+        #CI (which would effectively be the same as increasing our available
+        #minutes), enable:
+        #* macOS testing by adding "macos-latest" to this list. From the CLI
+        #  perspective, macOS is mostly just Linux (don't crucify me here,
+        #  people) with the POSIX-compliant GNU toolchain replaced with the
+        #  POSIX-compliant BSD toolchain. In either case, however, macOS and
+        #  Linux are both POSIX-compliant and thus crudely comparable.
+
+        # List of all platform-specific Docker images to test against,
+        # including:
+        # * The latest Long-Term Service (LTS) release of Ubuntu Linux, still
+        #   the most popular Linux distro and thus a sane baseline.
+        # * The latest *whatever* release of Microsoft Windows. Although Linux
+        #   and macOS are both POSIX-compliant and thus crudely comparable from
+        #   the low-level CLI perspective, Windows is POSIX-noncompliant and
+        #   thus heavily divergent from both macOS and Linux.
+        #
+        # Ergo, we willingly pay for Windows but *NOT* macOS CI minutes.
+        # Ideally, we'd pay for both. Pragmatically, we can't. We instead pay
+        # for the platform that is most divergent and thus the most likely
+        # to catastrophically collapse in the final mile. This means Windows.
+        platform: [ubuntu-latest, windows-latest]
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # WARNING: Changes to this section *MUST* be manually synchronized with:
+        # * The "envlist" setting of the "[tox]" subsection in "tox.ini".
+        # * The "include" setting below.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        # List of all "tox" environments (defined by the "envlist" setting of
+        # the "[tox]" subsection in "tox.ini") to be tested, which the
+        # ${TOXENV} environment variable declared below exposes to "tox".
+        tox-env: [py36, py37, py38, py39, pypy36, pypy37]
+
+        # Map each "tox" environment listed above to a GitHub Actions-specific
+        # "python-version" setting.
+        include:
+          - tox-env: py36
+            python-version: 3.6
+          - tox-env: py37
+            python-version: 3.7
+          - tox-env: py38
+            python-version: 3.8
+          - tox-env: py39
+            python-version: 3.9
+          - tox-env: pypy36
+            python-version: pypy-3.6
+          - tox-env: pypy37
+            python-version: pypy-3.7
+
+    # ..................{ SETTINGS                          }..................
+    # Arbitrary human-readable description.
+    name: "Python ${{ matrix.python-version }}"
+
+    # Name of the current Docker image to run tests under.
+    runs-on: ${{ matrix.platform }}
+
+    # ..................{ VARIABLES                         }..................
+    # External shell environment variables exposed to commands run below.
+    env:
+      # Map from the current item of the "tox-env" list defined above to the
+      # ${TOXENV} environment variable recognized by "tox".
+      TOXENV: ${{ matrix.tox-env }}
+
+    #FIXME: Uncomment after properly researching code coverage integration.
+    #On doing so, add "coverage[toml]" to the set of Python packages
+    #installed with "pip" below.
+    #  USING_COVERAGE: '3.6,3.8'
+
+    # ..................{ PROCESS                           }..................
+    steps:
+      - name: "Checking out repository..."
+        uses: 'actions/checkout@v2'
+      - name: "Installing Python ${{ matrix.python-version }}..."
+        uses: 'actions/setup-python@v2'
+        with:
+          python-version: '${{ matrix.python-version }}'
+
+      #FIXME: Consider adding the following back if we ever gain more free
+      #GitHub Actions CI minutes:
+      #    python -VV
+      #    python -m site
+
+      # Note that:
+      #
+      # * "set -xe" enables Bash:
+      #   * Reporting (i.e., "-x"), which implicitly prints each command to
+      #     stdout *BEFORE* running that command.
+      #   * Strictness (i.e., "-e").
+      # * Packaging dependencies (e.g., "pip") are upgraded *BEFORE* all
+      #   remaining dependencies (e.g., "tox").
+      - name: 'Installing package dependencies...'
+        run: |
+          set -xe
+          python -m pip install --upgrade pip  #setuptools wheel
+          python -m pip install --upgrade tox  #tox-gh-actions  #virtualenv 
+
+      # Note that:
+      #
+      # * "--skip-missing-interpreters=false" disables the corresponding
+      #   "skip_missing_interpreters = true" setting globally enabled by our
+      #   top-level "tox.ini" configuration, forcing CI failures for
+      #   unavailable Python environments. See also:
+      #       https://github.com/tox-dev/tox/issues/903
+      - name: 'Testing package with "tox"...'
+        run: |
+          python -m tox --skip-missing-interpreters=false

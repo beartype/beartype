@@ -722,14 +722,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #      subscripted by "[Any]", the "sizeable_height" for the type hints "list"
 #      and "list[int]" is both 1.
 #  * Note also that most containers satisfy the "collections.abc.Sizeable" ABC.
-#  * Given that, we can trivially estimate the EAS "sizeable_eas" of any
+#  * Given that, we can trivially estimate the EAS "sizeable_bigo_size" of any
 #    type-hinted sizeable object "sizeable" as follows:
-#      sizeable_eas = len(sizeable) ** sizeable_height
+#      sizeable_bigo_size = len(sizeable) ** sizeable_height
 #  Ergo, a list of length 100 type-hinted as "list[list[int]]" has a size of:
-#      sizeable_eas = 100 ** 2 = 10,000
-#* For dictionaries, the "sizeable_eas" provided by the equation above should
-#  be multiplied by two to account for the increased space consumption due to
-#  storing key-value pairs.
+#      sizeable_bigo_size = 100 ** 2 = 10,000
+#* For dictionaries, the "sizeable_bigo_size" provided by the equation above
+#  should be multiplied by two to account for the increased space consumption
+#  due to storing key-value pairs.
 #
 #Here's then how the "LRUDuffleCacheStrong" class is implemented:
 #* The "LRUDuffleCacheStrong" class should *NOT* subclass the
@@ -739,40 +739,41 @@ This private submodule is *not* intended for importation by downstream callers.
 #* The LRUDuffleCacheStrong.__init__() method should be implemented like this:
 #      def __init__(
 #          self,
-#          eas_max: int,
+#          bigo_size_max: int,
 #          value_metadata_len: 'Optional[int]' = 0,
 #      )
-#          assert eas_max > 0
+#          assert bigo_size_max > 0
 #          assert value_metadata_len >= 0
 #
 #          # Classify all passed parameters as instance variables.
-#          self._EAS_MAX = eas_max
+#          self._EAS_MAX = bigo_size_max
 #          self._FIXED_LIST_SIZE = value_metadata_len + 2
 #
 #          # Initialize all remaining instance variables.
-#          self._eas_cur = 0
+#          self._bigo_size_cur = 0
 #          self._iter = None
 #* Note the above assignment of these new instance variables:
 #  * "_EAS_MAX", the maximum capacity of this LRU cache in EAS units. Note that
 #    this capacity should ideally default to something that *DYNAMICALLY SCALES
-#    WITH THE RAM OF THE LOCAL MACHINE.* Ergo, "_eas_max" should be
+#    WITH THE RAM OF THE LOCAL MACHINE.* Ergo, "_bigo_size_max" should be
 #    significantly larger in a standard desktop system with 32GB RAM than it is 
 #    on a Raspberry Pi 2 with 1GB RAM: specifically, 32 times larger.
-#  * "_eas_cur", the current capacity of this LRU cache in EAS units.
+#  * "_bigo_size_cur", the current capacity of this LRU cache in EAS units.
 #  * "_FIXED_LIST_SIZE", the number of additional supplementary objects to
 #    be cached with each associated value of this LRU cache. The idea here is
 #    that each key-value pair of this cache is an arbitrary hashable object
 #    (the key) mapping to a "FixedList(size=self._FIXED_LIST_SIZE)"
 #    (the value) whose 0-based indices provide (in order):
-#    1. A strong reference to the primary object being cached under this key.
+#    1. The EAS of that object. For completeness, we should also add to the
+#       "sizeable_bigo_size" estimate given above the additional estimated cost
+#       of this "FixedList". Since the length of this "FixedList" is guaranteed
+#       to be exactly "self._value_metadata_len + 2", this then gives a final
+#       EAS of that object as:
+#         sizeable_bigo_size = (
+#             self._value_metadata_len + 2 + len(sizeable) ** sizeable_height)
+#    2. A strong reference to the primary object being cached under this key.
 #       For dictionaries and sets, this is an iterator over those dictionaries
 #       and sets.
-#    2. The EAS of that object. For completeness, we should also add to the
-#       "sizeable_eas" estimate given above the additional estimated cost of
-#       this "FixedList". Since the length of this "FixedList" is guaranteed to
-#       be exactly "self._value_metadata_len + 2", this then gives a final EAS
-#       of that object as:
-#         sizeable_eas = self._value_metadata_len + 2 + len(sizeable) ** sizeable_height
 #    3...self._value_metadata_len + 2: Additional supplementary objects to be
 #       cached along with that object. For dictionaries and sets, exactly one
 #       supplementary object must be cached, so this is:
@@ -829,8 +830,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #              # Return the least recent such pair.
 #              return self._iter.__next__()
 #* Refactor the __setitem__() method. Specifically, when caching a new
-#  key-value pair with EAS "eas_item" such that:
-#      while eas_item + self._eas_cur > self._eas_max:
+#  key-value pair with EAS "bigo_size_item" such that:
+#      while bigo_size_item + self._bigo_size_cur > self._bigo_size_max:
 #  ...we need to iteratively remove the least recently used key-value pair of
 #  this cache (which, yes, technically has O(n) worst-case time, which is
 #  non-ideal, which may be why nobody does this, but that's sort-of okay here,
@@ -839,13 +840,43 @@ This private submodule is *not* intended for importation by downstream callers.
 #  cost of iteration, especially as we expect O(1) average-case time) until
 #  this cache can fit that pair into itself. Once it does, we:
 #      # Bump the current EAS of this cache by the EAS of this pair.
-#      self._eas_cur += eas_item
+#      self._bigo_size_cur += bigo_size_item
+#  Oh, and there's an obvious edge case here: if "bigo_size_item >
+#  self._bigo_size_max", we do *NOT* attempt to do anything with that object.
+#  We don't cache it or an iterator over it. It's too bid. Instead, we just
+#  type-check the first item of that object in O(1) time. *shrug*
 #
 #Seems sweet to us. We can store arbitrarily large nested containers in our
 #duffle cache without exhausting memory, which is actually more than the
 #brute-force LRU cache can say. We get trivial iteration persistence. We also
 #avoid a proliferation of different LRU caches, because a single
 #"LRUDuffleCacheStrong" instance can flexibly store heterogeneous types.
+#FIXME: *RIGHT.* So, "LRUDuffleCacheStrong" is mostly awesome as defined above.
+#We'd just like to make a few minor tweaks for improved robustness:
+#
+#* Drop the "value_metadata_len" parameter from the
+#  LRUDuffleCacheStrong.__init__() method. We'd prefer to have that parameter
+#  individually passed to each cache_item() call (see below) rather than
+#  globally, as the former enables different types of cached objects to have a
+#  different quantity of metadata cached with those objects.
+#* Drop the __setitem__() implementation borrow from "LRUCacheStrong". Instead,
+#  defer to the existing dict.__setitem__() implementation. Why? Because we
+#  need to pass additional cache-specific parameters to our own
+#  __setitem__()-like non-dunder method, which __setitem__() doesn't support.
+#* Define a new cache_obj() method resembling LRUCacheStrong.__setitem__() but
+#  even more virile and awesome with signature resembling:
+#      def cache_value(
+#          self,
+#
+#          # Mandatory parameters.
+#          key: 'Hashable',
+#          value: object,
+#          *metadata: object,
+#
+#          # Optional parameters.
+#          value_height: 'Optional[int]' = 1,
+#      ) -> None:
+
 
 #FIXME: Here's a reasonably clever idea for perfect O(1) tuple type-checking
 #guaranteed to check all n items of an arbitrary tuple in exactly n calls, with

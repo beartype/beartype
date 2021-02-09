@@ -13,7 +13,7 @@
 # pathnames of this script and hence this script's directory.
 #
 # --------------------( CAVEATS                           )--------------------
-# *THE HIGHER-LEVEL "tox" COMMAND SHOULD TYPICALLY BE RUN INSTEAD.* This
+# *THE HIGHER-LEVEL "tox" SCRIPT SHOULD TYPICALLY BE RUN INSTEAD.* This
 # lower-level script only exercises this project against the single Python
 # interpreter associated with the "pytest" command and is thus suitable *ONLY*
 # as a rapid sanity check. Meanwhile, the higher-level "tox" command exercises
@@ -43,7 +43,8 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
-# Run this project's test suite with all passed arguments. Dismantled, this is:
+# Run this project's pytest-based test suite with all passed arguments.
+# Dismantled, this is:
 #
 # * "--maxfail=1", halt testing on the first failure for interactive tests.
 #   Permitting multiple failures complicates failure output, especially when

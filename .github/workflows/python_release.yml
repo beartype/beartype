@@ -18,8 +18,10 @@
 # ....................{ METADATA                          }....................
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
-name: "New stable version packaging and distribution."
+name: release
 
+# ....................{ TRIGGER                           }....................
+# Confine deployment to only new tags satisfying a release-specific format.
 on:
   push:
     #FIXME: Uncomment after determining why this induces critical failures on
@@ -36,7 +38,7 @@ on:
 
 # ....................{ MAIN                              }....................
 jobs:
-  # ...................{ RELEASE                           }...................
+  # ...................{ GITHUB                            }...................
   release:
     name: "Create tagged release on GitHub"
     runs-on: ubuntu-latest
