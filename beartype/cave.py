@@ -1386,8 +1386,21 @@ ambiguous type of all C-based bound methods and non-method functions.
 CallableTypes = tuple(set(FunctionTypes) | set(MethodTypes))
 '''
 Tuple of all **callable types** (i.e., types whose instances are callable
-objects, including both built-in and user-defined functions, lambdas, methods,
-and method descriptors).
+objects implemented in either low-level C or high-level Python, including both
+built-in and user-defined functions, lambdas, methods, and method descriptors).
+'''
+
+
+CallableCTypes = (
+    FunctionOrMethodCType,
+    MethodBoundInstanceDunderCType,
+    MethodUnboundInstanceDunderCType,
+    MethodUnboundInstanceNondunderCType,
+    MethodUnboundClassCType,
+)
+'''
+Tuple of all **C-based callable types** (i.e., types whose instances are
+callable objects implemented in low-level C rather than high-level Python).
 '''
 
 
@@ -1655,15 +1668,6 @@ This tuple matches:
   and returned by the stdlib :func:`re.compile` function).
 * All **textual types** (i.e., types contained in the :class:`StrTypes`
   tuple).
-'''
-
-CallableCTypes = (FunctionOrMethodCType, MethodBoundInstanceDunderCType,
-        MethodUnboundInstanceDunderCType, MethodUnboundInstanceNondunderCType,
-        MethodUnboundClassCType,
-        )
-'''
-Tuple of all callable **C-based types** 
-(i.e. callable objects implemented in low-level C.
 '''
 
 # ....................{ TUPLES ~ post-init : version      }....................

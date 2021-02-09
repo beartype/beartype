@@ -79,6 +79,7 @@ command pytest --maxfail=1 "${@}" .
 # command python3.6 -m pytest --maxfail=1 "${@}" .
 # command python3.8 -m pytest --maxfail=1 "${@}" .
 # command python3.9 -m pytest --maxfail=1 "${@}" .
+# command pypy3.6 -m pytest --maxfail=1 "${@}" .
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

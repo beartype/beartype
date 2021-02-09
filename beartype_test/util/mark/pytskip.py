@@ -118,9 +118,11 @@ def skip_if_pypy():
         *or* the identity decorator reducing to a noop otherwise.
     '''
 
+    # Defer heavyweight imports.
+    from beartype._util.py.utilpyinterpreter import IS_PYPY
+
     # Skip this test if the active Python interpreter is PyPy.
-    return skip_if(
-        platform.python_implementation() == 'PyPy', reason='PyPy.')
+    return skip_if(IS_PYPY, reason='PyPy.')
 
 
 def skip_if_python_version_less_than(minimum_version: str):
