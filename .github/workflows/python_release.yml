@@ -30,6 +30,10 @@ on:
     #    error: failed to push some refs to 'git@github.com:beartype/beartype.git'
     #See also: https://github.com/actions/create-release/issues/13
     # branches: [ master ]
+    #FIXME: *URGH!* "create-release" is now officially dead, so we need to
+    #refactor this as quickly as feasible to leverage an alternate action. See
+    #also this useful @Heliotrop3 issue:
+    #    https://github.com/beartype/beartype/issues/22
 
     # Sequence of glob expressions matched against "refs/tags" pushed to the
     # branches above.

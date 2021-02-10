@@ -57,8 +57,9 @@ on:
     branches:
       - main
   pull_request:
+    #FIXME: Is this actually right?
     branches:
-      - main
+      - '**'
 
 # ....................{ MAIN                              }....................
 jobs:
@@ -120,7 +121,7 @@ jobs:
 
     # ..................{ SETTINGS                          }..................
     # Arbitrary human-readable description.
-    name: "Python ${{ matrix.python-version }}"
+    name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }}"
 
     # Name of the current Docker image to run tests under.
     runs-on: ${{ matrix.platform }}
