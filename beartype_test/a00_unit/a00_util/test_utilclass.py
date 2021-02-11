@@ -24,7 +24,7 @@ def test_is_class_builtin() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.utilclass import is_class_builtin
-    from beartype_test.a00_unit.data.data_class import (
+    from beartype_test.a00_unit.data.data_type import (
         CLASSES_BUILTIN, CLASSES_NON_BUILTIN)
 
     # Assert this tester accepts all builtin types.
@@ -44,7 +44,7 @@ def test_is_classname_builtin() -> None:
     # Defer heavyweight imports.
     from beartype._util.utilclass import is_classname_builtin
     from beartype._util.utilobject import get_object_classname
-    from beartype_test.a00_unit.data.data_class import (
+    from beartype_test.a00_unit.data.data_type import (
         CLASSES_BUILTIN, CLASSES_NON_BUILTIN)
 
     # Assert this tester accepts the fully-qualified names of all builtin

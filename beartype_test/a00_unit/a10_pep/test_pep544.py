@@ -79,7 +79,7 @@ def test_is_hint_pep544_protocol() -> None:
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype_test.a00_unit.data.data_class import CLASSES_BUILTIN
+    from beartype_test.a00_unit.data.data_type import CLASSES_BUILTIN
     from typing import (
         SupportsAbs,
         SupportsBytes,

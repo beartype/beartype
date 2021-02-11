@@ -126,9 +126,19 @@ jobs:
     # Name of the current Docker image to run tests under.
     runs-on: ${{ matrix.platform }}
 
+    # Time in minutes to wait on the command pipeline run below to exit
+    # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
+    # under POSIX-compliant systems).
+    timeout-minutes: 5
+
     # ..................{ VARIABLES                         }..................
     # External shell environment variables exposed to commands run below.
     env:
+      # Prevent Python from buffering and hence failing to log output in the
+      # unlikely (but feasible) event of catastrophic failure from either the
+      # active Python process or OS kernel.
+      PYTHONUNBUFFERED: True
+
       # Map from the current item of the "tox-env" list defined above to the
       # ${TOXENV} environment variable recognized by "tox".
       TOXENV: ${{ matrix.tox-env }}

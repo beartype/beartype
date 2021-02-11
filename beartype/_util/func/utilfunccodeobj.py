@@ -7,7 +7,7 @@
 **Beartype callable code object utilities.**
 
 This private submodule implements utility functions dynamically introspecting
-**code objects** (i.e., instances of the :class:`types.CodeType` type)
+**code objects** (i.e., instances of the :class:`CodeType` type)
 underlying all pure-Python callables.
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -15,14 +15,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import _BeartypeUtilCallableException
-from types import FunctionType, MethodType
+from collections.abc import Callable
+from types import CodeType, FunctionType, MethodType
 
 # ....................{ GETTERS                           }....................
-def get_func_codeobj(func: 'Callable'):
+def get_func_codeobj(func: Callable) -> CodeType:
     '''
-    **Code object** (i.e., instance of the :class:`types.CodeType` type)
-    underlying the passed pure-Python callable if this callable is pure-Python
-    *or* raise an exception otherwise (i.e., if this callable is C-based).
+    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
+    the passed callable if this callable is pure-Python *or* raise an exception
+    otherwise (e.g., if this callable is C-based or a class or object defining
+    the ``__call__()`` dunder method).
 
     Parameters
     ----------
@@ -31,15 +33,51 @@ def get_func_codeobj(func: 'Callable'):
 
     Returns
     ----------
-    types.CodeType
-        **Code object** (i.e., instance of the :class:`types.CodeType` type)
-        underlying this pure-Python callable.
+    CodeType
+        Code object underlying this pure-Python callable.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable has *no* code object and is thus C-based rather than
-         pure-Python.
+         If this callable has *no* code object and is thus *not* pure-Python.
+    '''
+
+    # Code object underlying this callable if this callable is pure-Python *OR*
+    # "None" otherwise.
+    func_codeobj = get_func_codeobj_or_none(func)
+
+    # If this callable is *NOT* pure-Python, raise an exception.
+    if func_codeobj is None:
+        raise _BeartypeUtilCallableException(
+            f'Callable {repr(func)} code object not found '
+            f'(e.g., due to being either C-based or a class or object '
+            f'defining the ``__call__()`` dunder method).'
+        )
+    # Else, this code object exists.
+
+    # Return this code object.
+    return func_codeobj
+
+
+def get_func_codeobj_or_none(func: Callable) -> 'Optional[CodeType]':
+    '''
+    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
+    the passed callable if this callable is pure-Python *or* ``None`` otherwise
+    (e.g., if this callable is C-based or a class or object defining the
+    ``__call__()`` dunder method).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    ----------
+    Optional[CodeType]
+        Either:
+
+        * If this callable is pure-Python, this callable's code object.
+        * Else, ``None``.
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -53,19 +91,24 @@ def get_func_codeobj(func: 'Callable'):
     if isinstance(func, MethodType):
         func = func.__func__
     # Else, this callable is *NOT* a pure-Python bound method.
+    #
+    # In either case, this callable is now a pure-Python unbound function.
 
-    # If this callable is *NOT* a pure-Python function, this callable is
-    # neither a pure-Python method nor function, implying this callable to
-    # *NOT* be pure-Python and thus have *NO* code object. In this case, raise
-    # an exception.
+    # Return either...
+    #
+    # Note that the equivalent could also technically be written as
+    # "getattr(func, '__code__', None)", but that doing so would both be less
+    # efficient *AND* render this getter less robust. Why? Because the
+    # getattr() builtin internally calls the __getattr__() and
+    # __getattribute__() dunder methods, either of which could raise arbitrary
+    # exceptions, and is thus considerably less safe.
     #
     # Note that this test intentionally leverages the stdlib
     # "types.FunctionType" class rather than our equivalent
     # "beartype.cave.FunctionType" class to avoid circular import issues.
-    if not isinstance(func, FunctionType):
-        raise _BeartypeUtilCallableException(
-            f'C-based callable {repr(func)} has no code object.')
-    # If this callable is a pure-Python function.
-
-    # Return the code object underlying this function.
-    return func.__code__
+    return (
+        # If this function is pure-Python, this function's code object.
+        func.__code__ if isinstance(func, FunctionType) else
+        # Else, "None".
+        None
+    )

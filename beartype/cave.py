@@ -255,20 +255,20 @@ callable of indeterminate origin is in fact wrapped.
 
 CallableCodeObjectType = type(_get_type_or_unavailable.__code__)
 '''
-Type of all **code objects** (i.e., C-based objects underlying all pure-Python 
+Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
 '''
 
 # ....................{ TYPES ~ call : function           }....................
 FunctionType = _FunctionType
 '''
-Type of all **pure-Python functions** (i.e., functions implemented in pure
-Python *not* associated with an owning class or instance of a class).
+Type of all **pure-Python functions** (i.e., functions implemented in Python
+*not* associated with an owning class or instance of a class).
 
 Caveats
 ----------
-**This type ambiguously matches many callable types not commonly associated
-with "named functions,"** including:
+**This type ambiguously matches many callables not commonly associated with
+standard functions,** including:
 
 * **Lambda functions.** Of course, distinguishing between conventional named
   functions and unnamed lambda functions would usually be seen as overly
@@ -278,6 +278,14 @@ with "named functions,"** including:
 * **Static methods** (i.e., methods decorated with the builtin
   :func:`staticmethod` decorator regardless of whether accessed on their
   declaring classes or associated instances).
+
+**This type matches no callables whatsoever under some non-CPython
+interpreters,** including:
+
+* PyPy, which unconditionally compiles *all* pure-Python functions into C-based
+  functions. Ergo, under PyPy, *all* functions are guaranteed to be of the type
+  :class:`FunctionOrMethodCType` regardless of whether those functions were
+  initially defined in Python or C.
 
 See Also
 ----------
