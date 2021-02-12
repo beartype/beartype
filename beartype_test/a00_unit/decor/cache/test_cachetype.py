@@ -6,7 +6,7 @@
 '''
 **Beartypistry unit tests.**
 
-This submodule unit tests the :attr:`beartype._decor._typistry.bear_typistry`
+This submodule unit tests the :attr:`beartype._decor._cache.cachetype.bear_typistry`
 singleton.
 '''
 
@@ -22,14 +22,14 @@ def _eval_registered_expr(hint_expr: str) -> (type, tuple):
     '''
     Dynamically evaluate the passed Python expression (assumed to be
     a string returned by either the
-    :func:`beartype._decor._typistry.register_typistry_type` or
-    :func:`beartype._decor._typistry.register_typistry_tuple` functions) *and*
+    :func:`beartype._decor._cache.cachetype.register_typistry_type` or
+    :func:`beartype._decor._cache.cachetype.register_typistry_tuple` functions) *and*
     return the resulting value (assumed to either be a type or tuple of types).
     '''
     assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
 
     # Defer heavyweight imports.
-    from beartype._decor._typistry import bear_typistry
+    from beartype._decor._cache.cachetype import bear_typistry
     from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 
     # Dictionary of all local variables required to evaluate this expression.
@@ -43,13 +43,13 @@ def _eval_registered_expr(hint_expr: str) -> (type, tuple):
 def test_typistry_register_type_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._decor._typistry.register_typistry_type` function.
+    :func:`beartype._decor._cache.cachetype.register_typistry_type` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.cave import RegexCompiledType
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import register_typistry_type
+    from beartype._decor._cache.cachetype import register_typistry_type
     from beartype._util.utilobject import get_object_class_basename
 
     # Assert this function registers a non-builtin type under the beartypistry
@@ -82,12 +82,12 @@ def test_typistry_register_type_pass() -> None:
 def test_typistry_register_type_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._decor._typistry.register_typistry_type` function.
+    :func:`beartype._decor._cache.cachetype.register_typistry_type` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeUtilClassException
-    from beartype._decor._typistry import register_typistry_type
+    from beartype._decor._cache.cachetype import register_typistry_type
 
     # Assert that non-types are *NOT* registrable via the same function.
     with raises(_BeartypeUtilClassException):
@@ -101,13 +101,13 @@ def test_typistry_register_type_fail() -> None:
 def test_typistry_register_tuple_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._decor._typistry.register_typistry_tuple` function.
+    :func:`beartype._decor._cache.cachetype.register_typistry_tuple` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.cave import CallableTypes, NoneTypeOr
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import register_typistry_tuple
+    from beartype._decor._cache.cachetype import register_typistry_tuple
 
     # Assert this function registers a tuple and silently permits
     # re-registration of the same tuple.
@@ -155,12 +155,12 @@ def test_typistry_register_tuple_pass() -> None:
 def test_typistry_register_tuple_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._decor._typistry.register_typistry_tuple` function.
+    :func:`beartype._decor._cache.cachetype.register_typistry_tuple` function.
     '''
 
     # Defer heavyweight imports
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import register_typistry_tuple
+    from beartype._decor._cache.cachetype import register_typistry_tuple
     from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
         Pep484GenericTypevaredSingle)
 
@@ -207,12 +207,12 @@ def test_typistry_register_tuple_fail() -> None:
 def test_typistry_singleton_pass() -> None:
     '''
     Test successful usage of the
-    :attr:`beartype._decor._typistry.bear_typistry` singleton.
+    :attr:`beartype._decor._cache.cachetype.bear_typistry` singleton.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import bear_typistry
+    from beartype._decor._cache.cachetype import bear_typistry
     from beartype._util.utilobject import get_object_classname
 
     # Assert that dictionary syntax also implicitly registers a type. Since
@@ -240,12 +240,12 @@ def test_typistry_singleton_pass() -> None:
 def test_typistry_singleton_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :attr:`beartype._decor._typistry.bear_typistry` singleton.
+    :attr:`beartype._decor._cache.cachetype.bear_typistry` singleton.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
-    from beartype._decor._typistry import bear_typistry
+    from beartype._decor._cache.cachetype import bear_typistry
 
     # Assert that unhashable objects are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):

@@ -29,27 +29,7 @@ def test_get_callable_origin_label_pass_python() -> None:
     from beartype.roar import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncorigin import get_callable_origin_label
     from beartype_test.a00_unit.data.data_type import (
-        Class, function, MODULE_FILENAME)
-
-    # Tuple of all pure-Python callables to be tested.
-    CALLABLES_PYTHON = (function, Class, Class.instance_method)
-
-    # Tuple of all C-based callables.
-    CALLABLES_C = (
-        len,              # Built-in FunctionType
-        [].append,        # Built-in Method Type
-        object.__init__,  # Wrapper Descriptor Type
-        object().__str__, # Method Wrapper Type
-        str.join,         # Method Descriptor Type
-
-        #FIXME: *UGH.* This probably should be callable under PyPy 3.6, but
-        #it's not, which is why we've currently disabled this. That's clearly a
-        #PyPy bug. Uncomment this *AFTER* we drop support for PyPy 3.6 (and any
-        #newer PyPy versions also failing to implement this properly). We
-        #should probably also consider filing an upstream issue with PyPy,
-        #because this is non-ideal and non-orthogonal behaviour with CPython.
-        #dict.__dict__['fromkeys'],
-    )
+        CALLABLES_C, CALLABLES_PYTHON, MODULE_FILENAME)
 
     # Assert this getter returns the expected label for pure-Python callables.
     for callable_python in CALLABLES_PYTHON:
@@ -68,35 +48,9 @@ def test_get_callable_origin_label_fail() -> None:
     '''
 
     # Defer test-specific imports.
-    import sys
     from beartype.roar import _BeartypeUtilCallableException
-    from beartype._util.func.utilfuncorigin import (
-        get_callable_origin_label)
-    from beartype_test.a00_unit.data.data_type import (
-        async_generator,
-        closure_cell_factory,
-        coroutine,
-        function,
-        generator_factory,
-    )
-
-    try:
-        raise TypeError
-    except TypeError:
-        traceback = sys.exc_info()[2]
-
-    # Tuple of callable-like non-callable objects.
-    NON_CALLABLES = (
-        function.__code__, # CodeType
-        type.__dict__,      # Mapping Proxy Type
-        sys.implementation, # Simple Namespace Type
-        async_generator,
-        closure_cell_factory(),    # Cell Type
-        coroutine,
-        generator_factory(),
-        traceback,
-        traceback.tb_frame,
-    )
+    from beartype._util.func.utilfuncorigin import get_callable_origin_label
+    from beartype_test.a00_unit.data.data_type import NON_CALLABLES
 
     # Assert this getter raises the expected exception for non-callables.
     for non_callable in NON_CALLABLES:

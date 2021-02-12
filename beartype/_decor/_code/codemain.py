@@ -853,6 +853,8 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
         # is both PEP-compliant and supported, *OR* raise an exception
         # otherwise (i.e., if this hint is neither PEP-noncompliant nor a
         # supported PEP-compliant hint).
+        #
+        # Do this first *BEFORE* passing this hint to any further callables.
         hint = coerce_hint_pep(
             func=func,
             pith_name=param_name,

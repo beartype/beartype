@@ -38,7 +38,7 @@ from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER)
 from beartype._decor._data import BeartypeData
-from beartype._decor._typistry import register_typistry_forwardref
+from beartype._decor._cache.cachetype import register_typistry_forwardref
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj,

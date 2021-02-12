@@ -147,7 +147,7 @@ from beartype._decor._code.codemain import generate_code
 from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC, ARG_NAME_TYPISTRY)
 from beartype._decor._data import BeartypeData
-from beartype._decor._typistry import bear_typistry
+from beartype._decor._cache.cachetype import bear_typistry
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._decor._code._pep._error.peperror import (

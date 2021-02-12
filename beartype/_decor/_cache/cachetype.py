@@ -146,7 +146,7 @@ def register_typistry_type(hint: type) -> str:
     This function is syntactic sugar improving consistency throughout the
     codebase, but is otherwise roughly equivalent to:
 
-        >>> from beartype._decor._typistry import bear_typistry
+        >>> from beartype._decor._cache.cachetype import bear_typistry
         >>> from beartype._util.utilobject import get_object_classname
         >>> bear_typistry[get_object_classname(hint)] = hint
 

@@ -326,10 +326,10 @@ integration_>`__. If you have any time, money, or motivation left, `annotate
 callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
 callables with the @beartype.beartype decorator <Usage_>`__.
 
-Prefer ``beartype`` over other runtime type checkers whenever you lack control
-over the objects passed to or returned from your callables – *especially*
-whenever you cannot limit the size of those objects. This includes common
-developer scenarios like:
+Prefer ``beartype`` over other runtime and static type checkers whenever you
+lack control over the objects passed to or returned from your callables –
+*especially* whenever you cannot limit the size of those objects. This includes
+common developer scenarios like:
 
 * You are the author of an **open-source library** intended to be reused by a
   general audience.
@@ -337,17 +337,19 @@ developer scenarios like:
   output sufficiently large data internally passed to or returned from app
   callables.
 
-Prefer ``beartype`` over static type checkers whenever:
+If none of the above apply, prefer ``beartype`` over static type checkers
+whenever:
 
 * You want to `check types decidable only at runtime <Versus Static Type
   Checkers_>`__.
 * You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
   which most static type checkers remain incompatible with.
 
-Even where none of the above apply, still use ``beartype``. It's `free as in
-beer and speech <gratis versus libre_>`__ and `cost-free at installation- and
-runtime <Overview_>`__. Leverage ``beartype`` until you find something that
-suites you better, because ``beartype`` is *always* better than nothing.
+If none of the above *still* apply, still use ``beartype``. It's `free
+as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
+and runtime <Overview_>`__, and transparently stacks with existing type
+checking solutions. Leverage ``beartype`` until you find something that suites
+you better, because ``beartype`` is *always* better than nothing.
 
 Why should I use beartype?
 --------------------------

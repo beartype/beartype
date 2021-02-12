@@ -11,6 +11,7 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
+from sys import exc_info, implementation
 
 # ....................{ CLASSES                           }....................
 class Class:
@@ -89,13 +90,76 @@ Arbitrary pure-Python coroutine.
 # Prevent Python from emitting "ResourceWarning" warnings.
 coroutine.close()
 
+# ....................{ CONSTANTS                         }....................
+CALLABLE_CODE_OBJECT = function.__code__
+'''
+Arbitrary callable code object.
+'''
+
+
+# Initialized below.
+TRACEBACK = None
+'''
+Arbitrary traceback object.
+'''
+
+# Define the "TRACEBACK" constant via EAFP.
+try:
+    raise TypeError
+except TypeError:
+    TRACEBACK = exc_info()[2]
+
 # ....................{ CONSTANTS ~ filenames             }....................
 MODULE_FILENAME = __file__
 '''
 Absolute filename of the current submodule, declared purely for convenience.
 '''
 
-# ....................{ CONSTANTS ~ types                 }....................
+# ....................{ CONSTANTS ~ sets : callable       }....................
+CALLABLES_PYTHON = frozenset((function, Class, Class.instance_method))
+'''
+Frozen set of pure-Python callables exercising edge cases.
+'''
+
+
+CALLABLES_C = frozenset((
+    len,              # Built-in FunctionType
+    ().count,         # Built-in Method Type
+    object.__init__,  # Wrapper Descriptor Type
+    object().__str__, # Method Wrapper Type
+    str.join,         # Method Descriptor Type
+
+    #FIXME: *UGH.* This probably should be callable under PyPy 3.6, but
+    #it's not, which is why we've currently disabled this. That's clearly a
+    #PyPy bug. Uncomment this *AFTER* we drop support for PyPy 3.6 (and any
+    #newer PyPy versions also failing to implement this properly). We
+    #should probably also consider filing an upstream issue with PyPy,
+    #because this is non-ideal and non-orthogonal behaviour with CPython.
+    #dict.__dict__['fromkeys'],
+))
+'''
+Frozen set of C-based callables exercising edge cases.
+'''
+
+
+NON_CALLABLES = (
+    CALLABLE_CODE_OBJECT,
+    type.__dict__,      # Mapping Proxy Type
+    implementation,     # Simple Namespace Type
+    async_generator,
+    closure_cell_factory(), # Cell type
+    coroutine,
+    generator_factory(),
+    TRACEBACK,
+    TRACEBACK.tb_frame,
+)
+'''
+Tuple of callable-like non-callable objects exercising edge cases,
+intentionally defined as a tuple rather than frozen set due to the
+unhashability of one or more members (e.g., ``TRACEBACK``).
+'''
+
+# ....................{ CONSTANTS ~ sets : class          }....................
 CLASSES_BUILTIN = frozenset((
     bool,
     complex,

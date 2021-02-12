@@ -29,7 +29,7 @@ _MODULE_NAME_BUILTINS_DOTTED = f'{_MODULE_NAME_BUILTINS}.'
 '''
 Fully-qualified name of the module declaring all builtins followed by a ``.``,
 defined purely as a trivial optimization for the frequently accessed
-:class:`beartype._decor._typistry.Beartypistry.__setitem__` dunder method.
+:class:`beartype._decor._cache.cachetype.Beartypistry.__setitem__` dunder method.
 '''
 
 # ....................{ VALIDATORS                        }....................

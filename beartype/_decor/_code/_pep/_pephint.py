@@ -115,8 +115,57 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Grep the codebase for all existing uses of the @callable_cached decorator.
 #* For use such use, if the decorated callable accepts a "hint" parameter,
 #  refactor that callable to use @callable_cached_hintable instead.
+#FIXME: *YIKES!* We are incredibly thankful we didn't actually do any of the
+#above, but everything above is absolutely the *WRONG* approach. Yes, it would
+#technically work, but it would be considerably slower, more fragile, and
+#require considerably more work across the codebase than the preferable
+#approach delineated below -- which is to say, everything above is bad.
+#
+#So, how do we do this the right way? *SIMPLE.* We "patch up" PEP 585-compliant
+#type hints directly in the "func.__annotations__" dictionary once and only
+#once sufficiently early in @beartype decoration that we don't actually need to
+#do anything else, where "patch up" means:
+#* If passed a callable decorated by a PEP 585-compliant type hint whose
+#  repr() is something that we've already seen, we *REPLACE* that hint in that
+#  callable's "func.__annotations__" dictionary with the hint we already saw.
+#
+#To do so, we should probably:
+#* In the "beartype._decor._cache.cachehint" submodule:
+#  * Define a new private "HINT_REPR_TO_HINT" dictionary mapping from hint
+#    repr() strings to previously cached hints sharing the same repr() strings.
+#    This dictionary should actually be a trivial dictionary rather than a
+#    robust LRU cache, because the number of type hints used across a codebase
+#    is *ALWAYS* miniscule. Moreover, strong references to type hints are
+#    already stored in "func.__annotations__" dictionaries, so there's no space
+#    savings in dropping stale references to them in an LRU cache.
+#  * *ALL* hints except those that are already internally cached (e.g., by the
+#    "typing" module) should be cached into this dictionary. This obviously
+#    includes PEP 585-compliant type hints but also *ALL* hints produced by
+#    resolving deferred PEP 563-based type hint strings. Note that, in the
+#    latter case, we might want to additionally strip ignorable internal
+#    whitespace from those strings *IF* those strings contain such whitespace.
+#    We're pretty sure they don't (because they're programmatically constructed
+#    by the parser, we think), but we should still investigate this.
+#  * Any hint that appears in that cache should be *REPLACED* where it appears
+#    in the "func.__annotations__" dictionary with its cached value. Sweeeeeet.
+#* Cache deferred annotations in the "beartype._decor._pep563" submodule. To do
+#  so, we probably want to define a new cache_hint_pep563() function in the new
+#  "beartype._decor._cache.cachehint" submodule. Note this function should
+#  internally defer to the new cache_hint_nonpep563() function detailed below
+#  (e.g., to ensure tuple unions are cached as typing unions).
+#* Cache PEP 563 annotations in the "beartype._decor._code.codemain" or
+#  possibly "beartype._decor._code._pep.pepcode" submodule. *AHAH!* Yes. Here's
+#  what we want to do:
+#  * Shift the existing beartype._decor._code.pepcode.coerce_hint_pep()
+#    function into the new "beartype._decor._cache.cachehint" submodule as a
+#    new cache_hint_nonpep563() function. Note that if the passed hint was
+#    previously deferred and thus cached by a prior call to the
+#    cache_hint_pep563() function, then the current call to the
+#    cache_hint_nonpep563() function should just reduce to a noop.
+#FIXME: *UNIT TEST THIS CACHE AND MAKE SURE IT ACTUALLY WORKS* for both PEP
+#585- and 563-compliant hints, which are the principle use cases.
 
-#FIXME: *WOOPS.* The "LRUDuffleCacheStrong" class designed below assumes that
+#FIXME: *WOOPS.* The "LRUDuffleCacheStrong" class designed below assumes thatL
 #calculating the semantic height of a type hint (e.g., 3 for the complex hint
 #Optional[int, dict[Union[bool, tuple[int, ...], Sequence[set]], list[str]])
 #is largely trivial. It isn't -- at all. Computing that without a context-free
@@ -195,13 +244,20 @@ This private submodule is *not* intended for importation by downstream callers.
 #     greater than 1. This height *CANNOT* be defined during the first phase
 #     but *MUST* instead be deferred to the second phase.
 #   * ...probably loads more stuff, but that's fine.
-#* In the second phase, another "while ...:" loop generates a Python code
-#  snippet type-checking the root hint and all child hints visitable from that
-#  hint in full by beginning *AT THE LAST CHILD HINT ADDED TO THE* "hints_meta"
-#  FixedList, generating code type-checking that hint, iteratively visiting all
-#  hints *IN THE REVERSE DIRECTION BACK UP THE TREE*, and so on.
+#2. In the second phase, another "while ...:" loop generates a Python code
+#   snippet type-checking the root hint and all child hints visitable from that
+#   hint in full by beginning *AT THE LAST CHILD HINT ADDED TO THE*
+#   "hints_meta" FixedList, generating code type-checking that hint,
+#   iteratively visiting all hints *IN THE REVERSE DIRECTION BACK UP THE TREE*,
+#   and so on.
 #
 #That's insanely swag. It shames us that we only thought of it now. *sigh*
+#FIXME: Note that this new approach will probably (hopefully only slightly)
+#reduce decoration efficiency. This means that we should revert to optimizing
+#the common case of PEP-noncompliant classes. Currently, we uselessly iterate
+#over these classes with the same BFS below as we do PEP-compliant classes --
+#which is extreme overkill. This will be trivial (albeit irksome) to revert,
+#but it really is fairly crucial. *sigh*
 #FIXME: Now that we actually have an audience (yay!), we *REALLY* need to avoid
 #breaking anything. But implementing the above refactoring would absolutely
 #break everything for an indeterminate period of time. So how do we do this?
@@ -240,7 +296,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #objects with the "beartypistry" is *NOT* a valid generic solution. That said,
 #we *COULD* technically still do so for the subset of literal objects that are
 #hashable -- which will probably be most of them, actually. To do so, we would
-#then define a new beartype._decor._typistry.register_hashable() function
+#then define a new beartype._decor._cache.cachetype.register_hashable() function
 #registering a generic hashable. This would then necessitate a new prefix
 #unique to hashables (e.g., "h"). In short, this actually entails quite a bit
 #of work and fails in the general case. So, we might simply avoid this for now.
@@ -788,6 +844,29 @@ This private submodule is *not* intended for importation by downstream callers.
 #      cleanup routine *AFTER* code type-checking these parameters. While
 #      mildly inefficient, function calls incur considerably less overhead
 #      when compiled away from interpreted Python bytecode.
+#FIXME: Note that the above scheme by definition *REQUIRES* assignment
+#expressions and thus Python >= 3.8 for general-purpose O(1) type-checking of
+#arbitrarily nested dictionaries and sets. Why? Because each time we iterate an
+#iterator over those data structures we lose access to the previously iterated
+#value, which means there is *NO* sane means of type-checking nested
+#dictionaries or sets without assignment expressions. But that's unavoidable
+#and Python <= 3.7 is the past, so that's largely fine.
+#
+#What we can do under Python <= 3.7, however, is the following:
+#* If the (possibly nested) type hint is of the form
+#  "{checkable}[...,{dict_or_set}[{class},{class}],...]" where
+#  "{checkable}" is an arbitrary parent type hint safely checkable under Python
+#  <= 3.7 (e.g., lists, unions), "{dict_or_set}" is (wait for it) either "dict"
+#  or "set", and "{class}" is an arbitrary type, then that hint *IS* safely
+#  checkable under Python <= 3.7. Note that items (i.e., keys and values) can
+#  both be checked in O(1) time under Python <= 3.7 by just validating the key
+#  and value of a different key-value pair (e.g., by iterating once for the key
+#  and then again for the value). That does have the disadvantage of then
+#  requiring O(n) iteration to raise a human-readable exception if a dictionary
+#  value fails a type-check, but we're largely okay with that. Again, this only
+#  applies to an edge case under obsolete Python versions, so... *shrug*
+#* Else, a non-fatal warning should be emitted and the portion of that type
+#  hint that *CANNOT* be safely checked under Python <= 3.7 should be ignored.
 
 #FIXME: *WOOPS.* The "LRUCacheStrong" class is absolutely awesome and we'll
 #absolutely be reusing that for various supplementary purposes across the
@@ -1195,7 +1274,7 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype._decor._typistry import (
+from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_type,
     register_typistry_tuple,
