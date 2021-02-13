@@ -13,10 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 
-# ....................{ GETTERS                           }....................
-def is_func_arg_variadic(func: 'Callable') -> bool:
+# ....................{ TESTERS                           }....................
+def is_func_arg_variadic(func: Callable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts any **variadic
     parameters** and thus either variadic positional arguments (e.g.,

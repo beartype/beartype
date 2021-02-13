@@ -64,6 +64,7 @@ def number_lines(text: str) -> str:
     )
 
 # ....................{ REPLACERS                         }....................
+#FIXME: Unit test us up, please.
 def replace_str_substrs(text: str, old: str, new: str) -> str:
     '''
     Passed string with all instances of the passed source substring globally

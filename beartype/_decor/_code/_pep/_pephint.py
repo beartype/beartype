@@ -131,21 +131,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #To do so, we should probably:
 #* In the "beartype._decor._cache.cachehint" submodule:
-#  * Define a new private "HINT_REPR_TO_HINT" dictionary mapping from hint
-#    repr() strings to previously cached hints sharing the same repr() strings.
-#    This dictionary should actually be a trivial dictionary rather than a
-#    robust LRU cache, because the number of type hints used across a codebase
-#    is *ALWAYS* miniscule. Moreover, strong references to type hints are
-#    already stored in "func.__annotations__" dictionaries, so there's no space
-#    savings in dropping stale references to them in an LRU cache.
-#  * *ALL* hints except those that are already internally cached (e.g., by the
-#    "typing" module) should be cached into this dictionary. This obviously
-#    includes PEP 585-compliant type hints but also *ALL* hints produced by
-#    resolving deferred PEP 563-based type hint strings. Note that, in the
-#    latter case, we might want to additionally strip ignorable internal
-#    whitespace from those strings *IF* those strings contain such whitespace.
-#    We're pretty sure they don't (because they're programmatically constructed
-#    by the parser, we think), but we should still investigate this.
 #  * Any hint that appears in that cache should be *REPLACED* where it appears
 #    in the "func.__annotations__" dictionary with its cached value. Sweeeeeet.
 #* Cache deferred annotations in the "beartype._decor._pep563" submodule. To do

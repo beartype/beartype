@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.cave import HintPep585Type
 from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.func.utilfuncget import get_func_wrappee
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -58,6 +59,10 @@ if IS_PYTHON_AT_LEAST_3_9:
     @callable_cached
     def is_hint_pep585_generic(hint: object) -> bool:
 
+        # Tuple of all pseudo-superclasses originally subclassed by the passed
+        # hint if this hint is a generic *OR* false otherwise.
+        hint_bases_erased = getattr(hint, '__orig_bases__', False)
+
         # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
         # commonality with PEP 484-compliant generics. While the latter are
         # trivially detectable as subclassing "typing.Generic" after type
@@ -75,25 +80,23 @@ if IS_PYTHON_AT_LEAST_3_9:
         #   objects.
         #
         # Return true only if this hint satisfies *ALL* of the above conditions.
-        # Specifically, return true only if...
-        return (
-            # This hint defines the "__orig_bases__" dunder instance variable
-            # listing all pseudo-superclasses originally subclassed by this
-            # hint *AND*...
-            #
-            # Note that we could technically also test that this hint defines
-            # the __class_getitem__() dunder method. Since the subsequent
-            # condition suffices to ensure that this hint is a PEP
-            # 585-compliant generic, however, there exists little benefit to
-            # doing so.
-            hasattr(hint, '__orig_bases__') and
-            # At least one pseudo-superclass originally subclassed by this hint
-            # is a PEP 585-compliant type hint.
-            any(
-                is_hint_pep585(hint_base_erased)
-                for hint_base_erased in hint.__orig_bases__
-            )
+        # Specifically, return true only if one or more pseudo-superclasses
+        # originally subclassed by this hint are themselves PEP 585-compliant
+        # type hints.
+        #
+        # Note we could technically also test that this hint defines the
+        # __class_getitem__() dunder method. Since this condition suffices to
+        # ensure that this hint is a PEP 585-compliant generic, however, there
+        # exists little benefit to doing so.
+        return hint_bases_erased and any(
+            is_hint_pep585(hint_base_erased)
+            for hint_base_erased in hint_bases_erased
         )
+
+
+    # Unmemoized wrappee wrapped by the above memoized wrapper, for use in
+    # edge cases where memoization is actually undesirable.
+    is_hint_pep585_generic_uncached = get_func_wrappee(is_hint_pep585_generic)
 
 # Else, the active Python interpreter targets at most Python < 3.9 and thus
 # fails to support PEP 585. In this case, fallback to declaring this function
@@ -104,6 +107,8 @@ else:
 
     def is_hint_pep585_generic(hint: object) -> bool:
         return False
+
+    is_hint_pep585_generic_uncached = is_hint_pep585_generic
 
 # ....................{ TESTERS ~ doc                     }....................
 # Docstring for this function regardless of implementation details.
@@ -166,7 +171,35 @@ is_hint_pep585_generic.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a generic.
+        ``True`` only if this object is a `PEP 585`_-compliant generic.
+
+    .. _PEP 585:
+       https://www.python.org/dev/peps/pep-0585
+    '''
+
+
+is_hint_pep585_generic_uncached.__doc__ = '''
+    ``True`` only if the passed possibly non-cached object is a `PEP
+    585`_-compliant **generic** (i.e., class superficially subclassing at least
+    one subscripted `PEP 585`_-compliant pseudo-superclass).
+
+    Caveats
+    -------
+    **This non-memoized function should only be called at a sufficiently early
+    time during** :mod:`beartype` **decoration,** when the passed object cannot
+    be guaranteed to have already been cached somewhere. Since this is
+    typically *not* the case, the memoized :func:`is_hint_pep585_generic`
+    function wrapping this function should typically be called instead.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly non-cached object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a `PEP 585`_-compliant generic.
 
     .. _PEP 585:
        https://www.python.org/dev/peps/pep-0585

@@ -69,6 +69,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585,
     is_hint_pep585_generic,
+    is_hint_pep585_generic_uncached,
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
@@ -535,6 +536,67 @@ def is_hint_pep(hint: object) -> bool:
         is_hint_pep484_newtype(hint)
     )
 
+
+#FIXME: Unit test us up.
+def is_hint_pep_uncached(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **PEP-compliant non-self-cached
+    type hint** (i.e., PEP-compliant type hint that does *not* externally cache
+    itself).
+
+    Since most PEP-compliant type hints are self-caching, this function
+    returns:
+
+    * ``True`` for only:
+
+      * `PEP 484`_-compliant generics (e.g., ``from typing import Generic;
+        class MuhPep484List(Generic): pass; MuhPep484List[int]``).
+      * `PEP 585`_-compliant type hints, including both:
+
+        * Builtin `PEP 585`_-compliant type hints (e.g., ``list[int]``).
+        * User-defined `PEP 585`_-compliant generics (e.g.,
+          ``class MuhPep585List(list): pass; MuhPep585List[int]``).
+
+    * ``False`` for *all* other PEP-compliant type hints.
+
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Since this high-level function
+    internally defers to unmemoized low-level functions that are ``O(n)`` in
+    ``n`` the size of the inheritance hierarchy , this function should be
+    called sparingly. See the
+    :mod:`beartype._decor._cache.cachehint` submodule for further details.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a PEP-compliant type hint.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484
+    .. _PEP 585:
+        https://www.python.org/dev/peps/pep-0585
+    '''
+
+    # Return true only if either...
+    #
+    # Note that these tests are intentionally ordered in descending likelihood
+    # of a match with the least common type hints tested last and the most
+    # common type hints tested first.
+    return (
+        # This hint is a PEP 585-compliant type hint.
+        is_hint_pep585(hint) or
+        # This hint is a PEP-compliant generic, tested in a safe non-memoized
+        # manner explicitly preventing this hint from being unintentionally
+        # cached in a place where it *CANNOT* be readily looked up from.
+        is_hint_pep_generic_uncached(hint)
+    )
+
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
@@ -895,10 +957,59 @@ def is_hint_pep_generic(hint: object) -> bool:
     return (
         # A class that is either...
         isinstance(hint, type) and (
-            # A PEP 585-compliant generic *OR*...
-            is_hint_pep585_generic(hint) or
-            # A PEP 484-compliant generic.
-            is_hint_pep484_generic(hint)
+            # A PEP 484-compliant generic. Note this test trivially reduces to
+            # an O(1) operation and is thus tested first.
+            is_hint_pep484_generic(hint) or
+            # A PEP 585-compliant generic. Note this test is O(n) in n the
+            # number of pseudo-superclasses originally subclassed by this
+            # generic and is thus tested last.
+            is_hint_pep585_generic(hint)
+        )
+    )
+
+
+#FIXME: Unit test us up, please.
+def is_hint_pep_generic_uncached(hint: object) -> bool:
+    '''
+    ``True`` only if the passed possibly non-cached object is a **generic**
+    (i.e., class superficially subclassing at least one non-class PEP-compliant
+    object).
+
+    Caveats
+    -------
+    **This non-memoized function should only be called at a sufficiently early
+    time during** :mod:`beartype` **decoration,** when the passed object cannot
+    be guaranteed to have already been cached somewhere. Since this is
+    typically *not* the case, the memoized :func:`is_hint_pep585_generic`
+    function wrapping this function should typically be called instead.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly non-cached object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a generic.
+
+    See Also
+    ----------
+    :func:`is_hint_pep_generic`
+        Further details.
+    '''
+
+    # Return true only if this hint is...
+    return (
+        # A class that is either...
+        isinstance(hint, type) and (
+            # A PEP 484-compliant generic. Note this test trivially reduces to
+            # an O(1) operation and is thus tested first.
+            is_hint_pep484_generic(hint) or
+            # A PEP 585-compliant generic. Note this test is O(n) in n the
+            # number of pseudo-superclasses originally subclassed by this
+            # generic and is thus tested last.
+            is_hint_pep585_generic_uncached(hint)
         )
     )
 
