@@ -128,7 +128,7 @@ def get_callable_origin_label(func: Callable) -> str:
         # yet again. For inexplicable reasons, PyPy provides *ALL* C-based
         # builtins (e.g., len()) with code objects failing to provide this
         # metadata. Yes, this is awful. Yes, this is the Python ecosystem.
-        if func_codeobj is not None:
+        if func_codeobj:
             func_origin_label = getattr(
                 func_codeobj, 'co_filename', func_origin_label)
     # Else...

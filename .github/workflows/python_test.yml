@@ -67,16 +67,6 @@ jobs:
     # ..................{ MATRIX                            }..................
     strategy:
       matrix:
-        #FIXME: If GitHub Actions either substantially increases our available
-        #CI minutes *OR* increases the speed of the Azure platform running our
-        #CI (which would effectively be the same as increasing our available
-        #minutes), enable:
-        #* macOS testing by adding "macos-latest" to this list. From the CLI
-        #  perspective, macOS is mostly just Linux (don't crucify me here,
-        #  people) with the POSIX-compliant GNU toolchain replaced with the
-        #  POSIX-compliant BSD toolchain. In either case, however, macOS and
-        #  Linux are both POSIX-compliant and thus crudely comparable.
-
         # List of all platform-specific Docker images to test against,
         # including:
         # * The latest Long-Term Service (LTS) release of Ubuntu Linux, still
@@ -85,12 +75,12 @@ jobs:
         #   and macOS are both POSIX-compliant and thus crudely comparable from
         #   the low-level CLI perspective, Windows is POSIX-noncompliant and
         #   thus heavily divergent from both macOS and Linux.
-        #
-        # Ergo, we willingly pay for Windows but *NOT* macOS CI minutes.
-        # Ideally, we'd pay for both. Pragmatically, we can't. We instead pay
-        # for the platform that is most divergent and thus the most likely
-        # to catastrophically collapse in the final mile. This means Windows.
-        platform: [ubuntu-latest, windows-latest]
+        # * The latest *whatever* release of Apple macOS. We don't particularly
+        #   need to exercise tests on macOS, given the platform's patent
+        #   POSIX-compliant low-level similarities to Linux, but... what the
+        #   heck. Why not? Since this is the lowest priority, we defer macOS
+        #   testing until last.
+        platform: [ubuntu-latest, windows-latest, macos-latest]
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # WARNING: Changes to this section *MUST* be manually synchronized with:
@@ -129,7 +119,7 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     # ..................{ VARIABLES                         }..................
     # External shell environment variables exposed to commands run below.
