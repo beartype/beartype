@@ -1231,6 +1231,369 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Naturally, this requires these options to be hashable. Certainly, booleans
 #are, so this smart approach supports a new optional "is_proxying" parameter.
+#FIXME: Note that the above approach should only be employed as a last-ditch
+#fallback in the event that the passed callable both:
+#* Lacks a non-None "__annotations__" dictionary.
+#* Is *not* annotated by the third-party optional "typeshed" dependency.
+#
+#If the passed callable satisfies either of those two constraints, the existing
+#type hints annotating that callable should be trivially inspected instead in
+#O(1) time (e.g., by just performing a brute-force dictionary comparison from
+#that callable's "__annotations__" dictionary to a dictionary that we
+#internally construct and cache based on the type hints annotating the
+#currently decorated callable, except that doesn't quite work because the
+#"__annotations__" dictionary maps from parameter and return names whereas the
+#"typing.Callable" and "collections.abc.Callable" syntax omits those names,
+#which begs the question of how the latter syntax handles positional versus
+#keyword arguments anyway)... *OR SOMETHING.*
+#
+#Fascinatingly, "Callable" syntax supports *NO* distinction between mandatory,
+#optional, positional, or keyword arguments, because PEP 484 gonna PEP 484:
+#    "There is no syntax to indicate optional or keyword arguments; such
+#     function types are rarely used as callback types."
+#
+#Note that mapping from the return type hint given by "typing.Callable" syntax
+#into the "__annotations__" dictionary is trivial, because the return is always
+#unconditionally named "return" in that dictionary. So, we then just have to
+#resolve how to ignore parameter names. Actually, handling mandatory positional
+#parameters (i.e., positional parameters lacking defaults) on the passed
+#callable should also be trivial, because they *MUST* strictly correspond to
+#the first n child type hints of the first argument of the expected parent
+#"typing.Callable" type hint. It's optional positional parameters and keyword
+#arguments that are the rub. *shrug*
+#
+#Obviously, we'll want to dynamically generate the full test based on the
+#expected parent "typing.Callable" type hint. For sanity, do this iteratively
+#by generating code testing arbitrary "__annotations__" against a "Callable"
+#type hint (in increasing order of complexity):
+#* Passed *NO* parameters and returning something typed.
+#* Passed *ONE* parameter and returning something typed.
+#* Passed *TWO* parameters and returning something typed.
+#* Passed an arbitrary number of parameters and returning something typed.
+#
+#Note that test should ideally avoid iteration. We're fairly certain we can do
+#that by mapping various attributes from the code object of the passed callable
+#into something that enables us to produce a tuple of type hints matching the
+#first argument of the expected parent "Callable" type hint.
+#
+#*BINGO!* The value of the "func.__code__.co_varnames" attribute is a tuple of
+#both parameter names *AND* local variables. Fortunately, the parameter names
+#come first. Unfortunately, there are two types: standard and keyword-only.
+#Altogether, an expression yielding a tuple of the names of all parameters
+#(excluding local variables) is given by:
+#    func_codeobj = get_func_codeobj(func)
+#
+#    # Tuple of the names of all parameters accepted by this callable.
+#    func_param_names = func_codeobj.co_varnames[
+#        :func_codeobj.co_argcount + func_codeobj.co_kwonlyargcount]
+#
+#Note that "func_param_names" probably excludes variadic positional and keyword
+#argument names, but that's probably fine, because "Callable" type hint syntax
+#doesn't appear to explicitly support that sort of thing anyway. I mean, how
+#would it? Probably using the "..." singleton ellipse object, I'm sure. But
+#that's completely undefined, so it seems doubtful anyone's actually doing it.
+#
+#We then need to use that tuple to slice "func.__annotations__". Of course, you
+#can't slice a dictionary in Python, because Python dictionaries are much less
+#useful than they should be. See also:
+#    https://stackoverflow.com/questions/29216889/slicing-a-dictionary
+#
+#The simplest and fastest approach we can currently think of is given by:
+#    func_param_name_to_hint = func.__annotations__
+#
+#    # Generator comprehension producing type hints for this callable's
+#    # parameters in the same order expected by the first argument of the
+#    # "Callable" type hint.
+#    func_param_hints = (
+#        func_param_name_to_hint[func_param_name]
+#        for func_param_name in func_param_names
+#    )
+#
+#Note that because we know the exact number of expected parameters up front
+#(i.e., as the len() of the first argument of the "Callable" type hint), we can
+#generate optimal code *WITHOUT* a generator or other comprehension and thus
+#*WITHOUT* iteration. Yes, this is literally loop unrolling in Python, which is
+#both hilarious and exactly what CPython developers get for failing to support
+#generally useful operations on dictionaries and sets: e.g.,
+#
+#    callable_type_hint = ... # Give this a name for reference below.
+#
+#    # Number of non-variadic parameters expected to be accepted by this
+#    # caller-passed callable.
+#    FUNC_PARAM_LEN_EXPECTED = len(callable_type_hint[0])
+#
+#    # Generator comprehension producing type hints for this callable's
+#    # parameters in the same order expected by the first argument of the
+#    # "Callable" type hint.
+#    func_param_hints = (
+#        func_param_name_to_hint[func_param_names[0]],
+#        func_param_name_to_hint[func_param_names[1]],
+#        ...
+#        func_param_name_to_hint[func_param_names[FUNC_PARAM_LEN_EXPECTED]],
+#    )
+#
+#Clearly, there's *LOADS* of additional preliminary validation that needs to
+#happen here as well. Since "Callable" type hint syntax *REQUIRES* a return
+#type hint to be specified (yes, this is absolutely non-optional), we also need
+#to ensure that "func_param_name_to_hint" contains the 'return' key.
+#
+#Given all that, the final test would then resemble something like:
+#
+#    (
+#        __beartype_pith_n_func_param_name_to_hint := (
+#            func.__annotations__ or LOOKUP_IN_TYPESHED_SOMEHOW) and
+#        'return' in __beartype_pith_n_func_param_name_to_hint and
+#        __beartype_pith_n_func_codeobj := getattr(
+#            __beartype_pith_n, '__code__', None) and
+#        # Just ignore C-based callables and assume they're valid. Unsure what
+#        # else we can do with them. Okay, we could also proxy them here, but
+#        # that seems a bit lame. Just accept them as is for now, perhaps?
+#        __beartype_pith_n_func_codeobj is None or (
+#            __beartype_pith_n_func_param_names := (
+#                __beartype_pith_n_func_codeobj.co_varnames) and
+#            len(__beartype_pith_n_func_param_names) == {FUNC_PARAM_LEN_EXPECTED} and
+#            (
+#                __beartype_pith_n_func_param_name_to_hint[__beartype_pith_n_func_param_names[0]],
+#                __beartype_pith_n_func_param_name_to_hint[__beartype_pith_n_func_param_names[1]],
+#                ...
+#                __beartype_pith_n_func_param_name_to_hint[__beartype_pith_n_func_param_names[FUNC_PARAM_LEN_EXPECTED]],
+#                __beartype_pith_n_func_param_name_to_hint['return']
+#            ) == {callable_type_hint}
+#        )
+#    )
+#
+#*YUP.* That's super hot, that is. We're sweating.
+#
+#Note this test is effectively O(1) but really O(FUNC_PARAM_LEN_EXPECTED) where
+#FUNC_PARAM_LEN_EXPECTED is sufficiently small that it's basically O(1). That
+#said, the constant factors are non-negligible. Fortunately, callables *NEVER*
+#change once declared. You should now be thinking what we're thinking:
+#*CACHING*. That's right. Just stuff the results of the above test (i.e., a
+#boolean) into our duffel LRU cache keyed on the fully-qualified name of that
+#callable. We only want to pay the above price once per callable, if we can
+#help it, which we absolutely can, so let's do that please.
+#
+#*NOTE THAT ASSIGNMENT EXPRESSIONS ARE EFFECTIVELY MANDATORY.* I mean, there's
+#basically no way we can avoid them, so let's just require them. By the time we
+#get here anyway, Python 3.6 will be obsolete, which just leaves Python 3.7. We
+#could just emit warnings when decorating callables annotated by "Callable"
+#type hints under Python 3.7. </insert_shrug>
+#
+#*NOTE THAT BUILTINS DO NOT HAVE CODE OBJECTS,* complicating matters. At this
+#point, we could care less, but we'll have to care sometime that is not now.
+#FIXME: *OH.* Note that things are slightly less trivial than detailed above.
+#It's not enough for a callable to be annotated, of course; that callable also
+#needs to be annotated *AND* type-checked by a runtime type checker like
+#@beartype or @typeguard. The same, of course, does *NOT* apply to "typeshed"
+#annotations, because we generally expect stdlib callables to do exactly what
+#they say and nothing more or less. This means the above approach should only
+#be employed as a last-ditch fallback in the event that the passed callable
+#does *NOT* satisfy any of the following:
+#* Is decorated by a runtime type checker *AND* has a non-None
+#  "__annotations__" dictionary.
+#* Is annotated by the third-party optional "typeshed" dependency.
+#
+#Trivial, but worth noting.
+
+#FIXME: *IT'S CONFIGURATION TIME.* So, let's talk about how we efficiently
+#handle @beartype configuration like the "is_proxying" boolean introduced
+#above. It's worth getting this right the first time. Happily, we got this
+#right the first time with a balls-crazy scheme that gives us O(1)
+#configurability that supports global defaults that can be both trivially
+#changed globally *AND* overridden by passed optional @beartype parameters.
+#
+#Note this scheme does *NOT* require us to litter the codebase with cumbersome
+#and inefficient logic like:
+#    muh_setting = (
+#        beartype_params.muh_setting if beartype_params.muh_setting is not None else
+#        beartype._global_config.muh_setting)
+#
+#What is this magic we speak of? *SIMPLE.* We twist class variable MRO lookup
+#in our favour. Since CPython already efficiently implements such lookup with a
+#fast C implementation, we can hijack that implementation for our own sordid
+#purposes to do something completely different. Note that only *CLASS* variable
+#MRO lookup suffices. Since classes are global singletons, all subclasses will
+#implicitly perform efficient lookups for undefined class variables in their
+#superclass -- which is exactly what we want and need here.
+#
+#Specifically:
+#* Define a new private "beartype._config" submodule.
+#* In that submodule:
+#  * Define a new public "BeartypeConfigGlobal" class declaring all
+#    configuration settings as class variables defaulting to their desired
+#    arbitrary global defaults: e.g.,
+#        class BeartypeConfigGlobal(object):
+#            '''
+#            **Global beartype configuration.**
+#            '''
+#
+#            is_proxying = True
+#            ...
+#* Publicly expose that class to external users as a new public
+#  "beartype.config" *PSEUDO-MODULE.* In reality, that object will simply be an
+#  alias of "beartype._config.BeartypeConfigGlobal". But users shouldn't know
+#  that. They should just treat that object as if it was a module. To effect
+#  this, just establish this alias in the "beartype.__init__" submodule: e.g.,
+#      from beartype._config import BeartypeConfigGlobal
+#
+#      # It really is that simple, folks. Maybe. Gods, let it be that simple.
+#      config = BeartypeConfigGlobal
+#* Privatize the existing public "beartype._decor.main" submodule to
+#  "beartype._decor._decor" or something hopefully less ambiguous.
+#* In that submodule:
+#  * Rename the existing @beartype decorator to make_func_checker(). That
+#    function will now only be called internally rather than externally.
+#* Define a new private "beartype._decor._cache.cachedecor" submodule.
+#* In that submodule:
+#  * Define a new "BEARTYPE_PARAMS_TO_DECOR" dictionary mapping from a *TUPLE*
+#    of positional arguments listed in the exact same order as the optional
+#    parameters accepted by the new @beartype decorator discussed below to
+#    subclasses to dynamically generated @beartype decorators configured by
+#    those subclasses. This tuple should just literally be the argument tuple
+#    passed to the @beartype decorator, which is probably easiest to achieve if
+#    we force @beartype parameters to be passed as keyword-only arguments:
+#
+#        # Keyword-only arguments require Python >= 3.8. Under older Pythons,
+#        # just drop the "*". Under older Pythons, let's just *NOT ALLOW
+#        # CONFIGURATION AT ALL.* So, this gives us:
+#        if IS_PYTHON_AT_LEAST_3_8:
+#            def beartype(*, is_proxying: bool = None, ...) -> Callable:
+#                BEARTYPE_PARAMS = (is_proxying, ...)
+#
+#                beartype_decor = BEARTYPE_PARAMS_TO_DECOR.get(BEARTYPE_PARAMS)
+#                if beartype_decor:
+#                    return beartype_decor
+#
+#                # Else, we need to make a new @beartype decorator passed
+#                # these parameters, cache that decorator in
+#                # "BEARTYPE_PARAMS_TO_DECOR", and return that decorator.
+#        else:
+#            # Probably not quite right, but close enough.
+#            beartype = make_func_checker
+#
+#    We need a hashable tuple for lookup purposes. That's *ABSOLUTELY* the
+#    fastest way, given that we expect keyword arguments. So, we're moving on.
+#    Also, do *NOT* bother with LRU caching here, as the expected size of that
+#    dictionary will almost certainly always be less than 10 and surely 100.
+#* Define a new private "beartype._decor.main" submodule.
+#* In that submodule:
+#  * Define a new @beartype decorator accepting *ALL* of the *EXACT* same
+#    class variables declared by the "BeartypeConfigGlobal" class as optional
+#    parameters of the same name but *UNCONDITIONALLY* defaulting to "None".
+#    That last bit is critical. Do *NOT* default them to what the
+#    "BeartypeConfigGlobal" superclass defaults them to, as that would obstruct
+#    our purposes, which is to have lookups punted upward to the
+#    "BeartypeConfigGlobal" superclass only when undefined in a subclass.
+#  * The purpose of this new @beartype decorator is to (in order):
+#    * First lookup the passed parameters to get an existing decorator passed
+#      those parameters, as already implemented above. (This is trivial.)
+#    * If we need to make a new decorator, this is also mostly trivial. Just:
+#      * Define a new local dictionary "BEARTYPE_PARAM_NAME_TO_VALUE" bundling
+#        these optional parameters for efficient lookup: e.g.,
+#            BEARTYPE_PARAM_NAME_TO_VALUE = {
+#                'is_proxying': is_proxying,
+#                ...
+#            }
+#      * Dynamically create a new "BeartypeConfigGlobal" subclass *SETTING THE
+#        DESIRED CLASS VARIABLES* based on all of the passed optional
+#        parameters whose values are *NOT* "None". For example, if the only
+#        passed non-"None" optional parameter was "is_proxying", this would be:
+#            class _BeartypeConfigDecor{ARBITRARY_NUMBER}(BeartypeConfigGlobal):
+#                is_proxying = False
+#        This will probably require a bit of iteration to filter out all
+#        non-"None" optional parameters. Note that the simplest way to
+#        implement this would probably be to just dynamically declare an empty
+#        subclass and then monkey-patch that subclass' dictionary with the
+#        desired non-"None" optional parameters: e.g.,
+#            # Pseudo-code, but close enough.
+#            BeartypeConfigDecor = eval(
+#                f'''class _BeartypeConfigDecor{ARBITRARY_NUMBER}(BeartypeConfigGlobal): pass''')
+#
+#            # Yes, this is a bit lame, but it suffices for now. Remember,
+#            # we're caching this class, so the logic constructing this class
+#            # doesn't need to be lightning fast. It's *FAR* more critical that
+#            # the logic looking up this class in this class be lightning fast.
+#            #
+#            # Do *NOT* try to embed this logic into the above evaluation
+#            # (e.g., as f-expressions). Yes, that sort of hackery is trivial
+#            # with booleans but rapidly gets hairy with containers. So, I
+#            # *GUESS* we could do that for booleans. Just remember that that
+#            # doesn't generalize to the general case. Actually, don't bother.
+#            # The following suffices and doesn't violate DRY, which is the
+#            # only important thing here.
+#            BeartypeConfigDecor.__dict__.update({
+#                param_name: param_value
+#                param_name, param_value in BEARTYPE_PARAM_NAME_TO_VALUE.items()
+#                if param_value is not None
+#            })
+#      * Dynamically *COPY* the make_func_checker() function into a new
+#        function specific to that subclass, which means that function is
+#        actually just a template. We'll never actually the original function
+#        itself; we just use that function as the basis for dynamically
+#        generating new decorators on-the-fly. Heh! Fortunately, we only need
+#        a shallow function copy. That is to say, we want the code objects to
+#        remain the same. Note that the most efficient means of implementing
+#        this is given directly be this StackOverflow answer:
+#            https://stackoverflow.com/a/13503277/2809027
+#        Note that that answer can be slightly improved to resemble:
+#            WRAPPER_ASSIGNMENTS = functools.WRAPPER_ASSIGNMENTS + ('__kwdefaults__',)
+#            def copy_func(f):
+#                g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+#                                       argdefs=f.__defaults__,
+#                                       closure=f.__closure__)
+#                g = functools.update_wrapper(g, f, WRAPPER_ASSIGNMENTS)
+#                return g
+#        That's the most general form. Of course, we don't particularly care
+#        about copying metadata, since we don't expect anyone to care about
+#        these dynamically generated decorators. That means we can reduce the
+#        above to simply:
+#            def copy_func(f):
+#                return types.FunctionType(
+#                    f.__code__,
+#                    f.__globals__,
+#                    name=f.__name__,
+#                    argdefs=f.__defaults__,
+#                    closure=f.__closure__,
+#                )
+#      * Monkey-patch the new decorator returned by
+#        "copy_func(make_func_checker)" with the new subclass: e.g.,
+#            beartype_decor = copy_func(make_func_checker)
+#            beartype_decor.__beartype_config = BeartypeConfigDecor
+#        *HMMM.* Minor snag. That doesn't work, but the make_func_checker()
+#        template won't have access to that "__beartype_config". Instead, we'll
+#        need to:
+#        * Augment the signature of the make_func_checker() template to accept
+#          a new optional "config" parameter default to "None": e.g.,.
+#          def make_func_checker(
+#              func: Callable, config: BeartypeConfigGlobal = None) -> Callable:
+#        * Either refactor the copy_func() function defined above to accept a
+#          caller-defined "argdefs" parameter *OR* (more reasonably) just
+#          inline the body of that function in @beartype as:
+#            beartype_decor = types.FunctionType(
+#                f.__code__,
+#                f.__globals__,
+#                name=f.__name__,
+#                # Yup. In theory, that should do it, if we recall the internal
+#                # data structure of this parameter correctly.
+#                argdefs=(BeartypeConfigDecor,),
+#                closure=f.__closure__,
+#            )
+#      * Cache and return that decorator:
+#            BEARTYPE_PARAMS_TO_DECOR[BEARTYPE_PARAMS] = beartype_decor
+#            return beartype_decor
+#
+#Pretty trivial, honestly. We've basically already implemented all of the hard
+#stuff above, which is nice.
+#
+#Note that the make_func_checker() function will now accept an optional
+#"config" parameter -- which will, of course, *ALWAYS* be non-"None" by the
+#logic above. Assert this, of course. We can then trivially expose that
+#"config" to lower-level beartype functions by just stuffing it into the
+#existing "BeartypeData" class: e.g.,
+#    # Welp, that was trivial.
+#    func_data.config = config
+#
+#Since we pass "func_data" everywhere, we get configuration for free. Muhaha!
 
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
@@ -1251,6 +1614,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #  enable that class to be subscripted with "typing"-style types ala:
 #     def muh_func(muh_mapping: BeartypeDict[str, int]) -> None: pass
 #In short, we'll need to conduct considerably more research here.
+#FIXME: Actually, none of the above is necessary or desirable. Rather than
+#designing a random access "BeartypeDict" class, it would be *FAR* more useful
+#to design a series of beartype-specific container types in a new external
+#"beartypes" package, each of which performs O(1) type-checking *ON INSERTION
+#OF EACH CONTAINER ITEM.* This should be stupidly fast under standard use
+#cases, because we typically expect an item to be inserted only once but
+#accessed many, many times. By just checking on insertion, we avoid *ALL* of
+#the complications of trying to type-check after the fact during sequential
+#non-random iteration over items.
 
 # ....................{ IMPORTS                           }....................
 from beartype.cave import NoneType

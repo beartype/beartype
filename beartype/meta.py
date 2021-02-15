@@ -96,9 +96,7 @@ def _convert_version_str_to_tuple(version_str: str) -> tuple:
     Convert the passed human-readable ``.``-delimited version string into a
     machine-readable version tuple of corresponding integers.
     '''
-    assert isinstance(version_str, str), (
-        '"{}" not a version string.'.format(version_str))
-
+    assert isinstance(version_str, str), f'"{version_str}" not version string.'
     return tuple(int(version_part) for version_part in version_str.split('.'))
 
 
@@ -157,10 +155,10 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
 
     # Die ignominiously.
     raise RuntimeError(
-        '{} requires at least Python {}, but '
-        'the active interpreter only targets Python {}. '
-        'We feel unbearable sadness for you.'.format(
-            NAME, PYTHON_VERSION_MIN, _PYTHON_VERSION))
+        f'{NAME} requires at least Python {PYTHON_VERSION_MIN}, but '
+        f'the active interpreter only targets Python {_PYTHON_VERSION}. '
+        f'We feel unbearable sadness for you.'
+    )
 
 # ....................{ METADATA ~ version                }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -242,7 +240,7 @@ URL of this package's homepage.
 '''
 
 
-URL_DOWNLOAD = '{}/archive/{}.tar.gz'.format(URL_HOMEPAGE, VERSION)
+URL_DOWNLOAD = f'{URL_HOMEPAGE}/archive/{VERSION}.tar.gz'
 '''
 URL of the source tarball for the current version of this package.
 
@@ -254,7 +252,7 @@ have yet to be stabilized and hence tagged. Hence, this URL is typically valid
 '''
 
 
-URL_ISSUES = 'https://github.com/beartype/beartype/issues'
+URL_ISSUES = f'{URL_HOMEPAGE}/issues'
 '''
 URL of this package's issue tracker.
 '''
@@ -396,4 +394,3 @@ See Also
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
 '''
-
