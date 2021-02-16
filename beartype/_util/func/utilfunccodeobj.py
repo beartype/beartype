@@ -19,22 +19,32 @@ from collections.abc import Callable
 from types import CodeType, FunctionType, MethodType
 
 # ....................{ GETTERS                           }....................
-def get_func_codeobj(func: Callable) -> CodeType:
+def get_func_codeobj(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException
+) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed callable if this callable is pure-Python *or* raise an exception
-    otherwise (e.g., if this callable is C-based or a class or object defining
-    the ``__call__()`` dunder method).
+    the passed callable if this callable is a pure-Python function or method
+    *or* raise an exception otherwise (e.g., if this callable is C-based or a
+    class or object defining the ``__call__()`` dunder method).
 
     Parameters
     ----------
     func : Callable
         Callable to be inspected.
+    exception_cls : type
+        Type of exception to be raised if this callable is neither a
+        pure-Python function nor method. Defaults to
+        :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
     CodeType
-        Code object underlying this pure-Python callable.
+        Code object underlying this callable.
 
     Raises
     ----------
@@ -48,7 +58,9 @@ def get_func_codeobj(func: Callable) -> CodeType:
 
     # If this callable is *NOT* pure-Python, raise an exception.
     if func_codeobj is None:
-        raise _BeartypeUtilCallableException(
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        raise exception_cls(
             f'Callable {repr(func)} code object not found '
             f'(e.g., due to being either C-based or a class or object '
             f'defining the ``__call__()`` dunder method).'

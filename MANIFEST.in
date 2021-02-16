@@ -7,14 +7,15 @@
 
 # ....................{ INCLUDE                           }....................
 # Include all requisite top-level installation-time files.
+.readthedocs.yml
 include LICENSE
 include MANIFEST.in
 include README.md
 include conftest.py
-include pyproject.toml
 include pytest.ini
 include setup.cfg
 include setup.py
+include tox.ini
 
 # ....................{ INCLUDE ~ recursive               }....................
 # Include all requisite project-specific py.test and setuptools subpackages.

@@ -153,7 +153,6 @@ jobs:
       #    python -m site
 
       # Note that:
-      #
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
       #   * POSIX-noncompliant platforms (e.g., Windows).
@@ -162,9 +161,9 @@ jobs:
       # * Packaging dependencies (e.g., "pip") are upgraded *BEFORE* all
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
-        run: python -m pip install --upgrade pip  #setuptools wheel
+        run: python -m pip --quiet install --upgrade pip  #setuptools wheel
       - name: 'Installing package dependencies...'
-        run: python -m pip install --upgrade tox  #tox-gh-actions  #virtualenv 
+        run: python -m pip --quiet install --upgrade tox  #tox-gh-actions  #virtualenv 
 
       # Note that:
       #

@@ -1438,10 +1438,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #      # It really is that simple, folks. Maybe. Gods, let it be that simple.
 #      config = BeartypeConfigGlobal
-#* Privatize the existing public "beartype._decor.main" submodule to
-#  "beartype._decor._decor" or something hopefully less ambiguous.
+#* Privatize the existing public "beartype._decor.main" submodule to a new
+#  "beartype._decor._template" submodule.
 #* In that submodule:
-#  * Rename the existing @beartype decorator to make_func_checker(). That
+#  * Rename the existing @beartype decorator to beartype_template(). That
 #    function will now only be called internally rather than externally.
 #* Define a new private "beartype._decor._cache.cachedecor" submodule.
 #* In that submodule:
@@ -1469,7 +1469,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #                # "BEARTYPE_PARAMS_TO_DECOR", and return that decorator.
 #        else:
 #            # Probably not quite right, but close enough.
-#            beartype = make_func_checker
+#            beartype = beartype_template
 #
 #    We need a hashable tuple for lookup purposes. That's *ABSOLUTELY* the
 #    fastest way, given that we expect keyword arguments. So, we're moving on.
@@ -1526,7 +1526,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #                param_name, param_value in BEARTYPE_PARAM_NAME_TO_VALUE.items()
 #                if param_value is not None
 #            })
-#      * Dynamically *COPY* the make_func_checker() function into a new
+#      * Dynamically *COPY* the beartype_template() function into a new
 #        function specific to that subclass, which means that function is
 #        actually just a template. We'll never actually the original function
 #        itself; we just use that function as the basis for dynamically
@@ -1556,15 +1556,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #                    closure=f.__closure__,
 #                )
 #      * Monkey-patch the new decorator returned by
-#        "copy_func(make_func_checker)" with the new subclass: e.g.,
-#            beartype_decor = copy_func(make_func_checker)
+#        "copy_func(beartype_template)" with the new subclass: e.g.,
+#            beartype_decor = copy_func(beartype_template)
 #            beartype_decor.__beartype_config = BeartypeConfigDecor
-#        *HMMM.* Minor snag. That doesn't work, but the make_func_checker()
+#        *HMMM.* Minor snag. That doesn't work, but the beartype_template()
 #        template won't have access to that "__beartype_config". Instead, we'll
 #        need to:
-#        * Augment the signature of the make_func_checker() template to accept
+#        * Augment the signature of the beartype_template() template to accept
 #          a new optional "config" parameter default to "None": e.g.,.
-#          def make_func_checker(
+#          def beartype_template(
 #              func: Callable, config: BeartypeConfigGlobal = None) -> Callable:
 #        * Either refactor the copy_func() function defined above to accept a
 #          caller-defined "argdefs" parameter *OR* (more reasonably) just
@@ -1585,7 +1585,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Pretty trivial, honestly. We've basically already implemented all of the hard
 #stuff above, which is nice.
 #
-#Note that the make_func_checker() function will now accept an optional
+#Note that the beartype_template() function will now accept an optional
 #"config" parameter -- which will, of course, *ALWAYS* be non-"None" by the
 #logic above. Assert this, of course. We can then trivially expose that
 #"config" to lower-level beartype functions by just stuffing it into the

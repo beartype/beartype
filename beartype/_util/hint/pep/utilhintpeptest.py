@@ -320,6 +320,12 @@ def die_if_hint_pep_sign_unsupported(
         )
 
 # ....................{ WARNINGS                          }....................
+#FIXME: Resurrect usage the passed "hint_label" parameter. We've currently
+#disabled this parameter as it's typically just a non-human-readable
+#placeholder substring *NOT* intended to be exposed to end users (e.g.,
+#"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
+#replace such substrings with human-readable equivalents. Can we perform a
+#similar replacement for warnings?
 def warn_if_hint_pep_sign_deprecated(
     # Mandatory parameters.
     hint: object,
@@ -356,10 +362,20 @@ def warn_if_hint_pep_sign_deprecated(
 
     # If this sign is deprecated...
     if hint_sign in HINT_PEP_SIGNS_DEPRECATED:
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
+        #FIXME: Unit test that this string contains *NO* non-human-readable
+        #placeholder substrings. Note that the existing
+        #"beartype_test.a00_unit.decor.code.test_codemain" submodule contains
+        #relevant logic currently disabled for reasons that hopefully no longer
+        #apply. *Urgh!*
+
+        # assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        #
+        # # Warning message to be emitted.
+        # warning_message = f'{hint_label} PEP type hint {repr(hint)} deprecated'
 
         # Warning message to be emitted.
-        warning_message = f'{hint_label} PEP type hint {repr(hint)} deprecated'
+        warning_message = f'PEP type hint {repr(hint)} deprecated'
 
         # If this sign uniquely identifies PEP 484-compliant type hints
         # originating from origin types (e.g., "typing.List[int]"), this sign

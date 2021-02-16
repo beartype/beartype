@@ -27,7 +27,7 @@
 # option would be preferable but is unsupported by macOS's NetBSD-specific
 # version of "readlink". Instead, just defer to Python for portability.
 function canonicalize_path() {
-    python -c "
+    command python3 -c "
 import os, sys
 print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
 }
@@ -56,7 +56,7 @@ pushd "${script_dirname}" >/dev/null
 # This pipeline is gratefully inspired by this StackOverflow answer:
 #     https://stackoverflow.com/a/56387013/2809027
 #command tox -e $(command tox -l | command grep linux | command paste -sd "," -)
-command tox
+command python3 -m tox "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

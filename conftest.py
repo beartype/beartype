@@ -51,9 +51,8 @@ def pytest_sessionstart(session: '_pytest.main.Session') -> None:
 #   name suggested here.
 #* "pytest-retox". (Clever, and mildly meaningfull.)
 #* "pytest-detox". (Clever, but sadly meaningless.)
-#Once created, we can then require this plugin in both this *AND* the BETSEE
-#codebases. At present, we have no alternative means of sharing this code
-#between both codebases. DRY, yo!
+#Once created, we can then require this plugin in both this *AND* various other
+#codebases. At present, we have no alternative means of sharing this code. DRY!
 def _clean_imports() -> None:
     '''
     Sanitize and validate import directories (i.e., the global :attr:`sys.list`
@@ -93,9 +92,9 @@ def _clean_imports() -> None:
 
     # Print the absolute dirname of the system-wide Python prefix and current
     # Python prefix, which differs from the former under venvs.
-    print('python prefix (system [base]): ' + sys.base_prefix)
-    print('python prefix (system [real]): ' + getattr(sys, 'real_prefix', ''))
-    print('python prefix (current): ' + sys.prefix)
+    print(f'python prefix (system [base]): {sys.base_prefix}')
+    print(f'python prefix (system [real]): {getattr(sys, "real_prefix", "")}')
+    print(f'python prefix (current): {sys.prefix}')
 
     # True only if tests are isolated to a venv produced by either...
     #
@@ -123,7 +122,7 @@ def _clean_imports() -> None:
     )
 
     # Print whether tests are isolated to a venv.
-    print('venv test isolation: {}'.format(is_venv))
+    print(f'venv test isolation: {is_venv}')
 
     # If tests are *NOT* isolated to a venv, silently reduce to a noop.
     if not is_venv:
@@ -164,7 +163,6 @@ def _clean_imports() -> None:
                 import_pathname.endswith('.zip')
             )
         )
-
 
     # Sanitized list of the absolute pathnames of all paths to find modules to
     # be imported from, reordered from the unsanitized list of these pathnames
@@ -220,7 +218,7 @@ def _clean_imports() -> None:
     sys_path_nonvenv = []
 
     # Print the absolute dirname of this venv's top-level directory.
-    print('venv dir: {}'.format(sys.prefix))
+    print(f'venv dir: {sys.prefix}')
 
     # For the pathname of each path to find imports from...
     for import_pathname in sys.path:
@@ -234,15 +232,15 @@ def _clean_imports() -> None:
         # ignore this pathname and warn the user.
         elif import_pathname == PROJECT_DIRNAME:
             print(
-                'WARNING: Ignoring non-isolated import directory '
-                '"{}"...'.format(import_pathname),
+                f'WARNING: Ignoring non-isolated import directory '
+                f'"{import_pathname}"...',
                 file=sys.stderr)
         # Else if this pathname is *NOT* isolated to this venv...
         elif not _is_import_path_isolated(import_pathname):
             # Warn the user.
             print(
-                'WARNING: Deprioritizing non-isolated import path '
-                '"{}"...'.format(import_pathname),
+                f'WARNING: Deprioritizing non-isolated import path '
+                f'"{import_pathname}"...',
                 file=sys.stderr)
 
             # Append this pathname to the deprioritized list.
@@ -258,10 +256,10 @@ def _clean_imports() -> None:
     sys_path_new.extend(sys_path_nonvenv)
 
     # Print the unsanitized list of these pathnames.
-    print('venv import paths (unsanitized): ' + str(sys.path))
+    print(f'venv import paths (unsanitized): {sys.path}')
 
     # Print the sanitized list of these pathnames.
-    print('venv import paths (sanitized): ' + str(sys_path_new))
+    print(f'venv import paths (sanitized): {sys_path_new}')
 
     # Replace the original unsanitized list with this sanitized list as a
     # single atomic assignment, avoiding synchronization issues.
@@ -279,8 +277,9 @@ def _clean_imports() -> None:
     #
     if not _is_import_path_isolated(import_pathname_first):
         raise ValueError(
-            'Leading import path "{}" not isolated to '
-            'venv directory "{}".'.format(import_pathname_first, VENV_DIRNAME))
+            f'Leading import path "{import_pathname_first}" not isolated to '
+            f'venv directory "{VENV_DIRNAME}".'
+        )
 
     # Top-level package, imported only *AFTER* sanity checks above.
     import beartype as package
@@ -289,10 +288,11 @@ def _clean_imports() -> None:
     PACKAGE_DIRNAME = os.path.dirname(package.__file__)
 
     # Print this dirname.
-    print('venv project path: ' + PACKAGE_DIRNAME)
+    print(f'venv project path: {PACKAGE_DIRNAME}')
 
     # If this directory is *NOT* isolated to this venv, raise an exception.
     if not _is_import_path_isolated(PACKAGE_DIRNAME):
         raise ValueError(
-            'Project import directory "{}" not isolated to '
-            'venv directory "{}".'.format(PACKAGE_DIRNAME, VENV_DIRNAME))
+            f'Project import directory "{PACKAGE_DIRNAME}" not isolated to '
+            f'venv directory "{VENV_DIRNAME}".'
+        )

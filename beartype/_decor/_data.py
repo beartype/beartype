@@ -35,6 +35,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import inspect
 from beartype.cave import CallableTypes
+from beartype.roar import BeartypeDecorWrappeeException
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.text.utiltextlabel import label_callable_decorated
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -82,6 +84,11 @@ class BeartypeData(object):
     func : CallableTypes
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator).
+    func_codeobj = CallableCodeObjectType
+        **Code object** (i.e., instance of the :class:`CodeType` type)
+        underlying the decorated callable.
+    func_sig : inspect.Signature
+        :class:`inspect.Signature` object describing this signature.
 
     Attributes (String)
     ----------
@@ -90,11 +97,6 @@ class BeartypeData(object):
         returned by this decorator. To efficiently (albeit imperfectly) avoid
         clashes with existing attributes of the module defining that function,
         this name is obfuscated while still preserving human-readability.
-
-    Attributes (Object)
-    ----------
-    func_sig : inspect.Signature
-        :class:`inspect.Signature` object describing this signature.
 
     .. _PEP 563:
         https://www.python.org/dev/peps/pep-0563
@@ -107,9 +109,9 @@ class BeartypeData(object):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'func',
+        'func_codeobj',
         'func_sig',
         'func_wrapper_name',
-        '_pep_hint_placeholder_id',
     )
 
     # Coerce instances of this class to be unhashable, preventing spurious
@@ -144,6 +146,7 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func = None
+        self.func_codeobj = None
         self.func_sig = None
         self.func_wrapper_name = None
 
@@ -170,6 +173,10 @@ class BeartypeData(object):
             If evaluating a postponed annotation on this callable raises an
             exception (e.g., due to that annotation referring to local state no
             longer accessible from this deferred evaluation).
+        BeartypeDecorWrappeeException
+            If this callable is neither a pure-Python function *nor* method;
+            equivalently, if this callable is either C-based *or* a class or
+            object defining the ``__call__()`` dunder method.
 
         .. _PEP 563:
            https://www.python.org/dev/peps/pep-0563
@@ -181,6 +188,11 @@ class BeartypeData(object):
 
         # Callable currently being decorated.
         self.func = func
+
+        # Code object underlying this callable if this callable is a
+        # pure-Python function or method *OR* raise an exception otherwise.
+        self.func_codeobj = get_func_codeobj(
+            func=func, exception_cls=BeartypeDecorWrappeeException)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = f'__beartyped_{func.__name__}'

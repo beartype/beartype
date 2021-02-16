@@ -188,9 +188,10 @@ as a private default parameter to the signatures of these functions.
 # ....................{ DECORATORS                        }....................
 def beartype(func):
     '''
-    Decorate the passed **callable** (e.g., function, method) to validate both
-    all annotated parameters passed to this callable *and* the annotated value
-    returned by this callable if any.
+    Decorate the passed **pure-Python callable** (e.g., function or method
+    declared in Python rather than C) to validate both all annotated parameters
+    passed to this callable *and* the annotated value returned by this callable
+    if any.
 
     This decorator performs rudimentary type checking based on Python 3.x
     function annotations, as officially documented by PEP 484 ("Type Hints").
@@ -235,16 +236,20 @@ def beartype(func):
             fully-qualified classnames).
           * **Tuple unions** (i.e., tuples containing one or more classes
             and/or forward references).
-    BeartypeDecorParamNameException
-        If the name of any parameter declared on this callable is prefixed by
-        the reserved substring ``__beartype_``.
     BeartypeDecorHintPep563Exception
         If `PEP 563`_ is active for this callable and evaluating a **postponed
         annotation** (i.e., annotation whose value is a string) on this
         callable raises an exception (e.g., due to that annotation referring to
         local state no longer accessible from this deferred evaluation).
+    BeartypeDecorParamNameException
+        If the name of any parameter declared on this callable is prefixed by
+        the reserved substring ``__beartype_``.
     BeartypeDecorWrappeeException
-        If this callable is either uncallable or a class.
+        If this callable is either:
+
+        * Uncallable.
+        * A class, which :mod:`beartype` currently fails to support.
+        * A C-based callable (e.g., builtin, third-party C extension).
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
