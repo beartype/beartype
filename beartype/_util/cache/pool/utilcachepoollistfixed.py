@@ -85,13 +85,13 @@ class FixedList(list):
         # If this length is *NOT* an integer, raise an exception.
         if not isinstance(size, int):
             raise _BeartypeUtilCachedFixedListException(
-                'Fixed list length {!r} not integer.'.format(size))
+                f'Fixed list length {repr(size)} not integer.')
         # Else, this length is an integer.
 
         # If this length is non-positive, raise an exception.
         if size <= 0:
             raise _BeartypeUtilCachedFixedListException(
-                'Fixed list length {!r} <= 0.'.format(size))
+                f'Fixed list length {size} <= 0.')
         # Else, this length is positive.
 
         # Make it so with the standard Python idiom for preallocating list
@@ -122,19 +122,19 @@ class FixedList(list):
 
     def __delitem__(self, index):
         raise _BeartypeUtilCachedFixedListException(
-            '{} index {!r} not deletable.'.format(self._label, index))
+            f'{self._label} index {repr(index)} not deletable.')
 
 
     def __iadd__(self, value):
         raise _BeartypeUtilCachedFixedListException(
-            '{} not addable by {}.'.format(
-                self._label, get_object_representation(value)))
+            f'{self._label} not addable by '
+            f'{get_object_representation(value)}.')
 
 
     def __imul__(self, value):
         raise _BeartypeUtilCachedFixedListException(
-            '{} not multipliable by {}.'.format(
-                self._label, get_object_representation(value)))
+            f'{self._label} not multipliable by '
+            f'{get_object_representation(value)}.')
 
     # ..................{ BAD ~ dunders : setitem           }..................
     def __setitem__(self, index, value):
@@ -193,8 +193,8 @@ class FixedList(list):
         # If this value is *NOT* a sized container, raise an exception.
         if not isinstance(value, Sized):
             raise _BeartypeUtilCachedFixedListException(
-                '{} slice {!r} not settable to unsized {}.'.format(
-                    self._label, index, get_object_representation(value)))
+                f'{self._label} slice {repr(index)} not settable to unsized '
+                f'{get_object_representation(value)}.')
         # Else, this value is a sized container.
 
         # 0-based first and one-past-the-last indices sliced by this slice.
@@ -210,14 +210,10 @@ class FixedList(list):
         # If these two lengths differ, raise an exception.
         if slice_len != value_len:
             raise _BeartypeUtilCachedFixedListException(
-                '{} slice {!r} of length {} not settable to '
-                '{} of differing length {}.'.format(
-                    self._label,
-                    index,
-                    slice_len,
-                    get_object_representation(value),
-                    value_len,
-                ))
+                f'{self._label} slice {repr(index)} of length {slice_len} not '
+                f'settable to {get_object_representation(value)} of differing '
+                f'length {value_len}.'
+            )
 
     # ..................{ BAD ~ non-dunders                 }..................
     # Prohibit non-dunder methods modifying list length by overriding these
@@ -225,29 +221,29 @@ class FixedList(list):
 
     def append(self, obj) -> None:
         raise _BeartypeUtilCachedFixedListException(
-            '{} not appendable by {}.'.format(
-                self._label, get_object_representation(obj)))
+            f'{self._label} not appendable by '
+            f'{get_object_representation(obj)}.')
 
 
     def clear(self) -> None:
         raise _BeartypeUtilCachedFixedListException(
-            '{} not clearable.'.format(self._label))
+            f'{self._label} not clearable.')
 
 
     def extend(self, obj) -> None:
         raise _BeartypeUtilCachedFixedListException(
-            '{} not extendable by {}.'.format(
-                self._label, get_object_representation(obj)))
+            f'{self._label} not extendable by '
+            f'{get_object_representation(obj)}.')
 
 
     def pop(self, *args) -> None:
         raise _BeartypeUtilCachedFixedListException(
-            '{} not poppable.'.format(self._label))
+            f'{self._label} not poppable.')
 
 
     def remove(self, *args) -> None:
         raise _BeartypeUtilCachedFixedListException(
-            '{} not removable.'.format(self._label))
+            f'{self._label} not removable.')
 
     # ..................{ PRIVATE ~ property                }..................
     # Read-only properties intentionally prohibiting mutation.
@@ -264,7 +260,7 @@ class FixedList(list):
         '''
 
         # One-liners for magnanimous pusillanimousness.
-        return 'Fixed list ' + get_object_representation(self)
+        return f'Fixed list {get_object_representation(self)}'
 
 # ....................{ SINGLETONS ~ private              }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)
@@ -319,7 +315,7 @@ def acquire_fixed_list(size: int) -> FixedList:
     # Thread-safely acquire a fixed list of this length.
     fixed_list = _fixed_list_pool.acquire(size)
     assert isinstance(fixed_list, FixedList), (
-        '{!r} not a fixed list.'.format(fixed_list))
+        f'{repr(fixed_list)} not fixed list.')
 
     # Return this list.
     return fixed_list
@@ -354,7 +350,7 @@ def release_fixed_list(fixed_list: FixedList) -> None:
         Previously acquired fixed list to be released.
     '''
     assert isinstance(fixed_list, FixedList), (
-        '{!r} not a fixed list.'.format(fixed_list))
+        f'{repr(fixed_list)} not fixed list.')
 
     # Thread-safely release this fixed list.
     _fixed_list_pool.release(key=len(fixed_list), item=fixed_list)

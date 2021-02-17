@@ -32,7 +32,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     from typing import Protocol
 
     def is_hint_pep544_ignorable_or_none(
-        hint: object, hint_sign: object) -> 'Optional[bool]':
+        hint: object, hint_sign: object) -> Optional[bool]:
 
         # Return either:
         # * If this hint is the "typing.Protocol" superclass directly
@@ -88,7 +88,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 # to unconditionally return False.
 else:
     def is_hint_pep544_ignorable_or_none(
-        hint: object, hint_sign: object) -> 'Optional[bool]':
+        hint: object, hint_sign: object) -> Optional[bool]:
         return None
 
 
@@ -212,7 +212,7 @@ is_hint_pep544_protocol.__doc__ = '''
     '''
 
 # ....................{ GETTTERS                          }....................
-def get_hint_pep544_io_protocol_from_generic(hint: object) -> 'Protocol':
+def get_hint_pep544_io_protocol_from_generic(hint: object) -> type:
     '''
     `PEP 544`_-compliant :mod:`beartype` **IO protocol** (i.e., either
     :class:`beartype._util.hint.data.pep.proposal.utilhintdatapep544._Pep544IO`

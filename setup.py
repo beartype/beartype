@@ -249,8 +249,9 @@ _SETUP_OPTIONS = {
     # including the top-level package and all subpackages of that package. This
     # thus excludes:
     #
-    # * The top-level test package and all subpackages of this package, test
-    #   functionality *NOT* intended to be installed with this package.
+    # * The top-level test package and all subpackages of that package,
+    #   defining only test functionality *NOT* intended to be installed with
+    #   this package.
     # * "build", caching both setuptools metadata and a complete copy of this
     #   package, required only by a prior package installation.
     #
@@ -266,12 +267,18 @@ _SETUP_OPTIONS = {
     )),
 
     # ..................{ PACKAGES ~ data                   }..................
-    # Install all data files (i.e., non-Python files) embedded in the Python
-    # package tree for this application.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: *ALL DATA FILES TO BE INSTALLED MUST BE EXPLICITLY MATCHED IN
+    # THE TOP-LEVEL "MANIFEST.in" FILE.*
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #
-    # Unlike Python packages, undesirable data files are excludable from
-    # installation *ONLY* via the external "MANIFEST.in" file. This is
-    # terrible, of course. (Did you expect otherwise?)
+    # Install all data files (i.e., non-Python files) embedded in the Python
+    # package tree for this project which are also explicitly matched by the
+    # top-level "MANIFEST.in" file.
+    #
+    # Unlike Python packages, undesirable data files are includable and
+    # excludable from installation *ONLY* via the external "MANIFEST.in" file.
+    # This is terrible, of course. (Did you expect otherwise?)
     #
     # Data files are *NOT* Python modules and hence should *NOT* be embedded in
     # the Python package tree. Sadly, the "data_files" key supported by
@@ -283,13 +290,11 @@ _SETUP_OPTIONS = {
     # in 'data_files', that implementation would be inherently fragile. (That's
     # bad.) In lieu of sane setuptools support, we defer to the methodology
     # employed by everyone. Setuptools, your death is coming.
+    #
+    # See also:
+    # * "Data Files Support", official documentation for this abomination at:
+    #   https://setuptools.readthedocs.io/en/latest/userguide/datafiles.html
     'include_package_data': True,
-
-    # Distribute py.typed file (that's not included by default)
-    # This is required for PEP 561 compliance
-    'package_data': {
-        'beartype': ['py.typed']
-    },
 
     # Install to an uncompressed directory rather than a compressed archive.
     #

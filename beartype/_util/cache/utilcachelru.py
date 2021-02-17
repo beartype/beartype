@@ -128,7 +128,7 @@ class LRUCacheStrong(dict):
 
     def __getitem__(
         self,
-        key: 'Hashable',
+        key: Hashable,
 
         # Superclass methods efficiently localized as default parameters.
         __dict_delitem=dict.__delitem__,
@@ -185,7 +185,7 @@ class LRUCacheStrong(dict):
 
     def __setitem__(
         self,
-        key: 'Hashable',
+        key: Hashable,
         value: object,
 
         # Superclass methods efficiently localized as default parameters.
@@ -239,7 +239,7 @@ class LRUCacheStrong(dict):
 
     def __contains__(
         self,
-        key: 'Hashable',
+        key: Hashable,
 
         # Superclass methods efficiently localized as default parameters.
         __dict_contains = dict.__contains__,

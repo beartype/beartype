@@ -13,14 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import ModuleType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from types import ModuleType
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ ADDERS                            }....................
-def add_data(data_module: 'ModuleType') -> None:
+def add_data(data_module: ModuleType) -> None:
     '''
     Add `PEP 593`_**-compliant type hint data to various global containers
     declared by the passed module.

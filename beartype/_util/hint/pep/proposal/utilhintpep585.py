@@ -207,7 +207,7 @@ is_hint_pep585_generic_uncached.__doc__ = '''
     '''
 
 # ....................{ GETTERS                           }....................
-def get_hint_pep585_generic_bases_unerased(hint: object) -> 'Tuple[object]':
+def get_hint_pep585_generic_bases_unerased(hint: object) -> Tuple[object]:
     '''
     Tuple of all unerased `PEP 585`_-compliant **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
@@ -255,7 +255,7 @@ def get_hint_pep585_generic_bases_unerased(hint: object) -> 'Tuple[object]':
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(hint: object) -> 'Tuple[TypeVar, ...]':
+def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed `PEP 585`_-compliant generic listed by the caller
@@ -281,7 +281,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> 'Tuple[TypeVar, ...]':
 
     Returns
     ----------
-    Tuple[TypeVar]
+    Tuple[TypeVar, ...]
         Either:
 
         * If this `PEP 585`_-compliant generic defines a ``__parameters__``

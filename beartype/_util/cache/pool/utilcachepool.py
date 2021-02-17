@@ -13,9 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCachedKeyPoolException
-from collections import defaultdict, abc
+from collections import defaultdict
+from collections.abc import Hashable
 from threading import Lock
-from typing import Any, Hashable, Dict
+from typing import Any, Callable, Dict
 
 # ....................{ CLASSES                           }....................
 class KeyPool(object):
@@ -75,14 +76,14 @@ class KeyPool(object):
     # ..................{ INITIALIZER                       }..................
     def __init__(
         self,
-        item_maker: 'abc.Callable[Hashable, Any]',
+        item_maker: Callable[[Hashable,], Any],
     ) -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
         Parameters
         ----------
-        item_maker : collections.abc.Callable[(HashableType,), Any]
+        item_maker : Callable[Hashable, Any]
             Caller-defined factory callable internally called by the
             :meth:`acquire` method on attempting to acquire a non-existent
             object from an **empty pool** (i.e., either a missing key *or* an
@@ -95,8 +96,8 @@ class KeyPool(object):
 
             .. code-block:: python
 
-               from beartype.cave import HashableType
-               def item_maker(key: HashableType) -> object: ...
+               from collections.abc import Hashable
+               def item_maker(key: Hashable) -> object: ...
         '''
         assert callable(item_maker), f'{repr(item_maker)} not callable.'
 
@@ -118,7 +119,7 @@ class KeyPool(object):
         self._thread_lock = Lock()
 
     # ..................{ METHODS                           }..................
-    def acquire(self, key: 'Hashable' = None) -> object:
+    def acquire(self, key: Hashable = None) -> object:
         '''
         Acquire an arbitrary object associated with the passed **arbitrary
         key** (i.e., hashable object).
@@ -189,7 +190,7 @@ class KeyPool(object):
             return pool_item
 
 
-    def release(self, item: object, key: 'Hashable' = None) -> None:
+    def release(self, item: object, key: Hashable = None) -> None:
         '''
         Release the passed object acquired by a prior call to the
         :meth:`acquire` method passed the same passed **arbitrary key** (i.e.,

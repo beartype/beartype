@@ -1059,6 +1059,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `593 <PEP 593_>`__                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                  | `604 <PEP 604_>`__                      | *none*                        | *none*                    |
++------------------+-----------------------------------------+-------------------------------+---------------------------+
 | packages         | `PyPI <beartype PyPI_>`__               | **0.1.0**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `Anaconda <beartype Anaconda_>`__       | **0.1.0**\ —\ *current*       | —                         |
@@ -1404,6 +1406,7 @@ Compliance
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 * `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
+* `PEP 604 -- Adding a final qualifier to typing <PEP 604_>`__.
 
 See also the **PEP** and **typing** categories of our `features matrix
 <Features_>`__ for further details.
@@ -3073,6 +3076,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0591
 .. _PEP 593:
    https://www.python.org/dev/peps/pep-0593
+.. _PEP 604:
+   https://www.python.org/dev/peps/pep-0604
 .. _PEP 3141:
    https://www.python.org/dev/peps/pep-3141
 

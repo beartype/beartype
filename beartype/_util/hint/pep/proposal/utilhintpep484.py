@@ -32,7 +32,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep484_ignorable_or_none(
-    hint: object, hint_sign: object) -> 'Optional[bool]':
+    hint: object, hint_sign: object) -> Optional[bool]:
     '''
     ``True`` only if the passed object is a `PEP 484`_-compliant **ignorable
     type hint,** ``False`` only if this object is a `PEP 484`_-compliant
@@ -563,7 +563,7 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: object) -> type:
 
 
 @callable_cached
-def get_hint_pep484_generic_bases_unerased(hint: object) -> 'Tuple[object]':
+def get_hint_pep484_generic_bases_unerased(hint: object) -> Tuple[object]:
     '''
     Tuple of all unerased :mod:`typing` **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their

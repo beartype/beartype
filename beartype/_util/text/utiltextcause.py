@@ -72,7 +72,7 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
 
 
 def get_cause_object_not_nonpep_tuple(
-    pith: object, hint: 'Tuple[type]') -> str:
+    pith: object, hint: Tuple[type, ...]) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary
     object to satisfy (i.e., be an instance of at least one of the items of)

@@ -161,7 +161,7 @@ get_hint_pep_args.__doc__ = '''
 # If the active Python interpreter targets at least Python >= 3.9, implement
 # this function to perform cray-cray logic. *sigh*
 if IS_PYTHON_AT_LEAST_3_9:
-    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
+    def get_hint_pep_typevars(hint: object) -> Tuple[type, ...]:
 
         # Value of the "__parameters__" dunder attribute on this object if this
         # object defines this attribute *OR* "None" otherwise.
@@ -186,7 +186,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 # Else if the active Python interpreter targets Python 3.7 or 3.8, implement
 # this function to access the "__parameters__" dunder instance variable.
 elif IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
+    def get_hint_pep_typevars(hint: object) -> Tuple[type, ...]:
 
         # Value of the "__parameters__" dunder attribute on this object if this
         # object defines this attribute *OR* the empty tuple otherwise. Note:
@@ -204,7 +204,7 @@ elif IS_PYTHON_AT_LEAST_3_7:
 #
 # Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
-    def get_hint_pep_typevars(hint: object) -> 'Tuple[TypeVar]':
+    def get_hint_pep_typevars(hint: object) -> Tuple[type, ...]:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
@@ -265,7 +265,7 @@ get_hint_pep_typevars.__doc__ = '''
 
     Returns
     ----------
-    Tuple[TypeVar]
+    Tuple[TypeVar, ...]
         Either:
 
         * If this object defines a ``__parameters__`` dunder attribute, the
@@ -476,8 +476,7 @@ def get_hint_pep_sign(hint: object) -> dict:
         if hint not in HINT_PEP_SIGNS_TYPE:
             raise BeartypeDecorHintPepSignException(
                 f'Unsubscripted non-generic class {repr(hint)} invalid as '
-                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
-            )
+                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).')
         # Else, this class is explicitly allowed as a sign.
 
         # Return this class as is.
@@ -563,8 +562,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     if not sign_name.startswith('typing.'):
         raise BeartypeDecorHintPepSignException(
             f'PEP 484 type hint {repr(hint)} '
-            f'representation "{sign_name}" not prefixed by "typing.".'
-        )
+            f'representation "{sign_name}" not prefixed by "typing.".')
 
     # Strip the now-harmful "typing." prefix from this representation.
     # Preserving this prefix would raise an "AttributeError" exception from
@@ -601,8 +599,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     if sign is None:
         raise BeartypeDecorHintPepSignException(
             f'PEP 484 type hint {repr(hint)} '
-            f'attribute "typing.{sign_name}" not found.'
-        )
+            f'attribute "typing.{sign_name}" not found.')
     # Else, this "typing" attribute exists.
 
     # Return this "typing" attribute.
@@ -643,8 +640,7 @@ def get_hint_pep_type_origin(hint: object) -> type:
     if hint_type_origin is None:
         raise BeartypeDecorHintPepException(
             f'PEP type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from external class).'
-        )
+            f'(i.e., does not originate from external class).')
     # Else, this type exists.
 
     # Return this type.
@@ -655,7 +651,7 @@ def get_hint_pep_type_origin(hint: object) -> type:
 # this function to access the standard "__origin__" dunder instance variable
 # whose value is the origin type originating this hint.
 if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_type_origin_or_none(hint: object) -> 'Optional[type]':
+    def get_hint_pep_type_origin_or_none(hint: object) -> Optional[type]:
 
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
@@ -686,7 +682,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 #
 # Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
-    def get_hint_pep_type_origin_or_none(hint: object) -> 'Optional[type]':
+    def get_hint_pep_type_origin_or_none(hint: object) -> Optional[type]:
 
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
@@ -790,7 +786,7 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ subtype : generic       }....................
-def get_hint_pep_generic_bases_unerased(hint: object) -> 'Tuple[object]':
+def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     '''
     Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
     originally listed as superclasses prior to their implicit type erasure

@@ -36,7 +36,7 @@ from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
 from inspect import Parameter
-from typing import Callable, Optional
+from typing import Callable
 from warnings import warn
 
 # ....................{ CONSTANTS ~ private               }....................
@@ -70,7 +70,7 @@ flattened tuple of all parameters passed to the decorated callable.
 '''
 
 # ....................{ DECORATORS                        }....................
-def callable_cached(func: 'Callable') -> 'Callable':
+def callable_cached(func: Callable) -> Callable:
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
     values of the passed callable as well as all previously raised exceptions

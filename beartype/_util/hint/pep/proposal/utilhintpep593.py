@@ -44,7 +44,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
 
     def is_hint_pep593_ignorable_or_none(
-        hint: object, hint_sign: object) -> 'Optional[bool]':
+        hint: object, hint_sign: object) -> Optional[bool]:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -69,7 +69,7 @@ else:
 
 
     def is_hint_pep593_ignorable_or_none(
-        hint: object, hint_sign: object) -> 'Optional[bool]':
+        hint: object, hint_sign: object) -> Optional[bool]:
         return None
 
 # ....................{ TESTERS ~ doc                     }....................

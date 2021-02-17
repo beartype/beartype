@@ -6,7 +6,8 @@
 # Template with which setuptools generates this project's "MANIFEST" file.
 
 # ....................{ INCLUDE                           }....................
-# Include all requisite top-level installation-time files.
+# Include all requisite top-level install-time files.
+.mypy.ini
 .readthedocs.yml
 include LICENSE
 include MANIFEST.in
@@ -17,12 +18,15 @@ include setup.cfg
 include setup.py
 include tox.ini
 
+# Include all requisite package-level install-time files.
+beartype/py.typed
+
 # ....................{ INCLUDE ~ recursive               }....................
-# Include all requisite project-specific py.test and setuptools subpackages.
+# Include all requisite project-specific test packages.
 #
-# Note that these subpackages are *ONLY* required at installation time and
-# hence omitted from the "packages" key passed to the setup() function by
-# "setup.py". Welcome to Setuptools Hell, dear friend.
+# Note that these packages are *ONLY* required at test time and hence omitted
+# from the "packages" key passed to the setup() function by "setup.py". Welcome
+# to Setuptools Hell, dear friend.
 recursive-include beartype_test *
 
 # Include all optional documentation.

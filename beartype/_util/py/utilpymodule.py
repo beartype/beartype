@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import importlib
+from beartype.cave import ModuleType
 from beartype.roar import _BeartypeUtilModuleException
-from types import ModuleType
 from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -24,8 +24,8 @@ def die_unless_module_attr_name(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_label: 'Optional[str]' = 'Module attribute name',
-    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
+    exception_label: str = 'Module attribute name',
+    exception_cls: type = _BeartypeUtilModuleException,
 ) -> None:
     '''
     Raise an exception unless the passed string is the fully-qualified
@@ -39,10 +39,10 @@ def die_unless_module_attr_name(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be validated.
-    exception_label : Optional[str]
+    exception_label : str
         Human-readable label prefixing this name in the exception message
         raised by this function. Defaults to ``"Module attribute name"``.
-    exception_cls : Optional[type]
+    exception_cls : type
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
 
@@ -88,8 +88,7 @@ def die_unless_module_attr_name(
         raise exception_cls(
             f'{exception_label} "{module_attr_name}" '
             f'relative or refers to builtin object '
-            f'(i.e., due to containing no "." characters).'
-        )
+            f'(i.e., due to containing no "." characters).')
     # Else, this string contains one or more "." characters and is thus the
     # fully-qualified name of a non-builtin type.
     #
@@ -98,13 +97,12 @@ def die_unless_module_attr_name(
     elif not is_identifiers_joined(module_attr_name):
         raise exception_cls(
             f'{exception_label} "{module_attr_name}" '
-            f'syntactically invalid as module attribute name.'
-        )
+            f'syntactically invalid as module attribute name.')
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
 # ....................{ GETTERS ~ name                    }....................
-def get_object_module_name(obj: object) -> 'Optional[str]':
+def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this
@@ -118,7 +116,7 @@ def get_object_module_name(obj: object) -> 'Optional[str]':
 
     Returns
     ----------
-    Optional[str]
+    str
         Fully-qualified name of the module declaring this object.
 
     Raises
@@ -137,8 +135,7 @@ def get_object_module_name(obj: object) -> 'Optional[str]':
     if module_name is None:
         raise _BeartypeUtilModuleException(
             f'{repr(obj)} "__module__" dunder attribute undefined '
-            f'(e.g., due to being neither class nor callable).'
-        )
+            f'(e.g., due to being neither class nor callable).')
     # Else, this fully-qualified module name exists.
 
     # Return this name.
@@ -171,7 +168,7 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
     return getattr(obj, '__module__', None)
 
 
-def get_object_class_module_name_or_none(obj: object) -> 'Optional[str]':
+def get_object_class_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring either the passed object if this
@@ -264,8 +261,8 @@ def import_module(
     module_name: str,
 
     # Optional parameters.
-    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
-) -> 'ModuleType':
+    exception_cls: type = _BeartypeUtilModuleException,
+) -> ModuleType:
     '''
     Dynamically import and return the module, package, or C extension with the
     passed fully-qualified name if importable *or* raise an exception
@@ -275,7 +272,7 @@ def import_module(
     ----------
     module_name : str
         Fully-qualified name of the module to be imported.
-    exception_cls : Optional[type]
+    exception_cls : type
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
 
@@ -323,10 +320,10 @@ def import_module_attr(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be imported.
-    exception_label : Optional[str]
+    exception_label : str
         Human-readable label prefixing this name in the exception message
         raised by this function. Defaults to ``"Module attribute name"``.
-    exception_cls : Optional[type]
+    exception_cls : type
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
 
