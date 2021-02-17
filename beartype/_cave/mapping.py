@@ -34,6 +34,7 @@ from beartype.roar import (
 )
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
+from typing import Union, Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -94,7 +95,7 @@ class _NoneTypeOrType(dict):
             '{!r} externally immutable (i.e., not settable).'.format(self))
 
 
-    def __missing__(self, hint: (type, tuple)) -> tuple:
+    def __missing__(self, hint: Union[type, str, tuple]) -> tuple:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on getting the passed
@@ -151,12 +152,13 @@ class _NoneTypeOrType(dict):
         )
 
         # Tuple of types to be cached and returned by this call.
-        hint_or_none = None
+        hint_or_none: Optional[tuple] = None
 
         # If this key is a type...
         if isinstance(hint, type):
             # If this type is "NoneType", reuse the existing "_NoneTypes" tuple
             # containing only this type.
+            # I don't think mypy recognises _NoneType as None, and so gets confused
             if hint is _NoneType:
                 hint_or_none = _NoneTypes
             # Else, this type is *NOT* "NoneType". In this case, instantiate a

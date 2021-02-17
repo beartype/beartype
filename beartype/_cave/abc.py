@@ -41,6 +41,7 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta, abstractmethod
+from typing import Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

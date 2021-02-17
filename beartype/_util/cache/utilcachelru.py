@@ -23,6 +23,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilLRUCacheException
 from threading import RLock
+from typing import Hashable
 
 # ....................{ CLASSES                           }....................
 class LRUCacheStrong(dict):

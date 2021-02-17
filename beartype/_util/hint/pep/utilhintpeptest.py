@@ -76,7 +76,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 from beartype._util.utilobject import get_object_class_unless_class
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import TypeVar
+from typing import TypeVar, Optional
 from warnings import warn
 
 # See the "beartype.__init__" submodule for further commentary.
@@ -333,7 +333,7 @@ def warn_if_hint_pep_sign_deprecated(
 
     # Optional parameters.
     hint_label: str = 'Annotated',
-) -> bool:
+) -> None:
     '''
     Emit a non-fatal warning only if the passed PEP-compliant sign uniquely
     identifying the passed PEP-compliant type hint is **deprecated** (e.g., due
@@ -749,7 +749,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     return is_hint_pep_sign_supported(hint_pep_sign)
 
 
-def is_hint_pep_sign_supported(hint) -> bool:
+def is_hint_pep_sign_supported(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-compliant supported
     unsubscripted typing attribute** (i.e., public attribute of the

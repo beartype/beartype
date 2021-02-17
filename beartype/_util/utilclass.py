@@ -33,7 +33,7 @@ defined purely as a trivial optimization for the frequently accessed
 '''
 
 # ....................{ VALIDATORS                        }....................
-def die_unless_class(cls: type) -> bool:
+def die_unless_class(cls: type) -> None:
     '''
     Raise an exception unless the passed object is a class.
 

@@ -285,6 +285,12 @@ _SETUP_OPTIONS = {
     # employed by everyone. Setuptools, your death is coming.
     'include_package_data': True,
 
+    # Distribute py.typed file (that's not included by default)
+    # This is required for PEP 561 compliance
+    'package_data': {
+        'beartype': ['py.typed']
+    },
+
     # Install to an uncompressed directory rather than a compressed archive.
     #
     # While nothing technically precludes the latter, doing so substantially

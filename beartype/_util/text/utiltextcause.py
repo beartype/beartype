@@ -19,6 +19,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextlabel import label_class
 from beartype._util.text.utiltextrepr import get_object_representation
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
