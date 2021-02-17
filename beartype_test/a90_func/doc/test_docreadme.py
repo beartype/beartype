@@ -45,10 +45,10 @@ def test_doc_readme(monkeypatch) -> None:
     # Defer heavyweight imports.
     from docutils.core import publish_parts
     from docutils.utils import Reporter
-    from beartype_test.util.pytpath import get_repo_readme_file
+    from beartype_test.util.path.pytpathproject import get_project_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
-    README_CONTENTS = get_repo_readme_file().read_text()
+    README_CONTENTS = get_project_readme_file().read_text()
 
     # List of all warning and error messages emitted by "docutils" during
     # parsing of this project's top-level "README.rst" file.

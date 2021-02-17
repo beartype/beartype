@@ -145,9 +145,9 @@ def _sanitize_classifiers(
         List of all sanitized PyPI-specific trove classifier strings.
     '''
     assert isinstance(python_version_min_parts, tuple), (
-        '"{}" not tuple.'.format(python_version_min_parts))
+        f'"{python_version_min_parts}" not tuple.')
     assert isinstance(python_version_minor_max, int), (
-        '"{}" not integer.'.format(python_version_minor_max))
+        f'"{python_version_minor_max}" not integer.')
 
     # Major version of Python required by this package.
     PYTHON_VERSION_MAJOR = python_version_min_parts[0]
@@ -160,8 +160,9 @@ def _sanitize_classifiers(
     for python_version_minor in range(
         python_version_min_parts[1], python_version_minor_max + 1):
         classifiers_sane.append(
-            'Programming Language :: Python :: {}.{}'.format(
-                PYTHON_VERSION_MAJOR, python_version_minor,))
+            f'Programming Language :: Python :: '
+            f'{PYTHON_VERSION_MAJOR}.{python_version_minor}'
+        )
     # print('classifiers: {}'.format(_CLASSIFIERS))
 
     # Return this sanitized list of classifiers.
@@ -263,6 +264,42 @@ _SETUP_OPTIONS = {
         meta.PACKAGE_NAME + '_test.*',
         'build',
     )),
+
+    # ..................{ PACKAGES ~ data                   }..................
+    # Install all data files (i.e., non-Python files) embedded in the Python
+    # package tree for this application.
+    #
+    # Unlike Python packages, undesirable data files are excludable from
+    # installation *ONLY* via the external "MANIFEST.in" file. This is
+    # terrible, of course. (Did you expect otherwise?)
+    #
+    # Data files are *NOT* Python modules and hence should *NOT* be embedded in
+    # the Python package tree. Sadly, the "data_files" key supported by
+    # setuptools for this purpose is *NOT* cross-platform-portable and is thus
+    # inherently broken. Why? Because that key either requires usage of
+    # absolute paths *OR* relative paths relative to absolute paths defined by
+    # "setup.cfg"; in either case, those paths are absolute. While the current
+    # platform could be detected and the corresponding absolute path embedded
+    # in 'data_files', that implementation would be inherently fragile. (That's
+    # bad.) In lieu of sane setuptools support, we defer to the methodology
+    # employed by everyone. Setuptools, your death is coming.
+    'include_package_data': True,
+
+    # Install to an uncompressed directory rather than a compressed archive.
+    #
+    # While nothing technically precludes the latter, doing so substantially
+    # complicates runtime access of data files compressed into this archive
+    # (e.g., with the pkg_resources.resource_filename() function). How so? By
+    # decompressing this archive's contents into a temporary directory on
+    # program startup and removing these contents on program shutdown. Since
+    # there exists no guarantee this removal will actually be performed (e.g.,
+    # due to preemptive SIGKILLs), compressed archives are inherently fragile.
+    #
+    # Note that MyPy requires upstream PEP 561-compliant dependencies (like
+    # this project) to explicitly prohibit archival. See also:
+    #     https://mypy.readthedocs.io/en/stable/installed_packages.html
+    'zip_safe': False,
+
 }
 '''
 Dictionary unpacked as keyword arguments into the subsequent call of the

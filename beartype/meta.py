@@ -257,7 +257,7 @@ URL_ISSUES = f'{URL_HOMEPAGE}/issues'
 URL of this package's issue tracker.
 '''
 
-# ....................{ METADATA ~ libs                   }....................
+# ....................{ METADATA ~ libs : runtime         }....................
 LIBS_RUNTIME_OPTIONAL = ()
 '''
 Optional runtime package dependencies as a tuple of :mod:`setuptools`-specific
@@ -278,8 +278,7 @@ requirements strings of the format ``{project_name}
   ``2020.2.16``, ``0.75a2``).
 '''
 
-
-# ....................{ METADATA ~ libs                   }....................
+# ....................{ METADATA ~ libs : test            }....................
 LIBS_TESTTIME_MANDATORY_TOX = (
     # A relatively modern version of pytest is required.
     'pytest >=4.0.0',
@@ -289,6 +288,22 @@ LIBS_TESTTIME_MANDATORY_TOX = (
 to test this package under :mod:`tox`) as a tuple of :mod:`setuptools`-specific
 requirements strings of the format ``{project_name}
 {comparison1}{version1},...,{comparisonN}{versionN}``.
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+
+
+LIBS_TESTTIME_OPTIONAL = (
+    # A relatively modern version of mypy is recommended.
+    'mypy >=0.790',
+)
+'''
+**Optional developer test-time package dependencies** (i.e., dependencies
+recommended to test this package with :mod:`tox` as a developer at the command
+line) as a tuple of :mod:`setuptools`-specific requirements strings of the
+format ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
 
 See Also
 ----------
@@ -297,14 +312,12 @@ See Also
 '''
 
 
-LIBS_TESTTIME_MANDATORY = LIBS_TESTTIME_MANDATORY_TOX + (
-    # pytest should ideally remain the only hard dependency for testing on
-    # local machines. While our testing regime optionally leverages third-party
-    # frameworks and pytest plugins (e.g., "tox", "pytest-xdist"), these
-    # dependencies are *NOT* required for simple testing.
-    #
-    # A relatively modern version of tox is required.
-    'tox >=3.20.1',
+LIBS_TESTTIME_MANDATORY = (
+    LIBS_TESTTIME_MANDATORY_TOX +
+    LIBS_TESTTIME_OPTIONAL + (
+        # A relatively modern version of tox is required.
+        'tox >=3.20.1',
+    )
 )
 '''
 **Mandatory developer test-time package dependencies** (i.e., dependencies

@@ -102,7 +102,8 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Generic
+from collections.abc import Callable
+from typing import Generic, Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -133,12 +134,12 @@ excessively long as to prevent human-readability.
 # ....................{ RAISERS                           }....................
 def raise_pep_call_exception(
     # Mandatory parameters.
-    func: 'CallableTypes',
+    func: Callable,
     pith_name: str,
     pith_value: object,
 
     # Optional parameters.
-    random_int: 'Optional[int]' = None,
+    random_int: Optional[int] = None,
 ) -> None:
     '''
     Raise a human-readable exception detailing the failure of the parameter
@@ -239,10 +240,10 @@ def raise_pep_call_exception(
     # )'''.format(func, pith_name, pith_value))
 
     # Type of exception to be raised.
-    exception_cls = None
+    exception_cls: type = None  # type: ignore[assignment]
 
     # Human-readable label describing this parameter or return value.
-    pith_label = None
+    pith_label: str = None  # type: ignore[assignment]
 
     # If the name of this parameter is the magic string implying the passed
     # object to be a return value, set the above local variables appropriately.
@@ -296,7 +297,7 @@ def raise_pep_call_exception(
             text=exception_cause, suffix='.')
 
         # Raise an exception of the desired class embedding this cause.
-        raise exception_cls(
+        raise exception_cls(  # type: ignore[misc]
             f'{pith_label} violates type hint '
             f'{repr(hint)}, as {exception_cause_suffixed}'
         )

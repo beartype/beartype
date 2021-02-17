@@ -1394,6 +1394,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Is annotated by the third-party optional "typeshed" dependency.
 #
 #Trivial, but worth noting.
+#FIXME: Lastly, note that everywhere we say "typeshed" above, we *REALLY* mean
+#a PEP 561-compliant search for stub files annotating that callable.
+#Unsurprisingly, the search algorithm is non-trivial, which will impact the
+#performance gains associated with type-checking annotations in the first
+#place. Ergo, we might consider omitting aspects of this search that are both
+#highly inefficient *AND* unlikely to yield positive hits. See also:
+#    https://www.python.org/dev/peps/pep-0561/
 
 #FIXME: *IT'S CONFIGURATION TIME.* So, let's talk about how we efficiently
 #handle @beartype configuration like the "is_proxying" boolean introduced

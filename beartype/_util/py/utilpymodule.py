@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Python module utilities.**
+Project-wide **Python module** utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

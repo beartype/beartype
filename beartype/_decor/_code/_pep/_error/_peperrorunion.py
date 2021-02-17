@@ -24,12 +24,13 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed, uppercase_char_first)
 from beartype._util.text.utiltextrepr import get_object_representation
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_cause_or_none_union(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed PEP-compliant union type hint if this object actually

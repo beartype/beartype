@@ -19,7 +19,7 @@ from beartype._util.text.utiltextlabel import label_callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     '''
     Human-readable string describing the failure of the decorated callable to
     *not* return a value in violation of the `PEP 484`_-compliant

@@ -1043,6 +1043,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `560 <PEP 560_>`__                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                  | `561 <PEP 561_>`__                      | **0.5.2**\ —\ *current*       | **0.5.2**\ —\ *current*   |
++------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `563 <PEP 563_>`__                      | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `572 <PEP 572_>`__                      | **0.3.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
@@ -1389,6 +1391,7 @@ Compliance
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
 * `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
+* `PEP 561 -- Distributing and Packaging Type Information <PEP 561_>`_.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 572 -- Assignment Expressions <PEP 572_>`__.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
@@ -3052,6 +3055,8 @@ application stack at tool rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0526
 .. _PEP 544:
    https://www.python.org/dev/peps/pep-0544
+.. _PEP 561:
+   https://www.python.org/dev/peps/pep-0561
 .. _PEP 563:
    https://www.python.org/dev/peps/pep-0563
 .. _PEP 570:

@@ -42,7 +42,7 @@ from beartype._util.hint.utilhinttest import (
     is_hint_forwardref,
     is_hint_ignorable,
 )
-from typing import NoReturn
+from typing import Any, Callable, NoReturn, Optional, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -66,14 +66,14 @@ class CauseSleuth(object):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
-    func : object
+    func : Callable
         Decorated callable generating this type-checking error.
-    hint : object
+    hint : Any
         Type hint to validate this object against.
-    hint_sign : object
+    hint_sign : Any
         Unsubscripted :mod:`typing` attribute identifying this hint if this hint
         is PEP-compliant *or* ``None`` otherwise.
-    hint_childs : Optional[tuple]
+    hint_childs : Optional[Tuple]
         Either:
 
         * If this hint is PEP-compliant:
@@ -86,7 +86,7 @@ class CauseSleuth(object):
             hint if this
 
         * Else, ``None``.
-    pith : object
+    pith : Any
         Arbitrary object to be validated.
     random_int: Optional[int]
         **Pseudo-random integer** (i.e., unsigned 32-bit integer
@@ -142,9 +142,9 @@ class CauseSleuth(object):
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
-        func: object,
-        pith: object,
-        hint: object,
+        func: Callable,
+        pith: Any,
+        hint: Any,
         cause_indent: str,
         exception_label: str,
         random_int: int,
@@ -169,8 +169,8 @@ class CauseSleuth(object):
         self.random_int = random_int
 
         # Nullify all remaining parameters for safety.
-        self.hint_sign = None
-        self.hint_childs = None
+        self.hint_sign: Any = None
+        self.hint_childs: Tuple = None  # type: ignore[assignment]
 
         # ................{ REDUCTION                         }................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -233,7 +233,7 @@ class CauseSleuth(object):
             )
 
     # ..................{ GETTERS                           }..................
-    def get_cause_or_none(self) -> 'Optional[str]':
+    def get_cause_or_none(self) -> Optional[str]:
         '''
         Human-readable string describing the failure of this pith to satisfy
         this PEP-compliant type hint if this pith fails to satisfy this pith

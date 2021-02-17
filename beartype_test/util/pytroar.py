@@ -52,7 +52,7 @@ class BeartypeTestPathException(BeartypeTestException):
     **Beartype test path exceptions.**
 
     This exception is raised at test time from utility functions defined by the
-    :mod:`beartype_test.util.pytpath` submodule.
+    :mod:`beartype_test.util.path` subpackage.
     '''
 
     pass

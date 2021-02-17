@@ -14,6 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Generalize @callable_cached to revert to the body of the
+#@betse._util.type.decorator.decmemo.func_cached decorator when the passed
+#callable accepts *NO* parameters, which can be trivially decided by inspecting
+#the code object of this callable. Why do this? Because the @func_cached
+#decorator is *INSANELY* fast for this edge case -- substantially faster than
+#the current general-purpose @callable_cached approach.
+
 #FIXME: Generalize @callable_cached to support variadic parameters by appending
 #to "params_flat":
 #  1. A placeholder sentinel object after all positional and keyword arguments.

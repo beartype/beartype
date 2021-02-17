@@ -51,7 +51,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Callable, Iterable
 from inspect import Parameter
-from typing import NoReturn, Union
+from typing import NoReturn, Tuple, Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -157,7 +157,7 @@ def pep_code_check_param(
     hint: object,
     param: Parameter,
     param_index: int,
-) -> 'Tuple[str, bool]':
+) -> Tuple[str, bool]:
     '''
     Python code type-checking the parameter with the passed signature and index
     annotated by a **PEP-compliant type hint** (e.g., :mod:`beartype`-agnostic
@@ -295,7 +295,7 @@ def pep_code_check_param(
 def pep_code_check_return(
     data: BeartypeData,
     hint: object,
-) -> 'Tuple[str, bool]':
+) -> Tuple[str, bool]:
     '''
     Python code type-checking the return value annotated with a **PEP-compliant
     type hint** (e.g., :mod:`beartype`-agnostic annotation compliant with
@@ -327,7 +327,7 @@ def pep_code_check_return(
 
     # Memoized parameter-agnostic Python code type-checking either a parameter
     # or return value with an arbitrary name.
-    func_code = None
+    func_code: str = None  # type: ignore[assignment]
 
     # True only if type-checking for this return value requires a higher-level
     # caller to prefix the body of this wrapper function with code generating

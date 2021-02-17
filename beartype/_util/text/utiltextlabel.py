@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype text label utilities** (i.e., callables generating human-readable
-strings describing prominent objects or types, which are then typically
-interpolated into exception messages).
+Project-wide **text label utilities** (i.e., callables generating
+human-readable strings describing prominent objects or types, which are then
+typically interpolated into exception messages).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -14,19 +14,20 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.utilclass import is_classname_builtin
 from beartype._util.utilobject import get_object_classname
+from collections.abc import Callable
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS ~ callable              }....................
-def label_callable(func: 'CallableTypes') -> None:
+def label_callable(func: Callable) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
     method, property).
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Callable to be labelled.
 
     Returns
@@ -40,7 +41,7 @@ def label_callable(func: 'CallableTypes') -> None:
     return f'{func.__name__}()'
 
 
-def label_callable_decorated(func: 'CallableTypes') -> str:
+def label_callable_decorated(func: Callable) -> str:
     '''
     Human-readable label describing the passed **decorated callable** (i.e.,
     callable wrapped by the :func:`beartype.beartype` decorator with a wrapper
@@ -48,7 +49,7 @@ def label_callable_decorated(func: 'CallableTypes') -> str:
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
 
     Returns
@@ -62,7 +63,7 @@ def label_callable_decorated(func: 'CallableTypes') -> str:
 
 
 def label_callable_decorated_pith(
-    func: 'CallableTypes', pith_name: str) -> str:
+    func: Callable, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
     *or* return value if this name is ``return`` of the passed **decorated
@@ -71,7 +72,7 @@ def label_callable_decorated_pith(
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
     pith_name : str
         Name of the parameter or return value of this callable to be labelled.
@@ -95,7 +96,7 @@ def label_callable_decorated_pith(
 
 # ....................{ LABELLERS ~ callable : param      }....................
 def label_callable_decorated_param(
-    func: 'CallableTypes', param_name: str) -> str:
+    func: Callable, param_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     passed **decorated callable** (i.e., callable wrapped by the
@@ -104,7 +105,7 @@ def label_callable_decorated_param(
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
     param_name : str
         Name of the parameter of this callable to be labelled.
@@ -121,7 +122,7 @@ def label_callable_decorated_param(
 
 
 def label_callable_decorated_param_value(
-    func: 'CallableTypes', param_name: str, param_value: object) -> str:
+    func: Callable, param_name: str, param_value: object) -> str:
     '''
     Human-readable label describing the parameter with the passed name and
     trimmed value of the passed **decorated callable** (i.e., callable wrapped
@@ -130,7 +131,7 @@ def label_callable_decorated_param_value(
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
     param_name : str
         Name of the parameter of this callable to be labelled.
@@ -154,7 +155,7 @@ def label_callable_decorated_param_value(
     )
 
 # ....................{ LABELLERS ~ callable : return     }....................
-def label_callable_decorated_return(func: 'CallableTypes') -> str:
+def label_callable_decorated_return(func: Callable) -> str:
     '''
     Human-readable label describing the return of the passed **decorated
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
@@ -162,7 +163,7 @@ def label_callable_decorated_return(func: 'CallableTypes') -> str:
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
 
     Returns
@@ -176,7 +177,7 @@ def label_callable_decorated_return(func: 'CallableTypes') -> str:
 
 
 def label_callable_decorated_return_value(
-    func: 'CallableTypes', return_value: object) -> None:
+    func: Callable, return_value: object) -> str:
     '''
     Human-readable label describing the passed trimmed return value of the
     passed **decorated callable** (i.e., callable wrapped by the
@@ -185,7 +186,7 @@ def label_callable_decorated_return_value(
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         Decorated callable to be labelled.
     return_value : object
         Value returned by this callable to be labelled.

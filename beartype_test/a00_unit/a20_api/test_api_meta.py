@@ -43,6 +43,7 @@ def test_api_meta() -> None:
     assert isinstance(meta.LIBS_RUNTIME_OPTIONAL, tuple)
     assert isinstance(meta.LIBS_TESTTIME_MANDATORY, tuple)
     assert isinstance(meta.LIBS_TESTTIME_MANDATORY_TOX, tuple)
+    assert isinstance(meta.LIBS_TESTTIME_OPTIONAL, tuple)
     assert isinstance(meta.LIBS_DOCTIME_MANDATORY, tuple)
     assert isinstance(meta.LIBS_DOCTIME_MANDATORY_RTD, tuple)
     assert isinstance(meta.LIBS_DEVELOPER_MANDATORY, tuple)

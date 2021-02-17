@@ -20,13 +20,13 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-from typing import Generic
+from typing import Generic, Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_cause_or_none_generic(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed `PEP 484`_-compliant **generic** (i.e., type hint

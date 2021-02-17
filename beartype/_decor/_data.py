@@ -34,10 +34,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import inspect
-from beartype.cave import CallableTypes
+from beartype.cave import CallableCodeObjectType
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.text.utiltextlabel import label_callable_decorated
+from collections.abc import Callable
+from inspect import Signature
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -81,7 +84,7 @@ class BeartypeData(object):
 
     Attributes
     ----------
-    func : CallableTypes
+    func : Callable
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator).
     func_codeobj = CallableCodeObjectType
@@ -145,13 +148,13 @@ class BeartypeData(object):
         '''
 
         # Nullify all remaining instance variables.
-        self.func = None
-        self.func_codeobj = None
-        self.func_sig = None
-        self.func_wrapper_name = None
+        self.func: Callable = None  # type: ignore[assignment]
+        self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
+        self.func_sig: Signature = None  # type: ignore[assignment]
+        self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
-    def reinit(self, func: CallableTypes) -> None:
+    def reinit(self, func: Callable) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
         acquisition of a previously cached instance of this class from the
@@ -164,7 +167,7 @@ class BeartypeData(object):
 
         Parameters
         ----------
-        func : CallableTypes
+        func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
 
         Raises

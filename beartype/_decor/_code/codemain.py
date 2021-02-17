@@ -584,6 +584,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_return,
 )
 from inspect import Parameter, Signature
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -619,7 +620,7 @@ _RETURN_HINT_EMPTY = Signature.empty
 '''
 
 # ....................{ CODERS                            }....................
-def generate_code(data: BeartypeData) -> None:
+def generate_code(data: BeartypeData) -> Tuple[str, bool]:
     '''
     Set the :attr:`BeartypeData.func_code` instance variable of the passed data
     object to a raw string of Python statements implementing the wrapper
@@ -746,7 +747,7 @@ def generate_code(data: BeartypeData) -> None:
     return func_code, is_func_code_noop
 
 # ....................{ CODERS ~ private                  }....................
-def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
+def _code_check_params(data: BeartypeData) -> Tuple[str, bool]:
     '''
     Python code type-checking all annotated parameters of the decorated
     callable if any *or* the empty string otherwise (i.e., if these parameters
@@ -918,7 +919,7 @@ def _code_check_params(data: BeartypeData) -> 'Tuple[str, bool]':
     )
 
 # ....................{ CODERS                            }....................
-def _code_check_return(data: BeartypeData) -> 'Tuple[str, bool]':
+def _code_check_return(data: BeartypeData) -> Tuple[str, bool]:
     '''
     Python code snippet type-checking the annotated return value declared by
     the decorated callable if any *or* the empty string otherwise (i.e., if

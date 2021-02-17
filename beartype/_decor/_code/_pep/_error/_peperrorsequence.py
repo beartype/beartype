@@ -23,13 +23,13 @@ from beartype._util.hint.pep.utilhintpepget import get_hint_pep_type_origin
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import get_object_representation
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ sequence                }....................
-def get_cause_or_none_sequence_standard(
-    sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant standard sequence type hint** (i.e.,
@@ -68,7 +68,7 @@ def get_cause_or_none_sequence_standard(
     return _get_cause_or_none_sequence(sleuth)
 
 
-def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant standard sequence type hint** (i.e.,
@@ -169,7 +169,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> 'Optional[str]':
     return None
 
 # ....................{ GETTERS ~ private                 }....................
-def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
+def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant variadic sequence type hint** (i.e.,
@@ -219,7 +219,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> 'Optional[str]':
             # * "item" is an arbitrary item of this sequence.
             # * "item_index" is the 0-based index of this item.
             pith_enumerator = None
-            
+
             # If this sequence was indexed by the parent @beartype-generated
             # wrapper function by a pseudo-random integer in O(1) time,
             # type-check *ONLY* the same index of this sequence also in O(1)

@@ -22,12 +22,13 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_type_origin_or_none)
 from beartype._util.py.utilpymodule import import_module_attr
 from beartype._util.text.utiltextcause import get_cause_object_not_type
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ forwardref              }....................
-def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **forward reference type hint** (i.e., string whose
@@ -61,7 +62,7 @@ def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> 'Optional[str]':
     return get_cause_or_none_type(sleuth.permute(hint=hint_forwardref_class))
 
 # ....................{ GETTERS ~ type                    }....................
-def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_type(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to be an instance of the passed non-:mod:`typing` class if this object is
@@ -94,7 +95,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> 'Optional[str]':
     return get_cause_object_not_type(pith=sleuth.pith, hint=sleuth.hint)
 
 
-def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> 'Optional[str]':
+def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant originative type hint** (i.e.,
