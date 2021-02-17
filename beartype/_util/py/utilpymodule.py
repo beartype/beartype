@@ -12,6 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import importlib
 from beartype.roar import _BeartypeUtilModuleException
+from types import ModuleType
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -24,7 +26,7 @@ def die_unless_module_attr_name(
     # Optional parameters.
     exception_label: 'Optional[str]' = 'Module attribute name',
     exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
-) -> object:
+) -> None:
     '''
     Raise an exception unless the passed string is the fully-qualified
     syntactically valid name of a **module attribute** (i.e., object declared
@@ -143,7 +145,7 @@ def get_object_module_name(obj: object) -> 'Optional[str]':
     return module_name
 
 
-def get_object_module_name_or_none(obj: object) -> 'Optional[str]':
+def get_object_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this
@@ -309,8 +311,8 @@ def import_module_attr(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_label: 'Optional[str]' = 'Module attribute name',
-    exception_cls:   'Optional[type]' = _BeartypeUtilModuleException,
+    exception_label: str = 'Module attribute name',
+    exception_cls:  type = _BeartypeUtilModuleException,
 ) -> object:
     '''
     Dynamically import and return the **module attribute** (i.e., object

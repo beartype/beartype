@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from abc import abstractmethod
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -212,7 +213,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pass
 
         @abstractmethod
-        def truncate(self, size: int = None) -> int:
+        def truncate(self, size: Optional[int] = None) -> int:
             pass
 
         @abstractmethod

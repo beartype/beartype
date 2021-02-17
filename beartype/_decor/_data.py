@@ -129,7 +129,7 @@ class BeartypeData(object):
     #
     # See also:
     #     https://docs.python.org/3/reference/datamodel.html#object.__hash__
-    __hash__ = None
+    __hash__ = None  # type: ignore[assignment]
 
     # ..................{ INITIALIZERS                      }..................
     def __init__(self) -> None:
@@ -202,7 +202,7 @@ class BeartypeData(object):
 
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).
-        self.func_sig = None
+        self.func_sig = None  # type: ignore[assignment]
 
         # Resolve all postponed annotations if any on this callable *BEFORE*
         # parsing the actual annotations these postponed annotations refer to.

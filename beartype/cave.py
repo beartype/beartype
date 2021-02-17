@@ -175,11 +175,11 @@ class UnavailableType(object):
     third-party dependencies).
     '''
 
-    def __instancecheck__(self, obj):
+    def __instancecheck__(self, obj) -> None:
         raise _BeartypeCallCheckUnavailableTypeException(
             f'{self} not passable as the second parameter to isinstance().')
 
-    def __subclasscheck__(self, cls):
+    def __subclasscheck__(self, cls) -> None:
         raise _BeartypeCallCheckUnavailableTypeException(
             f'{self} not passable as the second parameter to issubclass().')
 

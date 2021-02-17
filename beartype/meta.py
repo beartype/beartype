@@ -36,6 +36,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -91,7 +92,7 @@ Maximum minor stable version of this major version of Python currently released
 '''
 
 
-def _convert_version_str_to_tuple(version_str: str) -> tuple:
+def _convert_version_str_to_tuple(version_str: str) -> Tuple[int, ...]:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
     machine-readable version tuple of corresponding integers.

@@ -223,29 +223,29 @@ class FixedList(list):
     # Prohibit non-dunder methods modifying list length by overriding these
     # methods to raise exceptions.
 
-    def append(self, obj):
+    def append(self, obj) -> None:
         raise _BeartypeUtilCachedFixedListException(
             '{} not appendable by {}.'.format(
                 self._label, get_object_representation(obj)))
 
 
-    def clear(self):
+    def clear(self) -> None:
         raise _BeartypeUtilCachedFixedListException(
             '{} not clearable.'.format(self._label))
 
 
-    def extend(self, obj):
+    def extend(self, obj) -> None:
         raise _BeartypeUtilCachedFixedListException(
             '{} not extendable by {}.'.format(
                 self._label, get_object_representation(obj)))
 
 
-    def pop(self, *args):
+    def pop(self, *args) -> None:
         raise _BeartypeUtilCachedFixedListException(
             '{} not poppable.'.format(self._label))
 
 
-    def remove(self, *args):
+    def remove(self, *args) -> None:
         raise _BeartypeUtilCachedFixedListException(
             '{} not removable.'.format(self._label))
 

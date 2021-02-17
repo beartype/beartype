@@ -19,6 +19,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.utilclass import is_class_builtin
 from beartype._util.utilobject import is_object_subclass
+from typing import Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -61,7 +62,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             return False
 
 
-    def is_hint_pep544_protocol(hint: object) -> None:
+    def is_hint_pep544_protocol(hint: object) -> bool:
 
         # Return true only if this hint is...
         return (
@@ -95,7 +96,7 @@ else:
         return False
 
 
-    def is_hint_pep544_protocol(hint: object) -> None:
+    def is_hint_pep544_protocol(hint: object) -> bool:
         return False
 
 # ....................{ TESTERS ~ doc                     }....................

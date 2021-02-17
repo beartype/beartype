@@ -13,8 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCachedKeyPoolException
-from collections import defaultdict
+from collections import defaultdict, abc
 from threading import Lock
+from typing import Any, Hashable, Dict
 
 # ....................{ CLASSES                           }....................
 class KeyPool(object):
@@ -74,7 +75,7 @@ class KeyPool(object):
     # ..................{ INITIALIZER                       }..................
     def __init__(
         self,
-        item_maker: 'collections.abc.Callable[(HashableType,), Any]',
+        item_maker: 'abc.Callable[Hashable, Any]',
     ) -> None:
         '''
         Initialize this key pool with the passed factory callable.
@@ -113,11 +114,11 @@ class KeyPool(object):
         #     >>> dd['ee']
         #     KeyError: 'ee'
         self._key_to_pool = defaultdict(list)
-        self._pool_item_id_to_is_acquired = {}
+        self._pool_item_id_to_is_acquired: Dict[int, bool] = {}
         self._thread_lock = Lock()
 
     # ..................{ METHODS                           }..................
-    def acquire(self, key: 'HashableType' = None) -> object:
+    def acquire(self, key: 'Hashable' = None) -> object:
         '''
         Acquire an arbitrary object associated with the passed **arbitrary
         key** (i.e., hashable object).
@@ -188,7 +189,7 @@ class KeyPool(object):
             return pool_item
 
 
-    def release(self, item: object, key: 'HashableType' = None) -> None:
+    def release(self, item: object, key: 'Hashable' = None) -> None:
         '''
         Release the passed object acquired by a prior call to the
         :meth:`acquire` method passed the same passed **arbitrary key** (i.e.,

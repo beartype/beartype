@@ -17,6 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import _BeartypeUtilCallableException
 from collections.abc import Callable
 from types import CodeType, FunctionType, MethodType
+from typing import Optional
 
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(

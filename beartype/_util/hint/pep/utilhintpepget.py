@@ -39,7 +39,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585,
     is_hint_pep585_generic,
 )
-from typing import Generic, NewType, TypeVar
+from typing import Generic, NewType, Optional, Tuple, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

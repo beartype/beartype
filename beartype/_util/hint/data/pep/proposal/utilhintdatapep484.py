@@ -74,7 +74,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # current Python version, as this superclass was thankfully publicized
 # under Python >= 3.7 after its initial privatization under Python <= 3.6.
 HINT_PEP484_BASE_FORWARDREF = (
-    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else typing._ForwardRef)
+    # mypy gets confused by _ForwardRef on python >= 3.7
+    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else typing._ForwardRef)  # type: ignore [attr-defined]
 '''
 **Forward reference sign** (i.e., arbitrary objects uniquely identifying a
 `PEP 484`_-compliant type hint unifying one or more subscripted type hint
