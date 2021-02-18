@@ -67,7 +67,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         # Return true only if this hint is...
         return (
             # A PEP 544-compliant protocol *AND*...
-            is_object_subclass(hint, Protocol) and
+            is_object_subclass(hint, Protocol) and  # type: ignore[arg-type]
             # *NOT* a builtin type. For unknown reasons, some but *NOT* all
             # builtin types erroneously present themselves to be PEP
             # 544-compliant protocols under Python >= 3.8: e.g.,
@@ -212,7 +212,7 @@ is_hint_pep544_protocol.__doc__ = '''
     '''
 
 # ....................{ GETTTERS                          }....................
-def get_hint_pep544_io_protocol_from_generic(hint: object) -> type:
+def get_hint_pep544_io_protocol_from_generic(hint: type) -> type:
     '''
     `PEP 544`_-compliant :mod:`beartype` **IO protocol** (i.e., either
     :class:`beartype._util.hint.data.pep.proposal.utilhintdatapep544._Pep544IO`
@@ -229,7 +229,7 @@ def get_hint_pep544_io_protocol_from_generic(hint: object) -> type:
 
     Parameters
     ----------
-    hint : object
+    hint : type
         `PEP 484`_-compliant :mod:`typing` IO generic base class to be replaced
         by the corresponding `PEP 544`_-compliant :mod:`beartype` IO protocol.
 

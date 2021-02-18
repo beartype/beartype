@@ -167,13 +167,12 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
-    assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
     # print('annotations: {!r}'.format(func.__annotations__))
 
     # Localize attributes of this metadata for negligible efficiency gains.
     func = data.func
-    func_globals = func.__globals__
+    func_globals = func.__globals__  # type: ignore[attr-defined]
 
     # Dictionary mapping from parameter name to resolved annotation for each
     # annotated parameter and return value of this callable.
@@ -242,8 +241,8 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
             # higher-level human-readable beartype-specific exception.
             except Exception as exception:
                 raise BeartypeDecorHintPep563Exception(
-                    '{} postponed hint "{}" not evaluable.'.format(
-                        pith_label, pith_hint)
+                    f'{pith_label} postponed hint '
+                    f'"{pith_hint}" not evaluable.'
                 ) from exception
         # Else, this annotation is *NOT* a PEP 563-formatted postponed string.
         # Since PEP 563 is active for this callable, this implies this
@@ -366,8 +365,7 @@ def _die_if_hint_repr_exceeds_child_limit(
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
-    assert isinstance(hint_repr, str), (
-        '{!r} not string.'.format(hint_repr))
+    assert isinstance(hint_repr, str), f'{repr(hint_repr)} not string.'
 
     # Total number of hints transitively encapsulated in this hint (i.e., the
     # total number of all child hints of this hint as well as this hint
@@ -389,7 +387,6 @@ def _die_if_hint_repr_exceeds_child_limit(
     # which the @beartype decorator traverses this hint, raise an exception.
     if hints_num >= SIZE_BIG:
         raise BeartypeDecorHintPepException(
-            '{} hint representation "{}" '
-            'contains {} subscripted arguments '
-            'exceeding maximum limit {}.'.format(
-                pith_label, hint_repr, hints_num, SIZE_BIG-1))
+            f'{pith_label} hint representation "{hint_repr}" '
+            f'contains {hints_num} subscripted arguments '
+            f'exceeding maximum limit {SIZE_BIG-1}.')

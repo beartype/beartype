@@ -16,7 +16,7 @@ from pathlib import Path
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype_test.util.pytroar import BeartypeTestPathException
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS ~ dir                     }....................
 @callable_cached
 def get_project_dir() -> Path:
     '''
@@ -182,7 +182,7 @@ def get_project_test_package_dir() -> Path:
     # Return this path.
     return PROJECT_TEST_PACKAGE_DIR
 
-
+# ....................{ GETTERS ~ file                    }....................
 @callable_cached
 def get_project_readme_file() -> Path:
     '''

@@ -85,6 +85,10 @@ def get_callable_origin_label(func: Callable) -> str:
     # Else, this callable is a standard callable rather than an arbitrary class
     # or object defining the __call__() dunder method...
     if isinstance(func, CallableTypes):
+        #FIXME: This is probably a bit overkill, as @beartype absolutely
+        #*REQUIRES* pure-Python rather than C-based overkills, as the latter
+        #are *NOT* efficiently introspectable at runtime. *shrug*
+
         # Default this label to the placeholder string specific to C-based
         # callables to simplify subsequent logic.
         func_origin_label = '<C-based>'
@@ -150,7 +154,8 @@ def get_callable_origin_label(func: Callable) -> str:
         # attribute. Unlike most other core Python objects, modules are simply
         # arbitrary objects that reside in the "sys.modules" dictionary.
         if func_module_name:
-            func_origin_label = getattr(modules[func_module_name], '__file__', func_origin_label)
+            func_origin_label = getattr(
+                modules[func_module_name], '__file__', func_origin_label)
 
     # Return this func_origin_label.
     return func_origin_label

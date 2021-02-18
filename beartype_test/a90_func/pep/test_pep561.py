@@ -38,6 +38,11 @@ from beartype_test.util.mark.pytskip import skip  #skip_unless_package
 #   absolutely isn't, but what you gonna do, right?
 
 #FIXME: Uncomment after mypy eventually passes. *sigh*
+#FIXME: We additionally want to add some sort of GitHub Action for mypy to our
+#"python_test.yml" CI configuration to ensure that both pushes and PRs are
+#linted against mypy. Getting this to work has been a considerable burden, so
+#let's try to keep this working as long as feasible, eh?
+
 # @skip_unless_package('mypy')
 @skip('beartype currently PEP 561-noncompliant and thus fails mypy.')
 def test_pep561_mypy() -> None:

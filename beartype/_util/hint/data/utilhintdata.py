@@ -13,13 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import sys
 from beartype._util.hint.data.pep import utilhintdatapep
+from typing import FrozenSet, Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS                              }....................
 # Fully initialized by the _init() function below.
-HINT_BASES_FORWARDREF = {
+HINT_BASES_FORWARDREF: Tuple[type, ...] = {  # type: ignore[assignment]
     # Technically, the builtin "str" type is the superclass of *ONLY*
     # PEP-noncompliant fully-qualified forward references (e.g.,
     # "muh_submodule.MuhType") and PEP 585-compliant nested forward references
@@ -40,7 +41,7 @@ of these superclasses).
 
 
 # Fully initialized by the _init() function below.
-HINTS_IGNORABLE_SHALLOW = {
+HINTS_IGNORABLE_SHALLOW: FrozenSet[type] = {  # type: ignore[assignment]
     # The PEP-noncompliant builtin "object" type is the transitive superclass
     # of all classes, parameters and return values annotated as "object"
     # unconditionally match *ALL* objects under isinstance()-based type

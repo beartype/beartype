@@ -45,6 +45,7 @@ from beartype._util.utilobject import (
     get_object_classname,
     get_object_class_basename,
 )
+from typing import Tuple
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -216,11 +217,11 @@ def register_typistry_type(hint: type) -> str:
 @callable_cached
 def register_typistry_tuple(
     # Mandatory parameters.
-    hint: tuple,
+    hint: Tuple[type, ...],
 
     # Optional parameters.
     is_types_unique: bool = False,
-) -> type:
+) -> str:
     '''
     Register the passed tuple of one or more **PEP-noncompliant types** (i.e.,
     classes neither defined by the :mod:`typing` module *nor* subclassing such
@@ -274,7 +275,7 @@ def register_typistry_tuple(
 
     Parameters
     ----------
-    hint : tuple
+    hint : Tuple[type]
         Tuple of all PEP-noncompliant types to be registered.
     is_types_unique : bool
         ``True`` only if the caller guarantees this tuple to contain *no*

@@ -25,7 +25,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # supports PEP 593, define these functions appropriately.
 if IS_PYTHON_AT_LEAST_3_9:
     # Defer version-dependent imports.
-    from typing import Annotated
+    from typing import Annotated  # type: ignore[attr-defined]
 
     #FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
     #we particularly care about this edge case? Probably not. *shrug*

@@ -38,16 +38,23 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 #        name='BoolType', method_names=('__bool__',))
 #
 #Dis goin' be good.
+#FIXME: Actually, don't do any of the above. That would simply be reinventing
+#the wheel, as the "typing.Protocol" superclass already exists and is more than
+#up to the task. In fact, once we drop support for Python < 3.7, we should:
+#* Redefine the "_BoolType" class declared below should in terms of the
+#  "typing.Protocol" superclass.
+#* Shift the "_BoolType" class directly into the "beartype.cave" submodule.
+#* Refactor away this entire submodule.
 
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta, abstractmethod
-from typing import Union
+from typing import Type
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ FUNCTIONS                         }....................
-def _check_methods(C: type, *methods: str) -> (bool, type(NotImplemented)):
+def _check_methods(C: type, *methods: str):
     '''
     Private utility function called by abstract base classes (ABCs)
     implementing structural subtyping by detecting whether the passed class or
@@ -61,15 +68,16 @@ def _check_methods(C: type, *methods: str) -> (bool, type(NotImplemented)):
     ----------
     C : type
         Class to be validated as defining these methods.
-    methods : Tuple[str]
+    methods : Tuple[str, ...]
         Tuple of the names of all methods to validate this class as defining.
 
     Returns
     ----------
-    ``True``
-        Only if this class defines all of these methods.
-    ``NotImplemented``
-        Only if this class fails to define one or more of these methods.
+    Either:
+
+        * ``True`` if this class defines all of these methods.
+        * ``NotImplemented`` if this class fails to define one or more of these
+          methods.
     '''
 
     mro = C.__mro__

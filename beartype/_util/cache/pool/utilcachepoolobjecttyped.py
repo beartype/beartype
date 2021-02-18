@@ -32,6 +32,7 @@ example:
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype.roar import _BeartypeUtilCachedObjectTypedException
+from typing import Any
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -50,7 +51,7 @@ efficiently validate both input *and* output to conform to sane expectations.
 '''
 
 # ....................{ (ACQUIRERS|RELEASERS)             }....................
-def acquire_object_typed(cls: type) -> object:
+def acquire_object_typed(cls: type) -> Any:
     '''
     Acquire an arbitrary object of the passed type.
 
@@ -90,7 +91,7 @@ def acquire_object_typed(cls: type) -> object:
     return object_typed
 
 
-def release_object_typed(obj: object) -> None:
+def release_object_typed(obj: Any) -> None:
     '''
     Release the passed object acquired by a prior call to the
     :func:`acquire_object_typed` function.

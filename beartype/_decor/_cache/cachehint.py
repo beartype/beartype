@@ -11,16 +11,24 @@ hints).**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: The coercion function(s) defined below should also rewrite unhashable
+#hints to be hashable *IF FEASIBLE.* This isn't always feasible, of course
+#(e.g., "Annotated[[]]", "Literal[[]]"). The one notable place where this is
+#feasible is with PEP 585-compliant type hints subscripted by unhashable rather
+#than hashable iterables, which can *ALWAYS* be safely rewritten to be hashable
+#(e.g., coercing "callable[[], None]" to "callable[(), None]").
+
 # ....................{ IMPORTS                           }....................
 from beartype._util.hint.utilhinttest import die_unless_hint
 from collections.abc import Callable
-from typing import Union
+from typing import Any, Dict, Union
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GLOBALS                           }....................
-_HINT_REPR_TO_HINT = {}
+_HINT_REPR_TO_HINT: Dict[str, Any] = {}
 '''
 **Type hint cache** (i.e., singleton dictionary mapping from the
 machine-readable representations of all non-self-cached type hints to those
@@ -74,9 +82,9 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
 def cache_hint_nonpep563(
     func: Callable,
     pith_name: str,
-    hint: object,
+    hint: Any,
     hint_label: str,
-) -> object:
+) -> Any:
     '''
     Coerce and cache the passed (possibly non-self-cached and/or
     PEP-noncompliant) type hint annotating the parameter or return value with

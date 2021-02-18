@@ -18,7 +18,7 @@ from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncget import get_func_wrappee
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from typing import Set, Tuple, TypeVar
+from typing import Any, Set, Tuple, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -207,7 +207,7 @@ is_hint_pep585_generic_uncached.__doc__ = '''
     '''
 
 # ....................{ GETTERS                           }....................
-def get_hint_pep585_generic_bases_unerased(hint: object) -> Tuple[object]:
+def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     '''
     Tuple of all unerased `PEP 585`_-compliant **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
@@ -306,7 +306,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)
 
     # Set of all type variables parametrizing these pseudo-superclasses.
-    hint_typevars: Set[TypeVar] = set()
+    hint_typevars: Set[type] = set()
 
     # For each such pseudo-superclass, add all type variables parametrizing
     # this pseudo-superclass to this set.

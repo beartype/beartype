@@ -25,7 +25,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
-from typing import Generic, NewType, Optional, Tuple
+from typing import Any, Generic, NewType, Optional
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -244,12 +244,12 @@ if IS_PYTHON_AT_LEAST_3_7:
         # "__orig_bases__" dunder attribute formalized by PEP 560, testing
         # whether that tuple is non-empty or not in no way guarantees this
         # object to be a PEP-compliant generic.
-        return is_object_subclass(hint, Generic)
+        return is_object_subclass(hint, Generic)  # type: ignore[arg-type]
 # Else, the active Python interpreter targets Python 3.6. In this case,
 # implement this function specific to this Python version.
 else:
     # Import the Python < 3.7.0-specific metaclass required by this tester.
-    from typing import GenericMeta
+    from typing import GenericMeta  # type: ignore[attr-defined]
 
     def is_hint_pep484_generic(hint: object) -> bool:
 
@@ -411,7 +411,7 @@ def is_hint_pep484_newtype(hint: object) -> bool:
 
 # ....................{ GETTERS ~ forwardref              }....................
 @callable_cached
-def get_hint_pep484_forwardref_class_basename(hint: object) -> str:
+def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
     '''
     **Unqualified classname** (i.e., name of a class *not* containing a ``.``
     delimiter and thus relative to the fully-qualified name of the submodule
@@ -468,7 +468,7 @@ def get_hint_pep484_forwardref_class_basename(hint: object) -> str:
     return hint.__forward_arg__
 
 # ....................{ GETTERS ~ newtype                 }....................
-def get_hint_pep484_newtype_class(hint: object) -> type:
+def get_hint_pep484_newtype_class(hint: Any) -> type:
     '''
     User-defined class aliased by the passed `PEP 484`_-compliant **new type**
     (i.e., closure created and returned by the :func:`typing.NewType` closure
@@ -517,7 +517,7 @@ def get_hint_pep484_newtype_class(hint: object) -> type:
 
 # ....................{ GETTERS ~ generic                 }....................
 @callable_cached
-def get_hint_pep484_generic_base_erased_from_unerased(hint: object) -> type:
+def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     '''
     Erased superclass originating the passed `PEP 484`_-compliant **unerased
     pseudo-superclass** (i.e., :mod:`typing` object originally listed as a
@@ -563,7 +563,7 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: object) -> type:
 
 
 @callable_cached
-def get_hint_pep484_generic_bases_unerased(hint: object) -> Tuple[object]:
+def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     '''
     Tuple of all unerased :mod:`typing` **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their

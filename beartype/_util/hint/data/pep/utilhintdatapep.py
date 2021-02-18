@@ -12,19 +12,19 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import sys
+from beartype.cave import ModuleType
 from beartype._util.hint.data.pep.proposal import (
     utilhintdatapep484,
     utilhintdatapep544,
     utilhintdatapep585,
     utilhintdatapep593,
 )
-from types import ModuleType
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SIGNS                             }....................
-HINT_PEP_SIGNS_DEPRECATED = set()
+HINT_PEP_SIGNS_DEPRECATED: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **deprecated signs** (i.e., arbitrary objects uniquely
 identifying outdated PEP-compliant type hints that have since been obsoleted by
@@ -35,7 +35,7 @@ This set is intended to be tested against typing attributes returned by the
 '''
 
 
-HINT_PEP_SIGNS_IGNORABLE = set()
+HINT_PEP_SIGNS_IGNORABLE: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints unconditionally ignored by the
@@ -52,7 +52,7 @@ See Also
 
 # ....................{ SETS ~ supported                  }....................
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED = None
+HINT_PEP_SIGNS_SUPPORTED: frozenset = None  # type: ignore[assignment]
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints).
@@ -63,7 +63,7 @@ This set is intended to be tested against typing attributes returned by the
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED_DEEP = set()
+HINT_PEP_SIGNS_SUPPORTED_DEEP: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints for which the :func:`beartype.beartype`
@@ -81,7 +81,7 @@ This set is intended to be tested against typing attributes returned by the
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED_SHALLOW = set()
+HINT_PEP_SIGNS_SUPPORTED_SHALLOW: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e.,
 arbitrary objects uniquely identifying PEP-compliant type hints *not*
@@ -94,7 +94,7 @@ This set is intended to be tested against typing attributes returned by the
 
 # ....................{ SETS ~ type                       }....................
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_TYPE = set()
+HINT_PEP_SIGNS_TYPE: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **standard class signs** (i.e., instances of the builtin
 :mod:`type` type uniquely identifying PEP-compliant type hints).
@@ -102,7 +102,7 @@ Frozen set of all **standard class signs** (i.e., instances of the builtin
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_TYPE_ORIGIN = set()
+HINT_PEP_SIGNS_TYPE_ORIGIN: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **signs** (i.e., arbitrary objects) uniquely identifying
 PEP-compliant type hints originating from an **origin type** (i.e.,
@@ -119,7 +119,7 @@ by the :func:`beartype.beartype` decorator.
 
 # ....................{ SETS ~ subtype                    }....................
 # Fully initialized by the _init() function below.
-HINT_PEP_BASES_FORWARDREF = set()
+HINT_PEP_BASES_FORWARDREF: tuple = set()  # type: ignore[assignment]
 '''
 Tuple of all **PEP-compliant forward reference type hint superclasses** (i.e.,
 superclasses such that all PEP-compliant type hints forward referencing
@@ -128,7 +128,7 @@ user-defined types are instances of these superclasses).
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_SEQUENCE_STANDARD = set()
+HINT_PEP_SIGNS_SEQUENCE_STANDARD: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints accepting exactly one subscripted type
@@ -167,7 +167,7 @@ This set intentionally excludes the:
 
 
 # Initialized by the _init() function below.
-HINT_PEP_SIGNS_TUPLE = set()
+HINT_PEP_SIGNS_TUPLE: frozenset = set()  # type: ignore[assignment]
 '''
 Frozen set of all **tuple signs** (i.e., arbitrary objects uniquely identifying
 PEP-compliant type hints accepting exactly one subscripted type hint argument
@@ -175,7 +175,7 @@ constraining *all* items of compliant tuples).
 '''
 
 # ....................{ INITIALIZERS                      }....................
-def add_data(data_module: 'ModuleType') -> None:
+def add_data(data_module: ModuleType) -> None:
     '''
     Add PEP-compliant type hint data to various global containers declared by
     the passed module.
@@ -213,7 +213,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Initialize all private submodules of this subpackage.
     for hint_data_pep_submodule in HINT_DATA_PEP_SUBMODULES:
-        hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)
+        hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)  # type: ignore[attr-defined]
 
     # Assert these global to have been initialized by these private submodules.
     assert HINT_PEP_SIGNS_TYPE, (
@@ -264,5 +264,5 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Add PEP-compliant type hint data to various global containers declared by
     # the passed module.
-    data_module.HINT_BASES_FORWARDREF.update(HINT_PEP_BASES_FORWARDREF)
-    data_module.HINTS_IGNORABLE_SHALLOW.update(HINT_PEP_SIGNS_IGNORABLE)
+    data_module.HINT_BASES_FORWARDREF.update(HINT_PEP_BASES_FORWARDREF)   # type: ignore[attr-defined]
+    data_module.HINTS_IGNORABLE_SHALLOW.update(HINT_PEP_SIGNS_IGNORABLE)  # type: ignore[attr-defined]

@@ -117,6 +117,10 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
+from typing import (
+    Any as _Any,
+    Tuple as _Tuple,
+)
 from weakref import (
     ref as _ref,
     ProxyTypes as _ProxyTypes,
@@ -199,7 +203,7 @@ Type of all objects regardless of type.
 '''
 
 
-NoneType = type(None)
+NoneType: _Any = type(None)
 '''
 Type of the ``None`` singleton.
 
@@ -253,7 +257,7 @@ callable of indeterminate origin is in fact wrapped.
 '''
 
 
-CallableCodeObjectType = type(_get_type_or_unavailable.__code__)
+CallableCodeObjectType: _Any = type(_get_type_or_unavailable.__code__)
 '''
 Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
@@ -329,7 +333,7 @@ the ``PyInstanceMethod_Type`` C type explicitly admits that:
 # standard "types.MethodWrapperType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
 # to *ALWAYS* exist is obtained instead.
-MethodBoundInstanceDunderCType = type(''.__add__)
+MethodBoundInstanceDunderCType: _Any = type(''.__add__)
 '''
 Type of all **C-based bound method wrappers** (i.e., callable objects
 implemented in low-level C, associated with special methods of builtin types
@@ -346,7 +350,7 @@ See Also
 # standard "types.ClassMethodDescriptorType" object, this is of no benefit to
 # older versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundClassCType = type(dict.__dict__['fromkeys'])
+MethodUnboundClassCType: _Any = type(dict.__dict__['fromkeys'])
 '''
 Type of all **C-based unbound class method descriptors** (i.e., callable
 objects implemented in low-level C, associated with class methods of
@@ -362,7 +366,7 @@ explicitly passing the intended ``cls`` objects as their first parameters).
 # standard "types.WrapperDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundInstanceDunderCType = type(str.__add__)
+MethodUnboundInstanceDunderCType: _Any = type(str.__add__)
 '''
 Type of all **C-based unbound dunder method wrapper descriptors** (i.e.,
 callable objects implemented in low-level C, associated with dunder methods of
@@ -384,7 +388,7 @@ See Also
 # standard "types.MethodDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundInstanceNondunderCType = type(str.upper)
+MethodUnboundInstanceNondunderCType: _Any = type(str.upper)
 '''
 Type of all **C-based unbound non-dunder method descriptors** (i.e., callable
 objects implemented in low-level C, associated with non-dunder methods of
@@ -912,7 +916,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ hint                      }....................
-HintPep585Type = UnavailableType
+HintPep585Type: _Any = UnavailableType
 '''
 C-based type of all `PEP 585`_-compliant **type hint** (i.e., C-based type hint
 instantiated by subscripting either a concrete builtin container class like
@@ -932,7 +936,7 @@ best not to think too hard about that.
 # If the active Python interpreter targets at least Python >= 3.9 and thus
 # supports PEP 585, correctly declare this type.
 if _IS_PYTHON_AT_LEAST_3_9:
-    HintPep585Type = type(list[str])
+    HintPep585Type = type(list[str])  # type: ignore[misc]
 
 # ....................{ TYPES ~ scalar                    }....................
 BoolType = _BoolType
@@ -1150,7 +1154,7 @@ parsers parsing either top-level commands *or* subcommands of those commands.
 # nature of Python's regular expression support, this type is *NOT* publicly
 # exposed. While the private "re._pattern_type" attribute does technically
 # provide this type, it does so in a private and hence non-portable manner.
-RegexCompiledType = type(_re.compile(r''))
+RegexCompiledType: _Any = type(_re.compile(r''))
 '''
 Type of all **compiled regular expressions** (i.e., objects created and
 returned by the stdlib :func:`re.compile` function).
@@ -1165,7 +1169,7 @@ returned by the stdlib :func:`re.compile` function).
 # type is *NOT* directly importable. Although this type's classname is
 # published to be "_sre.SRE_Match", the "_sre" C extension provides no such
 # type for pure-Python importation. So it goes.
-RegexMatchType = type(_re.match(r'', ''))
+RegexMatchType: _Any = type(_re.match(r'', ''))
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
@@ -1178,7 +1182,7 @@ Type of all **regular expression match objects** (i.e., objects returned by the
 
 # ....................{ TYPES ~ lib : numpy               }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyArrayType = UnavailableType
+NumpyArrayType: type = UnavailableType
 '''
 Type of all **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class implemented in low-level C and Fortran) if
@@ -1188,7 +1192,7 @@ Type of all **NumPy arrays** (i.e., instances of the concrete
 
 
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyScalarType = UnavailableType
+NumpyScalarType: type = UnavailableType
 '''
 Type of all **NumPy scalars** (i.e., instances of the abstract
 :class:`numpy.generic` base class implemented in low-level C and Fortran) if
@@ -1475,7 +1479,7 @@ Perl) typically implicitly convert:
 
 # ....................{ TUPLES ~ version                  }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-VersionComparableTypes = (tuple,)
+VersionComparableTypes: _Tuple[type, ...] = (tuple,)
 '''
 Tuple of all **comparable version types** (i.e., types suitable for use both as
 parameters to callables accepting arbitrary version specifiers *and* as
@@ -1504,7 +1508,7 @@ ironically, those types supported both under older but *not* newer versions of
 
 # ....................{ TUPLES ~ lib : numpy              }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceOrNumpyArrayTypes = (SequenceType,)
+SequenceOrNumpyArrayTypes: _Tuple[type, ...] = (SequenceType,)
 '''
 Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
 and structural subclasses of the abstract :class:`collections.abc.Sequence`
@@ -1526,7 +1530,7 @@ See Also
 
 
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceMutableOrNumpyArrayTypes = (SequenceMutableType,)
+SequenceMutableOrNumpyArrayTypes: _Tuple[type, ...] = (SequenceMutableType,)
 '''
 Tuple of all **mutable sequence types** (i.e., both concrete and structural
 subclasses of the abstract :class:`collections.abc.Sequence` base class;
@@ -1548,7 +1552,7 @@ See Also
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-SetuptoolsVersionTypes = UnavailableTypes
+SetuptoolsVersionTypes: _Tuple[type, ...] = UnavailableTypes
 '''
 Tuple of all **:mod:`setuptools`-specific version types** (i.e., types
 instantiated and returned by both the third-party
@@ -1588,7 +1592,7 @@ This tuple matches these types if :mod:`pkg_resources` is importable:
 
 # If NumPy is importable...
 try:
-    import numpy as _numpy
+    import numpy as _numpy  # type: ignore
 
     # Define NumPy-specific types.
     NumpyArrayType  = _numpy.ndarray
@@ -1604,12 +1608,12 @@ except:
 
 # If setuptools is importable, conditionally define setuptools-specific types.
 try:
-    import pkg_resources as _pkg_resources
+    import pkg_resources as _pkg_resources  # type: ignore
 
     # Define setuptools-specific types.
     SetuptoolsVersionTypes = (
-        _pkg_resources.packaging.version.Version,
-        _pkg_resources.packaging.version.LegacyVersion,
+        _pkg_resources.packaging.version.Version,        # type: ignore[attr-defined]
+        _pkg_resources.packaging.version.LegacyVersion,  # type: ignore[attr-defined]
     )
     VersionComparableTypes += SetuptoolsVersionTypes
 # Else, setuptools is unimportable. While this should typically *NEVER* be the

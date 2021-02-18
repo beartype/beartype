@@ -42,8 +42,8 @@ def add_data(data_module: ModuleType) -> None:
     # thus supports PEP 593.
 
     # Defer Python version-specific imports.
-    from typing import Annotated
+    from typing import Annotated  # type: ignore[attr-defined]
 
     # ..................{ SETS ~ signs                      }..................
     # Register the version-specific signs introduced in this version.
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Annotated)
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Annotated)  # type: ignore[attr-defined]

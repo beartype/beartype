@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.cave import NoneType
+from beartype.cave import ModuleType, NoneType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
@@ -74,8 +74,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # current Python version, as this superclass was thankfully publicized
 # under Python >= 3.7 after its initial privatization under Python <= 3.6.
 HINT_PEP484_BASE_FORWARDREF = (
-    # mypy gets confused by _ForwardRef on python >= 3.7
-    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else typing._ForwardRef)  # type: ignore [attr-defined]
+    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else
+    typing._ForwardRef  # type: ignore [attr-defined]
+)
 '''
 **Forward reference sign** (i.e., arbitrary objects uniquely identifying a
 `PEP 484`_-compliant type hint unifying one or more subscripted type hint
@@ -96,7 +97,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 
 # ....................{ SIGNS ~ sets                      }....................
 # Initialized by the add_data() function below.
-HINT_PEP484_SIGNS_TYPE_ORIGIN = None
+HINT_PEP484_SIGNS_TYPE_ORIGIN: frozenset = None  # type: ignore[assignment]
 '''
 Frozen set of all signs uniquely identifying `PEP 484`_-compliant type hints
 originating from an origin type.
@@ -128,7 +129,7 @@ If the active Python interpreter targets:
 '''
 
 # ....................{ ADDERS                            }....................
-def add_data(data_module: 'ModuleType') -> None:
+def add_data(data_module: ModuleType) -> None:
     '''
     Add `PEP 484`_**-compliant type hint data to various global containers
     declared by the passed module.
@@ -147,13 +148,13 @@ def add_data(data_module: 'ModuleType') -> None:
     global HINT_PEP484_SIGNS_TYPE_ORIGIN
 
     # ..................{ SETS ~ bases                      }..................
-    data_module.HINT_PEP_BASES_FORWARDREF.update((
+    data_module.HINT_PEP_BASES_FORWARDREF.update((  # type: ignore[attr-defined]
         # PEP 484-compliant forward reference superclass.
         HINT_PEP484_BASE_FORWARDREF,
     ))
 
     # ..................{ SETS ~ signs : ignorable          }..................
-    data_module.HINT_PEP_SIGNS_IGNORABLE.update((
+    data_module.HINT_PEP_SIGNS_IGNORABLE.update((  # type: ignore[attr-defined]
         # The "Any" singleton is semantically synonymous with the ignorable
         # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
         Any,
@@ -210,7 +211,7 @@ def add_data(data_module: 'ModuleType') -> None:
     ))
 
     # ..................{ SETS ~ signs : supported          }..................
-    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((
+    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((  # type: ignore[attr-defined]
         Any,
         NewType,
         NoReturn,
@@ -222,7 +223,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     equivalent to type(None).
         NoneType,
     ))
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((  # type: ignore[attr-defined]
         Generic,
         List,
         MutableSequence,
@@ -241,7 +242,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ SETS ~ signs : type               }..................
     # List of all signs uniquely identifying PEP 484-compliant type hints
     # originating from an origin type.
-    HINT_PEP484_SIGNS_TYPE_ORIGIN = [
+    _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST = [
         AbstractSet,
         AsyncGenerator,
         AsyncIterable,
@@ -283,7 +284,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # If the active Python interpreter targets at least various Python
     # versions, add PEP 484-specific signs introduced in those versions.
     if IS_PYTHON_AT_LEAST_3_7:
-        HINT_PEP484_SIGNS_TYPE_ORIGIN.extend((
+        _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.extend((
             typing.AsyncContextManager,
             typing.OrderedDict,
 
@@ -307,26 +308,28 @@ def add_data(data_module: 'ModuleType') -> None:
         ))
 
         if IS_PYTHON_AT_LEAST_3_8:
-            HINT_PEP484_SIGNS_TYPE_ORIGIN.append(typing.SupportsIndex)
+            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.SupportsIndex)  # type: ignore[attr-defined]
     # If the active Python interpreter targets Python 3.6. In this case, also
     # add these signs to the superclass set of all standard class signs.
     # Insanely, the Python 3.6 implementation of the "typing" module defines
     # *ALL* these signs as unique public classes.
     else:
-        data_module.HINT_PEP_SIGNS_TYPE.update(HINT_PEP484_SIGNS_TYPE_ORIGIN)
+        data_module.HINT_PEP_SIGNS_TYPE.update(  # type: ignore[attr-defined]
+            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
         # import sys
         # print(f'HINT_PEP_SIGNS_TYPE: {repr(data_module.HINT_PEP_SIGNS_TYPE)}', file=sys.stderr)
 
     # Coerce this list into a frozen set for subsequent constant-time lookup.
-    HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP484_SIGNS_TYPE_ORIGIN)
+    HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(
+        _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
 
     # The "Generic" superclass is explicitly equivalent under PEP 484 to the
     # "Generic[Any]" subscription and thus valid as a standard class sign.
-    data_module.HINT_PEP_SIGNS_TYPE.add(Generic)
+    data_module.HINT_PEP_SIGNS_TYPE.add(Generic)  # type: ignore[attr-defined]
 
     # Add these signs to the superclass set of all sign uniquely identifying
     # PEP-compliant type hints originating from an origin type.
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(
+    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(  # type: ignore[attr-defined]
         HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
     # If the active Python interpreter targets at least Python >= 3.9 and thus
@@ -337,15 +340,15 @@ def add_data(data_module: 'ModuleType') -> None:
     # signs uniquely identifying PEP 484-compliant type hints originating from
     # origin types.
     if IS_PYTHON_AT_LEAST_3_9:
-        data_module.HINT_PEP_SIGNS_DEPRECATED.update(
+        data_module.HINT_PEP_SIGNS_DEPRECATED.update(  # type: ignore[attr-defined]
             HINT_PEP484_SIGNS_TYPE_ORIGIN)
 
     # ..................{ SETS ~ signs : subtype            }..................
-    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((
+    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((  # type: ignore[attr-defined]
         List,
         MutableSequence,
         Sequence,
     ))
-    data_module.HINT_PEP_SIGNS_TUPLE.update((
+    data_module.HINT_PEP_SIGNS_TUPLE.update((  # type: ignore[attr-defined]
         Tuple,
     ))

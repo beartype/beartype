@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import ModuleType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
 
@@ -20,7 +21,7 @@ from beartype._util.utilobject import Iota
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-HINT_PEP585_TUPLE_EMPTY = tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota()
+HINT_PEP585_TUPLE_EMPTY = tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota()  # type: ignore[misc]
 '''
 `PEP 585`_-compliant empty fixed-length tuple type hint if the active Python
 interpreter supports at least Python 3.9 and thus `PEP 585`_ *or* a unique
@@ -32,7 +33,7 @@ objects against this object via equality tests.
 '''
 
 # ....................{ ADDERS                            }....................
-def add_data(data_module: 'ModuleType') -> None:
+def add_data(data_module: ModuleType) -> None:
     '''
     Add `PEP 585`_**-compliant type hint data to various global containers
     declared by the passed module.
@@ -140,11 +141,11 @@ def add_data(data_module: 'ModuleType') -> None:
         ValuesView,
     )
 
-    data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP585_SIGNS_TYPE)
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(_HINT_PEP585_SIGNS_TYPE)
+    data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP585_SIGNS_TYPE)  # type: ignore[attr-defined]
+    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(_HINT_PEP585_SIGNS_TYPE)  # type: ignore[attr-defined]
 
     # ..................{ SETS ~ signs : supported          }..................
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((  # type: ignore[attr-defined]
         list,
         tuple,
         ByteString,
@@ -153,12 +154,12 @@ def add_data(data_module: 'ModuleType') -> None:
     ))
 
     # ..................{ SETS ~ signs : subtypes           }..................
-    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((
+    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((  # type: ignore[attr-defined]
         list,
         ByteString,
         MutableSequence,
         Sequence,
     ))
-    data_module.HINT_PEP_SIGNS_TUPLE.update((
+    data_module.HINT_PEP_SIGNS_TUPLE.update((  # type: ignore[attr-defined]
         tuple,
     ))

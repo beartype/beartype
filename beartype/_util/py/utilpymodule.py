@@ -101,7 +101,7 @@ def die_unless_module_attr_name(
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
-# ....................{ GETTERS ~ name                    }....................
+# ....................{ GETTERS ~ object : name           }....................
 def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -197,7 +197,7 @@ def get_object_class_module_name_or_none(obj: object) -> Optional[str]:
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_class_unless_class(obj))
 
-# ....................{ GETTERS ~ attr : name             }....................
+# ....................{ GETTERS ~ module : attr           }....................
 def get_module_attr_name_relative_to_obj(
     obj: object, module_attr_name: str) -> str:
     '''
@@ -254,6 +254,67 @@ def get_module_attr_name_relative_to_obj(
         # the module declaring this object with this unqualified basename.
         f'{get_object_module_name(obj)}.{module_attr_name}'
     )
+
+# ....................{ GETTERS ~ module : file           }....................
+#FIXME: Unit test us up.
+def get_module_filename(module: ModuleType) -> str:
+    '''
+    Absolute filename of the passed module if this module is physically defined
+    on disk *or* raise an exception otherwise (i.e., if this module is
+    abstractly defined in memory).
+
+    Parameters
+    ----------
+    module : ModuleType
+        Module to be inspected.
+
+    Returns
+    ----------
+    str
+        Absolute filename of this on-disk module.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If this module *only* resides in memory.
+    '''
+
+    # Absolute filename of this module if on-disk *OR* "None" otherwise.
+    module_filename = get_module_filename_or_none(module)
+
+    # If this module resides *ONLY* in memory, raise an exception.
+    if module_filename is None:
+        raise _BeartypeUtilModuleException(
+            f'Module {repr(module)} not on disk.')
+    # Else, this module resides on disk.
+
+    # Return this filename.
+    return module_filename
+
+
+#FIXME: Unit test us up.
+def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
+    '''
+    Absolute filename of the passed module if this module is physically defined
+    on disk *or* ``None`` otherwise (i.e., if this module is abstractly defined
+    in memory).
+
+    Parameters
+    ----------
+    module : ModuleType
+        Module to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * Absolute filename of this module if this module resides on disk.
+        * ``None`` if this module *only* resides in memory.
+    '''
+
+    # Thus spake Onelinerthustra.
+    return getattr(module, '__file__', None)
 
 # ....................{ IMPORTERS                         }....................
 def import_module(

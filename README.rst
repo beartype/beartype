@@ -344,6 +344,11 @@ whenever:
   Checkers_>`__.
 * You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
   which most static type checkers remain incompatible with.
+* You prefer to write code rather than fight a static type checker, because
+  static type inference of a dynamically-typed language is guaranteed to fail
+  (and frequently does). If you've ever cursed the sky after suffixing working
+  code improperly typed by mypy_ with a vendor-specific pragma like ``# type:
+  ignore[{error_code}]``, ``beartype`` was specifically written for you.
 
 If none of the above *still* apply, still use ``beartype``. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-

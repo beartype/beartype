@@ -39,7 +39,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585,
     is_hint_pep585_generic,
 )
-from typing import Generic, NewType, Optional, Tuple, TypeVar
+from typing import Any, Generic, NewType, Optional, Tuple, TypeVar
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -92,7 +92,7 @@ else:
         # non-standard "type_var" instance variable whose value is either
         # "typing.AnyStr", "str", or "bytes". Since only the former is an
         # actual type variable, however, we further test that condition.
-        if isinstance(hint, typing._TypeAlias):
+        if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
             # If this value is a type variable, return the empty tuple.
             if is_hint_pep_typevar(hint.type_var):
                 return ()
@@ -215,7 +215,7 @@ else:
         # non-standard "type_var" instance variable whose value is either
         # "typing.AnyStr", "str", or "bytes". Since only the former is an
         # actual type variable, however, we further test that condition.
-        if isinstance(hint, typing._TypeAlias):
+        if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
             # If this value is a type variable, return a new 1-tuple containing
             # only this type variable.
             if is_hint_pep_typevar(hint.type_var):
@@ -287,7 +287,7 @@ get_hint_pep_typevars.__doc__ = '''
 
 # ....................{ GETTERS ~ sign                    }....................
 @callable_cached
-def get_hint_pep_sign(hint: object) -> dict:
+def get_hint_pep_sign(hint: Any) -> object:
     '''
     **Sign** (i.e., arbitrary object) uniquely identifying the passed
     PEP-compliant type hint if this hint is PEP-compliant *or* raise an
@@ -538,7 +538,7 @@ def get_hint_pep_sign(hint: object) -> dict:
     # "AttributeError" exception if something goes horribly awry.
     #
     # Gods... this is horrible. Thanks for nuthin', Python 3.6.
-    elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):
+    elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
         return getattr(typing, hint.name)
     # Else, this hint *MUST* be a standard PEP 484-compliant type hint defined
     # by the "typing" module.
@@ -651,7 +651,7 @@ def get_hint_pep_type_origin(hint: object) -> type:
 # this function to access the standard "__origin__" dunder instance variable
 # whose value is the origin type originating this hint.
 if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_type_origin_or_none(hint: object) -> Optional[type]:
+    def get_hint_pep_type_origin_or_none(hint: Any) -> Optional[type]:
 
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
@@ -682,7 +682,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 #
 # Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
-    def get_hint_pep_type_origin_or_none(hint: object) -> Optional[type]:
+    def get_hint_pep_type_origin_or_none(hint: Any) -> Optional[type]:
 
         # Sign uniquely identifying this hint.
         hint_sign = get_hint_pep_sign(hint)
@@ -698,7 +698,7 @@ else:
             # or "typing.Pattern" objects. In this case, this hint declares a
             # non-standard "impl_type" instance variable whose value is either
             # the "re.Match" or "re.Pattern" class. Return this class.
-            if isinstance(hint, typing._TypeAlias):
+            if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
                 return hint.impl_type
 
             # Else, this hint is a poorly designed Python 3.6-specific "generic

@@ -14,15 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from abc import abstractmethod
+from beartype.cave import ModuleType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from typing import Optional
+from typing import Any, Dict
 
 # See the "beartype.__init__" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................
 # Conditionally initialized by the add_data() function below.
-_Pep544IO = None
+_Pep544IO: Any = None
 '''
 `PEP 544`_-compliant protocol base class for :class:`_Pep544TextIO` and
 :class:`_Pep544BinaryIO`.
@@ -77,20 +78,20 @@ advertised (or at all)... *and no one ever will.*
 
 
 # Conditionally initialized by the add_data() function below.
-_Pep544BinaryIO = None
+_Pep544BinaryIO: Any = None
 '''
 Typed version of the return of open() in binary mode.
 '''
 
 
 # Conditionally initialized by the add_data() function below.
-_Pep544TextIO = None
+_Pep544TextIO: Any = None
 '''
 Typed version of the return of open() in text mode.
 '''
 
 # ....................{ MAPPINGS                          }....................
-_HINT_PEP544_IO_GENERIC_TO_PROTOCOL = {}
+_HINT_PEP544_IO_GENERIC_TO_PROTOCOL: Dict[type, type] = {}
 '''
 Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
 either :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined
@@ -100,7 +101,7 @@ defined by this submodule).
 '''
 
 # ....................{ ADDERS                            }....................
-def add_data(data_module: 'ModuleType') -> None:
+def add_data(data_module: ModuleType) -> None:
     '''
     Add `PEP 544`_**-compliant type hint data to various global containers
     declared by the passed module.
@@ -151,7 +152,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # The body of this class is copied wholesale from the existing
         # non-functional "typing.IO" class.
 
-        __slots__ = ()
+        __slots__: tuple = ()
 
         @property
         @abstractmethod
@@ -245,7 +246,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # The body of this class is copied wholesale from the existing
         # non-functional "typing.BinaryIO" class.
 
-        __slots__ = ()
+        __slots__: tuple = ()
 
         @abstractmethod
         def write(self, s: Union[bytes, bytearray]) -> int:
@@ -264,7 +265,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # The body of this class is copied wholesale from the existing
         # non-functional "typing.TextIO" class.
 
-        __slots__ = ()
+        __slots__: tuple = ()
 
         @property
         @abstractmethod
@@ -318,5 +319,5 @@ def add_data(data_module: 'ModuleType') -> None:
     #     True
     #     >>> isinstance(3333, t.Protocol)
     #     True
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Protocol)
-    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)
+    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Protocol)  # type: ignore[attr-defined]
+    data_module.HINT_PEP_SIGNS_IGNORABLE.add(Protocol)  # type: ignore[attr-defined]

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Cecil Curry.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Bash shell script statically type-checking this project with mypy, passing
+# sane default options suitable for interactive terminal testing and otherwise
+# passing all passed arguments as is to the "tox" command.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+#
+# --------------------( CAVEATS                           )--------------------
+# *tHIS SCRIPT ONLY STATICALLY TYPE-CHECKS THIS PROJECT'S CODEBASE.* Notably,
+# this script avoids statically type-checking this project's test suite as
+# well. Why? Because we only statically type-check this project's codebase for
+# PEP 561-compliance and downstream consumers themselves statically
+# type-checking beartype-dependent codebases. No such concerns apply to this
+# test suite, which is clearly *NEVER* intended for external reuse.
+#
+# This test suite also conditionally statically type-checks this project's
+# codebase as a functional test when the "mypy" package is importable. While
+# useful as a sanity check, this script is typically preferable from the
+# human-readable persective as its output is significantly more readable than
+# that captured by that functional test.
+
+# ....................{ PATHS                             }....................
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
+# option would be preferable but is unsupported by macOS's NetBSD-specific
+# version of "readlink". Instead, just defer to Python for portability.
+function canonicalize_path() {
+    command python3 -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+}
+
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                              }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}" >/dev/null
+
+# Statically type-check this project's codebase with all passed arguments.
+command python3 -m mypy "${@}" beartype
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}

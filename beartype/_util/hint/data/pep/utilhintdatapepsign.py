@@ -12,13 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_9,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from typing import Any
 
 # ....................{ SIGNS ~ declare                   }....................
 # Initialized below.
-HINT_PEP_SIGN_LIST = None
+HINT_PEP_SIGN_LIST: Any = None
 '''
 **List sign** (i.e., arbitrary object uniquely identifying PEP-compliant list
 type hints) appropriate to the current Python interpreter.
@@ -26,7 +25,7 @@ type hints) appropriate to the current Python interpreter.
 
 
 # Initialized below.
-HINT_PEP_SIGN_TUPLE = None
+HINT_PEP_SIGN_TUPLE: Any = None
 '''
 **Tuple sign** (i.e., arbitrary object uniquely identifying PEP-compliant tuple
 type hints) appropriate to the current Python interpreter.
