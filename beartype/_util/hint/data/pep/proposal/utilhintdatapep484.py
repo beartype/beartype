@@ -66,7 +66,7 @@ from typing import (
     ValuesView,
 )
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ BASES                             }....................

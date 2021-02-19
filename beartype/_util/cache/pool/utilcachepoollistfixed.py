@@ -24,7 +24,7 @@ from beartype._util.text.utiltextrepr import get_object_representation
 from beartype.roar import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................

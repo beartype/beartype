@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 from typing import Generic, Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................

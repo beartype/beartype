@@ -50,7 +50,7 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 from abc import ABCMeta, abstractmethod
 from typing import Type
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ FUNCTIONS                         }....................

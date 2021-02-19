@@ -27,7 +27,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
 from typing import Any, Generic, NewType, Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS ~ ignorable               }....................

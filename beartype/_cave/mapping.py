@@ -36,7 +36,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
 from typing import Union, Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................

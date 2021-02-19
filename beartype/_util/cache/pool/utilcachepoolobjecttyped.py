@@ -34,7 +34,7 @@ from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype.roar import _BeartypeUtilCachedObjectTypedException
 from typing import Any
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SINGLETONS ~ private              }....................

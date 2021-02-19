@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.text.utiltextlabel import label_callable
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................

@@ -21,7 +21,7 @@ from beartype._util.text.utiltextlabel import label_class
 from beartype._util.text.utiltextrepr import get_object_representation
 from typing import Tuple
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................

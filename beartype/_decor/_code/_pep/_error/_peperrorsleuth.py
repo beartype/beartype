@@ -44,7 +44,7 @@ from beartype._util.hint.utilhinttest import (
 )
 from typing import Any, Callable, NoReturn, Optional, Tuple
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................

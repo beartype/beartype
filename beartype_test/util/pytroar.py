@@ -21,7 +21,7 @@ and warnings emitted by unit and functional tests and fixtures.
 from abc import ABCMeta as _ABCMeta
 from beartype.roar import BeartypeException
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUPERCLASS                        }....................

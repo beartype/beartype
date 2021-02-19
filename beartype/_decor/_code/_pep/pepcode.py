@@ -53,7 +53,7 @@ from collections.abc import Callable, Iterable
 from inspect import Parameter
 from typing import NoReturn, Tuple, Union
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................

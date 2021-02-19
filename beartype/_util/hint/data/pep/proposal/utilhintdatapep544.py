@@ -18,7 +18,7 @@ from beartype.cave import ModuleType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from typing import Any, Dict
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................

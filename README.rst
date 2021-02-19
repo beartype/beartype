@@ -342,8 +342,6 @@ whenever:
 
 * You want to `check types decidable only at runtime <Versus Static Type
   Checkers_>`__.
-* You want to JIT_ your code with PyPy_, :superscript:`...which you should`,
-  which most static type checkers remain incompatible with.
 * You prefer to write code rather than fight a static type checker, because
   static type inference of a dynamically-typed language is guaranteed to fail
   (and frequently does). If you've ever cursed the sky after suffixing working

@@ -29,7 +29,7 @@ from beartype._util.hint.data.utilhintdata import (
     HINTS_IGNORABLE_SHALLOW,
 )
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................

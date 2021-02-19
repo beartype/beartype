@@ -31,7 +31,7 @@ from beartype._util.py.utilpyversion import (
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
 from sys import modules as sys_modules
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ RESOLVERS                         }....................

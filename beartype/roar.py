@@ -20,7 +20,7 @@ and warnings emitted by the :func:`beartype.beartype` decorator.
 
 from abc import ABCMeta as _ABCMeta
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUPERCLASS                        }....................

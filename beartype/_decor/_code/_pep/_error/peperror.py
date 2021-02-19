@@ -105,7 +105,7 @@ from beartype._util.text.utiltextrepr import get_object_representation
 from collections.abc import Callable
 from typing import Generic, Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ MAPPINGS                          }....................

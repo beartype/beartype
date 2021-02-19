@@ -17,7 +17,7 @@ from beartype.roar import BeartypeDecorHintPepException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                           }....................

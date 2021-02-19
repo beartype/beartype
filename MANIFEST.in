@@ -19,7 +19,7 @@ include setup.py
 include tox.ini
 
 # Include all requisite package-level install-time files.
-beartype/py.typed
+include beartype/py.typed
 
 # ....................{ INCLUDE ~ recursive               }....................
 # Include all requisite project-specific test packages.

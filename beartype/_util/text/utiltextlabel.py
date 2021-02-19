@@ -16,7 +16,7 @@ from beartype._util.utilclass import is_classname_builtin
 from beartype._util.utilobject import get_object_classname
 from collections.abc import Callable
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS ~ callable              }....................

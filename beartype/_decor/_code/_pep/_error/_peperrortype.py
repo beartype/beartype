@@ -24,7 +24,7 @@ from beartype._util.py.utilpymodule import import_module_attr
 from beartype._util.text.utiltextcause import get_cause_object_not_type
 from typing import Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ forwardref              }....................

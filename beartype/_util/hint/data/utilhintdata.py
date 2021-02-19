@@ -15,7 +15,7 @@ import sys
 from beartype._util.hint.data.pep import utilhintdatapep
 from typing import FrozenSet, Tuple
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS                              }....................

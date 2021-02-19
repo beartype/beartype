@@ -238,11 +238,11 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.text.utiltextmunge import number_lines
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 # from beartype._util.utilobject import get_object_name
 # from types import FunctionType
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
@@ -271,7 +271,7 @@ as a private default parameter to the signatures of these functions.
 '''
 
 # ....................{ DECORATORS                        }....................
-def beartype(func):
+def beartype(func: Callable) -> Callable:
     '''
     Decorate the passed **pure-Python callable** (e.g., function or method
     declared in Python rather than C) to validate both all annotated parameters
@@ -292,14 +292,14 @@ def beartype(func):
 
     Parameters
     ----------
-    func : CallableTypes
+    func : Callable
         **Non-class callable** (i.e., callable object that is *not* a class) to
         be decorated by a dynamically generated new callable wrapping this
         original callable with pure-Python type-checking.
 
     Returns
     ----------
-    CallableTypes
+    Callable
         Dynamically generated new callable wrapping this original callable with
         pure-Python type-checking.
 
@@ -590,7 +590,7 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-    def beartype(func):
+    def beartype(func: Callable) -> Callable:
         '''
         Identity decorator.
 

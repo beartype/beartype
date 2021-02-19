@@ -1731,7 +1731,7 @@ from beartype._util.text.utiltextmunge import replace_str_substrs
 from itertools import count
 from typing import Set, Generic, Tuple, NoReturn, Optional
 
-# See the "beartype.__init__" submodule for further commentary.
+# See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS ~ hint : meta           }....................
