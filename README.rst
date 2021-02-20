@@ -354,15 +354,18 @@ whenever:
   `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code.
   This includes common use patterns like changing the type of a variable by
   assigning that variable different objects of different types over that
-  variable's lifetime. In contrast:
+  variable's lifetime. Want to freeze a variable from a ``set`` into a
+  ``frozenset``? *Too bad.* Static type checkers don't want you to do that. In
+  contrast:
 
-    **Beartype believes dynamic typing is beneficial and never emits errors on
-    dynamically-typed code.** That's because ``beartype`` `operates
-    exclusively at the high level of pure-Python functions and methods <Versus
-    Static Type Checkers_>`__ rather than the low level of individual
-    statements *inside* pure-Python functions and methods. Unlike static type
-    checkers, ``beartype`` can't be opinionated about things that no one
-    should be.
+    **Beartype believes dynamic typing is beneficial by default. Beartype never
+    emits errors, warnings, or exceptions on dynamically-typed code.**
+    
+    That's because ``beartype`` `operates exclusively at the high level of
+    pure-Python functions and methods <Versus Static Type Checkers_>`__ rather
+    than the low level of individual statements *inside* pure-Python functions
+    and methods. Unlike static type checkers, ``beartype`` can't be opinionated
+    about things that no one should be.
 
 If none of the above *still* apply, still use ``beartype``. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
@@ -383,12 +386,11 @@ Patty's Day just because your frontend React_ client helpfully sent a 5MB JSON
 file serializing a doubly-nested list of integers.
 
 The idea of typeguard_ is that it does *everything.* If you annotate a function
-decorated by typeguard_ as accepting a triply-nested list of integers and then
-pass that function a list containing 1,000 nested lists each containing 1,000
-nested lists each containing 1,000 integers, *every* call to that function will
-check *every* integer transitively nested in that list – even if that list
-never changes. Did we mention that list transitively contains 1,000,000,000
-integers in total?
+decorated by typeguard_ as accepting a triply-nested list of integers and pass
+that function a list of 1,000 nested lists of 1,000 nested lists of 1,000
+integers, *every* call to that function will check *every* integer transitively
+nested in that list – even if that list never changes. Did we mention that list
+transitively contains 1,000,000,000 integers in total?
 
 .. code-block:: shell-session
 
