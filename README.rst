@@ -344,44 +344,42 @@ whenever:
   Checkers_>`__.
 * You want to write code rather than fight a static type checker, because
   `static type inference <type inference_>`__ of a `dynamically-typed`_
-  language is guaranteed to fail (and frequently does). If you've ever cursed
+  language is guaranteed to fail and frequently does. If you've ever cursed
   the sky after suffixing working code improperly typed by mypy_ with
   non-portable vendor-specific pragmas like ``# type:
   ignore[{inscrutable_error_code}]``, ``beartype`` was written for you.
 * You want to preserve `dynamic typing`_, because Python is a
   `dynamically-typed`_ language. Unlike ``beartype``, static type checkers
   enforce `static typing`_ and are thus strongly opinionated; they believe
-  `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code,
-  including common Python use patterns like changing the type of a variable
-  (e.g., by assigning that variable objects of different types over that
-  variable's lifetime). In contrast:
+  `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code.
+  This includes common use patterns like changing the type of a variable by
+  assigning that variable different objects of different types over that
+  variable's lifetime. In contrast:
 
-  .. ::
-  
-     **Beartype believes dynamic typing is beneficial and never emits errors on
-     dynamically-typed code.** That's because ``beartype`` `operates
-     exclusively at the high level of pure-Python functions and methods <Versus
-     Static Type Checkers_>`__ rather than the low level of individual
-     statements *inside* pure-Python functions and methods. Unlike static type
-     checkers, ``beartype`` can't be opinionated about things that no one
-     should be.
+    **Beartype believes dynamic typing is beneficial and never emits errors on
+    dynamically-typed code.** That's because ``beartype`` `operates
+    exclusively at the high level of pure-Python functions and methods <Versus
+    Static Type Checkers_>`__ rather than the low level of individual
+    statements *inside* pure-Python functions and methods. Unlike static type
+    checkers, ``beartype`` can't be opinionated about things that no one
+    should be.
 
 If none of the above *still* apply, still use ``beartype``. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
-and runtime <Overview_>`__, and transparently stacks with existing type
-checking solutions. Leverage ``beartype`` until you find something that suites
-you better, because ``beartype`` is *always* better than nothing.
+and runtime <Overview_>`__, and transparently stacks with existing
+type-checking solutions. Leverage ``beartype`` until you find something that
+suites you better, because ``beartype`` is *always* better than nothing.
 
 Why should I use beartype?
 --------------------------
 
 The idea of ``beartype`` is that it never costs you anything. It might not do
-quite as much as you'd like, but it will always do *something* – which is more
-than Python's default behaviour, which is to do *nothing* and ignore type hints
+as much as you'd like, but it will always do *something* – which is more than
+Python's default behaviour, which is to do *nothing* and ignore type hints
 altogether. This means you can always safely add ``beartype`` to any Python
 package, module, app, or script regardless of size, scope, funding, or audience
-and never worry about your back-end Django_ server taking a nosedive on St.
-Patty's Day just because your front-end React_ client helpfully sent a 5MB JSON
+and never worry about your backend Django_ server taking a nosedive on St.
+Patty's Day just because your frontend React_ client helpfully sent a 5MB JSON
 file serializing a doubly-nested list of integers.
 
 The idea of typeguard_ is that it does *everything.* If you annotate a function
