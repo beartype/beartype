@@ -16,16 +16,15 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# from pytest import raises
+from pytest import raises
 
 # ....................{ TESTS                             }....................
+
+
 def test_uppercase_char_first():
     # Defer heavyweight imports.
-    from pytest import raises
-
     from beartype._util.text.utiltextmunge import uppercase_char_first
 
-    # Not a string
     with raises(AssertionError):
         uppercase_char_first(7)
 
@@ -36,8 +35,7 @@ def test_uppercase_char_first():
 
 def test_number_lines():
     # Defer heavyweight imports.
-    from pytest import raises
-
+    from re import search
     from beartype._util.text.utiltextmunge import number_lines
 
     with raises(AssertionError):
@@ -46,26 +44,35 @@ def test_number_lines():
     # No lines to split
     assert number_lines(text="") == ""
 
-    # This is in essence "x == x" - I don't know if this adds
-    # anything substantive...
-    text = "bears, beats, battlestar galactica\n" * 20
-    expected_result = "\n".join(
-        '(line {:0>4d}) {}'.format(line_no, line_text)
-        for line_no, line_text in enumerate(text.splitlines(), start=1))
+    NEWLINE_COUNT = 20
+    base_string = 'bears, beats, battlestar galactica'
+    total_string = f'{base_string}\n' * NEWLINE_COUNT
 
-    assert number_lines(text) == expected_result
+    numbered_lines_string = number_lines(total_string)
+    numbered_lines_string = numbered_lines_string.splitlines()
+
+    # Confirm the function preserves newlines as is
+    assert len(numbered_lines_string) == NEWLINE_COUNT
+
+    # Confirm the base string is prefixed with something
+    for line_number in range(NEWLINE_COUNT):
+        assert search(pattern=fr'(?<!^){base_string}$',
+                      string=numbered_lines_string[line_number]
+                      ) is not None
 
 
 def test_replace_str_substrs():
     # Defer heavyweight imports.
-    from pytest import raises
-
     from beartype._util.text.utiltextmunge import replace_str_substrs
     from beartype.roar import _BeartypeUtilTextException
 
     with raises(AssertionError):
         replace_str_substrs(text=7, old='Oh No!', new='A non-str value')
+
+    with raises(AssertionError):
         replace_str_substrs(text='Oh No!', old=7.0, new='is a non-str value')
+
+    with raises(AssertionError):
         replace_str_substrs(text='Oh No!', old='A non-str value of ', new=7)
 
     with raises(_BeartypeUtilTextException):
@@ -80,12 +87,12 @@ def test_replace_str_substrs():
 
 def test_suffix_unless_suffixed():
     # Defer heavyweight imports.
-    from pytest import raises
-
     from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 
     with raises(AssertionError):
         suffix_unless_suffixed(text=7, suffix="That's not a string!")
+
+    with raises(AssertionError):
         suffix_unless_suffixed(text="HEY! You're not a string!", suffix=7)
 
     not_suffixed_text = "somefile"
