@@ -18,7 +18,7 @@ third-party static type-checkers and hence `PEP 561`_.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip  #skip_unless_package
+from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
 
 # ....................{ TESTS                             }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
@@ -37,14 +37,12 @@ from beartype_test.util.mark.pytskip import skip  #skip_unless_package
 #   accept the importability of the "mypy" package as sufficient, which it
 #   absolutely isn't, but what you gonna do, right?
 
-#FIXME: Uncomment after mypy eventually passes. *sigh*
-#FIXME: We additionally want to add some sort of GitHub Action for mypy to our
-#"python_test.yml" CI configuration to ensure that both pushes and PRs are
-#linted against mypy. Getting this to work has been a considerable burden, so
-#let's try to keep this working as long as feasible, eh?
-
-# @skip_unless_package('mypy')
-@skip('beartype currently PEP 561-noncompliant and thus fails mypy.')
+# If the active Python interpreter is PyPy, avoid this mypy-specific functional
+# test. mypy is currently incompatible with PyPy for inscrutable reasons that
+# should presumably be fixed at some future point. See also:
+#     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+@skip_unless_package('mypy')
+@skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
     Functional test testing this project's compliance with `PEP 561`_ by
@@ -60,16 +58,22 @@ def test_pep561_mypy() -> None:
     from beartype_test.util.path.pytpathproject import get_project_package_dir
     from mypy import api
 
-    # Tuple of all command-line options (i.e., "-"-prefixed strings) to be
+    # List of all command-line options (i.e., "-"-prefixed strings) to be
     # effectively passed to the external "mypy" command.
-    MYPY_OPTIONS = ()
+    #
+    # Note this iterable *MUST* be defined as a list rather than type. If *NOT*
+    # the case, the function called below raises an exception. Hot garbage!
+    MYPY_OPTIONS = []
 
-    # Tuple of all command-line arguments (i.e., non-options) to be effectively
+    # List of all command-line arguments (i.e., non-options) to be effectively
     # passed to the external "mypy" command.
-    MYPY_ARGUMENTS = (
+    #
+    # Note this iterable *MUST* be defined as a list rather than type. If *NOT*
+    # the case, the function called below raises an exception. Hot garbage!
+    MYPY_ARGUMENTS = [
         # Absolute dirname of this project's top-level package.
         str(get_project_package_dir()),
-    )
+    ]
 
     # Tuple of all command-line options to be effectively passed to the
     # external "mypy" command.

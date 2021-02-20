@@ -119,7 +119,10 @@ from enum import (
 from io import IOBase as _IOBase
 from typing import (
     Any as _Any,
+    Dict as _Dict,
+    Union as _Union,
     Tuple as _Tuple,
+    Type as _Type,
 )
 from weakref import (
     ref as _ref,
@@ -1230,7 +1233,7 @@ Specifically, for any callable parameter or return type annotated with:
 '''
 
 # ....................{ TUPLES ~ core                     }....................
-NoneTypeOr = _NoneTypeOrType()
+NoneTypeOr: _Any = _NoneTypeOrType()
 '''
 **:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary
 types or tuples of types to the same types or tuples of types concatenated with

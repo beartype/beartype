@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from typing import Optional
+from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -137,7 +137,7 @@ is_hint_pep593_ignorable_or_none.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ newtype                 }....................
-def get_hint_pep593_hint(hint: object) -> object:
+def get_hint_pep593_hint(hint: Any) -> object:
     '''
     PEP-compliant type hint annotated by the passed `PEP 593`_-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).

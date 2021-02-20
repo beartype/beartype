@@ -122,7 +122,7 @@ def skip_if_pypy():
     from beartype._util.py.utilpyinterpreter import IS_PYPY
 
     # Skip this test if the active Python interpreter is PyPy.
-    return skip_if(IS_PYPY, reason='PyPy.')
+    return skip_if(IS_PYPY, reason='Incompatible with PyPy.')
 
 
 def skip_if_python_version_less_than(minimum_version: str):

@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCachedKeyPoolException
 from collections import defaultdict
-from collections.abc import Hashable
+from collections.abc import Callable, Hashable
 from threading import Lock
-from typing import Any, Callable, Dict
+from typing import Any, Dict, Union
 
 # ....................{ CLASSES                           }....................
 class KeyPool(object):
@@ -31,12 +31,12 @@ class KeyPool(object):
     Attributes
     ----------
     _key_to_pool : defaultdict
-        Dictionary mapping from an **arbitrary key** (i.e., hashable objects)
-        to a corresponding **pool** (i.e., list of zero or more arbitrary
-        objects referred to as "pool items" cached under that key). For both
-        efficiency and simplicity, this dictionary is defined as a
-        :class:`defaultdict` implicitly initializing missing keys on initial
-        access to the empty list.
+        Dictionary mapping from an **arbitrary key** (i.e., hashable object) to
+        corresponding **pool** (i.e., list of zero or more arbitrary objects
+        referred to as "pool items" cached under that key). For both efficiency
+        and simplicity, this dictionary is defined as a :class:`defaultdict`
+        implicitly initializing missing keys on initial access to the empty
+        list.
     _pool_item_id_to_is_acquired : dict
         Dictionary mapping from the unique object identifier of a **pool item**
         (i.e., arbitrary object cached under a pool of the :attr:`_key_to_pool`
@@ -76,14 +76,14 @@ class KeyPool(object):
     # ..................{ INITIALIZER                       }..................
     def __init__(
         self,
-        item_maker: Callable[[Hashable,], Any],
+        item_maker: Union[type, Callable],
     ) -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
         Parameters
         ----------
-        item_maker : Callable[Hashable, Any]
+        item_maker : Union[type, Callable[[Hashable,], Any]]
             Caller-defined factory callable internally called by the
             :meth:`acquire` method on attempting to acquire a non-existent
             object from an **empty pool** (i.e., either a missing key *or* an
@@ -114,7 +114,7 @@ class KeyPool(object):
         #     >>> dd = defaultdict(default_factory=list)
         #     >>> dd['ee']
         #     KeyError: 'ee'
-        self._key_to_pool = defaultdict(list)
+        self._key_to_pool: Dict[Hashable, list] = defaultdict(list)
         self._pool_item_id_to_is_acquired: Dict[int, bool] = {}
         self._thread_lock = Lock()
 

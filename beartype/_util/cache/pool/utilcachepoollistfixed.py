@@ -23,6 +23,7 @@ from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import get_object_representation
 from beartype.roar import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
+from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -120,18 +121,18 @@ class FixedList(list):
     # Prohibit dunder methods modifying list length by overriding these methods
     # to raise exceptions.
 
-    def __delitem__(self, index):
+    def __delitem__(self, index) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} index {repr(index)} not deletable.')
 
 
-    def __iadd__(self, value):
+    def __iadd__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not addable by '
             f'{get_object_representation(value)}.')
 
 
-    def __imul__(self, value):
+    def __imul__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not multipliable by '
             f'{get_object_representation(value)}.')
@@ -219,29 +220,29 @@ class FixedList(list):
     # Prohibit non-dunder methods modifying list length by overriding these
     # methods to raise exceptions.
 
-    def append(self, obj) -> None:
+    def append(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not appendable by '
             f'{get_object_representation(obj)}.')
 
 
-    def clear(self) -> None:
+    def clear(self) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not clearable.')
 
 
-    def extend(self, obj) -> None:
+    def extend(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not extendable by '
             f'{get_object_representation(obj)}.')
 
 
-    def pop(self, *args) -> None:
+    def pop(self, *args) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not poppable.')
 
 
-    def remove(self, *args) -> None:
+    def remove(self, *args) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not removable.')
 

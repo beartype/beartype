@@ -36,7 +36,7 @@ from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
 from inspect import Parameter
-from typing import Callable
+from typing import Callable, Dict
 from warnings import warn
 
 # ....................{ CONSTANTS ~ private               }....................
@@ -202,13 +202,12 @@ def callable_cached(func: Callable) -> Callable:
     if is_func_arg_variadic(func):
         raise _BeartypeUtilCallableCachedException(
             f'@callable_cached {label_callable(func)} '
-            f'variadic arguments not cacheable.'
-        )
+            f'variadic arguments not cacheable.')
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
     # call if any (i.e., if that call did *NOT* raise an exception).
-    params_flat_to_return_value = {}
+    params_flat_to_return_value: Dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.
     params_flat_to_return_value_get = params_flat_to_return_value.get
@@ -216,7 +215,7 @@ def callable_cached(func: Callable) -> Callable:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
-    params_flat_to_exception = {}
+    params_flat_to_exception: Dict[tuple, Exception] = {}
 
     # get() method of this dictionary, localized for efficiency.
     params_flat_to_exception_get = params_flat_to_exception.get

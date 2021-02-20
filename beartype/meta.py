@@ -281,7 +281,12 @@ requirements strings of the format ``{project_name}
 
 # ....................{ METADATA ~ libs : test            }....................
 LIBS_TESTTIME_MANDATORY_TOX = (
-    # A relatively modern version of pytest is required.
+    # A *VERY* modern version of mypy is recommended. Even fairly recent older
+    # versions of mypy are significantly deficient with respect to error
+    # reporting to the point of uselessness.
+    'mypy >=0.800',
+
+    # A fairly modern version of pytest is required.
     'pytest >=4.0.0',
 )
 '''
@@ -296,10 +301,7 @@ See Also
 '''
 
 
-LIBS_TESTTIME_OPTIONAL = (
-    # A relatively modern version of mypy is recommended.
-    'mypy >=0.790',
-)
+LIBS_TESTTIME_OPTIONAL = ()
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
 recommended to test this package with :mod:`tox` as a developer at the command

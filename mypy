@@ -50,7 +50,10 @@ script_dirname="$(dirname "${script_filename}")"
 pushd "${script_dirname}" >/dev/null
 
 # Statically type-check this project's codebase with all passed arguments.
-command python3 -m mypy "${@}" beartype
+command python3 -m mypy "${@}"
+# command python3.6 -m mypy "${@}"
+# command python3.8 -m mypy "${@}"
+# command python3.9 -m mypy "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

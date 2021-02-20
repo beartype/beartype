@@ -342,11 +342,29 @@ whenever:
 
 * You want to `check types decidable only at runtime <Versus Static Type
   Checkers_>`__.
-* You prefer to write code rather than fight a static type checker, because
-  static type inference of a dynamically-typed language is guaranteed to fail
-  (and frequently does). If you've ever cursed the sky after suffixing working
-  code improperly typed by mypy_ with a vendor-specific pragma like ``# type:
-  ignore[{error_code}]``, ``beartype`` was specifically written for you.
+* You want to write code rather than fight a static type checker, because
+  `static type inference <type inference_>`__ of a `dynamically-typed`_
+  language is guaranteed to fail (and frequently does). If you've ever cursed
+  the sky after suffixing working code improperly typed by mypy_ with
+  non-portable vendor-specific pragmas like ``# type:
+  ignore[{inscrutable_error_code}]``, ``beartype`` was written for you.
+* You want to preserve `dynamic typing`_, because Python is a
+  `dynamically-typed`_ language. Unlike ``beartype``, static type checkers
+  enforce `static typing`_ and are thus strongly opinionated; they believe
+  `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code,
+  including common Python use patterns like changing the type of a variable
+  (e.g., by assigning that variable objects of different types over that
+  variable's lifetime). In contrast:
+
+  .. ::
+  
+     **Beartype believes dynamic typing is beneficial and never emits errors on
+     dynamically-typed code.** That's because ``beartype`` `operates
+     exclusively at the high level of pure-Python functions and methods <Versus
+     Static Type Checkers_>`__ rather than the low level of individual
+     statements *inside* pure-Python functions and methods. Unlike static type
+     checkers, ``beartype`` can't be opinionated about things that no one
+     should be.
 
 If none of the above *still* apply, still use ``beartype``. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
@@ -2934,9 +2952,13 @@ application stack at tool rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Random_walk
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
+.. _dynamic typing:
 .. _dynamically-typed:
+.. _static typing:
 .. _statically-typed:
    https://en.wikipedia.org/wiki/Type_system
+.. _type inference:
+   https://en.wikipedia.org/wiki/Type_inference
 .. _zero-cost abstraction:
    https://boats.gitlab.io/blog/post/zero-cost-abstractions
 

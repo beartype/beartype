@@ -92,7 +92,7 @@ class _NoneTypeOrType(dict):
         '''
 
         raise BeartypeCaveNoneTypeOrMutabilityException(
-            '{!r} externally immutable (i.e., not settable).'.format(self))
+            f'{repr(self)} externally immutable (i.e., not settable).')
 
 
     def __missing__(self, hint: Union[type, str, tuple]) -> tuple:
@@ -180,7 +180,7 @@ class _NoneTypeOrType(dict):
         # Nonetheless, raise a human-readable exception for sanity.
         else:
             raise BeartypeCaveNoneTypeOrKeyException(
-                '"NoneTypeOr" key {!r} unsupported.'.format(hint))
+                f'"NoneTypeOr" key {repr(hint)} unsupported.')
 
         # Return this new tuple.
         #
