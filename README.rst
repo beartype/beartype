@@ -344,28 +344,30 @@ whenever:
   Checkers_>`__.
 * You want to write code rather than fight a static type checker, because
   `static type inference <type inference_>`__ of a `dynamically-typed`_
-  language is guaranteed to fail and frequently does. If you've ever cursed
-  the sky after suffixing working code improperly typed by mypy_ with
-  non-portable vendor-specific pragmas like ``# type:
-  ignore[{inscrutable_error_code}]``, ``beartype`` was written for you.
+  language is guaranteed to fail and frequently does. If you've ever cursed the
+  sky after suffixing working code incorrectly typed by mypy_ with non-portable
+  vendor-specific pragmas like ``# type: ignore[{unreadable_error}]``,
+  ``beartype`` was written for you.
 * You want to preserve `dynamic typing`_, because Python is a
   `dynamically-typed`_ language. Unlike ``beartype``, static type checkers
   enforce `static typing`_ and are thus strongly opinionated; they believe
   `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code.
-  This includes common use patterns like changing the type of a variable by
-  assigning that variable different objects of different types over that
-  variable's lifetime. Want to freeze a variable from a ``set`` into a
-  ``frozenset``? *Too bad.* Static type checkers don't want you to do that. In
-  contrast:
+  This includes common use patterns like changing the type of a variable after
+  assigning that variable a value whose type differs from its initial value.
+  Want to freeze a variable from a ``set`` into a ``frozenset``? That's sad,
+  because static type checkers don't want you to. In contrast:
 
-    **Beartype believes dynamic typing is beneficial by default. Beartype never
-    emits errors, warnings, or exceptions on dynamically-typed code.**
+    **Beartype never emits errors, warnings, or exceptions on dynamically-typed
+    code,** because Python is not an error.
     
-    That's because ``beartype`` `operates exclusively at the high level of
-    pure-Python functions and methods <Versus Static Type Checkers_>`__ rather
-    than the low level of individual statements *inside* pure-Python functions
-    and methods. Unlike static type checkers, ``beartype`` can't be opinionated
-    about things that no one should be.
+    **Beartype believes dynamic typing is beneficial by default,** because
+    Python is beneficial by default.
+    
+    **Beartype is unopinionated.** That's because ``beartype`` `operates
+    exclusively at the higher level of pure-Python callables <Versus Static
+    Type Checkers_>`__ rather than the lower level of individual statements
+    *inside* pure-Python callables. Unlike static type checkers, ``beartype``
+    can't be opinionated about things that no one should be.
 
 If none of the above *still* apply, still use ``beartype``. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
