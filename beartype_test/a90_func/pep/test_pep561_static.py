@@ -54,7 +54,6 @@ def test_pep561_mypy() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.os.command.pytcmdexit import is_success
     from beartype_test.util.path.pytpathproject import get_project_package_dir
     from mypy import api
 

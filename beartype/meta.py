@@ -29,6 +29,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 # installation. This includes all standard Python and package modules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
@@ -36,7 +37,8 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from typing import Tuple
+from beartype._util.py.utilpyinterpreter import IS_PYPY as _IS_PYPY
+from typing import Tuple as _Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -92,7 +94,7 @@ Maximum minor stable version of this major version of Python currently released
 '''
 
 
-def _convert_version_str_to_tuple(version_str: str) -> Tuple[int, ...]:
+def _convert_version_str_to_tuple(version_str: str) -> _Tuple[int, ...]:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
     machine-readable version tuple of corresponding integers.
@@ -280,12 +282,31 @@ requirements strings of the format ``{project_name}
 '''
 
 # ....................{ METADATA ~ libs : test            }....................
-LIBS_TESTTIME_MANDATORY_TOX = (
+_LIBS_TESTTIME_MANDATORY_MYPY = (
     # A *VERY* modern version of mypy is recommended. Even fairly recent older
     # versions of mypy are significantly deficient with respect to error
     # reporting to the point of uselessness.
-    'mypy >=0.800',
+    'mypy >=0.800' ,
+) if not _IS_PYPY else ()
+'''
+**Mandatory mypy test-time package dependency** (i.e., dependencies required
+to test this package under :mod:`tox`) as a tuple of :mod:`setuptools`-specific
+requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}`` if the active Python
+interpreter is not PyPy *or* the empty tuple otherwise (i.e., if this
+interpreter is PyPy).
 
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    Official documentation discussing mypy's current incompatibility with PyPy
+    to presumably be fixed at some future point.
+'''
+
+
+LIBS_TESTTIME_MANDATORY_TOX = _LIBS_TESTTIME_MANDATORY_MYPY + (
     # A fairly modern version of pytest is required.
     'pytest >=4.0.0',
 )
@@ -294,6 +315,7 @@ LIBS_TESTTIME_MANDATORY_TOX = (
 to test this package under :mod:`tox`) as a tuple of :mod:`setuptools`-specific
 requirements strings of the format ``{project_name}
 {comparison1}{version1},...,{comparisonN}{versionN}``.
+
 See Also
 ----------
 :data:`LIBS_RUNTIME_OPTIONAL`
