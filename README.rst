@@ -352,7 +352,7 @@ whenever:
   `dynamically-typed`_ language. Unlike ``beartype``, static type checkers
   enforce `static typing`_ and are thus strongly opinionated; they believe
   `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code.
-  This includes common use patterns like changing the type of a variable after
+  This includes common use patterns like changing the type of a variable by
   assigning that variable a value whose type differs from its initial value.
   Want to freeze a variable from a ``set`` into a ``frozenset``? That's sad,
   because static type checkers don't want you to. In contrast:
