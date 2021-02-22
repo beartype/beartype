@@ -3,19 +3,20 @@
 # Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 
-'''
+"""
 **Beartype string munging utilities** (i.e., callables transforming passed
 strings into new strings with generic string operations).
 
 This private submodule is *not* intended for importation by downstream callers.
-'''
+"""
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilTextException
 
+
 # ....................{ CASERS                            }....................
 def uppercase_char_first(text: str) -> str:
-    '''
+    """
     Uppercase *only* the first character of the passed string.
 
     Whereas the standard :meth:`str.capitalize` method both uppercases the
@@ -32,15 +33,16 @@ def uppercase_char_first(text: str) -> str:
     ----------
     str
         This string with the first character uppercased.
-    '''
+    """
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     # For great justice!
     return text[0].upper() + text[1:] if text else ''
 
+
 # ....................{ NUMBERERS                         }....................
 def number_lines(text: str) -> str:
-    '''
+    """
     Passed string munged to prefix each line of this string with the 1-based
     number of that line padded by zeroes out to four digits for alignment.
 
@@ -53,7 +55,7 @@ def number_lines(text: str) -> str:
     ----------
     str
         This string with all lines numbered.
-    '''
+    """
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     # For radical benevolence!
@@ -63,10 +65,10 @@ def number_lines(text: str) -> str:
             text.splitlines(), start=1)
     )
 
+
 # ....................{ REPLACERS                         }....................
-#FIXME: Unit test us up, please.
 def replace_str_substrs(text: str, old: str, new: str) -> str:
-    '''
+    """
     Passed string with all instances of the passed source substring globally
     replaced by the passed target substring if this string contains at least
     one such instance *or* raise an exception otherwise (i.e., if this string
@@ -112,7 +114,7 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
         ...     text='I shot the ALBATROSS.', old='dross', new='drat')
         beartype.roar._BeartypeUtilTextException: String "I shot the
         ALBATROSS." substring "dross" not found.
-    '''
+    """
     assert isinstance(text, str), f'{repr(text)} not string.'
     assert isinstance(old, str), f'{repr(old)} not string.'
     assert isinstance(new, str), f'{repr(new)} not string.'
@@ -128,9 +130,10 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
     # replaced by this target substring.
     return text.replace(old, new)
 
+
 # ....................{ SUFFIXERS                         }....................
 def suffix_unless_suffixed(text: str, suffix: str) -> str:
-    '''
+    """
     Passed string either suffixed by the passed suffix if this string is not
     yet suffixed by this suffix *or* this string as is otherwise (i.e., if this
     string is already suffixed by this suffix).
@@ -150,7 +153,7 @@ def suffix_unless_suffixed(text: str, suffix: str) -> str:
         * If this string is *not* yet suffixed by this suffix, this string
           suffixed by this suffix.
         * Else, this string as is.
-    '''
+    """
     assert isinstance(text, str), f'{repr(text)} not string.'
     assert isinstance(suffix, str), f'{repr(suffix)} not string.'
 

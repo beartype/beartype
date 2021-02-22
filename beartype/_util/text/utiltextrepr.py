@@ -3,12 +3,12 @@
 # Copyright (c) 2014-2021 Cecil Curry.
 # See "LICENSE" for further details.
 
-'''
+"""
 **Beartype string munging utilities** (i.e., callables transforming passed
 strings into new strings with generic string operations).
 
 This private submodule is *not* intended for importation by downstream callers.
-'''
+"""
 
 # ....................{ IMPORTS                           }....................
 import re
@@ -16,7 +16,7 @@ from string import punctuation
 
 # ....................{ GETTERS                           }....................
 def get_object_representation(obj: object, max_len: int = 76) -> str:
-    '''
+    """
     Pretty-printed quasi-human-readable variant of the string returned by the
     non-pretty-printed machine-readable :meth:`obj.__repr__` dunder method of
     the passed object, truncated to the passed maximum string length.
@@ -62,8 +62,8 @@ def get_object_representation(obj: object, max_len: int = 76) -> str:
     str
         Pretty-printed quasi-human-readable variant of this object's
         non-pretty-printed machine-readable representation.
-    '''
-    assert isinstance(max_len, int), '"{!r}" not an integer.'.format(max_len)
+    """
+    assert isinstance(max_len, int), f'"{max_len}" not an integer.'
 
     # String describing the passed object. For debuggability, the verbose
     # (albeit less human-readable) output of repr() is preferred to the terse
@@ -80,9 +80,7 @@ def get_object_representation(obj: object, max_len: int = 76) -> str:
     # the string returned by this function, double-quote this representation
     # for disambiguity with preceding characters -- notably, sequence indices.
     if obj_repr[0] not in punctuation:
-        #FIXME: Refactor to leverage f-strings after dropping Python 3.5
-        #support, which are the optimal means of performing string formatting.
-        obj_repr = '"{}"'.format(obj_repr)
+        obj_repr = f'"{obj_repr}"'
 
     # If this representation either exceeds this maximum length *OR* contains a
     # newline...
