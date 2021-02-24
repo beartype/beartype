@@ -18,7 +18,7 @@ from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncget import get_func_wrappee
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from typing import Any, Set, Tuple, TypeVar
+from typing import Any, Set, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -94,11 +94,6 @@ if IS_PYTHON_AT_LEAST_3_9:
             for hint_base_erased in hint_bases_erased
         )
 
-
-    # Unmemoized wrappee wrapped by the above memoized wrapper, for use in
-    # edge cases where memoization is actually undesirable.
-    is_hint_pep585_generic_uncached = get_func_wrappee(is_hint_pep585_generic)
-
 # Else, the active Python interpreter targets at most Python < 3.9 and thus
 # fails to support PEP 585. In this case, fallback to declaring this function
 # to unconditionally return False.
@@ -108,8 +103,6 @@ else:
 
     def is_hint_pep585_generic(hint: object) -> bool:
         return False
-
-    is_hint_pep585_generic_uncached = is_hint_pep585_generic
 
 # ....................{ TESTERS ~ doc                     }....................
 # Docstring for this function regardless of implementation details.
@@ -168,34 +161,6 @@ is_hint_pep585_generic.__doc__ = '''
     ----------
     hint : object
         Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a `PEP 585`_-compliant generic.
-
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
-    '''
-
-
-is_hint_pep585_generic_uncached.__doc__ = '''
-    ``True`` only if the passed possibly non-cached object is a `PEP
-    585`_-compliant **generic** (i.e., class superficially subclassing at least
-    one subscripted `PEP 585`_-compliant pseudo-superclass).
-
-    Caveats
-    -------
-    **This non-memoized function should only be called at a sufficiently early
-    time during** :mod:`beartype` **decoration,** when the passed object cannot
-    be guaranteed to have already been cached somewhere. Since this is
-    typically *not* the case, the memoized :func:`is_hint_pep585_generic`
-    function wrapping this function should typically be called instead.
-
-    Parameters
-    ----------
-    hint : object
-        Possibly non-cached object to be inspected.
 
     Returns
     ----------

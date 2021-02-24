@@ -87,6 +87,18 @@ User-defined generic :mod:`typing` type variable.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
+class Pep484GenericUnsubscriptedSingle(List):
+    '''
+    `PEP 484`_-compliant user-defined generic subclassing a single
+    unsubscripted :mod:`typing` type.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    pass
+
+
 class Pep484GenericUntypevaredSingle(List[str]):
     '''
     `PEP 484`_-compliant user-defined generic subclassing a single
@@ -523,6 +535,30 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ GENERICS ~ user                   }................
+        # Generic subclassing a single unsubscripted "typing" type.
+        PepHintMetadata(
+            hint=Pep484GenericUnsubscriptedSingle,
+            pep_sign=Generic,
+            is_typing=False,
+            piths_satisfied_meta=(
+                # Subclass-specific generic list of string constants.
+                PepHintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
+                    'Ibid., incredibly indelible, edible craws a',
+                    'Token welfare’s malformed keening fare, keenly despaired',
+                ))),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'To pare their geognostic screeds'),
+                # List of string constants.
+                PepHintPithUnsatisfiedMetadata([
+                    'Of voluntary simplicities, Creed‐crinkled cities',
+                    'Of a liberal quiet, and',
+                ]),
+            ),
+        ),
+
         # Generic subclassing a single unparametrized "typing" type.
         PepHintMetadata(
             hint=Pep484GenericUntypevaredSingle,
@@ -1629,3 +1665,39 @@ def add_data(data_module: 'ModuleType') -> None:
                 type_origin=collections_abc.Sized,
             ),
         ))
+
+        #FIXME: Uncomment *AFTER* resolving the "FIXME:" in "cachetype".
+        # if IS_PYTHON_AT_LEAST_3_9:
+        #     data_module.HINTS_PEP_META.extend((
+        #         # ............{ GENERICS ~ user                   }............
+        #         # Subscripted generic subclassing a single unsubscripted
+        #         # "typing" type. Note that these types constitute an edge case
+        #         # supported *ONLY* under Python >= 3.9, which implements these
+        #         # tests in an ambiguous (albeit efficient) manner effectively
+        #         # indistinguishable from PEP 585-compliant type hints.
+        #         PepHintMetadata(
+        #             hint=Pep484GenericUnsubscriptedSingle[str],
+        #             pep_sign=Generic,
+        #             # Yes, this is awful. Yes, this is PEP-compliance. What you
+        #             # gonna do, techbro?
+        #             is_pep585=True,
+        #             is_typing=False,
+        #             piths_satisfied_meta=(
+        #                 # Subclass-specific generic list of string constants.
+        #                 PepHintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
+        #                     'Volubly vi‐brant libations',
+        #                     'To blubber‐lubed Bacchus — hustling',
+        #                 ))),
+        #             ),
+        #             piths_unsatisfied_meta=(
+        #                 # String constant.
+        #                 PepHintPithUnsatisfiedMetadata(
+        #                     'Pleasurable, Raucous caucuse'),
+        #                 # List of string constants.
+        #                 PepHintPithUnsatisfiedMetadata([
+        #                     'Within th-in cannon’s cynosure‐ensuring refectories',
+        #                     'We there‐in leather‐sutured scriptured books',
+        #                 ]),
+        #             ),
+        #         ),
+        #     ))

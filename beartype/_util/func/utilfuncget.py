@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable getter utilities.**
-
-This private submodule implements utility functions dynamically introspecting
-high-level metadata attached to arbitrary callables.
+Package-wide **callable utility getters** (i.e., callables dynamically
+introspecting metadata attached to arbitrary callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,7 +15,6 @@ from beartype.roar import _BeartypeUtilCallableException
 from collections.abc import Callable
 
 # ....................{ GETTERS                           }....................
-#FIXME: Unit test us up.
 def get_func_wrappee(func: Callable) -> Callable:
     '''
     **Wrappee** (i.e., lower-level callable) originally wrapped by the passed

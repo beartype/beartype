@@ -11,9 +11,7 @@
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_9,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
     PepHintPithSatisfiedMetadata,
@@ -59,16 +57,11 @@ def add_data(data_module: 'ModuleType') -> None:
         AbstractContextManager,
         contextmanager,
     )
-    from re import (
-        Match,
-        Pattern,
-        search
-    )
+    from re import Match, Pattern
     from typing import (
         Any,
         Generic,
         TypeVar,
-        Union,
     )
 
     # ..................{ TYPEVARS                          }..................

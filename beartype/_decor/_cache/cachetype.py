@@ -134,6 +134,28 @@ def register_typistry_forwardref(hint_classname: str) -> str:
     )
 
 # ....................{ REGISTRARS ~ type                 }....................
+#FIXME: Generalize this function to correctly distinguish between subscripted
+#and subscripted generics under Python >= 3.9. For example, given a PEP
+#585-compliant generic "class MuhList(list): pass", support both:
+#* "MuhList", an unsubscripted generic.
+#* "MuhList[int]", a subscripted generic.
+#
+#The core issue is that both of those type hints share the same classname
+#despite being different objects and thus effectively different classes, which
+#is all manner of screwball but something we nonetheless should probably
+#support. We say "should," because it might very well be the responsibility of
+#the parent pep_code_check_hint() function to strip the subscription from this
+#generic if subscripted.
+#
+#In any case, this function *MUST* absolutely be improved to detect when this
+#hint is subscripted (i.e., when "getattr(hint, '__args__', None) is not None")
+#and correctly do something, which could be either:
+#* Raising an exception.
+#* Reducing this subscripted generic to its original unsubscripted class
+#  (i.e., "hint.__origin").
+#
+#Trivial in either case, but worth consideration as to which is preferable.
+
 @callable_cached
 def register_typistry_type(hint: type) -> str:
     '''
@@ -418,7 +440,7 @@ class Beartypistry(dict):
 
         Parameters
         ----------
-        hint_name: str : str
+        hint_name: str
             String uniquely identifying this hint in a manner dependent on the
             type of this hint. Specifically, if this hint is:
 
@@ -431,13 +453,16 @@ class Beartypistry(dict):
                 classnames.
               * Hash of these types (ignoring duplicate types and type order in
                 this tuple).
+        hint : object
+            PEP-noncompliant type hint to be mapped from this string.
 
         Raises
         ----------
         TypeError
             If this hint is **unhashable** (i.e., *not* hashable by the builtin
             :func:`hash` function and thus unusable in hash-based containers
-            like dictionaries and sets). All supported type hints are hashable.
+            like dictionaries and sets). Since *all* supported PEP-noncompliant
+            type hints are hashable, this exception should *never* be raised.
         _BeartypeDecorBeartypistryException
             If either:
 

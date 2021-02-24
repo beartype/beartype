@@ -918,17 +918,26 @@ that enumeration's type and should be directly referenced as such: e.g.,
 # ....................{ TYPES ~ hint                      }....................
 HintPep585Type: _Any = UnavailableType
 '''
-C-based type of all `PEP 585`_-compliant **type hint** (i.e., C-based type hint
-instantiated by subscripting either a concrete builtin container class like
-:class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
-the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable` or
-:class:`collections.abc.Sequence`) if the active Python interpreter targets at
-least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
+C-based type of all `PEP 585`_-compliant **type hints** (i.e., C-based type
+hints instantiated by subscripting either a concrete builtin container class
+like :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared
+by the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
+or :class:`collections.abc.Sequence`) if the active Python interpreter targets
+at least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
 
-Note that *all* `PEP 585`_-compliant type hints are classes. Ergo, this C-based
-type is the class of classes and thus effectively a metaclass. It's probably
-best not to think too hard about that.
+Note that:
 
+* *All* `PEP 585`_-compliant type hints are classes. Ergo, this C-based type is
+  the class of those classes and thus effectively itself a metaclass. It's
+  probably best not to think too hard about that.
+* This C-based type is also the class of *all* `PEP 484`_-compliant
+  **subscripted generics** (i.e., classes superficially subclassing at least
+  one PEP-compliant type hint that is possibly *not* an actual class,
+  subscripted by a PEP-compliant type hint) under Python >= 3.9. It's probably
+  best not to think too hard about that, either.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
 .. _PEP 585:
     https://www.python.org/dev/peps/pep-0585
 '''
@@ -1162,7 +1171,7 @@ returned by the stdlib :func:`re.compile` function).
 
 
 #FIXME: Once Python 3.6 support is dropped, this can be safely reduced to:
-#     RegexCompiledType = re.Match
+#     RegexMatchType = re.Match
 
 # Yes, this type is required for type validation at module scope elsewhere.
 # Yes, this is the most time-efficient means of obtaining this type. No, this

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **text label utilities** (i.e., callables generating
+Package-wide **text label utilities** (i.e., callables generating
 human-readable strings describing prominent objects or types, which are then
 typically interpolated into exception messages).
 

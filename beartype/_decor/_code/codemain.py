@@ -402,12 +402,34 @@ This private submodule is *not* intended for importation by downstream callers.
 #with no return type hints *OR* deeply ignorable type hints. Why? Because we
 #can trivially eliminate the additional stack frame in this edge case by
 #unconditionally prefixing the body of the decorated callable by (in order):
+#
 #1. Code type-checking parameters passed to that callable.
 #2. Code deleting *ALL* beartype-specific "__bear"-prefixed locals and globals
 #   referenced by the code type-checking those parameters. This is essential,
 #   as it implies that we then no longer need to iteratively search the body of
 #   the decorated callable for local variables with conflicting names, which
 #   due to strings we can't reliably do without "ast"- or "dis"-style parsing.
+#
+#Note this edge case only applies to callables:
+#* Whose return hint is either:
+#  * Unspecified.
+#  * Deeply ignorable.
+#  * "None", implying this callable to return nothing. Callables explicitly
+#    returning a "None" value should instead be annotated with a return hint of
+#    "beartype.cave.NoneType"; this edge case would *NOT* apply to those.
+#* *DIRECTLY* decorated by @beartype: e.g.,
+#      @beartype
+#      def muh_func(): pass
+#  This edge case does *NOT* apply to callables directly decorated by another
+#  decorator first, as in that case the above procedure would erroneously
+#  discard the dynamic decoration of that other decorator: e.g.,
+#      @beartype
+#      @other_decorator
+#      def wat_func(): pass
+#* *NOT* implicitly transformed by one or more other import hooks. If any other
+#  import hooks are in effect, this edge case does *NOT* apply, as in that case
+#  the above procedure could again erroneously discard the dynamic
+#  transformations applied by those other import hooks.
 #FIXME: *GENERALIZATION:* All of the above would seem to pertain to a
 #prospective higher-level package, which has yet to be officially named but
 #which we are simply referring to as "beartypecache" for now. "beartypecache"
