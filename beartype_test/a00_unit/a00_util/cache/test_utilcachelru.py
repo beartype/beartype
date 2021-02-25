@@ -3,12 +3,12 @@
 # Copyright 2014-2021 by Cecil Curry.
 # See "LICENSE" for further details.
 
-'''
+"""
 **Beartype Least Recently Used (LRU) caching utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.cache.utilcachelru` submodule.
-'''
+"""
 
 # ....................{ IMPORTS                           }....................
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -16,15 +16,16 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
+from beartype.roar import _BeartypeUtilLRUCacheException
 
 
 # ....................{ TESTS                             }....................
 def test_lrucachestrong_one_pass() -> None:
-    '''
+    """
     Test successful usage of the
     :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class against an
     LRU cache caching at most one key-value pair.
-    '''
+    """
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachelru import LRUCacheStrong
@@ -55,11 +56,11 @@ def test_lrucachestrong_one_pass() -> None:
 
 
 def test_lrucachestrong_two_pass() -> None:
-    '''
+    """
     Test successful usage of the
     :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class against an
     LRU cache caching at most two key-value pairs.
-    '''
+    """
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachelru import LRUCacheStrong
@@ -126,18 +127,18 @@ def test_lrucachestrong_two_pass() -> None:
 
 
 def test_lrucachestrong_fail() -> None:
-    '''
+    """
     Test unsuccessful usage of the
     :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class.
-    '''
+    """
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachelru import LRUCacheStrong
 
     # Confirm behaviour for a non-integer size.
-    with raises(TypeError):
+    with raises(_BeartypeUtilLRUCacheException):
         LRUCacheStrong(size="Wait a minute, I'm not an int!")
 
     # Confirm behaviour for a non-positive size.
-    with raises(ValueError):
+    with raises(_BeartypeUtilLRUCacheException):
         LRUCacheStrong(size=0)
