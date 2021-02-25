@@ -30,6 +30,33 @@
 `constant-time <Timings_>`__ `runtime type checker <Usage_>`__ emphasizing
 efficiency, portability, and thrilling puns.
 
+      .. code-block:: shell-session
+      
+         $ pip3 --quiet install beartype
+         $ python3
+
+      .. code-block:: python
+      
+         >>> from beartype import beartype
+         >>> @beartype
+         ... def quote_wiggum(lines: list[str]) -> None:
+         ...     print('"{}"\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
+         >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
+         "Okay, folks. Show's over!
+          Nothing to see here. Show's…"
+         	— Police Chief Wiggum
+         >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
+         Traceback (most recent call last):
+           File "<stdin>", line 1, in <module>
+           File "<string>", line 30, in __beartyped_quote_wiggum
+           File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/peperror.py", line 220, in raise_pep_call_exception
+             raise exception_cls(
+         beartype.roar.BeartypeCallHintPepParamException: @beartyped
+         quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
+         crash!', b'Hey, everybody! Get a load of thi...'] violates type hint
+         list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
+         not str.
+
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods
@@ -48,33 +75,7 @@ dependency <Sphinx_>`__. Beartype supports `all actively developed Python
 versions <Python status_>`__, `all Python package managers <Install_>`__, and
 `multiple platform-specific package managers <Install_>`__.
 
-.. # Ideally, this heading would actually be formatted as a proper heading
-.. # (e.g., underlined by "=" characters). Since doing so causes the table of
-.. # contents that follows to be silently ignored, we fallback to a simple
-.. # block quote -- which technically suffices but is rather lame. So it goes!
-
-.. topic:: **tl;dr:**
-
-   #. `Install beartype <Install_>`__:
-   
-      .. code-block:: shell-session
-      
-         pip3 install beartype
-   
-   #. `Decorate functions and methods annotated by PEP-compliant type hints
-      with the @beartype.beartype decorator <Usage_>`__:
-   
-      .. code-block:: python
-   
-         from beartype import beartype
-         from collections.abc import Iterable
-         from typing import Optional
-   
-         @beartype
-         def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
-             print('\n'.join(messages))
-   
-   Quality assurance has now been assured.
+*Quality assurance has now been assured.*
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
