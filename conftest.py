@@ -41,8 +41,10 @@ def pytest_sessionstart(session: '_pytest.main.Session') -> None:
         :mod:`pytest`-specific test session object.
     '''
 
+    #FIXME: This doesn't appear to be working when this package is editably
+    #installed into a venv. We need to fix this -- and promptly!
     # Sanitize import directories *BEFORE* the first module importation.
-    _clean_imports()
+    # _clean_imports()
 
 
 #FIXME: Sufficiently general-purpose and widely useful that we should consider

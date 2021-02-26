@@ -19,6 +19,35 @@ This private submodule is *not* intended for importation by downstream callers.
 #than hashable iterables, which can *ALWAYS* be safely rewritten to be hashable
 #(e.g., coercing "callable[[], None]" to "callable[(), None]").
 
+#FIXME: The coercion function(s) defined below should also coerce PEP
+#544-compatible protocols *NOT* decorated by @typing.runtime_checkable to be
+#decorated by that decorator, as such protocols are unusable at runtime. Yes,
+#we should always try something *REALY* sneaky and clever.
+#
+#Specifically, rather than accept "typing" nonsense verbatim, we could instead:
+#* Detect PEP 544-compatible protocol type hints *NOT* decorated by
+#  @typing.runtime_checkable. We have an existing tester somewhere that now
+#  detects whether arbitrary classes are isinstanceable, so just call that.
+#* Emit a non-fatal warning advising the end user to resolve this on their end.
+#* Meanwhile, beartype can simply:
+#  * Dynamically fabricate a new PEP 544-compatible protocol decorated by
+#    @typing.runtime_checkable using the body of the undecorated user-defined
+#    protocol as its base. Indeed, simply subclassing a new subclass decorated
+#    by @typing.runtime_checkable from the undecorated user-defined protocol as
+#    its base with a noop body of "pass" should suffice.
+#  * Replacing all instances of the undecorated user-defined protocol with that
+#    decorated beartype-defined protocol in annotations. Note this would
+#    strongly benefit from some form of memoization or caching. Since this edge
+#    case should be fairly rare, even a dictionary would probably be overkill.
+#    Just implementing something resembling the following memoized getter
+#    in the "utilhintpep544" submodule would probably suffice:
+#        @callable_cached
+#        def get_pep544_protocol_checkable_from_protocol_uncheckable(
+#            protocol_uncheckable: object) -> Protocol:
+#            ...
+#
+#Checkmate, "typing". Checkmate.
+
 # ....................{ IMPORTS                           }....................
 from beartype._util.hint.utilhinttest import die_unless_hint
 from collections.abc import Callable

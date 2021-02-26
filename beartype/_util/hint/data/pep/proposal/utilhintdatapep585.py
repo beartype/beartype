@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import ModuleType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
 
@@ -32,21 +31,61 @@ objects against this object via equality tests.
     https://www.python.org/dev/peps/pep-0585
 '''
 
-# ....................{ ADDERS                            }....................
-def add_data(data_module: ModuleType) -> None:
+# ....................{ SETS ~ sign                       }....................
+HINT_PEP585_SIGNS_SUPPORTED_DEEP = frozenset()
+'''
+Frozen set of all `PEP 585`_-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying `PEP 585`_-compliant type hints for
+which the :func:`beartype.beartype` decorator generates deep type-checking
+code).
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+
+HINT_PEP585_SIGNS_TYPE = frozenset()
+'''
+Frozen set of all `PEP 585`_-compliant **standard class signs** (i.e.,
+instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
+type hints).
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+# ....................{ SETS ~ sign : category            }....................
+HINT_PEP585_SIGNS_SEQUENCE_STANDARD = frozenset()
+'''
+Frozen set of all `PEP 585`_-compliant **standard sequence signs** (i.e.,
+arbitrary objects uniquely identifying `PEP 585`_-compliant type hints
+accepting exactly one subscripted type hint argument constraining *all* items
+of compliant sequences, which necessarily satisfy the
+:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
+across all sequence items).
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+
+HINT_PEP585_SIGNS_TUPLE = frozenset()
+'''
+Frozen set of all `PEP 585`_-compliant **tuple signs** (i.e., arbitrary objects
+uniquely identifying `PEP 585`_-compliant type hints accepting exactly one
+subscripted type hint argument constraining *all* items of compliant tuples).
+
+.. _PEP 585:
+    https://www.python.org/dev/peps/pep-0585
+'''
+
+# ....................{ INITIALIZERS                      }....................
+def _init() -> None:
     '''
-    Add `PEP 585`_**-compliant type hint data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
-
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
+    Initialize this submodule.
     '''
 
+    # ..................{ VERSIONS                          }..................
     # If the active Python interpreter does *NOT* target at least Python >= 3.9
     # and thus fails to support PEP 585, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_9:
@@ -97,10 +136,23 @@ def add_data(data_module: ModuleType) -> None:
         Pattern,
     )
 
-    # ..................{ SETS ~ signs : type               }..................
-    # Tuple of all PEP 585-compliant standard class signs (i.e., instances of
-    # the builtin "type" type identifying PEP 585-compliant type hints).
-    _HINT_PEP585_SIGNS_TYPE = (
+    # ..................{ GLOBALS                           }..................
+    # Submodule globals to be redefined below.
+    global \
+        HINT_PEP585_SIGNS_SEQUENCE_STANDARD, \
+        HINT_PEP585_SIGNS_SUPPORTED_DEEP, \
+        HINT_PEP585_SIGNS_TUPLE, \
+        HINT_PEP585_SIGNS_TYPE
+
+    # ..................{ SETS ~ sign                       }..................
+    HINT_PEP585_SIGNS_SUPPORTED_DEEP = frozenset((
+        list,
+        tuple,
+        ByteString,
+        MutableSequence,
+        Sequence,
+    ))
+    HINT_PEP585_SIGNS_TYPE = frozenset((
         defaultdict,
         deque,
         dict,
@@ -139,27 +191,17 @@ def add_data(data_module: ModuleType) -> None:
         Sequence,
         Set,
         ValuesView,
-    )
-
-    data_module.HINT_PEP_SIGNS_TYPE.update(_HINT_PEP585_SIGNS_TYPE)  # type: ignore[attr-defined]
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(_HINT_PEP585_SIGNS_TYPE)  # type: ignore[attr-defined]
-
-    # ..................{ SETS ~ signs : supported          }..................
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((  # type: ignore[attr-defined]
-        list,
-        tuple,
-        ByteString,
-        MutableSequence,
-        Sequence,
     ))
 
-    # ..................{ SETS ~ signs : subtypes           }..................
-    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((  # type: ignore[attr-defined]
+    # ..................{ SETS ~ sign : category            }..................
+    HINT_PEP585_SIGNS_SEQUENCE_STANDARD = frozenset((
         list,
         ByteString,
         MutableSequence,
         Sequence,
     ))
-    data_module.HINT_PEP_SIGNS_TUPLE.update((  # type: ignore[attr-defined]
-        tuple,
-    ))
+    HINT_PEP585_SIGNS_TUPLE = frozenset((tuple,))
+
+
+# Initialize this submodule.
+_init()

@@ -3032,12 +3032,12 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     # Suffix this code by the substring suffixing all such
                     # code.
                     PEP_CODE_CHECK_HINT_GENERIC_SUFFIX
-                # Format the "indent_curr" prefix into this code deferred
-                # above for efficiency.
+                # Format...
                 ).format(
+                    # Indentation deferred above for efficiency.
                     indent_curr=indent_curr,
                     pith_curr_assign_expr=pith_curr_assign_expr,
-                    # Python expression evaluating to the builtin "tuple" type
+                    # Python expression evaluating to this user-defined type
                     # when accessed via the private "__beartypistry" parameter.
                     hint_curr_expr=register_typistry_type(hint_curr),
                 )

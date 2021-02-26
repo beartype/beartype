@@ -19,11 +19,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.utilclstest import is_type_isinstanceable
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ EXCEPTIONS                        }....................
+# ....................{ VALIDATORS                        }....................
+#FIXME: Unit test this function with respect to non-isinstanceable classes.
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -66,7 +68,7 @@ def die_unless_hint_nonpep(
         If this object is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
-    exception_type
+    exception_cls
         If this object is neither:
 
         * A non-:mod:`typing` type (i.e., class *not* defined by the
@@ -99,19 +101,16 @@ def die_unless_hint_nonpep(
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
-
     # If this object is a class...
     if isinstance(hint, type):
-        # If this is a PEP-compliant class, raise an exception.
-        die_if_hint_pep(
+        # If this class is *NOT* PEP-noncompliant, raise an exception.
+        _die_unless_hint_nonpep_type(
             hint=hint,
             hint_label=hint_label,
             exception_cls=exception_cls,
         )
 
-        # Else, this is a PEP-noncompliant class. In this case, silently accept
+        # Else, this class is isinstanceable. In this case, silently accept
         # this class as is.
         return
     # Else, this object is *NOT* a class.
@@ -146,6 +145,26 @@ def die_unless_hint_nonpep(
         )
 
 
+#FIXME: Optimize both this and the related _is_hint_nonpep_tuple() tester
+#defined below. The key realization here is that EAFP is *MUCH* faster in this
+#specific case than iteration. Why? Because iteration is guaranteed to
+#internally raise a stop iteration exception, whereas EAFP only raises an
+#exception if this tuple is invalid, in which case efficiency is no longer a
+#concern. So, what do we do instead? Simple. We internally refactor:
+#
+#* If "is_str_valid" is True, we continue to perform the existing
+#  implementation of both functions. *shrug*
+#* Else, we:
+#  * Perform a new optimized EAFP-style isinstance() check resembling that
+#    performed by die_unless_hint_type_isinstanceable().
+#  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
+#FIXME: The "is_str_valid: bool = True," default is rather bad, because it's
+#unsafe. The standard expectation is for tuples of types to be isinstanceable,
+#which tuples of types and strings clearly are not. Ergo, we should refactor
+#the codebase such that the default is instead:
+#    is_str_valid: bool = False,
+#FIXME: Unit test this function with respect to tuples containing
+#non-isinstanceable classes.
 def die_unless_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,
@@ -156,9 +175,9 @@ def die_unless_hint_nonpep_tuple(
     exception_cls: type = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
-    Raise an exception unless the passed object is a **PEP-noncompliant type
-    hint** (i.e., :mod:`beartype`-specific annotation *not* compliant with
-    annotation-centric PEPs).
+    Raise an exception unless the passed object is a **PEP-noncompliant tuple**
+    (i.e., :mod:`beartype`-specific tuple of one or more PEP-noncompliant types
+    *not* compliant with annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
@@ -188,7 +207,7 @@ def die_unless_hint_nonpep_tuple(
         If this object is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
-    exception_type
+    exception_cls
         If this object is neither:
 
         * A non-:mod:`typing` type (i.e., class *not* defined by the
@@ -208,7 +227,7 @@ def die_unless_hint_nonpep_tuple(
     #
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
-    if is_hint_nonpep_tuple(hint, is_str_valid):
+    if _is_hint_nonpep_tuple(hint, is_str_valid):
         return
     # Else, this object is *NOT* a PEP-noncompliant tuple. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -218,11 +237,8 @@ def die_unless_hint_nonpep_tuple(
     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with the is_hint_nonpep_tuple() tester.
+    # BEGIN: Synchronize changes here with the _is_hint_nonpep_tuple() tester.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
@@ -242,14 +258,12 @@ def die_unless_hint_nonpep_tuple(
 
         # If this item is a class...
         if isinstance(hint_item, type):
-            # If this is a PEP-compliant class, raise an exception.
-            die_if_hint_pep(
+            # If this class is *NOT* PEP-noncompliant, raise an exception.
+            _die_unless_hint_nonpep_type(
                 hint=hint_item,
                 hint_label=hint_label,
                 exception_cls=exception_cls,
             )
-            # Else, this is a PEP-noncompliant class. In this case,
-            # silently accept this class as is.
         # Else, this item is *NOT* a class.
         #
         # If this item is a forward reference...
@@ -270,6 +284,71 @@ def die_unless_hint_nonpep_tuple(
                 f'{hint_label} {repr(hint)} item {repr(hint_item)} '
                 f'{"neither type nor string" if is_str_valid else "not type"}.'
             )
+
+# ....................{ VALIDATORS ~ private              }....................
+def _die_unless_hint_nonpep_type(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Type hint',
+    exception_cls: type = BeartypeDecorHintNonPepException,
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **PEP-noncompliant type
+    hint** (i.e., :mod:`beartype`-agnostic isinstanceable type *not* compliant
+    with annotation-centric PEPs).
+
+    This validator is effectively (but technically *not*) memoized. See the
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``Type hint``.
+    exception_cls : Optional[type]
+        Type of the exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintNonPepException`.
+
+    Raises
+    ----------
+    TypeError
+        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        :func:`hash` function and thus unusable in hash-based containers like
+        dictionaries and sets). All supported type hints are hashable.
+    exception_cls
+        If this object is either:
+
+        * *Not* isinstanceable.
+        * A :mod:`typing` type (i.e., class defined by the :mod:`typing`
+          module, whose public classes are used to instantiate PEP-compliant
+          type hints or objects satisfying such hints that typically violate
+          standard class semantics and thus require PEP-specific handling).
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhinttest import (
+        die_unless_hint_type_isinstanceable)
+    from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
+
+    # If this class is PEP-compliant, raise an exception.
+    die_if_hint_pep(
+        hint=hint,
+        hint_label=hint_label,
+        exception_cls=exception_cls,
+    )
+    # Else, this class is PEP-noncompliant.
+
+    # If this class is *NOT* isinstanceable, raise an exception.
+    die_unless_hint_type_isinstanceable(
+        hint=hint,
+        hint_label=hint_label,
+        exception_cls=exception_cls,
+    )
+    # Else, this class is isinstanceable.
 
 # ....................{ TESTERS                           }....................
 def is_hint_nonpep(
@@ -324,29 +403,26 @@ def is_hint_nonpep(
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-
     # Return true only if either...
     return (
         # If this object is a class, return true only if this is *NOT* a
         # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
         # class by definition.
-        not is_hint_pep(hint) if isinstance(hint, type) else
+        _is_hint_nonpep_type(hint) if isinstance(hint, type) else
         # Else, this object is *NOT* a class.
         #
         # If this object is a tuple, return true only if this tuple contains
         # only one or more caller-permitted forward references and
         # PEP-noncompliant classes.
-        is_hint_nonpep_tuple(hint, is_str_valid) if isinstance(hint, tuple)
+        _is_hint_nonpep_tuple(hint, is_str_valid) if isinstance(hint, tuple)
         # Else, this object is neither a class nor tuple. Return false, as this
         # object *CANNOT* be PEP-noncompliant.
         else False
     )
 
-
+# ....................{ TESTERS ~ private                 }....................
 @callable_cached
-def is_hint_nonpep_tuple(
+def _is_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,
 
@@ -355,7 +431,7 @@ def is_hint_nonpep_tuple(
 ) -> bool:
     '''
     ``True`` only if the passed object is a PEP-noncompliant non-empty tuple of
-    one or more classes.
+    one or more types.
 
     This tester is memoized for efficiency.
 
@@ -388,9 +464,6 @@ def is_hint_nonpep_tuple(
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
-
     # Return true only if this object is...
     return (
         # A tuple *AND*...
@@ -400,9 +473,40 @@ def is_hint_nonpep_tuple(
         # Each item of this tuple is either a caller-permitted forward
         # reference *OR* a PEP-noncompliant class.
         all(
-            not is_hint_pep(hint_item) if isinstance(hint_item, type) else
-            is_str_valid               if isinstance(hint_item, str) else
+            _is_hint_nonpep_type(hint_item) if isinstance(hint_item, type) else
+            is_str_valid                    if isinstance(hint_item, str) else
             False
             for hint_item in hint
         )
     )
+
+
+def _is_hint_nonpep_type(hint: object,) -> bool:
+    '''
+    ``True`` only if the passed object is a PEP-noncompliant type.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a PEP-noncompliant type.
+    '''
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+
+    # Return true only if this object is isinstanceable and *NOT* a
+    # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
+    # class by definition.
+    return is_type_isinstanceable(hint) and not is_hint_pep(hint)

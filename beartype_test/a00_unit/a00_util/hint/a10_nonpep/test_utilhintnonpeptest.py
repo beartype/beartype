@@ -75,25 +75,25 @@ def test_is_hint_nonpep() -> None:
 def test_is_hint_nonpep_tuple() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.nonpep.utilhintnonpeptest.is_hint_nonpep_tuple`
+    :func:`beartype._util.hint.nonpep.utilhintnonpeptest._is_hint_nonpep_tuple`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.nonpep.utilhintnonpeptest import (
-        is_hint_nonpep_tuple)
+        _is_hint_nonpep_tuple)
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
 
     # Assert this function accepts PEP-noncompliant tuples.
     for hint_nonpep in HINTS_NONPEP:
-        assert is_hint_nonpep_tuple(hint_nonpep) is isinstance(
+        assert _is_hint_nonpep_tuple(hint_nonpep) is isinstance(
             hint_nonpep, tuple)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in NOT_HINTS_NONPEP:
-        assert is_hint_nonpep_tuple(not_hint_nonpep) is False
+        assert _is_hint_nonpep_tuple(not_hint_nonpep) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        assert is_hint_nonpep_tuple(non_hint_unhashable) is False
+        assert _is_hint_nonpep_tuple(non_hint_unhashable) is False

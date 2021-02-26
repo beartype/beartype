@@ -15,9 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
-    _HINT_PEP544_IO_GENERIC_TO_PROTOCOL)
+    HINT_PEP544_IO_GENERIC_TO_PROTOCOL)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype._util.utilclass import is_class_builtin
+from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.utilobject import is_object_subclass
 from typing import Optional
 
@@ -55,7 +55,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         try:
             # Return true only if this hint is a PEP 484-compliant IO generic
             # base class.
-            return hint in _HINT_PEP544_IO_GENERIC_TO_PROTOCOL
+            return hint in HINT_PEP544_IO_GENERIC_TO_PROTOCOL
         # If this hint is unhashable, this hint is by definition *NOT* a PEP
         # 484-compliant IO generic base class. In this case, return false.
         except TypeError:
@@ -79,7 +79,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             #
             # Since builtin types are obviously *NOT* PEP 544-compliant
             # protocols, explicitly exclude all such types. Why, Guido? Why?
-            not (isinstance(hint, type) and is_class_builtin(hint))
+            not (isinstance(hint, type) and is_type_builtin(hint))
         )
 
 
@@ -265,4 +265,4 @@ def get_hint_pep544_io_protocol_from_generic(hint: type) -> type:
     # Else, this object is *NOT* a PEP 484-compliant "typing" IO generic.
 
     # Return the corresponding PEP 544-compliant IO protocol.
-    return _HINT_PEP544_IO_GENERIC_TO_PROTOCOL[hint]
+    return HINT_PEP544_IO_GENERIC_TO_PROTOCOL[hint]

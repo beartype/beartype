@@ -142,6 +142,20 @@ class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
     pass
 
 
+class BeartypeDecorHintTypeException(BeartypeDecorHintException):
+    '''
+    **Beartype decorator class type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more **invalid class type hints** (i.e., type hints that are invalid
+    classes, typically due to failing to support runtime :func:`isinstance`
+    calls).
+    '''
+
+    pass
+
+
 class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
     '''
     **Beartype decorator forward reference type hint exception.**
@@ -154,7 +168,6 @@ class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
     '''
 
     pass
-
 
 # ....................{ DECORATOR ~ hint : value          }....................
 class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
@@ -577,12 +590,12 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     pass
 
 
-class _BeartypeUtilClassException(_BeartypeUtilException):
+class _BeartypeUtilTypeException(_BeartypeUtilException):
     '''
     **Beartype class utility exception.**
 
     This exception is raised by public functions of the private
-    :mod:`beartype._util.utilclass` subpackage.
+    :mod:`beartype._util.cls.utilclstest` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

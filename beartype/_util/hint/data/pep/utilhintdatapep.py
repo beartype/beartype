@@ -10,39 +10,66 @@ concerning PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: *WOOPS.* We have fundamental badness here and in similar submodules.
+#Why? Because this submodule is public and thus externally importable *BEFORE*
+#the equally public parent "utilhintdata" submodule. If that happens, then this
+#submodule will *NOT* have been initialized, which is awful. This clearly
+#suggests this entire design to be suspect, frankly; things simply should *NOT*
+#be this fragile.
+#
+#Of course, the trivial fix is just to forcefully import "utilhintdata" from
+#"beartype.__init__" as a hidden import with side effects, but... yikes.
+#That'll do as a temporary fix, but we absolutely need to get this under
+#control with a wide-sweeping rethink.
+
 # ....................{ IMPORTS                           }....................
-import sys
-from beartype.cave import ModuleType
-from beartype._util.hint.data.pep.proposal import (
-    utilhintdatapep484,
-    utilhintdatapep544,
-    utilhintdatapep585,
-    utilhintdatapep593,
+from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+    HINT_PEP484_SIGNS_DEPRECATED,
+    HINT_PEP484_SIGNS_IGNORABLE,
+    HINT_PEP484_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP484_SIGNS_SUPPORTED_DEEP,
+    HINT_PEP484_SIGNS_SUPPORTED_SHALLOW,
+    HINT_PEP484_SIGNS_TUPLE,
+    HINT_PEP484_SIGNS_TYPE,
+    HINT_PEP484_SIGNS_TYPE_ORIGIN,
+)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
+    HINT_PEP544_SIGNS_IGNORABLE,
+    HINT_PEP544_SIGNS_SUPPORTED_DEEP,
+)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
+    HINT_PEP585_SIGNS_SEQUENCE_STANDARD,
+    HINT_PEP585_SIGNS_SUPPORTED_DEEP,
+    HINT_PEP585_SIGNS_TUPLE,
+    HINT_PEP585_SIGNS_TYPE,
+)
+from beartype._util.hint.data.pep.proposal.utilhintdatapep593 import (
+    HINT_PEP593_SIGNS_SUPPORTED_DEEP,
 )
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SIGNS                             }....................
-HINT_PEP_SIGNS_DEPRECATED: frozenset = set()  # type: ignore[assignment]
+HINT_PEP_SIGNS_DEPRECATED = (
+    HINT_PEP484_SIGNS_DEPRECATED
+)
 '''
 Frozen set of all **deprecated signs** (i.e., arbitrary objects uniquely
 identifying outdated PEP-compliant type hints that have since been obsoleted by
-recent PEPs).
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
+more recent PEPs).
 '''
 
 
-HINT_PEP_SIGNS_IGNORABLE: frozenset = set()  # type: ignore[assignment]
+HINT_PEP_SIGNS_IGNORABLE = (
+    HINT_PEP484_SIGNS_IGNORABLE |
+    HINT_PEP544_SIGNS_IGNORABLE
+)
 '''
 Frozen set of all **ignorable signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints unconditionally ignored by the
 :func:`beartype.beartype` decorator).
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
 
 See Also
 ----------
@@ -50,85 +77,11 @@ See Also
     Further commentary.
 '''
 
-# ....................{ SETS ~ supported                  }....................
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED: frozenset = None  # type: ignore[assignment]
-'''
-Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints).
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
-'''
-
-
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED_DEEP: frozenset = set()  # type: ignore[assignment]
-'''
-Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints for which the :func:`beartype.beartype`
-decorator generates deeply type-checking code).
-
-This set contains *every* sign explicitly supported by one or more conditional
-branches in the body of the
-:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` function
-generating code deeply type-checking the current pith against the PEP-compliant
-type hint annotated by a subscription of that attribute.
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
-'''
-
-
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_SUPPORTED_SHALLOW: frozenset = set()  # type: ignore[assignment]
-'''
-Frozen set of all **shallowly supported non-originative signs** (i.e.,
-arbitrary objects uniquely identifying PEP-compliant type hints *not*
-originating from a non-:mod:`typing` origin type for which the
-:func:`beartype.beartype` decorator generates shallow type-checking code).
-
-This set is intended to be tested against typing attributes returned by the
-:func:`get_hint_pep_sign` getter function.
-'''
-
-# ....................{ SETS ~ type                       }....................
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_TYPE: frozenset = set()  # type: ignore[assignment]
-'''
-Frozen set of all **standard class signs** (i.e., instances of the builtin
-:mod:`type` type uniquely identifying PEP-compliant type hints).
-'''
-
-
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_TYPE_ORIGIN: frozenset = set()  # type: ignore[assignment]
-'''
-Frozen set of all **signs** (i.e., arbitrary objects) uniquely identifying
-PEP-compliant type hints originating from an **origin type** (i.e.,
-non-:mod:`typing` class such that *all* objects satisfying this hint are
-instances of this class).
-
-Since any arbitrary object is trivially type-checkable against an
-:func:`isinstance`-able class by passing that object and class to the
-:func:`isinstance` builtin, *all* parameters and return values annotated by
-PEP-compliant type hints subscripting unsubscripted typing attributes listed in
-this dictionary are shallowly type-checkable from wrapper functions generated
-by the :func:`beartype.beartype` decorator.
-'''
-
-# ....................{ SETS ~ subtype                    }....................
-# Fully initialized by the _init() function below.
-HINT_PEP_BASES_FORWARDREF: tuple = set()  # type: ignore[assignment]
-'''
-Tuple of all **PEP-compliant forward reference type hint superclasses** (i.e.,
-superclasses such that all PEP-compliant type hints forward referencing
-user-defined types are instances of these superclasses).
-'''
-
-
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_SEQUENCE_STANDARD: frozenset = set()  # type: ignore[assignment]
+# ....................{ SETS ~ category                   }....................
+HINT_PEP_SIGNS_SEQUENCE_STANDARD = (
+    HINT_PEP484_SIGNS_SEQUENCE_STANDARD |
+    HINT_PEP585_SIGNS_SEQUENCE_STANDARD
+)
 '''
 Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints accepting exactly one subscripted type
@@ -166,103 +119,90 @@ This set intentionally excludes the:
 '''
 
 
-# Initialized by the _init() function below.
-HINT_PEP_SIGNS_TUPLE: frozenset = set()  # type: ignore[assignment]
+HINT_PEP_SIGNS_TUPLE = (
+    HINT_PEP484_SIGNS_TUPLE |
+    HINT_PEP585_SIGNS_TUPLE
+)
 '''
 Frozen set of all **tuple signs** (i.e., arbitrary objects uniquely identifying
 PEP-compliant type hints accepting exactly one subscripted type hint argument
 constraining *all* items of compliant tuples).
 '''
 
-# ....................{ INITIALIZERS                      }....................
-def add_data(data_module: ModuleType) -> None:
-    '''
-    Add PEP-compliant type hint data to various global containers declared by
-    the passed module.
+# ....................{ SETS ~ supported                  }....................
+HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
+    HINT_PEP484_SIGNS_SUPPORTED_SHALLOW
+)
+'''
+Frozen set of all **shallowly supported non-originative signs** (i.e.,
+arbitrary objects uniquely identifying PEP-compliant type hints *not*
+originating from a non-:mod:`typing` origin type for which the
+:func:`beartype.beartype` decorator generates shallow type-checking code).
+'''
 
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
-    '''
 
-    # Submodule globals to be redefined below.
-    global \
-        HINT_PEP_BASES_FORWARDREF, \
-        HINT_PEP_SIGNS_DEPRECATED, \
-        HINT_PEP_SIGNS_IGNORABLE, \
-        HINT_PEP_SIGNS_SEQUENCE_STANDARD, \
-        HINT_PEP_SIGNS_SUPPORTED, \
-        HINT_PEP_SIGNS_SUPPORTED_DEEP, \
-        HINT_PEP_SIGNS_SUPPORTED_SHALLOW, \
-        HINT_PEP_SIGNS_TUPLE, \
-        HINT_PEP_SIGNS_TYPE, \
-        HINT_PEP_SIGNS_TYPE_ORIGIN
+HINT_PEP_SIGNS_SUPPORTED_DEEP = (
+    HINT_PEP484_SIGNS_SUPPORTED_DEEP |
+    HINT_PEP544_SIGNS_SUPPORTED_DEEP |
+    HINT_PEP585_SIGNS_SUPPORTED_DEEP |
+    HINT_PEP593_SIGNS_SUPPORTED_DEEP
+)
+'''
+Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints for which the :func:`beartype.beartype`
+decorator generates deeply type-checking code).
 
-    # Current submodule, obtained via the standard idiom. See also:
-    #     https://stackoverflow.com/a/1676860/2809027
-    CURRENT_SUBMODULE = sys.modules[__name__]
+This set contains *every* sign explicitly supported by one or more conditional
+branches in the body of the
+:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` function
+generating code deeply type-checking the current pith against the PEP-compliant
+type hint annotated by a subscription of that attribute.
+'''
 
-    # Tuple of all private submodules of this subpackage to be initialized.
-    HINT_DATA_PEP_SUBMODULES = (
-        utilhintdatapep484,
-        utilhintdatapep544,
-        utilhintdatapep585,
-        utilhintdatapep593,
-    )
+# ....................{ SETS ~ type                       }....................
+HINT_PEP_SIGNS_TYPE = (
+    HINT_PEP484_SIGNS_TYPE |
+    HINT_PEP585_SIGNS_TYPE
+)
+'''
+Frozen set of all **standard class signs** (i.e., instances of the builtin
+:mod:`type` type uniquely identifying PEP-compliant type hints).
+'''
 
-    # Initialize all private submodules of this subpackage.
-    for hint_data_pep_submodule in HINT_DATA_PEP_SUBMODULES:
-        hint_data_pep_submodule.add_data(CURRENT_SUBMODULE)  # type: ignore[attr-defined]
 
-    # Assert these global to have been initialized by these private submodules.
-    assert HINT_PEP_SIGNS_TYPE, (
-        'Set global "HINT_PEP_SIGNS_TYPE" empty.')
-    assert HINT_PEP_BASES_FORWARDREF, (
-        'Set global "HINT_BASES_FORWARDREF" empty.')
-    assert HINT_PEP_SIGNS_SUPPORTED_DEEP, (
-        'Set global "HINT_PEP_SIGNS_SUPPORTED_DEEP" empty.')
-    assert HINT_PEP_SIGNS_SUPPORTED_SHALLOW, (
-        'Set global "HINT_PEP_SIGNS_SUPPORTED_SHALLOW" empty.')
-    assert HINT_PEP_SIGNS_IGNORABLE, (
-        'Set global "HINT_PEP_SIGNS_IGNORABLE" empty.')
-    assert HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
-        'Set global "HINT_PEP_SIGNS_SEQUENCE_STANDARD" empty.')
-    assert HINT_PEP_SIGNS_TUPLE, (
-        'Set global "HINT_PEP_SIGNS_TUPLE" empty.')
-    assert HINT_PEP_SIGNS_TYPE_ORIGIN, (
-        'Set global "HINT_PEP_SIGNS_TYPE_ORIGIN" empty.')
+HINT_PEP_SIGNS_TYPE_ORIGIN = (
+    HINT_PEP484_SIGNS_TYPE_ORIGIN |
+    # Since all PEP 585-compliant type hints originate from an origin type, the
+    # set of all PEP 585-compliant standard class signs also doubles as the
+    # set of all PEP 585-compliant original class signs.
+    HINT_PEP585_SIGNS_TYPE
+)
+'''
+Frozen set of all **signs** (i.e., arbitrary objects) uniquely identifying
+PEP-compliant type hints originating from an **origin type** (i.e.,
+non-:mod:`typing` class such that *all* objects satisfying this hint are
+instances of this class).
 
-    # Tuples defined *AFTER* initializing these private submodules and
-    # thus the lower-level globals required by these tuples.
-    HINT_PEP_BASES_FORWARDREF = tuple(HINT_PEP_BASES_FORWARDREF)
+Since any arbitrary object is trivially type-checkable against an
+:func:`isinstance`-able class by passing that object and class to the
+:func:`isinstance` builtin, *all* parameters and return values annotated by
+PEP-compliant type hints subscripting unsubscripted typing attributes listed in
+this dictionary are shallowly type-checkable from wrapper functions generated
+by the :func:`beartype.beartype` decorator.
+'''
 
-    # Frozen sets defined *AFTER* initializing these private submodules and
-    # thus the lower-level globals required by these sets.
-    HINT_PEP_SIGNS_DEPRECATED = frozenset(HINT_PEP_SIGNS_DEPRECATED)
-    HINT_PEP_SIGNS_IGNORABLE = frozenset(HINT_PEP_SIGNS_IGNORABLE)
-    HINT_PEP_SIGNS_SEQUENCE_STANDARD = frozenset(
-        HINT_PEP_SIGNS_SEQUENCE_STANDARD)
-    HINT_PEP_SIGNS_SUPPORTED_DEEP = frozenset(HINT_PEP_SIGNS_SUPPORTED_DEEP)
-    HINT_PEP_SIGNS_SUPPORTED_SHALLOW = frozenset(
-        HINT_PEP_SIGNS_SUPPORTED_SHALLOW)
-    HINT_PEP_SIGNS_TUPLE = frozenset(HINT_PEP_SIGNS_TUPLE)
-    HINT_PEP_SIGNS_TYPE = frozenset(HINT_PEP_SIGNS_TYPE)
-    HINT_PEP_SIGNS_TYPE_ORIGIN = frozenset(HINT_PEP_SIGNS_TYPE_ORIGIN)
-
-    # Frozen sets defined *AFTER* defining all other frozen sets above.
-    HINT_PEP_SIGNS_SUPPORTED = frozenset(
-        # Set of all deeply supported signs.
-        HINT_PEP_SIGNS_SUPPORTED_DEEP |
-        # Set of all shallowly supported signs *NOT* originating from a
-        # non-"typing" origin type.
-        HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
-        # Set of all shallowly supported signs originating from a non-"typing"
-        # origin type.
-        HINT_PEP_SIGNS_TYPE_ORIGIN
-    )
-
-    # Add PEP-compliant type hint data to various global containers declared by
-    # the passed module.
-    data_module.HINT_BASES_FORWARDREF.update(HINT_PEP_BASES_FORWARDREF)   # type: ignore[attr-defined]
-    data_module.HINTS_IGNORABLE_SHALLOW.update(HINT_PEP_SIGNS_IGNORABLE)  # type: ignore[attr-defined]
+# ....................{ SETS ~ supported : all            }....................
+HINT_PEP_SIGNS_SUPPORTED = (
+    # Set of all deeply supported signs.
+    HINT_PEP_SIGNS_SUPPORTED_DEEP |
+    # Set of all shallowly supported signs *NOT* originating from a
+    # non-"typing" origin type.
+    HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
+    # Set of all shallowly supported signs originating from a non-"typing"
+    # origin type.
+    HINT_PEP_SIGNS_TYPE_ORIGIN
+)
+'''
+Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints).
+'''

@@ -16,28 +16,7 @@ singleton.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
-
-# ....................{ UTILITIES                         }....................
-def _eval_registered_expr(hint_expr: str) -> (type, tuple):
-    '''
-    Dynamically evaluate the passed Python expression (assumed to be
-    a string returned by either the
-    :func:`beartype._decor._cache.cachetype.register_typistry_type` or
-    :func:`beartype._decor._cache.cachetype.register_typistry_tuple` functions) *and*
-    return the resulting value (assumed to either be a type or tuple of types).
-    '''
-    assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
-
-    # Defer heavyweight imports.
-    from beartype._decor._cache.cachetype import bear_typistry
-    from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
-
-    # Dictionary of all local variables required to evaluate this expression.
-    eval_locals = {ARG_NAME_TYPISTRY: bear_typistry}
-
-    # Evaluate this expression under these local variables and return the
-    # resulting value.
-    return eval(hint_expr, {}, eval_locals)
+from typing import Tuple, Union
 
 # ....................{ TESTS ~ callable : type           }....................
 def test_typistry_register_type_pass() -> None:
@@ -86,14 +65,13 @@ def test_typistry_register_type_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeUtilClassException
+    from beartype.roar import _BeartypeUtilTypeException
     from beartype._decor._cache.cachetype import register_typistry_type
 
     # Assert that non-types are *NOT* registrable via the same function.
-    with raises(_BeartypeUtilClassException):
+    with raises(_BeartypeUtilTypeException):
         register_typistry_type((
-            'The best lack all conviction,',
-            'while the worst',
+            'The best lack all conviction, while the worst',
             'Are full of passionate intensity',
         ))
 
@@ -195,9 +173,6 @@ def test_typistry_register_tuple_fail() -> None:
     with raises(_BeartypeDecorBeartypistryException):
         register_typistry_tuple(())
 
-    #FIXME: Currently broken. Decipher why, please. It appears likely that the
-    #die_unless_hint_nonpep() validator is slightly broken. *sigh*
-
     # Assert that non-empty tuples containing one or more PEP-compliant types
     # are *NOT* registrable via this function.
     with raises(_BeartypeDecorBeartypistryException):
@@ -246,6 +221,18 @@ def test_typistry_singleton_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
+    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
+
+    # Assert that keys that are *NOT* strings are *NOT* registrable.
+    with raises(_BeartypeDecorBeartypistryException):
+        bear_typistry[(
+            'And what rough beast, its hour come round at last,',)] = (
+            'Slouches towards Bethlehem to be born?',)
+
+    # Assert that forward references are *NOT* registrable.
+    with raises(_BeartypeDecorBeartypistryException):
+        bear_typistry['Mere.anarchy.is.loosed.upon.the.world'] = (
+            'The blood-dimmed tide is loosed, and everywhere')
 
     # Assert that unhashable objects are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):
@@ -254,17 +241,35 @@ def test_typistry_singleton_fail() -> None:
                 'Things fall apart; the centre cannot hold;'),
         }
 
-    # Assert that forward references are *NOT* registrable.
-    with raises(_BeartypeDecorBeartypistryException):
-        bear_typistry['Mere.anarchy.is.loosed.upon.the.world'] = (
-            'The blood-dimmed tide is loosed, and everywhere')
-
-    # Assert that arbitrary objects are also *NOT* registrable.
+    # Assert that arbitrary non-classes are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
 
-    # Assert that beartypistry keys that are *NOT* strings are rejected.
+    # Assert that PEP 560-compliant classes overriding the __instancecheck__()
+    # dunder method to unconditionally raise exceptions are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):
-        bear_typistry[(
-            'And what rough beast, its hour come round at last,',)] = (
-            'Slouches towards Bethlehem to be born?',)
+        bear_typistry['When.a.vast.image.out.of.Spiritus.Mundi'] = (
+            NonIsinstanceableClass)
+
+# ....................{ PRIVATE ~ utility                 }....................
+def _eval_registered_expr(hint_expr: str) -> Union[type, Tuple[type, ...]]:
+    '''
+    Dynamically evaluate the passed Python expression (assumed to be a string
+    returned by either the
+    :func:`beartype._decor._cache.cachetype.register_typistry_type` or
+    :func:`beartype._decor._cache.cachetype.register_typistry_tuple` functions)
+    *and* return the resulting value (assumed to either be a type or tuple of
+    types).
+    '''
+    assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
+
+    # Defer heavyweight imports.
+    from beartype._decor._cache.cachetype import bear_typistry
+    from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
+
+    # Dictionary of all local variables required to evaluate this expression.
+    eval_locals = {ARG_NAME_TYPISTRY: bear_typistry}
+
+    # Evaluate this expression under these local variables and return the
+    # resulting value.
+    return eval(hint_expr, {}, eval_locals)

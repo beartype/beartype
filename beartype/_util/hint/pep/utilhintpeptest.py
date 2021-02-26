@@ -10,36 +10,6 @@ validating arbitrary objects to be PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Refactor is_hint_pep_supported() and die_unless_hint_pep_supported() to
-#explicitly reject (with a human-readable exception in the latter case) PEP
-#544-compatible protocols *NOT* decorated by @typing.runtime_checkable, as such
-#PEP-compliant type hints are unusable at runtime.
-#
-#Alternately, we could always try something *REAL* sneaky and clever:
-#basically, rather than accept "typing" nonsense verbatim, we could instead:
-#* Detect PEP 544-compatible protocol type hints *NOT* decorated by
-#  @typing.runtime_checkable.
-#* Emit a non-fatal warning advising the end user to resolve this on their end.
-#* Meanwhile, beartype can simply:
-#  * Dynamically fabricate a new PEP 544-compatible protocol decorated by
-#    @typing.runtime_checkable using the body of the undecorated user-defined
-#    protocol as its base. Indeed, simply subclassing a new subclass decorated
-#    by @typing.runtime_checkable from the undecorated user-defined protocol as
-#    its base with a noop body of "pass" should suffice.
-#  * Replacing all instances of the undecorated user-defined protocol with that
-#    decorated beartype-defined protocol in annotations. Note this would
-#    strongly benefit from some form of memoization or caching. Since this edge
-#    case should be fairly rare, even a dictionary would probably be overkill.
-#    Just implementing something resembling the following memoized getter
-#    in the "utilhintpep544" submodule would probably suffice:
-#        @callable_cached
-#        def get_pep544_protocol_checkable_from_protocol_uncheckable(
-#            protocol_uncheckable: object) -> Protocol:
-#            ...
-#
-#Checkmate, "typing". Checkmate.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -72,9 +42,9 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.utilobject import get_object_class_unless_class
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.utilobject import get_object_class_unless_class
 from typing import TypeVar
 from warnings import warn
 
@@ -272,7 +242,8 @@ def die_if_hint_pep_unsupported(
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
         f'{hint_label} PEP type hint "{repr(hint)}" '
-        f'currently unsupported by @beartype.')
+        f'currently unsupported by @beartype.'
+    )
 
 
 def die_if_hint_pep_sign_unsupported(
@@ -787,6 +758,7 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
     # from beartype._util.hint.data.pep.utilhintdatapep import (
     #     HINT_PEP_SIGNS_SUPPORTED_DEEP)
     # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')
+    print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
 
     # Return true only if this hint is a supported unsubscripted "typing"
     # attribute.

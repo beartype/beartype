@@ -13,37 +13,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import ModuleType
+import typing
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ ADDERS                            }....................
-def add_data(data_module: ModuleType) -> None:
-    '''
-    Add `PEP 593`_**-compliant type hint data to various global containers
-    declared by the passed module.
+# ....................{ SETS ~ sign : supported           }....................
+HINT_PEP593_SIGNS_SUPPORTED_DEEP = frozenset(
+    (typing.Annotated,) if IS_PYTHON_AT_LEAST_3_9 else ()
+)
+'''
+Frozen set of all `PEP 593`_-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying `PEP 593`_-compliant type hints for
+which the :func:`beartype.beartype` decorator generates deep type-checking
+code).
 
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
-
-    .. _PEP 593:
-        https://www.python.org/dev/peps/pep-0593
-    '''
-
-    # If the active Python interpreter does *NOT* target at least Python >= 3.9
-    # and thus fails to support PEP 593, silently reduce to a noop.
-    if not IS_PYTHON_AT_LEAST_3_9:
-        return
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 593.
-
-    # Defer Python version-specific imports.
-    from typing import Annotated  # type: ignore[attr-defined]
-
-    # ..................{ SETS ~ signs                      }..................
-    # Register the version-specific signs introduced in this version.
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.add(Annotated)  # type: ignore[attr-defined]
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
+'''

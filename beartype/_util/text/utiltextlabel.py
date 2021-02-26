@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.utilclass import is_classname_builtin
+from beartype._util.cls.utilclstest import is_classname_builtin
 from beartype._util.utilobject import get_object_classname
 from collections.abc import Callable
 

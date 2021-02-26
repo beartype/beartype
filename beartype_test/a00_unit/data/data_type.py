@@ -14,7 +14,7 @@ cases on behalf of higher-level unit test submodules.
 from sys import exc_info, implementation
 
 # ....................{ CLASSES                           }....................
-class Class:
+class Class(object):
     '''
     Arbitrary pure-Python class defining an arbitrary method.
     '''
@@ -23,6 +23,29 @@ class Class:
         '''Arbitrary pure-Python instance method.'''
 
         pass
+
+# ....................{ CLASSES ~ isinstance              }....................
+class NonIsinstanceableMetaclass(type):
+    '''
+    Metaclass overriding the ``__instancecheck__()`` dunder method to
+    unconditionally raise an exception, preventing classes with this metaclass
+    from being passed as the second parameter to the :func:`isinstance`
+    builtin.
+    '''
+
+    def __instancecheck__(self, obj: object) -> bool:
+        raise TypeError(
+            f'{self} not passable as second parameter to isinstance().')
+
+
+class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
+    '''
+    Class whose metaclass overrides the ``__instancecheck__()`` dunder method
+    to unconditionally raise an exception, preventing this class from being
+    passed as the second parameter to the :func:`isinstance` builtin.
+    '''
+
+    pass
 
 # ....................{ CALLABLES                         }....................
 def function():

@@ -14,8 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.cave import ModuleType, NoneType
+from beartype.cave import NoneType
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
@@ -95,12 +96,106 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
     https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ SIGNS ~ sets                      }....................
-# Initialized by the add_data() function below.
-HINT_PEP484_SIGNS_TYPE_ORIGIN: frozenset = None  # type: ignore[assignment]
+# ....................{ SETS ~ sign                       }....................
+HINT_PEP484_SIGNS_DEPRECATED = frozenset()
 '''
-Frozen set of all signs uniquely identifying `PEP 484`_-compliant type hints
-originating from an origin type.
+Frozen set of all `PEP 484`_-compliant **deprecated signs** (i.e., arbitrary
+objects uniquely identifying outdated `PEP 484`_-compliant type hints that have
+since been obsoleted by more recent PEPs).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+HINT_PEP484_SIGNS_IGNORABLE = frozenset((
+    # The "Any" singleton is semantically synonymous with the ignorable
+    # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
+    Any,
+
+    # The "Generic" superclass imposes no constraints and is thus also
+    # semantically synonymous with the ignorable PEP-noncompliant
+    # "beartype.cave.AnyType" and hence "object" types. Since PEP
+    # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+    # singleton including "typing.Generic" semantically expands to that
+    # singelton subscripted by an implicit "Any" argument, "Generic"
+    # semantically expands to the implicit "Generic[Any]" singleton.
+    Generic,
+
+    # The unsubscripted "Optional" singleton semantically expands to the
+    # implicit "Optional[Any]" singleton by the same argument. Since PEP
+    # 484 also stipulates that all "Optional[t]" singletons semantically
+    # expand to "Union[t, type(None)]" singletons for arbitrary arguments
+    # "t", "Optional[Any]" semantically expands to merely "Union[Any,
+    # type(None)]". Since all unions subscripted by "Any" semantically
+    # reduce to merely "Any", the "Optional" singleton also reduces to
+    # merely "Any".
+    #
+    # This intentionally excludes "Optional[type(None)]", which the
+    # "typing" module physically reduces to merely "type(None)". *shrug*
+    Optional,
+
+    # The unsubscripted "Union" singleton semantically expands to the
+    # implicit "Union[Any]" singleton by the same argument. Since PEP 484
+    # stipulates that a union of one type semantically reduces to only that
+    # type, "Union[Any]" semantically reduces to merely "Any". Despite
+    # their semantic equivalency, however, these objects remain
+    # syntactically distinct with respect to object identification: e.g.,
+    #     >>> Union is not Union[Any]
+    #     True
+    #     >>> Union is not Any
+    #     True
+    #
+    # This intentionally excludes:
+    #
+    # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
+    #   module physically reduces:
+    #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
+    #     this frozen set already contains.
+    #   * "Union[object]" to merely "object" (i.e., "Union[object] is
+    #     object"), which this frozen set also already contains.
+    # * "Union" singleton subscripted by one or more ignorable type hints
+    #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
+    #   exist a countably infinite number of these subscriptions, these
+    #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
+    #   these subscriptions are dynamically detected by the high-level
+    #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
+    #   function and thus referred to as deeply ignorable type hints.
+    Union,
+))
+'''
+Frozen set of all `PEP 484`_-compliant **ignorable signs** (i.e., arbitrary
+objects uniquely identifying `PEP 484`_-compliant type hints unconditionally
+ignored by the :func:`beartype.beartype` decorator).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+# ....................{ SETS ~ sign : category            }....................
+HINT_PEP484_SIGNS_SEQUENCE_STANDARD = frozenset((
+    List,
+    MutableSequence,
+    Sequence,
+))
+'''
+Frozen set of all `PEP 484`_-compliant **standard sequence signs** (i.e.,
+arbitrary objects uniquely identifying `PEP 484`_-compliant type hints
+accepting exactly one subscripted type hint argument constraining *all* items
+of compliant sequences, which necessarily satisfy the
+:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
+across all sequence items).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+HINT_PEP484_SIGNS_TUPLE = frozenset((Tuple,))
+'''
+Frozen set of all `PEP 484`_-compliant **tuple signs** (i.e., arbitrary objects
+uniquely identifying `PEP 484`_-compliant type hints accepting exactly one
+subscripted type hint argument constraining *all* items of compliant tuples).
 
 .. _PEP 484:
     https://www.python.org/dev/peps/pep-0484
@@ -128,118 +223,92 @@ If the active Python interpreter targets:
     https://www.python.org/dev/peps/pep-0484
 '''
 
-# ....................{ ADDERS                            }....................
-def add_data(data_module: ModuleType) -> None:
+# ....................{ SETS ~ sign : supported           }....................
+HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
+    Any,
+    NewType,
+    NoReturn,
+    TypeVar,
+    HINT_PEP484_BASE_FORWARDREF,
+
+    # PEP 484 explicitly supports the "None" singleton: i.e.,
+    #     When used in a type hint, the expression None is considered
+    #     equivalent to type(None).
+    NoneType,
+))
+'''
+Frozen set of all `PEP 484`_-compliant **shallowly supported non-originative
+signs** (i.e., arbitrary objects uniquely identifying `PEP 484`_-compliant type
+hints *not* originating from a non-:mod:`typing` origin type for which the
+:func:`beartype.beartype` decorator generates shallow type-checking code).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+HINT_PEP484_SIGNS_SUPPORTED_DEEP = frozenset((
+    Generic,
+    List,
+    MutableSequence,
+    Sequence,
+    Tuple,
+
+    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+    # under Python <= 3.9. The implementations of the "typing" module under
+    # those older Python versions transparently reduced "typing.Optional"
+    # to "typing.Union" at runtime. Since this reduction is no longer the
+    # case, both *MUST* now be explicitly listed here.
+    Union,
+    Optional,
+))
+'''
+Frozen set of all `PEP 484`_-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying `PEP 484`_-compliant type hints for
+which the :func:`beartype.beartype` decorator generates deep type-checking
+code).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+# ....................{ SETS ~ sign : type                }....................
+# Initialized by the _init() function below due to conditional complexity.
+HINT_PEP484_SIGNS_TYPE: frozenset = None  # type: ignore[assignment]
+'''
+Frozen set of all `PEP 484`_-compliant **standard class signs** (i.e.,
+instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
+type hints).
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+
+# Initialized by the _init() function below due to conditional complexity.
+HINT_PEP484_SIGNS_TYPE_ORIGIN: frozenset = None  # type: ignore[assignment]
+'''
+Frozen set of all signs uniquely identifying `PEP 484`_-compliant type hints
+originating from an origin type.
+
+.. _PEP 484:
+    https://www.python.org/dev/peps/pep-0484
+'''
+
+# ....................{ INITIALIZERS                      }....................
+def _init() -> None:
     '''
-    Add `PEP 484`_**-compliant type hint data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
+    Initialize this submodule.
     '''
 
     # ..................{ GLOBALS                           }..................
     # Submodule globals to be redefined below.
-    global HINT_PEP484_SIGNS_TYPE_ORIGIN
+    global \
+        HINT_PEP484_SIGNS_DEPRECATED, \
+        HINT_PEP484_SIGNS_TYPE, \
+        HINT_PEP484_SIGNS_TYPE_ORIGIN
 
-    # ..................{ SETS ~ bases                      }..................
-    data_module.HINT_PEP_BASES_FORWARDREF.update((  # type: ignore[attr-defined]
-        # PEP 484-compliant forward reference superclass.
-        HINT_PEP484_BASE_FORWARDREF,
-    ))
-
-    # ..................{ SETS ~ signs : ignorable          }..................
-    data_module.HINT_PEP_SIGNS_IGNORABLE.update((  # type: ignore[attr-defined]
-        # The "Any" singleton is semantically synonymous with the ignorable
-        # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
-        Any,
-
-        # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the ignorable PEP-noncompliant
-        # "beartype.cave.AnyType" and hence "object" types. Since PEP
-        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-        # singleton including "typing.Generic" semantically expands to that
-        # singelton subscripted by an implicit "Any" argument, "Generic"
-        # semantically expands to the implicit "Generic[Any]" singleton.
-        Generic,
-
-        # The unsubscripted "Optional" singleton semantically expands to the
-        # implicit "Optional[Any]" singleton by the same argument. Since PEP
-        # 484 also stipulates that all "Optional[t]" singletons semantically
-        # expand to "Union[t, type(None)]" singletons for arbitrary arguments
-        # "t", "Optional[Any]" semantically expands to merely "Union[Any,
-        # type(None)]". Since all unions subscripted by "Any" semantically
-        # reduce to merely "Any", the "Optional" singleton also reduces to
-        # merely "Any".
-        #
-        # This intentionally excludes "Optional[type(None)]", which the
-        # "typing" module physically reduces to merely "type(None)". *shrug*
-        Optional,
-
-        # The unsubscripted "Union" singleton semantically expands to the
-        # implicit "Union[Any]" singleton by the same argument. Since PEP 484
-        # stipulates that a union of one type semantically reduces to only that
-        # type, "Union[Any]" semantically reduces to merely "Any". Despite
-        # their semantic equivalency, however, these objects remain
-        # syntactically distinct with respect to object identification: e.g.,
-        #     >>> Union is not Union[Any]
-        #     True
-        #     >>> Union is not Any
-        #     True
-        #
-        # This intentionally excludes:
-        #
-        # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
-        #   module physically reduces:
-        #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
-        #     this frozen set already contains.
-        #   * "Union[object]" to merely "object" (i.e., "Union[object] is
-        #     object"), which this frozen set also already contains.
-        # * "Union" singleton subscripted by one or more ignorable type hints
-        #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
-        #   exist a countably infinite number of these subscriptions, these
-        #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
-        #   these subscriptions are dynamically detected by the high-level
-        #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
-        #   function and thus referred to as deeply ignorable type hints.
-        Union,
-    ))
-
-    # ..................{ SETS ~ signs : supported          }..................
-    data_module.HINT_PEP_SIGNS_SUPPORTED_SHALLOW.update((  # type: ignore[attr-defined]
-        Any,
-        NewType,
-        NoReturn,
-        TypeVar,
-        HINT_PEP484_BASE_FORWARDREF,
-
-        # PEP 484 explicitly supports the "None" singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        NoneType,
-    ))
-    data_module.HINT_PEP_SIGNS_SUPPORTED_DEEP.update((  # type: ignore[attr-defined]
-        Generic,
-        List,
-        MutableSequence,
-        Sequence,
-        Tuple,
-
-        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-        # under Python <= 3.9. The implementations of the "typing" module under
-        # those older Python versions transparently reduced "typing.Optional"
-        # to "typing.Union" at runtime. Since this reduction is no longer the
-        # case, both *MUST* now be explicitly listed here.
-        Union,
-        Optional,
-    ))
-
-    # ..................{ SETS ~ signs : type               }..................
+    # ..................{ SETS ~ signs : type : origin      }..................
     # List of all signs uniquely identifying PEP 484-compliant type hints
     # originating from an origin type.
     _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST = [
@@ -309,28 +378,24 @@ def add_data(data_module: ModuleType) -> None:
 
         if IS_PYTHON_AT_LEAST_3_8:
             _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.SupportsIndex)  # type: ignore[attr-defined]
-    # If the active Python interpreter targets Python 3.6. In this case, also
-    # add these signs to the superclass set of all standard class signs.
-    # Insanely, the Python 3.6 implementation of the "typing" module defines
-    # *ALL* these signs as unique public classes.
-    else:
-        data_module.HINT_PEP_SIGNS_TYPE.update(  # type: ignore[attr-defined]
-            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
-        # import sys
-        # print(f'HINT_PEP_SIGNS_TYPE: {repr(data_module.HINT_PEP_SIGNS_TYPE)}', file=sys.stderr)
 
     # Coerce this list into a frozen set for subsequent constant-time lookup.
     HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(
         _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
 
-    # The "Generic" superclass is explicitly equivalent under PEP 484 to the
-    # "Generic[Any]" subscription and thus valid as a standard class sign.
-    data_module.HINT_PEP_SIGNS_TYPE.add(Generic)  # type: ignore[attr-defined]
-
-    # Add these signs to the superclass set of all sign uniquely identifying
-    # PEP-compliant type hints originating from an origin type.
-    data_module.HINT_PEP_SIGNS_TYPE_ORIGIN.update(  # type: ignore[attr-defined]
-        HINT_PEP484_SIGNS_TYPE_ORIGIN)
+    # ..................{ SETS ~ signs                      }..................
+    HINT_PEP484_SIGNS_TYPE = frozenset((
+        # The "Generic" superclass is explicitly equivalent under PEP 484 to the
+        # "Generic[Any]" subscription and thus valid as a standard class sign.
+        Generic,
+    )) | (
+        # If the active Python interpreter targets Python 3.6, add all signs
+        # uniquely identifying PEP 484-compliant type hints originating from an
+        # origin type to the set of all standard class signs. Insanely, the
+        # Python 3.6 implementation of the "typing" module defines *ALL* these
+        # signs as unique public classes.
+        HINT_PEP484_SIGNS_TYPE_ORIGIN if IS_PYTHON_3_6 else frozenset()
+    )
 
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 585, add all signs uniquely identifying outdated PEP
@@ -340,15 +405,9 @@ def add_data(data_module: ModuleType) -> None:
     # signs uniquely identifying PEP 484-compliant type hints originating from
     # origin types.
     if IS_PYTHON_AT_LEAST_3_9:
-        data_module.HINT_PEP_SIGNS_DEPRECATED.update(  # type: ignore[attr-defined]
-            HINT_PEP484_SIGNS_TYPE_ORIGIN)
+        HINT_PEP484_SIGNS_DEPRECATED = HINT_PEP484_SIGNS_TYPE_ORIGIN
 
-    # ..................{ SETS ~ signs : subtype            }..................
-    data_module.HINT_PEP_SIGNS_SEQUENCE_STANDARD.update((  # type: ignore[attr-defined]
-        List,
-        MutableSequence,
-        Sequence,
-    ))
-    data_module.HINT_PEP_SIGNS_TUPLE.update((  # type: ignore[attr-defined]
-        Tuple,
-    ))
+
+# Initialize this submodule.
+_init()
+
