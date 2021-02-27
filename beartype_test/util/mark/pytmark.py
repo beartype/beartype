@@ -68,7 +68,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.utilobject import get_object_classname
+    from beartype._util.utilobject import get_object_type_name
 
     # If this object is *NOT* a class, raise an exception.
     if not isinstance(warning_cls, type):
@@ -82,7 +82,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
     # Else, this class is a "Warning" subclass.
 
     # Fully-qualified name of this class.
-    warning_classname = get_object_classname(warning_cls)
+    warning_classname = get_object_type_name(warning_cls)
 
     # Return the low-level pytest mark decorator ignoring all warnings of this
     # "Warning" subclass with a filter adhering to Python's peculiar warning

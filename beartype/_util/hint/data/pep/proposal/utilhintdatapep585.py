@@ -15,12 +15,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
+from typing import Any, FrozenSet
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-HINT_PEP585_TUPLE_EMPTY = tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota()  # type: ignore[misc]
+HINT_PEP585_TUPLE_EMPTY = (
+    tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota())  # type: ignore[misc]
 '''
 `PEP 585`_-compliant empty fixed-length tuple type hint if the active Python
 interpreter supports at least Python 3.9 and thus `PEP 585`_ *or* a unique
@@ -32,7 +34,7 @@ objects against this object via equality tests.
 '''
 
 # ....................{ SETS ~ sign                       }....................
-HINT_PEP585_SIGNS_SUPPORTED_DEEP = frozenset()
+HINT_PEP585_SIGNS_SUPPORTED_DEEP: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all `PEP 585`_-compliant **deeply supported signs** (i.e.,
 arbitrary objects uniquely identifying `PEP 585`_-compliant type hints for
@@ -44,7 +46,7 @@ code).
 '''
 
 
-HINT_PEP585_SIGNS_TYPE = frozenset()
+HINT_PEP585_SIGNS_TYPE: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all `PEP 585`_-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
@@ -55,7 +57,7 @@ type hints).
 '''
 
 # ....................{ SETS ~ sign : category            }....................
-HINT_PEP585_SIGNS_SEQUENCE_STANDARD = frozenset()
+HINT_PEP585_SIGNS_SEQUENCE_STANDARD: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all `PEP 585`_-compliant **standard sequence signs** (i.e.,
 arbitrary objects uniquely identifying `PEP 585`_-compliant type hints
@@ -69,7 +71,7 @@ across all sequence items).
 '''
 
 
-HINT_PEP585_SIGNS_TUPLE = frozenset()
+HINT_PEP585_SIGNS_TUPLE: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all `PEP 585`_-compliant **tuple signs** (i.e., arbitrary objects
 uniquely identifying `PEP 585`_-compliant type hints accepting exactly one

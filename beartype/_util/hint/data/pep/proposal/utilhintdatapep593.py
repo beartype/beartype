@@ -21,7 +21,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS ~ sign : supported           }....................
 HINT_PEP593_SIGNS_SUPPORTED_DEEP = frozenset(
-    (typing.Annotated,) if IS_PYTHON_AT_LEAST_3_9 else ()
+    (typing.Annotated,)  # type: ignore[attr-defined]
+    if IS_PYTHON_AT_LEAST_3_9 else
+    ()
 )
 '''
 Frozen set of all `PEP 593`_-compliant **deeply supported signs** (i.e.,

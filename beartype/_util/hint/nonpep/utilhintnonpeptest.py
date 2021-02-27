@@ -481,7 +481,7 @@ def _is_hint_nonpep_tuple(
     )
 
 
-def _is_hint_nonpep_type(hint: object,) -> bool:
+def _is_hint_nonpep_type(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a PEP-noncompliant type.
 

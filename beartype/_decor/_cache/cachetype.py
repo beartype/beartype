@@ -43,8 +43,8 @@ from beartype._util.cls.utilclstest import (
     is_classname_builtin,
 )
 from beartype._util.utilobject import (
-    get_object_classname,
-    get_object_class_basename,
+    get_object_type_name,
+    get_object_type_basename,
 )
 from typing import Tuple
 
@@ -79,9 +79,10 @@ beartypistry parameter.
 '''
 
 # ....................{ REGISTRARS ~ forwardref           }....................
-#FIXME: Refactor this function to optionally accept a "hint_label" parameter,
-#much like the registery_typistry_type() function.
 #FIXME: Unit test us up.
+
+# Note this function intentionally does *NOT* accept an optional "hint_labal"
+# parameter as doing so would conflict with memoization.
 @callable_cached
 def register_typistry_forwardref(hint_classname: str) -> str:
     '''
@@ -119,7 +120,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
     '''
 
     # If this object is *NOT* the syntactically valid fully-qualified name of a
-    # module attribute that may or may not actually exist, raise an exception.
+    # module attribute which may *NOT* actually exist, raise an exception.
     die_unless_module_attr_name(
         module_attr_name=hint_classname,
         exception_label='Forward reference',
@@ -164,17 +165,12 @@ def register_typistry_forwardref(hint_classname: str) -> str:
 #Given that, we should probably just raise an exception here if this hint is
 #subscripted and require our caller to explicitly strip this subscripted
 #generic to its original unsubscripted class (i.e., "hint.__origin").
-#FIXME: Refactor all calls to this function to pass the "hint_label" parameter.
 #FIXME: Exercise this with a unit test, please!
 
+# Note this function intentionally does *NOT* accept an optional "hint_labal"
+# parameter as doing so would conflict with memoization.
 @callable_cached
-def register_typistry_type(
-    # Mandatory parameters.
-    hint: type,
-
-    # Optional parameters.
-    hint_label: str = 'Annotated',
-) -> str:
+def register_typistry_type(hint: type) -> str:
     '''
     Register the passed **unsubscripted PEP-noncompliant type** (i.e., class
     neither defined by the :mod:`typing` module *nor* subclassing such a class
@@ -187,8 +183,8 @@ def register_typistry_type(
     codebase, but is otherwise roughly equivalent to:
 
         >>> from beartype._decor._cache.cachetype import bear_typistry
-        >>> from beartype._util.utilobject import get_object_classname
-        >>> bear_typistry[get_object_classname(hint)] = hint
+        >>> from beartype._util.utilobject import get_object_type_name
+        >>> bear_typistry[get_object_type_name(hint)] = hint
 
     This function is memoized for both efficiency *and* safety, preventing
     accidental re-registration of previously registered types.
@@ -197,9 +193,6 @@ def register_typistry_type(
     ----------
     hint : type
         Unsubscripted PEP-noncompliant type to be registered.
-    hint_label : str, optional
-        Human-readable label prefixing this type's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
 
     Returns
     ----------
@@ -211,10 +204,6 @@ def register_typistry_type(
     Raises
     ----------
     BeartypeDecorHintTypeException
-        If this object is *not* an *isinstanceable class** (i.e., class whose
-        metaclass does *not* define an ``__instancecheck__()`` dunder method
-        that raises an exception).
-    _BeartypeDecorBeartypistryException
         If this object is either:
 
         * *Not* a class.
@@ -222,6 +211,9 @@ def register_typistry_type(
           module *or* subclass of such a class and thus a PEP-compliant type
           hint, which all violate standard type semantics and thus require
           PEP-specific handling).
+        * *Not* an *isinstanceable class** (i.e., class whose metaclass does
+          *not* define an ``__instancecheck__()`` dunder method that raises an
+          exception).
 
     .. _PEP 484:
         https://www.python.org/dev/peps/pep-0484
@@ -232,7 +224,7 @@ def register_typistry_type(
     '''
 
     # If this object is *NOT* an isinstanceable class, raise an exception.
-    die_unless_hint_type_isinstanceable(hint=hint, hint_label=hint_label)
+    die_unless_hint_type_isinstanceable(hint)
     # Else, this object is an isinstanceable class.
     #
     # Note that we defer all further validation of this type to the
@@ -243,12 +235,12 @@ def register_typistry_type(
     # requiring *no* explicit importation), this type requires no registration.
     # In this case, return the unqualified basename of this type as is.
     if is_type_builtin(hint):
-        return get_object_class_basename(hint)
+        return get_object_type_basename(hint)
     # Else, this type is *NOT* a builtin and thus requires registration.
     # assert hint_basename != 'NoneType'
 
     # Fully-qualified name of this type.
-    hint_classname = get_object_classname(hint)
+    hint_classname = get_object_type_name(hint)
 
     # If this type has yet to be registered with the beartypistry singleton, do
     # so.
@@ -267,16 +259,14 @@ def register_typistry_type(
     )
 
 # ....................{ REGISTRARS ~ tuple                }....................
-#FIXME: Refactor all calls to this function to pass the "hint_label" parameter.
-#FIXME: Exercise this function with respect to tuples containing one or more
-#non-isinstanceable types, please.
+# Note this function intentionally does *NOT* accept an optional "hint_labal"
+# parameter as doing so would conflict with memoization.
 @callable_cached
 def register_typistry_tuple(
     # Mandatory parameters.
     hint: Tuple[type, ...],
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
     is_types_unique: bool = False,
 ) -> str:
     '''
@@ -334,9 +324,6 @@ def register_typistry_tuple(
     ----------
     hint : Tuple[type]
         Tuple of all PEP-noncompliant types to be registered.
-    hint_label : str, optional
-        Human-readable label prefixing this type's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
     is_types_unique : bool
         ``True`` only if the caller guarantees this tuple to contain *no*
         duplicates. If ``False``, this function assumes this tuple to contain
@@ -364,17 +351,20 @@ def register_typistry_tuple(
 
     Raises
     ----------
-    _BeartypeDecorBeartypistryException
+    BeartypeDecorHintNonPepException
         If this tuple is either:
 
         * *Not* a tuple.
-        * Is a tuple containing one or more items that are either:
+        * Is a tuple containing any item that is either:
 
-          * *Not* types.
-          * **PEP-compliant types** (i.e., either classes defined by the
-            :mod:`typing` module *or* subclasses of such classes and thus
-            PEP-compliant type hints, which all violate standard type semantics
+          * *Not* a type.
+          * A **PEP-compliant type** (i.e., class either defined by the
+            :mod:`typing` module *or* subclass of such a class and thus
+            PEP-compliant type hint, which all violate standard type semantics
             and thus require PEP-specific handling).
+          * *Not* an *isinstanceable class** (i.e., class whose metaclass does
+            *not* define an ``__instancecheck__()`` dunder method that raises
+            an exception).
     '''
     assert isinstance(is_types_unique, bool), (
         f'{repr(is_types_unique)} not bool.')
@@ -382,8 +372,6 @@ def register_typistry_tuple(
     # If this object is *NOT* an isinstanceable tuple, raise an exception.
     die_unless_hint_nonpep_tuple(
         hint=hint,
-        hint_label=hint_label,
-
         #FIXME: Actually, we eventually want to permit this to enable
         #trivial resolution of forward references. For now, this is fine.
         is_str_valid=False,
@@ -572,7 +560,7 @@ class Beartypistry(dict):
         # distinguishing between either here.
         elif isinstance(hint, type):
             # Fully-qualified classname of this type as declared by this type.
-            hint_clsname = get_object_classname(hint)
+            hint_clsname = get_object_type_name(hint)
 
             # If...
             if (
@@ -684,7 +672,7 @@ class Beartypistry(dict):
         # then implicitly maps the passed missing key to this class by
         # effectively assigning this name to this class: e.g.,
         #     self[hint_classname] = hint_class
-        return hint_class
+        return hint_class  # type: ignore[return-value]
 
 # ....................{ SINGLETONS                        }....................
 bear_typistry = Beartypistry()

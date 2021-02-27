@@ -44,7 +44,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from beartype._util.utilobject import get_object_class_unless_class
+from beartype._util.utilobject import get_object_type_unless_type
 from typing import TypeVar
 from warnings import warn
 
@@ -486,7 +486,7 @@ def is_hint_pep(hint: object) -> bool:
 
     # Either the passed object if this object is a class *OR* the class of this
     # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = get_object_class_unless_class(hint)
+    hint_type = get_object_type_unless_type(hint)
 
     # Return true only if either...
     #
@@ -757,8 +757,8 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
     '''
     # from beartype._util.hint.data.pep.utilhintdatapep import (
     #     HINT_PEP_SIGNS_SUPPORTED_DEEP)
+    # print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
     # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')
-    print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
 
     # Return true only if this hint is a supported unsubscripted "typing"
     # attribute.
@@ -839,7 +839,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_module_name(get_object_class_unless_class(hint)) == (
+        return get_object_module_name(get_object_type_unless_type(hint)) == (
             'typing')
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
@@ -856,7 +856,7 @@ else:
         # Return true only if...
         return (
             # This type pretends to be defined by the "typing" module *AND*...
-            get_object_module_name(get_object_class_unless_class(hint)) == (
+            get_object_module_name(get_object_type_unless_type(hint)) == (
                 'typing') and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment

@@ -23,12 +23,12 @@ from pytest import raises
 
 # ....................{ TESTS                             }....................
 @skip_if_python_version_less_than('3.8.0')
-def test_pep544() -> None:
+def test_pep544_pass() -> None:
     '''
-    Test `PEP 544`_ support implemented in the :func:`beartype.beartype`
-    decorator if the active Python interpreter targets at least Python 3.8.0
-    (i.e., the first major Python version to support `PEP 544`_) *or* skip
-    otherwise.
+    Test successful usage of `PEP 544`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets at least Python 3.8.0 (i.e., the first major Python version to
+    support `PEP 544`_) *or* skip otherwise.
 
     .. _PEP 544:
        https://www.python.org/dev/peps/pep-0544
@@ -37,6 +37,58 @@ def test_pep544() -> None:
     # Defer heavyweight imports.
     from abc import abstractmethod
     from beartype import beartype
+    from typing import Protocol, runtime_checkable
+
+    # User-defined runtime protocol declaring arbitrary methods.
+    @runtime_checkable
+    class Easter1916(Protocol):
+        def i_have_met_them_at_close_of_day(self) -> str:
+            return 'Coming with vivid faces'
+
+        @abstractmethod
+        def from_counter_or_desk_among_grey(self) -> str: pass
+
+    # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
+    # explicitly subclassing this user-defined protocol.
+    class Easter1916Structural(object):
+        def i_have_met_them_at_close_of_day(self) -> str:
+            return 'Eighteenth-century houses.'
+
+        def from_counter_or_desk_among_grey(self) -> str:
+            return 'I have passed with a nod of the head'
+
+    # @beartype-decorated callable annotated by this user-defined protocol.
+    @beartype
+    def or_polite_meaningless_words(lingered_awhile: Easter1916) -> str:
+        return (
+            lingered_awhile.i_have_met_them_at_close_of_day() +
+            lingered_awhile.from_counter_or_desk_among_grey()
+        )
+
+    # Assert this callable returns the expected string when passed this
+    # user-defined class structurally satisfying this protocol.
+    assert or_polite_meaningless_words(Easter1916Structural()) == (
+        'Eighteenth-century houses.'
+        'I have passed with a nod of the head'
+    )
+
+
+@skip_if_python_version_less_than('3.8.0')
+def test_pep544_fail() -> None:
+    '''
+    Test unsuccessful usage of `PEP 544`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets at least Python 3.8.0 (i.e., the first major Python version to
+    support `PEP 544`_) *or* skip otherwise.
+
+    .. _PEP 544:
+       https://www.python.org/dev/peps/pep-0544
+    '''
+
+    # Defer heavyweight imports.
+    from abc import abstractmethod
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorHintTypeException
     from typing import Protocol
 
     # User-defined protocol declaring arbitrary methods, but intentionally
@@ -49,23 +101,11 @@ def test_pep544() -> None:
         @abstractmethod
         def bitter_glass(self) -> str: pass
 
-    # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
-    # explicitly subclassing this user-defined protocol.
-    class TwoTreesStructural(object):
-        def holy_tree(self) -> str:
-            return 'The holy tree is growing there;'
-
-        def bitter_glass(self) -> str:
-            return 'Gaze no more in the bitter glass'
-
     # @beartype-decorated callable annotated by this user-defined protocol.
-    @beartype
-    def times_of_old(god_slept: TwoTrees) -> str:
-        return god_slept.holy_tree() + god_slept.bitter_glass()
-
-    # Assert that this callable raises the expected call-time exception.
-    with raises(TypeError):
-        times_of_old(TwoTreesStructural())
+    with raises(BeartypeDecorHintTypeException):
+        @beartype
+        def times_of_old(god_slept: TwoTrees) -> str:
+            return god_slept.holy_tree() + god_slept.bitter_glass()
 
 # ....................{ TESTS ~ protocol                  }....................
 def test_is_hint_pep544_protocol() -> None:

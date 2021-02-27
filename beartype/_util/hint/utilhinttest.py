@@ -110,15 +110,10 @@ def die_unless_hint(
     die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
 
 # ....................{ VALIDATORS ~ class                }....................
-# #FIXME: Call everywhere external where we currently call die_unless_type().
-# #FIXME: Refactor is_hint_pep_supported() and die_unless_hint_pep_supported() to
-# #explicitly reject (with a human-readable exception in the latter case) PEP
-# #544-compatible protocols *NOT* decorated by @typing.runtime_checkable, as such
-# #PEP-compliant type hints are unusable at runtime.
 #FIXME: Test us up.
 def die_unless_hint_type_isinstanceable(
     # Mandatory parameters.
-    hint: type,
+    hint: object,
 
     # Optional parameters.
     hint_label: str = 'Annotated',
@@ -182,7 +177,7 @@ def die_unless_hint_type_isinstanceable(
 
     Parameters
     ----------
-    hint : type
+    hint : object
         Object to be validated.
     hint_label : str
         Human-readable label prefixing this hint's representation in the
@@ -229,7 +224,7 @@ def die_unless_hint_type_isinstanceable(
         # CAUTION: Synchronize with the is_type_isinstanceable() tester.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         try:
-            isinstance(None, hint)
+            isinstance(None, hint)  # type: ignore[arg-type]
         except Exception as exception:
             # Human-readable exception message to be raised as either...
             exception_message = (
@@ -246,7 +241,7 @@ def die_unless_hint_type_isinstanceable(
                     f'{hint_label} type {hint} uncheckable at runtime (i.e., '
                     f'not passable as second parameter to isinstance() '
                     f'due to raising "{exception}" from metaclass '
-                    f'{hint.__name__}.__class__.__instancecheck__() method).'
+                    f'__instancecheck__() method).'
                 )
             )
 

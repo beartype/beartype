@@ -1940,9 +1940,6 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
     hint_root = hint
     del hint
 
-    # Human-readable label describing the root hint in exception messages.
-    hint_root_label = f'{EXCEPTION_CACHED_PLACEHOLDER}'
-
     # Python code snippet evaluating to the current passed parameter or return
     # value to be type-checked against the root hint.
     pith_root_expr = PEP_CODE_PITH_ROOT_NAME
@@ -1958,15 +1955,6 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
     # Python expression evaluating to an isinstance()-able class (e.g., origin
     # type) associated with the currently visited type hint if any.
     hint_curr_expr = None
-
-    # Human-readable label prefixing the machine-readable representation of the
-    # currently visited type hint in exception and warning messages.
-    hint_curr_label = None
-
-    # Human-readable label prefixing the machine-readable representation of the
-    # currently visited type hint if this hint is nested (i.e., any hint
-    # *except* the root type hint) in exception and warning messages.
-    hint_curr_label_nested = f'{hint_root_label} {repr(hint_root)} child'
 
     #FIXME: Excise us up.
     # Origin type (i.e., non-"typing" superclass suitable for shallowly
@@ -2154,6 +2142,23 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
     # of that assignment expression.
     pith_curr_assigned_expr: str = None  # type: ignore[assignment]
 
+    # ..................{ HINT ~ label                      }..................
+    # Human-readable label describing the root hint in exception messages.
+    #
+    # Note that the "hint_curr_label" should almost *ALWAYS* be used instead.
+    HINT_ROOT_LABEL = EXCEPTION_CACHED_PLACEHOLDER
+
+    # Human-readable label prefixing the machine-readable representation of the
+    # currently visited type hint if this hint is nested (i.e., any hint
+    # *except* the root type hint) in exception and warning messages.
+    #
+    # Note that the "hint_curr_label" should almost *ALWAYS* be used instead.
+    HINT_CHILD_LABEL = f'{HINT_ROOT_LABEL} {repr(hint_root)} child'
+
+    # Human-readable label prefixing the machine-readable representation of the
+    # currently visited type hint in exception and warning messages.
+    hint_curr_label = None
+
     # ..................{ METADATA                          }..................
     # Tuple of metadata describing the currently visited hint, appended by
     # the previously visited parent hint to the "hints_meta" stack.
@@ -2318,6 +2323,15 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
+        #FIXME: This test can be trivially avoided by:
+        #* Initializing "hint_curr_label = HINT_ROOT_LABEL" above.
+        #* Unconditionally setting "hint_curr_label = HINT_CHILD_LABEL"
+        #  below at the end of each iteration of this loop.
+        #
+        #Since we're going to be fundamentally refactoring this entire
+        #algorithm into a two-phase algorithm, let's hold off on that until the
+        #radioactive dust settles, shall we?
+
         # Human-readable label prefixing the machine-readable representation of
         # the currently visited type hint in exception and warning messages.
         #
@@ -2327,9 +2341,9 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
         # from the former to the latter. The latter approach would be
         # non-human-readable and insane.
         hint_curr_label = (
-            hint_root_label
+            HINT_ROOT_LABEL
             if hints_meta_index_curr == 0 else
-            hint_curr_label_nested
+            HINT_CHILD_LABEL
         )
 
         # ................{ REDUCTION                         }................
@@ -3427,7 +3441,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
     # absolutely should have... but may not have, which is why we're testing.
     if func_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{hint_root_label} {repr(hint_root)} not type-checked.')
+            f'{HINT_ROOT_LABEL} {repr(hint_root)} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
 
     # Suffix this code by a Python code snippet raising a human-readable

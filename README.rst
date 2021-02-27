@@ -75,8 +75,6 @@ dependency <Sphinx_>`__. Beartype supports `all actively developed Python
 versions <Python status_>`__, `all Python package managers <Install_>`__, and
 `multiple platform-specific package managers <Install_>`__.
 
-*Quality assurance has now been assured.*
-
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
 .. # table of contents heading from the prior paragraph by less than a single
@@ -93,6 +91,30 @@ versions <Python status_>`__, `all Python package managers <Install_>`__, and
    :local:
 
 .. # ------------------( DESCRIPTION                        )------------------
+
+tl;dr
+=====
+
+#. `Install beartype <Install_>`__:
+
+   .. code-block:: shell-session
+
+      pip3 install beartype
+
+#. `Decorate functions and methods annotated by PEP-compliant type hints
+   with the @beartype.beartype decorator <Usage_>`__:
+
+   .. code-block:: python
+
+      from beartype import beartype
+      from collections.abc import Iterable
+      from typing import Optional
+
+      @beartype
+      def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
+          print('\n'.join(messages))
+
+*Quality assurance has now been assured.*
 
 News
 ====

@@ -46,6 +46,8 @@ pushd "${script_dirname}" >/dev/null
 # Run this project's pytest-based test suite with all passed arguments.
 # Dismantled, this is:
 #
+# * "--color=yes", unconditionally enable colour output to guarantee color
+#   under piped pagers (e.g., "less").
 # * "--maxfail=1", halt testing on the first failure for interactive tests.
 #   Permitting multiple failures complicates failure output, especially when
 #   every failure after the first is a result of the same underlying issue.
@@ -75,7 +77,7 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-command python3 -m pytest --maxfail=1 "${@}" .
+command python3 -m pytest --color=yes --maxfail=1 "${@}" .
 # command python3.6 -m pytest --maxfail=1 "${@}" .
 # command python3.8 -m pytest --maxfail=1 "${@}" .
 # command python3.9 -m pytest --maxfail=1 "${@}" .

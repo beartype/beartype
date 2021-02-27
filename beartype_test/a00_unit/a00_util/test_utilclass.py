@@ -43,7 +43,7 @@ def test_is_classname_builtin() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cls.utilclstest import is_classname_builtin
-    from beartype._util.utilobject import get_object_classname
+    from beartype._util.utilobject import get_object_type_name
     from beartype_test.a00_unit.data.data_type import (
         CLASSES_BUILTIN, CLASSES_NON_BUILTIN)
 
@@ -51,9 +51,9 @@ def test_is_classname_builtin() -> None:
     # types.
     for class_builtin in CLASSES_BUILTIN:
         assert is_classname_builtin(
-            get_object_classname(class_builtin)) is True
+            get_object_type_name(class_builtin)) is True
 
     # Assert this tester rejects non-builtin types.
     for class_non_builtin in CLASSES_NON_BUILTIN:
         assert is_classname_builtin(
-            get_object_classname(class_non_builtin)) is False
+            get_object_type_name(class_non_builtin)) is False

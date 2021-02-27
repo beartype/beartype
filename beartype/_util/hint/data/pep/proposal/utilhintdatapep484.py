@@ -97,7 +97,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 '''
 
 # ....................{ SETS ~ sign                       }....................
-HINT_PEP484_SIGNS_DEPRECATED = frozenset()
+HINT_PEP484_SIGNS_DEPRECATED: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all `PEP 484`_-compliant **deprecated signs** (i.e., arbitrary
 objects uniquely identifying outdated `PEP 484`_-compliant type hints that have

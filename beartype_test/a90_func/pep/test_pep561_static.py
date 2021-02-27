@@ -18,7 +18,11 @@ third-party static type-checkers and hence `PEP 561`_.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
+from beartype_test.util.mark.pytskip import (
+    skip_if_python_version_less_than,
+    skip_if_pypy,
+    skip_unless_package,
+)
 
 # ....................{ TESTS                             }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
@@ -37,11 +41,20 @@ from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
 #   accept the importability of the "mypy" package as sufficient, which it
 #   absolutely isn't, but what you gonna do, right?
 
-# If the active Python interpreter is PyPy, avoid this mypy-specific functional
-# test. mypy is currently incompatible with PyPy for inscrutable reasons that
-# should presumably be fixed at some future point. See also:
+# Skip this "mypy"-specific functional test unless all of the following apply:
+#
+# * The "mypy" package is unimportable under the active Python interpreter.
+# * The active Python interpreter is *NOT* PyPy. mypy is currently incompatible
+#   with PyPy for inscrutable reasons that should presumably be fixed at some
+#   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+# * The active Python interpreter targets at least Python >= 3.7. While
+#   supporting "mypy" under Python 3.6 would of course be feasible, doing so is
+#   non-trivial due to the non-standard implementation of the "typing" module
+#   under Python 3.6. Moreover, Python 3.6 is obsolete. Ergo, there's no
+#   tangible benefits to doing so.
 @skip_unless_package('mypy')
+@skip_if_python_version_less_than('3.7.0')
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
@@ -76,13 +89,34 @@ def test_pep561_mypy() -> None:
 
     # Tuple of all command-line options to be effectively passed to the
     # external "mypy" command.
-    _, mypy_stderr, _ = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
-
-    # Assert "mypy" to have emitted *NO* warnings or errors.
     #
     # Note that we intentionally do *NOT* assert that call to have exited with
     # a successful exit code. Although mypy does exit with success on local
     # developer machines, it inexplicably does *NOT* under remote GitHub
     # Actions-based continuous integration despite "mypy_stderr" being empty.
     # Ergo, we conveniently ignore the former in favour of the latter.
+    mypy_stdout, mypy_stderr, _ = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
+    # mypy_stdout, mypy_stderr, mypy_exit = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
+
+    # Assert "mypy" to have emitted *NO* warnings or errors to "stderr".
+    #
+    # Note that "mypy" predominantly emits both warnings and errors to "stdout"
+    # rather than "stderr", despite this contravening sane POSIX semantics.
+    # They did this because some guy complained about not being able to
+    # trivially grep "mypy" output, regardless of the fact that redirecting
+    # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
+    # break everything just because some guy can't shell. See also:
+    #     https://github.com/python/mypy/issues/1051
     assert not mypy_stderr
+
+    # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
+    # Unfortunately, doing so is complicated by the failure of "mypy" to
+    # conform to sane POSIX semantics. Specifically:
+    # * If "mypy" succeeds, "mypy" emits to "stdout" a single line resembling:
+    #       Success: no issues found in 83 source files
+    # * If "mypy" fails, "mypy" emits to "stdout" *ANY* other line(s).
+    #
+    # Ergo, asserting this string to start with "Success:" suffices. Note this
+    # assertion depends on "mypy" internals and is thus fragile, but that we
+    # have *NO* sane alternative.
+    assert mypy_stdout.startswith('Success: ')

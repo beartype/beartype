@@ -29,13 +29,13 @@ def test_typistry_register_type_pass() -> None:
     from beartype.cave import RegexCompiledType
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import register_typistry_type
-    from beartype._util.utilobject import get_object_class_basename
+    from beartype._util.utilobject import get_object_type_basename
 
     # Assert this function registers a non-builtin type under the beartypistry
     # and silently permits re-registration of the same type.
     for hint in (RegexCompiledType,)*2:
         hint_name_cached = register_typistry_type(hint)
-        assert hint_name_cached != get_object_class_basename(hint)
+        assert hint_name_cached != get_object_type_basename(hint)
         hint_cached = _eval_registered_expr(hint_name_cached)
         assert hint is hint_cached
 
@@ -45,7 +45,7 @@ def test_typistry_register_type_pass() -> None:
     # doesn't actually exist, which is inconsistent nonsense, but whatever).
     hint = type(None)
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached != get_object_class_basename(hint)
+    assert hint_name_cached != get_object_type_basename(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
@@ -53,7 +53,7 @@ def test_typistry_register_type_pass() -> None:
     # basename.
     hint = list
     hint_name_cached = register_typistry_type(hint)
-    assert hint_name_cached == get_object_class_basename(hint)
+    assert hint_name_cached == get_object_type_basename(hint)
     hint_cached = _eval_registered_expr(hint_name_cached)
     assert hint is hint_cached
 
@@ -65,15 +65,22 @@ def test_typistry_register_type_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeUtilTypeException
+    from beartype.roar import BeartypeDecorHintTypeException
     from beartype._decor._cache.cachetype import register_typistry_type
+    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
 
-    # Assert that non-types are *NOT* registrable via the same function.
-    with raises(_BeartypeUtilTypeException):
+    # Assert this function raises the expected exception for non-types.
+    with raises(BeartypeDecorHintTypeException):
         register_typistry_type((
             'The best lack all conviction, while the worst',
             'Are full of passionate intensity',
         ))
+
+    # Assert this function raises the expected exception for PEP 560-compliant
+    # classes whose metaclasses define an __instancecheck__() dunder method to
+    # unconditionally raise exceptions.
+    with raises(BeartypeDecorHintTypeException):
+        register_typistry_type(NonIsinstanceableClass)
 
 # ....................{ TESTS ~ callable : tuple          }....................
 def test_typistry_register_tuple_pass() -> None:
@@ -101,20 +108,19 @@ def test_typistry_register_tuple_pass() -> None:
     hint_cached_expr_2 = register_typistry_tuple(hint)
     assert hint_cached_expr_1 == hint_cached_expr_2
 
-    # Assert that tuples of one type are registrable via the same function,
-    # but reduce to registering merely that type rather than that tuple.
+    # Assert this function registers tuples of one type as merely that type
+    # rather than that tuple.
     hint = (int,)
     hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
     assert hint_cached == int
 
-    # Assert that tuples containing duplicate types are registrable via the
-    # same function, but reduce to registering only the non-duplicate types.
+    # Assert this function registers tuples containing duplicate types as
+    # tuples containing only the proper subset of non-duplicate types.
     hint = (str, str, str,)
     hint_cached = _eval_registered_expr(register_typistry_tuple(hint))
     assert hint_cached == (str,)
 
-    # Assert that tuples guaranteed to contain *NO* duplicate types are
-    # registrable via the same function.
+    # Assert this function registers tuples containing *NO* duplicate types.
     hint = NoneTypeOr[CallableTypes]
     hint_cached = _eval_registered_expr(register_typistry_tuple(hint, True))
     assert hint == hint_cached
@@ -137,23 +143,14 @@ def test_typistry_register_tuple_fail() -> None:
     '''
 
     # Defer heavyweight imports
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._decor._cache.cachetype import register_typistry_tuple
+    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
         Pep484GenericTypevaredSingle)
 
-    # Assert that hashable non-tuple objects are *NOT* registrable via this
-    # function.
-    with raises(_BeartypeDecorBeartypistryException):
-        register_typistry_tuple('\n'.join((
-            'I will arise and go now, and go to Innisfree,',
-            'And a small cabin build there, of clay and wattles made;',
-            'Nine bean-rows will I have there, a hive for the honey-bee,',
-            'And live alone in the bee-loud glade.',
-        )))
-
-    # Assert that unhashable tuples are *NOT* registrable via this function.
-    with raises(TypeError):
+    # Assert this function raises the expected exception for unhashable tuples.
+    with raises(BeartypeDecorHintNonPepException):
         register_typistry_tuple((
             int,
             str,
@@ -169,14 +166,29 @@ def test_typistry_register_tuple_fail() -> None:
             },
         ))
 
-    # Assert that empty tuples are *NOT* registrable via this function.
-    with raises(_BeartypeDecorBeartypistryException):
+    # Assert this function raises the expected exception for non-tuples.
+    with raises(BeartypeDecorHintNonPepException):
+        register_typistry_tuple('\n'.join((
+            'I will arise and go now, and go to Innisfree,',
+            'And a small cabin build there, of clay and wattles made;',
+            'Nine bean-rows will I have there, a hive for the honey-bee,',
+            'And live alone in the bee-loud glade.',
+        )))
+
+    # Assert this function raises the expected exception for empty tuples.
+    with raises(BeartypeDecorHintNonPepException):
         register_typistry_tuple(())
 
-    # Assert that non-empty tuples containing one or more PEP-compliant types
-    # are *NOT* registrable via this function.
-    with raises(_BeartypeDecorBeartypistryException):
+    # Assert this function raises the expected exception for tuples containing
+    # one or more PEP-compliant types.
+    with raises(BeartypeDecorHintNonPepException):
         register_typistry_tuple((int, Pep484GenericTypevaredSingle, str,))
+
+    # Assert this function raises the expected exception for tuples containing
+    # one or more PEP 560-compliant classes whose metaclasses define an
+    # __instancecheck__() dunder method to unconditionally raise exceptions.
+    with raises(BeartypeDecorHintNonPepException):
+        register_typistry_tuple((bool, NonIsinstanceableClass, float,))
 
 # ....................{ TESTS ~ singleton                 }....................
 def test_typistry_singleton_pass() -> None:
@@ -188,14 +200,14 @@ def test_typistry_singleton_pass() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
-    from beartype._util.utilobject import get_object_classname
+    from beartype._util.utilobject import get_object_type_name
 
     # Assert that dictionary syntax also implicitly registers a type. Since
     # this approach explicitly prohibits re-registration for safety, we define
     # a custom user-defined type guaranteed *NOT* to have been registered yet.
     class TestTypistrySingletonPassType(object): pass
     hint = TestTypistrySingletonPassType
-    hint_name = get_object_classname(hint)
+    hint_name = get_object_type_name(hint)
     bear_typistry[hint_name] = hint
     assert bear_typistry.get(hint_name) is hint
 
@@ -221,7 +233,6 @@ def test_typistry_singleton_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
-    from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
 
     # Assert that keys that are *NOT* strings are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):
@@ -244,12 +255,6 @@ def test_typistry_singleton_fail() -> None:
     # Assert that arbitrary non-classes are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
-
-    # Assert that PEP 560-compliant classes overriding the __instancecheck__()
-    # dunder method to unconditionally raise exceptions are *NOT* registrable.
-    with raises(_BeartypeDecorBeartypistryException):
-        bear_typistry['When.a.vast.image.out.of.Spiritus.Mundi'] = (
-            NonIsinstanceableClass)
 
 # ....................{ PRIVATE ~ utility                 }....................
 def _eval_registered_expr(hint_expr: str) -> Union[type, Tuple[type, ...]]:

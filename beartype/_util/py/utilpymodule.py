@@ -168,7 +168,7 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
     return getattr(obj, '__module__', None)
 
 
-def get_object_class_module_name_or_none(obj: object) -> Optional[str]:
+def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring either the passed object if this
@@ -192,10 +192,10 @@ def get_object_class_module_name_or_none(obj: object) -> Optional[str]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.utilobject import get_object_class_unless_class
+    from beartype._util.utilobject import get_object_type_unless_type
 
     # Make it so, ensign.
-    return get_object_module_name_or_none(get_object_class_unless_class(obj))
+    return get_object_module_name_or_none(get_object_type_unless_type(obj))
 
 # ....................{ GETTERS ~ module : attr           }....................
 def get_module_attr_name_relative_to_obj(

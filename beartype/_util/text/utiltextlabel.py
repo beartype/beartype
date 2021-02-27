@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cls.utilclstest import is_classname_builtin
-from beartype._util.utilobject import get_object_classname
+from beartype._util.utilobject import get_object_type_name
 from collections.abc import Callable
 
 # See the "beartype.cave" submodule for further commentary.
@@ -228,7 +228,7 @@ def label_class(cls: type) -> str:
         is_hint_pep544_protocol)
 
     # Label to be returned, initialized to this class' fully-qualified name.
-    classname = get_object_classname(cls)
+    classname = get_object_type_name(cls)
 
     # If this name contains *NO* periods, this class is actually a builtin type
     # (e.g., "list"). Since builtin types are well-known and thus

@@ -34,7 +34,7 @@ method.
 # ....................{ VALIDATORS                        }....................
 def die_unless_type(
     # Mandatory parameters.
-    cls: type,
+    cls: object,
 
     # Optional parameters.
     exception_cls: Type[Exception] = _BeartypeUtilTypeException,
@@ -44,7 +44,7 @@ def die_unless_type(
 
     Parameters
     ----------
-    cls : type
+    cls : object
         Object to be validated.
     exception_cls : Type[Exception]
         Type of exception to be raised. Defaults to
@@ -90,7 +90,7 @@ def is_type_builtin(cls: type) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.py.utilpymodule import (
-        get_object_class_module_name_or_none)
+        get_object_type_module_name_or_none)
 
     # If this object is *NOT* a class, raise an exception.
     die_unless_type(cls)
@@ -120,7 +120,7 @@ def is_type_builtin(cls: type) -> bool:
     # Fully-qualified name of the module defining this class if this class is
     # defined by a module *OR* "None" otherwise (i.e., if this class is
     # dynamically defined in-memory).
-    cls_module_name = get_object_class_module_name_or_none(cls)
+    cls_module_name = get_object_type_module_name_or_none(cls)
 
     # This return true only if this name is that of the "builtins" module
     # declaring all builtin classes.
@@ -158,7 +158,7 @@ def is_classname_builtin(classname: str) -> bool:
     )
 
 # ....................{ TESTERS ~ isinstanceable          }....................
-def is_type_isinstanceable(cls: type) -> bool:
+def is_type_isinstanceable(cls: object) -> bool:
     '''
     ``True`` only if the passed type cls is an **isinstanceable class** (i.e.,
     class whose metaclass does *not* define an ``__instancecheck__()`` dunder
@@ -188,7 +188,7 @@ def is_type_isinstanceable(cls: type) -> bool:
 
     Parameters
     ----------
-    cls : type
+    cls : object
         Object to be tested.
 
     Returns
