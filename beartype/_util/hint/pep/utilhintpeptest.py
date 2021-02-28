@@ -949,6 +949,21 @@ def is_hint_pep_generic(hint: object) -> bool:
 
     # Return true only if this hint is...
     return (
+        #FIXME: Fascinating. Parametrized generics (e.g.,
+        #"Pep484GenericTypevaredSingle[S, T]") are *NOT* types, which means
+        #things now get complex. Refactor as follows:
+        #* Memoize this tester, which will no longer be trivial.
+        #* Detect parametrization by calling "get_hint_pep_typevars(hint)" and
+        #  where the return tuple is non-empty:
+        #  * Reduce this hint to "hint.__origin__". That *SHOULD* be safe, but
+        #    that's why we have tests, right? *smh*
+        #
+        #I can confirm that *SHOULD* work: e.g.,
+        #>>> isinstance(Pep484GenericTypevaredSingle[S, T].__origin__, type)
+        #True
+        #FIXME: Note we'll need to also implement similar behaviour for
+        #subscripted generics with respect to "__args__".
+
         # A class that is either...
         isinstance(hint, type) and (
             # A PEP 484-compliant generic. Note this test trivially reduces to

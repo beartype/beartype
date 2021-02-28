@@ -602,6 +602,25 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        # Generic subclassing a single parametrized "typing" type, itself
+        # parametrized by the same type variables in the same order.
+        PepHintMetadata(
+            hint=Pep484GenericTypevaredSingle[S, T],
+            pep_sign=Generic,
+            is_typevared=True,
+            is_typing=False,
+            piths_satisfied_meta=(
+                # Subclass-specific generic.
+                PepHintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    'Token welfare’s malformed keening fare, keenly despaired'
+                ),
+            ),
+        ),
+
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         PepHintMetadata(

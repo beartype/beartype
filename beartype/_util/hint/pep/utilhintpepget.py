@@ -418,6 +418,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     # superficially subclassing at least one non-class PEP-compliant object),
     # return the "typing.Generic" abstract base class (ABC) generically -- get
     # it? -- identifying PEP-compliant generics. Note that:
+    #
     # * *ALL* PEP 484-compliant generics and PEP 544-compliant protocols are
     #   guaranteed by the "typing" module to subclass this ABC regardless of
     #   whether those generics originally did so explicitly. How? By type
@@ -438,7 +439,8 @@ def get_hint_pep_sign(hint: Any) -> object:
     #
     # Note that generics *CANNOT* be detected by the general-purpose logic
     # performed below, as this ABC does *NOT* define a __repr__() dunder method
-    # returning a string prefixed by the "typing." substring.
+    # returning a string prefixed by the "typing." substring. Ergo, we
+    # necessarily detect generics with an explicit test instead.
     elif is_hint_pep_generic(hint):
         return Generic
     # Else, this hint is *NOT* a generic.
