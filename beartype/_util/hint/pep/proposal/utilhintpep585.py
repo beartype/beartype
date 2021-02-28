@@ -60,6 +60,16 @@ if IS_PYTHON_AT_LEAST_3_9:
     @callable_cached
     def is_hint_pep585_generic(hint: object) -> bool:
 
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpepget import (
+            get_hint_pep_origin_type_subscripted_or_none)
+
+        # If this hint is *NOT* a class, reduce this hint to the object
+        # originating this hint if any. See the comparable
+        # is_hint_pep484_generic() tester for further details.
+        if not isinstance(hint, type):
+            hint = get_hint_pep_origin_type_subscripted_or_none(hint)
+
         # Tuple of all pseudo-superclasses originally subclassed by the passed
         # hint if this hint is a generic *OR* false otherwise.
         hint_bases_erased = getattr(hint, '__orig_bases__', False)
@@ -70,6 +80,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         # erasure, the former are *NOT*. The only means of deterministically
         # deciding whether or not any given class is a PEP 585-compliant
         # generic is as follows:
+        #
         # * That class defines both the __class_getitem__() dunder method *AND*
         #   the "__orig_bases__" instance variable. Note that this condition in
         #   and of itself is insufficient to decide PEP 585-compliance as a

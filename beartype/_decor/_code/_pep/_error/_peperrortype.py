@@ -19,7 +19,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_type_origin_or_none)
+    get_hint_pep_origin_type_or_none)
 from beartype._util.py.utilpymodule import import_module_attr
 from beartype._util.text.utiltextcause import get_cause_object_not_type
 from typing import Optional
@@ -111,7 +111,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> Optional[str]:
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 
     # Origin type originating this hint if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_type_origin_or_none(sleuth.hint)
+    hint_type_origin = get_hint_pep_origin_type_or_none(sleuth.hint)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin is None:

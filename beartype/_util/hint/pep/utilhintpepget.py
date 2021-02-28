@@ -448,7 +448,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     # If this hint is a PEP 585-compliant type hint, return the origin type
     # originating this hint (e.g., "list" for "list[str]").
     #
-    # Note that the get_hint_pep_type_origin() getter is intentionally *NOT*
+    # Note that the get_hint_pep_origin_type() getter is intentionally *NOT*
     # called here. Why? Because doing so would induce an infinite recursive
     # loop, since that function internally calls this function. *sigh*
     elif is_hint_pep585(hint):
@@ -478,7 +478,8 @@ def get_hint_pep_sign(hint: Any) -> object:
         if hint not in HINT_PEP_SIGNS_TYPE:
             raise BeartypeDecorHintPepSignException(
                 f'Unsubscripted non-generic class {repr(hint)} invalid as '
-                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).')
+                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
+            )
         # Else, this class is explicitly allowed as a sign.
 
         # Return this class as is.
@@ -564,7 +565,8 @@ def get_hint_pep_sign(hint: Any) -> object:
     if not sign_name.startswith('typing.'):
         raise BeartypeDecorHintPepSignException(
             f'PEP 484 type hint {repr(hint)} '
-            f'representation "{sign_name}" not prefixed by "typing.".')
+            f'representation "{sign_name}" not prefixed by "typing.".'
+        )
 
     # Strip the now-harmful "typing." prefix from this representation.
     # Preserving this prefix would raise an "AttributeError" exception from
@@ -601,14 +603,15 @@ def get_hint_pep_sign(hint: Any) -> object:
     if sign is None:
         raise BeartypeDecorHintPepSignException(
             f'PEP 484 type hint {repr(hint)} '
-            f'attribute "typing.{sign_name}" not found.')
+            f'attribute "typing.{sign_name}" not found.'
+        )
     # Else, this "typing" attribute exists.
 
     # Return this "typing" attribute.
     return sign
 
 # ....................{ GETTERS ~ type                    }....................
-def get_hint_pep_type_origin(hint: object) -> type:
+def get_hint_pep_origin_type(hint: object) -> type:
     '''
     **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
     satisfying the passed PEP-compliant type hint are instances of this class)
@@ -627,99 +630,31 @@ def get_hint_pep_type_origin(hint: object) -> type:
 
     Returns
     ----------
-    tuple
+    type
         Origin type originating this hint.
 
     See Also
     ----------
-    :func:`get_hint_pep_type_origin_or_none`
+    :func:`get_hint_pep_origin_type_or_none`
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_type_origin_or_none(hint)
+    hint_type_origin = get_hint_pep_origin_type_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
     if hint_type_origin is None:
         raise BeartypeDecorHintPepException(
             f'PEP type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from external class).')
+            f'(i.e., does not originate from external class).'
+        )
     # Else, this type exists.
 
     # Return this type.
     return hint_type_origin
 
 
-# If the active Python interpreter targets at least Python >= 3.7, implement
-# this function to access the standard "__origin__" dunder instance variable
-# whose value is the origin type originating this hint.
-if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_type_origin_or_none(hint: Any) -> Optional[type]:
-
-        # Sign uniquely identifying this hint.
-        hint_sign = get_hint_pep_sign(hint)
-
-        # If this sign originates from an origin type...
-        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN:
-            # Return either...
-            return (
-                # If this hint is PEP 585-compliant type hint, this sign. By
-                # definition, the sign uniquely identifying *EVERY* PEP
-                # 585-compliant type hint is the origin type originating that
-                # hint (e.g., "list" for "list[str]").
-                hint_sign
-                if is_hint_pep585(hint) else
-                # Else, this hint is *NOT* a PEP 585-compliant type hint. By
-                # elimination, this hint *MUST* be a PEP 484-compliant type
-                # hint. In this case, return the origin type originating this
-                # hint (e.g., "list" for "typing.List[str]").
-                hint.__origin__
-            )
-
-        # Else, this sign does *NOT* originate from an origin type. In this
-        # case, return "None".
-        return None
-
-#FIXME: Drop this like hot lead after dropping Python 3.6 support.
-# Else, the active Python interpreter targets Python 3.6. In this case...
-#
-# Gods... this is horrible. Thanks for nuthin', Python 3.6.
-else:
-    def get_hint_pep_type_origin_or_none(hint: Any) -> Optional[type]:
-
-        # Sign uniquely identifying this hint.
-        hint_sign = get_hint_pep_sign(hint)
-
-        # If this sign originates from an origin type...
-        #
-        # Note this could be implemented substantially more efficiently -- but
-        # why even bother? Python 3.6 is on unofficial intubation and will be
-        # officially terminated shortly.
-        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN:
-            # If this hint is a poorly designed Python 3.6-specific "type
-            # alias", this hint is a subscription of either the "typing.Match"
-            # or "typing.Pattern" objects. In this case, this hint declares a
-            # non-standard "impl_type" instance variable whose value is either
-            # the "re.Match" or "re.Pattern" class. Return this class.
-            if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
-                return hint.impl_type
-
-            # Else, this hint is a poorly designed Python 3.6-specific "generic
-            # meta." In this case, this hint declares a non-standard
-            # "__extra__" dunder instance variable whose value is the origin
-            # type originating this hint. The "__origin__" dunder instance
-            # variable *DOES* exist under Python 3.6 but is typically the
-            # identity class referring to the same "typing" singleton (e.g.,
-            # "typing.List" for "typing.List[int]") rather than the origin type
-            # (e.g., "list" for "typing.List[int]") and is thus completely
-            # useless for everything.
-            return hint_sign.__extra__
-
-        # Else, this sign does *NOT* originate from an origin type. In this
-        # case, return "None".
-        return None
-
-# Document this function regardless of implementation details above.
-get_hint_pep_type_origin_or_none.__doc__ = '''
+def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
+    '''
     **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
     satisfying the passed PEP-compliant type hint are instances of this class)
     originating this hint if this hint originates from a non-:mod:`typing`
@@ -732,10 +667,170 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **This function should always be called in lieu of attempting to directly
-    access the low-level** ``__origin__`` **dunder attribute.** This attribute
-    is defined non-orthogonally by various singleton objects in the
-    :mod:`typing` module, including:
+    **This high-level getter should always be called in lieu of the low-level**
+    :func:`get_hint_pep_origin_object_or_none` **getter or attempting to
+    directly access the low-level** ``__origin__`` **dunder attribute.**
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[type]
+        Either:
+
+        * If this object originates from a non-:mod:`typing` class, that class.
+        * Else, ``None``.
+
+    See Also
+    ----------
+    :func:`get_hint_pep_origin_object_or_none`
+        Further details.
+    '''
+
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign(hint)
+
+    # Return either...
+    return (
+        # If this sign originates from an origin type, that type.
+        get_hint_pep_origin_object_or_none(hint)
+        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN else
+        # Else, "None".
+        None
+    )
+
+
+@callable_cached
+def get_hint_pep_origin_type_subscripted_or_none(hint: Any) -> Optional[type]:
+    '''
+    **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
+    satisfying the passed PEP-compliant type hint are instances of this class)
+    originating this hint if this hint both originates from a non-:mod:`typing`
+    class and is **subscripted** (i.e., indexed by one or more arguments and/or
+    type variables) *or* ``None`` otherwise (i.e., if this hint either does
+    *not* originate from a non-:mod:`typing` class or does but is
+    unsubscripted).
+
+    This getter is principally intended to simplify the implementation of
+    subscripted PEP-compliant type hints -- particularly subscripted generics.
+
+    This getter is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[type]
+        Either:
+
+        * If this object originates from a non-:mod:`typing` class, that class.
+        * Else, ``None``.
+
+    See Also
+    ----------
+    :func:`get_hint_pep_origin_object_or_none`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_subscripted
+
+    # If this hint is already a class, this class is effectively already its
+    # origin type. In this case, return this class as is.
+    if isinstance(hint, type):
+        return hint
+    # Else, this hint is *NOT* a class.
+
+    # If this hint is unsubscripted, return "None" immediately.
+    if not is_hint_pep_subscripted(hint):
+        return None
+    # Else, this hint subscripted.
+
+    # Arbitrary object originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_object_or_none(hint)
+
+    # Return either...
+    return (
+        # If this object is a class, this object is the origin type originating
+        # this hint.
+        hint_origin
+        if isinstance(hint_origin, type) else
+        # Else, this object is *NOT* a class. In this case, this hint
+        # originates from *NO* origin type.
+        None
+    )
+
+
+#FIXME: Unit test us up, please.
+# If the active Python interpreter targets at least Python >= 3.7, implement
+# this function to access the standard "__origin__" dunder instance variable
+# whose value is the origin type originating this hint.
+if IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep_origin_object_or_none(hint: Any) -> Optional[Any]:
+
+        # Return this hint's origin object if any *OR* "None" otherwise.
+        return getattr(hint, '__origin__', None)
+
+#FIXME: Drop this like hot lead after dropping Python 3.6 support.
+# Else, the active Python interpreter targets Python 3.6. In this case...
+#
+# Gods... this is horrible. Thanks for nuthin', Python 3.6.
+else:
+    def get_hint_pep_origin_object_or_none(hint: Any) -> Optional[Any]:
+
+        # Return either...
+        return (
+            # If this hint is a poorly designed Python 3.6-specific "type
+            # alias", this hint is a subscription of either the "typing.Match"
+            # or "typing.Pattern" objects. In this case, this hint declares a
+            # non-standard "impl_type" instance variable whose value is either
+            # the "re.Match" or "re.Pattern" class. Return that class.
+            hint.impl_type
+            if isinstance(hint, typing._TypeAlias) else
+            # Else, this hint's origin object if any *OR* "None" otherwise.
+            #
+            # If this hint is a poorly designed Python 3.6-specific "generic
+            # meta," this hint declares a non-standard "__extra__" dunder
+            # instance variable whose value is the origin object originating
+            # this hint. The "__origin__" dunder instance variable *DOES* exist
+            # under Python 3.6 but is typically the identity class referring to
+            # the same "typing" singleton (e.g., "typing.List" for
+            # "typing.List[int]") rather than the origin type (e.g., "list" for
+            # "typing.List[int]") and is thus completely useless for
+            # everything. Welcome to Typing Hell. We hope you enjoy your stay.
+            getattr(hint, '__extra__', None)
+        )
+
+# Document this function regardless of implementation details above.
+get_hint_pep_origin_object_or_none.__doc__ = '''
+    **Unsafe origin object** (i.e., arbitrary object possibly related to the
+    passed PEP-compliant type hint but *not* necessarily a non-:mod:`typing`
+    class such that *all* objects satisfying this hint are instances of this
+    class) originating this hint if this hint originates from an object *or*
+    ``None`` otherwise (i.e., if this hint originates from *no* such object).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Caveats
+    ----------
+    **The high-level** :func:`get_hint_pep_origin_type_or_none` function should
+    always be called in lieu of this low-level function.** Whereas the former
+    is guaranteed to return either a class or ``None``, this function enjoys no
+    such guarantees and instead returns what the caller can only safely assume
+    to be an arbitrary object.
+
+    If this function *must* be called, **this function should always be called
+    in lieu of attempting to directly access the low-level** ``__origin__``
+    **dunder attribute.** That attribute is defined non-orthogonally by various
+    singleton objects in the :mod:`typing` module, including:
 
     * Objects failing to define this attribute (e.g., :attr:`typing.Any`,
       :attr:`typing.NoReturn`).
@@ -745,7 +840,7 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
 
     Since the :mod:`typing` module neither guarantees the existence of this
     attribute nor imposes a uniform semantic on this attribute when defined,
-    this attribute is *not* safely directly accessible. Thus this function,
+    that attribute is *not* safely directly accessible. Thus this function,
     which "fills in the gaps" by implementing this oversight.
 
     Parameters
@@ -755,27 +850,29 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
 
     Returns
     ----------
-    tuple
+    Optional[Any]
         Either:
 
-        * If this object originates from a non-:mod:`typing` class, that class.
+        * If this hint originates from an arbitrary object, that object.
         * Else, ``None``.
 
     Examples
     ----------
         >>> import typing
         >>> from beartype._util.hint.pep.utilhintpepget import (
-        ...     get_hint_pep_type_origin_or_none)
+        ...     get_hint_pep_origin_type_unsafe_or_none)
         # This is sane.
-        >>> get_hint_pep_type_origin_or_none(typing.List[int])
+        >>> get_hint_pep_origin_type_unsafe_or_none(typing.List)
         list
-        >>> get_hint_pep_type_origin_or_none(typing.Union[int, str])
+        >>> get_hint_pep_origin_type_unsafe_or_none(typing.List[int])
+        list
+        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union)
         None
-        # This is reasonable.
-        >>> typing.List.__origin__
-        list
-        >>> typing.List[int].__origin__
-        list
+        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union[int])
+        None
+        # This is insane.
+        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union[int, str])
+        Union
         # This is crazy.
         >>> typing.Union.__origin__
         AttributeError: '_SpecialForm' object has no attribute '__origin__'
@@ -787,7 +884,7 @@ get_hint_pep_type_origin_or_none.__doc__ = '''
         typing.Union
     '''
 
-# ....................{ GETTERS ~ subtype : generic       }....................
+# ....................{ GETTERS ~ kind : generic          }....................
 def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     '''
     Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects

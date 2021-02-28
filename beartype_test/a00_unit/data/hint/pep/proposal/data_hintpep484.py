@@ -602,6 +602,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        #FIXME: Duplicate this for PEP 585 as well, please.
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         PepHintMetadata(

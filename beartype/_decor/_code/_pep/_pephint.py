@@ -1716,7 +1716,7 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
-    get_hint_pep_type_origin,
+    get_hint_pep_origin_type,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
@@ -2929,7 +2929,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
 
                 # For each pseudo-superclass subclassed by this generic...
                 for hint_child in hint_childs:
-                    # print(f'hint_child: {repr(hint_child)} {is_hint_pep_class_typing(hint_child)}')
+                    # print(f'hint_child: {repr(hint_child)} {is_hint_pep_type_typing(hint_child)}')
 
                     # If this pseudo-superclass is an actual class, this class
                     # is effectively ignorable. Why? Because the
@@ -3146,7 +3146,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        get_hint_pep_type_origin(hint_curr)),
+                        get_hint_pep_origin_type(hint_curr)),
                 )
             # Else, this hint is *NOT* its own unsubscripted "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -3183,7 +3183,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_pep_type_origin(hint_curr))
+                    get_hint_pep_origin_type(hint_curr))
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").

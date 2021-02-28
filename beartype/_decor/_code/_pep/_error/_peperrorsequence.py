@@ -19,7 +19,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
 )
-from beartype._util.hint.pep.utilhintpepget import get_hint_pep_type_origin
+from beartype._util.hint.pep.utilhintpepget import get_hint_pep_origin_type
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import get_object_representation
@@ -56,7 +56,7 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
         f'multiple arguments.')
 
     # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_pep_type_origin(sleuth.hint)
+    hint_type_origin = get_hint_pep_origin_type(sleuth.hint)
 
     # If this pith is *NOT* an instance of this class, defer to the getter
     # function handling non-"typing" classes.
