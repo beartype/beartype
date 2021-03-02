@@ -18,6 +18,127 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS                             }....................
+# Fine-grained tests are intentionally performed *BEFORE* coarse-grained tests,
+# dramatically improving readability of test failures.
+
+# ....................{ TESTS ~ kind : generic            }....................
+def test_is_hint_pep_generic() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+    from typing import Generic
+
+    # Assert this tester:
+    # * Accepts generic PEP 484-compliant generics.
+    # * Rejects concrete PEP-compliant type hints.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_generic(hint_pep_meta.hint) is (
+            hint_pep_meta.pep_sign is Generic)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_generic(not_hint_pep) is False
+
+# ....................{ TESTS ~ kind : typevar            }....................
+def test_is_hint_pep_typevar() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevar`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import T
+    from typing import Optional
+
+    # Assert that type variables are type variables.
+    assert is_hint_pep_typevar(T) is True
+
+    # Assert that "typing" types parametrized by type variables are *NOT* type
+    # variables.
+    assert is_hint_pep_typevar(Optional[T]) is False
+
+
+def test_is_hint_pep_typevared() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevared`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevared
+    from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert that various "TypeVar"-centric types are correctly detected.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_typevared(hint_pep_meta.hint) is (
+            hint_pep_meta.is_typevared)
+
+    # Assert that various "TypeVar"-agnostic types are correctly detected.
+    for nonhint_pep in HINTS_NONPEP:
+        assert is_hint_pep_typevared(nonhint_pep) is False
+
+# ....................{ TESTS ~ typing                    }....................
+def test_is_hint_pep_typing() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import (
+        is_hint_pep_typing)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert this tester accepts PEP-compliant type hints defined by the
+    # "typing" module.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_typing(hint_pep_meta.hint) is (
+            hint_pep_meta.is_typing)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_typing(not_hint_pep) is False
+
+
+def test_is_hint_pep_type_typing() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_type_typing`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import (
+        is_hint_pep_type_typing)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert this tester accepts PEP-compliant type hints defined by the
+    # "typing" module.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_type_typing(hint_pep_meta.hint) is (
+            hint_pep_meta.is_type_typing)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_type_typing(not_hint_pep) is False
+
+# ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
     '''
     Test the :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep`
@@ -46,6 +167,30 @@ def test_is_hint_pep() -> None:
         assert is_hint_pep(not_hint_pep) is False
 
 
+def test_is_hint_pep_subscripted() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_subscripted`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import (
+        is_hint_pep_subscripted)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert this tester accepts PEP-compliant subscripted type hints.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
+            hint_pep_meta.is_subscripted)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_subscripted(not_hint_pep) is False
+
+
 #FIXME: Implement us up, please.
 # def test_is_hint_pep_uncached() -> None:
 #     '''
@@ -66,7 +211,7 @@ def test_is_hint_pep() -> None:
 #         # True only if we expect this hint to be non-self-cached, including.
 #         is_hint_pep_uncached_expected = (
 #             # If th
-#             hint_pep_meta.is_pep585 or
+#             hint_pep_meta.is_pep585_builtin or
 #             (
 #                 IS_PYTHON_AT_LEAST_3_9 and
 #                 hint_pep_meta
@@ -84,30 +229,6 @@ def test_is_hint_pep() -> None:
 #     # PEP-compliant type hints as self-cached PEP-compliant type hints. *shrug*
 #     for not_hint_pep in NOT_HINTS_PEP:
 #         assert is_hint_pep_uncached(not_hint_pep) is True
-
-
-def test_is_hint_pep_typing() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_type_typing`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import (
-        is_hint_pep_type_typing)
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_META)
-
-    # Assert this tester accepts concrete PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_type_typing(hint_pep_meta.hint) is (
-            hint_pep_meta.is_typing)
-
-    # Assert this tester rejects non-PEP-compliant type hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_type_typing(not_hint_pep) is False
 
 # ....................{ TESTS ~ supported                 }....................
 def test_is_hint_pep_supported() -> None:
@@ -219,72 +340,3 @@ def test_die_unless_hint_pep_sign_supported() -> None:
         if not_hint_pep not in HINT_PEP_SIGNS_SUPPORTED:
             with raises(BeartypeDecorHintPepException):
                 die_if_hint_pep_sign_unsupported(not_hint_pep)
-
-# ....................{ TESTS ~ subtype : generic         }....................
-def test_is_hint_pep484_generic() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_META)
-    from typing import Generic
-
-    # Assert this tester:
-    # * Accepts generic PEP 484-compliant generics.
-    # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_generic(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is Generic)
-
-    # Assert this tester rejects non-PEP-compliant type hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_generic(not_hint_pep) is False
-
-# ....................{ TESTS ~ subtype : typevar         }....................
-def test_is_hint_typing_typevar() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevar`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import T
-    from typing import Optional
-
-    # Assert that type variables are type variables.
-    assert is_hint_pep_typevar(T) is True
-
-    # Assert that "typing" types parametrized by type variables are *NOT* type
-    # variables.
-    assert is_hint_pep_typevar(Optional[T]) is False
-
-
-def test_is_hint_typing_typevared() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevared`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevared
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_META)
-
-    # Assert that various "TypeVar"-centric types are correctly detected.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_typevared(hint_pep_meta.hint) is (
-            hint_pep_meta.is_typevared)
-
-    # Assert that various "TypeVar"-agnostic types are correctly detected.
-    for nonhint_pep in HINTS_NONPEP:
-        assert is_hint_pep_typevared(nonhint_pep) is False

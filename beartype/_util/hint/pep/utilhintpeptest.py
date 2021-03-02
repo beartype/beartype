@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.cave import HintGenericSubscriptedType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepDeprecatedWarning,
@@ -37,7 +38,7 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
-    is_hint_pep585,
+    is_hint_pep585_builtin,
     is_hint_pep585_generic,
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
@@ -45,7 +46,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import TypeVar
+from typing import AnyStr, TypeVar
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -122,7 +123,7 @@ def die_if_hint_pep(
 
         # Raise an exception of this class.
         raise exception_cls(
-            f'{hint_label} {repr(hint)} PEP-compliant '
+            f'{hint_label} {repr(hint)} PEP type hint '
             f'(e.g., rather than non-"typing" type).'
         )
 
@@ -160,8 +161,7 @@ def die_unless_hint_pep(
     if not is_hint_pep(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepException(
-            f'{hint_label} {repr(hint)} not PEP-compliant '
-            f'(e.g., not "typing" type).')
+            f'{hint_label} {repr(hint)} not PEP type hint.')
 
 # ....................{ EXCEPTIONS ~ supported            }....................
 #FIXME: Refactor all or most calls to this and the
@@ -494,13 +494,13 @@ def is_hint_pep(hint: object) -> bool:
     # of a match with the least common type hints tested last and the most
     # common type hints tested first.
     return (
+        # This hint is the PEP 484-compliant "None" singleton.
+        hint is None or
         # This hint's type is directly declared by the "typing" module and thus
         # PEP-compliant by definition *OR*...
         is_hint_pep_type_typing(hint_type) or
         # This hint is a PEP 585-compliant type hint.
-        is_hint_pep585(hint) or
-        # This hint is the PEP 484-compliant "None" singleton.
-        hint is None or
+        is_hint_pep585_builtin(hint) or
         # This hint is a PEP-compliant generic. Although a small subset of
         # generics are directly defined by the "typing" module (e.g.,
         # "typing.SupportsInt"), most generics are user-defined subclasses
@@ -587,7 +587,7 @@ def is_hint_pep_uncached(hint: object) -> bool:
     # * A PEP 585-compliant type hint.
     # * A PEP 484-compliant subscripted generic masquerading as a PEP
     #   585-compliant type hint. *shrug*
-    return is_hint_pep585(hint)
+    return is_hint_pep585_builtin(hint)
 
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep_ignorable(hint: object) -> bool:
@@ -764,32 +764,30 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
     return hint in HINT_PEP_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
-def is_hint_pep_typing(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is defined by the :mod:`typing` module.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is defined by the :mod:`typing` module.
-    '''
-
-    return repr(hint).startswith('typing.')
-
-
 # If the active Python interpreter targets at least Python 3.7 and is thus
 # sane enough to support the normal implementation of this tester, do so.
 if IS_PYTHON_AT_LEAST_3_7:
+    def is_hint_pep_typing(hint: object) -> bool:
+        # print(f'is_hint_pep_typing({repr(hint)}')
+
+        # Return true only if either...
+        return (
+            # The machine-readable representation of this hint is prefixed by
+            # "typing." *OR*...
+            repr(hint).startswith('typing.') or
+            # This hint is "typing.AnyStr", whose representation violates the
+            # prior constraint by nonsensically being "~AnyStr" rather than
+            # "typing.AnyStr".
+            hint is AnyStr
+        )
+
+
     def is_hint_pep_type_typing(hint: object) -> bool:
+
+        # This hint if this hint is a class *OR* this hint's class otherwise.
+        hint_type = get_object_type_unless_type(hint)
+        # print(f'pep_type_typing({repr(hint)}): {get_object_module_name(hint_type)}')
+
         # Return true only if this type is defined by the "typing" module.
         #
         # Note that this implementation could probably be reduced to the
@@ -838,8 +836,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_module_name(get_object_type_unless_type(hint)) == (
-            'typing')
+        return get_object_module_name(hint_type) == 'typing'
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -851,12 +848,40 @@ if IS_PYTHON_AT_LEAST_3_7:
 # the resolution is simply to explicitly test for and reject "collections.abc"
 # superclasses passed to this Python 3.6-specific tester implementation.
 else:
+    def is_hint_pep_typing(hint: object) -> bool:
+        # print(f'is_hint_pep_typing({repr(hint)}')
+
+        # Machine-readable representation of this hint.
+        hint_repr = repr(hint)
+
+        # Return true only if either...
+        return (
+            # This representation is prefixed by either "typing.", "Match", or
+            # "Pattern" *OR*...
+            #
+            # Yes, this could be made mildly more efficient by leveraging a
+            # compiled regular expression, but Python 3.6 is obsolete and this
+            # isn't *THAT* much worse. Ergo, we collectively shrug.
+            hint_repr.startswith('typing.') or
+            hint_repr.startswith('Match[') or
+            hint_repr.startswith('Pattern[') or
+            # This hint is "typing.AnyStr", whose representation violates the
+            # prior constraint by nonsensically being "~AnyStr" rather than
+            # "typing.AnyStr".
+            hint is AnyStr
+        )
+
+
     def is_hint_pep_type_typing(hint: object) -> bool:
+
+        # This hint if this hint is a class *OR* this hint's class otherwise.
+        hint_type = get_object_type_unless_type(hint)
+        # print(f'pep_type_typing({repr(hint)}): {repr(hint_type)} {repr(get_object_module_name(hint_type))}')
+
         # Return true only if...
         return (
             # This type pretends to be defined by the "typing" module *AND*...
-            get_object_module_name(get_object_type_unless_type(hint)) == (
-                'typing') and
+            get_object_module_name(hint_type) == 'typing' and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment
             # the following test:
@@ -879,7 +904,26 @@ else:
             repr(hint) != "<class 'typing.Generator'>"
         )
 
-# Docstring for this function regardless of implementation details.
+
+# Docstring for the above functions regardless of implementation details.
+is_hint_pep_typing.__doc__ = '''
+    ``True`` only if the passed object is defined by the :mod:`typing` module.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is defined by the :mod:`typing` module.
+    '''
+
 is_hint_pep_type_typing.__doc__ = '''
     ``True`` only if either the passed object is defined by the :mod:`typing`
     module if this object is a class *or* the class of this object is defined
@@ -932,11 +976,25 @@ def is_hint_pep_subscripted(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_args, get_hint_pep_typevars)
+        get_hint_pep_args,
+        get_hint_pep_typevars,
+    )
 
-    # Return true only if this hint is subscripted by one or more arguments
-    # and/or type variables.
-    return get_hint_pep_args(hint) or get_hint_pep_typevars(hint)
+    # Return true only if this hint is either...
+    return (
+        # A PEP-compliant subscripted generic under Python >= 3.9, including:
+        # * A PEP 484- or 585-compliant subscripted generic.
+        # * A PEP 585-compliant builtin type hint.
+        #
+        # Note this test is technically redundant, since all subscripted
+        # generics *MUST* necessarily be subscripted by one or more arguments
+        # and/or type variables, subsequently tested for. Nonetheless, this
+        # test efficiently reduces to a builtin call and is thus preferable.
+        isinstance(hint, HintGenericSubscriptedType) or
+        # Any other PEP-compliant type hint subscripted by one or more
+        # arguments and/or type variables.
+        bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+    )
 
 # ....................{ TESTERS ~ subscript : typevar     }....................
 def is_hint_pep_typevar(hint: object) -> bool:
@@ -1061,9 +1119,10 @@ def is_hint_pep_typevared(hint: object) -> bool:
     # Return true only if this hint is parametrized by one or more type
     # variables, trivially detected by testing whether the tuple of all type
     # variables parametrizing this hint is non-empty.
-    return len(get_hint_pep_typevars(hint))
+    return bool(get_hint_pep_typevars(hint))
 
 # ....................{ TESTERS ~ kind : generic          }....................
+@callable_cached
 def is_hint_pep_generic(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **generic** (i.e., class
@@ -1078,9 +1137,10 @@ def is_hint_pep_generic(hint: object) -> bool:
     * A `PEP 484`_-compliant generic as tested by the lower-level
       :func:`is_hint_pep484_generic` function.
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This tester is memoized for efficiency. Although the implementation
+    trivially reduces to a one-liner, constant factors associated with that
+    one-liner are non-negligible. Moreover, this tester is called frequently
+    enough to warrant its reduction to an efficient lookup.
 
     Parameters
     ----------
@@ -1113,47 +1173,6 @@ def is_hint_pep_generic(hint: object) -> bool:
         # generic and is thus tested last.
         is_hint_pep585_generic(hint)
     )
-
-    #FIXME: Fantastic. We now need to generalize this into the lower-level
-    #is_hint_pep484_generic() and is_hint_pep585_generic() testers. To do so,
-    #leverage our newly created get_hint_pep_origin_type_subscripted_or_none()
-    #getter in these lower-level testers. *sigh*
-
-    # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
-    # generic but could still be a subscripted generic (i.e., generic
-    # subscripted by one or more PEP-compliant child type hints). In this
-    # case...
-    # if not isinstance(hint, type) and is_hint_pep_subscripted(hint):
-    #     # Arbitrary object originating this hint if any *OR* "None" otherwise.
-    #     hint_origin = get_hint_pep_origin_object_or_none(hint)
-    #
-    #     # If this object is *NOT* a class, this hint does *NOT* originate from
-    #     # an origin type and this hint *CANNOT* be a subscripted generic. In
-    #     # this case, immediately return false.
-    #     if not isinstance(hint_origin, type):
-    #         return False
-    #
-    #     # Else, this object is a class, implying this hint originates from an
-    #     # origin type. Since this hint is subscripted, this hint could still be
-    #     # a subscripted generic. Reduce this hint to this origin type to enable
-    #     # the subsequent test to test whether this origin type is an
-    #     # unsubscripted generic, which would then imply this hint to be a
-    #     # subscripted generic. If this strikes you as insane, you're not alone.
-    #     hint = hint_origin
-    #
-    # # Return true only if this hint is...
-    # return (
-    #     # A class that is either...
-    #     isinstance(hint, type) and (
-    #         # A PEP 484-compliant generic. Note this test trivially reduces to
-    #         # an O(1) operation and is thus tested first.
-    #         is_hint_pep484_generic(hint) or
-    #         # A PEP 585-compliant generic. Note this test is O(n) in n the
-    #         # number of pseudo-superclasses originally subclassed by this
-    #         # generic and is thus tested last.
-    #         is_hint_pep585_generic(hint)
-    #     )
-    # )
 
 # ....................{ TESTERS ~ kind : tuple            }....................
 def is_hint_pep_tuple_empty(hint: object) -> bool:

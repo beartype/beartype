@@ -110,7 +110,7 @@ def die_unless_hint(
     die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
 
 # ....................{ VALIDATORS ~ class                }....................
-#FIXME: Test us up.
+#FIXME: Unit test us up, please.
 def die_unless_hint_type_isinstanceable(
     # Mandatory parameters.
     hint: object,
@@ -197,9 +197,9 @@ def die_unless_hint_type_isinstanceable(
         https://www.python.org/dev/peps/pep-0585
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
-        is_hint_pep544_protocol)
+    # # Avoid circular import dependencies.
+    # from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    #     is_hint_pep544_protocol)
 
     # If this hint is *NOT* a class, raise an exception.
     die_unless_type(cls=hint, exception_cls=exception_cls)
@@ -226,23 +226,33 @@ def die_unless_hint_type_isinstanceable(
         try:
             isinstance(None, hint)  # type: ignore[arg-type]
         except Exception as exception:
-            # Human-readable exception message to be raised as either...
+            #FIXME: Uncomment after we uncover why doing so triggers an
+            #infinite circular exception chain when "hint" is a "GenericAlias".
+            # # Human-readable exception message to be raised as either...
+            # exception_message = (
+            #     # If this class is a PEP 544-compliant protocol, a message
+            #     # documenting this exact issue and how to resolve it;
+            #     (
+            #         f'{hint_label} PEP 544 protocol {hint} '
+            #         f'uncheckable at runtime (i.e., '
+            #         f'not decorated by @typing.runtime_checkable).'
+            #     )
+            #     if is_hint_pep544_protocol(hint) else
+            #     # Else, a fallback message documenting this general issue.
+            #     (
+            #         f'{hint_label} type {hint} uncheckable at runtime (i.e., '
+            #         f'not passable as second parameter to isinstance() '
+            #         f'due to raising "{exception}" from metaclass '
+            #         f'__instancecheck__() method).'
+            #     )
+            # )
+
+            # Human-readable exception message to be raised.
             exception_message = (
-                # If this class is a PEP 544-compliant protocol, a message
-                # documenting this exact issue and how to resolve it;
-                (
-                    f'{hint_label} PEP 544 protocol {hint} '
-                    f'uncheckable at runtime (i.e., '
-                    f'not decorated by @typing.runtime_checkable).'
-                )
-                if is_hint_pep544_protocol(hint) else
-                # Else, a fallback message documenting this general issue.
-                (
-                    f'{hint_label} type {hint} uncheckable at runtime (i.e., '
-                    f'not passable as second parameter to isinstance() '
-                    f'due to raising "{exception}" from metaclass '
-                    f'__instancecheck__() method).'
-                )
+                f'{hint_label} type {hint} uncheckable at runtime (i.e., '
+                f'not passable as second parameter to isinstance() '
+                f'due to raising "{exception}" from metaclass '
+                f'__instancecheck__() method).'
             )
 
             # Raise this high-level exception with this human-readable message

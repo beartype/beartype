@@ -68,8 +68,6 @@ class CauseSleuth(object):
         from this getter in the event of unexpected runtime failure.
     func : Callable
         Decorated callable generating this type-checking error.
-    hint : Any
-        Type hint to validate this object against.
     hint_sign : Any
         Unsubscripted :mod:`typing` attribute identifying this hint if this hint
         is PEP-compliant *or* ``None`` otherwise.
@@ -97,6 +95,11 @@ class CauseSleuth(object):
         such integer). See the same parameter accepted by the higher-level
         :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
         function for further details.
+
+    Attributes (Private)
+    ----------
+    _hint : Any
+        Type hint to validate this object against.
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
@@ -107,11 +110,11 @@ class CauseSleuth(object):
         'cause_indent',
         'exception_label',
         'func',
-        'hint',
         'hint_sign',
         'hint_childs',
         'pith',
         'random_int',
+        '_hint',
     )
 
 
@@ -126,13 +129,6 @@ class CauseSleuth(object):
     '''
     Frozen set of the names of all parameters accepted by the :meth:`init`
     method, defined as a set to enable efficient membership testing.
-    '''
-
-
-    _VAR_NAMES = frozenset(__slots__)
-    '''
-    Frozen set of the names of all instance variables permitted on this object,
-    defined as a set to enable efficient membership testing.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -163,7 +159,6 @@ class CauseSleuth(object):
         # Classify all passed parameters.
         self.func = func
         self.pith = pith
-        self.hint = hint
         self.cause_indent = cause_indent
         self.exception_label = exception_label
         self.random_int = random_int
@@ -171,6 +166,25 @@ class CauseSleuth(object):
         # Nullify all remaining parameters for safety.
         self.hint_sign: Any = None
         self.hint_childs: Tuple = None  # type: ignore[assignment]
+
+        # Classify this hint *AFTER* initializing all parameters above.
+        self.hint = hint
+
+    # ..................{ PROPERTIES                        }..................
+    @property
+    def hint(self) -> Any:
+        '''
+        Type hint to validate this object against.
+        '''
+
+        return self._hint
+
+
+    @hint.setter
+    def hint(self, hint: Any) -> None:
+        '''
+        Set the type hint to validate this object against.
+        '''
 
         # ................{ REDUCTION                         }................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -188,13 +202,13 @@ class CauseSleuth(object):
         # "typing" module, PEP 484 explicitly supports this singleton:
         #     When used in a type hint, the expression None is considered
         #     equivalent to type(None).
-        if self.hint is None:
-            self.hint = NoneType
+        if hint is None:
+            hint = NoneType
         # If this is a PEP 484-compliant new type hint, reduce this hint to the
         # user-defined class aliased by this hint. Although this logic could
         # also be performed below, doing so here simplifies matters.
-        elif is_hint_pep484_newtype(self.hint):
-            self.hint = get_hint_pep484_newtype_class(self.hint)
+        elif is_hint_pep484_newtype(hint):
+            hint = get_hint_pep484_newtype_class(hint)
         # ................{ REDUCTION ~ pep 544               }................
         # If this is a PEP 484-compliant IO generic base class *AND* the active
         # Python interpreter targets at least Python >= 3.8 and thus supports
@@ -207,30 +221,33 @@ class CauseSleuth(object):
         # classes from third-party classes). Ergo, we can neither safely emit
         # warnings nor raise exceptions on visiting these classes under *ANY*
         # Python version.
-        elif is_hint_pep544_io_generic(self.hint):
-            self.hint = get_hint_pep544_io_protocol_from_generic(self.hint)
+        elif is_hint_pep544_io_generic(hint):
+            hint = get_hint_pep544_io_protocol_from_generic(hint)
         # ................{ REDUCTION ~ pep 593               }................
         # If this is a PEP 593-compliant type metahint, ignore all annotations
         # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
         # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
-        elif is_hint_pep593(self.hint):
-            self.hint = get_hint_pep593_hint(self.hint)
+        elif is_hint_pep593(hint):
+            hint = get_hint_pep593_hint(hint)
         # ................{ REDUCTION ~ end                   }................
 
         # If this hint is PEP-compliant...
-        if is_hint_pep(self.hint):
+        if is_hint_pep(hint):
             # Arbitrary object uniquely identifying this hint.
-            self.hint_sign = get_hint_pep_sign(self.hint)
+            self.hint_sign = get_hint_pep_sign(hint)
 
             # Tuple of either...
             self.hint_childs = (
                 # If this hint is a generic, the one or more unerased
                 # pseudo-superclasses originally subclassed by this hint.
-                get_hint_pep_generic_bases_unerased(self.hint)
-                if is_hint_pep_generic(self.hint) else
+                get_hint_pep_generic_bases_unerased(hint)
+                if is_hint_pep_generic(hint) else
                 # Else, the zero or more arguments subscripting this hint.
-                get_hint_pep_args(self.hint)
+                get_hint_pep_args(hint)
             )
+
+        # Classify this hint *AFTER* all other assignments above.
+        self._hint = hint
 
     # ..................{ GETTERS                           }..................
     def get_cause_or_none(self) -> Optional[str]:
@@ -426,18 +443,18 @@ class CauseSleuth(object):
 
         # For the name of each passed keyword argument...
         for param_name in kwargs.keys():
-            # If this copy does *NOT* already define an instance variable of
-            # the same name, raise an exception.
-            if param_name not in self._VAR_NAMES:
+            # If this name is *NOT* that of a parameter accepted by the
+            # __init__() method, raise an exception.
+            if param_name not in self._INIT_PARAM_NAMES:
                 raise _BeartypeCallHintPepRaiseException(
-                    f'Unrecognized instance variable '
-                    f'{self.__class__.__name__}.{param_name} not permutable.'
+                    f'{self.__class__}.__init__() parameter '
+                    f'{param_name} unrecognized.'
                 )
 
-        # For the name of each instance variable initializable by this class...
+        # For the name of each parameter accepted by the __init__() method...
         for param_name in self._INIT_PARAM_NAMES:
-            # If this variable is not already defined by these arguments,
-            # cascade the current value of this variable into these arguments.
+            # If this parameter was *NOT* explicitly passed by the caller,
+            # default this parameter to its current value from this object.
             if param_name not in kwargs:
                 kwargs[param_name] = getattr(self, param_name)
 

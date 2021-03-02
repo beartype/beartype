@@ -340,7 +340,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=ProtocolCustomUntypevared,
             pep_sign=Generic,
-            is_typing=False,
+            is_type_typing=False,
             piths_satisfied_meta=(
                 PepHintPithSatisfiedMetadata(protocol_custom_structural),
             ),
@@ -355,7 +355,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ProtocolCustomTypevared,
             pep_sign=Generic,
             is_typevared=True,
-            is_typing=False,
+            is_type_typing=False,
             piths_satisfied_meta=(
                 PepHintPithSatisfiedMetadata(protocol_custom_structural),
             ),

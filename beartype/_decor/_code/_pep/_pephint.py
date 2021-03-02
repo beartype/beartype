@@ -97,8 +97,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * In the inner wrapper function:
 #    * Test whether the passed mandatory "hint" parameter (trivially accessible
 #      via this closure constant providing its 0-based index in "*args") is an
-#      instance of "beartype.cave.HintPep585Type". Do *NOT* bother calling the
-#      higher-level is_hint_pep585() tester. Speed is of the essence here.
+#      instance of "beartype.cave.HintGenericSubscriptedType". Do *NOT* bother calling the
+#      higher-level is_hint_pep585_builtin() tester. Speed is of the essence here.
 #    * If so, replace this parameter in the "*args" tuple with the repr() for
 #      this parameter. Naturally, this (probably) requires inefficiently
 #      reconstructing the entire "*args" tuple. What can you do? Note that this
@@ -150,7 +150,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: *UNIT TEST THIS CACHE AND MAKE SURE IT ACTUALLY WORKS* for both PEP
 #585- and 563-compliant hints, which are the principle use cases.
 
-#FIXME: *WOOPS.* The "LRUDuffleCacheStrong" class designed below assumes thatL
+#FIXME: *WOOPS.* The "LRUDuffleCacheStrong" class designed below assumes that
 #calculating the semantic height of a type hint (e.g., 3 for the complex hint
 #Optional[int, dict[Union[bool, tuple[int, ...], Sequence[set]], list[str]])
 #is largely trivial. It isn't -- at all. Computing that without a context-free
@@ -1602,6 +1602,49 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Since we pass "func_data" everywhere, we get configuration for free. Muhaha!
 
+#FIXME: Propagate generic subscriptions both to *AND* from pseudo-superclasses.
+#First, consider the simpler case of propagating a generic subscription to
+#pseudo-superclasses: e.g.,
+#    from typing import List
+#    class MuhList(List): pass
+#
+#    @beartype
+#    def muh_lister(muh_list: MuhList[int]) -> None: pass
+#
+#During internal type hint visitation, @beartype should propagate the "int"
+#child type hint subscripting the "MuhList" type hint up to the "List"
+#pseudo-superclass under Python >= 3.9. Under older Python versions, leaving
+#"List" unsubscripted appears to raise exceptions at parse time. *shrug*
+#
+#Of the two cases, this first case is *SIGNIFICANTLY* more important than the
+#second case documented below. Why? Because mypy (probably) supports this first
+#but *NOT* second case, for  which mypy explicitly raises an "error". Since
+#mypy has effectively defined the standard interpretation of type hints,
+#there's little profit in contravening that ad-hoc standard by supporting
+#something unsupported under mypy -- especially because doing so would then
+#expose end user codebases to mypy errors. Sure, that's "not our problem, man,"
+#but it kind of is, because community standards exist for a reason -- even if
+#they're ad-hoc community standards we politely disagree with.
+#
+#Nonetheless, here's the second case. Consider the reverse case of propagating
+#a generic subscription from a pseudo-superclass down to its unsubscripted
+#generic: e.g.,
+#    from typing import Generic, TypeVar
+#
+#    T = TypeVar('T')
+#    class MuhGeneric(Generic[T]):
+#        def __init__(self, muh_param: T): pass
+#
+#    @beartype
+#    def muh_genericizer(generic: MuhGeneric, T) -> None: pass
+#
+#During internal type hint visitation, @beartype should propagate the "T"
+#child type hint subscripting the "Generic" pseudo-superclass down to the
+#"MuhGeneric" type hint under Python >= 3.9 and possibly older versions. Doing
+#so would reduce DRY violations, because there's no tangible reason why users
+#should have to perpetually subscript "MuhGeneric" when its pseudo-superclass
+#already has been. Of course, mypy doesn't see it that way. *shrug*
+
 #FIXME: When time permits, we can augment the pretty lame approach by
 #publishing our own "BeartypeDict" class that supports efficient random access
 #of both keys and values. Note that:
@@ -1707,7 +1750,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
     get_hint_pep544_io_protocol_from_generic,
     is_hint_pep544_io_generic,
 )
-from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_hint,
     is_hint_pep593,
@@ -1716,7 +1759,8 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
-    get_hint_pep_origin_type,
+    get_hint_pep_origin_type_stdlib,
+    get_hint_pep_origin_type_generic_or_none,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
@@ -1729,7 +1773,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from itertools import count
-from typing import Set, Generic, Tuple, NoReturn, Optional
+from typing import Set, Generic, Tuple, NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -2913,7 +2957,29 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
             #   at least one non-class PEP 585-compliant pseudo-superclasses).
             # Then this hint is a PEP-compliant generic. In this case...
             elif hint_curr_sign is Generic:
-                # Assert this hint is a class.
+                #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate *ALL*
+                #child type hints subscripting a generic up to *ALL*
+                #pseudo-superclasses of that generic (e.g., the "int" child
+                #hint subscripting a parent hint "MuhGeneric[int]" of type
+                #"class MuhGeneric(list[T]): pass" up to its "list[T]"
+                #pseudo-superclass).
+                #
+                #For now, we just strip *ALL* child type hints subscripting a
+                #generic with the following call. This suffices, because we
+                #just need this to work. So it goes, uneasy code bedfellows.
+
+                # If this hint is *NOT* a class, this hint is *NOT* an
+                # unsubscripted generic but could still be a generic
+                # subscripted by one or more PEP-compliant child type hints.
+                #
+                # To decide, reduce this hint to the object originating this
+                # hint if any, enabling the subsequent assertion to assert
+                # whether this origin object is an unsubscripted generic, which
+                # would then imply this hint to be a subscripted generic. If
+                # this strikes you as insane, you're not alone.
+                hint_curr = get_hint_pep_origin_type_generic_or_none(hint_curr)
+
+                # Assert this hint to be a class.
                 assert isinstance(hint_curr, type), (
                     f'{hint_curr_label} PEP generic type hint '
                     f'{repr(hint_curr)} not class.')
@@ -2966,7 +3032,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     #     >>> isinstance(UserProtocolUnerased, type)
                     #     False
                     # * PEP 585-compliant generics suffer no such issues:
-                    #     >>> from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+                    #     >>> from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
                     #     >>> class UserGeneric(list[int]): pass
                     #     >>> class UserSubgeneric(UserGeneric[int]): pass
                     #     >>> UserSubgeneric.__orig_bases__
@@ -2976,7 +3042,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     #     True
                     #     >>> UserGenericUnerased.__mro__
                     #     (UserGeneric, list, object)
-                    #     >>> is_hint_pep585(UserGenericUnerased)
+                    #     >>> is_hint_pep585_builtin(UserGenericUnerased)
                     #     True
                     #
                     # Walking up the unerased inheritance hierarchy for this
@@ -3011,7 +3077,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     # user-defined pseudo-superclass that is neither...
                     elif not (
                         # A PEP 585-compliant pseudo-superclass *NOR*...
-                        is_hint_pep585(hint_child) and
+                        is_hint_pep585_builtin(hint_child) and
                         # A PEP 484- or 544-compliant pseudo-superclass defined
                         # by the "typing" module.
                         is_hint_pep_typing(hint_child)
@@ -3146,7 +3212,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        get_hint_pep_origin_type(hint_curr)),
+                        get_hint_pep_origin_type_stdlib(hint_curr)),
                 )
             # Else, this hint is *NOT* its own unsubscripted "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -3183,7 +3249,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_pep_origin_type(hint_curr))
+                    get_hint_pep_origin_type_stdlib(hint_curr))
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").

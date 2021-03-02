@@ -18,7 +18,7 @@ from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_origin_type_or_none)
+    get_hint_pep_origin_type_stdlib_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextmunge import (
@@ -72,7 +72,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
         if is_hint_pep(hint_child):
             # Non-"typing" class originating this child hint if any *OR* "None"
             # otherwise.
-            hint_child_type_origin = get_hint_pep_origin_type_or_none(
+            hint_child_type_origin = get_hint_pep_origin_type_stdlib_or_none(
                 hint_child)
 
             # If...

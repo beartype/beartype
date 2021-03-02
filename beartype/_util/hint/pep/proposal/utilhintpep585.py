@@ -13,10 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import HintPep585Type
+from beartype.cave import HintGenericSubscriptedType
 from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.func.utilfuncget import get_func_wrappee
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Any, Set, Tuple
 
@@ -47,14 +46,25 @@ def die_unless_hint_pep585_generic(hint: object) -> None:
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception
     if not is_hint_pep585_generic(hint):
         raise BeartypeDecorHintPep585Exception(
-            f'PEP type hint "{repr(hint)}" not PEP 585 generic.')
+            f'Type hint {repr(hint)} not PEP 585 generic.')
 
 # ....................{ TESTERS                           }....................
 # If the active Python interpreter targets at least Python >= 3.9 and thus
 # supports PEP 585, correctly declare this function.
 if IS_PYTHON_AT_LEAST_3_9:
-    def is_hint_pep585(hint: object) -> bool:
-        return isinstance(hint, HintPep585Type)
+    def is_hint_pep585_builtin(hint: object) -> bool:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+
+        # Return true only if this hint...
+        return (
+            # Is either a PEP 484- or -585-compliant subscripted generic or
+            # PEP 585-compliant builtin *AND*...
+            isinstance(hint, HintGenericSubscriptedType) and
+            # Is *NOT* a PEP 484- or -585-compliant subscripted generic.
+            not is_hint_pep_generic(hint)
+        )
 
 
     @callable_cached
@@ -62,13 +72,12 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpepget import (
-            get_hint_pep_origin_type_subscripted_or_none)
+            get_hint_pep_origin_type_generic_or_none)
 
         # If this hint is *NOT* a class, reduce this hint to the object
         # originating this hint if any. See the comparable
         # is_hint_pep484_generic() tester for further details.
-        if not isinstance(hint, type):
-            hint = get_hint_pep_origin_type_subscripted_or_none(hint)
+        hint = get_hint_pep_origin_type_generic_or_none(hint)
 
         # Tuple of all pseudo-superclasses originally subclassed by the passed
         # hint if this hint is a generic *OR* false otherwise.
@@ -101,7 +110,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         # ensure that this hint is a PEP 585-compliant generic, however, there
         # exists little benefit to doing so.
         return hint_bases_erased and any(
-            is_hint_pep585(hint_base_erased)
+            is_hint_pep585_builtin(hint_base_erased)
             for hint_base_erased in hint_bases_erased
         )
 
@@ -109,7 +118,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 # fails to support PEP 585. In this case, fallback to declaring this function
 # to unconditionally return False.
 else:
-    def is_hint_pep585(hint: object) -> bool:
+    def is_hint_pep585_builtin(hint: object) -> bool:
         return False
 
     def is_hint_pep585_generic(hint: object) -> bool:
@@ -118,12 +127,12 @@ else:
 # ....................{ TESTERS ~ doc                     }....................
 # Docstring for this function regardless of implementation details.
 # Docstring for this function regardless of implementation details.
-is_hint_pep585.__doc__ = '''
-    ``True`` only if the passed object is a C-based `PEP 585`_-compliant **type
-    hint** (i.e., C-based type hint instantiated by subscripting either a
-    concrete builtin container class like :class:`list` or :class:`tuple` *or*
-    an abstract base class (ABC) declared by the :mod:`collections.abc`
-    submodule like :class:`collections.abc.Iterable` or
+is_hint_pep585_builtin.__doc__ = '''
+    ``True`` only if the passed object is a C-based `PEP 585`_-compliant
+    **builtin type hint** (i.e., C-based type hint instantiated by subscripting
+    either a concrete builtin container class like :class:`list` or
+    :class:`tuple` *or* an abstract base class (ABC) declared by the
+    :mod:`collections.abc` submodule like :class:`collections.abc.Iterable` or
     :class:`collections.abc.Sequence`).
 
     This tester is intentionally *not* memoized (e.g., by the
@@ -220,7 +229,15 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
        https://www.python.org/dev/peps/pep-0585
     '''
 
-    # If this hint is *NOT* a PEP 585-compliant generic, raise an exception
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import (
+        get_hint_pep_origin_type_generic_or_none)
+
+    # If this hint is *NOT* a class, reduce this hint to the object originating
+    # this hint if any. See the is_hint_pep484_generic() tester for details.
+    hint = get_hint_pep_origin_type_generic_or_none(hint)
+
+    # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
     die_unless_hint_pep585_generic(hint)
 
     # Return the tuple of all unerased pseudo-superclasses of this generic.
@@ -282,6 +299,11 @@ def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)
 
     # Set of all type variables parametrizing these pseudo-superclasses.
+    #
+    # Note the following inefficient iteration *CANNOT* be reduced to an
+    # efficient set comprehension, as each get_hint_pep_typevars() call returns
+    # a tuple of type variables rather than single type variable to be added to
+    # this set.
     hint_typevars: Set[type] = set()
 
     # For each such pseudo-superclass, add all type variables parametrizing

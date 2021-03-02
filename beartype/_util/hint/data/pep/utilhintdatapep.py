@@ -170,7 +170,7 @@ Frozen set of all **standard class signs** (i.e., instances of the builtin
 '''
 
 
-HINT_PEP_SIGNS_TYPE_ORIGIN = (
+HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB = (
     HINT_PEP484_SIGNS_TYPE_ORIGIN |
     # Since all PEP 585-compliant type hints originate from an origin type, the
     # set of all PEP 585-compliant standard class signs also doubles as the
@@ -200,7 +200,7 @@ HINT_PEP_SIGNS_SUPPORTED = (
     HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a non-"typing"
     # origin type.
-    HINT_PEP_SIGNS_TYPE_ORIGIN
+    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB
 )
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely

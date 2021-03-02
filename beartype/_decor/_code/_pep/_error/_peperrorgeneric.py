@@ -18,7 +18,9 @@ from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
+from beartype._util.hint.pep.utilhintpepget import (
+    get_hint_pep_origin_type_generic_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
 from typing import Generic, Optional
 
@@ -42,9 +44,13 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
     assert sleuth.hint_sign is Generic, (
         f'{repr(sleuth.hint_sign)} not generic.')
+
+    # If this hint is *NOT* a class, reduce this hint to the object originating
+    # this hint if any. See the is_hint_pep484_generic() tester for details.
+    sleuth.hint = get_hint_pep_origin_type_generic_or_none(sleuth.hint)
+    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
     # If this pith is *NOT* an instance of this generic, defer to the getter
     # function handling non-"typing" classes.
@@ -67,7 +73,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
         # *NOR* a PEP-compliant type hint defined by the "typing" module,
         # reduce this pseudo-superclass to a real superclass originating this
         # pseudo-superclass. See commentary in the "_pephint" submodule.
-        elif not (is_hint_pep585(hint_base) and is_hint_pep_typing(hint_base)):
+        elif not (is_hint_pep585_builtin(hint_base) and is_hint_pep_typing(hint_base)):
             hint_base = get_hint_pep484_generic_base_erased_from_unerased(
                 hint_base)
         # Else, this pseudo-superclass is defined by the "typing" module.

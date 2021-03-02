@@ -28,13 +28,13 @@ def test_is_hint_pep585() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585
+    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
     # Assert this tester accepts only PEP 585-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep585(hint_pep_meta.hint) is (
-            hint_pep_meta.is_pep585)
+        assert is_hint_pep585_builtin(hint_pep_meta.hint) is (
+            hint_pep_meta.is_pep585_builtin)
 
 # ....................{ TESTS ~ subtype : generic         }....................
 def test_is_hint_pep585_generic() -> None:

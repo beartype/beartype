@@ -916,25 +916,42 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ hint                      }....................
-HintPep585Type: _Any = UnavailableType
+HintGenericSubscriptedType: _Any = UnavailableType
 '''
-C-based type of all `PEP 585`_-compliant **type hints** (i.e., C-based type
-hints instantiated by subscripting either a concrete builtin container class
-like :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared
-by the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-or :class:`collections.abc.Sequence`) if the active Python interpreter targets
-at least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
+C-based type of all subscripted generics if the active Python interpreter
+targets at least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
 
-Note that:
+Subscripted generics include:
 
-* *All* `PEP 585`_-compliant type hints are classes. Ergo, this C-based type is
-  the class of those classes and thus effectively itself a metaclass. It's
-  probably best not to think too hard about that.
-* This C-based type is also the class of *all* `PEP 484`_-compliant
-  **subscripted generics** (i.e., classes superficially subclassing at least
-  one PEP-compliant type hint that is possibly *not* an actual class,
-  subscripted by a PEP-compliant type hint) under Python >= 3.9. It's probably
-  best not to think too hard about that, either.
+* `PEP 585`_-compliant **builtin type hints** (i.e., C-based type hints
+  instantiated by subscripting either a concrete builtin container class like
+  :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
+  the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
+  or :class:`collections.abc.Sequence`). Since *all* `PEP 585`_-compliant
+  builtin type hints are classes, this C-based type is the class of those
+  classes and thus effectively itself a metaclass. It's probably best not to
+  think about that.
+* `PEP 484`_-compliant **subscripted generics** (i.e., user-defined classes
+  subclassing one or more `PEP 484`_-compliant type hints subsequently
+  subscripted by one or more PEP-compliant type hints).
+* `PEP 585`_-compliant **subscripted generics** (i.e., user-defined classes
+  subclassing one or more `PEP 585`_-compliant type hints subsequently
+  subscripted by one or more PEP-compliant type hints).
+
+Caveats
+----------
+**This low-level type ambiguously matches semantically unrelated PEP-compliant
+type hints,** rendering this type all but useless for most practical purposes.
+To distinguish between the various semantic types of hints ambiguously matched
+by this type, higher-level PEP-specific functions *must* be called instead.
+These include:
+
+* :func:`beartype._util.hint.pep.proposal.utilhintpep484.is_hint_pep484_generic`.
+  detecting `PEP 484`_-compliant generic type hints.
+* :func:`beartype._util.hint.pep.proposal.utilhintpep585.is_hint_pep585_builtin`.
+  detecting `PEP 585`_-compliant builtin type hints.
+* :func:`beartype._util.hint.pep.proposal.utilhintpep585.is_hint_pep585_generic`.
+  detecting `PEP 585`_-compliant generic type hints.
 
 .. _PEP 484:
     https://www.python.org/dev/peps/pep-0484
@@ -945,7 +962,11 @@ Note that:
 # If the active Python interpreter targets at least Python >= 3.9 and thus
 # supports PEP 585, correctly declare this type.
 if _IS_PYTHON_AT_LEAST_3_9:
-    HintPep585Type = type(list[str])  # type: ignore[misc]
+    HintGenericSubscriptedType = type(list[str])  # type: ignore[misc]
+
+#FIXME: Deprecate this. We previously published this ambiguously named type.
+#Perhaps use a module __getattr__() under whatever Python versions support it?
+HintPep585Type = HintGenericSubscriptedType
 
 # ....................{ TYPES ~ scalar                    }....................
 BoolType = _BoolType

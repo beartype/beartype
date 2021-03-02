@@ -127,7 +127,7 @@ def is_hint_pep484_ignorable_or_none(
         # "typing.Generic[T]"), return true.
         #
         # Note that we intentionally avoid calling the
-        # get_hint_pep_origin_type_or_none() function here, which has been
+        # get_hint_pep_origin_type_stdlib_or_none() function here, which has been
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if getattr(hint, '__origin__', None) is Generic:
@@ -208,7 +208,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpepget import (
-            get_hint_pep_origin_type_subscripted_or_none)
+            get_hint_pep_origin_type_generic_or_none)
 
         # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
         # generic but could still be a subscripted generic (i.e., generic
@@ -217,7 +217,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         # enabling the subsequent test to test whether this origin object is an
         # unsubscripted generic, which would then imply this hint to be a
         # subscripted generic. If this strikes you as insane, you're not alone.
-        hint = get_hint_pep_origin_type_subscripted_or_none(hint)
+        hint = get_hint_pep_origin_type_generic_or_none(hint)
 
         # Return true only if this hint is a subclass of the "typing.Generic"
         # abstract base class (ABC), in which case this hint is a user-defined
@@ -260,23 +260,23 @@ if IS_PYTHON_AT_LEAST_3_7:
         # object to be a PEP-compliant generic.
         return is_object_subclass(hint, Generic)  # type: ignore[arg-type]
 
-# Else, the active Python interpreter targets Python 3.6. In this case,
+# Else, the active Python interpreter targets Python 3.6.x. In this case,
 # implement this function specific to this Python version.
 else:
-    # Import the Python < 3.7.0-specific metaclass required by this tester.
+    # Import the Python 3.6.x-specific metaclass required by this tester.
     from typing import GenericMeta  # type: ignore[attr-defined]
 
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpepget import (
-            get_hint_pep_origin_type_subscripted_or_none)
+            get_hint_pep_origin_type_generic_or_none)
         from beartype._util.hint.pep.utilhintpeptest import (
             is_hint_pep_type_typing)
 
         # If this hint is *NOT* a class, reduce this hint to the object
         # originating this hint if any. See the above tester for details.
-        hint = get_hint_pep_origin_type_subscripted_or_none(hint)
+        hint = get_hint_pep_origin_type_generic_or_none(hint)
 
         # Return true only if this hint is a subclass *NOT* defined by the
         # "typing" module whose class is the "typing.GenericMeta" metaclass, in
@@ -762,10 +762,18 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #  * Return a frozenset of this list, thus implicitly eliminating
     #    duplicate superclasses.
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import (
+        get_hint_pep_origin_type_generic_or_none)
+
+    # If this hint is *NOT* a class, reduce this hint to the object originating
+    # this hint if any. See is_hint_pep484_generic() tester for details.
+    hint = get_hint_pep_origin_type_generic_or_none(hint)
+
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
     if not is_hint_pep484_generic(hint):
         raise BeartypeDecorHintPep484Exception(
-            f'PEP type hint "{repr(hint)}" neither '
+            f'Type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'
         )
     # Else, this hint is a PEP 484-compliant generic.
