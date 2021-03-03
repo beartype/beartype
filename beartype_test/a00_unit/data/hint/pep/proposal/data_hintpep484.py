@@ -38,6 +38,7 @@ from beartype.cave import (
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_BASE_FORWARDREF)
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
@@ -362,7 +363,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=ByteString,
             pep_sign=ByteString,
-            origin_type_stdlib=collections_abc.ByteString,
+            stdlib_type=collections_abc.ByteString,
             piths_satisfied_meta=(
                 # Byte string constant.
                 PepHintPithSatisfiedMetadata(
@@ -386,7 +387,9 @@ def add_data(data_module: 'ModuleType') -> None:
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_subscripted=False,
-            is_typing=False,
+            # Type variable instances are directly declared by the "typing"
+            # module *ONLY* under Python 3.6.
+            is_typing=IS_PYTHON_3_6,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
                 PepHintPithSatisfiedMetadata(int),
@@ -427,7 +430,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Callable[[], str],
             pep_sign=Callable,
-            origin_type_stdlib=collections_abc.Callable,
+            stdlib_type=collections_abc.Callable,
             piths_satisfied_meta=(
                 # Lambda function returning a string constant.
                 PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
@@ -443,7 +446,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=ContextManager[str],
             pep_sign=ContextManager,
-            origin_type_stdlib=contextlib.AbstractContextManager,
+            stdlib_type=contextlib.AbstractContextManager,
             piths_satisfied_meta=(
                 # Context manager.
                 PepHintPithSatisfiedMetadata(
@@ -465,7 +468,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Dict,
             pep_sign=Dict,
             is_typevared=_IS_SIGN_TYPEVARED,
-            origin_type_stdlib=dict,
+            stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary containing arbitrary key-value pairs.
                 PepHintPithSatisfiedMetadata({
@@ -486,7 +489,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Dict[int, str],
             pep_sign=Dict,
-            origin_type_stdlib=dict,
+            stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary mapping integer keys to string values.
                 PepHintPithSatisfiedMetadata({
@@ -506,7 +509,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Dict[S, T],
             pep_sign=Dict,
             is_typevared=True,
-            origin_type_stdlib=dict,
+            stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary mapping string keys to integer values.
                 PepHintPithSatisfiedMetadata({
@@ -525,7 +528,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Generator[int, float, str],
             pep_sign=Generator,
-            origin_type_stdlib=collections_abc.Generator,
+            stdlib_type=collections_abc.Generator,
             piths_satisfied_meta=(
                 # Generator yielding integers, accepting floating-point numbers
                 # sent to this generator by the caller, and returning strings.
@@ -543,9 +546,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericUnsubscriptedSingle,
             pep_sign=Generic,
+            generic_type=Pep484GenericUnsubscriptedSingle,
             is_subscripted=False,
             is_type_typing=False,
-            origin_type_user=Pep484GenericUnsubscriptedSingle,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
                 PepHintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
@@ -569,9 +572,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericUntypevaredSingle,
             pep_sign=Generic,
+            generic_type=Pep484GenericUntypevaredSingle,
             is_subscripted=False,
             is_type_typing=False,
-            origin_type_user=Pep484GenericUntypevaredSingle,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
                 PepHintPithSatisfiedMetadata(Pep484GenericUntypevaredSingle((
@@ -595,9 +598,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericTypevaredSingle,
             pep_sign=Generic,
+            generic_type=Pep484GenericTypevaredSingle,
             is_typevared=True,
             is_type_typing=False,
-            origin_type_user=Pep484GenericTypevaredSingle,
             piths_satisfied_meta=(
                 # Subclass-specific generic.
                 PepHintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
@@ -616,6 +619,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericTypevaredSingle[S, T],
             pep_sign=Generic,
+            generic_type=Pep484GenericTypevaredSingle,
             is_typevared=True,
             # The type of subscripted PEP 484-compliant generics is:
             # * Under Python >= 3.7.0, "typing".
@@ -623,7 +627,6 @@ def add_data(data_module: 'ModuleType') -> None:
             # There's not much we can or should do about this, so we accept it.
             is_type_typing=IS_PYTHON_AT_LEAST_3_7,
             is_typing=False,
-            origin_type_user=Pep484GenericTypevaredSingle,
             piths_satisfied_meta=(
                 # Subclass-specific generic.
                 PepHintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
@@ -642,9 +645,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericUntypevaredMultiple,
             pep_sign=Generic,
+            generic_type=Pep484GenericUntypevaredMultiple,
             is_subscripted=False,
             is_type_typing=False,
-            origin_type_user=Pep484GenericUntypevaredMultiple,
             piths_satisfied_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
                 PepHintPithSatisfiedMetadata(Pep484GenericUntypevaredMultiple((
@@ -667,9 +670,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericTypevaredShallowMultiple,
             pep_sign=Generic,
+            generic_type=Pep484GenericTypevaredShallowMultiple,
             is_typevared=True,
             is_type_typing=False,
-            origin_type_user=Pep484GenericTypevaredShallowMultiple,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of string constants.
                 PepHintPithSatisfiedMetadata(
@@ -690,9 +693,9 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pep484GenericTypevaredDeepMultiple,
             pep_sign=Generic,
+            generic_type=Pep484GenericTypevaredDeepMultiple,
             is_typevared=True,
             is_type_typing=False,
-            origin_type_user=Pep484GenericTypevaredDeepMultiple,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
@@ -719,7 +722,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List[Pep484GenericUntypevaredMultiple],
             pep_sign=List,
-            origin_type_stdlib=list,
+            stdlib_type=list,
             piths_satisfied_meta=(
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
@@ -753,8 +756,8 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List,
             pep_sign=List,
+            stdlib_type=list,
             is_typevared=_IS_SIGN_TYPEVARED,
-            origin_type_stdlib=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 PepHintPithSatisfiedMetadata([]),
@@ -781,7 +784,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List[object],
             pep_sign=List,
-            origin_type_stdlib=list,
+            stdlib_type=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 PepHintPithSatisfiedMetadata([]),
@@ -803,7 +806,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List[str],
             pep_sign=List,
-            origin_type_stdlib=list,
+            stdlib_type=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 PepHintPithSatisfiedMetadata([]),
@@ -837,8 +840,8 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List[T],
             pep_sign=List,
+            stdlib_type=list,
             is_typevared=True,
-            origin_type_stdlib=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 PepHintPithSatisfiedMetadata([]),
@@ -861,10 +864,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=NewType('TotallyNotAStr', str),
             pep_sign=NewType,
             is_subscripted=False,
-            # New types are merely pure-Python functions of the standard
-            # pure-Python function type, which is *NOT* defined by the "typing"
-            # module.
+            # New types are merely pure-Python functions of the pure-Python
+            # function type, which is *NOT* defined by the "typing" module.
             is_type_typing=False,
+            # Conversely, new types themselves *ARE* defined by that module.
+            is_typing=True,
             piths_satisfied_meta=(
                 # String constant.
                 PepHintPithSatisfiedMetadata(
@@ -884,7 +888,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Match,
             pep_sign=Match,
-            origin_type_stdlib=RegexMatchType,
+            stdlib_type=RegexMatchType,
             is_typevared=_IS_SIGN_TYPEVARED,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
@@ -904,7 +908,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Match[str],
             pep_sign=Match,
-            origin_type_stdlib=RegexMatchType,
+            stdlib_type=RegexMatchType,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
                 PepHintPithSatisfiedMetadata(re.search(
@@ -923,7 +927,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pattern,
             pep_sign=Pattern,
-            origin_type_stdlib=RegexCompiledType,
+            stdlib_type=RegexCompiledType,
             is_typevared=_IS_SIGN_TYPEVARED,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
@@ -940,7 +944,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Pattern[str],
             pep_sign=Pattern,
-            origin_type_stdlib=RegexCompiledType,
+            stdlib_type=RegexCompiledType,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
                 PepHintPithSatisfiedMetadata(
@@ -960,7 +964,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple,
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
                 PepHintPithSatisfiedMetadata((
@@ -989,7 +993,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple[()],
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Empty tuple.
                 PepHintPithSatisfiedMetadata(()),
@@ -1014,7 +1018,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple[Any, object,],
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
                 PepHintPithSatisfiedMetadata((
@@ -1039,7 +1043,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple[float, Any, str,],
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number, string, and integer
                 # (in that exact order).
@@ -1088,7 +1092,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple[Tuple[float, Any, str,], ...],
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing tuples containing a floating-point number,
                 # string, and integer (in that exact order).
@@ -1141,7 +1145,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[S, T],
             pep_sign=Tuple,
             is_typevared=True,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -1165,7 +1169,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Tuple[str, ...],
             pep_sign=Tuple,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
                 PepHintPithSatisfiedMetadata((
@@ -1199,7 +1203,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[T, ...],
             pep_sign=Tuple,
             is_typevared=True,
-            origin_type_stdlib=tuple,
+            stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
                 PepHintPithSatisfiedMetadata((
@@ -1220,7 +1224,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type,
             pep_sign=Type,
             is_typevared=_IS_SIGN_TYPEVARED,
-            origin_type_stdlib=type,
+            stdlib_type=type,
             piths_satisfied_meta=(
                 # Transitive superclass of all superclasses.
                 PepHintPithSatisfiedMetadata(object),
@@ -1237,7 +1241,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Type[dict],
             pep_sign=Type,
-            origin_type_stdlib=type,
+            stdlib_type=type,
             piths_satisfied_meta=(
                 # Builtin "dict" class itself.
                 PepHintPithSatisfiedMetadata(dict),
@@ -1253,7 +1257,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[T],
             pep_sign=Type,
             is_typevared=True,
-            origin_type_stdlib=type,
+            stdlib_type=type,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
                 PepHintPithSatisfiedMetadata(int),
@@ -1452,7 +1456,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=List[Union[int, str,]],
             pep_sign=List,
-            origin_type_stdlib=list,
+            stdlib_type=list,
             piths_satisfied_meta=(
                 # List containing a mixture of integer and string constants.
                 PepHintPithSatisfiedMetadata([
@@ -1502,7 +1506,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Sequence[Union[str, ByteString]],
             pep_sign=Sequence,
-            origin_type_stdlib=collections_abc.Sequence,
+            stdlib_type=collections_abc.Sequence,
             piths_satisfied_meta=(
                 # Sequence of string and bytestring constants.
                 PepHintPithSatisfiedMetadata((
@@ -1550,7 +1554,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=MutableSequence,
-            origin_type_stdlib=collections_abc.MutableSequence,
+            stdlib_type=collections_abc.MutableSequence,
             piths_satisfied_meta=(
                 # Mutable sequence of string and bytestring constants.
                 PepHintPithSatisfiedMetadata([
@@ -1682,7 +1686,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Of language',
                     ]),
                 ),
-                origin_type_stdlib=collections_abc.Hashable,
+                stdlib_type=collections_abc.Hashable,
             ),
 
             # Unsubscripted "Sized" attribute.
@@ -1702,7 +1706,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Boolean constant.
                     PepHintPithUnsatisfiedMetadata(False),
                 ),
-                origin_type_stdlib=collections_abc.Sized,
+                stdlib_type=collections_abc.Sized,
             ),
         ))
 
@@ -1717,11 +1721,8 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintMetadata(
                     hint=Pep484GenericUnsubscriptedSingle[str],
                     pep_sign=Generic,
-                    # Yes, this is awful. Yes, this is PEP-compliance. What you
-                    # gonna do, techbro?
-                    is_pep585_builtin=True,
+                    generic_type=Pep484GenericUnsubscriptedSingle,
                     is_type_typing=False,
-                    origin_type_user=Pep484GenericUnsubscriptedSingle,
                     piths_satisfied_meta=(
                         # Subclass-specific generic list of string constants.
                         PepHintPithSatisfiedMetadata(
@@ -1733,12 +1734,11 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     piths_unsatisfied_meta=(
                         # String constant.
-                        PepHintPithUnsatisfiedMetadata(
-                            'Pleasurable, Raucous caucuse'),
+                        PepHintPithUnsatisfiedMetadata('O’ the frock'),
                         # List of string constants.
                         PepHintPithUnsatisfiedMetadata([
-                            'Within th-in cannon’s cynosure‐ensuring refectories',
-                            'We there‐in leather‐sutured scriptured books',
+                            'O’ Friday’s squealing — Sounding',
+                            'Freedom’s unappealing, Passive delights',
                         ]),
                     ),
                 ),

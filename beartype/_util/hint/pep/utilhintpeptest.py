@@ -46,7 +46,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import AnyStr, TypeVar
+from typing import TypeVar
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -764,24 +764,60 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
     return hint in HINT_PEP_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
+#FIXME: This test returns false negatives for PEP 593-compliant
+#"typing.Annotated" parent type hints, whose "__module__" attribute is
+#inexplicably that of the first PEP-compliant child type hint subscripting that
+#parent. Since the existing test suffices in all other cases *AND* since we
+#consider this behaviour aberrant rather than desirable, we are inclined to
+#preserve the existing test. If we ever *DO* want to properly support PEP
+#593-compliant type hints here, the correct solution will be to generalize this
+#tester as follows:
+#* Memoize this tester with @callable_cached.
+#* Generalize the body of this tester to:
+def is_hint_pep_typing(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is defined by the :mod:`typing` module.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is defined by the :mod:`typing` module.
+    '''
+    # print(f'is_hint_pep_typing({repr(hint)}')
+
+    # Return true if either...
+    return (
+        # This is any PEP-compliant type hint defined by the "typing" module
+        # *OTHER* than a PEP 593-compliant type hint, in which case the
+        # fully-qualified name of the module defining this hint is "typing".
+        getattr(hint, '__module__', None) == 'typing' or
+        # This is a PEP 593-compliant type hint. For inexplicable (and
+        # presumably indefensible) reasons, PEP 593-compliant type hints badly
+        # masquerade as their first subscripted PEP-compliant type hint (e.g.,
+        # the "int" in "typing.Annotated[int, 63]"). Ergo, the value of the
+        # "__module__" attribute of this hint is that of its first subscripted
+        # PEP-compliant type hint rather than its own. Nonetheless, its
+        # machine-readable representation remains prefixed by "typing.",
+        # enabling an efficient test that also generalizes to all other
+        # outlier edge cases that are probably lurking about.
+        #
+        # I have no code and I must scream.
+        repr(hint).startswith('typing.')
+    )
+
+
 # If the active Python interpreter targets at least Python 3.7 and is thus
 # sane enough to support the normal implementation of this tester, do so.
 if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep_typing(hint: object) -> bool:
-        # print(f'is_hint_pep_typing({repr(hint)}')
-
-        # Return true only if either...
-        return (
-            # The machine-readable representation of this hint is prefixed by
-            # "typing." *OR*...
-            repr(hint).startswith('typing.') or
-            # This hint is "typing.AnyStr", whose representation violates the
-            # prior constraint by nonsensically being "~AnyStr" rather than
-            # "typing.AnyStr".
-            hint is AnyStr
-        )
-
-
     def is_hint_pep_type_typing(hint: object) -> bool:
 
         # This hint if this hint is a class *OR* this hint's class otherwise.
@@ -836,7 +872,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return get_object_module_name(hint_type) == 'typing'
+        return hint_type.__module__ == 'typing'
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -848,30 +884,6 @@ if IS_PYTHON_AT_LEAST_3_7:
 # the resolution is simply to explicitly test for and reject "collections.abc"
 # superclasses passed to this Python 3.6-specific tester implementation.
 else:
-    def is_hint_pep_typing(hint: object) -> bool:
-        # print(f'is_hint_pep_typing({repr(hint)}')
-
-        # Machine-readable representation of this hint.
-        hint_repr = repr(hint)
-
-        # Return true only if either...
-        return (
-            # This representation is prefixed by either "typing.", "Match", or
-            # "Pattern" *OR*...
-            #
-            # Yes, this could be made mildly more efficient by leveraging a
-            # compiled regular expression, but Python 3.6 is obsolete and this
-            # isn't *THAT* much worse. Ergo, we collectively shrug.
-            hint_repr.startswith('typing.') or
-            hint_repr.startswith('Match[') or
-            hint_repr.startswith('Pattern[') or
-            # This hint is "typing.AnyStr", whose representation violates the
-            # prior constraint by nonsensically being "~AnyStr" rather than
-            # "typing.AnyStr".
-            hint is AnyStr
-        )
-
-
     def is_hint_pep_type_typing(hint: object) -> bool:
 
         # This hint if this hint is a class *OR* this hint's class otherwise.
@@ -905,25 +917,6 @@ else:
         )
 
 
-# Docstring for the above functions regardless of implementation details.
-is_hint_pep_typing.__doc__ = '''
-    ``True`` only if the passed object is defined by the :mod:`typing` module.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is defined by the :mod:`typing` module.
-    '''
-
 is_hint_pep_type_typing.__doc__ = '''
     ``True`` only if either the passed object is defined by the :mod:`typing`
     module if this object is a class *or* the class of this object is defined
@@ -951,6 +944,7 @@ is_hint_pep_type_typing.__doc__ = '''
     '''
 
 # ....................{ TESTERS ~ subscript               }....................
+#FIXME: Consider removal, as we don't actually call this anywhere.
 def is_hint_pep_subscripted(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a PEP-compliant type hint
@@ -992,8 +986,15 @@ def is_hint_pep_subscripted(hint: object) -> bool:
         # test efficiently reduces to a builtin call and is thus preferable.
         isinstance(hint, HintGenericSubscriptedType) or
         # Any other PEP-compliant type hint subscripted by one or more
-        # arguments and/or type variables.
-        bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+        # arguments and/or type variables. Note that this test is *NOT*
+        # reducible to merely:
+        #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+        # Frankly, we have no idea why. We suspect we'd probably have to
+        # change the "or" operator in the above expression to the "+" operator,
+        # at which point the resulting operation is likely to be substantially
+        # slower than the simple series of tests performed here.
+        bool(get_hint_pep_args(hint)) or
+        bool(get_hint_pep_typevars(hint))
     )
 
 # ....................{ TESTERS ~ subscript : typevar     }....................

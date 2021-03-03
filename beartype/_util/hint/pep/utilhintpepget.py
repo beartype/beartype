@@ -447,7 +447,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     # If this hint is a PEP 585-compliant type hint, return the origin type
     # originating this hint (e.g., "list" for "list[str]").
     #
-    # Note that the get_hint_pep_origin_type_stdlib() getter is intentionally *NOT*
+    # Note that the get_hint_pep_stdlib_type() getter is intentionally *NOT*
     # called here. Why? Because doing so would induce an infinite recursive
     # loop, since that function internally calls this function. *sigh*
     elif is_hint_pep585_builtin(hint):
@@ -609,31 +609,32 @@ def get_hint_pep_sign(hint: Any) -> object:
     # Return this "typing" attribute.
     return sign
 
-# ....................{ GETTERS ~ origin : generic        }....................
+# ....................{ GETTERS ~ type : generic          }....................
 @callable_cached
-def get_hint_pep_origin_type_generic_or_none(hint: Any) -> Optional[type]:
+def get_hint_pep_generic_type_or_none(hint: Any) -> Optional[type]:
     '''
-    Origin type originating the passed **generic** (i.e., class superficially
-    subclassing at least one PEP-compliant type hint that is possibly *not* an
-    actual class) if any *or* ``None`` otherwise (i.e., if this hint is *not* a
-    generic).
+    Either the passed **generic** (i.e., class superficially subclassing at
+    least one PEP-compliant type hint that is possibly *not* an actual class)
+    if **unsubscripted** (i.e., indexed by *no* arguments or type variables),
+    the unsubscripted generic underlying this generic if **subscripted** (i.e.,
+    indexed by one or more arguments and/or type variables), *or* ``None``
+    otherwise (i.e., if this hint is *not* a generic).
 
     Specifically, this getter returns:
 
-    * If this hint is already a class, this hint as is.
-    * Else, this hint is *not* a class. In this case:
-
-      * If this hint both originates from an **origin type** (i.e.,
-        non-:mod:`typing` class such that *all* objects satisfying this hint
-        are instances of that class) *and* is subscripted by one or more
-        arguments and/or type variables, that origin type.
-      * Else, ``None`` (i.e., if this hint either does not originate from an
-        origin type *or* does but is unsubscripted).
-
-    This getter is mostly intended to simplify usage of user-defined
-    subscripted PEP-compliant type hint generics.
+    * If this hint both originates from an **origin type** (i.e.,
+      non-:mod:`typing` class such that *all* objects satisfying this hint are
+      instances of that class), that origin type.
+    * Else if this hint is already a class, this hint as is.
+    * Else, ``None``.
 
     This getter is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This getter returns false positives in edge cases.** That is, this getter
+    returns non-``None`` values for both generics and non-generics. Callers
+    *must* perform subsequent tests to distinguish these two cases.
 
     Parameters
     ----------
@@ -666,13 +667,13 @@ def get_hint_pep_origin_type_generic_or_none(hint: Any) -> Optional[type]:
     # its origin type. In this case, return this class as is.
     elif isinstance(hint, type):
         return hint
-    # Else, this hint is *NOT* a class. In this case, this hint originates
-    # from *NO* origin type.
+    # Else, this hint is *NOT* a class. In this case, this hint originates from
+    # *NO* origin type.
     else:
         return None
 
-# ....................{ GETTERS ~ origin : stdlib         }....................
-def get_hint_pep_origin_type_stdlib(hint: object) -> type:
+# ....................{ GETTERS ~ type : stdlib           }....................
+def get_hint_pep_stdlib_type(hint: object) -> type:
     '''
     **Standard library origin type** (i.e., non-:mod:`typing` class such that
     *all* objects satisfying the passed PEP-compliant type hint are instances
@@ -701,11 +702,11 @@ def get_hint_pep_origin_type_stdlib(hint: object) -> type:
 
     See Also
     ----------
-    :func:`get_hint_pep_origin_type_stdlib_or_none`
+    :func:`get_hint_pep_stdlib_type_or_none`
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_origin_type_stdlib_or_none(hint)
+    hint_type_origin = get_hint_pep_stdlib_type_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
     if hint_type_origin is None:
@@ -719,7 +720,7 @@ def get_hint_pep_origin_type_stdlib(hint: object) -> type:
     return hint_type_origin
 
 
-def get_hint_pep_origin_type_stdlib_or_none(hint: Any) -> Optional[type]:
+def get_hint_pep_stdlib_type_or_none(hint: Any) -> Optional[type]:
     '''
     **Standard library origin type** (i.e., non-:mod:`typing` class defined by
     Python's standard library such that *all* objects satisfying the passed
@@ -1042,7 +1043,7 @@ _get_hint_pep_origin_object_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_origin_type_stdlib_or_none` function should
+    **The high-level** :func:`get_hint_pep_stdlib_type_or_none` function should
     always be called in lieu of this low-level function.** Whereas the former
     is guaranteed to return either a class or ``None``, this function enjoys no
     such guarantees and instead returns what the caller can only safely assume

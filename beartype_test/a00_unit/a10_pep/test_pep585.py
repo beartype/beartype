@@ -20,23 +20,26 @@ This submodule unit tests `PEP 585`_ support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS                             }....................
-def test_is_hint_pep585() -> None:
+# ....................{ TESTS ~ kind : builtin            }....................
+def test_is_hint_pep585_builtin() -> None:
     '''
-    Test `PEP 585`_ support implemented in the :func:`beartype.beartype`
-    decorator.
+    Test the
+    :func:`beartype._util.hint.pep.proposal.utilhintpep585.is_hint_pep585_builtin`
+    function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+        is_hint_pep585_builtin)
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
 
     # Assert this tester accepts only PEP 585-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
         assert is_hint_pep585_builtin(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_builtin)
 
-# ....................{ TESTS ~ subtype : generic         }....................
+# ....................{ TESTS ~ kind : generic            }....................
 def test_is_hint_pep585_generic() -> None:
     '''
     Test the
@@ -47,7 +50,8 @@ def test_is_hint_pep585_generic() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilhintpep585 import (
         is_hint_pep585_generic)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
 
     # Assert this tester accepts only PEP 585-compliant generics.
     for hint_pep_meta in HINTS_PEP_META:
@@ -66,7 +70,8 @@ def test_get_hint_pep585_generic_typevars() -> None:
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._util.hint.pep.proposal.utilhintpep585 import (
         get_hint_pep585_generic_typevars)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
 
     # Assert this getter...
     for hint_pep_meta in HINTS_PEP_META:

@@ -37,16 +37,12 @@ if IS_PYTHON_AT_LEAST_3_8:
         # Return either:
         # * If this hint is the "typing.Protocol" superclass directly
         #   parametrized by one or more type variables (e.g.,
-        #   "typing.Protocol[S, T]"), True. Testing whether this sign is that
-        #   superclass suffices to test this condition, as the
-        #   get_hint_pep_sign() function returns that superclass as a sign
-        #   *ONLY* when that superclass is directly parametrized by one or more
-        #   type variables. In *ALL* other cases involving that superclass,
-        #   that function *ALWAYS* returns the standard "typing.Generic"
-        #   superclass for instead -- as generics and protocols are otherwise
-        #   indistinguishable with respect to runtime type-checking.
+        #   "typing.Protocol[S, T]"), true. For unknown and presumably
+        #   uninteresting reasons, *ALL* possible objects satisfy this
+        #   superclass. Ergo, this superclass and *ALL* parametrizations of
+        #   this superclass are synonymous with the "object" root superclass.
         # * Else, "None".
-        return hint_sign is Protocol or None
+        return repr(hint).startswith('typing.Protocol[') or None
 
 
     def is_hint_pep544_io_generic(hint: object) -> bool:

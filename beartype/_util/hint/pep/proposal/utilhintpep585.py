@@ -72,12 +72,12 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilhintpepget import (
-            get_hint_pep_origin_type_generic_or_none)
+            get_hint_pep_generic_type_or_none)
 
         # If this hint is *NOT* a class, reduce this hint to the object
         # originating this hint if any. See the comparable
         # is_hint_pep484_generic() tester for further details.
-        hint = get_hint_pep_origin_type_generic_or_none(hint)
+        hint = get_hint_pep_generic_type_or_none(hint)
 
         # Tuple of all pseudo-superclasses originally subclassed by the passed
         # hint if this hint is a generic *OR* false otherwise.
@@ -231,11 +231,11 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_origin_type_generic_or_none)
+        get_hint_pep_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See the is_hint_pep484_generic() tester for details.
-    hint = get_hint_pep_origin_type_generic_or_none(hint)
+    hint = get_hint_pep_generic_type_or_none(hint)
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
     die_unless_hint_pep585_generic(hint)

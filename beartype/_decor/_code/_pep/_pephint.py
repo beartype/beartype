@@ -1759,8 +1759,8 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
-    get_hint_pep_origin_type_stdlib,
-    get_hint_pep_origin_type_generic_or_none,
+    get_hint_pep_stdlib_type,
+    get_hint_pep_generic_type_or_none,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
@@ -1773,7 +1773,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from itertools import count
-from typing import Set, Generic, Tuple, NoReturn
+from typing import Generic, Tuple, NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -2977,7 +2977,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                 # whether this origin object is an unsubscripted generic, which
                 # would then imply this hint to be a subscripted generic. If
                 # this strikes you as insane, you're not alone.
-                hint_curr = get_hint_pep_origin_type_generic_or_none(hint_curr)
+                hint_curr = get_hint_pep_generic_type_or_none(hint_curr)
 
                 # Assert this hint to be a class.
                 assert isinstance(hint_curr, type), (
@@ -3212,7 +3212,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        get_hint_pep_origin_type_stdlib(hint_curr)),
+                        get_hint_pep_stdlib_type(hint_curr)),
                 )
             # Else, this hint is *NOT* its own unsubscripted "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -3249,7 +3249,7 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_pep_origin_type_stdlib(hint_curr))
+                    get_hint_pep_stdlib_type(hint_curr))
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").

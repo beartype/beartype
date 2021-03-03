@@ -135,7 +135,8 @@ def get_object_module_name(obj: object) -> str:
     if module_name is None:
         raise _BeartypeUtilModuleException(
             f'{repr(obj)} "__module__" dunder attribute undefined '
-            f'(e.g., due to being neither class nor callable).')
+            f'(e.g., due to being neither class nor callable).'
+        )
     # Else, this fully-qualified module name exists.
 
     # Return this name.

@@ -114,12 +114,14 @@ class PepHintMetadata(NonPepHintMetadata):
     ----------
     is_pep585_builtin : bool
         ``True`` only if this hint is a `PEP 585`-compliant builtin. If
-        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to
-        ``False``.
+        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to the
+        negation of ``is_pep585_generic`` if non-``None`` *or* ``False``
+        otherwise (i.e., if ``is_pep585_generic`` is ``None``).
     is_pep585_generic : bool
         ``True`` only if this hint is a `PEP 585`-compliant generic. If
-        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to
-        ``False``. Defaults to ``False``.
+        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to the
+        negation of ``is_pep585_generic`` if non-``None`` *or* ``False``
+        otherwise (i.e., if ``is_pep585_generic`` is ``None``).
     is_subscripted : Optional[bool]
         ``True`` only if this hint is subscripted by one or more **arguments**
         (i.e., PEP-compliant type hints that are *not* type variables) and/or
@@ -152,19 +154,19 @@ class PepHintMetadata(NonPepHintMetadata):
 
         * :class:`typing.NamedTuple` reducing to :class:`tuple`.
         * :class:`typing.TypedDict` reducing to :class:`dict`.
-    origin_type_stdlib : Optional[type]
+    generic_type : Optional[type]
+        Subscripted origin type associated with this hint if any *or* ``None``
+        otherwise (i.e., if this hint is associated with *no* such type).
+        Defaults to either:
+
+        * If this hint is subscripted, ``stdlib_type``.
+        * Else, ``None``.
+    stdlib_type : Optional[type]
         **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
         satisfying this hint are instances of this class) originating this hint
         if this hint originates from a non-:mod:`typing` class *or* ``None``
         otherwise (i.e., if this hint does *not* originate from such a class).
         Defaults to ``None``.
-    origin_type_user : Optional[type]
-        Subscripted origin type associated with this hint if any *or* ``None``
-        otherwise (i.e., if this hint is associated with *no* such type).
-        Defaults to either:
-
-        * If this hint is subscripted, ``origin_type_stdlib``.
-        * Else, ``None``.
 
     All remaining keyword arguments are passed as is to the superclass
     :meth:`NonPepHintMetadata.__init__` method.
@@ -178,32 +180,46 @@ class PepHintMetadata(NonPepHintMetadata):
         pep_sign: object,
 
         # Optional parameters.
-        is_pep585_builtin: bool = False,
-        is_pep585_generic: bool = False,
+        is_pep585_builtin: Optional[bool] = False,
+        is_pep585_generic: Optional[bool] = False,
         is_subscripted: Optional[bool] = None,
         is_typevared: bool = False,
         is_type_typing: Optional[bool] = None,
         is_typing: Optional[bool] = None,
-        origin_type_stdlib: Optional[type] = None,
-        origin_type_user: Optional[type] = None,
+        stdlib_type: Optional[type] = None,
+        generic_type: Optional[type] = None,
         **kwargs
     ) -> None:
         # 2-tuple matching both classes and "None".
         NoneTypeOrType = (type, type(None))
 
-        assert isinstance(is_pep585_builtin, bool), (
-            f'{repr(is_pep585_builtin)} not bool.')
-        assert isinstance(is_pep585_generic, bool), (
-            f'{repr(is_pep585_generic)} not bool.')
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
-        assert isinstance(origin_type_stdlib, NoneTypeOrType), (
-            f'{repr(origin_type_stdlib)} neither class nor "None".')
+        assert isinstance(stdlib_type, NoneTypeOrType), (
+            f'{repr(stdlib_type)} neither class nor "None".')
 
         # Initialize our superclass with all passed keyword arguments.
         super().__init__(**kwargs)
 
         # Conditionally default all unpassed parameters.
+        if is_pep585_builtin is None:
+            # Default this parameter to either...
+            is_pep585_builtin = (
+                # If "is_pep585_generic" is non-"None", the negation of that;
+                not is_pep585_generic
+                if is_pep585_generic is not None else
+                # Else, false.
+                False
+            )
+        if is_pep585_generic is None:
+            # Default this parameter to either...
+            is_pep585_generic = (
+                # If "is_pep585_builtin" is non-"None", the negation of that;
+                not is_pep585_builtin
+                if is_pep585_builtin is not None else
+                # Else, false.
+                False
+            )
         if is_subscripted is None:
             # Default this parameter to true only if either...
             is_subscripted = (
@@ -213,7 +229,7 @@ class PepHintMetadata(NonPepHintMetadata):
                 self.hint is not pep_sign
             )
         if is_type_typing is None:
-            # Default this parameter to the negation of the PEP 585-compliant
+            # Default this parameter to the negation of all PEP 585-compliant
             # boolean parameters. By definition, PEP 585-compliant type hints
             # are *NOT* defined by the "typing" module and vice versa.
             is_type_typing = not (is_pep585_builtin or is_pep585_generic)
@@ -221,26 +237,31 @@ class PepHintMetadata(NonPepHintMetadata):
             # Default this parameter to true only if this hint's class is
             # defined by the "typing" module.
             is_typing = is_type_typing
-        if origin_type_user is None:
+        if generic_type is None:
             # Default this parameter to this hint's type origin only if this
             # hint is subscripted.
-            origin_type_user = origin_type_stdlib if is_subscripted else None
+            generic_type = stdlib_type if is_subscripted else None
 
         # Defer validating parameters defaulting to "None" until *AFTER*
         # initializing these parameters above.
+        assert isinstance(is_pep585_builtin, bool), (
+            f'{repr(is_pep585_builtin)} not bool.')
+        assert isinstance(is_pep585_generic, bool), (
+            f'{repr(is_pep585_generic)} not bool.')
         assert isinstance(is_subscripted, bool), (
             f'{repr(is_subscripted)} not bool.')
         assert isinstance(is_type_typing, bool), (
             f'{repr(is_type_typing)} not bool.')
         assert isinstance(is_typing, bool), (
             f'{repr(is_typing)} not bool.')
-        assert isinstance(origin_type_user, NoneTypeOrType), (
-            f'{repr(origin_type_user)} neither class nor "None".')
+        assert isinstance(generic_type, NoneTypeOrType), (
+            f'{repr(generic_type)} neither class nor "None".')
 
         # Validate that the "is_pep585_builtin" and "is_type_typing" are *NOT* both true.
         # Note that both can be false (e.g., for PEP 484-compliant user-defined
         # generics).
-        assert not ((is_pep585_builtin or is_pep585_generic) and is_type_typing), (
+        assert not (
+            (is_pep585_builtin or is_pep585_generic) and is_type_typing), (
             f'Mutually incompatible boolean parameters '
             f'is_type_typing={repr(is_type_typing)} and either'
             f'is_pep585_builtin={repr(is_pep585_builtin)} or '
@@ -255,8 +276,8 @@ class PepHintMetadata(NonPepHintMetadata):
         self.is_typevared = is_typevared
         self.is_type_typing = is_type_typing
         self.is_typing = is_typing
-        self.origin_type_stdlib = origin_type_stdlib
-        self.origin_type_user = origin_type_user
+        self.generic_type = generic_type
+        self.stdlib_type = stdlib_type
 
     # ..................{ STRINGIFIERS                      }..................
     def __repr__(self) -> str:
@@ -264,6 +285,8 @@ class PepHintMetadata(NonPepHintMetadata):
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
             f'    pep_sign={repr(self.pep_sign)},',
+            f'    generic_type={repr(self.generic_type)},',
+            f'    stdlib_type={repr(self.stdlib_type)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_subscripted={repr(self.is_subscripted)},',
             f'    is_supported={repr(self.is_supported)},',
@@ -274,8 +297,6 @@ class PepHintMetadata(NonPepHintMetadata):
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_satisfied_meta={repr(self.piths_satisfied_meta)},',
             f'    piths_unsatisfied_meta={repr(self.piths_unsatisfied_meta)},',
-            f'    origin_type_stdlib={repr(self.origin_type_stdlib)},',
-            f'    origin_type_user={repr(self.origin_type_user)},',
             f')',
         ))
 
