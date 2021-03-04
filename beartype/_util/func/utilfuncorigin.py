@@ -14,11 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import (
-    CallableTypes,
-    CallableCTypes,
-    MethodBoundInstanceOrClassType,
-)
+from beartype.cave import CallableTypes
 from beartype.roar import _BeartypeUtilCallableException
 from collections.abc import Callable
 from sys import modules

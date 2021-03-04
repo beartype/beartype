@@ -919,7 +919,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 HintGenericSubscriptedType: _Any = UnavailableType
 '''
 C-based type of all subscripted generics if the active Python interpreter
-targets at least Python 3.9.0 *or* :class:`UnavailableType` otherwise.
+targets Python >= 3.9 *or* :class:`UnavailableType` otherwise.
 
 Subscripted generics include:
 
@@ -966,6 +966,8 @@ if _IS_PYTHON_AT_LEAST_3_9:
 
 #FIXME: Deprecate this. We previously published this ambiguously named type.
 #Perhaps use a module __getattr__() under whatever Python versions support it?
+#Note this requires Python >= 3.7, but that Python 3.6 will simply ignore that
+#dunder method, which is obviously acceptable, because Python 3.6 is dead.
 HintPep585Type = HintGenericSubscriptedType
 
 # ....................{ TYPES ~ scalar                    }....................

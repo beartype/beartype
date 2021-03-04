@@ -200,6 +200,10 @@ beartype is releasable to all supported platforms as follows:
       * **None.** This release preserves backward compatibility with the prior
         stable release.
 
+      ## Packaging Improved
+
+      * **macOS Homebrew tap,** just 'cause.
+
       ## Dependencies Bumped
 
       * **`setuptools` >= 38.2.0,** just 'cause.
@@ -209,6 +213,10 @@ beartype is releasable to all supported platforms as follows:
       * **Type library,** just 'cause.
 
       ## Features Improved
+
+      * **`@beartype` performance,** just 'cause.
+
+      ## Features Optimized
 
       * **`@beartype` performance,** just 'cause.
 
