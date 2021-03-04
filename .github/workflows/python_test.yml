@@ -1,6 +1,6 @@
 ---
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Cecil Curry.
+# Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                          )--------------------
@@ -93,8 +93,9 @@ jobs:
         # ${TOXENV} environment variable declared below exposes to "tox".
         tox-env: [py36, py37, py38, py39, pypy36, pypy37]
 
-        # Map each "tox" environment listed above to a GitHub Actions-specific
-        # "python-version" setting.
+        # Map each "tox" environment name listed in the "tox-env" list above to
+        # the corresponding "python-version" string supported by the
+        # "actions/setup-python" GitHub Action run below.
         include:
           - tox-env: py36
             python-version: 3.6
@@ -147,11 +148,6 @@ jobs:
         with:
           python-version: '${{ matrix.python-version }}'
 
-      #FIXME: Consider adding the following back if we ever gain more free
-      #GitHub Actions CI minutes:
-      #    python -VV
-      #    python -m site
-
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
@@ -161,9 +157,13 @@ jobs:
       # * Packaging dependencies (e.g., "pip") are upgraded *BEFORE* all
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
-        run: python -m pip --quiet install --upgrade pip  #setuptools wheel
+        run: |
+          python -VV
+          python -m site
+          python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
-        run: python -m pip --quiet install --upgrade tox  #tox-gh-actions  #virtualenv 
+        run: |
+          python -m pip --quiet install --upgrade tox  #virtualenv 
 
       # Note that:
       #

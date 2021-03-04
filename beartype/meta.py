@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Cecil Curry.
+# Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -188,7 +188,7 @@ if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
 # For further details, see http://semver.org.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-VERSION = '0.5.2'
+VERSION = '0.6.0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
@@ -226,7 +226,7 @@ attribution, see the top-level ``AUTHORS.md`` file.
 '''
 
 
-COPYRIGHT = '2014-2021 Cecil Curry'
+COPYRIGHT = '2014-2021 Beartype authors'
 '''
 Legally binding copyright line excluding the license-specific prefix (e.g.,
 ``"Copyright (c)"``).

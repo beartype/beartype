@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright 2014-2021 by Cecil Curry.
+# Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 
 '''

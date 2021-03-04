@@ -30,32 +30,42 @@
 `constant-time <Timings_>`__ `runtime type checker <Usage_>`__ emphasizing
 efficiency, portability, and thrilling puns.
 
-      .. code-block:: shell-session
+.. code-block:: bash
       
-         $ pip3 --quiet install beartype
-         $ python3
+   # Install beartype.
+   $ pip3 install beartype
 
-      .. code-block:: python
+   # Use beartype.
+   $ python3
+
+.. code-block:: python
       
-         >>> from beartype import beartype
-         >>> @beartype
-         ... def quote_wiggum(lines: list[str]) -> None:
-         ...     print('"{}"\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
-         >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
-         "Okay, folks. Show's over!
-          Nothing to see here. Show's…"
-         	— Police Chief Wiggum
-         >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
-         Traceback (most recent call last):
-           File "<stdin>", line 1, in <module>
-           File "<string>", line 30, in __beartyped_quote_wiggum
-           File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/peperror.py", line 220, in raise_pep_call_exception
-             raise exception_cls(
-         beartype.roar.BeartypeCallHintPepParamException: @beartyped
-         quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
-         crash!', b'Hey, everybody! Get a load of thi...'] violates type hint
-         list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
-         not str.
+   # Import the @beartype decorator.
+   >>> from beartype import beartype
+
+   # Decorate callables annotated by PEP-compliant type hints with @beartype.
+   >>> @beartype
+   ... def quote_wiggum(lines: list[str]) -> None:
+   ...     print('"{}"\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
+
+   # Call those callables with valid parameters.
+   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
+   "Okay, folks. Show's over!
+    Nothing to see here. Show's…"
+      — Police Chief Wiggum
+
+   # Call those callables with invalid parameters.
+   >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
+   Traceback (most recent call last):
+     File "<stdin>", line 1, in <module>
+     File "<string>", line 30, in __beartyped_quote_wiggum
+     File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/peperror.py", line 220, in raise_pep_call_exception
+       raise exception_cls(
+   beartype.roar.BeartypeCallHintPepParamException: @beartyped
+   quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
+   crash!', b'Hey, everybody! Get a load of thi...'] violates type hint
+   list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
+   not str.
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
@@ -97,7 +107,7 @@ tl;dr
 
 #. `Install beartype <Install_>`__:
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       pip3 install beartype
 
@@ -131,14 +141,14 @@ Install
 
 Let's install ``beartype`` with pip_, because community standards are good:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    pip3 install beartype
 
 Let's install ``beartype`` with Anaconda_, because corporate standards are
 (occasionally) good too:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    conda config --add channels conda-forge
    conda install beartype
@@ -149,13 +159,13 @@ macOS
 Let's install ``beartype`` with Homebrew_ on macOS_ courtesy `our third-party
 tap <beartype Homebrew_>`__:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    brew install beartype/beartype/beartype
 
 Let's install ``beartype`` with MacPorts_ on macOS_:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    sudo port install py-beartype
 
@@ -170,7 +180,7 @@ Let's install ``beartype`` with ``emerge`` on Gentoo_ courtesy `a third-party
 overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
 CPU-bound nuclear option:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    emerge --ask app-eselect/eselect-repository
    mkdir -p /etc/portage/repos.conf
@@ -283,7 +293,7 @@ safety_>`__ languages that no one should use like C_ and `C++`_, the compiler
 validates at compilation time the types of all values passed to and returned
 from all functions and methods across the entire codebase?
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ gcc -Werror=int-conversion -xc - <<EOL
    #include <stdio.h>
@@ -302,7 +312,7 @@ everyone should use instead like Python_ and Ruby_, the interpreter performs no
 such validation at any interpretation phase but instead permits any arbitrary
 values to be passed to or returned from any function or method?
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ python3 - <<EOL
    def main() -> int:
@@ -318,7 +328,7 @@ on type safety in Python from `duck <duck typing_>`__ to `static typing
 <statically-typed_>`__ while still preserving all of the permissive benefits of
 the former as a default behaviour.
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ python3 - <<EOL
    from beartype import beartype
@@ -417,7 +427,7 @@ integers, *every* call to that function will check *every* integer transitively
 nested in that list – even if that list never changes. Did we mention that list
 transitively contains 1,000,000,000 integers in total?
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ python3 -m timeit -n 1 -r 1 -s '
    from typeguard import typechecked
@@ -455,7 +465,7 @@ single random integer contained in a single random nested list contained in a
 single random nested list contained in that parent list. This is what we mean
 by the quaint phrase "one-way random walk over the expected data structure."
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ python3 -m timeit -n 1024 -r 4 -s '
    from beartype import beartype
@@ -544,22 +554,22 @@ Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
 with automated runtime type checking to demonstrate beartype's support for
 non-trivial combinations of nested type hints compliant with different PEPs:
 
-   .. code-block:: python
+.. code-block:: python
 
-      from beartype import beartype
-      from collections.abc import Sequence
-      from numpy import dtype, empty_like, ndarray
-      from typing import Optional, Union
+   from beartype import beartype
+   from collections.abc import Sequence
+   from numpy import dtype, empty_like, ndarray
+   from typing import Optional, Union
 
-      @beartype
-      def empty_like_bear(
-          prototype: object,
-          dtype: Optional[dtype] = None,
-          order: str = 'K',
-          subok: bool = True,
-          shape: Optional[Union[int, Sequence[int]]] = None,
-      ) -> ndarray:
-          return empty_like(prototype, dtype, order, subok, shape)
+   @beartype
+   def empty_like_bear(
+       prototype: object,
+       dtype: Optional[dtype] = None,
+       order: str = 'K',
+       subok: bool = True,
+       shape: Optional[Union[int, Sequence[int]]] = None,
+   ) -> ndarray:
+       return empty_like(prototype, dtype, order, subok, shape)
 
 Note the non-trivial hint for the optional ``shape`` parameter, synthesized
 from a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP
@@ -573,17 +583,17 @@ from a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP
 
 Let's call that wrapper with both valid and invalid parameters:
 
-   .. code-block:: python
+.. code-block:: python
 
-      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
-      array([[94447336794963,              0],
-             [             7,             -1]])
-      >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
-      BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
-      shape=([2], [2]) violates type hint typing.Union[int,
-      collections.abc.Sequence, NoneType], as ([2], [2]):
-      * Not <class "builtins.NoneType"> or int.
-      * Tuple item 0 value [2] not int.
+   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
+   array([[94447336794963,              0],
+          [             7,             -1]])
+   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
+   BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
+   shape=([2], [2]) violates type hint typing.Union[int,
+   collections.abc.Sequence, NoneType], as ([2], [2]):
+   * Not <class "builtins.NoneType"> or int.
+   * Tuple item 0 value [2] not int.
 
 Note the human-readable message of the raised exception, containing a bulleted
 list enumerating the various ways this invalid parameter fails to satisfy its
@@ -780,7 +790,7 @@ Let's type-check like `greased lightning`_:
    class MyOtherClass:
        # Decorate instance methods as above without annotating "self".
        @beartype
-       def __init__(self, scalar: ScalarTypes) -> NoneType:
+       def __init__(self, scalar: ScalarTypes) -> None:
            self._scalar = scalar
 
        # Decorate class methods as above without annotating "cls". When
@@ -807,7 +817,7 @@ Let's type-check like `greased lightning`_:
        # Decorate property setter methods as above.
        @bare_gettermethod.setter
        @beartype
-       def bare_settermethod(self, bad: Integral = 0xBAAAAAAD) -> NoneType:
+       def bare_settermethod(self, bad: Integral = 0xBAAAAAAD) -> None:
            self._scalar = bad if bad else 0xBADDCAFE
 
    # User-defined PEP 585-compliant generic referenced above in type hints.
@@ -865,7 +875,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `tuple unions <Unions of Types_>`__     | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-| builtins_        | None_                                   | **0.5.2**\ —\ *current*       | **0.5.2**\ —\ *current*   |
+| builtins_        | None_                                   | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | dict_                                   | **0.5.0**\ —\ *current*       | *none*                    |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1089,7 +1099,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `560 <PEP 560_>`__                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | `561 <PEP 561_>`__                      | **0.5.2**\ —\ *current*       | **0.5.2**\ —\ *current*   |
+|                  | `561 <PEP 561_>`__                      | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `563 <PEP 563_>`__                      | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1134,7 +1144,7 @@ Timings
 Let's profile ``beartype`` against other runtime type-checkers with `a battery
 of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    $ bin/profile.bash
 
@@ -1142,7 +1152,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    
    python    [basename]: python3.9
    python    [version]: Python 3.9.0
-   beartype  [version]: 0.5.2
+   beartype  [version]: 0.6.0
    typeguard [version]: 2.9.1
    
    ===================================== str =====================================
@@ -2533,13 +2543,13 @@ Let's take this from the top.
 #. **Change to the desired parent directory** of your local fork.
 #. **Clone your fork,** replacing ``{URL}`` with the previously copied URL.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git clone {URL}
 
 #. **Add a new remote** referring to this upstream repository.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git remote add upstream https://github.com/beartype/beartype.git
 
@@ -2547,7 +2557,7 @@ Let's take this from the top.
    example, if you previously installed ``beartype`` with ``pip``, manually
    uninstall ``beartype`` with ``pip``.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       pip uninstall beartype
 
@@ -2556,14 +2566,14 @@ Let's take this from the top.
    Python. Note the ``[dev]`` extra installs developer-specific mandatory
    dependencies required at test or documentation time.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       pip3 install -e .[dev]
 
 #. **Create a new branch** to isolate changes to, replacing ``{branch_name}``
    with the desired name.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git checkout -b {branch_name}
 
@@ -2576,7 +2586,7 @@ Let's take this from the top.
    support varies significantly between major versions of different Python
    interpreters.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       ./tox
    
@@ -2595,19 +2605,19 @@ Let's take this from the top.
 
 #. **Stage these changes.**
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git add -a
 
 #. **Commit these changes.**
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git commit
 
 #. **Push these changes** to your remote fork.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git push
 
@@ -2616,7 +2626,7 @@ Let's take this from the top.
 #. Afterward, **routinely pull upstream changes** to avoid desynchronization
    with `the "beartype/beartype" repository <beartype_>`__.
 
-   .. code-block:: shell-session
+   .. code-block:: bash
 
       git checkout main && git pull upstream main
 
@@ -2795,16 +2805,28 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
 
 #. `@harens <harens_>`__, the boisterous London developer acclaimed for his
    defense of British animals that quack pridefully as they peck you in city
-   parks *as well as* `maintaining our first third-party package, a
-   macOS-specific MacPorts Portfile estimated to solve all your problems
-   <beartype harens MacPorts_>`__.
+   parks *as well as*:
+
+   * `Renovating beartype for conformance with both static type checking under
+     <beartype harens mypy_>`__ mypy_ and `PEP 561`_.
+   * Maintaining our first third-party packages:
+
+     * `A macOS-specific Homebrew tap predicted to solve all your problems
+       <beartype Homebrew_>`__.
+     * `A macOS-specific MacPorts Portfile expected to solve even more problems
+       <beartype MacPorts_>`__.
+
 #. `@Heliotrop3 <Heliotrop3_>`__, the `perennial flowering plant genus from
    Peru <heliotrope_>`__ whose "primal drive for ruthless efficiency makes
    overcoming these opportunities for growth [*and incoming world conquest*]
    inevitable" as well as:
 
-   * `Improving quality assurance across internal caching data structures
-     <beartype Heliotrop3 caching QA_>`__.
+   * `Introspecting human-readable labels from arbitrary callables <beartype
+     Heliotrop3 callable labelling_>`__.
+   * Improving quality assurance across internal:
+     
+     * `Caching data structures <beartype Heliotrop3 QA caching_>`__.
+     * `String munging utilities <beartype Heliotrop3 QA munging_>`__.
 
 See Also
 ========
@@ -2931,16 +2953,20 @@ application stack at tool rather than Python runtime) include:
    https://github.com/leycec
 
 .. # ------------------( LINKS ~ beartype : user : PRs      )------------------
-.. _beartype Heliotrop3 caching QA:
+.. _beartype Heliotrop3 QA caching:
    https://github.com/beartype/beartype/pull/15
+.. _beartype Heliotrop3 QA munging:
+   https://github.com/beartype/beartype/pull/24
+.. _beartype Heliotrop3 callable labelling:
+   https://github.com/beartype/beartype/pull/19
 .. _beartype felix-hilden branding:
    https://github.com/beartype/beartype/issues/8#issuecomment-760103474
 .. _beartype felix-hilden docs structure:
    https://github.com/beartype/beartype/pull/8
 .. _beartype felix-hilden docs RTD confs:
    https://github.com/beartype/beartype/pull/9
-.. _beartype harens MacPorts:
-   https://github.com/beartype/beartype/issues/12
+.. _beartype harens mypy:
+   https://github.com/beartype/beartype/pull/26
 
 .. # ------------------( LINKS ~ github                     )------------------
 .. _GitHub Actions:

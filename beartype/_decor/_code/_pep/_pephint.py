@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Cecil Curry.
+# Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -1673,6 +1673,44 @@ This private submodule is *not* intended for importation by downstream callers.
 #accessed many, many times. By just checking on insertion, we avoid *ALL* of
 #the complications of trying to type-check after the fact during sequential
 #non-random iteration over items.
+#
+#Indeed, there appears to be a number of similar projects with the same idea,
+#with the caveat that these projects *ALL* leverage package-specific constructs
+#rather than PEP-compliant type hints -- a significant negative. The most
+#interesting of these are:
+#* "typed_python", a fascinating package with a variety of novel ideas at play.
+#  In addition to providing package-specific container types that perform
+#  PEP-noncompliant type-checking on item insertion *IMPLEMENTED THAT AT THE C
+#  LEVEL* rather than in pure Python (which is both horrible and fascinating,
+#  mainly because... why bother? I mean, PyPy, Nuitka, and Cython already
+#  exist, so why go to all that trouble to work in C rather than Python?),
+#  this package also offers:
+#  * "typed_python.Entrypoint", which looks balls-cray-cray. This is probably
+#    the most interesting aspect of this package, presuming it actually behaves
+#    as advertised, which it almost certainly doesn't. Nonetheless, it appears
+#    to be a bit of a cross between Nuitka and beartype. To quote:
+#    "Simply stick the @typed_python.Entrypoint decorator around any function
+#     that uses "typed_python" primitives to get a fast version of it:
+#     @Entrypoint
+#     def sum(someList, zero):
+#         for x in someList:
+#             zero += x
+#         return x
+#     ...will generate specialized code for different data types
+#     ("ListOf(int)", say, or "ListOf(float)", or even "Dict(int)") that's not
+#     only many times faster than the python equivalent, but that can operate
+#     using multiple processors. Compilation occurs each time you call the
+#     method with a new combination of types." The "that can operate using
+#     multiple processors" part is particularly novel, as it implies
+#     circumvention of the GIL. "typed_python" appears to implement this magic
+#     by leveraging LLVM to compile Python down to C. Again, we strongly doubt
+#     any of this actually works under real-world industrial constraints, but
+#     it's still a fascinating thought experiment.
+#  * "type_python.Class", a generic-style class one subclasses to generate
+#    "strongly typed class with a packed memory layout." The "strongly typed"
+#    part isn't terribly interesting, as it's PEP-noncompliant. The "packed
+#    memory layout" part, however, *IS* interesting. Reducing space consumption
+#    by presumably compiling to C is intriguing, if tangential to our concerns.
 
 # ....................{ IMPORTS                           }....................
 from beartype.cave import NoneType

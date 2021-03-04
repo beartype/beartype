@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Cecil Curry.
+# Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -86,7 +86,7 @@ def get_callable_origin_label(func: Callable) -> str:
     # or object defining the __call__() dunder method...
     if isinstance(func, CallableTypes):
         #FIXME: This is probably a bit overkill, as @beartype absolutely
-        #*REQUIRES* pure-Python rather than C-based overkills, as the latter
+        #*REQUIRES* pure-Python rather than C-based callables, as the latter
         #are *NOT* efficiently introspectable at runtime. *shrug*
 
         # Default this label to the placeholder string specific to C-based
