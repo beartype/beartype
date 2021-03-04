@@ -5,13 +5,21 @@
 # --------------------( SYNOPSIS                          )--------------------
 # Template with which setuptools generates this project's "MANIFEST" file.
 
+# ....................{ TODO                              }....................
+#FIXME: Add a new functional test exercising the correctness of this file,
+#probably by manually running a shell command resembling:
+#    $ python3 setup.py sdist bdist_wheel
+#...where "python3" should be replaced by the command invoking the active
+#Python interpreter. It's likely that we'll then have to parse the output of
+#that command for lines suggestive of syntactic errors in this file. *shrug*
+
 # ....................{ INCLUDE                           }....................
 # Include all requisite top-level install-time files.
-.mypy.ini
-.readthedocs.yml
+include .mypy.ini
+include .readthedocs.yml
 include LICENSE
 include MANIFEST.in
-include README.md
+include README.rst
 include conftest.py
 include pytest.ini
 include setup.cfg
