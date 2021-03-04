@@ -53,7 +53,7 @@ jobs:
       - name: "Checking out repository..."
         uses: 'actions/checkout@v2'
       - name: "Publishing GitHub release..."
-        uses: 'actions/release-action@v1'
+        uses: 'ncipollo/release-action@v1'
         with:
           name: "beartype ${{ github.ref }}"
           body: ${{ github.event.commits[0].message }}
