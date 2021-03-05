@@ -83,10 +83,8 @@ class LRUCacheStrong(dict):
 
         Raises
         ------
-        TypeError:
-            The capacity is *not* an integer
-        ValueError:
-            The capacity is a **non-positive integer** (i.e. Less than 1)
+        _BeartypeUtilLRUCacheException:
+            If the capacity is *not* an integer or its a **non-positive integer** (i.e. Less than 1)
         """
         if not isinstance(size, int):
             raise _BeartypeUtilLRUCacheException(
