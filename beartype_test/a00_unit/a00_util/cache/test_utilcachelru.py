@@ -91,39 +91,33 @@ def test_lrucachestrong_two_pass() -> None:
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
 
     # Confirm __getitem__ resets the key in the cache.
-    # (These key-value pairs should be cached in reverse order.)
     assert lru_cache[LRU_CACHE_KEY_A] == LRU_CACHE_VALUE_A
     lru_cache_items = iter(lru_cache.items())
-
     assert len(lru_cache) == 2
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
     assert next(lru_cache_items) == LRU_CACHE_ITEM_A
 
     # Confirm __contains__ resets the key in the cache.
-    # (These key-value pairs should be cached in their original order.)
     assert LRU_CACHE_KEY_B in lru_cache
     lru_cache_items = iter(lru_cache.items())
-
-    assert len(lru_cache) == 2
     assert next(lru_cache_items) == LRU_CACHE_ITEM_A
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
 
     # Confirm the implicit enforcement of cache size
     lru_cache[LRU_CACHE_KEY_C] = LRU_CACHE_VALUE_C
-    assert LRU_CACHE_KEY_A not in lru_cache
     assert len(lru_cache) == 2
+    assert LRU_CACHE_KEY_A not in lru_cache
 
     # Confirm the remaining key-value pairs have been cached in insertion order.
     lru_cache_items = iter(lru_cache.items())
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
     assert next(lru_cache_items) == LRU_CACHE_ITEM_C
 
-    # Confirm __setitem__ resets the key in the cache.
+    # Confirm __setitem__ resets a cached key.
     lru_cache[LRU_CACHE_KEY_B] = LRU_CACHE_VALUE_B
     lru_cache_items = iter(lru_cache.items())
     assert next(lru_cache_items) == LRU_CACHE_ITEM_C
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
-
 
 
 def test_lrucachestrong_fail() -> None:

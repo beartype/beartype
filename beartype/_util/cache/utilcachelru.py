@@ -14,8 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 """
 # ....................{ IMPORTS                           }....................
 from threading import Lock
-from typing import Hashable, Union
+from typing import Hashable
 from beartype.roar import _BeartypeUtilLRUCacheException
+
 
 # ....................{ CLASSES                           }....................
 class LRUCacheStrong(dict):
@@ -103,6 +104,9 @@ class LRUCacheStrong(dict):
 
                     # Superclass methods efficiently localized as default parameters.
                     __contains=dict.__contains__,
+                    __getitem=dict.__getitem__,
+                    __delitem=dict.__delitem__,
+                    __pushitem=dict.__setitem__,
                     ) -> object:
         """
         Returns item previously cached under the passed key otherwise raises an exception.
@@ -126,20 +130,28 @@ class LRUCacheStrong(dict):
 
         Note
         ----
-         - **Practically** identical to :meth:`self.__contains__` but one
-           critical component disables a direct call to :meth:`self._push`:
-           raise an error if there is no value associated with the key.
+         - **Practically** identical to :meth:`self.__contains__` except we return
+           an an object rather than a bool.
         """
         with self._lock:
-            # Implicitly raises TypeError
+            # Reset the key if it exists
             if __contains(self, key):
-                # Pop, push, and return the associated value.
-                return self._push(key)
+                val = __getitem(self, key)
+                __delitem(self, key)
+                __pushitem(self, key, val)
+                return val
             raise KeyError(f'Key Error: {key}')
 
     def __setitem__(self,
                     key: Hashable,
-                    value: object
+                    value: object,
+
+                    # Superclass methods efficiently localized as default parameters.
+                    __contains=dict.__contains__,
+                    __delitem=dict.__delitem__,
+                    __pushitem=dict.__setitem__,
+                    __iter=dict.__iter__,
+                    __len=dict.__len__,
                     ) -> None:
         """
         Cache this key-value pair while preserving size constraints.
@@ -157,13 +169,24 @@ class LRUCacheStrong(dict):
             If this key is not hashable.
         """
         with self._lock:
-            self._push(key, value)
+
+            if __contains(self, key):
+                __delitem(self, key)
+            __pushitem(self, key, value)
+
+            # Prune the cache
+            if __len(self) > self._size:
+                __delitem(self, next(__iter(self)))
 
     def __contains__(self,
                      key: Hashable,
+
                      # Superclass methods efficiently localized as default parameters.
                      __contains=dict.__contains__,
                      __getitem=dict.__getitem__,
+                     __delitem=dict.__delitem__,
+                     __pushitem=dict.__setitem__,
+
                      ) -> bool:
         """
         Returns a boolean indicating whether this key is cached.
@@ -187,50 +210,8 @@ class LRUCacheStrong(dict):
         """
         with self._lock:
             if __contains(self, key):
-                self._push(key)
+                val = __getitem(self, key)
+                __delitem(self, key)
+                __pushitem(self, key, val)
                 return True
             return False
-
-    def _push(self,
-              key: Hashable,
-              value: Union[object, None] = None,
-
-              # Superclass methods efficiently localized as default parameters.
-              __contains=dict.__contains__,
-              __get=dict.__getitem__,
-              __delete=dict.__delitem__,
-              __push=dict.__setitem__,
-              __iter=dict.__iter__,
-              __len=dict.__len__,
-              ) -> object:
-        """
-        Add this key,value pair to the end of the cache.
-
-        This method is meant to be called from within a threading.Lock context manager:
-        this private method is non-thread safe by design.
-
-        Parameters
-        ----------
-        key : Hashable
-            Arbitrary hashable key to cache this value to.
-        value : object
-            Arbitrary value to be cached under this key.
-
-        Raises
-        --------
-        TypeError
-            If this key is not hashable.
-        """
-        # Remove association from mapping; Implicitly raises TypeError
-        if __contains(self, key):
-            if value is None:
-                value = __get(self, key)
-            __delete(self, key)
-
-        __push(self, key, value)
-
-        # Prune the cache
-        if __len(self) > self._size:
-            __delete(self, next(__iter(self)))
-
-        return value
