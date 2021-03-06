@@ -46,6 +46,8 @@ pushd "${script_dirname}" >/dev/null
 # Run this project's pytest-based test suite with all passed arguments.
 # Dismantled, this is:
 #
+# * "-X dev", enabling the Python Development Mode (PDM). See also commentary
+#   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
 # * "--color=yes", unconditionally enable colour output to guarantee color
 #   under piped pagers (e.g., "less").
 # * "--maxfail=1", halt testing on the first failure for interactive tests.
@@ -77,11 +79,11 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-command python3 -m pytest --color=yes --maxfail=1 "${@}" .
-# command python3.6 -m pytest --maxfail=1 "${@}" .
-# command python3.8 -m pytest --maxfail=1 "${@}" .
-# command python3.9 -m pytest --maxfail=1 "${@}" .
-# command pypy3.6 -m pytest --maxfail=1 "${@}" .
+command python3 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
+# command python3.6 -X dev -m pytest --maxfail=1 "${@}" .
+# command python3.8 -X dev -m pytest --maxfail=1 "${@}" .
+# command python3.9 -X dev -m pytest --maxfail=1 "${@}" .
+# command pypy3.6 -X dev -m pytest --maxfail=1 "${@}" .
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

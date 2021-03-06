@@ -16,6 +16,30 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Add support for Python 3.10 and thus:
+#* PEP 604-compliance (e.g., "def square(number: int | float): pass"). Note
+#  PEP 604 thankfully preserves backward compatibility with "typing.Union":
+#      The existing typing.Union and | syntax should be equivalent.
+#           int | str == typing.Union[int, str]
+#  This means that we should:
+#  * Require no changes to the "beartype" package to support PEP 604.
+#  * Add unit tests explicitly support PEP 604 compliance under Python >= 3.10
+#    to the "beartype_test" package.
+#  * Note this support in documentation.
+#* PEP 612-compliance. Since we don't currently support callable annotations,
+#  we probably can't extend that non-existent support to PEP 612. Nonetheless,
+#  we *ABSOLUTELY* should ensure that we do *NOT* raise exceptions when passed
+#  the two new "typing" singletons introduced by this:
+#  * "typing.ParamSpec", documented at:
+#    https://docs.python.org/3.10/library/typing.html#typing.ParamSpec
+#  * "typing.Concatenate", documented at:
+#    https://docs.python.org/3.10/library/typing.html#typing.Concatenate
+#  Ideally, we should simply ignore these singletons for now in a similar
+#  manner to how we currently ignore type variables. After all, these
+#  singletons are actually a new unique category of callable-specific type
+#  variables. See also:
+#  https://www.python.org/dev/peps/pep-0612
+
 #FIXME: Byte string values aren't displayed properly in messages: e.g.,
 #    ...as value "b"What? Haven't you ever seen a byte-string separator
 #    before?"" not str.
@@ -852,6 +876,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #  applies to an edge case under obsolete Python versions, so... *shrug*
 #* Else, a non-fatal warning should be emitted and the portion of that type
 #  hint that *CANNOT* be safely checked under Python <= 3.7 should be ignored.
+#FIXME: Note that mapping views now provide a "mapping" attribute enabling
+#direct access of the mapping mapped by that view under Python >= 3.10:
+#    The views returned by dict.keys(), dict.values() and dict.items() now all
+#    have a mapping attribute that gives a types.MappingProxyType object
+#    wrapping the original dictionary.
+#This means that we do *NOT* need to explicitly cache the "mapping" object
+#mapped by any cached view under Python >= 3.10, reducing space consumption.
 
 #FIXME: *WOOPS.* The "LRUCacheStrong" class is absolutely awesome and we'll
 #absolutely be reusing that for various supplementary purposes across the
@@ -2727,7 +2758,13 @@ def pep_code_check_hint(hint: object) -> Tuple[str, bool, Tuple[str, ...]]:
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            # Switch on (as in, pretend Python provides a "switch" statement)
+            #FIXME: Python 3.10 provides proper syntactic support for "case"
+            #statements, which should allow us to dramatically optimize this
+            #"if" logic into equivalent "case" logic *AFTER* we drop support
+            #for Python 3.9. Of course, that will be basically never, so we'll
+            #have to preserve this for basically forever. What you gonna do?
+
+            # Switch on (as in, pretend Python provides a "case" statement)
             # this attribute to decide which type of code to generate to
             # type-check the current pith against the current hint.
             #

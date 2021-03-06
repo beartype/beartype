@@ -102,6 +102,10 @@ def test_codemain() -> None:
                 #pytest.warns() context manager appears to be broken on our
                 #local machine. We have no recourse but to unconditionally
                 #ignore this warning at the module level. So much rage!
+                #FIXME: It's likely this has something to do with the fact that
+                #Python filters deprecation warnings by default. This is almost
+                #certainly a pytest issue. Since this has become fairly
+                #unctuous, we should probably submit a pytest issue report.
                 # with pytest.warns(BeartypeDecorHintPepDeprecatedWarning):
                 #     func_typed = beartype(func_untyped)
                 func_typed = beartype(func_untyped)
