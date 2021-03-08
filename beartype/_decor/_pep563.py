@@ -25,7 +25,7 @@ from beartype.roar import (
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_4_0,
+    IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_7,
 )
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
@@ -47,12 +47,12 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     Conditions
     ----------
     `PEP 563`_ is active for this callable if the active Python interpreter
-    targets at least:
+    targets:
 
-    * Python 3.7.0 *and* the module declaring this callable explicitly enables
-      `PEP 563`_ support with a leading dunder importation of the form ``from
-      __future__ import annotations``.
-    * Python 4.0.0, where `PEP 563`_ is expected to be mandatory.
+    * Python >= 3.10, where `PEP 563`_ is globally, unconditionally enabled.
+    * Python >= 3.7 < 3.10 *and* the module declaring this callable explicitly
+      enables `PEP 563`_ support with a leading dunder importation of the form
+      ``from __future__ import annotations``.
 
     Resolution
     ----------
@@ -116,15 +116,14 @@ def _is_hints_postponed(data: BeartypeData) -> bool:
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
-    assert data.__class__ is BeartypeData, (
-        '{!r} not @beartype data.'.format(data))
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
     # True only if PEP 563 is active for this callable.
     #
-    # If the active Python interpreter targets at least Python 4.0.x, PEP 563
-    # is unconditionally active. Ergo, *ALL* annotations including this
-    # callable's annotations are necessarily postponed.
-    is_hints_postponed = IS_PYTHON_AT_LEAST_4_0
+    # If the active Python interpreter targets Python >= 3.10, PEP 563 is
+    # unconditionally active. Ergo, *ALL* annotations including this callable's
+    # annotations are necessarily postponed.
+    is_hints_postponed = IS_PYTHON_AT_LEAST_3_10
 
     # If the active Python interpreter targets at least Python 3.7.x, PEP 563
     # is conditionally active only if...
@@ -389,4 +388,5 @@ def _die_if_hint_repr_exceeds_child_limit(
         raise BeartypeDecorHintPepException(
             f'{pith_label} hint representation "{hint_repr}" '
             f'contains {hints_num} subscripted arguments '
-            f'exceeding maximum limit {SIZE_BIG-1}.')
+            f'exceeding maximum limit {SIZE_BIG-1}.'
+        )

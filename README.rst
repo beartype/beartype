@@ -648,15 +648,15 @@ Let's type-check like `greased lightning`_:
    # Import the core @beartype decorator.
    from beartype import beartype
 
-   # Import PEP 593-compliant type hints. Note this requires Python ≥ 3.9.
-   from typing import Annotated
+   # Import PEP 544-compliant type hints. Note this requires Python ≥ 3.8.
+   from typing import Protocol, runtime_checkable
 
    # Import PEP 585-compliant type hints. Note this requires Python ≥ 3.9.
    from collections.abc import (
        Callable, Generator, Iterable, MutableSequence, Sequence)
 
-   # Import PEP 544-compliant type hints. Note this requires Python ≥ 3.8.
-   from typing import Protocol, runtime_checkable
+   # Import PEP 593-compliant type hints. Note this requires Python ≥ 3.9.
+   from typing import Annotated
 
    # Import PEP 484-compliant type hints, too. Note that many of these types
    # have been deprecated by PEP 585-compliant type hints under Python ≥ 3.9,
@@ -1136,6 +1136,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 |                  | 3.8                                     | **0.1.0**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | 3.9                                     | **0.3.2**\ —\ *current*       | —                         |
++------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                  | 3.10                                    | **0.6.1**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 
 Timings
