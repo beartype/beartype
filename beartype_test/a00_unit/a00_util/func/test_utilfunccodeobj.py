@@ -44,10 +44,15 @@ def test_get_func_codeobj() -> None:
     fireside = of_stagnant_waters()
 
     # Assert this tester accepts pure-Python callables.
+    the_heroic_wealth_of_hall_and_bower = get_func_codeobj(england_hath_need)
     assert isinstance(
-        get_func_codeobj(england_hath_need), CallableCodeObjectType)
+        the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
     assert isinstance(
         get_func_codeobj(fireside.altar), CallableCodeObjectType)
+
+    # Assert this tester also accepts code objects.
+    assert get_func_codeobj(the_heroic_wealth_of_hall_and_bower) is (
+        the_heroic_wealth_of_hall_and_bower)
 
     # Assert this tester rejects C-based callables.
     with raises(_BeartypeUtilCallableException):

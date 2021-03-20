@@ -13,30 +13,39 @@ underlying all pure-Python callables.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
+# ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
 from collections.abc import Callable
 from types import CodeType, FunctionType, MethodType
-from typing import Optional
+from typing import Optional, Union
+
+# ....................{ HINTS                             }....................
+CallableOrCodeType = Union[Callable, CodeType]
+'''
+PEP-compliant type hint matching either a callable *or* code object.
+'''
 
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(
     # Mandatory parameters.
-    func: Callable,
+    func: CallableOrCodeType,
 
     # Optional parameters.
     exception_cls: type = _BeartypeUtilCallableException
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed callable if this callable is a pure-Python function or method
-    *or* raise an exception otherwise (e.g., if this callable is C-based or a
-    class or object defining the ``__call__()`` dunder method).
+    the passed callable if this callable is pure-Python *or* raise an exception
+    otherwise (e.g., if this callable is C-based or a class or object defining
+    the ``__call__()`` dunder method).
+
+    For convenience, this getter also accepts a code object, in which case that
+    code object is simply returned as is.
 
     Parameters
     ----------
-    func : Callable
-        Callable to be inspected.
+    func : Union[Callable, CodeType]
+        Callable or code object to be inspected.
     exception_cls : type
         Type of exception to be raised if this callable is neither a
         pure-Python function nor method. Defaults to
@@ -52,6 +61,11 @@ def get_func_codeobj(
     _BeartypeUtilCallableException
          If this callable has *no* code object and is thus *not* pure-Python.
     '''
+
+    # If the passed object is already a code object, return this object as is.
+    if isinstance(func, CodeType):
+        return func
+    # Else, this object is *NOT* already a code object.
 
     # Code object underlying this callable if this callable is pure-Python *OR*
     # "None" otherwise.
@@ -72,7 +86,7 @@ def get_func_codeobj(
     return func_codeobj
 
 
-def get_func_codeobj_or_none(func: Callable) -> 'Optional[CodeType]':
+def get_func_codeobj_or_none(func: Callable) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
     the passed callable if this callable is pure-Python *or* ``None`` otherwise

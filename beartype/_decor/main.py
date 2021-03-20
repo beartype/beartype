@@ -223,7 +223,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #perspective, which means we should make this happen.
 
 # ....................{ IMPORTS                           }....................
-import functools, random
 from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
@@ -237,17 +236,16 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
-from beartype._util.text.utiltextmunge import number_lines
+from beartype._util.func.utilfuncmake import make_func
+from random import getrandbits
 from typing import Callable, TYPE_CHECKING
-# from beartype._util.utilobject import get_object_name
-# from types import FunctionType
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_GLOBAL_ATTRS = {
-    '__beartype_getrandbits': random.getrandbits,
+_ATTRS_GLOBAL = {
+    '__beartype_getrandbits': getrandbits,
     '__beartype_raise_pep_call_exception': raise_pep_call_exception,
 }
 '''
@@ -406,14 +404,14 @@ def beartype(func: Callable) -> Callable:
     # * For efficiency, only attributes specific to the body of this wrapper
     #   are copied from the current namespace. Attributes generically
     #   applicable to the body of all wrappers are instead implicitly imported
-    #   from this submodule by passing "_GLOBAL_ATTRS" below.
+    #   from this submodule by passing "_ATTRS_GLOBAL" below.
     # * For each attribute specified here, one new keyword parameter of the
     #   form "{local_attr_key_name}={local_attr_key_name}" *MUST* be added to
     #   the signature for this wrapper defined by the "CODE_SIGNATURE" string.
     #
     # For the above reasons, the *ONLY* attribute that should be passed is the
     # wrapper-specific "__beartype_func" attribute.
-    local_attrs = {
+    attrs_local = {
         ARG_NAME_FUNC: func,
         ARG_NAME_TYPISTRY: bear_typistry,
     }
@@ -489,75 +487,21 @@ def beartype(func: Callable) -> Callable:
     #Indeed, see the _make() function of the "makefun.main" submodule:
     #    https://github.com/smarie/python-makefun/blob/master/makefun/main.py
 
-    # Attempt to define this wrapper as a closure of this decorator. For
-    # obscure and presumably uninteresting reasons, Python fails to locally
-    # declare this closure when the locals() dictionary is passed; to capture
-    # this closure, a local dictionary must be passed instead.
-    #
-    # Note that the same result may also be achieved via the compile() builtin
-    # and "types.FunctionType" class: e.g.,
-    #
-    #     func_code_compiled = compile(
-    #         func_code, "<string>", "exec").co_consts[0]
-    #     return types.FunctionType(
-    #         code=func_code_compiled,
-    #         globals=_GLOBAL_ATTRS,
-    #         argdefs=('__beartype_func', func)
-    #     )
-    #
-    # Since doing so is both more verbose and obfuscatory for no tangible gain,
-    # the current circumspect approach is preferred.
-    try:
-        # print('\n@beartyped {} wrapper:\n\n{}\n'.format(func_data.func_name, func_code))
-        # print('\n@beartyped {} wrapper:\n\n{}\n'.format(func_data.func_name, number_lines(func_code)))
-        exec(func_code, _GLOBAL_ATTRS, local_attrs)
-
-        #FIXME: See above.
-        #FIXME: Should "exec" be "single" instead? Does it matter? Is there any
-        #performance gap between the two?
-        # func_code_compiled = compile(
-        #     func_code, func_wrapper_filename, "exec").co_consts[0]
-        # return FunctionType(
-        #     code=func_code_compiled,
-        #     globals=_GLOBAL_ATTRS,
-        #
-        #     #FIXME: This really doesn't seem right, but... *shrug*
-        #     argdefs=tuple(local_attrs.values()),
-        # )
-    # If doing so fails for any reason, raise an exception suffixed by
-    # debuggable wrapper code such that each line of this code is prefixed by
-    # that line's number, rendering "SyntaxError" exceptions referencing
-    # arbitrary line numbers human-readable: e.g.,
-    #       File "<string>", line 56
-    #         if not (
-    #          ^
-    #     SyntaxError: invalid syntax
-    except Exception as exception:
-        raise BeartypeDecorWrapperException(
-            f'@beartyped {func_data.func_name} wrapper unparseable:\n\n'
-            f'{number_lines(func_code)}'
-        ) from exception
-
-    # This wrapper.
-    #
-    # Note that, as the above logic successfully compiled this wrapper, this
-    # dictionary is guaranteed to contain a key with this wrapper's name whose
-    # value is this wrapper. Ergo, no additional validation of the existence of
-    # this key or type of this wrapper is needed.
-    func_wrapper: Callable = local_attrs[func_data.func_wrapper_name]  # type: ignore[assignment]
+    # Function wrapping this callable with type-checking to be returned.
+    func_wrapper = make_func(
+        name=func_data.func_wrapper_name,
+        code=func_code,
+        attrs_global=_ATTRS_GLOBAL,
+        attrs_local=attrs_local,
+        label=f'@beartyped {func_data.func_name} wrapper',
+        code_exception_cls=BeartypeDecorWrapperException,
+        func_wrapped=func,
+    )
 
     # Declare this wrapper to be generated by @beartype, which tests for the
     # existence of this attribute above to avoid re-decorating callables
     # already decorated by @beartype by efficiently reducing to a noop.
     func_wrapper.__beartype_wrapper = True  # type: ignore[attr-defined]
-
-    # Propagate identifying metadata (stored as special attributes) from the
-    # original function to this wrapper for debuggability, including:
-    #
-    # * "__name__", the unqualified name of this function.
-    # * "__doc__", the docstring of this function (if any).
-    # * "__module__", the fully-qualified name of this function's module.
-    functools.update_wrapper(wrapper=func_wrapper, wrapped=func)
 
     # Release this callable metadata back to its object pool.
     release_object_typed(func_data)

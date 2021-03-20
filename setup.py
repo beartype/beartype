@@ -185,13 +185,27 @@ _SETUP_OPTIONS = {
     #   that variable's value as this metadata outside of that context. (Ugh.)
     'name':             meta.PACKAGE_NAME,
     'version':          meta.VERSION,
+    'description':      meta.SYNOPSIS,
+
+    # ..................{ AUTHORS                           }..................
     'author':           meta.AUTHORS,
     'author_email':     meta.AUTHOR_EMAIL,
     'maintainer':       meta.AUTHORS,
     'maintainer_email': meta.AUTHOR_EMAIL,
-    'description':      meta.SYNOPSIS,
+
+    # ..................{ URLS                              }..................
     'url':              meta.URL_HOMEPAGE,
     'download_url':     meta.URL_DOWNLOAD,
+
+    # Dictionary mapping from arbitrary human-readable terse names describing
+    # various package-related URLs to those URLs.
+    'project_urls': {
+        #FIXME: Uncomment after we actually have meaningful RTD documentation.
+        # 'Documentation': 'https://beartype.readthedocs.io',
+        'Issues': 'https://github.com/beartype/beartype/issues',
+        'Source': 'https://github.com/beartype/beartype',
+        'Releases': 'https://github.com/beartype/beartype/releases',
+    },
 
     # ..................{ PYPI                              }..................
     # PyPi-specific meta.

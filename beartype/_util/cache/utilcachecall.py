@@ -31,7 +31,10 @@ from beartype.roar import (
     _BeartypeUtilCallableCachedException,
     _BeartypeUtilCallableCachedKwargsWarning,
 )
-from beartype._util.func.utilfuncarg import is_func_arg_variadic
+from beartype._util.func.utilfuncarg import (
+    is_func_argless,
+    is_func_arg_variadic,
+)
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
@@ -202,7 +205,8 @@ def callable_cached(func: Callable) -> Callable:
     if is_func_arg_variadic(func):
         raise _BeartypeUtilCallableCachedException(
             f'@callable_cached {label_callable(func)} '
-            f'variadic arguments not cacheable.')
+            f'variadic arguments uncacheable.'
+        )
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
