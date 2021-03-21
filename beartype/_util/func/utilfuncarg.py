@@ -15,14 +15,50 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from collections.abc import Callable
-from inspect import CO_VARARGS, CO_VARKEYWORDS
+from enum import Enum as EnumMemberType
+from inspect import (
+    CO_VARARGS,
+    CO_VARKEYWORDS,
+    Parameter,
+)
 from types import CodeType
-from typing import Union
+from typing import Any, Generator, Tuple, Union
 
 # ....................{ HINTS                             }....................
 CallableOrCodeType = Union[Callable, CodeType]
 '''
 PEP-compliant type hint matching either a callable *or* code object.
+'''
+
+# ....................{ CONSTANTS ~ index                 }....................
+ITER_FUNC_ARGS_INDEX_NAME = 0
+'''
+0-based index of the name of each callable parameter in each 3-tuple yielded by
+the :func:`iter_func_args` generator.
+'''
+
+
+ITER_FUNC_ARGS_INDEX_KIND = 0
+'''
+0-based index of the kind of each callable parameter in each 3-tuple yielded by
+the :func:`iter_func_args` generator.
+
+This kind is guaranteed to be one of the following enumeration members:
+
+* :attr:`Parameter.POSITIONAL_OR_KEYWORD` for standard (i.e., positional or
+  keyword) parameters.
+* :attr:`Parameter.POSITIONAL_ONLY` for positional-only parameters.
+* :attr:`Parameter.KEYWORD_ONLY` for keyword-only parameters.
+* :attr:`Parameter.VAR_POSITIONAL` for the variadic positional parameter.
+* :attr:`Parameter.VAR_KEYWORD` for the variadic keyword parameter.
+'''
+
+
+ITER_FUNC_ARGS_INDEX_DEFAULT = 0
+'''
+0-based index of the default value of each optional callable parameter and
+``None`` for each mandatory callable parameter in each 3-tuple yielded by the
+:func:`iter_func_args` generator.
 '''
 
 # ....................{ TESTERS ~ kind                    }....................
@@ -157,6 +193,7 @@ def is_func_arg_variadic_keyword(func: CallableOrCodeType) -> bool:
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
 
 # ....................{ TESTERS ~ name                    }....................
+#FIXME: Refactor this function in terms of the new iter_func_args() iterator.
 def is_func_arg_name(func: CallableOrCodeType, arg_name: str) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts an argument with
@@ -189,35 +226,148 @@ def is_func_arg_name(func: CallableOrCodeType, arg_name: str) -> bool:
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'
 
+    # For the name of each parameter accepted by this callable...
+    for arg_name_curr, _, _ in iter_func_args(func):
+        # If this is the passed name, return true.
+        if arg_name_curr == arg_name:
+            return True
+
+    # Else, this callable accepts no such parameter. In this case, return
+    # false.
+    return False
+
+
+#FIXME: Docstring us up, please. See the index docstrings above, which we
+#probably simply want to refactor away now that we think about it.
+#FIXME: Unit test us up, please.
+def iter_func_args(func: CallableOrCodeType) -> Generator[
+    Tuple[str, EnumMemberType, Any], None, None]:
+
     # Code object underlying this pure-Python callable.
     func_codeobj = get_func_codeobj(func)
 
-    #FIXME: Consider generalizing this useful logic into either a new
-    #get_func_args_len() *OR* get_func_args_name() getter function as needed.
-
-    # Number of arguments accepted by this callable.
-    func_args_len = func_codeobj.co_argcount + func_codeobj.co_kwonlyargcount
-
-    # If this callable accepts variadic positional arguments, increment the
-    # number of arguments.
-    if is_func_arg_variadic_positional(func):
-        func_args_len += 1
-
-    # If this callable accepts variadic keyword arguments, increment the
-    # number of arguments.
-    if is_func_arg_variadic_keyword(func):
-        func_args_len += 1
-
-    # Return true only if this callable accepts an argument with this name.
+    # Tuple of the names of all variables localized to this callable.
     #
-    # Note that the "co_varnames" tuple contains the names of both:
-    # * All arguments accepted by this callable.
+    # Note that this tuple contains the names of both:
+    # * All parameters accepted by this callable.
     # * All local variables internally declared in this callable's body.
-    # * The "func_codeobj.co_names" is incorrectly documented in the "inspect"
+    # * "func_codeobj.co_names" is incorrectly documented in the "inspect"
     #   module as "tuple of names of local variables." That's a lie, of course.
-    #   That attribute is instead a largely useless tuple of the names of
+    #   That attribute is instead a largely useless tuple of the names of both
     #   globals and object attributes accessed in this callable's body. *shrug*
     #
     # Ergo, this tuple *CANNOT* be searched in full. Only the subset of this
     # tuple containing only argument names may be safely searched.
-    return arg_name in func_codeobj.co_varnames[:func_args_len]
+    args_name = func_codeobj.co_varnames
+
+    # Tuple of the default values assigned to all optional standard (i.e.,
+    # positional or keyword) parameters accepted by this callable if any *OR*
+    # the empty tuple otherwise.
+    args_defaults_std = getattr(func_codeobj, '__defaults__', ())
+
+    # Dictionary mapping the name of each optional keyword-only parameter
+    # accepted by this callable to the default value assigned to that parameter
+    # if any *OR* the empty dictionary otherwise.
+    args_defaults_kwonly = getattr(func_codeobj, '__kwdefaults__', {})
+
+    # Number of standard parameters accepted by this callable.
+    args_len_std = func_codeobj.co_argcount
+
+    # Number of keyword-only parameters accepted by this callable.
+    args_len_kwonly = func_codeobj.co_kwonlyargcount
+
+    # Number of optional standard parameters accepted by this callable.
+    args_len_std_optional = len(args_defaults_std)
+
+    # Number of optional keyword-only parameters accepted by this callable.
+    args_len_kwonly_optional = len(args_defaults_kwonly)
+
+    # Number of mandatory standard parameters accepted by this callable.
+    args_len_std_mandatory = args_len_std - args_len_std_optional
+
+    # Number of mandatory keyword-only parameters accepted by this callable.
+    args_len_kwonly_mandatory = args_len_kwonly - args_len_kwonly_optional
+
+    # 0-based index of the first mandatory standard parameter accepted by this
+    # callable in the "args_name" tuple.
+    args_index_std_mandatory = 0
+
+    # 0-based index of the first optional standard parameter accepted by this
+    # callable in the "args_name" tuple.
+    args_index_std_optional = args_len_std_mandatory
+
+    # 0-based index of the first mandatory keyword-only parameter accepted by
+    # this callable in the "args_name" tuple.
+    args_index_kwonly_mandatory = (
+        args_index_std_optional + args_len_std_optional)
+
+    # 0-based index of the first optional keyword-only parameter accepted by
+    # this callable in the "args_name" tuple.
+    args_index_kwonly_optional = (
+        args_index_kwonly_mandatory + args_len_kwonly_mandatory)
+
+    # 0-based index of the variadic positional parameter accepted by this
+    # callable in the "args_name" tuple if any *OR* a meaningless value
+    # otherwise (i.e., if this callable accepts nu such parameter).
+    args_index_var_pos = (
+        args_index_kwonly_optional + args_len_kwonly_optional)
+
+    # 0-based index of the variadic keyword parameter accepted by this
+    # callable in the "args_name" tuple if any *OR* a meaningless value
+    # otherwise (i.e., if this callable accepts nu such parameter).
+    args_index_var_kw = args_index_var_pos + 1
+
+    # For each mandatory standard parameter accepted by this callable, yield a
+    # 3-tuple describing this parameter.
+    for arg_std_mandatory in args_name[
+        args_index_std_mandatory:args_index_std_optional]:
+        yield (arg_std_mandatory, Parameter.POSITIONAL_OR_KEYWORD, None,)
+
+    # For the 0-based index each optional standard parameter accepted by this
+    # callable and that parameter, yield a 3-tuple describing this parameter.
+    for arg_std_optional_index, arg_std_optional in enumerate(args_name[
+        args_index_std_optional:args_index_kwonly_mandatory]):
+        assert arg_std_optional_index < args_len_std_optional, (
+            f'Optional standard parameter index {arg_std_optional_index} exceeds '
+            f'optional standard parameter count {args_len_std_optional}.')
+
+        yield (
+            arg_std_optional,
+            Parameter.POSITIONAL_OR_KEYWORD,
+            args_defaults_std[arg_std_optional_index],
+        )
+
+    # For each mandatory keyword-only parameter accepted by this callable,
+    # yield a 3-tuple describing this parameter.
+    for arg_kwonly_mandatory in args_name[
+        args_index_kwonly_mandatory:args_index_kwonly_optional]:
+        yield (arg_kwonly_mandatory, Parameter.KEYWORD_ONLY, None,)
+
+    # For the 0-based index each optional keyword-only parameter accepted by
+    # this callable and that parameter, yield a 3-tuple describing this
+    # parameter.
+    for arg_kwonly_optional in args_name[
+        args_index_kwonly_optional:args_index_var_pos]:
+        yield (
+            arg_kwonly_optional,
+            Parameter.KEYWORD_ONLY,
+            args_defaults_kwonly[arg_kwonly_optional],
+        )
+
+    # If this callable accepts a variadic positional parameter, yield a 3-tuple
+    # describing this parameter.
+    if is_func_arg_variadic_positional(func):
+        yield (
+            args_name[args_index_var_pos],
+            Parameter.VAR_POSITIONAL,
+            None,
+        )
+
+    # If this callable accepts variadic keyword arguments, yield a 3-tuple
+    # describing this parameter.
+    if is_func_arg_variadic_keyword(func):
+        yield (
+            args_name[args_index_var_kw],
+            Parameter.VAR_KEYWORD,
+            None,
+        )

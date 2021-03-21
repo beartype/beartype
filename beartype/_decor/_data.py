@@ -31,6 +31,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #as the inspect.signature() function is *GUARANTEED* to be a performance
 #bottleneck for us. This is low-priority for the moment and may actually never
 #happen... but it really should.
+#FIXME: Bwaha! We actually did this and even more space- and time-efficiently
+#than the above scheme. See the new
+#beartype.util.func.utilfuncargs.iter_func_args() generator, called like so:
+#    for arg_name, arg_kind, _ in iter_func_args(func): ...
+#*AWESOME.* Note we simply ignore the third item of each 3-tuple yielded by
+#that generator, as we currently have *NO* need for default values. We will
+#elsewhere certainly, but not quite yet. *shrug*
 
 # ....................{ IMPORTS                           }....................
 import inspect
