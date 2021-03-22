@@ -237,6 +237,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.func.utilfuncscope import get_func_globals_locals
 from random import getrandbits
 from typing import Callable, TYPE_CHECKING
 
@@ -369,24 +370,22 @@ def beartype(func: Callable) -> Callable:
         # returning this callable as is.
         return func
 
-    #FIXME: Optimize by caching and reusing previously cached "BeartypeData"
-    #instances across @beartype decorations. To do so:
+    # 2-tuple "(globals, locals)" of the global and local scope for this
+    # callable.
     #
-    #* Define a new "beartype._util.cache.utilcachepoolobj" submodule copied
-    #  from the existing "beartype._util.cache.list.utilfixedlistpool"
-    #  submodule. "utilcachepoolobj" should publish a similar API, except:
-    #  * Keys should be arbitrary classes rather than integers.
-    #  * Pool items should be arbitrary objects of those classes rather than
-    #    fixed lists.
-    #* Define a new BeartypeData.init() method resembling the existing
-    #  BeartypeData.__init__() dunder method.
-    #* Call (in order):
-    #  func_data = utilcachepoolobj.acquire_object(BeartypeData)
-    #  func_data.init(func)
+    # Note that this function unavoidably introspects the current call stack
+    # and *MUST THUS BE CALLED DIRECTLY IN THE BODY OF THIS DECORATOR* (e.g.,
+    # to prevent extraneous intervening calls from polluting the call stack).
+    func_globals_locals = get_func_globals_locals(
+        func=func,
+        # Ignore an additional frame on the call stack identifying the
+        # current call to this decorator.
+        func_stack_frames_ignore=1,
+    )
 
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeData)
-    func_data.reinit(func)
+    func_data.reinit(func=func, func_globals_locals=func_globals_locals)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_code, is_func_code_noop = generate_code(func_data)

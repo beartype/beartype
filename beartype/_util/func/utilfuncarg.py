@@ -13,53 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from collections.abc import Callable
+from beartype._util.func.utilfunccodeobj import (
+    CallableOrCodeType, get_func_codeobj)
 from enum import Enum as EnumMemberType
 from inspect import (
     CO_VARARGS,
     CO_VARKEYWORDS,
     Parameter,
 )
-from types import CodeType
-from typing import Any, Generator, Tuple, Union
-
-# ....................{ HINTS                             }....................
-CallableOrCodeType = Union[Callable, CodeType]
-'''
-PEP-compliant type hint matching either a callable *or* code object.
-'''
-
-# ....................{ CONSTANTS ~ index                 }....................
-ITER_FUNC_ARGS_INDEX_NAME = 0
-'''
-0-based index of the name of each callable parameter in each 3-tuple yielded by
-the :func:`iter_func_args` generator.
-'''
-
-
-ITER_FUNC_ARGS_INDEX_KIND = 0
-'''
-0-based index of the kind of each callable parameter in each 3-tuple yielded by
-the :func:`iter_func_args` generator.
-
-This kind is guaranteed to be one of the following enumeration members:
-
-* :attr:`Parameter.POSITIONAL_OR_KEYWORD` for standard (i.e., positional or
-  keyword) parameters.
-* :attr:`Parameter.POSITIONAL_ONLY` for positional-only parameters.
-* :attr:`Parameter.KEYWORD_ONLY` for keyword-only parameters.
-* :attr:`Parameter.VAR_POSITIONAL` for the variadic positional parameter.
-* :attr:`Parameter.VAR_KEYWORD` for the variadic keyword parameter.
-'''
-
-
-ITER_FUNC_ARGS_INDEX_DEFAULT = 0
-'''
-0-based index of the default value of each optional callable parameter and
-``None`` for each mandatory callable parameter in each 3-tuple yielded by the
-:func:`iter_func_args` generator.
-'''
+from typing import Any, Generator, Tuple
 
 # ....................{ TESTERS ~ kind                    }....................
 def is_func_argless(func: CallableOrCodeType) -> bool:
@@ -236,12 +198,52 @@ def is_func_arg_name(func: CallableOrCodeType, arg_name: str) -> bool:
     # false.
     return False
 
-
-#FIXME: Docstring us up, please. See the index docstrings above, which we
-#probably simply want to refactor away now that we think about it.
+# ....................{ GENERATORS                        }....................
 #FIXME: Unit test us up, please.
 def iter_func_args(func: CallableOrCodeType) -> Generator[
     Tuple[str, EnumMemberType, Any], None, None]:
+    '''
+    Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)`` for
+    each parameter accepted by the passed callable.
+
+    Specifically, this function dynamically creates and returns a new one-shot
+    generator yielding for each callable parameter one 3-tuple containing:
+
+    #. ``arg_name``, the name of the currently iterated parameter.
+    #. ``arg_kind``, the kind of the currently iterated parameter, guaranteed
+       to be one of the following enumeration members:
+
+       * :attr:`Parameter.POSITIONAL_OR_KEYWORD` for standard (i.e., positional
+         or keyword) parameters.
+       * :attr:`Parameter.POSITIONAL_ONLY` for positional-only parameters.
+       * :attr:`Parameter.KEYWORD_ONLY` for keyword-only parameters.
+       * :attr:`Parameter.VAR_POSITIONAL` for the variadic positional
+         parameter.
+       * :attr:`Parameter.VAR_KEYWORD` for the variadic keyword parameter.
+
+    #. ``arg_default``, either:
+
+       * If this parameter is mandatory, ``None``.
+       * If this parameter is optional, the default value of this parameter.
+
+    Caveats
+    ----------
+    **This highly optimized generator should always be called in lieu of the
+    highly unoptimized** :func:`inspect.signature` **function,** which
+    implements a similar introspection as this generator with significantly
+    worse space and time consumption.
+
+    Parameters
+    ----------
+    func : Union[Callable, CodeType]
+        Callable or code object to be inspected.
+
+    Returns
+    ----------
+    Generator[Tuple[str, EnumMemberType, Any], None, None]
+        Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)``
+        for each parameter accepted by this callable.
+    '''
 
     # Code object underlying this pure-Python callable.
     func_codeobj = get_func_codeobj(func)
@@ -356,7 +358,7 @@ def iter_func_args(func: CallableOrCodeType) -> Generator[
 
     # If this callable accepts a variadic positional parameter, yield a 3-tuple
     # describing this parameter.
-    if is_func_arg_variadic_positional(func):
+    if is_func_arg_variadic_positional(func_codeobj):
         yield (
             args_name[args_index_var_pos],
             Parameter.VAR_POSITIONAL,
@@ -365,7 +367,7 @@ def iter_func_args(func: CallableOrCodeType) -> Generator[
 
     # If this callable accepts variadic keyword arguments, yield a 3-tuple
     # describing this parameter.
-    if is_func_arg_variadic_keyword(func):
+    if is_func_arg_variadic_keyword(func_codeobj):
         yield (
             args_name[args_index_var_kw],
             Parameter.VAR_KEYWORD,

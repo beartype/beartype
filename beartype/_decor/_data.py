@@ -44,6 +44,8 @@ import inspect
 from beartype.cave import CallableCodeObjectType
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfuncscope import (
+    CallableScope, CallableScopesGlobalsLocals)
 from beartype._util.text.utiltextlabel import label_callable_decorated
 from collections.abc import Callable
 from inspect import Signature
@@ -100,6 +102,21 @@ class BeartypeData(object):
     func_sig : inspect.Signature
         :class:`inspect.Signature` object describing this signature.
 
+    Attributes (Scope)
+    ----------
+    func_globals : Dict[str, Any]
+        Dictionary mapping from the name to value of each **globally scoped
+        attribute** (i.e., global attribute declared by the module transitively
+        declaring this callable) accessible to the decorated callable.
+    func_locals : Dict[str, Any]
+        Either:
+
+        * If the decorated callable is a **closure** (i.e., callable declared
+          in another callable), dictionary mapping from the name to value of
+          each **locally scoped attribute** (i.e., local attribute declared by
+          a parent callable transitively declaring the decorated callable).
+        * Else, the empty dictionary.
+
     Attributes (String)
     ----------
     func_wrapper_name : str
@@ -120,6 +137,8 @@ class BeartypeData(object):
     __slots__ = (
         'func',
         'func_codeobj',
+        'func_globals',
+        'func_locals',
         'func_sig',
         'func_wrapper_name',
     )
@@ -156,12 +175,18 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
+        self.func_globals: CallableScope = None  # type: ignore[assignment]
+        self.func_locals: CallableScope = None  # type: ignore[assignment]
         self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
-    def reinit(self, func: Callable) -> None:
+    def reinit(
+        self,
+        func: Callable,
+        func_globals_locals: CallableScopesGlobalsLocals,
+    ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
         acquisition of a previously cached instance of this class from the
@@ -176,6 +201,11 @@ class BeartypeData(object):
         ----------
         func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
+        func_globals_locals : CallableScopesGlobalsLocals
+            2-tuple ``(globals, locals)`` of the global and local scope for
+            this callable, as returned by the
+            :func:`beartype._util.func.utilfuncscope.get_func_globals_locals`
+            getter.
 
         Raises
         ----------
@@ -192,12 +222,25 @@ class BeartypeData(object):
            https://www.python.org/dev/peps/pep-0563
         '''
         assert callable(func), f'{repr(func)} uncallable.'
+        assert isinstance(func_globals_locals, tuple), (
+            f'{repr(func_globals_locals)} not tuple.')
+        assert len(func_globals_locals) == 2, (
+            f'{repr(func_globals_locals)} not 2-tuple.')
+        assert (
+            isinstance(func_globals_locals[0], dict) and
+            isinstance(func_globals_locals[1], dict)
+        ), (
+            f'{repr(func_globals_locals)} not 2-tuple of dictionaries.')
 
         # Avoid circular import dependencies.
         from beartype._decor._pep563 import resolve_hints_postponed_if_needed
 
         # Callable currently being decorated.
         self.func = func
+
+        # Global and local scopes for this callable.
+        self.func_globals = func_globals_locals[0]
+        self.func_locals  = func_globals_locals[1]
 
         # Code object underlying this callable if this callable is a
         # pure-Python function or method *OR* raise an exception otherwise.

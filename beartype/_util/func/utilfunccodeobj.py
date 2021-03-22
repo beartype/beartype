@@ -42,6 +42,35 @@ def get_func_codeobj(
     For convenience, this getter also accepts a code object, in which case that
     code object is simply returned as is.
 
+    Code objects have a docstring under CPython resembling:
+
+    .. _code-block:: python
+
+       Code objects provide these attributes:
+           co_argcount         number of arguments (not including *, ** args
+                               or keyword only arguments)
+           co_code             string of raw compiled bytecode
+           co_cellvars         tuple of names of cell variables
+           co_consts           tuple of constants used in the bytecode
+           co_filename         name of file in which this code object was
+                               created
+           co_firstlineno      number of first line in Python source code
+           co_flags            bitmap: 1=optimized | 2=newlocals | 4=*arg |
+                               8=**arg | 16=nested | 32=generator | 64=nofree |
+                               128=coroutine | 256=iterable_coroutine |
+                               512=async_generator
+           co_freevars         tuple of names of free variables
+           co_posonlyargcount  number of positional only arguments
+           co_kwonlyargcount   number of keyword only arguments (not including
+                               ** arg)
+           co_lnotab           encoded mapping of line numbers to bytecode
+                               indices
+           co_name             name with which this code object was defined
+           co_names            tuple of names of local variables
+           co_nlocals          number of local variables
+           co_stacksize        virtual machine stack space required
+           co_varnames         tuple of names of arguments and local variables
+
     Parameters
     ----------
     func : Union[Callable, CodeType]
