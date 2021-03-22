@@ -30,6 +30,7 @@ from pytest import raises
 #* "AsyncGeneratorCType".
 #* "AsyncCoroutineCType".
 #* "AsyncCTypes".
+#* "CallableCTypes".
 
 # ....................{ CLASSES                           }....................
 # Test class defining all possible class-specific callables, including...
@@ -832,6 +833,12 @@ def test_api_cave_lib_setuptools() -> None:
         },
         # PEP 440-compliant version object.
         pkg_resources.parse_version('6.9.6a'),
+
+        #FIXME: Sadly, the recent deprecation of
+        #"pkg_resources.packaging.version.LegacyVersion" that we previously
+        #used to support PEP-440-noncompliant version objects also deprecates
+        #that support. Let's preserve this in the unlikely event we think of
+        #some non-deprecated means of resurrecting this. So it goes.
         # PEP 440-noncompliant version object.
-        pkg_resources.parse_version('6.9.6t'),
+        # pkg_resources.parse_version('6.9.6t'),
     )

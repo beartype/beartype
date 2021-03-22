@@ -1642,11 +1642,16 @@ except:
 try:
     import pkg_resources as _pkg_resources  # type: ignore
 
+    #FIXME: Now that "_pkg_resources.packaging.version.LegacyVersion" has been
+    #deprecated, we need to refactor this up as follows:
+    #* Define a new *PRIVATE* alias:
+    #  _SetuptoolsVersionType = _pkg_resources.packaging.version.Version
+    #  VersionComparableTypes += (_SetuptoolsVersionType,)
+    #  Exposing a "setuptools"-specific class was clearly a bad idea.
+    #* Refactor "SetuptoolsVersionTypes" to be deprecated by us, too. *shrug*
+
     # Define setuptools-specific types.
-    SetuptoolsVersionTypes = (
-        _pkg_resources.packaging.version.Version,        # type: ignore[attr-defined]
-        _pkg_resources.packaging.version.LegacyVersion,  # type: ignore[attr-defined]
-    )
+    SetuptoolsVersionTypes = (_pkg_resources.packaging.version.Version,)  # type: ignore[attr-defined]
     VersionComparableTypes += SetuptoolsVersionTypes
 # Else, setuptools is unimportable. While this should typically *NEVER* be the
 # case, edge cases gonna edge case.
