@@ -16,19 +16,66 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
 from collections.abc import Callable
-from types import CodeType, FunctionType, MethodType
+from types import CodeType, FrameType, FunctionType, MethodType
 from typing import Optional, Union
 
 # ....................{ HINTS                             }....................
-CallableOrCodeType = Union[Callable, CodeType]
+CallableOrFrameOrCodeType = Union[Callable, CodeType, FrameType]
 '''
 PEP-compliant type hint matching either a callable *or* code object.
 '''
 
+# ....................{ VALIDATORS                        }....................
+def die_unless_func_python(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException
+) -> None:
+    '''
+    Raise an exception if the passed function is **C-based** (i.e., implemented
+    in C as either a builtin bundled with the active Python interpreter *or*
+    third-party C extension function).
+
+    Equivalently, this validator raises an exception unless the passed function
+    is **pure-Python** (i.e., implemented in Python as either a function or
+    method).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+    exception_cls : type, optional
+        Type of exception to be raised if this callable is neither a
+        pure-Python function nor method. Defaults to
+        :class:`_BeartypeUtilCallableException`.
+
+    Raises
+    ----------
+    exception_cls
+         If this callable has *no* code object and is thus *not* pure-Python.
+    '''
+
+    # Code object underlying this callable if this callable is pure-Python *OR*
+    # "None" otherwise.
+    func_codeobj = get_func_codeobj_or_none(func)
+
+    # If this callable is *NOT* pure-Python, raise an exception.
+    if func_codeobj is None:
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        raise exception_cls(
+            f'Callable {repr(func)} code object not found '
+            f'(e.g., due to being either C-based or a class or object '
+            f'defining the ``__call__()`` dunder method).'
+        )
+    # Else, this code object exists.
+
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(
     # Mandatory parameters.
-    func: CallableOrCodeType,
+    func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
     exception_cls: type = _BeartypeUtilCallableException
@@ -73,9 +120,9 @@ def get_func_codeobj(
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
-    exception_cls : type
+    func : Union[Callable, CodeType, FrameType]
+        Callable or frame or code object to be inspected.
+    exception_cls : type, optional
         Type of exception to be raised if this callable is neither a
         pure-Python function nor method. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -87,14 +134,23 @@ def get_func_codeobj(
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    exception_cls
          If this callable has *no* code object and is thus *not* pure-Python.
     '''
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #FIXME: Synchronize this logic with get_func_codeobj_or_none().
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If the passed object is already a code object, return this object as is.
     if isinstance(func, CodeType):
         return func
     # Else, this object is *NOT* already a code object.
+    #
+    # If this object is a call stack frame, return this frame's code object.
+    elif isinstance(func, FrameType):
+        return func.f_code
+    # Else, this object is *NOT* a call stack frame and is thus a callable.
 
     # Code object underlying this callable if this callable is pure-Python *OR*
     # "None" otherwise.
@@ -102,20 +158,15 @@ def get_func_codeobj(
 
     # If this callable is *NOT* pure-Python, raise an exception.
     if func_codeobj is None:
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
-        raise exception_cls(
-            f'Callable {repr(func)} code object not found '
-            f'(e.g., due to being either C-based or a class or object '
-            f'defining the ``__call__()`` dunder method).'
-        )
-    # Else, this code object exists.
+        die_unless_func_python(func=func, exception_cls=exception_cls)
+    # Else, this callable is pure-Python and this code object exists.
 
     # Return this code object.
-    return func_codeobj
+    return func_codeobj  # type: ignore[return-value]
 
 
-def get_func_codeobj_or_none(func: Callable) -> Optional[CodeType]:
+def get_func_codeobj_or_none(
+    func: CallableOrFrameOrCodeType) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
     the passed callable if this callable is pure-Python *or* ``None`` otherwise
@@ -124,8 +175,8 @@ def get_func_codeobj_or_none(func: Callable) -> Optional[CodeType]:
 
     Parameters
     ----------
-    func : Callable
-        Callable to be inspected.
+    func : CallableOrFrameOrCodeType
+        Callable or frame or code object to be inspected.
 
     Returns
     ----------
@@ -137,6 +188,20 @@ def get_func_codeobj_or_none(func: Callable) -> Optional[CodeType]:
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #FIXME: Synchronize this logic with get_func_codeobj().
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # If the passed object is already a code object, return this object as is.
+    if isinstance(func, CodeType):
+        return func
+    # Else, this object is *NOT* already a code object.
+    #
+    # If this object is a call stack frame, return this frame's code object.
+    elif isinstance(func, FrameType):
+        return func.f_code
+
+    # Else, this object is *NOT* a call stack frame and is thus a callable.
     # If this callable is a pure-Python bound method, reduce this callable to
     # the pure-Python unbound function encapsulated by this method.
     #

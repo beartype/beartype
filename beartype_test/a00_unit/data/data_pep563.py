@@ -27,6 +27,8 @@ Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 from __future__ import annotations
 from beartype import beartype
 from beartype.cave import IntType
+from collections.abc import Callable
+from typing import List, Union
 
 # ....................{ CONSTANTS                         }....................
 _MINECRAFT_END_TXT_STANZAS = (
@@ -108,24 +110,67 @@ _MINECRAFT_END_TXT_STANZAS = (
     'Wake up.',
 )
 
-# ....................{ CALLABLES                         }....................
-# Callable intentionally decorated by @beartype.
+# ....................{ CALLABLES ~ module                }....................
+# Callables exercising module-scoped edge cases under PEP 563.
+
+def get_minecraft_end_txt(player_name: str) -> str:
+    '''
+    Callable *not* decorated by :func:`beartype.beartype`.
+
+    The ``test_pep_563()`` unit test tests that :func:`beartype.beartype`
+    silently accepts callables with one or more non-postponed annotations under
+    PEP 563 by manually resolving all postponed annotations on this callable
+    and then manually passing this callable to :func:`beartype.beartype`.
+    '''
+
+    return ''.join(_MINECRAFT_END_TXT_STANZAS).format(player_name=player_name)
+
+
 @beartype
 def get_minecraft_end_txt_stanza(
-    stanza_index: IntType, player_name: str) -> str:
+    player_name: str, stanza_index: IntType) -> str:
+    '''
+    Callable decorated by :func:`beartype.beartype`.
+    '''
+
     return _MINECRAFT_END_TXT_STANZAS[stanza_index].format(
         player_name=player_name)
 
+# ....................{ CALLABLES ~ closure               }....................
+# Callables exercising closure-scoped edge cases under PEP 563.
 
-# Callable intentionally *NOT* decorated by @beartype. The test_pep_563() unit
-# test tests that @beartype emits warnings when passed callables with one or
-# more non-postponed annotations under PEP 563 by manually resolving all
-# postponed annotations on this callable and then manually passing this
-# callable to @beartype.
-def get_minecraft_end_txt(player_name: str) -> str:
-    return ''.join(_MINECRAFT_END_TXT_STANZAS).format(player_name=player_name)
+@beartype
+def get_minecraft_end_txt_closure(player_name: str) -> Callable:
+    '''
+    Callable decorated by :func:`beartype.beartype`, internally declaring and
+    returning a closure also decorated by :func:`beartype.beartype` and
+    annotated by PEP-compliant type hints accessible only as local cell
+    variables to that closure.
+    '''
 
-# ....................{ CALLABLES ~ child limit           }....................
+    # PEP-compliant type hints accessible only as local cell variables to the
+    # following closure, exercising a significant edge case in PEP 563 support.
+    StringLike = Union[str, int, bytes]
+    ListOfStrings = List[str]
+
+    #FIXME: Uncomment after we finalize a working first draft for this.
+    # @beartype
+    def get_minecraft_end_txt_substr(substr: StringLike) -> ListOfStrings:
+        '''
+        Closure decorated by :func:`beartype.beartype`.
+        '''
+
+        return [
+            stanza.format(player_name=player_name)
+            for stanza in _MINECRAFT_END_TXT_STANZAS
+            if str(substr) in stanza
+        ]
+    # print(f'mc.__qualname__: {get_minecraft_end_txt_substr.__qualname__}')
+
+    # Return this closure.
+    return get_minecraft_end_txt_substr
+
+# ....................{ CALLABLES ~ limit                 }....................
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. Why not? Because some combination of the "typing" module

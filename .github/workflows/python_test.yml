@@ -105,10 +105,11 @@ jobs:
             python-version: 3.8
           - tox-env: py39
             python-version: 3.9
-          - tox-env: py310
-            #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
+          #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
+          #the development version now fails to build wheels. *shrug*
+          # - tox-env: py310
             # python-version: 3.10
-            python-version: 3.10-dev
+            # python-version: 3.10-dev
           - tox-env: pypy36
             python-version: pypy-3.6
           - tox-env: pypy37

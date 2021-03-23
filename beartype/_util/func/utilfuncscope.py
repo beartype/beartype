@@ -14,6 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
+from beartype._util.func.utilfunccodeobj import (
+    die_unless_func_python,
+    get_func_codeobj,
+    get_func_codeobj_or_none,
+)
 from collections.abc import Callable
 from typing import Any, Dict, Tuple
 
@@ -188,8 +193,12 @@ def is_func_closure(func: Callable) -> bool:
 #This is incredibly fragile, so tests.
 
 def get_func_globals_locals(
+    # Mandatory parameters.
     func: Callable,
-    func_stack_frames_ignore: int,
+
+    # Optional parameters.
+    func_stack_frames_ignore: int = 0,
+    exception_cls: type = _BeartypeUtilCallableException,
 ) -> CallableScopesGlobalsLocals:
     '''
     2-tuple ``(globals, locals)`` of the global and local scope for the passed
@@ -221,11 +230,14 @@ def get_func_globals_locals(
     ----------
     func : Callable
         Callable to be inspected.
-    func_stack_frames_ignore : int
+    func_stack_frames_ignore : int, optional
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past), such that the next non-ignored frame following the
         last ignored frame is the parent callable or module directly declaring
-        the passed callable.
+        the passed callable. Defaults to 0.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of fatal error. Defaults to
+        :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -235,9 +247,13 @@ def get_func_globals_locals(
 
     Raises
     ----------
-    _BeartypeUtilCallableException
-        If the next non-ignored frame following the last ignored frame is *not*
-        the parent callable or module directly declaring the passed callable.
+    exception_cls
+        If either:
+
+        * The passed callable unwraps to a C-based rather than pure-Python
+          wrappee callable.
+        * The next non-ignored frame following the last ignored frame is *not*
+          the parent callable or module directly declaring the passed callable.
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -249,16 +265,22 @@ def get_func_globals_locals(
     # Lowest-level wrappee callable wrapped by this wrapper callable.
     func_wrappee = unwrap_func(func)
 
-    # Dictionary mapping from the name to value of each locally scoped attribute
-    # accessible to this wrappee callable to be returned.
+    # If this callable is *NOT* pure-Python, raise an exception.
+    #
+    # Note that this is critical, as only pure-Python callables define various
+    # dunder attributes accessed below (e.g., "__globals__").
+    die_unless_func_python(func=func, exception_cls=exception_cls)
+
+    # Dictionary mapping from the name to value of each locally scoped
+    # attribute accessible to this wrappee callable to be returned.
     #
     # Note that we intentionally do *NOT* return the global scope for this
     # wrapper callable, as wrappers are typically defined in different modules
     # (and thus different global scopes) by different module authors.
     func_globals: CallableScope = func_wrappee.__globals__  # type: ignore[attr-defined]
 
-    # Dictionary mapping from the name to value of each locally scoped attribute
-    # accessible to this wrapper callable to be returned.
+    # Dictionary mapping from the name to value of each locally scoped
+    # attribute accessible to this wrapper callable to be returned.
     #
     # Note that we intentionally *DO* return the local scope for this wrapper
     # rather than wrappee callable, as local scope can *ONLY* be obtained by
@@ -278,58 +300,14 @@ def get_func_globals_locals(
         # declares that getter *OR* "None" otherwise.
         get_func_stack_frame = get_func_stack_frame_getter_or_none()
 
-        # If this interpreter declare that getter...
+        # If this interpreter declares that getter...
         if get_func_stack_frame is not None:
-            assert isinstance(func_stack_frames_ignore, int), (
-                f'{func_stack_frames_ignore} not integer.')
-            assert func_stack_frames_ignore >= 0, (
-                f'{func_stack_frames_ignore} negative.')
-
-            # Unqualified name of the passed callable.
-            func_name = func.__name__
-
-            # Ignore an additional frame on the call stack identifying the
-            # current call to this getter.
-            func_stack_frames_ignore += 1
-
-            # Next non-ignored frame following the last ignored frame.
-            func_frame = get_func_stack_frame(func_stack_frames_ignore)
-
-            #FIXME: Generalize all of the following logic to iteratively search
-            #up the call stack:
-            #* First, we need to get past all of the decorators that could have
-            #  been applied *AFTER* @beartype to this callable. So, search up
-            #  until we find a parent callable declaring the passed callable.
-            #* Then, we need to iteratively extend our locals with parent
-            #  callable locals until hitting a "<module>" boundary. We recall
-            #  seeing something somewhere about the special strings "<module>"
-            #  and "__module__" being useful for this purpose. That said, the
-            #  simplest solution may simply be to detect changes in the module
-            #  name. Note that we can trivially obtain module names with:
-            #      caller_module = func_frame.f_globals['__name__']
-            #  That said, it'd still be nice to detect module boundaries.
-            #  Perhaps simply leave a "FIXME" comment for later, yes?
-
-            # Unqualified name of the parent callable embodied by this frame.
-            func_frame_name = func_frame.f_code.co_name
-
-            # Dictionary mapping from the name to value of each locally scoped
-            # attribute accessible in the body of this parent callable.
-            func_frame_locals: CallableScope = func_frame.f_locals
-
-            # If this parent callable does *NOT* declare the passed callable,
-            # raise an exception.
-            if func_name not in func_frame_locals:
-                raise _BeartypeUtilCallableException(
-                    f'Closure {func_name}() not declared by parent callable '
-                    f'{func_frame_name}() with locals:\n'
-                    f'{func_frame_locals}'
-                )
-            # Else, this parent callable declares the passed callable.
-
-            # Extend the local scope of the passed callable with the local
-            # scope of this parent callable.
-            func_locals.update(func_frame_locals)
+            # Get this closure's local scope.
+            func_locals = _get_closure_locals(
+                func=func,
+                func_stack_frames_ignore=func_stack_frames_ignore,
+                exception_cls=exception_cls,
+            )
         # Else, this interpreter does *NOT* declare that getter. In this case,
         # we unconditionally treat this closure as module-scoped instead by
         # preserving "locals" as the empty dictionary.
@@ -338,3 +316,158 @@ def get_func_globals_locals(
 
     # Return the 2-tuple "(globals, locals)" of these global and local scopes.
     return (func_globals, func_locals)
+
+
+def _get_closure_locals(
+    func: Callable,
+    func_stack_frames_ignore: int,
+    exception_cls: type,
+) -> CallableScope:
+    '''
+    **Local scope** (i.e., dictionary mapping from the name to value of each
+    locally scoped attribute accessible to this closure).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+    func_stack_frames_ignore : int
+        Number of frames on the call stack to be ignored (i.e., silently
+        incremented past).
+    exception_cls : type
+        Type of exception to be raised in the event of fatal error.
+
+    Returns
+    ----------
+    Dict[str, Any]
+        Local scope for this closure.
+
+    Raises
+    ----------
+    exception_cls
+        If either:
+
+        * The next non-ignored frame following the last ignored frame is *not*
+          the parent callable or module directly declaring the passed callable.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+    assert isinstance(func_stack_frames_ignore, int), (
+        f'{func_stack_frames_ignore} not integer.')
+    assert func_stack_frames_ignore >= 0, (
+        f'{func_stack_frames_ignore} negative.')
+
+    # Note that the caller has explicitly validated this only conditionally
+    # available private getter to already exist.
+    from sys import _getframe
+
+    # Unqualified name of the passed callable.
+    func_name = func.__name__
+
+    # Fully-qualified name of the passed callable.
+    func_name = func.__name__
+
+    # Ignore additional frames on the call stack embodying:
+    # * The current call to this private getter.
+    # * The previous call to the public parent getter.
+    func_stack_frames_ignore += 2
+
+    # Next non-ignored frame following the last ignored frame.
+    func_frame = _getframe(func_stack_frames_ignore)
+
+    # Code object underlying this callable if this callable is pure-Python *OR*
+    # raise an exception otherwise.
+    func_frame_codeobj = get_func_codeobj(func_frame)
+
+    # Dictionary mapping from the name to value of each locally scoped
+    # attribute accessible to this wrapper callable to be returned.
+    func_locals: CallableScope = {}
+
+    #FIXME: Generalize all of the following logic to iteratively search
+    #up the call stack:
+    #* First, we need to get past all of the decorators that could have
+    #  been applied *AFTER* @beartype to this callable. So, search up
+    #  until we find a parent callable declaring the passed callable.
+    #* Then, we need to iteratively extend our locals with parent
+    #  callable locals until hitting a "<module>" boundary. We recall
+    #  seeing something somewhere about the special strings "<module>"
+    #  and "__module__" being useful for this purpose. That said, the
+    #  simplest solution may simply be to detect changes in the module
+    #  name. Note that we can trivially obtain module names with:
+    #      caller_module = func_frame.f_globals['__name__']
+    #  That said, it'd still be nice to detect module boundaries.
+    #  Perhaps simply leave a "FIXME" comment for later, yes?
+    #FIXME: Actually, we absolutely *DO* need to first parse
+    #"func.__qualname__" to associate callable names with relevant
+    #lexical scopes. Why? Because we need to ignore *ALL* callable
+    #names on the call stack not in a relevant lexical scope.
+    #
+    #*NOTE THAT PARSING "func.__qualname__" SHOULD BE TRIVIAL.* Why? Because we
+    #can just do something resembling:
+    #    func_scopes_name = func.__qualname__.rsplit('.')
+    #    func_scopes_name = tuple(
+    #        func_scope_name
+    #        for func_scope_name in func_scopes_name
+    #        if func_scope_name != '<locals>'
+    #    )
+    #Trivial. No regular expressions required. This should be considerably
+    #faster than regex-based iteration, too. We might even be able to refactor
+    #the above to avoid the tuple comprehension with "cleverness" resembling:
+    #    func_scopes_name = func.__qualname__.rsplit('.')
+    #    func_scopes_name_index = len(func_scopes_name) - 1
+    #    func_scope_name_next = func_scopes_name[func_scopes_name_index]
+    #
+    #    # Replace the existing horrible loop condition with this great one!
+    #    while func_scopes_name_index >= 0:
+    #        ...
+    #
+    #        # At the very end of this iteration...
+    #        func_scopes_name_index += -1
+    #        func_scope_name_next = func_scopes_name[func_scopes_name_index]
+    #
+    #        if func_scope_name == '<locals>':
+    #            func_scopes_name_index += -1
+    #            func_scope_name_next = func_scopes_name[func_scopes_name_index]
+    #Note that we could technically also use reversed iterators, but then we'd
+    #have to deal with StopException -- which is a *HUGE* pain we do not need.
+
+    # While at least one frame remains to be visited...
+    while func_frame:
+        # Code object underlying this callable if this callable is pure-Python
+        # *OR* "None" otherwise.
+        func_frame_codeobj = get_func_codeobj_or_none(func_frame)  # type: ignore[assignment]
+
+        # If this callable is *NOT* pure-Python, silently ignore this callable
+        # and proceed to the next frame in the call stack.
+        if func_frame_codeobj is not None:
+            continue
+        # Else, this callable is pure-Python; this code object exists.
+
+        # Unqualified name of the parent callable embodied by this frame.
+        func_frame_name = func_frame_codeobj.co_name
+
+        #FIXME: O.K.! Here's where we need to ignore this frame *UNLESS* this
+        #name is that of an unqualified name parsed from "func.__qualname__".
+
+        # Dictionary mapping from the name to value of each locally scoped
+        # attribute accessible in this parent callable's body.
+        func_frame_locals: CallableScope = func_frame.f_locals
+
+        # If this parent callable does *NOT* declare the passed callable, raise
+        # an exception.
+        if func_name not in func_frame_locals:
+            raise exception_cls(
+                f'Closure {func_name}() not declared by parent callable '
+                f'{func_frame_name}() with locals:\n'
+                f'{func_frame_locals}'
+            )
+        # Else, this parent callable declares the passed callable.
+
+        # Extend the local scope of the passed callable with the local scope of
+        # this parent callable.
+        func_locals.update(func_frame_locals)
+
+        # Iterate to the next frame on the call stack.
+        func_frame = func_frame.f_back
+
+    # Return this closure's local scope.
+    return func_locals

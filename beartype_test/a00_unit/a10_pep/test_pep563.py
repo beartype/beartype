@@ -21,14 +21,13 @@ This submodule unit tests `PEP 563`_ support implemented in the
 from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 # from pytest import raises
 
-# ....................{ TESTS ~ type                      }....................
+# ....................{ TESTS                             }....................
 @skip_if_python_version_less_than('3.7.0')
-def test_pep563() -> None:
+def test_pep563_module() -> None:
     '''
-    Test `PEP 563`_ support implemented in the :func:`beartype.beartype`
-    decorator if the active Python interpreter targets at least Python 3.7.0
-    (i.e., the first major Python version to support `PEP 563`_) *or* skip
-    otherwise.
+    Test module-scoped `PEP 563`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
 
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
@@ -65,7 +64,7 @@ def test_pep563() -> None:
 
     # Assert that a @beartype-decorated callable works under PEP 563.
     assert get_minecraft_end_txt_stanza(
-        stanza_index=33, player_name='Notch') == 'Notch. Player of games.'
+        player_name='Notch', stanza_index=33) == 'Notch. Player of games.'
 
     # Test that @beartype silently accepts callables with one or more
     # non-postponed annotations under PEP 563, a technically non-erroneous edge
@@ -85,6 +84,32 @@ def test_pep563() -> None:
     assert isinstance(get_minecraft_end_txt_typed(player_name='Notch'), str)
 
 
+@skip_if_python_version_less_than('3.7.0')
+def test_pep563_closure() -> None:
+    '''
+    Test closure-scoped `PEP 563`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
+
+    .. _PEP 563:
+       https://www.python.org/dev/peps/pep-0563
+    '''
+
+    # Defer heavyweight imports.
+    from beartype_test.a00_unit.data.data_pep563 import (
+        get_minecraft_end_txt_closure)
+
+    # Assert that declaring a @beartype-decorated closure works under PEP 563.
+    get_minecraft_end_txt_substr = get_minecraft_end_txt_closure(
+        player_name='Julian Gough')
+    assert callable(get_minecraft_end_txt_substr)
+
+    # Assert that this closure works under PEP 563.
+    minecraft_end_txt_substr = get_minecraft_end_txt_substr('player')
+    assert isinstance(minecraft_end_txt_substr, list)
+    assert 'You are the player.' in minecraft_end_txt_substr
+
+# ....................{ TESTS ~ limit                     }....................
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. See commentary in the
