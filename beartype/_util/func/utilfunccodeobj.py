@@ -141,7 +141,6 @@ def get_func_codeobj(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #FIXME: Synchronize this logic with get_func_codeobj_or_none().
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     # If the passed object is already a code object, return this object as is.
     if isinstance(func, CodeType):
         return func
@@ -186,12 +185,10 @@ def get_func_codeobj_or_none(
         * If this callable is pure-Python, this callable's code object.
         * Else, ``None``.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #FIXME: Synchronize this logic with get_func_codeobj().
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     # If the passed object is already a code object, return this object as is.
     if isinstance(func, CodeType):
         return func

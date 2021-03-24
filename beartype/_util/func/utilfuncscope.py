@@ -338,47 +338,39 @@ def _get_func_nested_locals(
     # nested callable was physically declared by an on-disk module *OR* "None".
     func_module_name = func.__module__
 
-    # Unqualified name of this nested callable.
-    func_name = func.__name__
-
     # ..................{ LOCALS ~ func : scope             }..................
     # Fully-qualified name of this nested callable identifying all lexical
     # scopes encapsulating this nested callable, stripped of all ".<locals"
     # placeholder substrings uselessly emphasizing nested callable contexts.
     #
     # For example, for an inner nested callable muh_closure() declared by an
-    # outer function muh_func() declared by a module "muh_module", this is:
+    # outer function muh_func(), this is:
     #     >>> func.__qualname__
-    #     'muh_module.muh_func.<locals>.muh_closure'
+    #     'muh_func.<locals>.muh_closure'
     #     >>> func_scopes_name_str
-    #     'muh_module.muh_func.muh_closure'
+    #     'muh_func.muh_closure'
     func_scopes_name_str = func.__qualname__.replace('.<locals>', '')
 
     # Human-readable label describing this nested callable in exceptions.
     func_label = f'Nested callable {func_scopes_name_str}()'
 
     # List of the unqualified names of all lexical scopes encapsulating this
-    # nested callable (e.g., "['muh_module', 'muh_func', 'muh_closure']").
+    # nested callable (e.g., "['muh_func', 'muh_closure']").
     func_scopes_name = func_scopes_name_str.split('.')
 
-    # If this nested callable is *NOT* encapsulated by at least three lexical scopes
-    # (signifying this nested callable, the parent callable declaring this
-    # nested callable, and the top-level module containing these callables),
-    # raise an exception.
-    if len(func_scopes_name) < 3:
+    # If this nested callable is *NOT* encapsulated by at least two lexical
+    # scopes (signifying this nested callable and the parent callable declaring
+    # this nested callable), raise an exception.
+    if len(func_scopes_name) < 2:
         raise exception_cls(
-            f'{func_label} lexical scopes len({repr(func_scopes_name)}) < 3.')
+            f'{func_label} lexical scopes len({repr(func_scopes_name)}) < 2.')
     # Else, this nested callable is encapsulated by at least three lexical scopes.
 
-    # Discard the:
-    # * First lexical scope, embodying the top-level module scope, which only
-    #   declares globals and is thus irrelevant to deciding local scopes.
-    # * Last lexical scope, which is *NOT* actually a scope but rather simply
-    #   the unqualified name of the passed callable.
-    #
-    # Since this nested callable is encapsulated by at least three lexical
-    # scopes, this list is guaranteed to contain at least one lexical scope.
-    func_scopes_name = func_scopes_name[1:-1]
+    # Discard the last lexical scope, which is *NOT* actually a scope but
+    # rather simply the unqualified name of the passed callable. Since this
+    # nested callable is encapsulated by at least two lexical scopes, this list
+    # is guaranteed to contain at least one lexical scope after this reduction.
+    func_scopes_name.pop()
 
     # 0-based index of the current lexical scope to be searched for in the
     # current runtime call stack.
@@ -428,7 +420,7 @@ def _get_func_nested_locals(
     # callable on the call stack.
     #
     # While at least one lexical scope remains to be found on the call stack...
-    print(f'{func_label} local scope capturing!')
+    # print(f'{func_label} local scope capturing!')
     while func_scopes_name_index >= 0:
         # Current lexical scope to be searched for in the call stack.
         func_scope_name_curr = func_scopes_name[func_scopes_name_index]
@@ -517,14 +509,23 @@ def _get_func_nested_locals(
         # Iterate to the next lexical scope to be found.
         func_scopes_name_index += -1
 
-    # If this transitive local scope does *NOT* declare this nested callable,
-    # the above iteration failed to capture at least the local scope of the
-    # parent callable declaring this nested callable. Raise an exception!
-    if func_name not in func_locals:
-        raise exception_cls(
-            f'{func_label} not declared by parent callables with '
-            f'call stack locals:\n\n{repr(func_locals)}'
-        )
-
     # Return this nested callable's local scope.
+    #
+    # Note that this scope *CANNOT* be validated to declare this nested
+    # callable. Why? Because this getter function is called by the @beartype
+    # decorator when decorating this nested callable, which has yet to be
+    # declared until @beartype creates and returns a new wrapper function and
+    # is thus unavailable from this scope: e.g.,
+    #
+    #     # This conditional *ALWAYS* raises an exception, because this nested
+    #     # callable has yet to be declared.
+    #     if func_name not in func_locals:
+    #         raise exception_cls(
+    #             f'{func_label} not declared by lexically scoped parent '
+    #             f'callable(s) that declared local variables:\n{repr(func_locals)}'
+    #         )
+    #
+    # Ergo, we have *NO* alternative but to blindly assume the above algorithm
+    # correctly collected this scope, which we only do because we have
+    # exhaustively tested this with *ALL* possible edge cases.
     return func_locals

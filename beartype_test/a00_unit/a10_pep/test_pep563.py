@@ -97,7 +97,9 @@ def test_pep563_closure() -> None:
 
     # Defer heavyweight imports.
     from beartype_test.a00_unit.data.data_pep563 import (
-        get_minecraft_end_txt_closure)
+        get_minecraft_end_txt_closure,
+        get_minecraft_end_txt_closure_factory,
+    )
 
     # Assert that declaring a @beartype-decorated closure works under PEP 563.
     get_minecraft_end_txt_substr = get_minecraft_end_txt_closure(
@@ -108,6 +110,45 @@ def test_pep563_closure() -> None:
     minecraft_end_txt_substr = get_minecraft_end_txt_substr('player')
     assert isinstance(minecraft_end_txt_substr, list)
     assert 'You are the player.' in minecraft_end_txt_substr
+
+    # Assert that declaring a @beartype-decorated closure factory works under
+    # PEP 563.
+    get_minecraft_end_txt_closure_outer = (
+        get_minecraft_end_txt_closure_factory(player_name='Markus Persson'))
+    assert callable(get_minecraft_end_txt_closure_outer)
+
+    # Assert that declaring a @beartype-decorated closure declared by a
+    # @beartype-decorated closure factory works under PEP 563.
+    get_minecraft_end_txt_closure_inner = get_minecraft_end_txt_closure_outer(
+        stanza_len_min=65)
+    assert callable(get_minecraft_end_txt_closure_inner)
+
+    # Assert that this closure works under PEP 563.
+    minecraft_end_txt_inner = get_minecraft_end_txt_closure_inner('thought')
+    assert isinstance(minecraft_end_txt_inner, list)
+    assert (
+        'It is reading our thoughts as though they were words on a screen.' in
+        minecraft_end_txt_inner
+    )
+    assert 'It cannot read that thought.' not in minecraft_end_txt_inner
+    assert 'It reads our thoughts.'       not in minecraft_end_txt_inner
+
+
+@skip_if_python_version_less_than('3.7.0')
+def test_pep563_class() -> None:
+    '''
+    Test class-scoped `PEP 563`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
+
+    .. _PEP 563:
+       https://www.python.org/dev/peps/pep-0563
+    '''
+
+    # Defer heavyweight imports.
+    # from beartype_test.a00_unit.data.data_pep563 import (
+    #     get_minecraft_end_txt_class,
+    # )
 
 # ....................{ TESTS ~ limit                     }....................
 #FIXME: Hilariously, we can't even unit test whether the

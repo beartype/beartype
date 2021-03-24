@@ -91,7 +91,10 @@ jobs:
         # List of all "tox" environments (defined by the "envlist" setting of
         # the "[tox]" subsection in "tox.ini") to be tested, which the
         # ${TOXENV} environment variable declared below exposes to "tox".
-        tox-env: [py36, py37, py38, py39, py310, pypy36, pypy37]
+        tox-env: [py36, py37, py38, py39, pypy36, pypy37]
+        #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
+        #the development version now fails to build wheels. *shrug*
+        # tox-env: [py36, py37, py38, py39, py310, pypy36, pypy37]
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
@@ -105,11 +108,10 @@ jobs:
             python-version: 3.8
           - tox-env: py39
             python-version: 3.9
-          #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
-          #the development version now fails to build wheels. *shrug*
-          # - tox-env: py310
+          - tox-env: py310
+            #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
             # python-version: 3.10
-            # python-version: 3.10-dev
+            python-version: 3.10-dev
           - tox-env: pypy36
             python-version: pypy-3.6
           - tox-env: pypy37
