@@ -21,7 +21,7 @@ from typing import Optional
 # ....................{ TESTERS                           }....................
 def get_func_stack_frame_getter_or_none() -> Optional[Callable]:
     '''
-    Private low-level :func:`sys._getframes` getter if the active Python
+    Private low-level :func:`sys._getframe` getter if the active Python
     interpreter declares that getter *or* ``None`` otherwise (i.e., if this
     interpreter does *not* declare that getter).
 
@@ -61,9 +61,9 @@ def get_func_stack_frame_getter_or_none() -> Optional[Callable]:
         Either:
 
         * If the active Python interpreter declares the private low-level
-          :func:`sys._getframes` getter, that getter.
+          :func:`sys._getframe` getter, that getter.
         * Else, ``None``.
     '''
 
     # Ultimate One-liners defy the Ancient Enemy!
-    return getattr(sys, '_getframes', None)
+    return getattr(sys, '_getframe', None)

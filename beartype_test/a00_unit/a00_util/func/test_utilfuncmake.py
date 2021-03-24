@@ -46,8 +46,8 @@ def test_make_func_pass() -> None:
     # Arbitrary wrapper accessing both globally and locally scoped attributes,
     # exercising most optional parameters.
     ulysses = make_func(
-        name='it_may_be_that_the_gulfs_will_wash_us_down',
-        code='''
+        func_name='it_may_be_that_the_gulfs_will_wash_us_down',
+        func_code='''
 def it_may_be_that_the_gulfs_will_wash_us_down(
     it_may_be_we_shall_touch_the_happy_isles: Optional[str]) -> str:
     return (
@@ -60,13 +60,13 @@ def it_may_be_that_the_gulfs_will_wash_us_down(
         )
     )
 ''',
-        attrs_global={
+        func_globals={
             'AND_SEE_THE_GREAT_ACHILLES': AND_SEE_THE_GREAT_ACHILLES,
             'THO_MUCH_IS_TAKEN': THO_MUCH_IS_TAKEN,
             'we_are_not_now_that_strength_which_in_old_days': (
                 we_are_not_now_that_strength_which_in_old_days),
         },
-        attrs_local={
+        func_locals={
             'Optional': Optional,
         },
         func_wrapped=we_are_not_now_that_strength_which_in_old_days,
@@ -82,8 +82,8 @@ def it_may_be_that_the_gulfs_will_wash_us_down(
 
     # Arbitrary callable accessing no scoped attributes.
     to_strive_to_seek_to_find = make_func(
-        name='to_strive_to_seek_to_find',
-        code='''
+        func_name='to_strive_to_seek_to_find',
+        func_code='''
 def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
     return and_not_to_yield
 ''',
@@ -103,18 +103,49 @@ def test_make_func_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorWrapperException
+    from beartype.roar import (
+        BeartypeDecorWrapperException,
+        _BeartypeUtilCallableException,
+    )
     from beartype._util.func.utilfuncmake import make_func
 
-    # Assert that attempting to create a syntactically invalid function raises
+    # Assert that attempting to create a function whose name collides with that
+    # of a caller-defined local variable raises the expected exception.
+    with raises(_BeartypeUtilCallableException):
+        make_func(
+            func_name='come_my_friends',
+            func_code='''
+def come_my_friends(T: str) -> str:
+    return T + 'is not too late to seek a newer world'
+''',
+            func_label='Magnanimous come_my_friends() function',
+            func_locals={
+                'come_my_friends': 'Push off, and sitting well in order smite',
+            },
+        )
+
+    # Assert that attempting to execute a syntactically invalid snippet raises
     # the expected exception.
     with raises(BeartypeDecorWrapperException):
         make_func(
-            name='to_sail_beyond_the_sunset',
-            code='''
+            func_name='to_sail_beyond_the_sunset',
+            func_code='''
 def to_sail_beyond_the_sunset(and_the_baths: str) -> str:
     Of all the western stars, until I die.
 ''',
-            label='Heroic to_sail_beyond_the_sunset() function',
-            code_exception_cls=BeartypeDecorWrapperException,
+            func_label='Heroic to_sail_beyond_the_sunset() function',
+            exception_cls=BeartypeDecorWrapperException,
+        )
+
+    # Assert that attempting to execute a syntactically valid snippet failing
+    # to declare this function raises the expected exception.
+    with raises(BeartypeDecorWrapperException):
+        make_func(
+            func_name='you_and_i_are_old',
+            func_code='''
+def old_age_hath_yet_his_honour_and_his_toil() -> str:
+    return 'Death closes all: but something ere the end'
+''',
+            func_label='Geriatric you_and_i_are_old() function',
+            exception_cls=BeartypeDecorWrapperException,
         )

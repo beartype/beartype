@@ -14,23 +14,24 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
+from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
-from typing import Any, Dict, Optional
+from typing import Optional
 
 # ....................{ TESTERS ~ kind                    }....................
 def make_func(
     # Mandatory arguments.
-    name: str,
-    code: str,
+    func_name: str,
+    func_code: str,
 
     # Optional arguments.
-    attrs_global: Optional[Dict[str, Any]] = None,
-    attrs_local:  Optional[Dict[str, Any]] = None,
-    label: Optional[str] = None,
-    code_exception_cls: type = _BeartypeUtilCallableException,
-    func_wrapped: Optional[Callable] = None
+    func_globals: Optional[CallableScope] = None,
+    func_locals:  Optional[CallableScope] = None,
+    func_label:   Optional[str] = None,
+    func_wrapped: Optional[Callable] = None,
+    exception_cls: type = _BeartypeUtilCallableException,
 ) -> Callable:
     '''
     Dynamically create and return a new function with the passed name declared
@@ -39,30 +40,27 @@ def make_func(
 
     Parameters
     ----------
-    name : str
+    func_name : str
         Name of the function to be created.
-    code : str
+    func_code : str
         Code snippet declaring this function, including both this function's
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    attrs_global : Dict[str, Any], optional
+    func_globals : Dict[str, Any], optional
         Dictionary mapping from the name to value of each **globally scoped
         attribute** (i.e., internally referenced in the body of the function
         declared by this code snippet). Defaults to the empty dictionary.
-    attrs_local : Dict[str, Any], optional
+    func_locals : Dict[str, Any], optional
         Dictionary mapping from the name to value of each **locally scoped
         attribute** (i.e., internally referenced either in the signature of
         the function declared by this code snippet *or* as decorators
         decorating that function). **Note that this factory necessarily
         modifies the contents of this dictionary.** Defaults to the empty
         dictionary.
-    label : str, optional
+    func_label : str, optional
         Human-readable label describing this function for error-handling
         purposes. Defaults to ``{name}()``.
-    code_exception_cls : type, optional
-        Class of exception to be raised if this code snippet is syntactically
-        invalid. Defaults to :exc:`_BeartypeUtilCallableException`.
     func_wrapped : Callable, optional
         Callable wrapped by the function to be created. If non-``None``,
         special dunder attributes will be propagated (i.e., copied) from this
@@ -73,6 +71,9 @@ def make_func(
         * ``__module__``, the fully-qualified name of this function's module.
 
         Defaults to ``None``.
+    exception_cls : type, optional
+        Class of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -81,24 +82,40 @@ def make_func(
 
     Raises
     ----------
-    _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+    exception_cls
+        If either:
+
+        * ``func_locals`` contains a key whose value is that of ``func_name``,
+          implying the caller already declared a local attribute whose name
+          collides with that of this function.
+        * This code snippet is syntactically invalid.
+        * This code snippet is syntactically valid but fails to declare a
+          function with this name.
     '''
-    assert isinstance(name, str), f'{repr(name)} not string.'
-    assert isinstance(code, str), f'{repr(code)} not string.'
+    assert isinstance(func_name, str), f'{repr(func_name)} not string.'
+    assert isinstance(func_code, str), f'{repr(func_code)} not string.'
 
     # Default all unpassed parameters.
-    if attrs_global is None:
-        attrs_global = {}
-    if attrs_local is None:
-        attrs_local = {}
-    if label is None:
-        label = f'{name}()'
-    assert isinstance(attrs_global, dict), (
-        f'{repr(attrs_global)} not dictionary.')
-    assert isinstance(attrs_local, dict), (
-        f'{repr(attrs_local)} not dictionary.')
-    assert isinstance(label, str), f'{repr(label)} not string.'
+    if func_globals is None:
+        func_globals = {}
+    if func_locals is None:
+        func_locals = {}
+    if func_label is None:
+        func_label = f'{func_name}()'
+    assert isinstance(func_globals, dict), (
+        f'{repr(func_globals)} not dictionary.')
+    assert isinstance(func_locals, dict), (
+        f'{repr(func_locals)} not dictionary.')
+    assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+
+    # If this function's name is already in this local scope, the caller
+    # already declared a local attribute whose name collides with this
+    # function's. For safety, raise an exception.
+    if func_name in func_locals:
+        raise exception_cls(
+            f'{func_label} already defined by caller locals:\n'
+            f'{repr(func_locals)}'
+        )
 
     # Attempt to declare this function as a closure of this factory. For
     # obscure and presumably uninteresting reasons, Python fails to locally
@@ -120,7 +137,7 @@ def make_func(
     # the current circumspect approach is preferred.
     try:
         # print('\n@beartyped {} wrapper:\n\n{}\n'.format(func_data.func_name, number_lines(func_code)))
-        exec(code, attrs_global, attrs_local)
+        exec(func_code, func_globals, func_locals)
 
         #FIXME: See above.
         #FIXME: Should "exec" be "single" instead? Does it matter? Is there any
@@ -144,16 +161,29 @@ def make_func(
         #         if not (
         #          ^
         #     SyntaxError: invalid syntax
-        raise code_exception_cls(
-            f'{label} unparseable:\n\n{number_lines(code)}') from exception
+        raise exception_cls(
+            f'{func_label} unparseable:\n\n'
+            f'{number_lines(func_code)}'
+        ) from exception
 
-    # This created function.
-    #
-    # Note that, as the above logic successfully compiled this function, this
-    # dictionary is guaranteed to contain a key with this function's name whose
-    # value is this function. Ergo, no additional validation of the existence
-    # of this key or the type of this function is warranted.
-    func: Callable = attrs_local[name]  # type: ignore[assignment]
+    # If this function's name is *NOT* in this local scope, this code snippet
+    # failed to declare this function. In this case, raise an exception.
+    if func_name not in func_locals:
+        raise exception_cls(
+            f'{func_label} undefined by code snippet:\n\n'
+            f'{number_lines(func_code)}'
+        )
+
+    # Function declared by this code snippet.
+    func: Callable = func_locals[func_name]  # type: ignore[assignment]
+
+    # If this function is uncallable and thus *NOT* a function, raise an
+    # exception.
+    if not callable(func):
+        raise exception_cls(
+            f'{func_label} defined by code snippet uncallable:\n\n'
+            f'{number_lines(func_code)}'
+        )
 
     # If this function wraps another callable, propagate dunder attributes from
     # that wrapped callable onto this wrapper function.

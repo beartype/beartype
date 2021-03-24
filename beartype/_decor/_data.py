@@ -175,8 +175,8 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
-        self.func_globals: CallableScope = None  # type: ignore[assignment]
-        self.func_locals: CallableScope = None  # type: ignore[assignment]
+        self.func_globals: Optional[CallableScope] = None
+        self.func_locals: Optional[CallableScope] = None
         self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
         self.func_wrapper_name: str = None  # type: ignore[assignment]
@@ -185,7 +185,7 @@ class BeartypeData(object):
     def reinit(
         self,
         func: Callable,
-        func_globals_locals: CallableScopesGlobalsLocals,
+        func_globals_locals: Optional[CallableScopesGlobalsLocals],
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -201,11 +201,12 @@ class BeartypeData(object):
         ----------
         func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
-        func_globals_locals : CallableScopesGlobalsLocals
+        func_globals_locals : Optional[CallableScopesGlobalsLocals]
             2-tuple ``(globals, locals)`` of the global and local scope for
-            this callable, as returned by the
+            this callable (as returned by the
             :func:`beartype._util.func.utilfuncscope.get_func_globals_locals`
-            getter.
+            getter) if `PEP 563_` is active for this callable *or* ``None``
+            otherwise.
 
         Raises
         ----------
@@ -222,25 +223,12 @@ class BeartypeData(object):
            https://www.python.org/dev/peps/pep-0563
         '''
         assert callable(func), f'{repr(func)} uncallable.'
-        assert isinstance(func_globals_locals, tuple), (
-            f'{repr(func_globals_locals)} not tuple.')
-        assert len(func_globals_locals) == 2, (
-            f'{repr(func_globals_locals)} not 2-tuple.')
-        assert (
-            isinstance(func_globals_locals[0], dict) and
-            isinstance(func_globals_locals[1], dict)
-        ), (
-            f'{repr(func_globals_locals)} not 2-tuple of dictionaries.')
 
         # Avoid circular import dependencies.
         from beartype._decor._pep563 import resolve_hints_postponed_if_needed
 
         # Callable currently being decorated.
         self.func = func
-
-        # Global and local scopes for this callable.
-        self.func_globals = func_globals_locals[0]
-        self.func_locals  = func_globals_locals[1]
 
         # Code object underlying this callable if this callable is a
         # pure-Python function or method *OR* raise an exception otherwise.
@@ -253,10 +241,28 @@ class BeartypeData(object):
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).
         self.func_sig = None  # type: ignore[assignment]
+        self.func_globals = None
+        self.func_locals = None
 
-        # Resolve all postponed annotations if any on this callable *BEFORE*
-        # parsing the actual annotations these postponed annotations refer to.
-        resolve_hints_postponed_if_needed(self)
+        # If PEP 563 is active for this callable...
+        if func_globals_locals is not None:
+            assert isinstance(func_globals_locals, tuple), (
+                f'{repr(func_globals_locals)} not tuple.')
+            assert len(func_globals_locals) == 2, (
+                f'{repr(func_globals_locals)} not 2-tuple.')
+            assert (
+                isinstance(func_globals_locals[0], dict) and
+                isinstance(func_globals_locals[1], dict)
+            ), (
+                f'{repr(func_globals_locals)} not 2-tuple of dictionaries.')
+
+            # Global and local scopes for this callable.
+            self.func_globals = func_globals_locals[0]
+            self.func_locals  = func_globals_locals[1]
+
+            # Resolve all postponed hints if any on this callable *BEFORE*
+            # parsing the actual hints these postponed hints refer to.
+            resolve_hints_postponed_if_needed(self)
 
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.

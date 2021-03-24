@@ -17,19 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import __future__
 from beartype.roar import (
     BeartypeDecorHintPep563Exception,
     BeartypeDecorHintPepException,
 )
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_7,
-)
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
-from sys import modules as sys_modules
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -84,90 +78,12 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
        https://www.python.org/dev/peps/pep-0563
     '''
 
-    # If this callable's annotations are postponed under PEP 563, resolve these
-    # annotations to their referents.
-    if _is_hints_postponed(data):
-        _resolve_hints_postponed(data)
-
-    #FIXME: We currently no longer require this, but nonetheless preserve this
-    #for both posterity and the unknowable future to come.
-    # Else, this callable's annotations are *NOT* postponed under PEP 563. In
-    # this case, shallowly copy the originating annotations dictionary to a
-    # beartype-specific annotations dictionary to enable other functions
-    # elsewhere to safely modify these annotations.
-    # else:
-    #     data.func_hints = data.func.__annotations__.copy()
-
-# ....................{ PRIVATE ~ resolvers               }....................
-def _is_hints_postponed(data: BeartypeData) -> bool:
-    '''
-    ``True`` only if `PEP 563`_ is active for the currently decorated callable.
-
-    Parameters
-    ----------
-    data : BeartypeData
-        Decorated callable to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if `PEP 563`_ is active for this callable.
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
-    '''
-    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-
-    # True only if PEP 563 is active for this callable.
-    #
-    # If the active Python interpreter targets Python >= 3.10, PEP 563 is
-    # unconditionally active. Ergo, *ALL* annotations including this callable's
-    # annotations are necessarily postponed.
-    is_hints_postponed = IS_PYTHON_AT_LEAST_3_10
-
-    # If the active Python interpreter targets at least Python 3.7.x, PEP 563
-    # is conditionally active only if...
-    if not is_hints_postponed and IS_PYTHON_AT_LEAST_3_7:
-        # Module declaring this callable.
-        func_module = sys_modules[data.func.__module__]
-
-        # "annotations" attribute declared by this module if any *OR* None.
-        func_module_annotations_attr = getattr(
-            func_module, 'annotations', None)
-
-        # If this attribute is the "__future__.annotations" object, then the
-        # module declaring this callable *MUST* necessarily have enabled PEP
-        # 563 support with a leading statement resembling:
-        #     from __future__ import annotations
-        is_hints_postponed = (
-             func_module_annotations_attr is __future__.annotations)
-
-    # Return true only if PEP 563 is active for this callable.
-    return is_hints_postponed
-
-
-def _resolve_hints_postponed(data: BeartypeData) -> None:
-    '''
-    Resolve all `PEP 563`_-based postponed annotations on the currently
-    decorated callable to their referents.
-
-    Parameters
-    ----------
-    data : BeartypeData
-        Decorated callable to be resolved.
-
-    Raises
-    ----------
-    BeartypeDecorHintPep563Exception
-        If evaluating a postponed annotation on this callable raises an
-        exception (e.g., due to that annotation referring to local state no
-        longer accessible from this deferred evaluation).
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
-    '''
-    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-    # print('annotations: {!r}'.format(func.__annotations__))
+    # If this callable's annotations are *NOT* postponed under PEP 563,
+    # silently reduce to a noop..
+    if data.func_globals is None:
+        return
+    # Else, this callable's annotations are postponed under PEP 563. In this
+    # case, resolve these annotations to their referents.
 
     # Localize attributes of this metadata for negligible efficiency gains.
     func = data.func
@@ -275,6 +191,12 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
         #
         # Because we should probably mention those complaints here.
         else:
+            #FIXME: Since CPython appears to currently be incapable of even
+            #defining a deeply nested annotation that would violate this limit,
+            #we avoid performing this test for the moment. Nonetheless, it's
+            #likely that CPython will permit such annotations to be defined at
+            #under some *VERY* distant major version. Ergo, we preserve this.
+
             # If the machine-readable representation of this annotation (which
             # internally encapsulates the same structural metadata as the
             # PEP 563-formatted postponed string representation of this
@@ -288,9 +210,9 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
             # PEP 563 as a mandatory backward compatibility-breaking change,
             # this penalty will effectively cease to existence for the
             # overwhelming majority of real-world annotations. *shrug*
-            _die_if_hint_repr_exceeds_child_limit(
-                hint_repr=repr(pith_hint),
-                pith_label=pith_label)
+            #_die_if_hint_repr_exceeds_child_limit(
+            #    hint_repr=repr(pith_hint),
+            #    pith_label=pith_label)
 
             # Silently preserve this annotation as is.
             func_hints[pith_name] = pith_hint
@@ -305,6 +227,15 @@ def _resolve_hints_postponed(data: BeartypeData) -> None:
     # justified. Everyone benefits from replacing useless postponed annotations
     # with useful real annotations; so, we do so.
     func.__annotations__ = func_hints
+
+    #FIXME: We currently no longer require this, but nonetheless preserve this
+    #for both posterity and the unknowable future to come.
+    # Else, this callable's annotations are *NOT* postponed under PEP 563. In
+    # this case, shallowly copy the originating annotations dictionary to a
+    # beartype-specific annotations dictionary to enable other functions
+    # elsewhere to safely modify these annotations.
+    # else:
+    #     data.func_hints = data.func.__annotations__.copy()
 
 
 # ....................{ PRIVATE ~ resolvers               }....................
