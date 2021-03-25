@@ -12,6 +12,7 @@ cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 from sys import exc_info, implementation
+from typing import Callable
 
 # ....................{ CLASSES                           }....................
 class Class(object):
@@ -75,6 +76,20 @@ def closure_cell_factory():
     return closure.__closure__[0]
 
 
+def decorator(func: Callable) -> Callable:
+    '''
+    **Identity decorator** (i.e., decorator returning the passed callable
+    unmodified).
+
+    This decorator enables logic elsewhere to exercise the
+    :mod:`beartype.beartype` decorator with respect to nested callables
+    decorated by both the :mod:`beartype.beartype` decorator and one or more
+    decorators *not* the :mod:`beartype.beartype` decorator.
+    '''
+
+    return func
+
+
 def generator_factory():
     '''
     Arbitrary pure-Python generator factory function.
@@ -82,7 +97,7 @@ def generator_factory():
 
     yield 1
 
-
+# ....................{ CALLABLES ~ async                 }....................
 async def async_generator_factory():
     '''
     Arbitrary pure-Python asynchronous generator factory function.

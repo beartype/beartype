@@ -124,31 +124,45 @@ def test_pep563_closure() -> None:
     assert callable(get_minecraft_end_txt_closure_inner)
 
     # Assert that this closure works under PEP 563.
-    minecraft_end_txt_inner = get_minecraft_end_txt_closure_inner('thought')
+    minecraft_end_txt_inner = get_minecraft_end_txt_closure_inner(
+        stanza_len_max=65, substr='thought')
     assert isinstance(minecraft_end_txt_inner, list)
-    assert (
-        'It is reading our thoughts as though they were words on a screen.' in
-        minecraft_end_txt_inner
-    )
-    assert 'It cannot read that thought.' not in minecraft_end_txt_inner
-    assert 'It reads our thoughts.'       not in minecraft_end_txt_inner
+    assert len(minecraft_end_txt_inner) == 1
+    assert minecraft_end_txt_inner[0] == (
+        'It is reading our thoughts as though they were words on a screen.')
 
 
-@skip_if_python_version_less_than('3.7.0')
-def test_pep563_class() -> None:
-    '''
-    Test class-scoped `PEP 563`_ support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
-    '''
-
-    # Defer heavyweight imports.
-    # from beartype_test.a00_unit.data.data_pep563 import (
-    #     get_minecraft_end_txt_class,
-    # )
+#FIXME: Uncomment after adding class support for PEP 563.
+# @skip_if_python_version_less_than('3.7.0')
+# def test_pep563_class() -> None:
+#     '''
+#     Test class-scoped `PEP 563`_ support implemented in the
+#     :func:`beartype.beartype` decorator if the active Python interpreter
+#     targets Python >= 3.7 *or* skip otherwise.
+#
+#     .. _PEP 563:
+#        https://www.python.org/dev/peps/pep-0563
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype_test.a00_unit.data.data_pep563 import (
+#         MinecraftEndTxtUnscrambler)
+#
+#     # Assert that instantiating a class with a @beartype-decorated __init__()
+#     # method declaring a @beartype-decorated method closure works.
+#     minecraft_end_txt_unscrambler = MinecraftEndTxtUnscrambler(
+#         unscrambling='dream')
+#
+#     # Assert that that __init__() method declared that method closure.
+#     get_minecraft_end_txt_unscrambled_stanza = (
+#         minecraft_end_txt_unscrambler.get_minecraft_end_txt_unscrambled_stanza)
+#     assert callable(get_minecraft_end_txt_unscrambled_stanza)
+#
+#     # Assert that this method closure works under PEP 563.
+#     minecraft_end_txt_unscrambled_stanza = (
+#         get_minecraft_end_txt_unscrambled_stanza(is_stanza_last=True))
+#     assert isinstance(minecraft_end_txt_unscrambled_stanza, str)
+#     assert minecraft_end_txt_unscrambled_stanza.count('dream') is 5
 
 # ....................{ TESTS ~ limit                     }....................
 #FIXME: Hilariously, we can't even unit test whether the

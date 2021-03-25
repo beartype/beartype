@@ -17,12 +17,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeDecorHintPep563Exception,
-    BeartypeDecorHintPepException,
-)
+from beartype.roar import BeartypeDecorHintPep563Exception
 from beartype._decor._data import BeartypeData
-from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
 
 # See the "beartype.cave" submodule for further commentary.
@@ -142,12 +138,17 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
         #    because in all likelihood the stack frame at the time of the call no
         #    longer exists."
 
+            #FIXME: Since CPython appears to currently be incapable of even
+            #defining a deeply nested annotation that would violate this limit,
+            #we avoid performing this test for the moment. Nonetheless, it's
+            #likely that CPython will permit such annotations to be defined at
+            #under some *VERY* distant major version. Ergo, we preserve this.
             # If this string internally exceeds the child limit (i.e., maximum
             # number of nested child type hints listed as subscripted arguments
             # of the parent PEP-compliant type hint produced by evaluating this
             # string) permitted by the @beartype decorator, raise an exception.
-            _die_if_hint_repr_exceeds_child_limit(
-                hint_repr=pith_hint, pith_label=pith_label)
+            #_die_if_hint_repr_exceeds_child_limit(
+            #    hint_repr=pith_hint, pith_label=pith_label)
 
             # Attempt to resolve this postponed annotation to its referent.
             try:
@@ -191,12 +192,7 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
         #
         # Because we should probably mention those complaints here.
         else:
-            #FIXME: Since CPython appears to currently be incapable of even
-            #defining a deeply nested annotation that would violate this limit,
-            #we avoid performing this test for the moment. Nonetheless, it's
-            #likely that CPython will permit such annotations to be defined at
-            #under some *VERY* distant major version. Ergo, we preserve this.
-
+            #FIXME: See above.
             # If the machine-readable representation of this annotation (which
             # internally encapsulates the same structural metadata as the
             # PEP 563-formatted postponed string representation of this
@@ -237,89 +233,92 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     # else:
     #     data.func_hints = data.func.__annotations__.copy()
 
-
 # ....................{ PRIVATE ~ resolvers               }....................
-def _die_if_hint_repr_exceeds_child_limit(
-    hint_repr: str, pith_label: str) -> None:
-    '''
-    Raise an exception if the passed machine-readable representation of an
-    arbitrary annotation internally exceeds the **child limit** (i.e., maximum
-    number of nested child type hints listed as subscripted arguments of
-    PEP-compliant type hints) permitted by the :func:`beartype.beartype`
-    decorator.
-
-    The :mod:`beartype` decorator internally traverses over these nested child
-    types of the parent PEP-compliant type hint produced by evaluating this
-    string representation to its referent with a breadth-first search (BFS).
-    For efficiency, this search is iteratively implemented with a cached
-    **fixed list** (i.e.,
-    :class:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList`
-    instance) rather than recursively implemented with traditional recursion.
-    Since the size of this list is sufficiently large to handle all uncommon
-    *and* uncommon edge cases, this list suffices for *all* PEP-compliant type
-    hints of real-world interest.
-
-    Nonetheless, safety demands that we guarantee this by explicitly raising an
-    exception when the internal structure of this string suggests that the
-    resulting PEP-compliant type hint will subsequently violate this limit.
-    This has the convenient side effect of optimizing that BFS, which may now
-    unconditionally insert child hints into arbitrary indices of that cached
-    fixed list without having to explicitly test whether each index exceeds the
-    fixed length of that list.
-
-    Caveats
-    ----------
-    **This function is currently irrelevant.** Why? Because all existing
-    implementations of the :mod:`typing` module are sufficiently
-    space-consumptive that they already implicitly prohibit deep nesting of
-    PEP-compliant type hints. See commentary in the
-    :mod:`beartype_test.a00_unit.data.data_pep563` submodule for appalling details.
-    Ergo, this validator could technically be disabled. Indeed, if this
-    validator actually incurred any measurable costs, it *would* be disabled.
-    Since it doesn't, this validator has preserved purely for forward
-    compatibility with some future revision of the :mod:`typing` module that
-    hopefully improves that module's horrid space consumption.
-
-    Parameters
-    ----------
-    hint_repr : str
-        Machine-readable representation of this annotation, typically but *not*
-        necessarily as a `PEP 563`_-formatted postponed string.
-    pith_label : str
-        Human-readable label describing the callable parameter or return value
-        annotated by this string.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this representation internally exceeds this limit.
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
-    '''
-    assert isinstance(hint_repr, str), f'{repr(hint_repr)} not string.'
-
-    # Total number of hints transitively encapsulated in this hint (i.e., the
-    # total number of all child hints of this hint as well as this hint
-    # itself), defined as the summation of...
-    hints_num = (
-        # Number of parent PEP-compliant type hints nested in this hint,
-        # including this hint itself *AND*...
-        hint_repr.count('[') +
-        # Number of child type hints (both PEP-compliant type hints and
-        # non-"typing" types) nested in this hint, excluding the last child
-        # hint subscripting each parent PEP-compliant type hint *AND*...
-        hint_repr.count(',') +
-        # Number of last child hints subscripting all parent PEP-compliant type
-        # hints.
-        hint_repr.count(']')
-    )
-
-    # If this number exceeds the fixed length of the cached fixed list with
-    # which the @beartype decorator traverses this hint, raise an exception.
-    if hints_num >= SIZE_BIG:
-        raise BeartypeDecorHintPepException(
-            f'{pith_label} hint representation "{hint_repr}" '
-            f'contains {hints_num} subscripted arguments '
-            f'exceeding maximum limit {SIZE_BIG-1}.'
-        )
+#FIXME: We currently no longer require this. See above for further commentary.
+# from beartype.roar import BeartypeDecorHintPepException
+# from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
+#
+# def _die_if_hint_repr_exceeds_child_limit(
+#     hint_repr: str, pith_label: str) -> None:
+#     '''
+#     Raise an exception if the passed machine-readable representation of an
+#     arbitrary annotation internally exceeds the **child limit** (i.e., maximum
+#     number of nested child type hints listed as subscripted arguments of
+#     PEP-compliant type hints) permitted by the :func:`beartype.beartype`
+#     decorator.
+#
+#     The :mod:`beartype` decorator internally traverses over these nested child
+#     types of the parent PEP-compliant type hint produced by evaluating this
+#     string representation to its referent with a breadth-first search (BFS).
+#     For efficiency, this search is iteratively implemented with a cached
+#     **fixed list** (i.e.,
+#     :class:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList`
+#     instance) rather than recursively implemented with traditional recursion.
+#     Since the size of this list is sufficiently large to handle all uncommon
+#     *and* uncommon edge cases, this list suffices for *all* PEP-compliant type
+#     hints of real-world interest.
+#
+#     Nonetheless, safety demands that we guarantee this by explicitly raising an
+#     exception when the internal structure of this string suggests that the
+#     resulting PEP-compliant type hint will subsequently violate this limit.
+#     This has the convenient side effect of optimizing that BFS, which may now
+#     unconditionally insert child hints into arbitrary indices of that cached
+#     fixed list without having to explicitly test whether each index exceeds the
+#     fixed length of that list.
+#
+#     Caveats
+#     ----------
+#     **This function is currently irrelevant.** Why? Because all existing
+#     implementations of the :mod:`typing` module are sufficiently
+#     space-consumptive that they already implicitly prohibit deep nesting of
+#     PEP-compliant type hints. See commentary in the
+#     :mod:`beartype_test.a00_unit.data.data_pep563` submodule for appalling details.
+#     Ergo, this validator could technically be disabled. Indeed, if this
+#     validator actually incurred any measurable costs, it *would* be disabled.
+#     Since it doesn't, this validator has preserved purely for forward
+#     compatibility with some future revision of the :mod:`typing` module that
+#     hopefully improves that module's horrid space consumption.
+#
+#     Parameters
+#     ----------
+#     hint_repr : str
+#         Machine-readable representation of this annotation, typically but *not*
+#         necessarily as a `PEP 563`_-formatted postponed string.
+#     pith_label : str
+#         Human-readable label describing the callable parameter or return value
+#         annotated by this string.
+#
+#     Raises
+#     ----------
+#     BeartypeDecorHintPepException
+#         If this representation internally exceeds this limit.
+#
+#     .. _PEP 563:
+#        https://www.python.org/dev/peps/pep-0563
+#     '''
+#     assert isinstance(hint_repr, str), f'{repr(hint_repr)} not string.'
+#
+#     # Total number of hints transitively encapsulated in this hint (i.e., the
+#     # total number of all child hints of this hint as well as this hint
+#     # itself), defined as the summation of...
+#     hints_num = (
+#         # Number of parent PEP-compliant type hints nested in this hint,
+#         # including this hint itself *AND*...
+#         hint_repr.count('[') +
+#         # Number of child type hints (both PEP-compliant type hints and
+#         # non-"typing" types) nested in this hint, excluding the last child
+#         # hint subscripting each parent PEP-compliant type hint *AND*...
+#         hint_repr.count(',') +
+#         # Number of last child hints subscripting all parent PEP-compliant type
+#         # hints.
+#         hint_repr.count(']')
+#     )
+#
+#     # If this number exceeds the fixed length of the cached fixed list with
+#     # which the @beartype decorator traverses this hint, raise an exception.
+#     if hints_num >= SIZE_BIG:
+#         raise BeartypeDecorHintPepException(
+#             f'{pith_label} hint representation "{hint_repr}" '
+#             f'contains {hints_num} subscripted arguments '
+#             f'exceeding maximum limit {SIZE_BIG-1}.'
+#         )
