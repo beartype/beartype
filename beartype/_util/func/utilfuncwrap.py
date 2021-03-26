@@ -16,7 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from collections.abc import Callable
 
 # ....................{ UNWRAPPERS                        }....................
-#FIXME: Unit test us up, please.
 def unwrap_func(func: Callable) -> Callable:
     '''
     Lowest-level **wrappee** (i.e., callable wrapped by the passed wrapper
@@ -54,5 +53,48 @@ def unwrap_func(func: Callable) -> Callable:
         func = func.__wrapped__  # type: ignore[attr-defined]
 
     # Return this lowest-level wrappee, which is now guaranteed to *NOT* itself
-    # by a wrapper.
+    # be a wrapper.
     return func
+
+
+#FIXME: Unclear whether we'll ever require this, but preserved as is for now.
+# def get_func_wrappee(func: Callable) -> Callable:
+#     '''
+#     **Wrappee** (i.e., lower-level callable) originally wrapped by the passed
+#     **wrapper** (i.e., higher-level callable typically produced by the
+#     :mod:`functools.wraps` decorator) if this wrapper actually is a wrapper
+#     *or* raise an exception otherwise (i.e., if this wrapper is *not* actually
+#     a wrapper).
+#
+#     Parameters
+#     ----------
+#     func : Callable
+#         Wrapper to be unwrapped.
+#
+#     Returns
+#     ----------
+#     Callable
+#         Wrappee wrapped by this wrapper.
+#
+#     Raises
+#     ----------
+#     _BeartypeUtilCallableException
+#          If this callable is *not* a wrapper.
+#     '''
+#     assert callable(func), f'{repr(func)} not callable.'
+#
+#     # Wrappee wrapped by this wrapper if this wrapper actually is a wrapper
+#     # *OR* "None" otherwise.
+#     wrappee = getattr(func, '__wrapped__', None)
+#
+#     # If this wrapper is *NOT* actually a wrapper, raise an exception.
+#     if wrappee is None:
+#         raise _BeartypeUtilCallableException(
+#             f'Callable {func} not wrapper '
+#             f'(i.e., "__wrapped__" attribute undefined).'
+#         )
+#     # Else, this wrapper is a wrapper. In this case, this wrappee exists.
+#
+#     # Return this wrappee.
+#     return wrappee
+

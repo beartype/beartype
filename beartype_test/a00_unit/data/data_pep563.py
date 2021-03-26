@@ -166,6 +166,7 @@ def get_minecraft_end_txt_closure(player_name: str) -> Callable:
     StringLike = Union[str, int, bytes]
     ListOfStrings = ListStrType
 
+    # Intentionally delimited by one layer of decoration to exercise edges.
     @decorator
     @beartype
     @decorator
@@ -205,6 +206,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     IntLike = Union[float, int]
     ReturnType = Callable
 
+    # Intentionally delimited by two layers of decoration to exercise edges.
     @decorator
     @decorator
     @beartype
@@ -228,11 +230,8 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
         StringLike = Union[str, bytes]
         ReturnType = ListStrType
 
-        @decorator
-        @decorator
+        # Intentionally delimited by no layers of decoration to exercise edges.
         @beartype
-        @decorator
-        @decorator
         def get_minecraft_end_txt_closure_inner(
             stanza_len_max: IntLike,
             substr: StringLike,
@@ -263,52 +262,51 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
 # ....................{ CLASSES                           }....................
 # Classes exercising module-scoped edge cases under PEP 563.
 
-#FIXME: Uncomment after adding class support for PEP 563.
 #FIXME: We should probably nest this class in a function to exercise
 #everything, but this would seem to suffice for now as an initial foray.
-# class MinecraftEndTxtUnscrambler(object):
-#     '''
-#     Class declaring a method decorated by :func:`beartype.beartype` annotated
-#     by PEP-compliant type hints accessible only as class variables.
-#     '''
-#
-#     # PEP-compliant type hints accessible only as class variables to the
-#     # following method, exercising a significant edge case in PEP 563 support.
-#     NoneIsh = None
-#     TextIsh = Union[str, bytes]
-#
-#     @beartype
-#     def __init__(self, unscrambling: TextIsh) -> NoneIsh:
-#         '''
-#         Method decorated by :func:`beartype.beartype`, annotated by
-#         PEP-compliant type hints accessible only as class variables.
-#         '''
-#
-#         _minecraft_end_txt_stanzas_unscrambled = [
-#             minecraft_end_txt_stanza.replace('[scrambled]', unscrambling)
-#             for minecraft_end_txt_stanza in _MINECRAFT_END_TXT_STANZAS
-#             if '[scrambled]' in minecraft_end_txt_stanza
-#         ]
-#
-#         # PEP-compliant type hints accessible only as local variables to the
-#         # following closure, exercising an edge case in PEP 563 support.
-#         BoolIsh = Union[bool, float, int]
-#
-#         @beartype
-#         def get_minecraft_end_txt_unscrambled_stanza_closure(
-#             self, is_stanza_last: BoolIsh) -> TextIsh:
-#             '''
-#             Closure decorated by :func:`beartype.beartype`, annotated by
-#             PEP-compliant type hints accessible only as both class and local
-#             variables.
-#             '''
-#
-#             return _minecraft_end_txt_stanzas_unscrambled[
-#                 int(bool(is_stanza_last))]
-#
-#         # Reuse this closure as a bound method.
-#         self.get_minecraft_end_txt_unscrambled_stanza = (
-#             get_minecraft_end_txt_unscrambled_stanza_closure)
+class MinecraftEndTxtUnscrambler(object):
+    '''
+    Class declaring a method decorated by :func:`beartype.beartype` annotated
+    by PEP-compliant type hints accessible only as class variables.
+    '''
+
+    # PEP-compliant type hints accessible only as class variables to the
+    # following method, exercising a significant edge case in PEP 563 support.
+    NoneIsh = None
+    TextIsh = Union[str, bytes]
+
+    @beartype
+    def __init__(self, unscrambling: TextIsh) -> NoneIsh:
+        '''
+        Method decorated by :func:`beartype.beartype`, annotated by
+        PEP-compliant type hints accessible only as class variables.
+        '''
+
+        _minecraft_end_txt_stanzas_unscrambled = [
+            minecraft_end_txt_stanza.replace('[scrambled]', unscrambling)
+            for minecraft_end_txt_stanza in _MINECRAFT_END_TXT_STANZAS
+            if '[scrambled]' in minecraft_end_txt_stanza
+        ]
+
+        # PEP-compliant type hints accessible only as local variables to the
+        # following closure, exercising an edge case in PEP 563 support.
+        BoolIsh = Union[bool, float, int]
+
+        @beartype
+        def get_minecraft_end_txt_unscrambled_stanza_closure(
+            self, is_stanza_last: BoolIsh) -> self.TextIsh:
+            '''
+            Closure decorated by :func:`beartype.beartype`, annotated by
+            PEP-compliant type hints accessible only as both class and local
+            variables.
+            '''
+
+            return _minecraft_end_txt_stanzas_unscrambled[
+                int(bool(is_stanza_last))]
+
+        # Reuse this closure as a bound method.
+        self.get_minecraft_end_txt_unscrambled_stanza = (
+            get_minecraft_end_txt_unscrambled_stanza_closure)
 
 # ....................{ CALLABLES ~ limit                 }....................
 #FIXME: Hilariously, we can't even unit test whether the

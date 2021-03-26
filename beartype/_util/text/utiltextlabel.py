@@ -13,7 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cls.utilclstest import is_classname_builtin
-from beartype._util.utilobject import get_object_type_name
+from beartype._util.utilobject import (
+    get_object_scopes_name,
+    get_object_type_name,
+)
 from collections.abc import Callable
 
 # See the "beartype.cave" submodule for further commentary.
@@ -38,7 +41,7 @@ def label_callable(func: Callable) -> str:
     assert callable(func), f'{repr(func)} uncallable.'
 
     # Create and return this label.
-    return f'{func.__name__}()'
+    return f'{get_object_scopes_name(func)}()'
 
 
 def label_callable_decorated(func: Callable) -> str:
@@ -173,7 +176,7 @@ def label_callable_decorated_return(func: Callable) -> str:
     '''
 
     # Create and return this label.
-    return f'{label_callable_decorated(func)} return '
+    return f'{label_callable_decorated(func)} return'
 
 
 def label_callable_decorated_return_value(

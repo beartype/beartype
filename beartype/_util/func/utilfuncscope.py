@@ -57,89 +57,80 @@ def is_func_nested(func: Callable) -> bool:
     assert callable(func), f'{repr(func)} not callable.'
 
     # Return true only if the fully-qualified name of this callable contains
-    # the one or more ".<locals>" placeholder substrings signifying
-    # closure-specific lexical scopes.
-    return '.<locals>.' in func.__qualname__
+    # one or more "." delimiters, each signifying a nested lexical scope. Since
+    # *ALL* callables (i.e., both pure-Python and C-based) define a non-empty
+    # "__qualname__" dunder variable containing at least their unqualified
+    # names, this simplistic test is guaranteed to be safe.
+    #
+    # Note this function intentionally tests for the general-purpose existence
+    # of a "." delimiter rather than the special-cased existence of a
+    # ".<locals>." placeholder substring. Why? Because there are two types of
+    # nested callables:
+    # * Non-methods, which are lexically nested in a parent callable whose
+    #   scope encapsulates all previously declared local variables. For unknown
+    #   reasons, the unqualified names of nested non-method callables are
+    #   *ALWAYS* prefixed by ".<locals>." in their "__qualname__" variables:
+    #       >>> from collections.abc import Callable
+    #       >>> def muh_parent_callable() -> Callable:
+    #       ...     def muh_nested_callable() -> None: pass
+    #       ...     return muh_nested_callable
+    #       >>> muh_nested_callable = muh_parent_callable()
+    #       >>> muh_parent_callable.__qualname__
+    #       'muh_parent_callable'
+    #       >>> muh_nested_callable.__qualname__
+    #       'muh_parent_callable.<locals>.muh_nested_callable'
+    # * Methods, which are lexically nested in the scope encapsulating all
+    #   previously declared class variables (i.e., variables declared in class
+    #   scope and thus accessible as method annotations). For unknown reasons,
+    #   the unqualified names of methods are *NEVER* prefixed by ".<locals>."
+    #   in their "__qualname__" variables: e.g.,
+    #       >>> from typing import ClassVar
+    #       >>> class MuhClass(object):
+    #       ...    # Class variable declared in class scope.
+    #       ...    muh_class_var: ClassVar[type] = int
+    #       ...    # Instance method annotated by this class variable.
+    #       ...    def muh_method(self) -> muh_class_var: return 42
+    #       >>> MuhClass.muh_method.__qualname__
+    #       'MuhClass.muh_method'
+    return '.' in func.__qualname__
 
 
 #FIXME: Unit test us up.
 #FIXME: Technically, we currently don't call this anywhere. But we probably
 #will someday, so let's preserve this intact until then. *shrug*
-def is_func_closure(func: Callable) -> bool:
-    '''
-    ``True`` only if the passed callable is a **closure** (i.e.,
-    nested callable accessing one or more variables declared by the parent
-    callable also declaring that callable).
-
-    Note that all closures are necessarily nested callables but that the
-    converse is *not* necessarily the case. In particular, a nested callable
-    accessing no variables declared by the parent callable also declaring that
-    callable is *not* a closure.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this callable is a closure.
-    '''
-    assert callable(func), f'{repr(func)} not callable.'
-
-    # Return true only if this callable defines a closure-specific dunder
-    # attribute.
-    #
-    # Note that the "__closure__" dunder variable is either:
-    # * If this callable is a closure, a tuple of zero or more cell variables.
-    # * If this callable is a pure-Python non-closure, "None".
-    # * If this callable is C-based, undefined.
-    return getattr(func, '__closure__', None) is not None
+# def is_func_closure(func: Callable) -> bool:
+#     '''
+#     ``True`` only if the passed callable is a **closure** (i.e.,
+#     nested callable accessing one or more variables declared by the parent
+#     callable also declaring that callable).
+#
+#     Note that all closures are necessarily nested callables but that the
+#     converse is *not* necessarily the case. In particular, a nested callable
+#     accessing no variables declared by the parent callable also declaring that
+#     callable is *not* a closure.
+#
+#     Parameters
+#     ----------
+#     func : Callable
+#         Callable to be inspected.
+#
+#     Returns
+#     ----------
+#     bool
+#         ``True`` only if this callable is a closure.
+#     '''
+#     assert callable(func), f'{repr(func)} not callable.'
+#
+#     # Return true only if this callable defines a closure-specific dunder
+#     # attribute.
+#     #
+#     # Note that the "__closure__" dunder variable is either:
+#     # * If this callable is a closure, a tuple of zero or more cell variables.
+#     # * If this callable is a pure-Python non-closure, "None".
+#     # * If this callable is C-based, undefined.
+#     return getattr(func, '__closure__', None) is not None
 
 # ....................{ TESTERS                           }....................
-#FIXME: Insufficient. We also need to dynamically obtain
-#"func_locals" by either:
-#* If "func" is actually a @beartype-decorated class, then PEP 563
-#  itself provides the algorithm for retrieving this:
-#      For classes, localns can be composed by chaining vars of the
-#      given class and its base classes (in the method resolution
-#      order). Since slots can only be filled after the class was
-#      defined, we don't need to consult them for this purpose.
-#  That seems... pretty intense. We're fairly certain "typing"
-#  might already support something like that? Research us up..
-#FIXME: How does this intersect with class and instance methods? Do
-#we actually exercise @beartype against class and instance methods
-#in our test suite anywhere? We suspect... not. Obviously, we need
-#to begin doing that. *sigh*
-#FIXME: Actually, it still might be a bit worse than described
-#above, because (nested) classes also interact with (nested)
-#closures. Fortunately, note that decorators can non-trivially
-#decide whether they're currently decorating an unbound method
-#(which tests as a function from the perspective of isinstance) or
-#a non-class function. How? By inspecting the call stack yet again.
-#From an exceptionally useful StackOverflow post:
-#    Take a look at the output of inspect.stack() when you wrap a
-#    method. When your decorator's execution is underway, the
-#    current stack frame is the function call to your decorator;
-#    the next stack frame down is the @ wrapping action that is
-#    being applied to the new method; and the third frame will be
-#    the class definition itself, which merits a separate stack
-#    frame because the class definition is its own namespace (that
-#    is wrapped up to create a class when it is done executing).
-#See also:
-#    https://stackoverflow.com/a/8793684/2809027
-#
-#Our intuitive analysis of the situation suggests that, for our
-#purposes, (nested) classes and closures should effectively be
-#solvable by the exact same algorithm with *NO* special handling
-#required for (nested) classes, since (nested) class declarations
-#are simply additional frames on the call stack. Nice! Two birds
-#with one stone to go.
-#FIXME: Note that this StackOverflow answer offers an extreme (albeit
-#interesting) means of differentiating unbound methods from functions:
-#    https://stackoverflow.com/a/48836522/2809027
-
 #FIXME: Exercise all edge cases with a unit test:
 #* Declaring a closure decorated by both @beartype and another
 #  decorator (probably just the identity decorator for simplicity).
@@ -182,6 +173,32 @@ def get_func_globals_locals(
        callable if this callable is **nested** (i.e., callable declared in
        another callable) *or* the empty dictionary otherwise (i.e., if this
        callable is directly declared in a module).
+
+    Design
+    ----------
+    This getter transparently supports:
+
+    * **Wrapped callables** (i.e.,
+    * **Methods**, which are lexically nested in the scope encapsulating all
+      previously declared **class variables** (i.e., variables declared from
+      class scope and thus accessible as type hints when annotating the methods
+      of that class). When declaring a class, Python creates a stack frame for
+      the declaration of that class whose local scope is the set of all
+      class-scope attributes declared in the body of that class (including
+      class variables, class methods, static methods, and instance methods).
+      When passed any method, this getter finds and returns that local scope.
+      When passed the ``MuhClass.muh_method` method declared by the following
+      example, for example, this getter returns the local scope containing the
+      key ``'muh_class_var'`` with value ``int``:
+
+      .. code-block:: python
+
+         >>> from typing import ClassVar
+         >>> class MuhClass(object):
+         ...    # Class variable declared in class scope.
+         ...    muh_class_var: ClassVar[type] = int
+         ...    # Instance method annotated by this class variable.
+         ...    def muh_method(self) -> muh_class_var: return 42
 
     Caveats
     ----------
@@ -228,14 +245,15 @@ def get_func_globals_locals(
         get_func_stack_frame_getter_or_none)
     from beartype._util.func.utilfuncwrap import unwrap_func
 
-    # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func(func)
-
     # If this callable is *NOT* pure-Python, raise an exception.
     #
     # Note that this is critical, as only pure-Python callables define various
     # dunder attributes accessed below (e.g., "__globals__").
     die_unless_func_python(func=func, exception_cls=exception_cls)
+    # Else, this callable is pure-Python, raise an exception.
+
+    # Lowest-level wrappee callable wrapped by this wrapper callable.
+    func_wrappee = unwrap_func(func)
 
     # Dictionary mapping from the name to value of each locally scoped
     # attribute accessible to this wrappee callable to be returned.
@@ -259,27 +277,6 @@ def get_func_globals_locals(
     # we would erroneously return local attributes that this wrappee callable
     # originally had no lexical access to. That's bad. So, we don't do that.
     func_locals: CallableScope = {}
-
-    #FIXME: Add support for methods, too. Fortunately, this appears to be
-    #considerably easier than expected. Why? Because class declarations
-    #actually appear on the call stack. Moreover, the "f_locals" dictionary of
-    #their frame is exactly the requisite dictionary, which is incredibly
-    #fortuitous. This will require generalizations below resembling:
-    #* Rename is_func_nested() to is_object_nested(). That tester's
-    #  implementation will need to be generalized to support both callables
-    #  nested both in other callables as nested callables and in classes as
-    #  standard methods. In the latter case, no "<locals>" substring exists.
-    #  Ergo, refactor that tester to something resembling:
-    #    def is_object_nested(obj: Any) -> bool:
-    #        return '.' in getattr(obj, '__qualname__', '')  # <---- sweet
-    #* Rename _get_func_nested_locals() to _get_object_nested_locals() and
-    #  generalize that function's implementation as well. Notably, that
-    #  function can no longer assume that the second-to-last scope is the
-    #  ignorable placeholder "<locals>". Instead, that function should:
-    #    func_scope_name = func_scopes_name[-2]
-    #    if func_scope_name == '<locals>':
-    #        func_scope_name = func_scopes_name[-3]
-    #Everything else appears sane, fortuitously. Let's do this!
 
     # If this callable is nested...
     # print(f'Capturing {func.__qualname__}() local scope...')
@@ -366,13 +363,8 @@ def _get_func_nested_locals(
     func_label = f'Nested callable {func_name}()'
 
     # ..................{ LOCALS ~ scope                    }..................
-    #FIXME: *WOOPS.* Looks like this is substantially simpler than previously
-    #expected. We don't need the outer iteration below, because "f_locals"
-    #thankfully already encapsulates the full scope we require. Ergo, we only
-    #need to find and directly return the first relevant "f_locals" dictionary
-    #unmodified -- which will be that of the parent callable directly declaring
-    #this nested callable. Phew! That dramatically improves the runtime
-    #efficiency, which is a solid win for bearkind.
+    # Fully-qualified name of this callable.
+    func_scopes = func.__qualname__
 
     # List of the unqualified names of all lexical scopes encapsulating this
     # nested callable.
@@ -399,19 +391,18 @@ def _get_func_nested_locals(
     #     end of that stack.
     #   * Lexical scopes for scopes with corresponding frames, beginning at the
     #     last lexical scope.
-    func_scopes_name = func.__qualname__.split('.')
+    func_scopes_name = func_scopes.split('.')
 
-    # Assert this nested callable is *NOT* encapsulated by at least three
-    # lexical scopes identifying this nested callable, a "<locals>" placeholder
-    # string, and the parent callable declaring this nested callable.
-    assert len(func_scopes_name) >= 3, (
-        f'{func_label} lexical scopes len({repr(func_scopes_name)}) < 3.')
+    # Assert this nested callable is *NOT* encapsulated by at least two lexical
+    # scopes identifying at least this nested callable and the parent callable
+    # or class declaring this nested callable.
+    assert len(func_scopes_name) >= 2, (
+        f'{func_label} not nested (i.e., fully-qualified name '
+        f'"{func_scopes}" identical to unqualified name "{func_name}").')
     assert func_scopes_name[-1] == func_name, (
-        f'{func_label} last lexical scope '
-        f'"{func_scopes_name[-1]}" != "{func_name}".')
-    assert func_scopes_name[-2] == '<locals>', (
-        f'{func_label} second-to-last lexical scope '
-        f'"{func_scopes_name[-2]}" != "<locals>".')
+        f'{func_label} fully-qualified name "{func_scopes}" invalid '
+        f'(i.e., last lexical '
+        f'scope "{func_scopes_name[-1]}" not unqualified name "{func_name}").')
 
     # Lexical scope encapsulating the parent callable directly containing and
     # thus declaring this nested callable -- which by the above validation is
@@ -425,7 +416,17 @@ def _get_func_nested_locals(
     # scope). Since that parent callable's local runtime scope is exactly the
     # dictionary to be returned, iteration below searches up the runtime call
     # stack for a stack frame embodying that parent callable and no further.
-    func_scope_name = func_scopes_name[-3]
+    func_scope_name = func_scopes_name[-2]
+
+    # If this lexical scope is a placeholder substring specific to nested
+    # non-method callables, ignore this placeholder by preferring the actual
+    # lexical scope preceding this placeholder.
+    if func_scope_name == '<locals>':
+        assert len(func_scopes_name) >= 3, (
+            f'{func_label} fully-qualified name "{func_scopes}" invalid '
+            f'(i.e., placeholder substring "<locals>" not preceded by '
+            f'unqualified name of parent callable).')
+        func_scope_name = func_scopes_name[-3]
 
     # ..................{ LOCALS ~ frame                    }..................
     # Ignore additional frames on the call stack embodying:

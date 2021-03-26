@@ -160,7 +160,10 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             except Exception as exception:
                 raise BeartypeDecorHintPep563Exception(
                     f'{pith_label} postponed hint '
-                    f'"{pith_hint}" not evaluable.'
+                    f'{repr(pith_hint)} syntactically invalid '
+                    f'(i.e., "{str(exception)}") under:\n'
+                    f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
+                    f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
                 ) from exception
         # Else, this annotation is *NOT* a PEP 563-formatted postponed string.
         # Since PEP 563 is active for this callable, this implies this
