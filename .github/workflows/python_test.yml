@@ -196,10 +196,11 @@ jobs:
       #    run: coverage xml
       #That said, let's just get this to work for now. *sigh*
       - name: 'Installing test coverage dependencies...'
-        run: python -m pip --quiet install --upgrade coverage 
+        run: python -m pip --quiet install --upgrade pytest pytest-cov
+        # run: python -m pip --quiet install --upgrade coverage 
       - name: 'Generating test coverage...'
-        run: python -m coverage xml
-        # run: python -m pytest --cov --cov-report xml --maxfail=1
+        run: python -m pytest --cov --cov-report xml --maxfail=1
+        # run: python -m coverage xml
 
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v1'
