@@ -74,7 +74,7 @@ show_missing = True
 # ....................{ REPORT ~ format                    }...................
 # Low-level settings configuring how coverage emits format-specific reports.
 [html]
-output = ./coverage.html
+directory = ./coverage.html
 
 [xml]
 output = ./coverage.xml
