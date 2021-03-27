@@ -16,7 +16,7 @@
 |beartype-banner|
 =================
 
-|ci-badge| |rtd-badge|
+|ci-badge| |codecov-badge| |rtd-badge|
 
 .. parsed-literal::
 
@@ -31,7 +31,7 @@
 efficiency, portability, and thrilling puns.
 
 .. code-block:: bash
-      
+
    # Install beartype.
    $ pip3 install beartype
 
@@ -78,12 +78,12 @@ constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
-Actions`_ **+** tox_ **+** pytest_, and `permissively distributed <beartype
-license_>`__ under the `MIT license`_. Beartype has *no* runtime dependencies,
-`only one test-time dependency <pytest_>`__, and `only one documentation-time
-dependency <Sphinx_>`__. Beartype supports `all actively developed Python
-versions <Python status_>`__, `all Python package managers <Install_>`__, and
-`multiple platform-specific package managers <Install_>`__.
+Actions`_ **+** tox_ **+** pytest_ **+** Codecov_, and `permissively
+distributed <beartype license_>`__ under the `MIT license`_. Beartype has *no*
+runtime dependencies, `only one test-time dependency <pytest_>`__, and `only
+one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
+developed Python versions <Python status_>`__, `all Python package managers
+<Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -2867,9 +2867,14 @@ application stack at tool rather than Python runtime) include:
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://beartype.rtfd.io
    :alt: beartype —[ the bare-metal type checker ]—
+
+.. # ------------------( IMAGES ~ badge                     )------------------
 .. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=test
    :alt: beartype continuous integration (CI) status
+.. |codecov-badge| image:: https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ
+   :target: https://codecov.io/gh/beartype/beartype
+   :alt: beartype test coverage status
 .. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
@@ -3120,6 +3125,8 @@ application stack at tool rather than Python runtime) include:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
 
 .. # ------------------( LINKS ~ py : package : test        )------------------
+.. _Codecov:
+   https://about.codecov.io
 .. _pytest:
    https://docs.pytest.org
 .. _tox:

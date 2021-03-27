@@ -188,7 +188,6 @@ def get_minecraft_end_txt_closure(player_name: str) -> Callable:
     return get_minecraft_end_txt_substr
 
 
-#FIXME: Exercise variable precedence here.
 @beartype
 def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     '''

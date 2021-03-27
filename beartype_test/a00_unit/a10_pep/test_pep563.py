@@ -18,7 +18,10 @@ This submodule unit tests `PEP 563`_ support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test.util.mark.pytskip import (
+    skip_if_pypy,
+    skip_if_python_version_less_than,
+)
 # from pytest import raises
 
 # ....................{ TESTS                             }....................
@@ -85,9 +88,9 @@ def test_pep563_module() -> None:
 
 
 @skip_if_python_version_less_than('3.7.0')
-def test_pep563_closure() -> None:
+def test_pep563_closure_nonnested() -> None:
     '''
-    Test closure-scoped `PEP 563`_ support implemented in the
+    Test non-nested closure-scoped `PEP 563`_ support implemented in the
     :func:`beartype.beartype` decorator if the active Python interpreter
     targets Python >= 3.7 *or* skip otherwise.
 
@@ -97,9 +100,7 @@ def test_pep563_closure() -> None:
 
     # Defer heavyweight imports.
     from beartype_test.a00_unit.data.data_pep563 import (
-        get_minecraft_end_txt_closure,
-        get_minecraft_end_txt_closure_factory,
-    )
+        get_minecraft_end_txt_closure)
 
     # Assert that declaring a @beartype-decorated closure works under PEP 563.
     get_minecraft_end_txt_substr = get_minecraft_end_txt_closure(
@@ -110,6 +111,56 @@ def test_pep563_closure() -> None:
     minecraft_end_txt_substr = get_minecraft_end_txt_substr('player')
     assert isinstance(minecraft_end_txt_substr, list)
     assert 'You are the player.' in minecraft_end_txt_substr
+
+
+#FIXME: *REPORT AN UPSTREAM ISSUE WITH THE PYPY TRACKER AT:*
+#    https://foss.heptapod.net/pypy/pypy/-/issues
+#So, what's going on here? What's going on here is that PyPy appears to be
+#slightly broken with respect to the "FrameType.f_locals" dictionary. Whereas
+#CPython provides the actual dictionary of lexically scoped locals required by
+#the current frame, PyPy only dynamically computes that dictionary on-the-fly.
+#This dynamic computation is known to fail cross-thread but was assumed to be
+#fully compliant with CPython expectations when running in the same thread.
+#
+#This does *NOT* appear to be the case. Specifically, the "IntLike" local
+#variable declared by the top-level get_minecraft_end_txt_closure_factory()
+#function is:
+#* Correctly accessible to the lowest-level
+#  get_minecraft_end_txt_closure_inner() closure with respect to actual
+#  interpretation of statements and thus declaration of closures by PyPy.
+#* Incorrectly omitted from the "FrameType.f_locals" dictionary of the frame
+#  object for the mid-level get_minecraft_end_txt_closure_outer() closure
+#  declaring the lowest-level get_minecraft_end_txt_closure_inner() closure.
+#  What's bizarre is that that dictionary correctly includes the "player_name"
+#  parameter accepted by the top-level get_minecraft_end_txt_closure_factory()
+#  function.
+#
+#Clearly, what's happening here is that PyPy developers failed to add local
+#variables of lexical scopes declared by distant parent callables (i.e.,
+#callables that are *NOT* the direct parent of the lowest-level closure in
+#question) when those local variables are *ONLY* accessed in annotations.
+#Moreover, when those local variables are accessed outside annotations (as
+#with the "player_name" parameter) in the body of the lowest-level closure,
+#those variables are correctly added to the "FrameType.f_locals" dictionary.
+#Ergo, this is an annotation-specific issue in the internal algorithm PyPy
+#uses to dynamically construct that dictionary on-the-fly. Admittedly, this was
+#an edge case that basically didn't matter until PEP 563 landed -- at which
+#point this edge case *REALLY* mattered.
+@skip_if_pypy()
+@skip_if_python_version_less_than('3.7.0')
+def test_pep563_closure_nested() -> None:
+    '''
+    Test nested closure-scoped `PEP 563`_ support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
+
+    .. _PEP 563:
+       https://www.python.org/dev/peps/pep-0563
+    '''
+
+    # Defer heavyweight imports.
+    from beartype_test.a00_unit.data.data_pep563 import (
+        get_minecraft_end_txt_closure_factory)
 
     # Assert that declaring a @beartype-decorated closure factory works under
     # PEP 563.

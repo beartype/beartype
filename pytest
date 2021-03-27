@@ -43,10 +43,7 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
-#FIXME: Add support for optionally running "pytest-cov" instead if available.
-
-# Run this project's pytest-based test suite with all passed arguments.
-# Dismantled, this is:
+# Array of all arguments to be passed to "pytest" below. Dismantled, this is:
 #
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
@@ -81,12 +78,27 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-command python3 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
-# command python3.6 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
-# command python3.8 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
-# command python3.9 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
-# command python3.10 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
-# command pypy3.6 -X dev -m pytest --color=yes --maxfail=1 "${@}" .
+pytest_args=(
+    -X dev -m pytest '--color=yes' '--maxfail=1'
+    "${@}"
+)
+
+# If passed the "-k" option, avoid measuring coverage. Why? Because that option
+# restricts testing to a subset of tests, guaranteeing that coverage
+# measurements will be misleading at best and trigger a test failure at worst
+# (e.g., if the "fail_under" option is enabled in ".coveragerc").
+if [[ " ${pytest_args[*]} " =~ " -k " ]]; then
+    pytest_args+=( '--no-cov' )
+fi
+# echo "pytest args: ${pytest_args[*]}"
+
+# Run this project's pytest-based test suite with all passed arguments.
+command python3 "${pytest_args[@]}" .
+# command python3.6 "${pytest_args[@]}" .
+# command python3.8 "${pytest_args[@]}" .
+# command python3.9 "${pytest_args[@]}" .
+# command python3.10 "${pytest_args[@]}" .
+# command pypy3.7 "${pytest_args[@]}" .
 
 # 0-based exit code reported by the prior command.
 exit_code=$?
