@@ -96,8 +96,10 @@ if [[ " ${pytest_args[*]} " =~ " -k " ]]; then
 #   * This is configured via the top-level ".coveragerc" dotfile.
 # * "--no-cov-on-fail", conditionally disabling "pytest-cov"-based test
 #   coverage reporting if one or more tests fail.
+# * "--cov-report term", generating a CLI-specific test report.
+# * "--cov-report xml", generating an XML-specific test report.
 else
-    pytest_args+=( --cov --no-cov-on-fail )
+    pytest_args+=( --cov --no-cov-on-fail --cov-report term --cov-report xml )
 fi
 # echo "pytest args: ${pytest_args[*]}"
 

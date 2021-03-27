@@ -20,8 +20,17 @@
 # Low-level settings configuring how coverage is measured.
 [run]
 
-# Comma- or newline-separated list of package names to be measured.
-source_pkgs = beartype
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: "coverage" is fragile and well-known to silently fail to behave as
+# expected if the option "source = ." is *NOT* explicitly specified here.
+# Notably, enabling the following option succeeds when generating CLI-based
+# reports but inexplicably fails when generating XML-formatted reports:
+#     # Comma- or newline-separated list of package names to be measured.
+#     source_pkgs = beartype
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Comma- or newline-separated list of all pathnames and/or package names to be
+# measured. Note that this should typically *NEVER* be modified.
+source = .
 
 # Comma- or newline-separated list of glob-formatted pathnames to be omitted
 # from measurement, specified only for completeness.
@@ -43,6 +52,10 @@ branch = True
 # High-level settings configuring how coverage reports measurements.
 [report]
 
+# Comma- or newline-separated list of all pathnames measured above to be
+# included in on-disk reports.
+include = beartype/*
+
 # If the total coverage measurement falls under this number, exit with a
 # "coverage"-specific failure status code of 2.
 #
@@ -57,3 +70,11 @@ precision = 2
 # Add a column "Missing" listing the comma-delimited line number ranges of all
 # missing lines for each covered submodule to coverage reports.
 show_missing = True
+
+# ....................{ REPORT ~ format                    }...................
+# Low-level settings configuring how coverage emits format-specific reports.
+[html]
+output = ./coverage.html
+
+[xml]
+output = ./coverage.xml
