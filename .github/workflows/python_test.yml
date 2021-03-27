@@ -185,7 +185,6 @@ jobs:
       #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
         run: python -m tox --skip-missing-interpreters=false
-with:
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v1'
         with:
