@@ -43,10 +43,8 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
-# Run this project's tox-based test suite with all passed arguments.
-# Dismantled, this is:
-# * "tox -e", exercising only the passed comma-delimited list of environments.
-#   Note this implicitly disables the "envlist" default in "tox.ini".
+# Comma-delimited list of all tox environments. Dismantled, this is:
+#
 # * "tox -l", listing all environments defined by the "envlist" default.
 # * "grep linux", removing all duplicate platform-specific environments from
 #   that list.
@@ -55,8 +53,24 @@ pushd "${script_dirname}" >/dev/null
 #
 # This pipeline is gratefully inspired by this StackOverflow answer:
 #     https://stackoverflow.com/a/56387013/2809027
-#command tox -e $(command tox -l | command grep linux | command paste -sd "," -)
-command python3 -m tox "${@}"
+tox_envs="$(command tox -l | command paste -sd "," -)"
+
+# Strip the optional "-coverage" suffix from these environments, preventing
+# tox from measuring coverage. While tox can be made to measure coverage at the
+# command line, coverage is best measured either:
+# * Directly by "pytest" from the command line.
+# * Indirectly by "tox" from continuous integration (CI).
+tox_envs="${tox_envs//-coverage}"
+
+# Print this munged list for debuggability.
+echo "Exercising tox environments \"${tox_envs}\"..."
+
+# Run this project's tox-based test suite with all passed arguments.
+# Dismantled, this is:
+#
+# * "tox -e", exercising only the passed comma-delimited list of environments.
+#   Note this implicitly disables the "envlist" default in "tox.ini".
+command python3 -m tox -e "${tox_envs}" "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

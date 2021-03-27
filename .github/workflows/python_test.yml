@@ -63,6 +63,9 @@ on:
 
 # ....................{ MAIN                              }....................
 jobs:
+  # ...................{ TESTS                             }...................
+  # Job iteratively exercising our test suite against all Python interpreters
+  # supported by this package (and also measuring the coverage of that suite).
   tests:
     # ..................{ MATRIX                            }..................
     strategy:
@@ -91,35 +94,42 @@ jobs:
         # List of all "tox" environments (defined by the "envlist" setting of
         # the "[tox]" subsection in "tox.ini") to be tested, which the
         # ${TOXENV} environment variable declared below exposes to "tox".
-        tox-env: [py36, py37, py38, py39, pypy36, pypy37]
-        #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
-        #the development version now fails to build wheels. *shrug*
-        # tox-env: [py36, py37, py38, py39, py310, pypy36, pypy37]
+        tox-env:
+          - py36-coverage
+          - py37-coverage
+          - py38-coverage
+          - py39-coverage
+          - pypy36-coverage
+          - pypy37-coverage
+
+          #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
+          #the development version now fails to build wheels. *shrug*
+          # - py310-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
         # "actions/setup-python" GitHub Action run below.
         include:
-          - tox-env: py36
+          - tox-env: py36-coverage
             python-version: 3.6
-          - tox-env: py37
+          - tox-env: py37-coverage
             python-version: 3.7
-          - tox-env: py38
+          - tox-env: py38-coverage
             python-version: 3.8
-          - tox-env: py39
+          - tox-env: py39-coverage
             python-version: 3.9
           #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
           # - tox-env: py310
           #   python-version: 3.10
           #   python-version: 3.10-dev
-          - tox-env: pypy36
+          - tox-env: pypy36-coverage
             python-version: pypy-3.6
-          - tox-env: pypy37
+          - tox-env: pypy37-coverage
             python-version: pypy-3.7
 
     # ..................{ SETTINGS                          }..................
     # Arbitrary human-readable description.
-    name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }}"
+    name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }} CI"
 
     # Name of the current Docker image to run tests under.
     runs-on: "${{ matrix.platform }}"
@@ -140,11 +150,6 @@ jobs:
       # Map from the current item of the "tox-env" list defined above to the
       # ${TOXENV} environment variable recognized by "tox".
       TOXENV: "${{ matrix.tox-env }}"
-
-    #FIXME: Uncomment after properly researching code coverage integration.
-    #On doing so, add "coverage[toml]" to the set of Python packages
-    #installed with "pip" below.
-    #  USING_COVERAGE: '3.6,3.8'
 
     # ..................{ PROCESS                           }..................
     steps:
@@ -169,8 +174,7 @@ jobs:
           python -m site
           python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
-        run: |
-          python -m pip --quiet install --upgrade tox  #virtualenv 
+        run: python -m pip --quiet install --upgrade tox  #virtualenv 
 
       # Note that:
       #
@@ -181,5 +185,10 @@ jobs:
       #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
         run: python -m tox --skip-missing-interpreters=false
-      - name: 'Uploading test coverage to "codecov.io"...'
+with:
+      - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v1'
+        with:
+          name: "${{ matrix.platform }}-${{ matrix.python-version }}"
+          # file: ./coverage.xml
+          # name: ${{ runner.os }}-${{ matrix.python-version }}

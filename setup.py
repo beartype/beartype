@@ -252,6 +252,11 @@ _SETUP_OPTIONS = {
         # required *ONLY* for integration with the top-level "tox.ini" file.
         # See the "extras" key in that file for further details.
         'test-tox': meta.LIBS_TESTTIME_MANDATORY_TOX,
+
+        # All mandatory coverage-specific testing dependencies as an
+        # arbitrarily named extra, required *ONLY* for integration with the
+        # top-level "tox.ini" file. See the "extras" key in that file.
+        'test-tox-coverage': meta.LIBS_TESTTIME_MANDATORY_COVERAGE,
     },
 
     # Mandatory testing dependencies.

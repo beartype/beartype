@@ -88,7 +88,16 @@ pytest_args=(
 # measurements will be misleading at best and trigger a test failure at worst
 # (e.g., if the "fail_under" option is enabled in ".coveragerc").
 if [[ " ${pytest_args[*]} " =~ " -k " ]]; then
-    pytest_args+=( '--no-cov' )
+    pytest_args+=( --no-cov )
+# Else, measure coverage. Dismantled, this is:
+# * "--cov", enable "pytest-cov"-based test coverage reporting. Note that:
+#   * This requires the third-party "pytest-cov" package to be installed, which
+#     itself requires the lower-level suite-agnostic "coverage" package.
+#   * This is configured via the top-level ".coveragerc" dotfile.
+# * "--no-cov-on-fail", conditionally disabling "pytest-cov"-based test
+#   coverage reporting if one or more tests fail.
+else
+    pytest_args+=( --cov --no-cov-on-fail )
 fi
 # echo "pytest args: ${pytest_args[*]}"
 

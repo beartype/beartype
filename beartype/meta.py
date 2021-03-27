@@ -306,9 +306,24 @@ https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 '''
 
 
+LIBS_TESTTIME_MANDATORY_COVERAGE = (
+    'pytest-cov >=2.11.0',
+)
+'''
+**Mandatory test-time coverage package dependencies** (i.e., dependencies
+required to measure test coverage for this package) as a tuple of
+:mod:`setuptools`-specific requirements strings of the format ``{project_name}
+{comparison1}{version1},...,{comparisonN}{versionN}``.
+
+See Also
+----------
+:data:`LIBS_RUNTIME_OPTIONAL`
+    Further details.
+'''
+
+
 LIBS_TESTTIME_MANDATORY_TOX = _LIBS_TESTTIME_MANDATORY_MYPY + (
     'pytest >=4.0.0',
-    'pytest-cov >=2.11.0',
 )
 '''
 **Mandatory tox test-time package dependencies** (i.e., dependencies required
@@ -323,8 +338,7 @@ See Also
 '''
 
 
-LIBS_TESTTIME_OPTIONAL = (
-)
+LIBS_TESTTIME_OPTIONAL = ()
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
 recommended to test this package with :mod:`tox` as a developer at the command
@@ -339,6 +353,7 @@ See Also
 
 
 LIBS_TESTTIME_MANDATORY = (
+    LIBS_TESTTIME_MANDATORY_COVERAGE +
     LIBS_TESTTIME_MANDATORY_TOX +
     LIBS_TESTTIME_OPTIONAL + (
         # A relatively modern version of tox is required.
