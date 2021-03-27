@@ -1,0 +1,59 @@
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Beartype authors.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Project-wide "coverage" configuration, applied to all invocations of the
+# third-party "coverage" package collecting test coverage statistics.
+#
+# This configuration also applies to the higher-level third-party "pytest-cov"
+# pytest plugin, which leverages "coverage" under the hood and is thus also
+# configured via this configuration file. 
+#
+# --------------------( SEE ALSO                          )--------------------
+# https://pytest-cov.readthedocs.io/en/latest/config.html
+#     "pytest-cov" documentation on this file and configuration in general.
+# https://coverage.readthedocs.io/en/latest/config.html
+#     "coverage" documentation on this file.
+
+# ....................{ RUN                                }...................
+# Low-level settings configuring how coverage is measured.
+[run]
+
+# Comma- or newline-separated list of package names to be measured.
+source_pkgs = beartype
+
+# Comma- or newline-separated list of glob-formatted pathnames to be omitted
+# from measurement, specified only for completeness.
+omit = beartype_test/*
+
+# Measure branch coverage in additional to the default statement coverage.
+# Whereas statement coverage only measures the lower-level unintelligent
+# metric of the total number of executed statements, branch coverage
+# measures the higher-level intelligent metric of the total number of
+# executed branch destinations (i.e., the two or more target statements to
+# which a source branch may "jump" conditionally depending on the decision
+# computed by that branch). Branches include "if", "elif", "else", and
+# "while" statements.
+#
+# See also: https://coverage.readthedocs.io/en/latest/branch.html#branch
+branch = True
+
+# ....................{ REPORT                             }...................
+# High-level settings configuring how coverage reports measurements.
+[report]
+
+# If the total coverage measurement falls under this number, exit with a
+# "coverage"-specific failure status code of 2.
+#
+# Note this number should be suffixed by at most a number of fractional digits
+# equal to the "precision" setting defined below.
+fail_under = 75.00
+
+# Number of fractional digits to display for reported coverage percentages
+# *AND* constrain the "fail_under" setting defined above to.
+precision = 2
+
+# Add a column "Missing" listing the comma-delimited line number ranges of all
+# missing lines for each covered submodule to coverage reports.
+show_missing = True

@@ -43,6 +43,8 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
+#FIXME: Add support for optionally running "pytest-cov" instead if available.
+
 # Run this project's pytest-based test suite with all passed arguments.
 # Dismantled, this is:
 #

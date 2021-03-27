@@ -307,8 +307,8 @@ https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 
 
 LIBS_TESTTIME_MANDATORY_TOX = _LIBS_TESTTIME_MANDATORY_MYPY + (
-    # A fairly modern version of pytest is required.
     'pytest >=4.0.0',
+    'pytest-cov >=2.11.0',
 )
 '''
 **Mandatory tox test-time package dependencies** (i.e., dependencies required
@@ -323,7 +323,8 @@ See Also
 '''
 
 
-LIBS_TESTTIME_OPTIONAL = ()
+LIBS_TESTTIME_OPTIONAL = (
+)
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
 recommended to test this package with :mod:`tox` as a developer at the command

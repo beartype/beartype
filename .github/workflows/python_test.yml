@@ -108,10 +108,10 @@ jobs:
             python-version: 3.8
           - tox-env: py39
             python-version: 3.9
-          - tox-env: py310
-            #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
-            # python-version: 3.10
-            python-version: 3.10-dev
+          #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
+          # - tox-env: py310
+          #   python-version: 3.10
+          #   python-version: 3.10-dev
           - tox-env: pypy36
             python-version: pypy-3.6
           - tox-env: pypy37
@@ -122,7 +122,7 @@ jobs:
     name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }}"
 
     # Name of the current Docker image to run tests under.
-    runs-on: ${{ matrix.platform }}
+    runs-on: "${{ matrix.platform }}"
 
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
@@ -139,7 +139,7 @@ jobs:
 
       # Map from the current item of the "tox-env" list defined above to the
       # ${TOXENV} environment variable recognized by "tox".
-      TOXENV: ${{ matrix.tox-env }}
+      TOXENV: "${{ matrix.tox-env }}"
 
     #FIXME: Uncomment after properly researching code coverage integration.
     #On doing so, add "coverage[toml]" to the set of Python packages
@@ -148,12 +148,12 @@ jobs:
 
     # ..................{ PROCESS                           }..................
     steps:
-      - name: "Checking out repository..."
+      - name: 'Checking out repository...'
         uses: 'actions/checkout@v2'
       - name: "Installing Python ${{ matrix.python-version }}..."
         uses: 'actions/setup-python@v2'
         with:
-          python-version: '${{ matrix.python-version }}'
+          python-version: "${{ matrix.python-version }}"
 
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
@@ -181,3 +181,5 @@ jobs:
       #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
         run: python -m tox --skip-missing-interpreters=false
+      - name: 'Uploading test coverage to "codecov.io"...'
+        uses: 'codecov/codecov-action@v1'

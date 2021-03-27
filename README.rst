@@ -2835,10 +2835,10 @@ See Also
 
 External ``beartype`` resources include:
 
-* `This list of all open-source PyPI-hosted dependents <beartype
-  dependents_>`__ (i.e., projects requiring ``beartype`` as a mandatory runtime
-  dependency), kindly provided by the `Libraries.io package registry
-  <Libraries.io_>`__.
+* `This list of all open-source PyPI-hosted dependents of this package
+  <beartype dependents_>`__ (i.e., third-party packages requiring ``beartype``
+  as a runtime dependency), kindly provided by the `Libraries.io package
+  registry <Libraries.io_>`__.
 
 **Runtime type checkers** (i.e., third-party mostly pure-Python packages
 dynamically validating Python callable types at Python runtime, typically via
