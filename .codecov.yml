@@ -1,0 +1,20 @@
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Beartype authors.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                          )--------------------
+# Project-wide "coverage" configuration specific to the third-party Codecov
+# service, which ignores the standard ".coveragerc" configuration leveraged by
+# the third-party "coverage" package collecting test coverage statistics in
+# favour of its own ad-hoc format. *sigh*
+#
+# --------------------( SEE ALSO                          )--------------------
+# https://docs.codecov.io/docs/codecov-yaml
+#     Codecov documentation on this file.
+
+# ....................{ MAIN                               }...................
+# List of all glob-interpolated pathnames to avoid measuring coverage for. See
+# also: https://docs.codecov.io/docs/ignoring-paths
+ignore:
+  # Ignore testing-specific paths.
+  - beartype_test

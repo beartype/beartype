@@ -159,7 +159,6 @@ jobs:
         uses: 'actions/setup-python@v2'
         with:
           python-version: "${{ matrix.python-version }}"
-
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
@@ -175,7 +174,6 @@ jobs:
           python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
         run: python -m pip --quiet install --upgrade tox  #virtualenv 
-
       # Note that:
       #
       # * "--skip-missing-interpreters=false" disables the corresponding

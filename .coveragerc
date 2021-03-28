@@ -11,6 +11,10 @@
 # configured via this configuration file. Of course, *NOTE THAT ONE SHOULD
 # NEVER USE "pytest-cov"* for the reasons discussed in "tox.ini".
 #
+# --------------------( CAVEATS                           )--------------------
+# This configuration does *NOT* apply to the third-party Codecov service, which
+# instead leverages its own ad-hoc ".codecov.yml" format. *sigh* 
+#
 # --------------------( SEE ALSO                          )--------------------
 # https://pytest-cov.readthedocs.io/en/latest/config.html
 #     "pytest-cov" documentation on this file and configuration in general.
