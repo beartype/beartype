@@ -43,10 +43,13 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
-# Array of all arguments to be passed to "pytest" below. Dismantled, this is:
-#
+# Array of all arguments to be passed to "python3" below. Dismantled, this is:
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
+python_args=( -X dev )
+
+# Array of all arguments to be passed to "pytest" below. Dismantled, this is:
+#
 # * "--color=yes", unconditionally enable colour output to guarantee color
 #   under piped pagers (e.g., "less").
 # * "--maxfail=1", halt testing on the first failure for interactive tests.
@@ -78,33 +81,33 @@ pushd "${script_dirname}" >/dev/null
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-pytest_args=(
-    -X dev -m pytest '--color=yes' '--maxfail=1'
-    "${@}"
-)
+pytest_args=( pytest '--color=yes' '--maxfail=1' "${@}" )
 
-# If passed the "-k" option, avoid measuring coverage. Why? Because that option
-# restricts testing to a subset of tests, guaranteeing that coverage
-# measurements will be misleading at best and trigger a test failure at worst
+# If the external "coverage" command installed by the third-party "coverage"
+# package is installed *AND* the "-k" option was *NOT* passed, then measure
+# coverage while running tests.
+#
+# If the "-k" option was passed, we avoid measuring coverage. Why? Because that
+# option restricts testing to a subset of tests, guaranteeing that coverage
+# measurements will be misleading at best and trigger test failure at worst
 # (e.g., if the "fail_under" option is enabled in ".coveragerc").
-if [[ " ${pytest_args[*]} " =~ " -k " ]]; then
-    pytest_args+=( --no-cov )
-# Else, measure coverage. Dismantled, this is:
-# * "--cov", enable "pytest-cov"-based test coverage reporting. Note that:
-#   * This requires the third-party "pytest-cov" package to be installed, which
-#     itself requires the lower-level suite-agnostic "coverage" package.
-#   * This is configured via the top-level ".coveragerc" dotfile.
-# * "--no-cov-on-fail", conditionally disabling "pytest-cov"-based test
-#   coverage reporting if one or more tests fail.
-# * "--cov-report term", generating a CLI-specific test report.
-# * "--cov-report xml", generating an XML-specific test report.
+if hash coverage 2>/dev/null && [[ ! " ${pytest_args[*]} " =~ " -k " ]]; then
+    # Run this project's pytest-based test suite with all passed arguments
+    # while measuring coverage.
+    command python3 "${python_args[@]}" -m \
+        coverage run -m "${pytest_args[@]}" .
+
+    # Generate a terminal-based coverage report.
+    command python3 "${python_args[@]}" -m \
+        coverage report
+# Else, run this project's pytest-based test suite with all passed arguments
+# *WITHOUT* measuring coverage.
 else
-    pytest_args+=( --cov --no-cov-on-fail --cov-report term --cov-report xml )
+    command python3 "${python_args[@]}" -m \
+        "${pytest_args[@]}" .
 fi
 # echo "pytest args: ${pytest_args[*]}"
 
-# Run this project's pytest-based test suite with all passed arguments.
-command python3 "${pytest_args[@]}" .
 # command python3.6 "${pytest_args[@]}" .
 # command python3.8 "${pytest_args[@]}" .
 # command python3.9 "${pytest_args[@]}" .

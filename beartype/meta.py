@@ -307,7 +307,7 @@ https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 
 
 LIBS_TESTTIME_MANDATORY_COVERAGE = (
-    'pytest-cov >=2.11.0',
+    'coverage >=5.5',
 )
 '''
 **Mandatory test-time coverage package dependencies** (i.e., dependencies

@@ -16,7 +16,7 @@
 |beartype-banner|
 =================
 
-|ci-badge| |codecov-badge| |rtd-badge|
+|ci-badge| |rtd-badge| |codecov-badge|
 
 .. parsed-literal::
 

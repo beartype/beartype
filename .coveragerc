@@ -8,7 +8,8 @@
 #
 # This configuration also applies to the higher-level third-party "pytest-cov"
 # pytest plugin, which leverages "coverage" under the hood and is thus also
-# configured via this configuration file. 
+# configured via this configuration file. Of course, *NOTE THAT ONE SHOULD
+# NEVER USE "pytest-cov"* for the reasons discussed in "tox.ini".
 #
 # --------------------( SEE ALSO                          )--------------------
 # https://pytest-cov.readthedocs.io/en/latest/config.html
@@ -77,4 +78,4 @@ show_missing = True
 directory = ./coverage.html
 
 [xml]
-output = ./coverage.xml
+# output = ./coverage.xml
