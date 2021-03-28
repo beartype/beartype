@@ -18,3 +18,4 @@
 ignore:
   # Ignore testing-specific paths.
   - beartype_test
+  - conftest.py
