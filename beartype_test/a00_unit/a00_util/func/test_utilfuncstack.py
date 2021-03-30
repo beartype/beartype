@@ -17,15 +17,14 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-def test_get_func_stack_frame_getter_or_none() -> None:
+def test_get_func_stack_frame() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncstack.get_func_stack_frame_getter_or_none` function.
+    :func:`beartype._util.func.utilfuncstack.get_func_stack_frame` attribute.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.func.utilfuncstack import (
-        get_func_stack_frame_getter_or_none)
+    from beartype._util.func.utilfuncstack import get_func_stack_frame
 
-    # Assert this function returns a callable under both CPython and PyPy.
-    assert callable(get_func_stack_frame_getter_or_none()) is True
+    # Assert this attribute is a callable under both CPython and PyPy.
+    assert callable(get_func_stack_frame) is True

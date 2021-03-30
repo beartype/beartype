@@ -17,9 +17,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
 from beartype._decor._data import BeartypeData
+from beartype._util.func.utilfuncscope import (
+    get_func_globals,
+    get_func_locals,
+)
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_7,
+)
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
+from sys import modules as sys_modules
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -34,8 +44,6 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     563`_ is active for this callable *or* silently reduce to a noop otherwise
     (i.e., if `PEP 563`_ is *not* active for this callable).
 
-    Conditions
-    ----------
     `PEP 563`_ is active for this callable if the active Python interpreter
     targets:
 
@@ -44,19 +52,27 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
       enables `PEP 563`_ support with a leading dunder importation of the form
       ``from __future__ import annotations``.
 
-    Resolution
-    ----------
-    If the above conditions applies, then for each annotation on this callable:
+    If `PEP 563`_ is active for this callable, then for each type-hint
+    annotating this callable:
 
-    * If this annotation is postponed (i.e., is a string), this function:
+    * If that hint is a string and thus postponed, this function:
 
       #. Dynamically evaluates that string within this callable's globals
          context (i.e., set of all global variables defined by the module
          declaring this callable).
-      #. Replaces this annotation's string value with the expression produced
-         by this dynamic evaluation.
+      #. Replaces that hint's string value with the expression produced by this
+         dynamic evaluation.
 
-    * Else, this function preserves this annotation as is.
+    * Else, this function preserves that hint as is (e.g., due to that hint
+      that was previously postponed having already been evaluated by a prior
+      decorator).
+
+    Caveats
+    ----------
+    **This function must be called only directly by the**
+    :meth:`beartype._decor._data.BeartypeData.reinit` **method**, due to
+    unavoidably introspecting the current call stack and making fixed
+    assumptions about the structure and height of that stack.
 
     Parameters
     ----------
@@ -73,50 +89,64 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     .. _PEP 563:
        https://www.python.org/dev/peps/pep-0563
     '''
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
-    # If this callable's annotations are *NOT* postponed under PEP 563,
-    # silently reduce to a noop..
-    if data.func_globals is None:
+    # Localize attributes of this metadata for negligible efficiency gains.
+    func = data.func
+
+    # If neither...
+    if not (
+        # The active Python interpreter targets Python >= 3.10 *NOR*...
+        #
+        # If this interpreter targets Python >= 3.10, PEP 563 is
+        # unconditionally active. In this case, *ALL* annotations including
+        # this callable's annotations are necessarily postponed.
+        IS_PYTHON_AT_LEAST_3_10 or
+        (
+            # The active Python interpreter targets Python >= 3.7 *AND*...
+            IS_PYTHON_AT_LEAST_3_7 and
+            # This callable was declared by on on-disk module *AND*...
+            func.__module__ is not None and
+            # This callable's module defined an "annotations" attribute to be
+            # the "__future__.annotations" object. In this case, that module
+            # enabled PEP 563 support with a leading statement resembling:
+            #     from __future__ import annotations
+            getattr(sys_modules[func.__module__], 'annotations', None) is (
+                __future__.annotations)
+        )
+    # Then this callable's annotations are *NOT* postponed under PEP 563. In
+    # this case, silently reduce to a noop.
+    ):
         return
     # Else, this callable's annotations are postponed under PEP 563. In this
     # case, resolve these annotations to their referents.
 
-    # Localize attributes of this metadata for negligible efficiency gains.
-    func = data.func
-    func_globals = data.func_globals
-    func_locals = data.func_locals
+    # Global scope for this callable.
+    func_globals = get_func_globals(
+        func=func, exception_cls=BeartypeDecorHintPep563Exception)
 
     # Dictionary mapping from parameter name to resolved annotation for each
     # annotated parameter and return value of this callable.
     func_hints = {}
 
     # For the parameter name (or "return" for the return value) and
-    # corresponding annotation of each of this callable's annotations...
+    # corresponding annotation of each of this callable's type hints...
     #
     # Note that refactoring this iteration into a dictionary comprehension
     # would be largely infeasible (e.g., due to the need to raise
-    # human-readable exceptions on evaluating unevaluatable annotations) as
-    # well as largely pointless (e.g., due to dictionary comprehensions being
-    # either no faster or even slower than explicit iteration for small
-    # dictionary sizes, as "func.__annotations__" usually is).
+    # human-readable exceptions on evaluating unevaluatable type hints) as well
+    # as largely pointless (e.g., due to dictionary comprehensions being either
+    # no faster or even slower than explicit iteration for small dictionary
+    # sizes, as "func.__annotations__" usually is).
     for pith_name, pith_hint in func.__annotations__.items():
-        # Human-readable label describing this pith.
-        pith_label = label_callable_decorated_pith(
-            func=func, pith_name=pith_name)
-
         # If...
         if (
-            # This annotation is a string *AND*...
+            # This hint is a string *AND*...
             isinstance(pith_hint, str) and
             # This string is non-empty...
             pith_hint
         ):
-        # Then this annotation is a PEP 563-formatted postponed string. In this
-        # case, resolve this annotation to its referent against the global
-        # variables (if any) defined by the module defining this callable.
-        #
-        # Note that:
-        #
+        # Then this hint is a PEP 563-compliant postponed hint.  Note that:
         # * This test could technically yield a false positive in the unlikely
         #   edge case that this annotation was previously postponed but has
         #   since been replaced in-place with its referent, which is itself a
@@ -150,21 +180,58 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             #_die_if_hint_repr_exceeds_child_limit(
             #    hint_repr=pith_hint, pith_label=pith_label)
 
-            # Attempt to resolve this postponed annotation to its referent.
+            # First, attempt to evaluate this postponed hint against the global
+            # scope defined by the module declaring the decorated callable.
+            #
+            # Note that this first attempt intentionally does *NOT* attempt to
+            # evaluate this postponed hint against both the global and local
+            # scope of the decorated callable. Why? Because:
+            # * The overwhelming majority of real-world type hints are imported
+            #   at module scope (e.g., from "collections.abc" and "typing") and
+            #   thus accessible as global attributes.
+            # * Deciding the local scope of the decorated callable is an O(k)
+            #   operation for k the distance in call stack frames between the
+            #   call to the current function and the call to the parent
+            #   callable or class declaring the decorated callable. Ergo, this
+            #   decision problem should be deferred until as long as possible
+            #   to minimize space and time costs of the @beartype decorator.
             try:
-                func_hints[pith_name] = eval(
-                    pith_hint, func_globals, func_locals)
-            # If this fails (as it commonly does), wrap the low-level (and
-            # usually non-human-readable) exception raised by eval() with a
-            # higher-level human-readable beartype-specific exception.
+                func_hints[pith_name] = eval(pith_hint, func_globals)
+            # If this fails (as it occasionally does)...
             except Exception as exception:
-                raise BeartypeDecorHintPep563Exception(
-                    f'{pith_label} postponed hint '
-                    f'{repr(pith_hint)} syntactically invalid '
-                    f'(i.e., "{str(exception)}") under:\n'
-                    f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
-                    f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
-                ) from exception
+                # Local scope for this callable.
+                func_locals = get_func_locals(
+                    func=func,
+                    # Ignore additional frames on the call stack embodying:
+                    # * The current call to this function.
+                    # * The call to the parent
+                    #   beartype._decor._data.BeartypeData.reinit() method.
+                    # * The call to the parent @beartype.beartype() decorator.
+                    func_stack_frames_ignore=3,
+                    exception_cls=BeartypeDecorHintPep563Exception,
+                )
+
+                try:
+                    # Last, attempt to evaluate this postponed hint against
+                    # both the global and local scopes for the decorated
+                    # callable.
+                    func_hints[pith_name] = eval(
+                        pith_hint, func_globals, func_locals)
+                # If this also fails...
+                except Exception as exception:
+                    # Human-readable label describing this pith.
+                    pith_label = label_callable_decorated_pith(
+                        func=func, pith_name=pith_name)
+
+                    # Wrap this low-level non-human-readable exception with a
+                    # high-level human-readable beartype-specific exception.
+                    raise BeartypeDecorHintPep563Exception(
+                        f'{pith_label} postponed hint '
+                        f'{repr(pith_hint)} syntactically invalid '
+                        f'(i.e., "{str(exception)}") under:\n'
+                        f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
+                        f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
+                    ) from exception
         # Else, this annotation is *NOT* a PEP 563-formatted postponed string.
         # Since PEP 563 is active for this callable, this implies this
         # annotation *MUST* have been previously postponed but has since been

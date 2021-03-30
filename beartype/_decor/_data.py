@@ -44,8 +44,6 @@ import inspect
 from beartype.cave import CallableCodeObjectType
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.func.utilfuncscope import (
-    CallableScope, CallableScopesGlobalsLocals)
 from beartype._util.text.utiltextlabel import label_callable_decorated
 from collections.abc import Callable
 from inspect import Signature
@@ -74,54 +72,43 @@ class BeartypeData(object):
 
     Caveats
     ----------
-    **This object should not be used to communicate state between low-level
+    **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
     :func:`beartype._decor._code._pep._pephint.pep_code_check_hint`) **and
     higher-level callables** (e.g.,
     :func:`beartype._decor._code.codemain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
-    stack to those higher-level callables. Why? Because, by definition,
-    memoized callables are *not* recalled on subsequent calls passed the same
-    parameters. Since only the first call to those callables passed those
-    parameters will set the appropriate state on this object intended to be
-    communicated to higher-level callables, *all* subsequent calls will subtly
-    fail with difficult-to-diagnose issues. See also `<issue #5_>`__, which
-    exhibited this very complaint.
+    stack to those higher-level callables. By definition, memoized callables
+    are *not* recalled on subsequent calls passed the same parameters. Since
+    only the first call to those callables passed those parameters would set
+    the appropriate state on this object intended to be communicated to
+    higher-level callables, *all* subsequent calls would subtly fail with
+    difficult-to-diagnose issues. See also `<issue #5_>`__, which exhibited
+    this very complaint.
 
     .. _issue #5:
        https://github.com/beartype/beartype/issues/5
 
     Attributes
     ----------
-    func : Callable
+    func : Optional[Callable]
         **Decorated callable** (i.e., callable currently being decorated by the
-        :func:`beartype.beartype` decorator).
-    func_codeobj = CallableCodeObjectType
+        :func:`beartype.beartype` decorator) if the :meth:`reinit` method has
+        been called *or* ``None`` otherwise.
+    func_codeobj : Optional[CallableCodeObjectType]
         **Code object** (i.e., instance of the :class:`CodeType` type)
-        underlying the decorated callable.
-    func_sig : inspect.Signature
-        :class:`inspect.Signature` object describing this signature.
-
-    Attributes (Scope)
-    ----------
-    func_globals : Dict[str, Any]
-        Dictionary mapping from the name to value of each **globally scoped
-        attribute** (i.e., global attribute declared by the module transitively
-        declaring this callable) accessible to the decorated callable.
-    func_locals : Dict[str, Any]
-        Either:
-
-        * If the decorated callable is a **closure** (i.e., callable declared
-          in another callable), dictionary mapping from the name to value of
-          each **locally scoped attribute** (i.e., local attribute declared by
-          a parent callable transitively declaring the decorated callable).
-        * Else, the empty dictionary.
+        underlying the decorated callable if the :meth:`reinit` method has been
+        called *or* ``None`` otherwise.
+    func_sig : Optional[inspect.Signature]
+        :class:`inspect.Signature` object describing this signature if the
+        :meth:`reinit` method has been called *or* ``None`` otherwise.
 
     Attributes (String)
     ----------
-    func_wrapper_name : str
+    func_wrapper_name : Optional[str]
         Machine-readable name of the wrapper function to be generated and
-        returned by this decorator. To efficiently (albeit imperfectly) avoid
+        returned by this decorator if the :meth:`reinit` method has been called
+        *or* ``None`` otherwise. To efficiently (albeit imperfectly) avoid
         clashes with existing attributes of the module defining that function,
         this name is obfuscated while still preserving human-readability.
 
@@ -137,8 +124,6 @@ class BeartypeData(object):
     __slots__ = (
         'func',
         'func_codeobj',
-        'func_globals',
-        'func_locals',
         'func_sig',
         'func_wrapper_name',
     )
@@ -175,8 +160,6 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
-        self.func_globals: Optional[CallableScope] = None
-        self.func_locals: Optional[CallableScope] = None
         self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
         self.func_wrapper_name: str = None  # type: ignore[assignment]
@@ -185,7 +168,6 @@ class BeartypeData(object):
     def reinit(
         self,
         func: Callable,
-        func_globals_locals: Optional[CallableScopesGlobalsLocals],
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -201,12 +183,6 @@ class BeartypeData(object):
         ----------
         func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
-        func_globals_locals : Optional[CallableScopesGlobalsLocals]
-            2-tuple ``(globals, locals)`` of the global and local scope for
-            this callable (as returned by the
-            :func:`beartype._util.func.utilfuncscope.get_func_globals_locals`
-            getter) if `PEP 563_` is active for this callable *or* ``None``
-            otherwise.
 
         Raises
         ----------
@@ -241,42 +217,11 @@ class BeartypeData(object):
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_postponed_if_needed()).
         self.func_sig = None  # type: ignore[assignment]
-        self.func_globals = None
-        self.func_locals = None
 
-        # If PEP 563 is active for this callable...
-        if func_globals_locals is not None:
-            assert isinstance(func_globals_locals, tuple), (
-                f'{repr(func_globals_locals)} not tuple.')
-            assert len(func_globals_locals) == 2, (
-                f'{repr(func_globals_locals)} not 2-tuple.')
-            assert (
-                isinstance(func_globals_locals[0], dict) and
-                isinstance(func_globals_locals[1], dict)
-            ), (
-                f'{repr(func_globals_locals)} not 2-tuple of dictionaries.')
-
-            # Global and local scopes for this callable.
-            self.func_globals = func_globals_locals[0]
-            self.func_locals  = func_globals_locals[1]
-
-            # Resolve all postponed hints if any on this callable *BEFORE*
-            # parsing the actual hints these postponed hints refer to.
-            resolve_hints_postponed_if_needed(self)
+        # Resolve all postponed hints on this callable if any *BEFORE* parsing
+        # the actual hints these postponed hints refer to.
+        resolve_hints_postponed_if_needed(self)
 
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.
         self.func_sig = inspect.signature(func)
-
-    # ..................{ PROPERTIES ~ read-only            }..................
-    @property
-    def func_name(self) -> str:
-        '''
-        Human-readable name of this callable.
-
-        This attribute is only accessed when raising exceptions (where
-        efficiency is entirely ignorable) and thus intentionally declared as a
-        read-only property rather than an instance variable.
-        '''
-
-        return label_callable_decorated(self.func)

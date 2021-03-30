@@ -48,12 +48,6 @@ efficiency, portability, and thrilling puns.
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('"{}"\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
 
-   # Call those callables with valid parameters.
-   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
-   "Okay, folks. Show's over!
-    Nothing to see here. Show's…"
-      — Police Chief Wiggum
-
    # Call those callables with invalid parameters.
    >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
    Traceback (most recent call last):
@@ -66,6 +60,12 @@ efficiency, portability, and thrilling puns.
    crash!', b'Hey, everybody! Get a load of thi...'] violates type hint
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
+
+   # Call those callables with valid parameters.
+   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
+   "Okay, folks. Show's over!
+    Nothing to see here. Show's…"
+      — Police Chief Wiggum
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by

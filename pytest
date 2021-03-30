@@ -92,12 +92,10 @@ pytest_args=( pytest '--color=yes' '--maxfail=1' "${@}" )
 # measurements will be misleading at best and trigger test failure at worst
 # (e.g., if the "fail_under" option is enabled in ".coveragerc").
 if hash coverage 2>/dev/null && [[ ! " ${pytest_args[*]} " =~ " -k " ]]; then
-    # Run this project's pytest-based test suite with all passed arguments
-    # while measuring coverage.
+    # If run this project's pytest-based test suite with all passed arguments
+    # (while measuring coverage) succeeds, generate a terminal coverage report.
     command python3 "${python_args[@]}" -m \
-        coverage run -m "${pytest_args[@]}" .
-
-    # Generate a terminal-based coverage report.
+        coverage run -m "${pytest_args[@]}" . &&
     command python3 "${python_args[@]}" -m \
         coverage report
 # Else, run this project's pytest-based test suite with all passed arguments

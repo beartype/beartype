@@ -151,10 +151,7 @@ from beartype._decor._code._pep._error.peperror import (
     raise_pep_call_exception)
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
-from beartype._util.hint.pep.proposal.utilhintpep563 import (
-    is_func_hints_pep563)
 from beartype._util.func.utilfuncmake import make_func
-from beartype._util.func.utilfuncscope import get_func_globals_locals
 from random import getrandbits
 from typing import Callable, TYPE_CHECKING
 
@@ -292,27 +289,9 @@ def beartype(func: Callable) -> Callable:
         # returning this callable as is.
         return func
 
-    # Either...
-    func_globals_locals = (
-        # If PEP 563 is active for the decorated callable, a 2-tuple "(globals,
-        # locals)" of global and local scopes for this callable.
-        #
-        # Note that this getter unavoidably introspects the current call stack
-        # and *MUST THUS BE CALLED DIRECTLY IN THE BODY OF THIS DECORATOR*,
-        # preventing extraneous intervening calls from polluting this stack.
-        get_func_globals_locals(
-            func=func,
-            # Ignore an additional frame on the call stack identifying the
-            # current call to this decorator.
-            func_stack_frames_ignore=1,
-        ) if is_func_hints_pep563(func) else
-        # Else, "None".
-        None
-    )
-
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeData)
-    func_data.reinit(func=func, func_globals_locals=func_globals_locals)
+    func_data.reinit(func)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_code, is_func_code_noop = generate_code(func_data)
@@ -419,7 +398,7 @@ def beartype(func: Callable) -> Callable:
         func_code=func_code,
         func_globals=_ATTRS_GLOBAL,
         func_locals=attrs_local,
-        func_label=f'@beartyped {func_data.func_name} wrapper',
+        func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
         exception_cls=BeartypeDecorWrapperException,
     )
