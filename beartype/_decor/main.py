@@ -143,45 +143,14 @@ from beartype.roar import (
     BeartypeDecorWrapperException,
 )
 from beartype._decor._code.codemain import generate_code
-from beartype._decor._code.codesnip import (
-    ARG_NAME_FUNC, ARG_NAME_TYPISTRY)
 from beartype._decor._data import BeartypeData
-from beartype._decor._cache.cachetype import bear_typistry
-from beartype._decor._code._pep._error.peperror import (
-    raise_pep_call_exception)
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._util.func.utilfuncmake import make_func
-from random import getrandbits
 from typing import Callable, TYPE_CHECKING
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
-_ATTRS_GLOBAL = {
-    '__beartype_getrandbits': getrandbits,
-    '__beartype_raise_pep_call_exception': raise_pep_call_exception,
-}
-'''
-Dictionary mapping from the name to value of all attributes internally
-accessed as globals (rather than as locals externally passed as private default
-parameters) in wrapping functions created and returned by the :func:`beartype`
-decorator.
-
-The names of these attributes are embedded in one or more string global
-constants declared by one or more snippet submodules (e.g.,
-:mod:`beartype._decor._code.codesnip`). To avoid colliding with the names of
-arbitrary caller-defined parameters, these names *must* be aliased under
-alternate names prefixed by ``__beartype_``.
-
-Caveats
-----------
-**Attributes frequently accessed in the body of these functions should instead
-be externally passed as default parameters into these functions.** This
-includes the frequently accessed ``__beartypistry`` local, which is thus passed
-as a private default parameter to the signatures of these functions.
-'''
 
 # ....................{ DECORATORS                        }....................
 def beartype(func: Callable) -> Callable:
@@ -294,32 +263,12 @@ def beartype(func: Callable) -> Callable:
     func_data.reinit(func)
 
     # Generate the raw string of Python statements implementing this wrapper.
-    func_code, is_func_code_noop = generate_code(func_data)
+    func_wrapper_code, func_wrapper_locals = generate_code(func_data)
 
-    # If this wrapper proxies this callable *WITHOUT* type-checking,
-    # efficiently reduce to a noop (i.e., the identity decorator) by returning
-    # this callable as is.
-    if is_func_code_noop:
+    # If this callable requires *NO* type-checking, silently reduce to a noop
+    # and thus the identity decorator by returning this callable as is.
+    if not func_wrapper_code:
         return func
-
-    # Dictionary mapping from local attribute names to values passed to the
-    # module-scoped outermost definition (but *NOT* the actual body) of this
-    # wrapper. Note that:
-    #
-    # * For efficiency, only attributes specific to the body of this wrapper
-    #   are copied from the current namespace. Attributes generically
-    #   applicable to the body of all wrappers are instead implicitly imported
-    #   from this submodule by passing "_ATTRS_GLOBAL" below.
-    # * For each attribute specified here, one new keyword parameter of the
-    #   form "{local_attr_key_name}={local_attr_key_name}" *MUST* be added to
-    #   the signature for this wrapper defined by the "CODE_SIGNATURE" string.
-    #
-    # For the above reasons, the *ONLY* attribute that should be passed is the
-    # wrapper-specific "__beartype_func" attribute.
-    attrs_local = {
-        ARG_NAME_FUNC: func,
-        ARG_NAME_TYPISTRY: bear_typistry,
-    }
 
     #FIXME: Uncomment after uncommenting the corresponding logic below.
     # Fully-qualified name of this undecorated callable to be decorated.
@@ -393,11 +342,16 @@ def beartype(func: Callable) -> Callable:
     #    https://github.com/smarie/python-makefun/blob/master/makefun/main.py
 
     # Function wrapping this callable with type-checking to be returned.
+    #
+    # For efficiency, this wrapper accesses *ONLY* local rather than global
+    # attributes. The latter incur a minor performance penalty, since local
+    # attributes take precedence over global attributes, implying all global
+    # attributes are *ALWAYS* first looked up as local attributes before
+    # falling back to being looked up as global attributes.
     func_wrapper = make_func(
         func_name=func_data.func_wrapper_name,
-        func_code=func_code,
-        func_globals=_ATTRS_GLOBAL,
-        func_locals=attrs_local,
+        func_code=func_wrapper_code,
+        func_locals=func_wrapper_locals,
         func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
         exception_cls=BeartypeDecorWrapperException,

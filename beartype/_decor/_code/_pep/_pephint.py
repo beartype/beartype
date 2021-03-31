@@ -293,6 +293,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #The resulting structure is guaranteed to be considerably more space-efficient,
 #due to being both contiguous in memory and requiring only a single object
 #(and thus object dictionary) to maintain. Cue painless forehead slap.
+#FIXME: See additional commentary at this front-facing issue:
+#    https://github.com/beartype/beartype/issues/31#issuecomment-799938621
 
 #FIXME: Add support for "PEP 586 -- Literal Types". Sadly, doing so will be
 #surprisingly non-trivial.
@@ -444,7 +446,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  entire tree of function calls leading to this function. Why? Because we'll
 #  need to percolate up the tree the following additional metadata as
 #  additional return values:
-#      global_var_name_to_value: Dict[str, object]
+#      func_wrapper_locals: Dict[str, object]
 #
 #  Obviously, that is a dictionary mapping from the unique name to value of
 #  each callable-specific global variable that should be declared by the
@@ -452,7 +454,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  Specifically:
 #
 #  * The pep_code_check_hint() function below should be refactored to:
-#    * Locally declare a new "global_var_name_to_value" local dictionary,
+#    * Locally declare a new "func_wrapper_locals" local dictionary,
 #      initialized to the empty dictionary. Although this local *COULD* also be
 #      initialized to "None", that would be a bit silly and complicate
 #      everything in the common case, as most calls to this function will be
@@ -466,31 +468,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #        _typistry.register_tuple() function. Tuples of types are particularly
 #        complicated, thanks to continued caching under the beartypistry.
 #    * Return this dictionary as yet another return value.
-#  * The beartype._decor.main.beartype() function should be refactored to:
-#    * Define these new local variables:
-#      * "global_attrs", the dictionary mapping from the names to values of all
-#        global variables required by the decorated callable. Initialized to
-#        either "None" or the empty dictionary.
-#      * "global_attrs_func", the dictionary mapping from the names to values
-#        of all global variables conditionally required by this decorated
-#        callable specifically. Note that it is explicitly permissible for this
-#        dictionary to be empty (e.g., when type hints annotating the decorated
-#        callable are all builtin types).
-#    * Set "global_attrs_func" to the "global_var_name_to_value" value returned
-#      by the generate_code() function.
-#    * Set "global_attrs" to the dynamic merger of the "_GLOBAL_ATTRS" global
-#      dictionary constant with the "global_attrs_func" dictionary local. We
-#      probably want to code this mildly carefully. Efficiency is slightly less
-#      critical here than robustness, as this is decoration time. In
-#      particular, we'll want to ensure that:
-#      * The "_GLOBAL_ATTRS" and "global_attrs_func" dictionaries do *NOT*
-#        collide (i.e., have no keys in common). An exception should be raised
-#        when this is the case, as that would indicate a critical low-level
-#        @beartype issue.
-#      * The "__beartype_func" global variable be added to either the
-#        "global_attrs_func" *OR* "global_attrs" dictionaries. It doesn't
-#        particularly matter which, so whichever is easier and faster is it.
-#    * Pass "global_attrs" rather than "_GLOBAL_ATTRS" to the exec() call.
 #
 #That's it! We'll be hitting two birds with one stone here, so that makes this
 #a fairly fun step forwards -- even if "typing.Literal" itself is rather
