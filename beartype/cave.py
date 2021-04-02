@@ -120,9 +120,9 @@ from io import IOBase as _IOBase
 from typing import (
     Any as _Any,
     Dict as _Dict,
-    Union as _Union,
     Tuple as _Tuple,
-    Type as _Type,
+    # Type as _Type,
+    # Union as _Union,
 )
 from weakref import (
     ref as _ref,
@@ -552,7 +552,7 @@ This type matches both the C-based :class:`weakref.ref` class *and* the
 pure-Python :class:`weakref.WeakMethod` class, which subclasses the former.
 '''
 
-# ....................{ TYPES ~ contain                   }....................
+# ....................{ TYPES ~ data                      }....................
 ContainerType = _Container
 '''
 Type of all **containers** (i.e., concrete instances of the abstract
@@ -715,7 +715,7 @@ See Also
     Further details on structural subtyping.
 '''
 
-# ....................{ TYPES ~ contain : mapping         }....................
+# ....................{ TYPES ~ data : mapping            }....................
 HashableType = _Hashable
 '''
 Type of all **hashable objects** (i.e., both concrete and structural instances
@@ -767,7 +767,7 @@ See Also
     Type of all mutable and immutable mappings.
 '''
 
-# ....................{ TYPES ~ contain : sequence        }....................
+# ....................{ TYPES ~ data : sequence           }....................
 SequenceType = _Sequence
 '''
 Type of all **mutable** and **immutable sequences** (i.e., both concrete and

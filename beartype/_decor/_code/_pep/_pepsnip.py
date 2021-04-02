@@ -21,6 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
+    ARG_NAME_RAISE_EXCEPTION,
     ARG_NAME_TYPISTRY,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_RANDOM_INT,
@@ -68,9 +69,7 @@ See Also
 '''
 
 # ....................{ PARAM                             }....................
-#FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-#which are the optimal means of performing string formatting.
-PARAM_KIND_TO_PEP_CODE_GET = {
+PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     # Snippet localizing any positional or keyword parameter as follows:
     #
     # * If this parameter's 0-based index (in the parameter list of the
@@ -136,7 +135,7 @@ Note that this snippet intentionally terminates on a line containing only the
 ``(`` character, enabling subsequent type-checking code to effectively ignore
 indentation level and thus uniformly operate on both:
 
-* Parameters localized via values of the :data:`PARAM_KIND_TO_PEP_CODE_GET`
+* Parameters localized via values of the :data:`PARAM_KIND_TO_PEP_CODE_LOCALIZE`
   dictionary.
 * Return values localized via this sippet.
 
@@ -168,7 +167,7 @@ PEP484_CODE_CHECK_NORETURN = f'''
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python
     # interpreter, unconditionally raise an exception.
-    __beartype_raise_pep_call_exception(
+    {ARG_NAME_RAISE_EXCEPTION}(
         func={ARG_NAME_FUNC},
         pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
         pith_value={PEP_CODE_PITH_ROOT_NAME},
@@ -240,7 +239,7 @@ This prefix is intended to be locally suffixed in the
 
 
 PEP_CODE_CHECK_HINT_ROOT_SUFFIX = f''':
-            __beartype_raise_pep_call_exception(
+            {ARG_NAME_RAISE_EXCEPTION}(
                 func={ARG_NAME_FUNC},
                 pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
                 pith_value={PEP_CODE_PITH_ROOT_NAME},{{random_int_if_any}}
@@ -256,7 +255,7 @@ This snippet expects to be formatted with these named interpolations:
 * ``{random_int_if_any}``, whose value is either:
 
   * If type-checking the current type hint requires a pseudo-random integer,
-    :data:`PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT`.
+    :data:`PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT`.
   * Else, the empty substring.
 
 Design
@@ -269,12 +268,12 @@ embedded in the conditional test initiated by the
 '''
 
 
-PEP_CODE_RAISE_PEP_CALL_EXCEPTION_RANDOM_INT = f'''
+PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT = f'''
                 random_int={VAR_NAME_RANDOM_INT},'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the **root pith**
-(i.e., value of the current parameter or return value) against the root
-PEP-compliant type hint annotating that pith.
+PEP-compliant code snippet passing the value of the random integer previously
+generated for the current call to the exception-handling function call embedded
+in the :data:`PEP_CODE_CHECK_HINT_ROOT_SUFFIX` snippet.
 '''
 
 # ....................{ HINT ~ nonpep                     }....................
@@ -521,32 +520,3 @@ See Also
 :data:`PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP`
     Further details.
 '''
-
-# ....................{ FORMATTERS                        }....................
-# Bound format methods of string globals defined above, preserved as discrete
-# global variables for efficient lookup elsewhere.
-
-# Bound format methods of string globals imported above.
-PEP_CODE_CHECK_HINT_NONPEP_TYPE_format = (
-    PEP_CODE_CHECK_HINT_NONPEP_TYPE.format)
-PEP_CODE_CHECK_HINT_GENERIC_CHILD_format = (
-    PEP_CODE_CHECK_HINT_GENERIC_CHILD.format)
-PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format = (
-    PEP_CODE_CHECK_HINT_ROOT_SUFFIX.format)
-PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format = (
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format)
-PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format = (
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format)
-PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY.format)
-PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN.format)
-PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD.format)
-PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format = (
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format)
-PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format = (
-    PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP.format)
-PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format = (
-    PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format)
-PEP_CODE_PITH_ASSIGN_EXPR_format = PEP_CODE_PITH_ASSIGN_EXPR.format

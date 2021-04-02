@@ -107,7 +107,97 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
 '''
 
 # ....................{ CACHERS                           }....................
-#FIXME: Replace all calls to coerce_hint_pep() with calls to this function.
+#FIXME: Refactor as follows:
+#* Finish implementing cache_hint_nonpep563() below.
+#* Replace all calls to coerce_hint_pep() with calls to cache_hint_nonpep563().
+#* Remove coerce_hint_pep() entirely.
+def coerce_hint_pep(
+    func: Callable,
+    pith_name: str,
+    hint: object,
+    hint_label: str,
+) -> object:
+    '''
+    Coerce the passed type hint annotating the parameter or return with the
+    passed name of the passed callable into the corresponding PEP-compliant
+    type hint if needed.
+
+    Specifically, this function:
+
+    * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
+      more standard classes and forward references to standard classes):
+
+      * Coerces this tuple union into the equivalent `PEP 484`_-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this `PEP 484`_-compliant union.
+      * Returns this `PEP 484`_-compliant union.
+
+    * Else if this hint is already PEP-compliant, preserves and returns this
+      hint unmodified as is.
+    * Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
+      thus invalid as a type hint), raise an exception.
+
+    This getter is *not* memoized, due to being only called once per decorated
+    callable parameter or return value and being efficient in any case.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable
+    pith_name : str
+        Either:
+
+        * If this hint annotates a parameter, the name of that parameter.
+        * If this hint annotates the return, ``"return"``.
+    hint : object
+        Type hint to be rendered PEP-compliant.
+    hint_label : str
+        Human-readable label describing this hint.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this hint is PEP-noncompliant, PEP-compliant type hint converted
+          from this hint.
+        * If this hint is PEP-compliant, hint unmodified as is.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonPepException
+        If this object is neither:
+
+        * A PEP-noncompliant type hint.
+        * A supported PEP-compliant type hint.
+
+    .. _PEP 484:
+       https://www.python.org/dev/peps/pep-0484
+    '''
+
+    # If this hint is a PEP-noncompliant tuple union, coerce this union into
+    # the equivalent PEP-compliant union subscripted by the same child hints.
+    # By definition, PEP-compliant unions are a strict superset of
+    # PEP-noncompliant tuple unions and thus accept all child hints accepted by
+    # the latter.
+    if isinstance(hint, tuple):
+        assert callable(func), f'{repr(func)} not callable.'
+        assert isinstance(pith_name, str), f'{pith_name} not string.'
+
+        hint = func.__annotations__[pith_name] = Union.__getitem__(hint)
+    # Else, this hint is *NOT* a PEP-noncompliant tuple union.
+
+    # If this object is neither a PEP-noncompliant type hint *NOR* supported
+    # PEP-compliant type hint, raise an exception.
+    die_unless_hint(hint=hint, hint_label=hint_label)
+    # Else, this object is either a PEP-noncompliant type hint *OR* supported
+    # PEP-compliant type hint.
+
+    # Return this hint.
+    return hint
+
+
 def cache_hint_nonpep563(
     func: Callable,
     pith_name: str,
