@@ -18,6 +18,9 @@ import sys
 from types import FrameType
 from typing import Callable, Optional
 
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ TESTERS                           }....................
 get_func_stack_frame: Optional[Callable[[int,], Optional[FrameType]]] = (
     getattr(sys, '_getframe', None))

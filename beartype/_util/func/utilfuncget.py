@@ -16,4 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype.roar import _BeartypeUtilCallableException
 # from collections.abc import Callable
 
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ GETTERS                           }....................

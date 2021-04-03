@@ -19,6 +19,9 @@ from collections.abc import Callable
 from types import CodeType, FrameType, FunctionType, MethodType
 from typing import Optional, Union
 
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ HINTS                             }....................
 CallableOrFrameOrCodeType = Union[Callable, CodeType, FrameType]
 '''

@@ -15,6 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from collections.abc import Callable
 
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
 # ....................{ UNWRAPPERS                        }....................
 def unwrap_func(func: Callable) -> Callable:
     '''

@@ -14,13 +14,106 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
+from beartype._util.func.utilfunccodeobj import die_unless_func_python
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
+from types import FunctionType
 from typing import Optional
 
-# ....................{ TESTERS ~ kind                    }....................
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ COPIERS                           }....................
+def copy_func_shallow(
+    # Mandatory arguments.
+    func: Callable,
+
+    # Optional arguments.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> Callable:
+    '''
+    Create and return a new shallow copy of the passed callable.
+
+    Specifically, this function creates and returns a new function sharing with
+    the passed callable the same:
+
+    * Underlying code object (i.e., ``func.__code__``).
+    * Unqualified and fully-qualified names (i.e., ``func.__name__`` and
+      ``func.__qualname__``).
+    * Docstring (i.e., ``func.__doc__``).
+    * Type hints (i.e., ``func.__annotations__``).
+    * Global scope (i.e., ``func.__globals__``).
+    * Fully-qualified module name (i.e., ``func.__module__``).
+    * Default values of optional parameters (i.e., ``f.__defaults__`` and
+      ``f.__kwdefaults__``).
+    * Closure-specific cell variables (i.e., ``f.__closure__``).
+    * Custom public and private attributes.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be copied.
+    exception_cls : type, optional
+        Type of exception to raise in the event of a fatal error. Defaults to
+        :exc:`_BeartypeUtilCallableException`.
+
+    Returns
+    ----------
+    Callable
+        Function shallowly copied from the passed callable.
+
+    Raises
+    ----------
+    exception_cls
+        If either:
+
+        * The passed callable is *not* pure-Python.
+
+    See Also
+    ----------
+    https://stackoverflow.com/a/30714299/2809027
+        StackOverflow answer strongly inspiring this implementation.
+    '''
+
+    # If the passed callable is *NOT* pure-Python, raise an exception.
+    die_unless_func_python(func=func, exception_cls=exception_cls)
+
+    # Function shallowly copied from the passed callable.
+    #
+    # Note that *ALL* pure-Python callables are guaranteed to define the
+    # following dunder attributes.
+    func_copy = FunctionType(
+        func.__code__,
+        func.__globals__,  # type: ignore[attr-defined]
+        func.__name__,
+        func.__defaults__,  # type: ignore[attr-defined]
+        func.__closure__,  # type: ignore[attr-defined]
+    )
+
+    # Shallowly copy all remaining dunder attributes from the original callable
+    # onto this copy *NOT* already copied by the FunctionType.__init__() method
+    # called above.
+    #
+    # Note that *ALL* pure-Python callables are guaranteed to define the
+    # following dunder attributes.
+    func_copy.__annotations__ = func.__annotations__
+    func_copy.__doc__ = func.__doc__
+    func_copy.__kwdefaults__ = func.__kwdefaults__  # type: ignore[attr-defined]
+    func_copy.__module__ = func.__module__
+    func_copy.__qualname__ = func.__qualname__
+
+    # Shallowly copy all custom attributes (i.e., non-dunder attributes
+    # explicitly set by the caller) from the original callable onto this copy.
+    func_copy.__dict__.update(func.__dict__)
+    # print(f'func.__dict__: {func.__dict__}')
+    # print(f'func_copy.__dict__: {func_copy.__dict__}')
+
+    # Return this copy.
+    return func_copy
+
+# ....................{ MAKERS                            }....................
 def make_func(
     # Mandatory arguments.
     func_name: str,
@@ -72,8 +165,8 @@ def make_func(
 
         Defaults to ``None``.
     exception_cls : type, optional
-        Class of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`_BeartypeUtilCallableException`.
+        Type of exception to raise in the event of a fatal error. Defaults to
+        :exc:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -94,6 +187,8 @@ def make_func(
     '''
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
+    assert func_name, '"func_name" empty.'
+    assert func_code, '"func_code" empty.'
 
     # Default all unpassed parameters.
     if func_globals is None:
