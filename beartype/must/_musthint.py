@@ -38,7 +38,6 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................
 #FIXME: Unit test us up via the public "beartype.must.Must" class alias.
-#FIXME: Docstring us up, please.
 #FIXME: Implement as follows:
 #* Define the PEP 560-compliant __class_getitem__() class dunder method to:
 #  * Accept a single argument, which *MUST* be a callable itself accepting a
@@ -70,8 +69,53 @@ class Must(object):
     '''
     **Beartype data validator** (i.e., class subscripted (indexed) by a
     caller-defined function validating the internal structure of arbitrarily
-    complex scalars, data structures, or third-party objects in a PEP-compliant
-    manner supported by the :func:`beartype.beartype decorator).
+    complex scalars, data structures, and third-party objects in a
+    PEP-compliant and checker-agnostic manner explicitly supported by the
+    :func:`beartype.beartype decorator).
+
+    Callers are expected to (in order):
+
+    #. Annotate callable parameters and returns to be validated with `PEP
+       593`_-compliant :attr:`typing.Annotated` type hints.
+    #. Subscript those hints with (in order):
+
+       #. The type of those parameters and returns.
+       #. One or more subscriptions (indexations) of this class. In turn, this
+          class *must* be subscripted (indexed) by a callable accepting a
+          single arbitrary object and returning a boolean that is ``True`` only
+          if the passed object is valid. Formally, that callable should have a
+          signature resembling:
+
+          .. _code-block:: python
+
+             def is_object_valid(obj: object) -> bool: ...
+
+          If the passed object is invalid, that callable should preferably
+          return ``False`` rather than raise an exception.
+
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
+
+    Examples
+    ----------
+
+    .. _code-block:: python
+
+       from beartype import beartype
+       from beartype.must import Must
+       from typing import Annotated
+
+       @beartype
+       def get_text_middle(text: Annotated[str, Must[
+           lambda text: 4 <= len(data) <= 14]]):
+           """
+           Return the substring spanning characters ``[6, 9]`` inclusive
+           from the passed string required to have a length in the range
+           ``[4, 14]`` inclusive.
+           """
+
+           #  "This is guaranteed to work," says beartype.
+           r eturn text[7:10]
     '''
 
     pass

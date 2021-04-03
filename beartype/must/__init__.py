@@ -27,9 +27,6 @@ Instead, callers are expected to (in order):
 
 .. _PEP 593:
    https://www.python.org/dev/peps/pep-0593
-
-Examples
-----------
 '''
 
 # ....................{ TODO                              }....................
