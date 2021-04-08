@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable code object utilities.**
+Project-wide **callable code object** utilities.
 
 This private submodule implements utility functions dynamically introspecting
 **code objects** (i.e., instances of the :class:`CodeType` type)
@@ -27,53 +27,6 @@ CallableOrFrameOrCodeType = Union[Callable, CodeType, FrameType]
 '''
 PEP-compliant type hint matching either a callable *or* code object.
 '''
-
-# ....................{ VALIDATORS                        }....................
-def die_unless_func_python(
-    # Mandatory parameters.
-    func: Callable,
-
-    # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException
-) -> None:
-    '''
-    Raise an exception if the passed function is **C-based** (i.e., implemented
-    in C as either a builtin bundled with the active Python interpreter *or*
-    third-party C extension function).
-
-    Equivalently, this validator raises an exception unless the passed function
-    is **pure-Python** (i.e., implemented in Python as either a function or
-    method).
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-    exception_cls : type, optional
-        Type of exception to be raised if this callable is neither a
-        pure-Python function nor method. Defaults to
-        :class:`_BeartypeUtilCallableException`.
-
-    Raises
-    ----------
-    exception_cls
-         If this callable has *no* code object and is thus *not* pure-Python.
-    '''
-
-    # Code object underlying this callable if this callable is pure-Python *OR*
-    # "None" otherwise.
-    func_codeobj = get_func_codeobj_or_none(func)
-
-    # If this callable is *NOT* pure-Python, raise an exception.
-    if func_codeobj is None:
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
-        raise exception_cls(
-            f'Callable {repr(func)} code object not found '
-            f'(e.g., due to being either C-based or a class or object '
-            f'defining the ``__call__()`` dunder method).'
-        )
-    # Else, this code object exists.
 
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(
@@ -158,8 +111,12 @@ def get_func_codeobj(
     # "None" otherwise.
     func_codeobj = get_func_codeobj_or_none(func)
 
-    # If this callable is *NOT* pure-Python, raise an exception.
+    # If this callable is *NOT* pure-Python...
     if func_codeobj is None:
+        # Avoid circular import dependencies.
+        from beartype._util.func.utilfunctest import die_unless_func_python
+
+        # Raise an exception.
         die_unless_func_python(func=func, exception_cls=exception_cls)
     # Else, this callable is pure-Python and this code object exists.
 

@@ -5,8 +5,6 @@
 
 '''
 **Beartype cave-specific abstract base classes (ABCs).**
-
-This submodule declares non-standard ABCs subclassed by  implementing .
 '''
 
 # ....................{ TODO                              }....................
@@ -48,7 +46,6 @@ This submodule declares non-standard ABCs subclassed by  implementing .
 
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta, abstractmethod
-from typing import Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

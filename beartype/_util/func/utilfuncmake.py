@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import _BeartypeUtilCallableException
-from beartype._util.func.utilfunccodeobj import die_unless_func_python
 from beartype._util.func.utilfuncscope import CallableScope
+from beartype._util.func.utilfunctest import die_unless_func_python
 from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
@@ -67,9 +67,7 @@ def copy_func_shallow(
     Raises
     ----------
     exception_cls
-        If either:
-
-        * The passed callable is *not* pure-Python.
+        If the passed callable is *not* pure-Python.
 
     See Also
     ----------

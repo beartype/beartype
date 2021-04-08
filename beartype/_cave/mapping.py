@@ -5,8 +5,6 @@
 
 '''
 **Beartype cave-specific abstract base classes (ABCs).**
-
-This submodule declares non-standard ABCs subclassed by  implementing .
 '''
 
 # ....................{ TODO                              }....................

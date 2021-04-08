@@ -436,6 +436,36 @@ class BeartypeCallHintPepReturnException(BeartypeCallHintPepException):
 
     pass
 
+# ....................{ HINT ~ is                         }....................
+class BeartypeHintIsException(BeartypeException, metaclass=_ABCMeta):
+    '''
+    Abstract base class of all **beartype-specific data validation type hint
+    exceptions.**
+
+    Instances of subclasses of this exception are raised at usage time from the
+    class hierarchy publicized by the :func:`beartype.is` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeHintIsUsageException(BeartypeHintIsException):
+    '''
+    **Beartype-specific data validation type hint usage exception.**
+
+    This exception is raised on attempts to inappropriately use the class
+    hierarchy publicized by the :func:`beartype.is` subpackage, including
+    attempts to:
+
+    * Instantiate *any* of these classes. Like standard type hints, these
+      classes are *only* intended to be subscripted (indexed).
+    * Subscript *any* of these classes by anything other than a **data
+      validation callable** (i.e., tester function satisfying the type hint
+      ``collections.abc.Callable[[typing.Any,], bool]``).
+    '''
+
+    pass
+
 # ....................{ WARNINGS                          }....................
 class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     '''

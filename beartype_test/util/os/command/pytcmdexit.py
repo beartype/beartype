@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**External command exit status** (i.e., integer signifying whether a process
-terminated successfully or unsuccessfully) utilities.
+Project-wide **external command exit status** (i.e., integer signifying whether
+a process terminated successfully or unsuccessfully) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
