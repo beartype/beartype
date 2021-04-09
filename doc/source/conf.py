@@ -130,9 +130,26 @@ except ImportError:
 # * https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 #   Official documentation.
 
-# Prevent Napoleon from attempting to erroneously parse docstrings in the
-# Google format unused by this project.
+# Force Napolean to *ONLY* parse docstrings in the NumPy format used by this
+# project. By default, Napolean attempts and often fails to permissively parse
+# docstrings in both Google and NumPy formats.
+napoleon_numpy_docstring = True
 napoleon_google_docstring = False
+
+# List of the names of all non-standard section headers (i.e., headers *NOT*
+# already supported out-of-the-box by Napoleon) embedded in docstrings
+# throughout this project. By default, Napolean silently ignores *ALL* content
+# in non-standard section headers.
+#
+# See also:
+# * This list of all standard section headers:
+#   https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html#docstring-sections
+napoleon_custom_sections = [
+    'Caveats',
+    'Design',
+    'Motivation',
+    'Usage',
+]
 
 #FIXME: Experiment with enabling these non-default settings as well.
 # napoleon_use_param = False

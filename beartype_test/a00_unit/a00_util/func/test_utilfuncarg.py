@@ -15,8 +15,9 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from pytest import raises
 
-# ....................{ TESTS ~ kind                      }....................
+# ....................{ TESTS ~ tester : kind             }....................
 def test_is_func_argless() -> None:
     '''
     Test the
@@ -87,7 +88,7 @@ def test_is_func_arg_variadic() -> None:
     # Assert this tester rejects callables accepting *NO* variadic arguments.
     assert is_func_arg_variadic(by_day_or_starlight) is False
 
-# ....................{ TESTS ~ name                      }....................
+# ....................{ TESTS ~ tester : name             }....................
 def test_is_func_arg_name() -> None:
     '''
     Test the
@@ -122,3 +123,42 @@ def test_is_func_arg_name() -> None:
     # callable's body.
     assert is_func_arg_name(
         of_inward_happiness, 'thy_soul_was_like_a_star') is False
+
+# ....................{ TESTS ~ getter                    }....................
+def test_get_func_arg_len_standard() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncarg.get_func_args_len_standard` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar import _BeartypeUtilCallableException
+    from beartype._util.func.utilfuncarg import get_func_args_len_standard
+
+    # Arbitrary callable accepting no arguments.
+    def the_coming_of_arthur() -> str:
+        return 'And so there grew great tracts of wilderness,'
+
+    # Arbitrary callable accepting one variadic argument.
+    def guinevere(*and_in_her_his_one_delight: str) -> str:
+        return 'Wherein the beast was ever more and more,'
+
+    # Arbitrary callable accepting one standard argument.
+    def leodogran_the_king_of_cameliard(had_one_fair_daughter: str) -> str:
+        return 'But man was less and less, till Arthur came.'
+
+    # Arbitrary callable accepting two or more standard arguments.
+    def the_land_of_cameliard_was_waste(
+        thick_with_wet_woods: str, and_many_a_beast_therein: str) -> str:
+        return 'For here between the man and beast we die.'
+
+    # Assert this tester returns the expected lengths of these callables.
+    assert get_func_args_len_standard(the_coming_of_arthur) == 0
+    assert get_func_args_len_standard(guinevere) == 0
+    assert get_func_args_len_standard(leodogran_the_king_of_cameliard) == 1
+    assert get_func_args_len_standard(the_land_of_cameliard_was_waste) == 2
+
+    # Assert this tester raises the expected exception when passed a C-based
+    # callable.
+    with raises(_BeartypeUtilCallableException):
+        get_func_args_len_standard(iter)

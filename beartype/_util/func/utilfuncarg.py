@@ -158,7 +158,6 @@ def is_func_arg_variadic_keyword(func: CallableOrFrameOrCodeType) -> bool:
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
 
 # ....................{ TESTERS ~ name                    }....................
-#FIXME: Refactor this function in terms of the new iter_func_args() iterator.
 def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts an argument with
@@ -201,13 +200,41 @@ def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
     # false.
     return False
 
+# ....................{ GETTERS                           }....................
+def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
+    '''
+    Number of **standard parameters** (i.e., positional or keyword) accepted by
+    the passed pure-Python callable.
+
+    Parameters
+    ----------
+    func : CallableOrFrameOrCodeType
+        Pure-Python Callable, frame, or code object to be inspected.
+
+    Returns
+    ----------
+    int
+        Number of standard parameters accepted by this pure-Python callable.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableException
+         If this callable is *not* pure-Python.
+    '''
+
+    # Code object underlying this pure-Python callable.
+    func_codeobj = get_func_codeobj(func)
+
+    # Return the number of standard parameters accepted by this callable.
+    return func_codeobj.co_argcount
+
 # ....................{ GENERATORS                        }....................
 #FIXME: Unit test us up, please.
 def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
     Tuple[str, EnumMemberType, Any], None, None]:
     '''
     Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)`` for
-    each parameter accepted by the passed callable.
+    each parameter accepted by the passed pure-Python callable.
 
     Specifically, this function dynamically creates and returns a new one-shot
     generator yielding for each callable parameter one 3-tuple containing:
@@ -238,14 +265,19 @@ def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : CallableOrFrameOrCodeType
+        Pure-Python Callable, frame, or code object to be inspected.
 
     Returns
     ----------
     Generator[Tuple[str, EnumMemberType, Any], None, None]
         Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)``
         for each parameter accepted by this callable.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableException
+         If this callable is *not* pure-Python.
     '''
 
     # Code object underlying this pure-Python callable.
