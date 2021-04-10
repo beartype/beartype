@@ -26,6 +26,7 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
+from beartype.vale._valeiscore import is_hint_pep593_beartype
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_type,
@@ -109,7 +110,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
-    get_hint_pep593_hint,
+    get_hint_pep593_type,
     is_hint_pep593,
 )
 from beartype._util.hint.pep.utilhintpepget import (
@@ -720,11 +721,20 @@ def pep_code_check_hint(
         elif is_hint_pep544_io_generic(hint_curr):
             hint_curr = get_hint_pep544_io_protocol_from_generic(hint_curr)
         # ................{ REDUCTION ~ pep 593               }................
-        # If this is a PEP 593-compliant type metahint, ignore all annotations
-        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
-        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+        # If this is a PEP 593-compliant type metahint...
         elif is_hint_pep593(hint_curr):
-            hint_curr = get_hint_pep593_hint(hint_curr)
+            #FIXME: Replicate this logic into the "_error" submodule, please.
+            # If the first argument subscripting this metahint is
+            # beartype-agnostic (e.g., *NOT* an instance of the
+            # "beartype.vale.AnnotatedIs" class produced by subscripting
+            # (indexing) the "Is" class), ignore all annotations on this hint
+            # by reducing this hint to its origin (e.g., "str" in
+            # "Annotated[str, 50, False]").
+            if not is_hint_pep593_beartype(hint_curr):
+                hint_curr = get_hint_pep593_type(hint_curr)
+            # Else, that beartype-specific. In this case, preserve this hint as
+            # is for subsequent handling below.
+
         # ................{ REDUCTION ~ end                   }................
 
         #FIXME: Comment this sanity check out after we're sufficiently
@@ -1778,7 +1788,10 @@ def pep_code_check_hint(
         # ................{ CLEANUP                           }................
         # Inject this code into the body of this wrapper.
         func_wrapper_code = replace_str_substrs(
-            text=func_wrapper_code, old=hint_curr_placeholder, new=func_curr_code)
+            text=func_wrapper_code,
+            old=hint_curr_placeholder,
+            new=func_curr_code,
+        )
 
         # Nullify the metadata describing the previously visited hint in this
         # list for safety.

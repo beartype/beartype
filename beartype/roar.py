@@ -437,31 +437,34 @@ class BeartypeCallHintPepReturnException(BeartypeCallHintPepException):
     pass
 
 # ....................{ HINT ~ is                         }....................
-class BeartypeHintIsException(BeartypeException, metaclass=_ABCMeta):
+class BeartypeAnnotatedIsException(BeartypeException, metaclass=_ABCMeta):
     '''
-    Abstract base class of all **beartype-specific data validation type hint
+    Abstract base class of all **beartype data validation type hint
     exceptions.**
 
     Instances of subclasses of this exception are raised at usage time from the
-    class hierarchy publicized by the :func:`beartype.is` subpackage.
+    class hierarchy publicized by the :func:`beartype.vale` subpackage.
     '''
 
     pass
 
 
-class BeartypeHintIsUsageException(BeartypeHintIsException):
+class BeartypeAnnotatedIsCoreException(BeartypeAnnotatedIsException):
     '''
-    **Beartype-specific data validation type hint usage exception.**
+    **Beartype core data validation type hint exception.**
 
     This exception is raised on attempts to inappropriately use the class
-    hierarchy publicized by the :func:`beartype.is` subpackage, including
+    hierarchy publicized by the :func:`beartype.vale` subpackage, including
     attempts to:
 
     * Instantiate *any* of these classes. Like standard type hints, these
       classes are *only* intended to be subscripted (indexed).
     * Subscript *any* of these classes by anything other than a **data
-      validation callable** (i.e., tester function satisfying the type hint
+      validator** (i.e., tester function satisfying the type hint
       ``collections.abc.Callable[[typing.Any,], bool]``).
+    * Apply the ``&`` or ``|`` operators to *any* subscriptions of these
+      classes and *any* other objects (e.g.,
+      ``beartype.vale.Is[lambda obj: True]] & 'If it seems bad, it is.'``).
     '''
 
     pass

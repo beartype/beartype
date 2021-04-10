@@ -14,7 +14,6 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 import argparse, functools, re, sys, weakref
 from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
 from collections import deque
@@ -33,6 +32,9 @@ from pytest import raises
 #* "CallableCTypes".
 
 # ....................{ CLASSES                           }....................
+#FIXME: Replace most of the following with trivial access of attributes already
+#defined by the existing "beartype_test.a00_unit.data.data_type" submodule.
+
 # Test class defining all possible class-specific callables, including...
 class _WeHaveFedOurSeaForAThousandYears(object):
     # Instance method.

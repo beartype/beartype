@@ -36,7 +36,17 @@ Instead, callers are expected to (in order):
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.vale._valehint import Is
+from beartype.vale._valeiscore import (
+    AnnotatedIs,
+    Is,
+)
+
+#FIXME: Uncomment *AFTER* defining this subpackage and classes.
+# from beartype.vale._valeismore import (
+#     IsEqual,
+#     IsIdentical,
+#     IsMatch,
+# )
 
 # ....................{ TODO                              }....................
 #FIXME: More importantly, document this throughout "README.rst", including:

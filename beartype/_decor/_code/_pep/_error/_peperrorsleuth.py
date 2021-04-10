@@ -24,7 +24,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_io_generic,
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
-    get_hint_pep593_hint,
+    get_hint_pep593_type,
     is_hint_pep593,
 )
 from beartype._util.hint.pep.utilhintpepget import (
@@ -228,7 +228,7 @@ class CauseSleuth(object):
         # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
         # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
         elif is_hint_pep593(hint):
-            hint = get_hint_pep593_hint(hint)
+            hint = get_hint_pep593_type(hint)
         # ................{ REDUCTION ~ end                   }................
 
         # If this hint is PEP-compliant...

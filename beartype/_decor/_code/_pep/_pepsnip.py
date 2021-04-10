@@ -276,7 +276,7 @@ generated for the current call to the exception-handling function call embedded
 in the :data:`PEP_CODE_CHECK_HINT_ROOT_SUFFIX` snippet.
 '''
 
-# ....................{ HINT ~ nonpep                     }....................
+# ....................{ HINT ~ type : nonpep              }....................
 PEP_CODE_CHECK_HINT_NONPEP_TYPE = (
     '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
@@ -285,7 +285,7 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
-# ....................{ HINT ~ generic                    }....................
+# ....................{ HINT ~ type : generic             }....................
 PEP_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
 {indent_curr}    # True only if this pith is an instance of this generic.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
@@ -341,7 +341,7 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
 '''
 
-# ....................{ HINT ~ sequence : standard        }....................
+# ....................{ HINT ~ type : sequence : standard }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
 {indent_curr}    # True only if this pith shallowly satisfies this hint.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -392,7 +392,7 @@ PEP-compliant Python expression yielding the value of a randomly indexed item
 of the current pith (which, by definition, *must* be a standard sequence).
 '''
 
-# ....................{ HINT ~ sequence : tuple           }....................
+# ....................{ HINT ~ type : sequence : tuple    }....................
 PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
@@ -472,11 +472,11 @@ PEP-compliant Python expression yielding the value of the currently indexed
 item of the current pith (which, by definition, *must* be a tuple).
 '''
 
-# ....................{ HINT ~ pep484 : union             }....................
+# ....................{ HINT ~ type : pep484 : union      }....................
 PEP484_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
-against each subscripted argument of a :class:`typing.Union` type.
+against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
@@ -484,7 +484,7 @@ PEP484_CODE_CHECK_HINT_UNION_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
-against each subscripted argument of a :class:`typing.Union` type.
+against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
@@ -492,19 +492,20 @@ PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP = '''
 {{indent_curr}}    {hint_child_placeholder} or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
-PEP-compliant child argument subscripting a parent :class:`typing.Union` type.
+PEP-compliant child argument subscripting a parent :class:`typing.Union` type
+hint.
 
 Caveats
 ----------
 The caller is required to manually slice the trailing suffix ``" or"`` after
-applying this snippet to the last subscripted argument of a
-:class:`typing.Union` type. While there exist alternate and more readable means
-of accomplishing this, this approach is the optimally efficient.
+applying this snippet to the last subscripted argument of such a hint. While
+there exist alternate and more readable means of accomplishing this, this
+approach is the optimally efficient.
 
 The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
-this parent type has been generated.
+this parent hint has been generated.
 '''
 
 
@@ -513,10 +514,60 @@ PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP = '''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
 PEP-noncompliant child argument subscripting a parent :class:`typing.Union`
-type.
+type hint.
 
 See Also
 ----------
 :data:`PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP`
     Further details.
+'''
+
+# ....................{ HINT ~ type : pep593 : union      }....................
+PEP593_CODE_CHECK_HINT_ANNOTATED_IS_PREFIX = '''(
+    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+against each subscripted argument of a `PEP 593`_-compliant
+:attr:`typing.Annotated` type hint subscripted by one or more
+:class:`beartype.vale.AnnotatedIs` objects.
+
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
+'''
+
+
+PEP593_CODE_CHECK_HINT_ANNOTATED_IS_SUFFIX = '''
+{indent_curr})'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the current pith
+against each subscripted argument of a `PEP 593`_-compliant
+:attr:`typing.Annotated` type hint subscripted by one or more
+:class:`beartype.vale.AnnotatedIs` objects.
+
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
+'''
+
+
+PEP593_CODE_CHECK_HINT_ANNOTATED_IS_CHILD = '''
+{{indent_curr}}    {hint_child_arg_name}({pith_curr_assigned_expr}) and'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+child :class:`beartype.vale.AnnotatedIs` argument subscripting a parent `PEP
+593`_-compliant :attr:`typing.Annotated` type hint.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" and"`` after
+applying this snippet to the last subscripted argument of such a
+:class:`typing.Union` type. While there exist alternate and more readable means
+of accomplishing this, this approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent hint has been generated.
+
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
 '''
