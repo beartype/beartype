@@ -21,6 +21,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
 )
+from sys import version_info
 from typing import (
     AbstractSet,
     Any,
@@ -355,7 +356,6 @@ def _init() -> None:
     if IS_PYTHON_AT_LEAST_3_7:
         _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.extend((
             typing.AsyncContextManager,
-            typing.OrderedDict,
 
             # Although the Python 3.6-specific implementation of the "typing"
             # module *DOES* technically supply these attributes, it does so
@@ -376,8 +376,17 @@ def _init() -> None:
             typing.Sized,
         ))
 
-        if IS_PYTHON_AT_LEAST_3_8:
-            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.SupportsIndex)  # type: ignore[attr-defined]
+        # If the active Python interpreter targets Python >= 3.7.2...
+        #
+        # Note that this is the *ONLY* test against Python >= 3.7.2 in the
+        # codebase and thus done manually rather than with a global boolean.
+        if version_info >= (3, 7, 2):
+            # Add the "typing.OrderedDict" sign first introduced by the patch
+            # release Python 3.7.2. Yes, this is insane. Yes, this is "typing".
+            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.OrderedDict)
+
+            if IS_PYTHON_AT_LEAST_3_8:
+                _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.SupportsIndex)  # type: ignore[attr-defined]
 
     # Coerce this list into a frozen set for subsequent constant-time lookup.
     HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(

@@ -101,6 +101,9 @@ Data validators are suitable for subscripting the :class:`Is` class.
 #* Refactor the Is.__class_getitem__() to instantiate and return a new
 #  "issubscription = _IsSubscription(func)" instance. Note that we also don't
 #  need the copy_func_shallow() function using this approach either. Noice!
+#FIXME: Oh, and just make "IsSubscription" public. Then there's no need
+#whatsoever for silly testers like is_hint_issubscription(). Yay!
+
 class Is(object):
     '''
     **Beartype data validator** (i.e., class subscripted (indexed) by a
