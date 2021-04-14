@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Beartype authors.
+# See "LICENSE" for further details.
+
+'''
+**Beartype** `PEP 593`_**-compliant type hint utility unit tests.**
+
+This submodule unit tests the public API of the private
+:mod:`beartype._util.hint.pep.proposal.utilhintpep593` submodule.
+
+.. _PEP 593:
+   https://www.python.org/dev/peps/pep-0593
+'''
+
+# ....................{ IMPORTS                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To raise human-readable test errors, avoid importing from
+# package-specific submodules at module scope.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from pytest import raises
+
+# ....................{ TESTS ~ tester                    }....................
+def test_is_hint_pep593_beartype() -> None:
+    '''
+    Test usage of the private
+    :mod:`beartype._util.hint.pep.proposal.utilhintpep593.is_hint_pep593_beartype`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar import BeartypeDecorHintPepException
+    from beartype.vale._valeiscore import Is
+    from beartype._util.hint.pep.proposal.utilhintpep593 import (
+        is_hint_pep593_beartype)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+
+    # If the active Python interpreter targets at least Python >= 3.9 and thus
+    # supports PEP 593...
+    if IS_PYTHON_AT_LEAST_3_9:
+        from typing import Annotated
+
+        # Assert this tester accepts beartype-specific metahints.
+        assert is_hint_pep593_beartype(Annotated[
+            str, Is[lambda text: bool(text)]]) is True
+
+        # Assert this tester rejects beartype-agnostic metahints.
+        assert is_hint_pep593_beartype(Annotated[
+            str, 'And may there be no sadness of farewell']) is False
+
+    # Assert this tester raises the expected exception when passed a
+    # non-metahint in either case.
+    with raises(BeartypeDecorHintPepException):
+        is_hint_pep593_beartype('When I embark;')

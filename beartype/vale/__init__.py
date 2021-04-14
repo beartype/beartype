@@ -49,12 +49,6 @@ from beartype.vale._valeiscore import (
 # )
 
 # ....................{ TODO                              }....................
-#FIXME: More importantly, document this throughout "README.rst", including:
-#* In our "Cheatsheet" section.
-#* In our "Features" matrix.
-#* In a new "Usage" subsection.
-#* In our FAQ.
-
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:
 #
@@ -75,6 +69,12 @@ from beartype.vale._valeiscore import (
 #  * GreaterThan.
 #  * Range.
 #  * DivisibleBy.
+
+#FIXME: Document this throughout "README.rst", including:
+#* In our "Cheatsheet" section.
+#* In our "Features" matrix.
+#* In a new "Usage" subsection.
+#* In our FAQ.
 
 #FIXME: *BRILLIANT IDEA.* Holyshitballstime. The idea here is that we can
 #leverage all of our existing "beartype.is" infrastructure to dynamically

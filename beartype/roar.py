@@ -449,13 +449,12 @@ class BeartypeAnnotatedIsException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeAnnotatedIsCoreException(BeartypeAnnotatedIsException):
+class BeartypeAnnotatedIsInstantiationException(BeartypeAnnotatedIsException):
     '''
     **Beartype core data validation type hint exception.**
 
-    This exception is raised on attempts to inappropriately use the class
-    hierarchy publicized by the :func:`beartype.vale` subpackage, including
-    attempts to:
+    This exception is raised on erroneous subscriptions of the class hierarchy
+    publicized by the :func:`beartype.vale` subpackage, including attempts to:
 
     * Instantiate *any* of these classes. Like standard type hints, these
       classes are *only* intended to be subscripted (indexed).

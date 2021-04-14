@@ -26,7 +26,8 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype.vale._valeiscore import is_hint_pep593_beartype
+from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    is_hint_pep593_beartype)
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_type,
@@ -202,9 +203,9 @@ def pep_code_check_hint(
         PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format),
 ) -> Tuple[str, CallableScope, Tuple[str, ...]]:
     '''
-    Python code type-checking the previously localized parameter or return
-    value annotated by the passed PEP-compliant type hint against this hint of
-    the decorated callable.
+    Python code snippet type-checking the previously localized parameter or
+    return value annotated by the passed PEP-compliant type hint against that
+    hint of the decorated callable.
 
     This code generator is memoized for efficiency.
 
@@ -242,9 +243,9 @@ def pep_code_check_hint(
 
         * ``func_wrapper_code`` is a Python code snippet type-checking the
           previously localized parameter or return value against this hint.
-        * ``func_wrapper_locals`` the **local scope** (i.e., dictionary mapping
-          from the name to value of each attribute referenced in the signature)
-          of this wrapper function needed for this type-checking.
+        * ``func_wrapper_locals`` is the **local scope** (i.e., dictionary
+          mapping from the name to value of each attribute referenced in the
+          signature) of this wrapper function needed for this type-checking.
         * ``hints_forwardref_class_basename`` is a tuple of the unqualified
           classnames of `PEP 484`_-compliant relative forward references
           visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
@@ -688,24 +689,41 @@ def pep_code_check_hint(
         # beartype._decor._code._pep._error._peperrorsleuth.CauseSleuth.__init__()
         # method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Reduce the currently visited hint to a lower-level hint-like object
+        # associated with this hint if this hint satisfies a condition.
         #
-        # This logic reduces the currently visited hint to an arbitrary object
-        # associated with this hint when this hint conditionally satisfies any
-        # of various conditions.
+        # This decision is intentionally implemented as a linear series of
+        # tests ordered in descending likelihood for efficiency. While
+        # alternative implementations (that are more readily readable and
+        # maintainable) do exist, these alternatives all appear to be
+        # substantially less efficient.
         #
-        # ................{ REDUCTION ~ pep 484               }................
+        # ................{ REDUCTION ~ pep 484 ~ none        }................
         # If this is the PEP 484-compliant "None" singleton, reduce this hint
         # to the type of that singleton. While not explicitly defined by the
         # "typing" module, PEP 484 explicitly supports this singleton:
         #     When used in a type hint, the expression None is considered
         #     equivalent to type(None).
+        # The "None" singleton is used to type callables lacking an explicit
+        # "return" statement and thus absurdly common. Ergo, detect this first.
         if hint_curr is None:
             hint_curr = NoneType
-        # If this is a PEP 484-compliant new type hint, reduce this hint to the
-        # user-defined class aliased by this hint. Although this logic could
-        # also be performed below, doing so here simplifies matters.
-        elif is_hint_pep484_newtype(hint_curr):
-            hint_curr = get_hint_pep484_newtype_class(hint_curr)
+        # ................{ REDUCTION ~ pep 593               }................
+        # If this is a PEP 593-compliant type metahint...
+        #
+        # Metahints form the core backbone of our beartype-specific data
+        # validation API and are thus also extremely common. Ergo, detect these
+        # next-to-first.
+        elif is_hint_pep593(hint_curr):
+            # If the first argument subscripting this metahint is
+            # beartype-agnostic (e.g., *NOT* an instance of the
+            # "beartype.vale.AnnotatedIs" class produced by subscripting the
+            # "Is" class), ignore all annotations on this hint by reducing this
+            # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+            if not is_hint_pep593_beartype(hint_curr):
+                hint_curr = get_hint_pep593_type(hint_curr)
+            # Else, that argument is beartype-specific. In this case, preserve
+            # this hint as is for subsequent handling below.
         # ................{ REDUCTION ~ pep 544               }................
         # If this is a PEP 484-compliant IO generic base class *AND* the active
         # Python interpreter targets at least Python >= 3.8 and thus supports
@@ -720,23 +738,16 @@ def pep_code_check_hint(
         # Python version.
         elif is_hint_pep544_io_generic(hint_curr):
             hint_curr = get_hint_pep544_io_protocol_from_generic(hint_curr)
-        # ................{ REDUCTION ~ pep 593               }................
-        # If this is a PEP 593-compliant type metahint...
-        elif is_hint_pep593(hint_curr):
-            #FIXME: Replicate this logic into the "_error" submodule, please.
-            # If the first argument subscripting this metahint is
-            # beartype-agnostic (e.g., *NOT* an instance of the
-            # "beartype.vale.AnnotatedIs" class produced by subscripting
-            # (indexing) the "Is" class), ignore all annotations on this hint
-            # by reducing this hint to its origin (e.g., "str" in
-            # "Annotated[str, 50, False]").
-            if not is_hint_pep593_beartype(hint_curr):
-                hint_curr = get_hint_pep593_type(hint_curr)
-            # Else, that beartype-specific. In this case, preserve this hint as
-            # is for subsequent handling below.
-
+        # ................{ REDUCTION ~ pep 484 ~ new type    }................
+        # If this is a PEP 484-compliant new type hint, reduce this hint to the
+        # user-defined class aliased by this hint. Although this logic could
+        # also be performed below, doing so here simplifies matters.
+        #
+        # New type hints are functionally useless for any meaningful purpose
+        # and thus reasonably rare in the wild. Ergo, detect these last.
+        elif is_hint_pep484_newtype(hint_curr):
+            hint_curr = get_hint_pep484_newtype_class(hint_curr)
         # ................{ REDUCTION ~ end                   }................
-
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
         #requires a linear search over the entire code and is thus costly.

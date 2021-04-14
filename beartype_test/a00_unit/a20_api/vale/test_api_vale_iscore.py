@@ -16,13 +16,17 @@ This submodule unit tests the subset of the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 from pytest import raises
 
 # ....................{ TESTS ~ class                     }....................
-def test_api_vale_classes_pass() -> None:
+@skip_if_python_version_less_than('3.7.0')
+def test_api_vale_core_classes_pass() -> None:
     '''
     Test successful usage of the public :mod:`beartype.vale.AnnotatedIs` and
-    :mod:`beartype.vale.Is` classes.
+    :mod:`beartype.vale.Is` classes if the active Python interpreter targets
+    Python >= 3.7 (and thus supports the ``__class_getitem__()`` dunder method)
+    *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
@@ -41,8 +45,12 @@ def test_api_vale_classes_pass() -> None:
     assert IsLengthy.is_valid('Right through the line they broke;') is True
     assert IsSentence.is_valid('Theirs not to make reply,') is False
     assert IsSentence.is_valid('Theirs but to do and die.') is True
-    assert IsQuoted  .is_valid('Theirs not to reason why,') is False
-    assert IsQuoted  .is_valid('"Forward, the Light Brigade!"') is True
+    assert IsQuoted.is_valid('Theirs not to reason why,') is False
+    assert IsQuoted.is_valid('"Forward, the Light Brigade!"') is True
+
+    # Assert these objects provide neither code nor code locals.
+    assert IsLengthy.is_valid_code is None
+    assert IsLengthy.is_valid_code_locals is None
 
     # Object synthesized from the above objects with the domain-specific
     # language (DSL) supported by those objects.
@@ -59,48 +67,51 @@ def test_api_vale_classes_pass() -> None:
         'Into the valley of Death') is False
 
 
-def test_api_vale_classes_fail() -> None:
+@skip_if_python_version_less_than('3.7.0')
+def test_api_vale_core_classes_fail() -> None:
     '''
-    Test successful usage of the public :mod:`beartype.vale.AnnotatedIs` and
-    :mod:`beartype.vale.Is` classes.
+    Test unsuccessful usage of the public :mod:`beartype.vale.AnnotatedIs` and
+    :mod:`beartype.vale.Is` classes if the active Python interpreter targets
+    Python >= 3.7 (and thus supports the ``__class_getitem__()`` dunder method)
+    *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeAnnotatedIsCoreException
-    from beartype.vale import Is
+    from beartype.roar import BeartypeAnnotatedIsInstantiationException
+    from beartype.vale import AnnotatedIs, Is
 
     # Assert that instantiating the "Is" class raises the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is()
 
     # Assert that subscripting the "Is" class with the empty tuple raises the
     # expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is[()]
 
     # Assert that subscripting the "Is" class with two or more arguments raises
     # the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is['Cannon to right of them,', 'Cannon to left of them,']
 
     # Assert that subscripting the "Is" class with a non-callable argument
     # raises the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is['Cannon in front of them']
 
     # Assert that subscripting the "Is" class with a C-based callable argument
     # raises the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is[iter]
 
     # Assert that subscripting the "Is" class with a pure-Python callable that
     # does *NOT* accept exactly one argument raises the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is[lambda: True]
 
     # Assert that subscripting the "Is" class with a pure-Python callable that
     # does *NOT* accept exactly one argument raises the expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         Is[lambda: True]
 
     # Object produced by subscripting the "Is" class with a valid validator.
@@ -110,37 +121,43 @@ def test_api_vale_classes_fail() -> None:
     # with the domain-specific language (DSL) supported by that object and an
     # arbitrary object that is *NOT* an instance of the same class raises the
     # expected exception.
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         IsNonEmpty & 'While horse and hero fell.'
-    with raises(BeartypeAnnotatedIsCoreException):
+    with raises(BeartypeAnnotatedIsInstantiationException):
         IsNonEmpty | 'While horse and hero fell.'
 
-# ....................{ TESTS ~ tester                    }....................
-def test_api_vale_is_hint_pep593_beartype() -> None:
-    '''
-    Test usage of the private
-    :mod:`beartype.vale._valeiscore.is_hint_pep593_beartype` tester.
-    '''
+    # Assert that attempting to instantiate the "AnnotatedIs" class with
+    # non-string code raises the expected exception.
+    with raises(BeartypeAnnotatedIsInstantiationException):
+        AnnotatedIs(
+            is_valid=lambda text: bool(text),
+            is_valid_code=b'Into the jaws of Death,',
+        )
 
-    # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintPepException
-    from beartype.vale._valeiscore import Is, is_hint_pep593_beartype
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    # Assert that attempting to instantiate the "AnnotatedIs" class with
+    # string code but *NO* code locals raises the expected exception.
+    with raises(BeartypeAnnotatedIsInstantiationException):
+        AnnotatedIs(
+            is_valid=lambda text: bool(text),
+            is_valid_code='Into the mouth of hell',
+        )
 
-    # If the active Python interpreter targets at least Python >= 3.9 and thus
-    # supports PEP 593...
-    if IS_PYTHON_AT_LEAST_3_9:
-        from typing import Annotated
+    # Assert that attempting to instantiate the "AnnotatedIs" class with
+    # string code and code locals such that that code does *NOT* contain the
+    # test subject substring "{pith_curr_assigned_expr}" raises the expected
+    # exception.
+    with raises(BeartypeAnnotatedIsInstantiationException):
+        AnnotatedIs(
+            is_valid=lambda text: bool(text),
+            is_valid_code='Came through the jaws of Death,',
+            is_valid_code_locals={},
+        )
 
-        # Assert this tester accepts beartype-specific metahints.
-        assert is_hint_pep593_beartype(Annotated[
-            str, Is[lambda text: bool(text)]]) is True
-
-        # Assert this tester rejects beartype-agnostic metahints.
-        assert is_hint_pep593_beartype(Annotated[
-            str, 'And may there be no sadness of farewell']) is False
-
-    # Assert this tester raises the expected exception when passed a
-    # non-metahint in either case.
-    with raises(BeartypeDecorHintPepException):
-        is_hint_pep593_beartype('When I embark;')
+    # Assert that attempting to instantiate the "AnnotatedIs" class with
+    # code locals but *NO* code raises the expected
+    # exception.
+    with raises(BeartypeAnnotatedIsInstantiationException):
+        AnnotatedIs(
+            is_valid=lambda text: bool(text),
+            is_valid_code_locals={},
+        )

@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utilities** (i.e., callables
-operating on PEP-compliant type hints intended to be called by dynamically
-generated wrapper functions wrapping decorated callables).
+**Beartype PEP-compliant type hint exception raisers** (i.e., functions raising
+human-readable exceptions called by :mod:`beartype`-decorated callables on the
+first invalid parameter or return value failing a type-check against the
+PEP-compliant type hint annotating that parameter or return).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -72,6 +73,8 @@ from beartype.roar import (
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
+from beartype._decor._code._pep._error._peperrorannotated import (
+    get_cause_or_none_annotated)
 from beartype._decor._code._pep._error._peperrorgeneric import (
     get_cause_or_none_generic)
 from beartype._decor._code._pep._error._peperrorsequence import (
@@ -96,6 +99,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
     label_callable_decorated_return_value,
@@ -354,6 +358,16 @@ def _init() -> None:
         HINT_PEP484_BASE_FORWARDREF: get_cause_or_none_forwardref,
         Generic: get_cause_or_none_generic,
     })
+
+    # If the active Python interpreter targets at least Python >= 3.9...
+    if IS_PYTHON_AT_LEAST_3_9:
+        # Defer imports conditionally dependent on this version.
+        from typing import Annotated  # type: ignore[attr-defined]
+
+        # Map each of the "typing" attributes imported above.
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
+            Annotated: get_cause_or_none_annotated,
+        })
 
 
 # Initialize this submodule.

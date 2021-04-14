@@ -47,6 +47,7 @@ pushd "${script_dirname}" >/dev/null
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
 python_args=( python3 -X dev )
+# python_args=( python3.6 -X dev )
 # python_args=( python3.9 -X dev )
 # python_args=( pypy3.7 -X dev )
 

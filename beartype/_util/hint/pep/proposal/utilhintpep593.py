@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
+from beartype.vale import AnnotatedIs
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Any, Optional
 
@@ -21,6 +22,7 @@ from typing import Any, Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ VALIDATORS                        }....................
+#FIXME: Unit test us up, please.
 def die_unless_hint_pep593(hint: object) -> None:
     '''
     Raise an exception unless the passed object is a `PEP 593`_-compliant
@@ -54,6 +56,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     # Defer version-dependent imports.
     from typing import Annotated  # type: ignore[attr-defined]
 
+    #FIXME: Unit test us up, please.
     #FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
     #we particularly care about this edge case? Probably not. *shrug*
     def is_hint_pep593(hint: object) -> bool:
@@ -163,7 +166,55 @@ is_hint_pep593_ignorable_or_none.__doc__ = '''
        https://www.python.org/dev/peps/pep-0593
     '''
 
-# ....................{ GETTERS ~ newtype                 }....................
+# ....................{ TESTERS ~ beartype                }....................
+def is_hint_pep593_beartype(hint: Any) -> bool:
+    '''
+    ``True`` only if the first argument subscripting the passed `PEP
+    593`-compliant :attr:`typing.Annotated` type hint is
+    :mod:`beartype`-specific (e.g., instance of the :class:`AnnotatedIs` class
+    produced by subscripting (indexing) the :class:`Is` class).
+
+    Parameters
+    ----------
+    hint : Any
+        `PEP 593`-compliant :attr:`typing.Annotated` type hint to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if the first argument subscripting this hint is
+        :mod:`beartype`-specific.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this object is *not* a `PEP 593`_-compliant type metahint.
+    '''
+
+    # If this object is *NOT* a PEP 593-compliant type metahint, raise an
+    # exception.
+    die_unless_hint_pep593(hint)
+    # Else, this object is a PEP 593-compliant type metahint.
+
+    # Attempt to return true only if the first argument subscripting this hint
+    # is beartype-specific.
+    #
+    # Note that the "__metadata__" dunder attribute is both guaranteed to exist
+    # for metahints *AND* be a non-empty tuple of arbitrary objects: e.g.,
+    #     >>> from typing import Annotated
+    #     >>> Annotated[int]
+    #     TypeError: Annotated[...] should be used with at least two
+    #     arguments (a type and an annotation).
+    try:
+        return isinstance(hint.__metadata__[0], AnnotatedIs)
+    # If the metaclass of the first argument subscripting this hint overrides
+    # the __isinstancecheck__() dunder method to raise an exception, silently
+    # ignore this exception by returning false instead.
+    except:
+        return False
+
+# ....................{ GETTERS                           }....................
+#FIXME: Unit test us up, please.
 def get_hint_pep593_type(hint: Any) -> type:
     '''
     Class annotated by the passed `PEP 593`_-compliant **type metahint** (i.e.,

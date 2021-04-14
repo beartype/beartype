@@ -26,6 +26,7 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_type,
     is_hint_pep593,
+    is_hint_pep593_beartype,
 )
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
@@ -196,7 +197,7 @@ class CauseSleuth(object):
         # associated with this hint when this hint conditionally satisfies any
         # of various conditions.
         #
-        # ................{ REDUCTION ~ pep 484               }................
+        # ................{ REDUCTION ~ pep 484 ~ none        }................
         # If this is the PEP 484-compliant "None" singleton, reduce this hint
         # to the type of that singleton. While not explicitly defined by the
         # "typing" module, PEP 484 explicitly supports this singleton:
@@ -204,11 +205,20 @@ class CauseSleuth(object):
         #     equivalent to type(None).
         if hint is None:
             hint = NoneType
-        # If this is a PEP 484-compliant new type hint, reduce this hint to the
-        # user-defined class aliased by this hint. Although this logic could
-        # also be performed below, doing so here simplifies matters.
-        elif is_hint_pep484_newtype(hint):
-            hint = get_hint_pep484_newtype_class(hint)
+        # ................{ REDUCTION ~ pep 593               }................
+        # If this is a PEP 593-compliant type metahint, ignore all annotations
+        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
+        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+        elif is_hint_pep593(hint):
+            # If the first argument subscripting this metahint is
+            # beartype-agnostic (e.g., *NOT* an instance of the
+            # "beartype.vale.AnnotatedIs" class produced by subscripting the
+            # "Is" class), ignore all annotations on this hint by reducing this
+            # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+            if not is_hint_pep593_beartype(hint):
+                hint = get_hint_pep593_type(hint)
+            # Else, that argument is beartype-specific. In this case, preserve
+            # this hint as is for subsequent handling below.
         # ................{ REDUCTION ~ pep 544               }................
         # If this is a PEP 484-compliant IO generic base class *AND* the active
         # Python interpreter targets at least Python >= 3.8 and thus supports
@@ -223,12 +233,12 @@ class CauseSleuth(object):
         # Python version.
         elif is_hint_pep544_io_generic(hint):
             hint = get_hint_pep544_io_protocol_from_generic(hint)
-        # ................{ REDUCTION ~ pep 593               }................
-        # If this is a PEP 593-compliant type metahint, ignore all annotations
-        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
-        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
-        elif is_hint_pep593(hint):
-            hint = get_hint_pep593_type(hint)
+        # ................{ REDUCTION ~ pep 484 ~ new type    }................
+        # If this is a PEP 484-compliant new type hint, reduce this hint to the
+        # user-defined class aliased by this hint. Although this logic could
+        # also be performed below, doing so here simplifies matters.
+        elif is_hint_pep484_newtype(hint):
+            hint = get_hint_pep484_newtype_class(hint)
         # ................{ REDUCTION ~ end                   }................
 
         # If this hint is PEP-compliant...
@@ -373,10 +383,8 @@ class CauseSleuth(object):
                     f'{self.exception_label} PEP type hint '
                     f'{repr(self.hint)} unsubscripted.'
                 )
-            # Else, thus subscripted by one or more child hints (e.g.,
-            # "typing.List[str]" rather than "typing.List")
-            #
-            # Else, this hint is subscripted by one or more child hints.
+            # Else, this hint is subscripted by one or more child hints (e.g.,
+            # "typing.List[str]" rather than "typing.List").
 
             # Avoid circular import dependencies.
             from beartype._decor._code._pep._error.peperror import (

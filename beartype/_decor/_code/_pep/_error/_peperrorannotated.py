@@ -4,13 +4,20 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant generic type hint exception raisers** (i.e., functions
-raising human-readable exceptions called by :mod:`beartype`-decorated callables
-on the first invalid parameter or return value failing a type-check against the
-PEP-compliant generic type hint annotating that parameter or return).
+**Beartype** `PEP 593`_-compliant :class:`typing.Annotated` **type hint
+exception raisers** (i.e., functions raising human-readable exceptions called
+by :mod:`beartype`-decorated callables on the first invalid parameter or return
+value failing a type-check against the `PEP 593`_-compliant
+:class:`typing.Annotated` type hint annotating that parameter or return).
 
 This private submodule is *not* intended for importation by downstream callers.
+
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
 '''
+
+# ....................{ TODO                              }....................
+#FIXME: Refactor in terms of beartype-specific AnnotatedIs.is_valid().
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._code._pep._error._peperrortype import (
@@ -30,7 +37,7 @@ from typing import Generic, Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
+def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed `PEP 484`_-compliant **generic** (i.e., type hint
