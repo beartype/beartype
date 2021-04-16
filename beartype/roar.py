@@ -240,7 +240,7 @@ class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
 # ....................{ DECORATOR ~ hint : pep : proposal }....................
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 484`_**-compliant type hint value exception.**
+    **Beartype decorator** `PEP 484`_**-compliant type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
@@ -259,7 +259,7 @@ class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 544`_**-compliant type hint value exception.**
+    **Beartype decorator** `PEP 544`_**-compliant type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
@@ -275,7 +275,7 @@ class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 585`_**-compliant type hint value exception.**
+    **Beartype decorator** `PEP 585`_**-compliant type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
@@ -284,6 +284,22 @@ class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
 
     .. _PEP 585:
        https://www.python.org/dev/peps/pep-0585
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** `PEP 593`_**-compliant type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating `PEP 593`_ *or* this
+    decorator's implementation of `PEP 593`_.
+
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
     '''
 
     pass
@@ -437,7 +453,7 @@ class BeartypeCallHintPepReturnException(BeartypeCallHintPepException):
     pass
 
 # ....................{ HINT ~ is                         }....................
-class BeartypeAnnotatedIsException(BeartypeException, metaclass=_ABCMeta):
+class BeartypeSubscriptedIsException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype data validation type hint
     exceptions.**
@@ -449,7 +465,7 @@ class BeartypeAnnotatedIsException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 
-class BeartypeAnnotatedIsInstantiationException(BeartypeAnnotatedIsException):
+class BeartypeSubscriptedIsInstantiationException(BeartypeSubscriptedIsException):
     '''
     **Beartype core data validation type hint exception.**
 

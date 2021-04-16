@@ -25,9 +25,10 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
+    BeartypeDecorHintPep593Exception,
+    _BeartypeUtilMappingException,
 )
-from beartype._util.hint.pep.proposal.utilhintpep593 import (
-    is_hint_pep593_beartype)
+from beartype.vale import SubscriptedIs
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_type,
@@ -35,6 +36,7 @@ from beartype._decor._cache.cachetype import (
 )
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
+    ARG_NAME_TEMPLATE_OBJECT,
     CODE_INDENT_1,
     CODE_INDENT_2,
 )
@@ -61,6 +63,7 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,
     PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX,
     PEP_CODE_CHECK_HINT_ROOT_PREFIX,
+    PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
@@ -68,11 +71,14 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ASSIGN_EXPR,
     PEP_CODE_PITH_NAME_PREFIX,
     PEP_CODE_PITH_ROOT_NAME,
-    PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP,
     PEP484_CODE_CHECK_HINT_UNION_PREFIX,
     PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
+    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_CODE,
+    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_FUNC,
+    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX,
+    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -97,6 +103,8 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
+from beartype._util.hint.data.pep.utilhintdatapepsign import (
+    HINT_PEP593_SIGN_ANNOTATED)
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -111,8 +119,10 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    get_hint_pep593_metadata,
     get_hint_pep593_type,
     is_hint_pep593,
+    is_hint_pep593_beartype,
 )
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
@@ -131,6 +141,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmunge import replace_str_substrs
+from beartype._util.text.utiltextrepr import get_object_representation
 from collections.abc import Callable
 from random import getrandbits
 from typing import Generic, Tuple, NoReturn
@@ -151,8 +162,12 @@ def pep_code_check_hint(
 
     #FIXME: Declare *ALL* other globals accessed below as optional parameters.
 
+    # "beartype.vale" globals.
+    _SubscriptedIs=SubscriptedIs,
+
     # "beartype._decor._code.codesnip" globals.
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
+    _ARG_NAME_TEMPLATE_OBJECT_format=ARG_NAME_TEMPLATE_OBJECT.format,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
 
@@ -195,12 +210,20 @@ def pep_code_check_hint(
         PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD.format),
     _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
         PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format),
-    PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
+    _PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
     _PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format: Callable = (
         PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP.format),
     _PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format: Callable = (
         PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format),
+    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX_format: Callable = (
+        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX.format),
+    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format: Callable = (
+        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX.format),
+    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_CODE_format: Callable = (
+        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_CODE.format),
+    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_FUNC_format: Callable = (
+        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_FUNC.format),
 ) -> Tuple[str, CallableScope, Tuple[str, ...]]:
     '''
     Python code snippet type-checking the previously localized parameter or
@@ -258,22 +281,35 @@ def pep_code_check_hint(
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-
-    Raises
-    ----------
     BeartypeDecorHintPepDeprecatedWarning
-        If one or more PEP-compliant type hints annotating the currently
-        decorated callable are deprecated.
+        If one or more PEP-compliant type hints visitable from this object are
+        deprecated.
+    BeartypeDecorHintPep484Exception
+        If one or more PEP-compliant type hints visitable from this object are
+        nested :attr:`typing.NoReturn` child hints, since
+        :attr:`typing.NoReturn` is valid *only* as a non-nested return hint.
+    BeartypeDecorHintPep593Exception
+        If one or more PEP-compliant type hints visitable from this object
+        subscript the `PEP 593`_-compliant :class:`typing.Annotated` class such
+        that:
+
+        * The second argument subscripting that class is an instance of the
+          :class:`beartype.vale.Is` class.
+        * One or more further arguments subscripting that class are *not*
+          instances of the :class:`beartype.vale.Is` class.
 
     .. _PEP 484:
        https://www.python.org/dev/peps/pep-0484
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
     '''
 
     # ..................{ HINT ~ root                       }..................
-    # Top-level hint relocalized for disambiguity. For the same reason, delete
-    # the passed parameter whose name is ambiguous within the context of this
-    # code generator.
+    # Top-level hint relocalized for disambiguity.
     hint_root = hint
+
+    # Delete the passed parameter whose name is ambiguous within the context of
+    # this function for similar disambiguity.
     del hint
 
     # Python code snippet evaluating to the current passed parameter or return
@@ -329,12 +365,6 @@ def pep_code_check_hint(
     # Current unsubscripted typing attribute associated with this hint (e.g.,
     # "Union" if "hint_child == Union[int, str]").
     # hint_child_sign = None
-
-    # Placeholder string to be globally replaced in the Python code snippet to
-    # be returned (i.e., "func_wrapper_code") by a Python code snippet
-    # type-checking the child pith expression (i.e., "pith_child_expr") against
-    # the currently iterated child hint (i.e., "hint_child").
-    hint_child_placeholder = None
 
     # Integer identifying the currently iterated child PEP-compliant type
     # hint of the currently visited parent PEP-compliant type hint.
@@ -523,10 +553,80 @@ def pep_code_check_hint(
     # below initializes index 0 of the "hints_meta" fixed list.
     hints_meta_index_last = -1
 
-    # ..................{ CLOSURES ~ hint : child           }..................
+    # ..................{ FUNC ~ code                       }..................
+    # Python code snippet type-checking the current pith against the currently
+    # visited hint (to be appended to the "func_wrapper_code" string).
+    func_curr_code: str = None  # type: ignore[assignment]
+
+    # Local scope (i.e., dictionary mapping from the name to value of each
+    # attribute referenced in the signature) of this wrapper function required
+    # by this Python code snippet.
+    func_wrapper_locals: CallableScope = {}
+
+    # dict.get() method of this dictionary, localized for efficiency.
+    func_wrapper_locals_get = func_wrapper_locals.get
+
+    # True only if one or more PEP-compliant type hints visitable from this
+    # root hint require a pseudo-random integer. If true, the higher-level
+    # beartype._decor._code.codemain.generate_code() function prefixes the body
+    # of this wrapper function with code generating such an integer.
+    is_var_random_int_needed = False
+
+    # ..................{ CLOSURES                          }..................
     # Closures centralizing frequently repeated logic and thus addressing any
     # Don't Repeat Yourself (DRY) concerns during the breadth-first search
     # (BFS) performed below.
+
+    #FIXME: Refactor all register_typistry_type() calls to call this closure
+    #instead. That should be *ALL* we need to do, there.
+    def _add_func_wrapper_local(obj: object) -> str:
+        '''
+        Pass the passed object to the current wrapper function as a new
+        **wrapper parameter** (i.e., attribute passed to that function as an
+        optional private :mod:`beartype`-specific parameter defaulting to this
+        passed object).
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be passed as a new parameter.
+
+        Returns
+        ----------
+        str
+            Arbitrary name of that parameter created by this closure.
+
+        Raises
+        ----------
+        _BeartypeUtilMappingException
+            If a parameter with the same name but differing value has already
+            been passed to the current wrapper function. As this name is unique
+            to this object, name collisions of this sort should *never* occur.
+            Since this exception should *never* be raised, we intentionally
+            raise a private rather than public exception here.
+        '''
+
+        # Name of the new optional parameter defaulting to this object.
+        local_name = _ARG_NAME_TEMPLATE_OBJECT_format(object_id=id(obj))
+
+        # If a parameter with the same name but differing value has already
+        # been passed to the current wrapper function, raise an exception.
+        if func_wrapper_locals_get(local_name, obj) is not obj:
+            raise _BeartypeUtilMappingException(
+                f'{hint_curr_label} wrapper parameter "{local_name}" already '
+                f'generated with differing default value:\n'
+                f'~~~~[ OLD VALUE ]~~~~\n{repr(obj)}\n'
+                f'~~~~[ NEW VALUE ]~~~~\n{repr(func_wrapper_locals[local_name])}'
+            )
+        # Else, either no parameter with the same name *OR* a parameter with
+        # the same name and value has already been passed.
+
+        # Add this parameter to the dictionary of all such parameters.
+        func_wrapper_locals[local_name] = obj
+
+        # Return this name.
+        return local_name
+
 
     def _enqueue_hint_child(pith_child_expr: str) -> str:
         '''
@@ -556,9 +656,7 @@ def pep_code_check_hint(
         '''
 
         # Allow these local variables of the outer scope to be modified below.
-        nonlocal \
-            hint_child_placeholder_id, \
-            hints_meta_index_last
+        nonlocal hint_child_placeholder_id, hints_meta_index_last
 
         # Increment the 0-based index of metadata describing the last visitable
         # hint in the "hints_meta" list *BEFORE* overwriting the existing
@@ -607,13 +705,16 @@ def pep_code_check_hint(
         # Return this placeholder string.
         return hint_child_placeholder
 
-    # Seed this list with metadata describing the root hint.
-    hint_child_placeholder = _enqueue_hint_child(pith_root_expr)
+    # ..................{ CLOSURES ~ locals                 }..................
+    # Local variables calling one or more closures declared above and thus
+    # deferred until after declaring those closures.
 
-    # ..................{ FUNC ~ code                       }..................
-    # Python code snippet type-checking the current pith against the currently
-    # visited hint (to be appended to the "func_wrapper_code" string).
-    func_curr_code: str = None  # type: ignore[assignment]
+    # Placeholder string to be globally replaced in the Python code snippet to
+    # be returned (i.e., "func_wrapper_code") by a Python code snippet
+    # type-checking the child pith expression (i.e., "pith_child_expr") against
+    # the currently iterated child hint (i.e., "hint_child"), initialized to a
+    # placeholder describing the root hint.
+    hint_child_placeholder = _enqueue_hint_child(pith_root_expr)
 
     # Python code snippet type-checking the root pith against the root hint,
     # localized separately from the "func_wrapper_code" snippet to enable this
@@ -625,17 +726,6 @@ def pep_code_check_hint(
     # replaced on the first iteration of the breadth-first search performed
     # below with a snippet type-checking the root pith against the root hint.
     func_wrapper_code = func_root_code
-
-    # Local scope (i.e., dictionary mapping from the name to value of each
-    # attribute referenced in the signature) of this wrapper function required
-    # by this Python code snippet.
-    func_wrapper_locals = {}
-
-    # True only if one or more PEP-compliant type hints visitable from this
-    # root hint require a pseudo-random integer. If true, the higher-level
-    # beartype._decor._code.codemain.generate_code() function prefixes the body
-    # of this wrapper function with code generating such an integer.
-    is_var_random_int_needed = False
 
     # ..................{ SEARCH                            }..................
     # While the 0-based index of metadata describing the next visited hint in
@@ -715,11 +805,11 @@ def pep_code_check_hint(
         # validation API and are thus also extremely common. Ergo, detect these
         # next-to-first.
         elif is_hint_pep593(hint_curr):
-            # If the first argument subscripting this metahint is
-            # beartype-agnostic (e.g., *NOT* an instance of the
-            # "beartype.vale.AnnotatedIs" class produced by subscripting the
-            # "Is" class), ignore all annotations on this hint by reducing this
-            # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
+            # If this metahint is beartype-specific (i.e., its second argument
+            # is an instance of the "beartype.vale.SubscriptedIs" class produced
+            # by subscripting the "Is" class), ignore all annotations on this
+            # hint by reducing this hint to its origin (e.g., "str" in
+            # "Annotated[str, 50, False]").
             if not is_hint_pep593_beartype(hint_curr):
                 hint_curr = get_hint_pep593_type(hint_curr)
             # Else, that argument is beartype-specific. In this case, preserve
@@ -973,16 +1063,16 @@ def pep_code_check_hint(
                 # Reduce the current pith expression to the name of this local
                 # variable.
                 pith_curr_assigned_expr = (
-                    PEP_CODE_PITH_NAME_PREFIX +
-                    str(pith_curr_assign_expr_name_counter))
+                    f'{PEP_CODE_PITH_NAME_PREFIX}'
+                    f'{pith_curr_assign_expr_name_counter}'
+                )
 
                 # Python >= 3.8-specific assignment expression assigning this
                 # full expression to this variable.
-                pith_curr_assign_expr = (
-                    PEP_CODE_PITH_ASSIGN_EXPR_format(
-                        pith_curr_assigned_expr=pith_curr_assigned_expr,
-                        pith_curr_expr=pith_curr_expr,
-                    ))
+                pith_curr_assign_expr = _PEP_CODE_PITH_ASSIGN_EXPR_format(
+                    pith_curr_assigned_expr=pith_curr_assigned_expr,
+                    pith_curr_expr=pith_curr_expr,
+                )
             # Else, one or more of these conditions have *NOT* been satisfied.
             # In this case, preserve the Python code snippet evaluating to the
             # current pith as is.
@@ -1052,16 +1142,15 @@ def pep_code_check_hint(
             # typing.Optional[float]")...
             #
             # Note that unions are non-physical abstractions of physical types
-            # and are thus *NOT* type-checked; only the subscripted arguments
-            # of unions are type-checked. This differs from "typing"
-            # pseudo-containers like "List[int]", in which both the parent
-            # "List" and child "int" types represent physical types to be
-            # type-checked. Ergo, unions themselves impose no narrowing of the
-            # current pith expression and thus *CANNOT* by definition benefit
-            # from Python >= 3.8-specific assignment expressions -- unlike
-            # standard sequences, for example, which typically narrow the
-            # current pith expression and thus do benefit from these
-            # expressions.
+            # and thus *NOT* themselves subject to type-checking; only the
+            # subscripted arguments of unions are type-checked. This differs
+            # from "typing" pseudo-containers like "List[int]", in which both
+            # the parent "List" and child "int" types represent physical types
+            # to be type-checked. Ergo, unions themselves impose no narrowing
+            # of the current pith expression and thus *CANNOT* by definition
+            # benefit from Python >= 3.8-specific assignment expressions. This
+            # differs from "typing" pseudo-containers, which narrow the current
+            # pith expression and thus do benefit from these expressions.
             if hint_curr_sign in HINT_PEP484_SIGNS_UNION:
                 # Assert this union is subscripted by one or more child hints.
                 # Note this should *ALWAYS* be the case, as:
@@ -1249,10 +1338,10 @@ def pep_code_check_hint(
                     func_curr_code = (
                         # Strip the erroneous " or" suffix appended by the
                         # last child hint from this code.
-                        func_curr_code[:-_OPERATOR_SUFFIX_LEN_OR] +
+                        f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_OR]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
-                        PEP484_CODE_CHECK_HINT_UNION_SUFFIX
+                        f'{PEP484_CODE_CHECK_HINT_UNION_SUFFIX}'
                     # Format the "indent_curr" prefix into this code deferred
                     # above for efficiency.
                     ).format(indent_curr=indent_curr)
@@ -1262,6 +1351,99 @@ def pep_code_check_hint(
                 release_object_typed(hint_childs_nonpep)
                 release_object_typed(hint_childs_pep)
             # Else, this hint is *NOT* a union.
+
+            # ..............{ ANNOTATED                         }..............
+            # If this hint is a PEP 593-compliant type metahint, this metahint
+            # is guaranteed by the reduction performed above to be
+            # beartype-specific (i.e., metahint whose second argument is an
+            # instance of the "beartype.vale.SubscriptedIs" class produced by
+            # subscripting the "Is" class). In this case...
+            elif hint_curr_sign is HINT_PEP593_SIGN_ANNOTATED:
+                #FIXME: Implement similar checking in the "_error" subpackage.
+                #FIXME: Iteratively merge the following code with similar logic
+                #in the "GENERIC" subsection below.
+
+                # Initialize the code type-checking the current pith against
+                # this generic to the substring prefixing all such code.
+                #
+                # Note that we intentionally do *NOT* defer formatting these
+                # variables into this string as we do for most other kinds of
+                # type hints. Why? Safety. Since caller-defined code could
+                # theoretically embed substrings accidentally matching these
+                # variable names, we safely (but inefficiently) format these
+                # variables into the exact strings known to embed them.
+                func_curr_code = (
+                    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX_format(
+                        indent_curr=indent_curr,
+                        pith_curr_assign_expr=pith_curr_assign_expr,
+                        # Python expression exposing the type annotated by this
+                        # metahint with a new parameter added to the signature
+                        # of the current wrapper function.
+                        hint_curr_expr=_add_func_wrapper_local(
+                            get_hint_pep593_type(hint_curr)),
+                    ))
+
+                # For each beartype-specific argument subscripting this hint,
+                # excluding the first beartype-agnostic argument guaranteed to
+                # be a type...
+                for hint_child in get_hint_pep593_metadata(hint_curr):
+                    #FIXME: Unit test us up.
+                    # If this argument is *NOT* beartype-specific, raise an
+                    # exception. Since the second argument was
+                    # beartype-specific, all additional arguments are
+                    # explicitly required to be beartype-specific as well for
+                    # consistency and safety.
+                    if not isinstance(hint_child, _SubscriptedIs):
+                        raise BeartypeDecorHintPep593Exception(
+                            f'{hint_curr_label} PEP 593 type hint '
+                            f'{repr(hint_curr)} annotated by both '
+                            f'@beartype-specific and -agnostic objects '
+                            f'(i.e., {get_object_representation(hint_child)} '
+                            f'not subscription of "beartype.vale.Is*" class).'
+                        )
+                    # Else, this argument is beartype-specific.
+
+                    # If this argument provides data validator code (i.e.,
+                    # Python code snippet validating the previously localized
+                    # parameter or return against the same data validation
+                    # performed by the hint_child.is_valid() function)...
+                    if hint_child.is_valid_code is not None:
+                        # Generate and append efficient code type-checking
+                        # this data validator by embedding this code as is.
+                        func_curr_code += _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_CODE_format(
+                            indent_curr=indent_curr,
+                            # Python expression formatting the current pith
+                            # into the "{object}" variable already embedded by
+                            # the caller into this code.
+                            hint_child_expr=hint_child.is_valid_code.format(
+                                obj=pith_curr_assigned_expr),
+                        )
+                    # Else, this argument provides *NO* data validator code. In
+                    # this case, fallback to calling the less efficient data
+                    # validator function provided by this argument.
+                    else:
+                        # Generate and append efficient code type-checking
+                        # this data validator by calling this data validator.
+                        func_curr_code += _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_FUNC_format(
+                            indent_curr=indent_curr,
+                            pith_curr_assigned_expr=pith_curr_assigned_expr,
+                            # Python expression exposing this data validator
+                            # with a new parameter added to the signature of
+                            # the current wrapper function.
+                            hint_child_expr=_add_func_wrapper_local(
+                                hint_child.is_valid),
+                        )
+
+                # Munge this code to...
+                func_curr_code = (
+                    # Strip the erroneous " and" suffix appended by the last
+                    # child hint from this code.
+                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
+                    # Suffix this code by the substring suffixing all such
+                    # code.
+                    f'{_PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format(indent_curr=indent_curr)}'
+                )
+            # Else, this hint is *NOT* a metahint.
 
             # ..............{ GENERIC or PROTOCOL               }..............
             # If this hint is either a:
@@ -1426,10 +1608,10 @@ def pep_code_check_hint(
                 func_curr_code = (
                     # Strip the erroneous " and" suffix appended by the last
                     # child hint from this code.
-                    func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND] +
+                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    _PEP_CODE_CHECK_HINT_GENERIC_SUFFIX
+                    f'{_PEP_CODE_CHECK_HINT_GENERIC_SUFFIX}'
                 # Format...
                 ).format(
                     # Indentation deferred above for efficiency.
@@ -1699,29 +1881,30 @@ def pep_code_check_hint(
                         # Else, this child hint is unignorable.
 
                         # Append code type-checking this child pith.
-                        func_curr_code += (
-                            _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
-                                hint_child_placeholder=_enqueue_hint_child(
-                                    # Python expression yielding the value of
-                                    # the currently indexed item of this tuple to
-                                    # be type-checked against this child hint.
-                                    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                        pith_curr_assigned_expr=(
-                                            pith_curr_assigned_expr),
-                                        pith_child_index=hint_child_index)),
-                            ))
+                        func_curr_code += _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                            hint_child_placeholder=_enqueue_hint_child(
+                                # Python expression yielding the value of
+                                # the currently indexed item of this tuple to
+                                # be type-checked against this child hint.
+                                _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                    pith_curr_assigned_expr=(
+                                        pith_curr_assigned_expr),
+                                    pith_child_index=hint_child_index,
+                                )
+                            ),
+                        )
 
                 # Munge this code to...
                 func_curr_code = (
                     # Strip the erroneous " and" suffix appended by the
                     # last child hint from this code.
-                    func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND] +
+                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX
-                # Format the "indent_curr" prefix into this code deferred
-                # above for efficiency.
+                    f'{_PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
+                # Format...
                 ).format(
+                    # Indentation deferred above for efficiency.
                     indent_curr=indent_curr,
                     pith_curr_assign_expr=pith_curr_assign_expr,
                     # Python expression evaluating to the builtin "tuple" type
@@ -1857,14 +2040,15 @@ def pep_code_check_hint(
         func_wrapper_code,
         func_wrapper_locals,
         # Tuple of the unqualified classnames referred to by all relative
-        # forward references visitable from this hint converted from this set
-        # to reduce space consumption after memoization by @callable_cached.
+        # forward references visitable from this hint converted from that set
+        # to reduce space consumption after memoization by @callable_cached,
+        # defined as either...
         (
             # If *NO* relative forward references are visitable from this root
-            # hint, the empty tuple.
+            # hint, the empty tuple;
             ()
             if hints_forwardref_class_basename is None else
-            # Else, this set converted into a tuple.
+            # Else, that set converted into a tuple.
             tuple(hints_forwardref_class_basename)
         ),
     )

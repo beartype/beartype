@@ -37,7 +37,7 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._valeiscore import (
-    AnnotatedIs,
+    SubscriptedIs,
     Is,
 )
 

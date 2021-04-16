@@ -212,7 +212,7 @@ class CauseSleuth(object):
         elif is_hint_pep593(hint):
             # If the first argument subscripting this metahint is
             # beartype-agnostic (e.g., *NOT* an instance of the
-            # "beartype.vale.AnnotatedIs" class produced by subscripting the
+            # "beartype.vale.SubscriptedIs" class produced by subscripting the
             # "Is" class), ignore all annotations on this hint by reducing this
             # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
             if not is_hint_pep593_beartype(hint):

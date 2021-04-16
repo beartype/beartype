@@ -25,6 +25,28 @@ from typing import Tuple
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
+def get_cause_object_representation(pith: object) -> str:
+    '''
+    Truncated machine-readable representation of the passed arbitrary object,
+    intended to be embedded in a human-readable error message describing the
+    failure of this object to satisfy one or more caller-defined constraints.
+
+    Parameters
+    ----------
+    pith : object
+        Object to be represented.
+
+    Returns
+    ----------
+    str
+        Truncated machine-readable representation of this object.
+    '''
+
+    # Return the machine-readable representation of this object.
+    return f'value {get_object_representation(pith)}'
+
+# ....................{ GETTERS ~ type                    }....................
+#FIXME: Unit test us up.
 def get_cause_object_not_type(pith: object, hint: type) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary
@@ -51,26 +73,26 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
         * This object is actually an instance of this class.
     '''
 
-    # Truncated representation of this pith.
-    pith_repr = get_object_representation(pith)
-
     # If this hint is *NOT* a class, raise an exception.
     if not isinstance(hint, type):
         raise _BeartypeCallHintRaiseException(
             f'Non-PEP type hint {repr(hint)} not class.')
     # Else, this hint is a class.
     #
-    # If this pith is an instance of this class, raise an exception.
+    # If this pith is actually an instance of this class, raise an exception.
     elif isinstance(pith, hint):
         raise _BeartypeCallHintRaiseException(
-            f'{pith_repr} is instance of {repr(hint)}.')
+            f'{get_object_representation(pith)} instance of '
+            f'non-PEP type hint {repr(hint)}.'
+        )
     # Else, this pith is *NOT* an instance of this type.
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return f'value {pith_repr} not {label_class(hint)}'
+    return f'{get_cause_object_representation(pith)} not {label_class(hint)}'
 
 
+#FIXME: Unit test us up.
 def get_cause_object_not_nonpep_tuple(
     pith: object, hint: Tuple[type, ...]) -> str:
     '''
@@ -111,18 +133,19 @@ def get_cause_object_not_nonpep_tuple(
     )
     # Else, this hint is a PEP-noncompliant tuple of classes.
 
-    # Truncated representation of this pith.
-    pith_repr = get_object_representation(pith)
-
     # If this pith is an instance of one or more of the classes listed by this
     # tuple, raise an exception.
     if isinstance(pith, hint):
         raise _BeartypeCallHintRaiseException(
-            f'{pith_repr} is instance of one or more classes in {repr(hint)}.')
+            f'{get_object_representation(pith)} instance of one or more '
+            f'classes in non-PEP tuple union:\n{repr(hint)}'
+        )
     # Else, this pith is *NOT* an instance of one or more of the classes listed
     # by this tuple.
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'value {pith_repr} not {join_delimited_disjunction_classes(hint)}')
+        f'{get_cause_object_representation(pith)} not '
+        f'{join_delimited_disjunction_classes(hint)}'
+    )

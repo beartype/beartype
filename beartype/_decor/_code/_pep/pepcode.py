@@ -308,8 +308,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
         data=data,
         func_wrapper_code=func_wrapper_code,
         pith_repr=_RETURN_REPR,
-        hints_forwardref_class_basename=(
-            hints_forwardref_class_basename),
+        hints_forwardref_class_basename=hints_forwardref_class_basename,
     )
 
     # Return all metadata required by higher-level callers.

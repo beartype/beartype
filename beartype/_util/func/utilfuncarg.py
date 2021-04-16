@@ -14,7 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.func.utilfunccodeobj import (
-    CallableOrFrameOrCodeType, get_func_codeobj)
+    CallableOrFrameOrCodeType,
+    get_func_codeobj,
+)
 from enum import Enum as EnumMemberType
 from inspect import (
     CO_VARARGS,

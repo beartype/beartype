@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable utilities.**
+Project-wide **callable origin** (i.e., uncompiled source from which a compiled
+callable originated) utilities.
 
 This private submodule implements supplementary callable-specific utility
 functions required by various :mod:`beartype` facilities, including callables
@@ -16,25 +17,92 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.cave import CallableTypes
 from beartype.roar import _BeartypeUtilCallableException
+from beartype._util.func.utilfunccodeobj import (
+    CallableOrFrameOrCodeType,
+    get_func_codeobj,
+    get_func_codeobj_or_none,
+)
 from collections.abc import Callable
 from sys import modules
+from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
+#FIXME: Unit test us up.
+def get_callable_origin_code_or_none(
+    # Mandatory parameters.
+    func: CallableOrFrameOrCodeType,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> Optional[str]:
+    '''
+    **Uncompiled Python source code** (i.e., string concatenating all lines of
+    the on-disk Python script or module declaring that callable) of the passed
+    pure-Python callable if that callable was declared on-disk *or* ``None``
+    otherwise (i.e., if that callable was dynamically declared in-memory).
+
+    Parameters
+    ----------
+    func : Union[Callable, CodeType, FrameType]
+        Callable or frame or code object to be inspected.
+    exception_cls : type, optional
+        Type of exception in the event of fatal error. Defaults to
+        :class:`_BeartypeUtilCallableException`.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * If that callable was physically declared by an uncompiled Python
+          script or module, a string concatenating the subset of lines of that
+          script or module declaring that callable.
+        * If that callable was dynamically declared in-memory, ``None``.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableException
+         If this callable is *not* pure-Python.
+    '''
+
+    # Code object underlying that pure-Python callable.
+    func_codeobj = get_func_codeobj(func)
+
+    # Absolute filename of the physical Python module or script declaring
+    # that callable if this code object provides that metadata *OR* "None"
+    # otherwise.
+    #
+    # Note that we intentionally do *NOT* assume all code objects to provide
+    # this metadata. Why? Because PyPy yet again. For inexplicable reasons,
+    # PyPy provides *ALL* C-based builtins (e.g., len()) with code objects
+    # failing to provide this metadata. Welcome to the Python ecosystem.
+    func_filename = getattr(func_codeobj, 'co_filename', None)
+
+    # If that callable was dynamically declared in-memory, reduce to a noop.
+    if not func_filename:
+        return None
+    # Else, that callable was physically declared on-disk.
+
+    #FIXME: Implement us up, please.
+    raise ValueError('Implement us up, please!')
+
+
 def get_callable_origin_label(func: Callable) -> str:
     '''
-    Human-readable label describing the origin of the passed callable.
+    Human-readable label describing the **origin** (i.e., uncompiled source) of
+    the passed callable.
 
     Specifically, this getter returns either:
 
-    * If this callable is pure-Python *and* physically declared on-disk, the
+    * If that callable is pure-Python *and* physically declared on-disk, the
       absolute filename of the uncompiled on-disk Python script or module
-      physically declaring this callable.
-    * If this callable is pure-Python *and* dynamically declared in-memory,
+      physically declaring that callable.
+    * If that callable is pure-Python *and* dynamically declared in-memory,
       the placeholder string ``"<string>"``.
-    * If this callable is C-based, the placeholder string ``"<C-based>"``.
+    * If that callable is C-based, the placeholder string ``"<C-based>"``.
 
     Caveats
     ----------
@@ -53,15 +121,15 @@ def get_callable_origin_label(func: Callable) -> str:
     str
         Either:
 
-        * If this callable is physically declared by an uncompiled Python
+        * If that callable is physically declared by an uncompiled Python
           script or module, the absolute filename of this script or module.
-        * Else, the placeholder string ``"<string>"`` implying this callable to
+        * Else, the placeholder string ``"<string>"`` implying that callable to
           have been dynamically declared in-memory.
 
     Raises
     ------
     _BeartypeUtilCallableException
-        If this callable is *not* callable.
+        If that callable is *not* callable.
 
     See Also
     ----------
@@ -71,12 +139,10 @@ def get_callable_origin_label(func: Callable) -> str:
         :func:`beartype.beartype` decorator.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-
-    # If this callable is *NOT*, raise an exception.
+    # If this callable is uncallable, raise an exception.
     if not callable(func):
         raise _BeartypeUtilCallableException(f'{repr(func)} not callable.')
+    # Else, this callable is callable.
 
     # Human-readable label describing the origin of the passed callable.
     func_origin_label = '<string>'
@@ -120,10 +186,10 @@ def get_callable_origin_label(func: Callable) -> str:
         # pure-Python in a Python module. So it goes.
         func_codeobj = get_func_codeobj_or_none(func)
 
-        # If this callable is has a code object, set this label to either the
-        # absolute filename of the physical Python module declaring this
-        # callable if this code object provides that metadata *OR* the current
-        # placeholder string otherwise.
+        # If this callable has a code object, set this label to either the
+        # absolute filename of the physical Python module or script declaring
+        # this callable if this code object provides that metadata *OR* the
+        # current placeholder string otherwise.
         #
         # Note that we intentionally do *NOT* assume all code objects to
         # provide this metadata (e.g., by unconditionally returning

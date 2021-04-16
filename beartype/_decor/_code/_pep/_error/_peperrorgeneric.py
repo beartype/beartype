@@ -55,7 +55,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
     # If this pith is *NOT* an instance of this generic, defer to the getter
-    # function handling non-"typing" classes.
+    # handling non-"typing" classes.
     if not isinstance(sleuth.pith, sleuth.hint):
         return get_cause_or_none_type(sleuth)
     # Else, this pith is an instance of this generic.
@@ -96,8 +96,8 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
         pith_base_cause = sleuth.permute(hint=hint_base).get_cause_or_none()
 
         # If this pseudo-superclass is the cause of this failure, return a
-        # substring describing this failure by embedding this failure (itself
-        # intended to be embedded in a longer string).
+        # substring describing this failure by embedding this failure in a
+        # longer string.
         if pith_base_cause is not None:
             # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
             return f'generic base {repr(hint_base)} {pith_base_cause}'

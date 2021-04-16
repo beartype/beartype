@@ -13,25 +13,25 @@ value failing a type-check against the `PEP 593`_-compliant
 This private submodule is *not* intended for importation by downstream callers.
 
 .. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
+   https://www.python.org/dev/peps/pep-0593
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Refactor in terms of beartype-specific AnnotatedIs.is_valid().
-
 # ....................{ IMPORTS                           }....................
+from beartype.roar import _BeartypeCallHintPepRaiseException
+from beartype.vale import SubscriptedIs
 from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilhintpep585 import (
-    is_hint_pep585_builtin)
-from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_generic_type_or_none)
-from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-from typing import Generic, Optional
+from beartype._util.func.utilfuncorigin import get_callable_origin_code_or_none
+from beartype._util.hint.data.pep.utilhintdatapepsign import (
+    HINT_PEP593_SIGN_ANNOTATED)
+from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    get_hint_pep593_metadata,
+    get_hint_pep593_type,
+)
+from beartype._util.text.utiltextcause import get_cause_object_representation
+from beartype._util.text.utiltextrepr import get_object_representation
+from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -40,78 +40,122 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed `PEP 484`_-compliant **generic** (i.e., type hint
-    subclassing a combination of one or more of the :mod:`typing.Generic`
-    superclass, the :mod:`typing.Protocol` superclass, and/or other
-    :mod:`typing` non-class pseudo-superclasses) if this object actually fails
-    to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    to satisfy the passed `PEP 593`_-compliant :mod:`beartype`-specific
+    **metahint** (i.e., type hint annotating a standard class with one or more
+    :class:`SubscriptedIs` objects, each produced by subscripting the
+    :class:`beartype.vale.Is` class or a subclass of that class) if this object
+    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
+    object satisfies this hint).
 
     Parameters
     ----------
     sleuth : CauseSleuth
         Type-checking error cause sleuth.
+
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is Generic, (
-        f'{repr(sleuth.hint_sign)} not generic.')
+    assert sleuth.hint_sign is HINT_PEP593_SIGN_ANNOTATED, (
+        f'{repr(sleuth.hint_sign)} not annotated.')
 
-    # If this hint is *NOT* a class, reduce this hint to the object originating
-    # this hint if any. See the is_hint_pep484_generic() tester for details.
-    sleuth.hint = get_hint_pep_generic_type_or_none(sleuth.hint)
-    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
-
-    # If this pith is *NOT* an instance of this generic, defer to the getter
-    # function handling non-"typing" classes.
-    if not isinstance(sleuth.pith, sleuth.hint):
+    # If this pith is *NOT* an instance of the non-"typing" class annotated by
+    # this metahint, defer to the getter handling non-"typing" classes.
+    if not isinstance(sleuth.pith, get_hint_pep593_type(sleuth.hint)):
         return get_cause_or_none_type(sleuth)
-    # Else, this pith is an instance of this generic.
+    # Else, this pith is an instance of that class.
 
-    # For each pseudo-superclass of this generic...
-    for hint_base in sleuth.hint_childs:
-        # If this pseudo-superclass is an actual superclass, this
-        # pseudo-superclass is effectively ignorable. Why? Because the
-        # isinstance() call above already type-checked this pith against the
-        # generic subclassing this superclass and thus this superclass as well.
-        # In this case, skip to the next pseudo-superclass.
-        if isinstance(hint_base, type):
-            continue
-        # Else, this pseudo-superclass is *NOT* an actual class.
+    # For each arbitrary object annotating that class...
+    for hint_metadatum in get_hint_pep593_metadata(sleuth.hint):
+        # If this object is *NOT* beartype-specific, raise an exception.
         #
-        # If this pseudo-superclass is neither...
-        elif not (
-            # A PEP 585-compliant type hint *NOR*...
-            is_hint_pep585_builtin(hint_base) and
-            # A PEP-compliant type hint defined by the "typing" module...
-            is_hint_pep_typing(hint_base)
-        ):
-            # Reduce this pseudo-superclass to the real superclass originating
-            # this pseudo-superclass. See the "_pephint" submodule.
-            hint_base = get_hint_pep484_generic_base_erased_from_unerased(
-                hint_base)
-        # Else, this pseudo-superclass is defined by the "typing" module.
+        # Note that this object should already be beartype-specific, as the
+        # @beartype decorator enforces this constraint at decoration time.
+        if not isinstance(hint_metadatum, SubscriptedIs):
+            raise _BeartypeCallHintPepRaiseException(
+                f'{sleuth.exception_label} PEP 593 type hint '
+                f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} not '
+                f'not subscription of "beartype.vale.Is*" class.'
+            )
+        # Else, this object is beartype-specific.
 
-        # If this superclass is ignorable, do so.
-        if is_hint_ignorable(hint_base):
-            continue
-        # Else, this superclass is unignorable.
+        # If this pith fails to satisfy this validator and is thus the cause of
+        # this failure...
+        if not hint_metadatum.is_valid(sleuth.hint):
+            # Python source code underlying this validator, defined as...
+            pith_cause_code = (
+                # If this validator provides code, all "{obj}" format variable
+                # substrings in that code globally replaced with the truncated
+                # machine-readable representation of this pith for readability;
+                hint_metadatum.is_valid_code.format(
+                    obj=get_object_representation(sleuth.pith))
+                if hint_metadatum.is_valid_code is not None else
 
-        # Human-readable string describing the failure of this pith to satisfy
-        # this pseudo-superclass if this pith actually fails to satisfy
-        # this pseudo-superclass *or* "None" otherwise.
-        # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
-        pith_base_cause = sleuth.permute(hint=hint_base).get_cause_or_none()
+                #FIXME: Implement this getter up.
+                #FIXME: This is highly non-ideal. While this suffices for
+                #trivial on-disk lambda functions, this fails for in-memory
+                #lambda functions produced by synthesizing on-disk lambda
+                #functions (e.g., with "|"). This suggests we want to
+                #refactor the "SubscriptedIs" class as follows:
+                #* Define a new __repr__() method resembling:
+                #     def __repr__(self):
+                #         return self._repr
+                #* Refactor the __init__() method as follows:
+                #  * Accept a new optional "repr" parameter: e.g.,
+                #        repr: Optional[str] = None,
+                #  * Localize that parameter: e.g.,
+                #        self._repr = repr
+                #* Refactor the various operators to synthesize that parameter.
+                #  For example, the negated "repr" parameter should resemble:
+                #      repr=f'~{self._repr}'
+                #* Refactor the Is.__class_getitem__() method as follows:
+                #  * Define the "repr" instance variable as follows:
+                #        #FIXME: This should be fine for the core "Is" class.
+                #        #Subclasses of that class will define their own
+                #        #__class_getitem__() methods specifying different
+                #        #"repr" strings, of course.
+                #        repr_code = (
+                #            #FIXME: Define a new
+                #            #get_callable_origin_code_or_placeholder().
+                #            get_callable_origin_code_or_none(is_valid) or
+                #               '<string>')
+                #        repr = f'{cls.__name__}[{repr_code}]'
+                #  * Pass that variable to the SubscriptedIs.__init__() method.
+                #* Remove the "pith_cause_code" local variable here entirely.
+                #* Reduce the statement below to just:
+                #      return (
+                #          # The truncated machine-readable representation of this pith...
+                #          f'{get_cause_object_representation(sleuth.pith)} '
+                #          f'violates caller-defined constraint:\n'
+                #          f'{repr(hint_metadatum)}'
+                #      )
 
-        # If this pseudo-superclass is the cause of this failure, return a
-        # substring describing this failure by embedding this failure (itself
-        # intended to be embedded in a longer string).
-        if pith_base_cause is not None:
-            # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
-            return f'generic base {repr(hint_base)} {pith_base_cause}'
-        # Else, this pseudo-superclass is *NOT* the cause of this failure.
-        # Silently continue to the next.
+                # Else, this validator does *NOT* provide code. In this case,
+                # either:
+                # * If this validator was declared on-disk, a string
+                #   concatenating all lines of the on-disk script or module
+                #   declaring this validator.
+                # * If this validator was declared in-memory, "None".
+                get_callable_origin_code_or_none(hint_metadatum.is_valid)
+            )
 
-    # Return "None", as this pith satisfies both this generic itself *AND* all
-    # pseudo-superclasses subclassed by this generic, implying this pith to
-    # deeply satisfy this hint.
+            # Return the cause of this failure, concatenating...
+            return (
+                # The truncated machine-readable representation of this pith...
+                f'{get_cause_object_representation(sleuth.pith)} '
+                # Either...
+                #
+                # If this validator's code exists, that code;
+                f'violates caller-defined constraint:\n{pith_cause_code}'
+                if pith_cause_code else
+                # Else, this validator's code does *NOT* exist. In that
+                # case, a catch-all complaint.
+                'violates caller-defined in-memory constraint'
+            )
+        # Else, this pith satisfies this data validator. Ergo, this validator
+        # *NOT* the cause of this failure. Silently continue to the next.
+
+    # Return "None", as this pith satisfies both this non-"typing" class itself
+    # *AND* all data validators annotating that class, implying this pith to
+    # deeply satisfy this metahint.
     return None

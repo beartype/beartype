@@ -13,10 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintPepException
-from beartype.vale import AnnotatedIs
+from beartype.roar import BeartypeDecorHintPep593Exception
+from beartype.vale import SubscriptedIs
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -36,7 +36,7 @@ def die_unless_hint_pep593(hint: object) -> None:
 
     Raises
     ----------
-    BeartypeDecorHintPepException
+    BeartypeDecorHintPep593Exception
         If this object is *not* a `PEP 593`_-compliant type metahint.
 
     .. _PEP 593:
@@ -46,7 +46,7 @@ def die_unless_hint_pep593(hint: object) -> None:
     # If this object is *NOT* a PEP 593-compliant type metahint, raise an
     # exception.
     if not is_hint_pep593(hint):
-        raise BeartypeDecorHintPepException(
+        raise BeartypeDecorHintPep593Exception(
             f'PEP type hint {repr(hint)} not "typing.Annotated".')
 
 # ....................{ TESTERS                           }....................
@@ -171,7 +171,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
     ``True`` only if the first argument subscripting the passed `PEP
     593`-compliant :attr:`typing.Annotated` type hint is
-    :mod:`beartype`-specific (e.g., instance of the :class:`AnnotatedIs` class
+    :mod:`beartype`-specific (e.g., instance of the :class:`SubscriptedIs` class
     produced by subscripting (indexing) the :class:`Is` class).
 
     Parameters
@@ -187,7 +187,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 
     Raises
     ----------
-    BeartypeDecorHintPepException
+    BeartypeDecorHintPep593Exception
         If this object is *not* a `PEP 593`_-compliant type metahint.
     '''
 
@@ -206,7 +206,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     #     TypeError: Annotated[...] should be used with at least two
     #     arguments (a type and an annotation).
     try:
-        return isinstance(hint.__metadata__[0], AnnotatedIs)
+        return isinstance(hint.__metadata__[0], SubscriptedIs)
     # If the metaclass of the first argument subscripting this hint overrides
     # the __isinstancecheck__() dunder method to raise an exception, silently
     # ignore this exception by returning false instead.
@@ -215,15 +215,15 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 
 # ....................{ GETTERS                           }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep593_type(hint: Any) -> type:
+def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     '''
-    Class annotated by the passed `PEP 593`_-compliant **type metahint** (i.e.,
-    subscription of the :attr:`typing.Annotated` singleton).
+    Tuple of one or more arbitrary objects annotating the passed `PEP
+    593`_-compliant **type metahint** (i.e., subscription of the
+    :attr:`typing.Annotated` singleton).
 
-    This getter does *not* return any of the arbitrary user-defined metadata
-    associated with this metahint, as that metadata is by definition
-    application-specific and mostly useless for basically all valid purposes.
-    Welcome to `PEP 593`_, where the effort you waste is only your own.
+    Specifically, this getter returns *all* arguments subscripting this
+    metahint excluding the first, which conveys its own semantics and is thus
+    returned by the :func:`get_hint_pep593_type` getter.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -232,40 +232,88 @@ def get_hint_pep593_type(hint: Any) -> type:
     Parameters
     ----------
     hint : object
-        `PEP 593`-compliant :attr:`typing.Annotated` type hint to be inspected.
+        `PEP 593`-compliant type metahint to be inspected.
 
     Returns
     ----------
     type
-        Class annotated by the passed `PEP 593`_-compliant type metahint.
+        Tuple of one or more arbitrary objects annotating this metahint.
 
     Raises
     ----------
-    BeartypeDecorHintPepException
+    BeartypeDecorHintPep593Exception
         If this object is *not* a `PEP 593`_-compliant type metahint.
 
     See Also
     ----------
     :func:`is_hint_pep593`
         Further commentary.
+    :func:`get_hint_pep593_type`
+        Related getter.
 
     .. _PEP 593:
        https://www.python.org/dev/peps/pep-0593
     '''
 
-    # If this object is *NOT* a PEP 593-compliant type metahint, raise an
-    # exception.
+    # If this object is *NOT* a metahint, raise an exception.
     die_unless_hint_pep593(hint)
-    # Else, this object is a PEP 593-compliant type metahint.
+    # Else, this object is a metahint.
 
-    # Return the PEP-compliant type hint annotated by this metahint.
+    # Return the tuple of one or more objects annotating this metahint.
+    return hint.__metadata__
+
+
+#FIXME: Unit test us up, please.
+def get_hint_pep593_type(hint: Any) -> type:
+    '''
+    Class annotated by the passed `PEP 593`_-compliant **type metahint** (i.e.,
+    subscription of the :attr:`typing.Annotated` singleton).
+
+    Specifically, this getter returns the first argument subscripting this
+    metahint. By design, this argument is guaranteed to be a standard class.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        `PEP 593`-compliant type metahint to be inspected.
+
+    Returns
+    ----------
+    type
+        Class annotated by this metahint.
+
+    Raises
+    ----------
+    BeartypeDecorHintPep593Exception
+        If this object is *not* a `PEP 593`_-compliant type metahint.
+
+    See Also
+    ----------
+    :func:`is_hint_pep593`
+        Further commentary.
+    :func:`get_hint_pep593_metadata`
+        Related getter.
+
+    .. _PEP 593:
+       https://www.python.org/dev/peps/pep-0593
+    '''
+
+    # If this object is *NOT* a metahint, raise an exception.
+    die_unless_hint_pep593(hint)
+    # Else, this object is a metahint.
+
+    # Return the standard class annotated by this metahint.
     #
-    # Most non-standard PEP-compliant type hints store their data in
-    # non-standard hint-specific dunder attributes (e.g., "__supertype__" for
-    # new type aliases, "__forward_arg__" for forward references). Some,
-    # however, coopt and misuse standard dunder attributes commonly used for
-    # entirely different purposes. PEP 593-compliant type metahints are of the
-    # latter sort, preferring to store their data in the standard "__origin__"
+    # Note that most edge-case PEP-compliant type hints store their data in
+    # hint-specific dunder attributes (e.g., "__supertype__" for new type
+    # aliases, "__forward_arg__" for forward references). Some, however, coopt
+    # and misuse standard dunder attributes commonly used for entirely
+    # different purposes. PEP 593-compliant type metahints the latter sort,
+    # preferring to store their class in the standard "__origin__" attribute
     # commonly used to store the origin type of type hints originating from a
     # standard class rather than in a metahint-specific dunder attribute.
     return hint.__origin__

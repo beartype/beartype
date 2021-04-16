@@ -523,45 +523,78 @@ See Also
 '''
 
 # ....................{ HINT ~ type : pep593 : union      }....................
-PEP593_CODE_CHECK_HINT_ANNOTATED_IS_PREFIX = '''(
-    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX = '''(
+{indent_curr}    # True only if this pith is an instance of this annotated.
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against each subscripted argument of a `PEP 593`_-compliant
-:attr:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale.AnnotatedIs` objects.
+:class:`typing.Annotated` type hint subscripted by one or more
+:class:`beartype.vale.SubscriptedIs` objects.
 
 .. _PEP 593:
     https://www.python.org/dev/peps/pep-0593
 '''
 
 
-PEP593_CODE_CHECK_HINT_ANNOTATED_IS_SUFFIX = '''
+PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
 against each subscripted argument of a `PEP 593`_-compliant
-:attr:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale.AnnotatedIs` objects.
+:class:`typing.Annotated` type hint subscripted by one or more
+:class:`beartype.vale.SubscriptedIs` objects.
 
 .. _PEP 593:
     https://www.python.org/dev/peps/pep-0593
 '''
 
 
-PEP593_CODE_CHECK_HINT_ANNOTATED_IS_CHILD = '''
-{{indent_curr}}    {hint_child_arg_name}({pith_curr_assigned_expr}) and'''
+PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_CODE = '''
+{{indent_curr}}    # True only if this pith satisfies this caller-defined
+{{indent_curr}}    # data validator code of this annotated.
+{{indent_curr}}    {hint_child_expr} and'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-child :class:`beartype.vale.AnnotatedIs` argument subscripting a parent `PEP
-593`_-compliant :attr:`typing.Annotated` type hint.
+PEP-compliant code snippet type-checking the current pith against
+:mod:`beartype`-specific **data validator code** (i.e., caller-defined
+:meth:`beartype.vale.SubscriptedIs.is_valid_code` string) of the current child
+:class:`beartype.vale.SubscriptedIs` argument subscripting a parent `PEP
+593`_-compliant :class:`typing.Annotated` type hint.
 
 Caveats
 ----------
 The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted argument of such a
-:class:`typing.Union` type. While there exist alternate and more readable means
-of accomplishing this, this approach is the optimally efficient.
+:class:`typing.Annotated` type. While there exist alternate and more readable
+means of accomplishing this, this approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent hint has been generated.
+
+.. _PEP 593:
+    https://www.python.org/dev/peps/pep-0593
+'''
+
+
+PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_FUNC = '''
+{{indent_curr}}    # True only if this pith satisfies this caller-defined
+{{indent_curr}}    # data validator of this annotated.
+{{indent_curr}}    {hint_child_expr}({pith_curr_assigned_expr}) and'''
+'''
+PEP-compliant code snippet type-checking the current pith against a
+:mod:`beartype`-specific **data validator** (i.e., caller-defined
+:meth:`beartype.vale.SubscriptedIs.is_valid` function) of the current child
+:class:`beartype.vale.SubscriptedIs` argument subscripting a parent `PEP
+593`_-compliant :class:`typing.Annotated` type hint.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" and"`` after
+applying this snippet to the last subscripted argument of such a
+:class:`typing.Annotated` type. While there exist alternate and more readable
+means of accomplishing this, this approach is the optimally efficient.
 
 The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code

@@ -84,7 +84,7 @@ singleton).
 '''
 
 # ....................{ CODE ~ arg : template             }....................
-ARG_NAME_TEMPLATE_OBJECT_CALLER = '__beartype_object_{object_id}'
+ARG_NAME_TEMPLATE_OBJECT = '__beartype_object_{object_id}'
 '''
 Template for the name of each **private caller-defined object parameter**
 (i.e., :mod:`beartype`-specific parameter whose default value is an arbitrary

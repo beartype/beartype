@@ -34,12 +34,12 @@ def get_func_codeobj(
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException
+    exception_cls: type = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed callable if this callable is pure-Python *or* raise an exception
-    otherwise (e.g., if this callable is C-based or a class or object defining
+    the passed callable if that callable is pure-Python *or* raise an exception
+    otherwise (e.g., if that callable is C-based or a class or object defining
     the ``__call__()`` dunder method).
 
     For convenience, this getter also accepts a code object, in which case that
@@ -79,8 +79,7 @@ def get_func_codeobj(
     func : Union[Callable, CodeType, FrameType]
         Callable or frame or code object to be inspected.
     exception_cls : type, optional
-        Type of exception to be raised if this callable is neither a
-        pure-Python function nor method. Defaults to
+        Type of exception in the event of fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
 
     Returns

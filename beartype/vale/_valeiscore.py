@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeAnnotatedIsInstantiationException
+from beartype.roar import BeartypeSubscriptedIsInstantiationException
 from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncarg import get_func_args_len_standard
 from beartype._util.func.utilfuncscope import CallableScope
@@ -29,7 +29,7 @@ from typing import Any, Callable, Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-AnnotatedIsValidator = Callable[[Any,], bool]
+SubscriptedIsValidator = Callable[[Any,], bool]
 '''
 PEP-compliant type hint matching a **data validator** (i.e., caller-defined
 function accepting a single arbitrary object and returning either ``True`` if
@@ -39,43 +39,7 @@ Data validators are suitable for subscripting the :class:`Is` class.
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
-#FIXME: Handle subscriptions of this class from "_pephint" on each argument of
-#an "Annotated" type hint to detect whether that argument is a "Is"
-#subscription. Specifically:
-#* Amend the "_pephint" BFS like so:
-#    #FIXME: Implement similar checking in the "_error" subpackage. *sigh*
-#    func_curr_code = ''
-#
-#    for hint_child in hint_curr.__args__[1:]:
-#        if not isinstance(hint_child, AnnotatedIs):
-#            continue
-#
-#        hint_child_arg_name = _ARG_NAME_CUSTOM_OBJECT_format(
-#            object_id=id(hint_child))
-#
-#        func_curr_code += _PEP_CODE_CHECK_HINT_ANNOTATED_IS_CHILD_format(
-#            pith_curr_assigned_expr=pith_curr_assigned_expr,
-#            hint_child_arg_name=hint_child_arg_name,
-#        )
-#
-#        func_wrapper_locals[hint_child_arg_name] = hint_child.is_valid
-#
-#    if func_curr_code:
-#        func_curr_code = (
-#             # Prefix this code by the substring prefixing all such code.
-#            _PEP_CODE_CHECK_HINT_ANNOTATED_IS_PREFIX_format(
-#                pith_curr_assign_expr=pith_curr_assign_expr,
-#                hint_curr_expr=hint_curr_expr,
-#            # Strip the erroneous " and" suffix appended by the last
-#            # child hint from this code.
-#            ) + func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]'
-#        # Format the "indent_curr" prefix into this code deferred
-#        # above for efficiency.
-#        ).format(indent_curr=indent_curr)
-#
-#That should do it, in theory. Yay!
-
-class AnnotatedIs(object):
+class SubscriptedIs(object):
     '''
     **Beartype data validator** (i.e., object encapsulating a caller-defined
     data validation function returning ``True`` when an arbitrary object passed
@@ -122,10 +86,9 @@ class AnnotatedIs(object):
         validation performed by the :meth:`is_valid` function) if this data
         validator supports code generation *or* ``None`` otherwise (i.e., if
         this data validator does *not* support code generation). This code
-        *must* contain one or more instances of the test subject substring
-        ``{pith_curr_assigned_expr}``, which code generators will globally
-        replace at dynamic execution time with the name of the actual object to
-        be validated by this code.
+        *must* contain one or more test subject substrings ``{obj}``, which
+        code generators globally replace at dynamic execution time with the
+        name of the actual object to be validated by this code.
     is_valid_code_locals : Optional[CallableScope]
         **Data validator code local scope** (i.e., dictionary mapping from the
         name to value of each local attribute referenced in the :attr:`code`
@@ -163,7 +126,7 @@ class AnnotatedIs(object):
         self,
 
         # Mandatory parameters.
-        is_valid: AnnotatedIsValidator,
+        is_valid: SubscriptedIsValidator,
 
         # Optional parameters.
         is_valid_code: Optional[str] = None,
@@ -187,10 +150,10 @@ class AnnotatedIs(object):
             data validation performed by the :meth:`is_valid` function) if this
             data validator supports code generation *or* ``None`` otherwise
             (i.e., if this data validator does *not* support code generation).
-            This code *must* contain one or more instances of the test subject
-            substring ``{pith_curr_assigned_expr}``, which code generators will
-            globally replace at dynamic execution time with the name of the
-            actual object to be validated by this code.
+            This code *must* contain one or more test subject substrings
+            ``{obj}``, which code generators globally replace at dynamic
+            execution time with the name of the actual object to be validated
+            by this code.
         is_valid_code_locals : Optional[CallableScope]
             **Data validator code local scope** (i.e., dictionary mapping from
             the name to value of each local attribute referenced in the
@@ -201,7 +164,7 @@ class AnnotatedIs(object):
 
         Raises
         ----------
-        BeartypeAnnotatedIsInstantiationException
+        BeartypeSubscriptedIsInstantiationException
             If either:
 
             * ``is_valid`` is either:
@@ -213,9 +176,12 @@ class AnnotatedIs(object):
             * ``is_valid_code`` is non-``None`` *and* either:
 
               * *Not* a string.
-              * A string *not* containing the test subject substring
-                ``{pith_curr_assigned_expr}`` and thus *not* valid validator
-                code.
+              * A string either:
+
+                * Empty.
+                * Non-empty but **invalid** (i.e., *not* containing the test
+                  subject substring ``{obj}``).
+
               * ``is_valid_locals`` is ``None``.
 
             * ``is_valid_locals`` is non-``None`` but ``is_valid_code`` is
@@ -228,20 +194,20 @@ class AnnotatedIs(object):
             # If this class was subscripted by two or more arguments, raise a
             # human-readable exception.
             if is_valid:
-                raise BeartypeAnnotatedIsInstantiationException(
+                raise BeartypeSubscriptedIsInstantiationException(
                     f'Class "beartype.vale.Is" subscripted by two or more '
                     f'arguments:\n{get_object_representation(is_valid)}'
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
-                raise BeartypeAnnotatedIsInstantiationException(
+                raise BeartypeSubscriptedIsInstantiationException(
                     'Class "beartype.vale.Is" subscripted by empty tuple.')
         # Else, the this class was subscripted by a single argument.
         #
         # If this argument is uncallable, raise a human-readable exception.
         elif not callable(is_valid):
-            raise BeartypeAnnotatedIsInstantiationException(
+            raise BeartypeSubscriptedIsInstantiationException(
                 f'Class "beartype.vale.Is" subscripted argument '
                 f'{get_object_representation(is_valid)} not callable.'
             )
@@ -249,7 +215,7 @@ class AnnotatedIs(object):
         #
         # If this callable is C-based, raise a human-readable exception.
         elif not is_func_python(is_valid):
-            raise BeartypeAnnotatedIsInstantiationException(
+            raise BeartypeSubscriptedIsInstantiationException(
                 f'Class "beartype.vale.Is" subscripted callable '
                 f'{repr(is_valid)} not pure-Python (e.g., C-based).'
             )
@@ -258,7 +224,7 @@ class AnnotatedIs(object):
         # If this callable does *NOT* accept exactly one argument, raise a
         # human-readable exception.
         elif get_func_args_len_standard(is_valid) != 1:
-            raise BeartypeAnnotatedIsInstantiationException(
+            raise BeartypeSubscriptedIsInstantiationException(
                 f'Class "beartype.vale.Is" subscripted callable '
                 f'{repr(is_valid)} positional or keyword argument count '
                 f'{get_func_args_len_standard(is_valid)} != 1.'
@@ -273,36 +239,51 @@ class AnnotatedIs(object):
 
         # If the caller passed code for this validator...
         if is_valid_code is not None:
-            # If this code is *NOT* a string, raise an exception.
-            if not isinstance(is_valid_code, str):
-                raise BeartypeAnnotatedIsInstantiationException(
-                    f'Data validator code not string:\n'
-                    f'{get_object_representation(is_valid_code)}'
-                )
-            # Else, this code is a string.
-            #
             # If the caller passed *NO* code locals, raise an exception.
-            elif is_valid_code_locals is None:
-                raise BeartypeAnnotatedIsInstantiationException(
+            if is_valid_code_locals is None:
+                raise BeartypeSubscriptedIsInstantiationException(
                     f'Data validator code locals unpassed but code passed:\n'
                     f'{is_valid_code}'
                 )
             # Else, the caller passed code locals.
             #
-            # If this code does *NOT* contain the test subject substring
-            # "{pith_curr_assigned_expr}" and is invalid, raise an exception.
-            elif '{pith_curr_assigned_expr}' not in is_valid_code:
-                raise BeartypeAnnotatedIsInstantiationException(
-                    f'Data validator code invalid (i.e., test subject '
-                    f'substring "{{pith_curr_assigned_expr}}" not found):\n'
-                    f'{is_valid_code}'
+            # If this code is *NOT* a string, raise an exception.
+            elif not isinstance(is_valid_code, str):
+                raise BeartypeSubscriptedIsInstantiationException(
+                    f'Data validator code not string:\n'
+                    f'{get_object_representation(is_valid_code)}'
                 )
-            # Else, this code is valid.
+            # Else, this code is a string.
+            #
+            # If this code is the empty string, raise an exception.
+            elif not is_valid_code:
+                raise BeartypeSubscriptedIsInstantiationException(
+                    'Data validator code empty.')
+            # Else, this code is a non-empty string.
+            #
+            # If this code does *NOT* contain the test subject substring
+            # "{obj}" and is invalid, raise an exception.
+            elif '{obj}' not in is_valid_code:
+                raise BeartypeSubscriptedIsInstantiationException(
+                    f'Data validator code invalid (i.e., test subject '
+                    f'substring "{{obj}}" not found):\n{is_valid_code}'
+                )
+            # Else, this code is hopefully valid.
+            #
+            # If this code is *NOT* explicitly prefixed by "(" and suffixed by
+            # ")", do so to ensure this code remains safely evaluable when
+            # embedded in parent expressions.
+            #FIXME: Unit test us up.
+            elif not (
+                is_valid_code[ 0] == '(' and
+                is_valid_code[-1] == ')'
+            ):
+                is_valid_code = f'({is_valid_code})'
         # Else, the caller passed *NO* code for this validator.
         #
         # If the caller paradoxically passed code locals, raise an exception.
         elif is_valid_code_locals is not None:
-            raise BeartypeAnnotatedIsInstantiationException(
+            raise BeartypeSubscriptedIsInstantiationException(
                 f'Data validator code unpassed but code locals passed:\n'
                 f'{get_object_representation(is_valid_code_locals)}'
             )
@@ -317,36 +298,37 @@ class AnnotatedIs(object):
     # ..................{ OPERATORS                         }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # combine and Override
-    def __and__(self, other: 'AnnotatedIs') -> (
-        'AnnotatedIs'):
+    def __and__(self, other: 'SubscriptedIs') -> (
+        'SubscriptedIs'):
         '''
         **Conjunction** (i.e., ``self & other``), synthesizing a new
-        :class:`AnnotatedIs` object whose data validator returns ``True`` only
+        :class:`SubscriptedIs` object whose data validator returns ``True`` only
         when the data validators of both this *and* the passed
-        :class:`AnnotatedIs` objects all return ``True``.
+        :class:`SubscriptedIs` objects all return ``True``.
 
         Parameters
         ----------
-        other : AnnotatedIs
+        other : SubscriptedIs
             Object to conjunctively synthesize with this object.
 
         Returns
         ----------
-        AnnotatedIs
+        SubscriptedIs
             New object conjunctively synthesized with this object.
 
         Raises
         ----------
-        BeartypeAnnotatedIsInstantiationException
+        BeartypeSubscriptedIsInstantiationException
             If the passed object is *not* also an instance of the same class.
         '''
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, AnnotatedIs):
-            raise BeartypeAnnotatedIsInstantiationException(
-                f'Second & operand {get_object_representation(other)} not '
-                f'"AnnotatedIs" instance.'
+        if not isinstance(other, SubscriptedIs):
+            raise BeartypeSubscriptedIsInstantiationException(
+                f'Subscripted "beartype.vale.Is*" class & operand '
+                f'{get_object_representation(other)} not '
+                f'subscripted "beartype.vale.Is*" class.'
             )
         # Else, the passed object is also an instance of this class.
 
@@ -359,7 +341,7 @@ class AnnotatedIs(object):
         if self.is_valid_code and other.is_valid_code:
             # Generate code conjunctively performing both validations.
             is_valid_code = (
-                f'(({self.is_valid_code}) and ({other.is_valid_code}))')
+                f'({self.is_valid_code} and {other.is_valid_code})')
 
             # Generate locals safely merging the locals required by the code
             # provided by both this and that validator.
@@ -369,38 +351,39 @@ class AnnotatedIs(object):
         # case, avoid generating any code for safety.
 
         # Closures for great justice.
-        return AnnotatedIs(
+        return SubscriptedIs(
             is_valid=lambda obj: self.is_valid(obj) and other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
         )
 
 
-    def __or__(self, other: 'AnnotatedIs') -> (
-        'AnnotatedIs'):
+    def __or__(self, other: 'SubscriptedIs') -> (
+        'SubscriptedIs'):
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
-        :class:`AnnotatedIs` object whose data validator returns ``True`` only
+        :class:`SubscriptedIs` object whose data validator returns ``True`` only
         when the data validators of either this *or* the passed
-        :class:`AnnotatedIs` objects return ``True``.
+        :class:`SubscriptedIs` objects return ``True``.
 
         Parameters
         ----------
-        other : AnnotatedIs
+        other : SubscriptedIs
             Object to disjunctively synthesize with this object.
 
         Returns
         ----------
-        AnnotatedIs
+        SubscriptedIs
             New object disjunctively synthesized with this object.
         '''
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, AnnotatedIs):
-            raise BeartypeAnnotatedIsInstantiationException(
-                f'Second | operand {get_object_representation(other)} not '
-                f'"AnnotatedIs" instance.'
+        if not isinstance(other, SubscriptedIs):
+            raise BeartypeSubscriptedIsInstantiationException(
+                f'Subscripted "beartype.vale.Is*" class | operand '
+                f'{get_object_representation(other)} not '
+                f'subscripted "beartype.vale.Is*" class.'
             )
         # Else, the passed object is also an instance of this class.
 
@@ -413,7 +396,7 @@ class AnnotatedIs(object):
         if self.is_valid_code and other.is_valid_code:
             # Generate code disjunctively performing both validations.
             is_valid_code = (
-                f'(({self.is_valid_code}) or ({other.is_valid_code}))')
+                f'({self.is_valid_code} or {other.is_valid_code})')
 
             # Generate locals safely merging the locals required by the code
             # provided by both this and that validator.
@@ -423,33 +406,33 @@ class AnnotatedIs(object):
         # case, avoid generating any code for safety.
 
         # Closures for great justice.
-        return AnnotatedIs(
+        return SubscriptedIs(
             is_valid=lambda obj: self.is_valid(obj) or other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
         )
 
 
-    def __invert__(self) -> 'AnnotatedIs':
+    def __invert__(self) -> 'SubscriptedIs':
         '''
-        **Negation** (i.e., ``~self``), synthesizing a new :class:`AnnotatedIs`
+        **Negation** (i.e., ``~self``), synthesizing a new :class:`SubscriptedIs`
         object whose data validator returns ``True`` only when the data
-        validators of this :class:`AnnotatedIs` object returns ``False``.
+        validators of this :class:`SubscriptedIs` object returns ``False``.
 
         Returns
         ----------
-        AnnotatedIs
+        SubscriptedIs
             New object negating this object.
         '''
 
         # Closures for profound lore.
-        return AnnotatedIs(
+        return SubscriptedIs(
             is_valid=lambda obj: not self.is_valid(obj),
             # Inverted data validator code, defined as either...
             is_valid_code=(
                 # If this validator provides code, the trivial boolean negation
                 # of that code;
-                f'not ({self.is_valid_code})' if self.is_valid_code else
+                f'(not {self.is_valid_code})' if self.is_valid_code else
                 # Else, "None".
                 None
             ),
@@ -462,16 +445,16 @@ class Is(object):
     **Beartype data validator factory** (i.e., class that, when subscripted
     (indexed) by a caller-defined data validation function returning ``True``
     when an arbitrary object passed to that function satisfies an arbitrary
-    constraint, creates a new :class:`AnnotatedIs` object encapsulating that
+    constraint, creates a new :class:`SubscriptedIs` object encapsulating that
     function suitable for subscripting (indexing) :attr:`typing.Annotated` type
     hints, which then enforce that validation on :mod:`beartype`-decorated
     callable parameters and returns annotated by those hints).
 
-    Subscripting (indexing) this class produces an :class:`AnnotatedIs`
+    Subscripting (indexing) this class produces an :class:`SubscriptedIs`
     object that validates the internal integrity, consistency, and structure of
     arbitrary objects ranging from simple builtin scalars like integers and
     strings to complex data structures defined by third-party packages like
-    NumPy arrays and Pandas DataFrames. For portability, :class:`AnnotatedIs`
+    NumPy arrays and Pandas DataFrames. For portability, :class:`SubscriptedIs`
     objects are:
 
     * **PEP-compliant** and thus guaranteed to *never* violate existing or
@@ -534,12 +517,12 @@ class Is(object):
 
        Annotated[str, Is[lambda text: bool(text)]]
 
-    :class:`AnnotatedIs` objects also support an expressive domain-specific
+    :class:`SubscriptedIs` objects also support an expressive domain-specific
     language (DSL) enabling callers to trivially synthesize new objects from
     existing objects with standard Pythonic math operators:
 
-    * **Negation** (i.e., ``not``). Negating an :class:`AnnotatedIs` object
-      with the ``~`` operator synthesizes a new :class:`AnnotatedIs` object
+    * **Negation** (i.e., ``not``). Negating an :class:`SubscriptedIs` object
+      with the ``~`` operator synthesizes a new :class:`SubscriptedIs` object
       whose data validator returns ``True`` only when the data validator of the
       original object returns ``False``. For example, the following type hint
       only accepts strings containing *no* periods:
@@ -549,8 +532,8 @@ class Is(object):
          Annotated[str, ~Is[lambda text: '.' in text]]
 
     * **Conjunction** (i.e., ``and``). Conjunctively combining two or more
-      :class:`AnnotatedIs` objects with the ``&`` operator synthesizes a new
-      :class:`AnnotatedIs` object whose data validator returns ``True`` only
+      :class:`SubscriptedIs` objects with the ``&`` operator synthesizes a new
+      :class:`SubscriptedIs` object whose data validator returns ``True`` only
       when all data validators of the original objects return ``True``. For
       example, the following type hint only accepts non-empty strings
       containing *no* periods:
@@ -568,8 +551,8 @@ class Is(object):
       both empty strings *and* non-empty strings containing at least one
       period:
     * **Disjunction** (i.e., ``or``). Disjunctively combining two or more
-      :class:`AnnotatedIs` objects with the ``|`` operator synthesizes a new
-      :class:`AnnotatedIs` object whose data validator returns ``True`` only
+      :class:`SubscriptedIs` objects with the ``|`` operator synthesizes a new
+      :class:`SubscriptedIs` object whose data validator returns ``True`` only
       when at least one data validator of the original objects returns
       ``True``. For example, the following type hint accepts both empty strings
       *and* non-empty strings containing at least one period:
@@ -601,7 +584,7 @@ class Is(object):
 
     **This class prohibits instantiation.** This class is *only* intended to be
     subscripted. Attempting to instantiate this class into an object will raise
-    an :exc:`BeartypeAnnotatedIsInstantiationException` exception.
+    an :exc:`BeartypeSubscriptedIsInstantiationException` exception.
 
     Examples
     ----------
@@ -666,22 +649,22 @@ class Is(object):
 
         Raises
         ----------
-        BeartypeAnnotatedIsInstantiationException
+        BeartypeSubscriptedIsInstantiationException
             Always.
         '''
 
         # Murderbot would know what to do here.
-        raise BeartypeAnnotatedIsInstantiationException(
+        raise BeartypeSubscriptedIsInstantiationException(
             f'Class "{cls.__name__}" not instantiable; '
             f'index this class with data validation functions instead '
             f'(e.g., "{cls.__name__}[lambda obj: bool(obj)]").'
         )
 
     # ..................{ DUNDERS                           }..................
-    def __class_getitem__(cls, is_valid: AnnotatedIsValidator) -> AnnotatedIs:
+    def __class_getitem__(cls, is_valid: SubscriptedIsValidator) -> SubscriptedIs:
         '''
         `PEP 560`_-compliant dunder method dynamically generating a new
-        :class:`AnnotatedIs` object from the passed data validation function
+        :class:`SubscriptedIs` object from the passed data validation function
         suitable for subscripting `PEP 593`_-compliant :attr:`typing.Annotated`
         type hints.
 
@@ -696,12 +679,12 @@ class Is(object):
 
         Returns
         ----------
-        AnnotatedIs
+        SubscriptedIs
             New object encapsulating this data validator.
 
         Raises
         ----------
-        BeartypeAnnotatedIsInstantiationException
+        BeartypeSubscriptedIsInstantiationException
             If either:
 
             * This class was subscripted by two or more arguments.
@@ -718,4 +701,4 @@ class Is(object):
         '''
 
         # One one-liner to rule them all and in "pdb" bind them.
-        return AnnotatedIs(is_valid=is_valid)
+        return SubscriptedIs(is_valid=is_valid)

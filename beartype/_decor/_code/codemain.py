@@ -299,8 +299,7 @@ def _code_check_params(data: BeartypeData) -> FuncWrapperData:
     # ..................{ GENERATE                          }..................
     # For the name of each parameter accepted by this callable and the
     # "Parameter" instance encapsulating this parameter (in signature order)...
-    for param_index, param in enumerate(
-        data.func_sig.parameters.values()):
+    for param_index, param in enumerate(data.func_sig.parameters.values()):
         # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
         # otherwise (i.e., if this parameter is unannotated).
         hint = param.annotation
