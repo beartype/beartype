@@ -17,15 +17,15 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
+from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ VALIDATORS                        }....................
-#FIXME: Unit test us up, please.
 def die_unless_func_python(
     # Mandatory parameters.
-    func: Callable,
+    func: Any,
 
     # Optional parameters.
     exception_cls: type = _BeartypeUtilCallableException,
@@ -65,8 +65,32 @@ def die_unless_func_python(
         )
 
 # ....................{ TESTERS                           }....................
-#FIXME: Unit test us up, please.
-def is_func_python(func: Callable) -> bool:
+def is_func_lambda(func: Callable) -> bool:
+    '''
+    ``True`` only if the passed callable is a pure-Python lambda function
+    (i.e., function declared as a `lambda` expression rather than full-blown
+    `def` statement).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this callable is a pure-Python lambda function.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+
+    # Return true only if this callable's name is the lambda-specific
+    # placeholder Python gives to *ALL* lambda functions. While predictably
+    # absurd, this is also the only sane means of differentiating lambda
+    # functions from non-lambda callables.
+    return func.__name__ == '<lambda>'
+
+
+def is_func_python(func: Any) -> bool:
     '''
     ``True`` only if the passed callable is **C-based** (i.e., implemented in
     Python as either a function or method rather than in C as either a builtin

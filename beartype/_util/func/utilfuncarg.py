@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.func.utilfunccodeobj import (
     CallableOrFrameOrCodeType,
-    get_func_codeobj,
+    get_func_unwrapped_codeobj,
 )
 from enum import Enum as EnumMemberType
 from inspect import (
@@ -36,22 +36,22 @@ def is_func_argless(func: CallableOrFrameOrCodeType) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable accepts *no* arguments.
+        ``True`` only if the passed callable accepts *no* arguments.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying this pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_unwrapped_codeobj(func)
 
     # Return true only if this callable accepts neither...
     return not (
@@ -76,13 +76,13 @@ def is_func_arg_variadic(func: CallableOrFrameOrCodeType) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable accepts either:
+        ``True`` only if the passed callable accepts either:
 
         * Variadic positional arguments (e.g., "*args").
         * Variadic keyword arguments (e.g., "**kwargs").
@@ -90,7 +90,7 @@ def is_func_arg_variadic(func: CallableOrFrameOrCodeType) -> bool:
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
     # Return true only if this callable declares either...
@@ -111,22 +111,23 @@ def is_func_arg_variadic_positional(func: CallableOrFrameOrCodeType) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable accepts variadic positional arguments.
+        ``True`` only if the passed callable accepts variadic positional
+        arguments.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying this pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_unwrapped_codeobj(func)
 
     # Return true only if this callable declares Variadic positional arguments.
     return func_codeobj.co_flags & CO_VARARGS != 0
@@ -139,22 +140,23 @@ def is_func_arg_variadic_keyword(func: CallableOrFrameOrCodeType) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable accepts variadic keyword arguments.
+        ``True`` only if the passed callable accepts variadic keyword
+        arguments.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying this pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_unwrapped_codeobj(func)
 
     # Return true only if this callable declares Variadic positional arguments.
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
@@ -175,20 +177,21 @@ def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType]
-        Callable or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
     arg_name : str
         Name of the argument to be searched for.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable accepts an argument with this name.
+        ``True`` only if the passed callable accepts an argument with this
+        name.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'
 
@@ -210,22 +213,23 @@ def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Pure-Python Callable, frame, or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     int
-        Number of standard parameters accepted by this pure-Python callable.
+        Number of standard parameters accepted by the passed pure-Python
+        callable.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying this pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_unwrapped_codeobj(func)
 
     # Return the number of standard parameters accepted by this callable.
     return func_codeobj.co_argcount
@@ -267,8 +271,8 @@ def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Pure-Python Callable, frame, or code object to be inspected.
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
@@ -282,8 +286,8 @@ def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
          If this callable is *not* pure-Python.
     '''
 
-    # Code object underlying this pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_unwrapped_codeobj(func)
 
     # Tuple of the names of all variables localized to this callable.
     #

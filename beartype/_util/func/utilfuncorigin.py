@@ -18,38 +18,65 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.cave import CallableTypes
 from beartype.roar import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
-    CallableOrFrameOrCodeType,
-    get_func_codeobj,
-    get_func_codeobj_or_none,
-)
+    get_func_unwrapped_codeobj_or_none)
+from beartype._util.func.utilfunctest import die_unless_func_python
 from collections.abc import Callable
+from inspect import getsourcelines
 from sys import modules
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS                           }....................
-#FIXME: Unit test us up.
-def get_callable_origin_code_or_none(
+# ....................{ GETTERS ~ code                    }....................
+#FIXME: Improve with lambda-specific support. If the passed callable is a
+#lambda, this getter erroneously returns the *ENTIRE* line containing that
+#lambda rather than the substring of that line specifically declaring that
+#lambda. Sadly, we can verify after several hours of online grepping that there
+#is *NO* means of obtaining that substring *WITHOUT* importing one of the two
+#following third-party packages:
+#* "asttokens", as implemented by the third-party "icontract" package:
+#  https://github.com/Parquery/icontract/blob/master/icontract/_represent.py
+#* "astunparse", as implemented by this StackOverflow solution:
+#  https://stackoverflow.com/a/64421174/2809027
+#Since the StackOverflow solution is substantially simpler, "astunparse" would
+#appear to be the solution here. We're certainly *NOT* requiring "astunparse"
+#as a mandatory dependency, but optionally importing that package to display
+#lambda code on exceptions (if installed) wouldn't necessarily be the worst
+#decision we've ever made. *shrug*
+
+def get_func_origin_code_or_none(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: Callable,
 
     # Optional parameters.
     exception_cls: type = _BeartypeUtilCallableException,
 ) -> Optional[str]:
     '''
-    **Uncompiled Python source code** (i.e., string concatenating all lines of
-    the on-disk Python script or module declaring that callable) of the passed
-    pure-Python callable if that callable was declared on-disk *or* ``None``
-    otherwise (i.e., if that callable was dynamically declared in-memory).
+    **Uncompiled Python source code** (i.e., string concatenating the subset of
+    all lines of the on-disk Python script or module declaring the passed
+    pure-Python callable) of that callable if that callable was declared
+    on-disk *or* ``None`` otherwise (i.e., if that callable was dynamically
+    declared in-memory).
+
+    Caveats
+    ----------
+    **This getter is excruciatingly slow** and should thus be called *only*
+    when unavoidable and ideally *only* in performance-agnostic code paths.
+    Specifically, this getter finds the relevant lines by parsing the script or
+    module declaring that callable beginning at the first line of that
+    declaration and continuing until a rudimentary Python tokenizer implemented
+    in pure-Python with *no* concern for optimization and thus slow beyond all
+    understanding of "slow" detects the last line of that declaration. In
+    theory, we could significantly optimize that process; in practice, anyone
+    who cares should probably just compile or JIT :mod:`beartype` instead.
 
     Parameters
     ----------
     func : Union[Callable, CodeType, FrameType]
         Callable or frame or code object to be inspected.
     exception_cls : type, optional
-        Type of exception in the event of fatal error. Defaults to
+        Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
 
     Returns
@@ -57,40 +84,41 @@ def get_callable_origin_code_or_none(
     Optional[str]
         Either:
 
-        * If that callable was physically declared by an uncompiled Python
+        * If the passed callable was physically declared by an uncompiled
           script or module, a string concatenating the subset of lines of that
           script or module declaring that callable.
-        * If that callable was dynamically declared in-memory, ``None``.
+        * Else, the passed callable was dynamically declared in-memory. In this
+          case, ``None``.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If this callable is *not* pure-Python.
+         If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying that pure-Python callable.
-    func_codeobj = get_func_codeobj(func)
+    # If the passed callable is *NOT* pure-Python, raise an exception.
+    die_unless_func_python(func=func, exception_cls=exception_cls)
+    # Else, the passed callable is pure-Python.
 
-    # Absolute filename of the physical Python module or script declaring
-    # that callable if this code object provides that metadata *OR* "None"
-    # otherwise.
-    #
-    # Note that we intentionally do *NOT* assume all code objects to provide
-    # this metadata. Why? Because PyPy yet again. For inexplicable reasons,
-    # PyPy provides *ALL* C-based builtins (e.g., len()) with code objects
-    # failing to provide this metadata. Welcome to the Python ecosystem.
-    func_filename = getattr(func_codeobj, 'co_filename', None)
+    # Attempt to defer to the standard inspect.getsourcelines() function,
+    # which returns a 2-tuple "(func_code_lines, func_code_lineno_start)",
+    # where:
+    # * "func_code_lines" is a list of all lines covering the passed callable.
+    # * "func_code_lineno_start" is the line number of the first such line.
+    try:
+        # List of all lines covering the passed callable
+        func_code_lines, _ = getsourcelines(func)
 
-    # If that callable was dynamically declared in-memory, reduce to a noop.
-    if not func_filename:
+        # Return this list concatenated into a string.
+        return ''.join(func_code_lines)
+    # If that function raised an "OSError" exception, that function failed to
+    # find that callable (e.g., due to that callable being declared in-memory
+    # rather than on-disk). In this case, return "None" instead.
+    except OSError:
         return None
-    # Else, that callable was physically declared on-disk.
 
-    #FIXME: Implement us up, please.
-    raise ValueError('Implement us up, please!')
-
-
-def get_callable_origin_label(func: Callable) -> str:
+# ....................{ GETTERS ~ label                   }....................
+def get_func_origin_label(func: Callable) -> str:
     '''
     Human-readable label describing the **origin** (i.e., uncompiled source) of
     the passed callable.
@@ -147,8 +175,8 @@ def get_callable_origin_label(func: Callable) -> str:
     # Human-readable label describing the origin of the passed callable.
     func_origin_label = '<string>'
 
-    # Else, this callable is a standard callable rather than an arbitrary class
-    # or object defining the __call__() dunder method...
+    # If this callable is a standard callable rather than arbitrary class or
+    # object overriding the __call__() dunder method...
     if isinstance(func, CallableTypes):
         #FIXME: This is probably a bit overkill, as @beartype absolutely
         #*REQUIRES* pure-Python rather than C-based callables, as the latter
@@ -158,7 +186,8 @@ def get_callable_origin_label(func: Callable) -> str:
         # callables to simplify subsequent logic.
         func_origin_label = '<C-based>'
 
-        # Code object underlying this callable if found *OR* "None" otherwise.
+        # Code object underlying the passed pure-Python callable unwrapped if
+        # this callable is pure-Python *OR* "None" otherwise.
         #
         # Note that we intentionally do *NOT* test whether this callable is
         # explicitly pure-Python or C-based: e.g.,
@@ -184,7 +213,7 @@ def get_callable_origin_label(func: Callable) -> str:
         # approach would unconditionally return the C-specific placeholder
         # string for all callables -- including those originally declared as
         # pure-Python in a Python module. So it goes.
-        func_codeobj = get_func_codeobj_or_none(func)
+        func_codeobj = get_func_unwrapped_codeobj_or_none(func)
 
         # If this callable has a code object, set this label to either the
         # absolute filename of the physical Python module or script declaring
@@ -200,7 +229,7 @@ def get_callable_origin_label(func: Callable) -> str:
         if func_codeobj:
             func_origin_label = getattr(
                 func_codeobj, 'co_filename', func_origin_label)
-    # Else...
+    # Else, this callable is *NOT* a standard callable. In this case...
     else:
         # If this callable is *NOT* a class (i.e., is an object defining the
         # __call__() method), reduce this callable to the class of this object.
@@ -222,5 +251,5 @@ def get_callable_origin_label(func: Callable) -> str:
             func_origin_label = getattr(
                 modules[func_module_name], '__file__', func_origin_label)
 
-    # Return this func_origin_label.
+    # Return this label.
     return func_origin_label

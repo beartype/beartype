@@ -43,7 +43,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import inspect
 from beartype.cave import CallableCodeObjectType
 from beartype.roar import BeartypeDecorWrappeeException
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
 from beartype._util.text.utiltextlabel import label_callable_decorated
 from collections.abc import Callable
 from inspect import Signature
@@ -123,7 +123,8 @@ class BeartypeData(object):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'func',
-        'func_codeobj',
+        #FIXME: Uncomment if needed.
+        # 'func_codeobj',
         'func_sig',
         'func_wrapper_name',
     )
@@ -160,7 +161,8 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
-        self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
+        #FIXME: Uncomment if needed.
+        # self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
@@ -206,10 +208,11 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        # Code object underlying this callable if this callable is a
-        # pure-Python function or method *OR* raise an exception otherwise.
-        self.func_codeobj = get_func_codeobj(
-            func=func, exception_cls=BeartypeDecorWrappeeException)
+        #FIXME: Uncomment if needed.
+        # Code object underlying that callable unwrapped if that callable is
+        # pure-Python *OR* raise an exception otherwise.
+        # self.func_codeobj = get_func_unwrapped_codeobj(
+        #     func=func, exception_cls=BeartypeDecorWrappeeException)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = f'__beartyped_{func.__name__}'

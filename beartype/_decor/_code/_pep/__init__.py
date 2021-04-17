@@ -1277,7 +1277,7 @@
 #come first. Unfortunately, there are two types: standard and keyword-only.
 #Altogether, an expression yielding a tuple of the names of all parameters
 #(excluding local variables) is given by:
-#    func_codeobj = get_func_codeobj(func)
+#    func_codeobj = get_func_unwrapped_codeobj(func)
 #
 #    # Tuple of the names of all parameters accepted by this callable.
 #    func_param_names = func_codeobj.co_varnames[

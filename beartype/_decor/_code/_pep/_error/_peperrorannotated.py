@@ -22,7 +22,7 @@ from beartype.vale import SubscriptedIs
 from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.func.utilfuncorigin import get_callable_origin_code_or_none
+from beartype._util.func.utilfuncorigin import get_func_origin_code_or_none
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
@@ -129,6 +129,24 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
                 #          f'violates caller-defined constraint:\n'
                 #          f'{repr(hint_metadatum)}'
                 #      )
+                #FIXME: Everything above is great, of course. We have only one
+                #significant concern: get_func_origin_code_or_none() is
+                #*INSANELY* slow and will only get slower with time. This means
+                #we absolutely *CANNOT* call that function at "Is[...]"
+                #subscription time; instead, we absolutely *MUST* defer calling
+                #that function until we absolutely need it, which is *HERE*:
+                #that is, when an exception is being raised.
+                #
+                #That's mostly fine, except for synthetic "Is[...]"
+                #subscriptions (e.g., "~Is[...]"). To emit human-readable
+                #exception messages for those, we'll need to store a reference
+                #to the original callable in those synthetic subscriptions.
+                #That reference then enables us to iteratively call
+                #get_func_origin_code_or_none() on each stored reference to
+                #produce increasingly indented code for each nested lambda.
+                #While non-trivial, there exist *NO* sane alternatives that
+                #(A) are efficient and (B) also produce human-readable
+                #exception messages. Ergo, we bite this bullet and just do it.
 
                 # Else, this validator does *NOT* provide code. In this case,
                 # either:
@@ -136,7 +154,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
                 #   concatenating all lines of the on-disk script or module
                 #   declaring this validator.
                 # * If this validator was declared in-memory, "None".
-                get_callable_origin_code_or_none(hint_metadatum.is_valid)
+                get_func_origin_code_or_none(hint_metadatum.is_valid)
             )
 
             # Return the cause of this failure, concatenating...

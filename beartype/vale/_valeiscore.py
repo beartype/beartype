@@ -661,7 +661,8 @@ class Is(object):
         )
 
     # ..................{ DUNDERS                           }..................
-    def __class_getitem__(cls, is_valid: SubscriptedIsValidator) -> SubscriptedIs:
+    def __class_getitem__(
+        cls, is_valid: SubscriptedIsValidator) -> SubscriptedIs:
         '''
         `PEP 560`_-compliant dunder method dynamically generating a new
         :class:`SubscriptedIs` object from the passed data validation function
@@ -701,4 +702,6 @@ class Is(object):
         '''
 
         # One one-liner to rule them all and in "pdb" bind them.
-        return SubscriptedIs(is_valid=is_valid)
+        return SubscriptedIs(
+            is_valid=is_valid,
+        )

@@ -141,6 +141,7 @@ def get_func_globals(
     lowel-level callables at either decoration time via the
     :func:`functools.wraps` decorator *or* after declaration via the
     :func:`functools.update_wrapper` function).
+
     Parameters
     ----------
     func : Callable
@@ -151,8 +152,8 @@ def get_func_globals(
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
     exception_cls : type, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -274,8 +275,8 @@ def get_func_locals(
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
     exception_cls : type, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
