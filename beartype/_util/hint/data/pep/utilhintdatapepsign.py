@@ -37,7 +37,7 @@ type hints) importable under the active Python interpreter.
 
 
 # Initialized below.
-HINT_PEP593_SIGN_ANNOTATED = SENTINEL
+HINT_PEP593_SIGN_ANNOTATED: Any = SENTINEL
 '''
 **Annotated sign** (i.e., arbitrary object uniquely identifying `PEP
 593`_-compliant type metahints) importable under the active Python interpreter.

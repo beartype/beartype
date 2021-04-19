@@ -215,8 +215,8 @@ instead stressing expense-free strategies at both:
 Versus Static Type Checkers
 ---------------------------
 
-Like `competing static type checkers <See Also_>`__ operating at the
-coarse-grained application level via ad-hoc heuristic type inference (e.g.,
+Like `competing static type checkers <Static Type Checkers_>`__ operating at
+the coarse-grained application level via ad-hoc heuristic type inference (e.g.,
 Pyre_, mypy_, pyright_, pytype_), beartype effectively `imposes no runtime
 overhead <Timings_>`__. Unlike static type checkers:
 
@@ -258,8 +258,8 @@ overhead <Timings_>`__. Unlike static type checkers:
 Versus Runtime Type Checkers
 ----------------------------
 
-Unlike `comparable runtime type checkers <See Also_>`__ (e.g., enforce_,
-pytypes_, typeguard_), beartype decorates callables with dynamically generated
+Unlike `comparable runtime type checkers <Runtime Type Checkers_>`__ (e.g.,
+pydantic_, typeguard_), beartype decorates callables with dynamically generated
 wrappers efficiently type-checking each parameter passed to and value returned
 from those callables in constant time. Since "performance by default" is our
 first-class concern, generated wrappers are guaranteed to:
@@ -2840,21 +2840,107 @@ External ``beartype`` resources include:
   as a runtime dependency), kindly provided by the `Libraries.io package
   registry <Libraries.io_>`__.
 
-**Runtime type checkers** (i.e., third-party mostly pure-Python packages
-dynamically validating Python callable types at Python runtime, typically via
-decorators, explicit function calls, and import hooks) include:
+Related type-checking resources include:
+
+Runtime Type Checkers
+---------------------
+
+**Runtime type checkers** (i.e., third-party Python packages dynamically
+validating callables annotated by type hints at runtime, typically via
+decorators, function calls, and import hooks) include:
 
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
-* ``beartype``. :sup:`...sup.`
-* enforce_.
-* pytypes_.
-* typeen_.
-* typeguard_.
++-------------------+---------+---------------+---------------------------+
+| package           | active  | PEP-compliant | time multiplier [#speed]_ |
++===================+=========+===============+===========================+
+| ``beartype``      | **yes** | **yes**       | 1.0 ✕ ``beartype``        |
++-------------------+---------+---------------+---------------------------+
+| deal_ [#baddeal]_ | **yes** | **yes**       | 20.0 ✕ ``beartype``       |
++-------------------+---------+---------------+---------------------------+
+| enforce_          | no      | **yes**       | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
+| enforce_typing_   | no      | **yes**       | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
+| pydantic_         | **yes** | no            | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
+| pytypes_          | no      | **yes**       | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
+| typeen_           | no      | no            | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
+| typeguard_        | **yes** | **yes**       | 20.0 ✕ ``beartype``       |
++-------------------+---------+---------------+---------------------------+
 
-**Static type checkers** (i.e., third-party tooling *not* implemented in Python
-statically validating Python callable and/or variable types across a full
-application stack at tool rather than Python runtime) include:
+.. [#speed]
+   The floating-point number listed for each runtime type checker in the *speed
+   multliplier* column is an approximate measure of **how much slower on
+   overage than** ``beartype`` **that checker is** as `timed by our profile
+   suite <Timings_>`__. Ergo, a time multiplier of:
+
+   * 1.0 means that checker is approximately as fast as ``beartype``, which
+     means that checker is probably ``beartype`` itself.
+   * 20.0 means that checker is approximately twenty times slower than
+     ``beartype`` on average.
+
+.. [#baddeal]
+   With respect to runtime type checking, deal_ is just a thin shim wrapping
+   typeguard_. Since deal_ **currently has no open issue tracker,** prefer
+   typeguard_ over deal_ if you absolutely *must* use one or the other.
+
+Like `static type checkers <Static Type Checkers_>`__, runtime type checkers
+*always* require callables to be annotated by type hints. Unlike `static type
+checkers <Static Type Checkers_>`__, runtime type checkers do *not* necessarily
+comply with community standards; although some do require callers to annotate
+callables with strictly PEP-compliant type hints, others permit or even require
+callers to annotate callables with PEP-noncompliant type hints. Runtime type
+checkers that do so violate:
+
+* `PEP 561 -- Distributing and Packaging Type Information <PEP 561_>`_, which
+  requires callables to be annotated with strictly PEP-compliant type hints.
+  Packages violating `PEP 561`_ even once cannot be type-checked with `static
+  type checkers <Static Type Checkers_>`__ (e.g., mypy_), unless each such
+  violation is explicitly ignored with a checker-specific filter (e.g., with a
+  mypy_-specific inline type comment).
+* `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`_, which
+  explicitly deprecates PEP-noncompliant type hints:
+
+      With this in mind, **uses for annotations incompatible with the
+      aforementioned PEPs** *[i.e., PEPs 484, 544, 557, and 560]* **should be
+      considered deprecated.**
+
+Runtime Data Validators
+-----------------------
+
+**Runtime data validators** (i.e., third-party Python packages dynamically
+validating callables decorated by caller-defined contracts, constraints, and
+validation routines at runtime) include:
+
+.. # Note: intentionally sorted in lexicographic order to avoid bias.
+
+* PyContracts_.
+* contracts_.
+* covenant_.
+* dpcontracts_.
+* icontract_.
+* pcd_.
+* pyadbc_.
+
+Unlike both `runtime type checkers <Runtime Type Checkers_>`__ and `static type
+checkers <Static Type Checkers_>`__, most runtime data validators do *not*
+require callables to be annotated by type hints. Like some `runtime type
+checkers <Runtime Type Checkers_>`__, most runtime data validators do *not*
+comply with community standards but instead require callers to either:
+
+* Decorate callables with package-specific decorators.
+* Annotate callables with package-specific and thus PEP-noncompliant type
+  hints.
+
+Static Type Checkers
+--------------------
+
+**Static type checkers** (i.e., third-party tooling validating Python callable
+and/or variable types across an application stack at static analysis time
+rather than Python runtime) include:
 
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
@@ -3463,14 +3549,36 @@ application stack at tool rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
 
 .. # ------------------( LINKS ~ py : type : runtime        )------------------
+.. _deal:
+   https://github.com/life4/deal
 .. _enforce:
    https://github.com/RussBaz/enforce
+.. _enforce_typing:
+   https://github.com/matchawine/python-enforce-typing
+.. _pydantic:
+   https://pydantic-docs.helpmanual.io/
 .. _pytypes:
    https://github.com/Stewori/pytypes
 .. _typeen:
    https://github.com/k2bd/typen
 .. _typeguard:
    https://github.com/agronholm/typeguard
+
+.. # ------------------( LINKS ~ py : type : runtime : data )------------------
+.. _PyContracts:
+   https://github.com/AlexandruBurlacu/pycontracts
+.. _contracts:
+   https://pypi.org/project/contracts
+.. _covenant:
+   https://github.com/kisielk/covenant
+.. _dpcontracts:
+   https://pypi.org/project/dpcontracts
+.. _icontract:
+   https://github.com/Parquery/icontract
+.. _pyadbc:
+   https://pypi.org/project/pyadbc
+.. _pcd:
+   https://pypi.org/project/pcd
 
 .. # ------------------( LINKS ~ py : type : static         )------------------
 .. _Pyre:

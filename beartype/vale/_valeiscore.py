@@ -39,6 +39,8 @@ Data validators are suitable for subscripting the :class:`Is` class.
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
+#FIXME: Unit test up "_get_repr", please.
+#FIXME: Docstring up "_get_repr", please.
 class SubscriptedIs(object):
     '''
     **Beartype data validator** (i.e., object encapsulating a caller-defined
@@ -80,6 +82,10 @@ class SubscriptedIs(object):
 
     Attributes
     ----------
+    is_valid : Callable[[Any,], bool]
+        **Data validator** (i.e., caller-defined function accepting a single
+        arbitrary object and returning either ``True`` if that object satisfies
+        an arbitrary constraint *or* ``False`` otherwise).
     is_valid_code : Optional[str]
         **Data validator code** (i.e., Python code snippet validating the
         previously localized parameter or return value against the same data
@@ -96,10 +102,7 @@ class SubscriptedIs(object):
         into byte code at runtime if this data validator supports code
         generation *or* ``None`` otherwise (i.e., if this data validator does
         *not* support code generation).
-    is_valid : Callable[[Any,], bool]
-        **Data validator** (i.e., caller-defined function accepting a single
-        arbitrary object and returning either ``True`` if that object satisfies
-        an arbitrary constraint *or* ``False`` otherwise).
+    _get_repr : Callable[[], str]
 
     See Also
     ----------
@@ -119,6 +122,7 @@ class SubscriptedIs(object):
         'is_valid',
         'is_valid_code',
         'is_valid_code_locals',
+        '_get_repr',
     )
 
     # ..................{ INITIALIZERS                      }..................
@@ -127,6 +131,11 @@ class SubscriptedIs(object):
 
         # Mandatory parameters.
         is_valid: SubscriptedIsValidator,
+
+        #FIXME: Implement us up. Also be sure to validate that:
+        #    get_repr.startswith("f'") and
+        #    get_repr.endswith("'")
+        get_repr: Callable[[], str],
 
         # Optional parameters.
         is_valid_code: Optional[str] = None,
@@ -294,8 +303,9 @@ class SubscriptedIs(object):
         self.is_valid = is_valid
         self.is_valid_code = is_valid_code
         self.is_valid_code_locals = is_valid_code_locals
+        self._get_repr = get_repr
 
-    # ..................{ OPERATORS                         }..................
+    # ..................{ DUNDERS ~ operator                }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # combine and Override
     def __and__(self, other: 'SubscriptedIs') -> (
@@ -355,6 +365,7 @@ class SubscriptedIs(object):
             is_valid=lambda obj: self.is_valid(obj) and other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
+            get_repr=lambda: f'{repr(self)} & {repr(other)}',
         )
 
 
@@ -410,14 +421,18 @@ class SubscriptedIs(object):
             is_valid=lambda obj: self.is_valid(obj) or other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
+            get_repr=lambda: f'{repr(self)} | {repr(other)}',
         )
 
 
+    #FIXME: Fun optimization: if inverting something that's already been
+    #inverted, return the original "SubscriptedIs" object sans inversion. :p
     def __invert__(self) -> 'SubscriptedIs':
         '''
-        **Negation** (i.e., ``~self``), synthesizing a new :class:`SubscriptedIs`
-        object whose data validator returns ``True`` only when the data
-        validators of this :class:`SubscriptedIs` object returns ``False``.
+        **Negation** (i.e., ``~self``), synthesizing a new
+        :class:`SubscriptedIs` object whose data validator returns ``True``
+        only when the data validators of this :class:`SubscriptedIs` object
+        returns ``False``.
 
         Returns
         ----------
@@ -437,7 +452,21 @@ class SubscriptedIs(object):
                 None
             ),
             is_valid_code_locals=self.is_valid_code_locals,
+            get_repr=lambda: f'~{repr(self)}',
         )
+
+    # ..................{ DUNDERS ~ str                     }..................
+    #FIXME: Implement us up.
+    #FIXME: Docstring us up.
+    def __repr__(self) -> str:
+        '''
+
+        Parameters
+        ----------
+        '''
+
+        # Fight the dark power with... power.
+        return self._get_repr()
 
 # ....................{ CLASSES ~ subscriptable           }....................
 class Is(object):
@@ -704,4 +733,17 @@ class Is(object):
         # One one-liner to rule them all and in "pdb" bind them.
         return SubscriptedIs(
             is_valid=is_valid,
+            get_repr=lambda: f'Is[{_get_func_representation(is_valid)}]'
         )
+
+# ....................{ PRIVATE ~ getter                  }....................
+#FIXME: Implement us up.
+#FIXME: Docstring us up.
+def _get_func_representation(func: Callable) -> str:
+    '''
+
+    Parameters
+    ----------
+    '''
+
+    pass

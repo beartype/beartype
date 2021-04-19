@@ -23,6 +23,45 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ VALIDATORS                        }....................
+#FIXME: Unit test us up.
+def die_unless_func_lambda(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> None:
+    '''
+    Raise an exception unless the passed callable is a **pure-Python lambda
+    function** (i.e., function declared as a `lambda` expression embedded in a
+    larger statement rather than as a full-blown `def` statement).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+    exception_cls : type, optional
+        Type of exception to be raised if this callable is *not* a pure-Python
+        lambda function. Defaults to :class:`_BeartypeUtilCallableException`.
+
+    Raises
+    ----------
+    exception_cls
+         If this callable is *not* a pure-Python lambda function.
+
+    See Also
+    ----------
+    :func:`is_func_lambda`
+        Further details.
+    '''
+
+    # If this callable is *NOT* a lambda function, raise an exception.
+    if not is_func_lambda(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        raise exception_cls(f'Callable {repr(func)} not lambda function.')
+
+
 def die_unless_func_python(
     # Mandatory parameters.
     func: Any,
@@ -52,6 +91,11 @@ def die_unless_func_python(
     ----------
     exception_cls
          If this callable has *no* code object and is thus *not* pure-Python.
+
+    See Also
+    ----------
+    :func:`is_func_python`
+        Further details.
     '''
 
     # If this callable is *NOT* pure-Python, raise an exception.
@@ -67,9 +111,9 @@ def die_unless_func_python(
 # ....................{ TESTERS                           }....................
 def is_func_lambda(func: Callable) -> bool:
     '''
-    ``True`` only if the passed callable is a pure-Python lambda function
-    (i.e., function declared as a `lambda` expression rather than full-blown
-    `def` statement).
+    ``True`` only if the passed callable is a **pure-Python lambda function**
+    (i.e., function declared as a `lambda` expression embedded in a larger
+    statement rather than as a full-blown `def` statement).
 
     Parameters
     ----------
@@ -83,11 +127,22 @@ def is_func_lambda(func: Callable) -> bool:
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
-    # Return true only if this callable's name is the lambda-specific
-    # placeholder Python gives to *ALL* lambda functions. While predictably
-    # absurd, this is also the only sane means of differentiating lambda
-    # functions from non-lambda callables.
-    return func.__name__ == '<lambda>'
+    # Return true only if this both...
+    return (
+        # This callable is pure-Python *AND*...
+        is_func_python(func) and
+        # This callable's name is the lambda-specific placeholder name
+        # initially given by Python to *ALL* lambda functions. Technically,
+        # this name may be externally changed by malicious third parties after
+        # the declaration of this lambda. Pragmatically, no one sane would
+        # ever do such a horrible thing.
+        #
+        # While predictably absurd, this is also the only efficient (and thus
+        # sane) means of differentiating lambda from non-lambda callables.
+        # Alternatives require AST-based parsing, which comes with its own
+        # substantial caveats, concerns, and edge cases.
+        func.__name__ == '<lambda>'
+    )
 
 
 def is_func_python(func: Any) -> bool:

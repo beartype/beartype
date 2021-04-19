@@ -15,18 +15,70 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from ast import (
+    NodeVisitor,
+    parse as ast_parse,
+)
 from beartype.cave import CallableTypes
 from beartype.roar import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
-    get_func_unwrapped_codeobj_or_none)
-from beartype._util.func.utilfunctest import die_unless_func_python
+    get_func_codeobj,
+    get_func_unwrapped_codeobj_or_none,
+)
+from beartype._util.func.utilfunctest import (
+    die_unless_func_lambda,
+    die_unless_func_python,
+)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable
-from inspect import getsourcelines
+from inspect import findsource, getsource
 from sys import modules
-from typing import Optional
+from typing import List, Optional
+from warnings import warn
+
+# If the active Python interpreter targets Python >= 3.9 and thus defines the
+# ast.unparse() function conditionally called below, import this function at
+# module scope for efficiency.
+if IS_PYTHON_AT_LEAST_3_9:
+    from ast import unparse as ast_unparse  # type: ignore[attr-defined]
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CLASSES                           }....................
+#FIXME: Docstring us up.
+class _LambdaNodeUnparser(NodeVisitor):
+
+    def __init__(self, lambda_lineno: int):
+
+        super().__init__()
+
+        if not IS_PYTHON_AT_LEAST_3_9:
+            raise _BeartypeUtilCallableException(
+                f'{repr(type(self))} only usable under Python >= 3.9.')
+
+        self.lambdas_code: List[str] = []
+        self._lambda_lineno = lambda_lineno
+
+    def visit_Lambda(self, node):
+
+        if node.lineno == self._lambda_lineno:
+            try:
+                self.lambdas_code.append(ast_unparse(node))
+            # If the ast.unparse() function exhausts the stack due to recursion
+            # overflow (*sigh*), reduce this fatal error to a non-fatal warning.
+            #
+            # Specifically, official documentation for ast.unparse() reads:
+            #     Warning; Trying to unparse a highly complex expression would
+            #     result with RecursionError.
+            except RecursionError:
+                #FIXME: Sanitize all warnings emitted in this submodule!
+                warn('Ugh!')
+
+        # Recursively visit all child nodes of this lambda node. While doing so
+        # seems largely useless, a sufficient number of dragons are skulking
+        # around here to warrant an abundance of caution and +1 Magic Swords.
+        self.generic_visit(node)
 
 # ....................{ GETTERS ~ code                    }....................
 #FIXME: Improve with lambda-specific support. If the passed callable is a
@@ -44,7 +96,63 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #as a mandatory dependency, but optionally importing that package to display
 #lambda code on exceptions (if installed) wouldn't necessarily be the worst
 #decision we've ever made. *shrug*
+#FIXME: Eureka! Python 3.9 now provides an ast.unparse() function trivially
+#doing everything that "astunparse" does. Unsurprisingly, "astunparse" does
+#*NOT* support Python 3.9. Ergo, it's dead. Ergo, we just want to call
+#ast.unparse(). Since all of this is only meaningfully usable under Python >=
+#3.9 anyway, this imposes no hardship whatsoever. The question then becomes:
+#how exactly do we call ast.unparse()? We have no idea, but the solution
+#probably resembles something like this:
 
+
+#FIXME: Unit test us up.
+#FIXME: Docstring us up.
+#FIXME: Comment us up.
+#FIXME: Contribute back to this StackOverflow question as a new answer, as this
+#is highly non-trivial, frankly:
+#    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
+def get_func_lambda_origin_code_or_none(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> Optional[str]:
+
+    #FIXME: Define us up, please.
+    die_unless_func_lambda(func)
+
+    if IS_PYTHON_AT_LEAST_3_9:
+        lambda_origin_file_code = get_func_origin_file_code_or_none(
+            func=func, exception_cls=exception_cls)
+
+        if lambda_origin_file_code:
+            func_codeobj = get_func_codeobj(func)
+
+            ast_tree = ast_parse(lambda_origin_file_code)
+
+            lambda_node_unparser = _LambdaNodeUnparser(
+                lambda_lineno=func_codeobj.co_firstlineno)
+            lambda_node_unparser.visit(ast_tree)
+            lambdas_code = lambda_node_unparser.lambdas_code
+
+            if not lambdas_code:
+                raise exception_cls(
+                    f'Lambda function {repr(func)} declared on '
+                    f'line {func_codeobj.co_firstlineno} of '
+                    f'file "{func_codeobj.co_filename}" not found.'
+                )
+            # If multiple
+            elif len(lambdas_code) >= 2:
+                warn('Ugh!')
+
+            return lambdas_code[0]
+
+    return get_func_origin_code_or_none(
+        func=func, exception_cls=exception_cls)
+
+
+#FIXME: Unit test us up.
 def get_func_origin_code_or_none(
     # Mandatory parameters.
     func: Callable,
@@ -84,15 +192,14 @@ def get_func_origin_code_or_none(
     Optional[str]
         Either:
 
-        * If the passed callable was physically declared by an uncompiled
-          script or module, a string concatenating the subset of lines of that
-          script or module declaring that callable.
-        * Else, the passed callable was dynamically declared in-memory. In this
-          case, ``None``.
+        * If the passed callable was physically declared by an on-disk script
+          or module, a string concatenating the subset of lines of that script
+          or module declaring that callable.
+        * If the passed callable was dynamically declared in-memory, ``None``.
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
@@ -100,17 +207,79 @@ def get_func_origin_code_or_none(
     die_unless_func_python(func=func, exception_cls=exception_cls)
     # Else, the passed callable is pure-Python.
 
-    # Attempt to defer to the standard inspect.getsourcelines() function,
-    # which returns a 2-tuple "(func_code_lines, func_code_lineno_start)",
-    # where:
-    # * "func_code_lines" is a list of all lines covering the passed callable.
-    # * "func_code_lineno_start" is the line number of the first such line.
+    # Attempt to defer to the standard inspect.getsource() function.
     try:
-        # List of all lines covering the passed callable
-        func_code_lines, _ = getsourcelines(func)
+        return getsource(func)
+    # If that function raised an "OSError" exception, that function failed to
+    # find that callable (e.g., due to that callable being declared in-memory
+    # rather than on-disk). In this case, return "None" instead.
+    except OSError:
+        return None
+
+
+#FIXME: Unit test us up.
+def get_func_origin_file_code_or_none(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> Optional[str]:
+    '''
+    **Uncompiled Python source file code** (i.e., string concatenating *all*
+    lines of the on-disk Python script or module declaring the passed
+    pure-Python callable) of that callable if that callable was declared
+    on-disk *or* ``None`` otherwise (i.e., if that callable was dynamically
+    declared in-memory).
+
+    Caveats
+    ----------
+    **This getter is excruciatingly slow.** See
+    :func:`get_func_origin_code_or_none` for further commentary.
+
+    Parameters
+    ----------
+    func : Union[Callable, CodeType, FrameType]
+        Callable or frame or code object to be inspected.
+    exception_cls : type, optional
+        Type of exception in the event of a fatal error. Defaults to
+        :class:`_BeartypeUtilCallableException`.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * If the passed callable was physically declared by an on-disk script
+          or module, a string concatenating *all* lines of that file.
+        * If the passed callable was dynamically declared in-memory, ``None``.
+
+    Raises
+    ----------
+    exception_cls
+         If the passed callable is *not* pure-Python.
+    '''
+
+    # If the passed callable is *NOT* pure-Python, raise an exception.
+    die_unless_func_python(func=func, exception_cls=exception_cls)
+    # Else, the passed callable is pure-Python.
+
+    # Attempt to defer to the standard inspect.findsource() function, which
+    # returns a 2-tuple "(file_code_lines, file_code_lineno_start)", where:
+    # * "file_code_lines" is a list of all lines of the script or module
+    #    declaring the passed callable.
+    # * "file_code_lineno_start" is the line number of the first such line
+    #    declaring the passed callable. Since this line number is already
+    #    provided by the "co_firstlineno" instance variable of this callable's
+    #    code object, however, there is *NO* reason whatsoever to return this
+    #    line number. Indeed, it's unclear why that function returns this
+    #    redundant and thus useless metadata in the first place. *sigh*
+    try:
+        # List of all lines of the file declaring the passed callable.
+        func_file_code_lines, _ = findsource(func)
 
         # Return this list concatenated into a string.
-        return ''.join(func_code_lines)
+        return ''.join(func_file_code_lines)
     # If that function raised an "OSError" exception, that function failed to
     # find that callable (e.g., due to that callable being declared in-memory
     # rather than on-disk). In this case, return "None" instead.

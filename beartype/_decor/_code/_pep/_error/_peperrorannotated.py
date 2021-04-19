@@ -147,6 +147,16 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
                 #While non-trivial, there exist *NO* sane alternatives that
                 #(A) are efficient and (B) also produce human-readable
                 #exception messages. Ergo, we bite this bullet and just do it.
+                #
+                #To do so, the SubscriptedIs.__repr__() method will probably
+                #need to ignore "self._repr" when "self.is_valid_code is None"
+                #and instead dynamically synthesize a new "self._repr"... or
+                #maybe we want to define an actual method named
+                #SubscriptedIs.get_cause() returning the expected substring?
+                #*RIGHT.* That seems substantially saner, because nobody
+                #expects a __repr__() method to (A) return a non-representation
+                #and (B) to start internally doing crazy stuff.
+                #FIXME: Actually, just use what we've already done. *heh*
 
                 # Else, this validator does *NOT* provide code. In this case,
                 # either:

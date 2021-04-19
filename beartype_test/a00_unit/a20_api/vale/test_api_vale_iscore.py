@@ -136,13 +136,17 @@ def test_api_vale_core_classes_fail() -> None:
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code=b'Into the jaws of Death,',
+            get_repr=lambda: f'Is[lambda text: bool(text)]',
         )
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # empty string code raises the expected exception.
     with raises(BeartypeSubscriptedIsInstantiationException):
         SubscriptedIs(
-            is_valid=lambda text: bool(text), is_valid_code='')
+            is_valid=lambda text: bool(text),
+            is_valid_code='',
+            get_repr=lambda: f'Is[lambda text: bool(text)]',
+        )
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # non-empty string code but *NO* code locals raises the expected exception.
@@ -150,6 +154,7 @@ def test_api_vale_core_classes_fail() -> None:
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code='Into the mouth of hell',
+            get_repr=lambda: f'Is[lambda text: bool(text)]',
         )
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
@@ -160,6 +165,7 @@ def test_api_vale_core_classes_fail() -> None:
             is_valid=lambda text: bool(text),
             is_valid_code='Came through the jaws of Death,',
             is_valid_code_locals={},
+            get_repr=lambda: f'Is[lambda text: bool(text)]',
         )
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
@@ -169,4 +175,5 @@ def test_api_vale_core_classes_fail() -> None:
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code_locals={},
+            get_repr=lambda: f'Is[lambda text: bool(text)]',
         )
