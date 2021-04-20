@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import importlib
 from beartype.cave import ModuleType
-from beartype.roar import _BeartypeUtilModuleException
-from typing import Optional
+from beartype.roar._roarexc import _BeartypeUtilModuleException
+from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -372,7 +372,7 @@ def import_module_attr(
     # Optional parameters.
     exception_label: str = 'Module attribute name',
     exception_cls:  type = _BeartypeUtilModuleException,
-) -> object:
+) -> Any:
     '''
     Dynamically import and return the **module attribute** (i.e., object
     declared at module scope by a module) with the passed fully-qualified name

@@ -27,7 +27,7 @@ def test_typistry_register_type_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.cave import RegexCompiledType
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import register_typistry_type
     from beartype._util.utilobject import get_object_type_basename
 
@@ -91,7 +91,7 @@ def test_typistry_register_tuple_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.cave import CallableTypes, NoneTypeOr
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import register_typistry_tuple
 
     # Assert this function registers a tuple and silently permits
@@ -198,7 +198,7 @@ def test_typistry_singleton_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
     from beartype._util.utilobject import get_object_type_name
 
@@ -231,7 +231,7 @@ def test_typistry_singleton_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeDecorBeartypistryException
+    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
 
     # Assert that keys that are *NOT* strings are *NOT* registrable.

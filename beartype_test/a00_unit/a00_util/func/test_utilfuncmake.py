@@ -184,10 +184,8 @@ def test_make_func_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import (
-        BeartypeDecorWrapperException,
-        _BeartypeUtilCallableException,
-    )
+    from beartype.roar import BeartypeDecorWrapperException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncmake import make_func
 
     # Assert that attempting to create a function whose name collides with that

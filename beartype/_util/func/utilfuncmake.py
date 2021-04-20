@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilCallableException
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import die_unless_func_python
 from beartype._util.text.utiltextmunge import number_lines
@@ -120,6 +120,7 @@ def make_func(
     # Optional arguments.
     func_globals: Optional[CallableScope] = None,
     func_locals:  Optional[CallableScope] = None,
+    func_doc: Optional[str] = None,
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
     exception_cls: type = _BeartypeUtilCallableException,
@@ -149,6 +150,9 @@ def make_func(
         decorating that function). **Note that this factory necessarily
         modifies the contents of this dictionary.** Defaults to the empty
         dictionary.
+    func_doc : str, optional
+        Human-readable docstring documenting this function. Defaults to
+        ``None``, in which case this function remains undocumented.
     func_label : str, optional
         Human-readable label describing this function for error-handling
         purposes. Defaults to ``{name}()``.
@@ -278,11 +282,23 @@ def make_func(
             f'{number_lines(func_code)}'
         )
 
-    # If this function wraps another callable, propagate dunder attributes from
-    # that wrapped callable onto this wrapper function.
+    # If this function is a wrapper wrapping a wrappee callable, propagate
+    # dunder attributes from that wrappee onto this wrapper.
     if func_wrapped is not None:
         assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
+
+    # If this function is documented...
+    #
+    # Note this function is intentionally documented *AFTER* propagating dunder
+    # attributes to enable callers to explicitly overwrite documentation
+    # propagated from that wrappee onto this wrapper.
+    if func_doc is not None:
+        assert isinstance(func_doc, str), f'{repr(func_doc)} not string.'
+        assert func_doc, '"func_doc" empty.'
+
+        # Document this function.
+        func.__doc__ = func_doc
 
     # Return this function.
     return func

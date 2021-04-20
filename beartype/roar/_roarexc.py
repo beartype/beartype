@@ -4,10 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Hear beartype roar** as it handles errors and warnings.
+**Beartype exception hierarchy.**
 
-This submodule defines hierarchies of :mod:`beartype`-specific exceptions
-and warnings emitted by the :func:`beartype.beartype` decorator.
+This private submodule publishes a hierarchy of both public and private
+:mod:`beartype`-specific exceptions raised at decoration, call, and usage time.
+
+This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -38,7 +40,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
     pass
 
 # ....................{ CAVE                              }....................
-class BeartypeCaveException(BeartypeException, metaclass=_ABCMeta):
+class BeartypeCaveException(BeartypeException):
     '''
     Abstract base class of all **beartype cave exceptions.**
 
@@ -49,8 +51,7 @@ class BeartypeCaveException(BeartypeException, metaclass=_ABCMeta):
     pass
 
 # ....................{ CAVE ~ NoneTypeOr                 }....................
-class BeartypeCaveNoneTypeOrException(
-    BeartypeCaveException, metaclass=_ABCMeta):
+class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
     '''
     Abstract base class of all **beartype cave** ``None`` **tuple factory
     exceptions.**
@@ -92,7 +93,7 @@ class BeartypeCaveNoneTypeOrMutabilityException(
     pass
 
 # ....................{ DECORATOR                         }....................
-class BeartypeDecorException(BeartypeException, metaclass=_ABCMeta):
+class BeartypeDecorException(BeartypeException):
     '''
     Abstract base class of all **beartype decorator exceptions.**
 
@@ -128,7 +129,7 @@ class BeartypeDecorWrapperException(BeartypeDecorException):
     pass
 
 # ....................{ DECORATOR ~ hint                  }....................
-class BeartypeDecorHintException(BeartypeDecorException, metaclass=_ABCMeta):
+class BeartypeDecorHintException(BeartypeDecorException):
     '''
     Abstract base class of all **beartype decorator type hint exceptions.**
 
@@ -169,7 +170,7 @@ class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
 
     pass
 
-# ....................{ DECORATOR ~ hint : value          }....................
+# ....................{ DECORATOR ~ hint : nonpep         }....................
 class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     '''
     **Beartype decorator PEP-noncompliant type hint value exception.**
@@ -191,8 +192,7 @@ class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     pass
 
 # ....................{ DECORATOR ~ hint : pep            }....................
-class BeartypeDecorHintPepException(
-    BeartypeDecorHintException, metaclass=_ABCMeta):
+class BeartypeDecorHintPepException(BeartypeDecorHintException):
     '''
     Abstract base class of all **beartype decorator PEP-compliant type hint
     value exceptions.**
@@ -238,6 +238,28 @@ class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
     pass
 
 # ....................{ DECORATOR ~ hint : pep : proposal }....................
+class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** `PEP 3119`_**-compliant type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating `PEP 3119`_ *or* this
+    decorator's implementation of `PEP 3119`_, including:
+
+    * Hints that are **non-isinstanceable classes** (i.e., classes that
+      prohibit being passed as the second parameter to the :func:`isinstance`
+      builtin by leveraging metaclasses overriding the ``__instancecheck__()``
+      dunder method to raise exceptions). Notably, this includes most public
+      classes declared by the standard :mod:`typing` module.
+
+    .. _PEP 3119:
+       https://www.python.org/dev/peps/pep-3119
+    '''
+
+    pass
+
+
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** `PEP 484`_**-compliant type hint exception.**
@@ -305,7 +327,7 @@ class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
     pass
 
 # ....................{ DECORATOR ~ param                 }....................
-class BeartypeDecorParamException(BeartypeDecorException, metaclass=_ABCMeta):
+class BeartypeDecorParamException(BeartypeDecorException):
     '''
     Abstract base class of all **beartype decorator parameter exceptions.**
 
@@ -330,7 +352,7 @@ class BeartypeDecorParamNameException(BeartypeDecorParamException):
     pass
 
 # ....................{ DECORATOR ~ pep                   }....................
-class BeartypeDecorPepException(BeartypeDecorException, metaclass=_ABCMeta):
+class BeartypeDecorPepException(BeartypeDecorException):
     '''
     Abstract base class of all **beartype decorator Python Enhancement Proposal
     (PEP) exceptions.**
@@ -359,7 +381,7 @@ class BeartypeDecorHintPep563Exception(BeartypeDecorPepException):
     pass
 
 # ....................{ CALL                              }....................
-class BeartypeCallException(BeartypeException, metaclass=_ABCMeta):
+class BeartypeCallException(BeartypeException):
     '''
     Abstract base class of all **beartyped callable exceptions.**
 
@@ -385,7 +407,7 @@ class BeartypeCallUnavailableTypeException(BeartypeCallException):
     pass
 
 # ....................{ CALL ~ hint                       }....................
-class BeartypeCallHintException(BeartypeCallException, metaclass=_ABCMeta):
+class BeartypeCallHintException(BeartypeCallException):
     '''
     Abstract base class of all **beartyped callable type-checking exceptions.**
 
@@ -413,8 +435,7 @@ class BeartypeCallHintForwardRefException(BeartypeCallHintException):
     pass
 
 # ....................{ CALL ~ hint : pep                 }....................
-class BeartypeCallHintPepException(
-    BeartypeCallHintException, metaclass=_ABCMeta):
+class BeartypeCallHintPepException(BeartypeCallHintException):
     '''
     Abstract base class of all **beartyped callable PEP-compliant type
     exceptions.**
@@ -452,25 +473,39 @@ class BeartypeCallHintPepReturnException(BeartypeCallHintPepException):
 
     pass
 
-# ....................{ HINT ~ is                         }....................
-class BeartypeSubscriptedIsException(BeartypeException, metaclass=_ABCMeta):
+# ....................{ HINT ~ vale                       }....................
+class BeartypeValeException(BeartypeException):
     '''
-    Abstract base class of all **beartype data validation type hint
-    exceptions.**
+    Abstract base class of all **beartype data validation exceptions.**
 
-    Instances of subclasses of this exception are raised at usage time from the
-    class hierarchy publicized by the :func:`beartype.vale` subpackage.
+    Instances of subclasses of this exception are raised at usage (e.g.,
+    instantiation, method call) time from the class hierarchy published by the
+    :func:`beartype.vale` subpackage.
     '''
 
     pass
 
 
-class BeartypeSubscriptedIsInstantiationException(BeartypeSubscriptedIsException):
+class BeartypeValeSubscriptedIsException(BeartypeValeException):
     '''
-    **Beartype core data validation type hint exception.**
+    Abstract base class of all **beartype data validation subscription
+    exceptions.**
 
-    This exception is raised on erroneous subscriptions of the class hierarchy
-    publicized by the :func:`beartype.vale` subpackage, including attempts to:
+    Instances of subclasses of this exception are raised when subscripting
+    (indexing) classes published by the :func:`beartype.vale` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeValeSubscriptedIsInitException(
+    BeartypeValeSubscriptedIsException):
+    '''
+    **Beartype data validation subscription initialization exception.**
+
+    This exception is raised at instantiation time when subscripting (indexing)
+    classes published by the :func:`beartype.vale` subpackage, including
+    attempts to:
 
     * Instantiate *any* of these classes. Like standard type hints, these
       classes are *only* intended to be subscripted (indexed).
@@ -483,116 +518,6 @@ class BeartypeSubscriptedIsInstantiationException(BeartypeSubscriptedIsException
     '''
 
     pass
-
-# ....................{ WARNINGS                          }....................
-class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype warnings.**
-
-    Instances of subclasses of this warning are emitted either:
-
-    * At decoration time from the :func:`beartype.beartype` decorator.
-    * At call time from the new callable generated by the
-      :func:`beartype.beartype` decorator to wrap the original callable.
-    * At Sphinx-based documentation building time from Python code invoked by
-      the ``doc/Makefile`` file.
-    '''
-
-    pass
-
-
-class BeartypeDependencyOptionalMissingWarning(BeartypeWarning):
-    '''
-    **Beartype missing optional dependency warning.**
-
-    This warning is emitted at various times to inform the user of a **missing
-    recommended optional dependency** (i.e., third-party Python package *not*
-    installed under the active Python interpreter whose installation is
-    technically optional but recommended).
-    '''
-
-    pass
-
-# ....................{ WARNINGS ~ decor : hint : pep     }....................
-class BeartypeDecorHintPepWarning(BeartypeWarning, metaclass=_ABCMeta):
-    '''
-    Abstract base class of all **beartype decorator PEP-compliant type hint
-    warnings.**
-
-    Instances of subclasses of this warning are emitted at decoration time from
-    the :func:`beartype.beartype` decorator on receiving a callable annotated
-    by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
-    warranting non-fatal warnings *without* raising fatal exceptions.
-    '''
-
-    pass
-
-
-class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
-    '''
-    **Beartype decorator deprecated PEP-compliant type hint warning.**
-
-    This warning is emitted at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **deprecated PEP-compliant type hints** (i.e., type hints
-    compliant with outdated PEPs that have since been obsoleted by recent
-    PEPs), including:
-
-    * If the active Python interpreter targets at least Python >= 3.9 and thus
-      supports `PEP 585`_, outdated `PEP 484`_-compliant type hints (e.g.,
-      ``typing.List[int]``) that have since been obsoleted by the equivalent
-      `PEP 585`_-compliant type hints (e.g., ``list[int]``).
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
-    '''
-
-    pass
-
-
-#FIXME: Consider removal.
-# class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
-#     '''
-#     **Beartype decorator deeply ignorable PEP-compliant type hint warning.**
-#
-#     This warning is emitted at decoration time from the
-#     :func:`beartype.beartype` decorator on receiving a callable annotated by
-#     one or more **deeply ignorable PEP-compliant type hints** (i.e., instances or classes declared
-#     by the stdlib :mod:`typing` module) currently unsupported by this
-#     decorator.
-#     '''
-#
-#     pass
-
-
-#FIXME: Consider removal.
-# class BeartypeDecorHintPepUnsupportedWarning(BeartypeWarning):
-#     '''
-#     **Beartype decorator unsupported PEP-compliant type hint warning.**
-#
-#     This warning is emitted at decoration time from the
-#     :func:`beartype.beartype` decorator on receiving a callable annotated with
-#     one or more PEP-compliant type hints (e.g., instances or classes declared
-#     by the stdlib :mod:`typing` module) currently unsupported by this
-#     decorator.
-#     '''
-#
-#     pass
-
-# ....................{ WARNINGS ~ sphinx                 }....................
-#FIXME: Consider removal.
-# class BeartypeSphinxWarning(BeartypeWarning, metaclass=_ABCMeta):
-#     '''
-#     Abstract base class of all **beartype Sphinx warnings.**
-#
-#     Instances of subclasses of this warning are emitted at Sphinx-based
-#     documentation building time from the ``doc/Makefile`` file in various edge
-#     cases warranting non-fatal warnings *without* raising fatal exceptions.
-#     '''
-#
-#     pass
 
 # ....................{ PRIVATE ~ decorator               }....................
 class _BeartypeDecorBeartypistryException(BeartypeDecorException):
@@ -611,14 +536,14 @@ class _BeartypeDecorBeartypistryException(BeartypeDecorException):
     pass
 
 # ....................{ PRIVATE ~ util                    }....................
-class _BeartypeUtilException(BeartypeException, metaclass=_ABCMeta):
+class _BeartypeUtilException(BeartypeException):
     '''
-    Abstract base class of all **beartype utility exceptions.**
+    Abstract base class of all **beartype private utility exceptions.**
 
     Instances of subclasses of this exception are raised by *most* (but *not*
     all) private submodules of the private :mod:`beartype._util` subpackage.
     These exceptions denote critical internal issues and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
+    raised, let alone allowed to percolate up the call stack to end users.
     '''
 
     pass
@@ -698,8 +623,7 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
     pass
 
 # ....................{ PRIVATE ~ util : call               }..................
-class _BeartypeCallHintRaiseException(
-    _BeartypeUtilException, metaclass=_ABCMeta):
+class _BeartypeCallHintRaiseException(_BeartypeUtilException):
     '''
     Abstract base class of all **beartype human-readable exception raiser
     exceptions.**
@@ -761,7 +685,7 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
     pass
 
 # ....................{ PRIVATE ~ util : cache              }..................
-class _BeartypeUtilCachedException(_BeartypeUtilException, metaclass=_ABCMeta):
+class _BeartypeUtilCachedException(_BeartypeUtilException):
     '''
     Abstract base class of all **beartype caching utility exceptions.**
 
@@ -848,24 +772,6 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-# ....................{ PRIVATE ~ warnings : util         }....................
-class _BeartypeUtilCallableCachedKwargsWarning(BeartypeWarning):
-    '''
-    **Beartype decorator memoization decorator keyword argument warnings.**
-
-    This warning is emitted from callables memoized by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator on
-    calls receiving one or more keyword arguments. Memoizing keyword arguments
-    is substantially more space- and time-intensive than memoizing the
-    equivalent positional arguments, partially defeating the purpose of
-    memoization in the first place.
-
-    This warning denotes a critical internal issue and should thus *never* be
-    emitted to end users.
     '''
 
     pass

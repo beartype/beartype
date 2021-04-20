@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-# from beartype.roar import _BeartypeUtilTextException
+# from beartype.roar._roarexc import _BeartypeUtilTextException
 
 # ....................{ GETTERS                           }....................
 #FIXME: Uncomment if ever needed.

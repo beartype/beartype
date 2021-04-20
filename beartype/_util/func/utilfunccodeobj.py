@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilCallableException
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncwrap import unwrap_func
 from collections.abc import Callable
 from types import CodeType, FrameType, FunctionType, MethodType

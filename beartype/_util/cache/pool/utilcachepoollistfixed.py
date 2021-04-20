@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import get_object_representation
-from beartype.roar import _BeartypeUtilCachedFixedListException
+from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
 from typing import NoReturn
 

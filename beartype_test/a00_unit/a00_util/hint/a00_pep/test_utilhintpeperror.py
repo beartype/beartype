@@ -30,8 +30,8 @@ def test_raise_pep_call_exception() -> None:
         BeartypeCallHintPepParamException,
         BeartypeCallHintPepReturnException,
         BeartypeDecorHintNonPepException,
-        _BeartypeCallHintPepRaiseException,
     )
+    from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._decor._code._pep._error.peperror import (
         raise_pep_call_exception)
     from beartype._util.hint.data.pep.utilhintdatapepsign import (

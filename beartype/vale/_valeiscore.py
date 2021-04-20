@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeSubscriptedIsInstantiationException
+from beartype.roar import BeartypeValeSubscriptedIsInitException
 from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncarg import get_func_args_len_standard
 from beartype._util.func.utilfuncscope import CallableScope
@@ -139,6 +139,9 @@ class SubscriptedIs(object):
 
         # Optional parameters.
         is_valid_code: Optional[str] = None,
+
+        #FIXME: Refactor to be a simple set of arbitrary objects. We absolutely
+        #should *NOT* be mapping scopes here.
         is_valid_code_locals: Optional[CallableScope] = None,
     ) -> None:
         '''
@@ -173,7 +176,7 @@ class SubscriptedIs(object):
 
         Raises
         ----------
-        BeartypeSubscriptedIsInstantiationException
+        BeartypeValeSubscriptedIsInitException
             If either:
 
             * ``is_valid`` is either:
@@ -203,20 +206,20 @@ class SubscriptedIs(object):
             # If this class was subscripted by two or more arguments, raise a
             # human-readable exception.
             if is_valid:
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     f'Class "beartype.vale.Is" subscripted by two or more '
                     f'arguments:\n{get_object_representation(is_valid)}'
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     'Class "beartype.vale.Is" subscripted by empty tuple.')
         # Else, the this class was subscripted by a single argument.
         #
         # If this argument is uncallable, raise a human-readable exception.
         elif not callable(is_valid):
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted argument '
                 f'{get_object_representation(is_valid)} not callable.'
             )
@@ -224,7 +227,7 @@ class SubscriptedIs(object):
         #
         # If this callable is C-based, raise a human-readable exception.
         elif not is_func_python(is_valid):
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted callable '
                 f'{repr(is_valid)} not pure-Python (e.g., C-based).'
             )
@@ -233,7 +236,7 @@ class SubscriptedIs(object):
         # If this callable does *NOT* accept exactly one argument, raise a
         # human-readable exception.
         elif get_func_args_len_standard(is_valid) != 1:
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted callable '
                 f'{repr(is_valid)} positional or keyword argument count '
                 f'{get_func_args_len_standard(is_valid)} != 1.'
@@ -250,7 +253,7 @@ class SubscriptedIs(object):
         if is_valid_code is not None:
             # If the caller passed *NO* code locals, raise an exception.
             if is_valid_code_locals is None:
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     f'Data validator code locals unpassed but code passed:\n'
                     f'{is_valid_code}'
                 )
@@ -258,7 +261,7 @@ class SubscriptedIs(object):
             #
             # If this code is *NOT* a string, raise an exception.
             elif not isinstance(is_valid_code, str):
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     f'Data validator code not string:\n'
                     f'{get_object_representation(is_valid_code)}'
                 )
@@ -266,14 +269,14 @@ class SubscriptedIs(object):
             #
             # If this code is the empty string, raise an exception.
             elif not is_valid_code:
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     'Data validator code empty.')
             # Else, this code is a non-empty string.
             #
             # If this code does *NOT* contain the test subject substring
             # "{obj}" and is invalid, raise an exception.
             elif '{obj}' not in is_valid_code:
-                raise BeartypeSubscriptedIsInstantiationException(
+                raise BeartypeValeSubscriptedIsInitException(
                     f'Data validator code invalid (i.e., test subject '
                     f'substring "{{obj}}" not found):\n{is_valid_code}'
                 )
@@ -292,7 +295,7 @@ class SubscriptedIs(object):
         #
         # If the caller paradoxically passed code locals, raise an exception.
         elif is_valid_code_locals is not None:
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Data validator code unpassed but code locals passed:\n'
                 f'{get_object_representation(is_valid_code_locals)}'
             )
@@ -306,6 +309,12 @@ class SubscriptedIs(object):
         self._get_repr = get_repr
 
     # ..................{ DUNDERS ~ operator                }..................
+    #FIXME: Optimize operators. When synthesizing lambda-style "SubscriptedIs"
+    #objects, these operators currently generate *NO* code. They absolutely
+    #should be, because adding stack frames just for this is absurd. To do so,
+    #just add the lambda functions of each operand without code to the
+    #"is_valid_locals" parameter of the new "SubscriptedIs" object.
+
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # combine and Override
     def __and__(self, other: 'SubscriptedIs') -> (
@@ -328,14 +337,14 @@ class SubscriptedIs(object):
 
         Raises
         ----------
-        BeartypeSubscriptedIsInstantiationException
+        BeartypeValeSubscriptedIsInitException
             If the passed object is *not* also an instance of the same class.
         '''
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
         if not isinstance(other, SubscriptedIs):
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Subscripted "beartype.vale.Is*" class & operand '
                 f'{get_object_representation(other)} not '
                 f'subscripted "beartype.vale.Is*" class.'
@@ -391,7 +400,7 @@ class SubscriptedIs(object):
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
         if not isinstance(other, SubscriptedIs):
-            raise BeartypeSubscriptedIsInstantiationException(
+            raise BeartypeValeSubscriptedIsInitException(
                 f'Subscripted "beartype.vale.Is*" class | operand '
                 f'{get_object_representation(other)} not '
                 f'subscripted "beartype.vale.Is*" class.'
@@ -613,7 +622,7 @@ class Is(object):
 
     **This class prohibits instantiation.** This class is *only* intended to be
     subscripted. Attempting to instantiate this class into an object will raise
-    an :exc:`BeartypeSubscriptedIsInstantiationException` exception.
+    an :exc:`BeartypeValeSubscriptedIsInitException` exception.
 
     Examples
     ----------
@@ -678,12 +687,12 @@ class Is(object):
 
         Raises
         ----------
-        BeartypeSubscriptedIsInstantiationException
+        BeartypeValeSubscriptedIsInitException
             Always.
         '''
 
         # Murderbot would know what to do here.
-        raise BeartypeSubscriptedIsInstantiationException(
+        raise BeartypeValeSubscriptedIsInitException(
             f'Class "{cls.__name__}" not instantiable; '
             f'index this class with data validation functions instead '
             f'(e.g., "{cls.__name__}[lambda obj: bool(obj)]").'
@@ -714,7 +723,7 @@ class Is(object):
 
         Raises
         ----------
-        BeartypeSubscriptedIsInstantiationException
+        BeartypeValeSubscriptedIsInitException
             If either:
 
             * This class was subscripted by two or more arguments.

@@ -27,7 +27,7 @@ def test_key_pool_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
-    from beartype.roar import _BeartypeUtilCachedKeyPoolException
+    from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
 
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
@@ -115,7 +115,7 @@ def test_key_pool_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
-    from beartype.roar import _BeartypeUtilCachedKeyPoolException
+    from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
     
     # Key pool to be tested, seeding empty pools with the identity function.
     key_pool = KeyPool(item_maker=lambda key: key)

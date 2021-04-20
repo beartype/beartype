@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import _BeartypeUtilCallableCachedKwargsWarning
+from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
 from beartype_test.util.mark.pytmark import ignore_warnings
 from pytest import raises
 
@@ -105,7 +105,7 @@ def test_callable_cached_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype.roar import _BeartypeUtilCallableCachedException
+    from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 
     # Assert that attempting to memoize a callable accepting one or more
     # variadic positional parameters fails with the expected exception.

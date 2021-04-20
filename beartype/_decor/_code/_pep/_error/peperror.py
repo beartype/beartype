@@ -70,6 +70,8 @@ from beartype.meta import URL_ISSUES
 from beartype.roar import (
     BeartypeCallHintPepParamException,
     BeartypeCallHintPepReturnException,
+)
+from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )

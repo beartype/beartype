@@ -19,7 +19,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import is_type_isinstanceable
+from beartype._util.cls.utilclstest import (
+    die_unless_type_isinstanceable,
+    is_type_isinstanceable,
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -156,7 +159,7 @@ def die_unless_hint_nonpep(
 #  implementation of both functions. *shrug*
 #* Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
-#    performed by die_unless_hint_type_isinstanceable().
+#    performed by die_unless_type_isinstanceable().
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
 #FIXME: The "is_str_valid: bool = True," default is rather bad, because it's
 #unsafe. The standard expectation is for tuples of types to be isinstanceable,
@@ -288,23 +291,24 @@ def die_unless_hint_nonpep_tuple(
 # ....................{ VALIDATORS ~ private              }....................
 def _die_unless_hint_nonpep_type(
     # Mandatory parameters.
-    hint: object,
+    hint: type,
 
     # Optional parameters.
     hint_label: str = 'Type hint',
     exception_cls: type = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
-    Raise an exception unless the passed object is a **PEP-noncompliant type
-    hint** (i.e., :mod:`beartype`-agnostic isinstanceable type *not* compliant
-    with annotation-centric PEPs).
+    Raise an exception unless the passed object is an **isinstanceable type**
+    (i.e., standard class passable as the second parameter to the
+    :func:`isinstance` builtin and thus typically *not* compliant with
+    annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
     ----------
-    hint : object
+    hint : type
         Object to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
@@ -330,8 +334,6 @@ def _die_unless_hint_nonpep_type(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import (
-        die_unless_hint_type_isinstanceable)
     from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
     # If this class is PEP-compliant, raise an exception.
@@ -343,9 +345,9 @@ def _die_unless_hint_nonpep_type(
     # Else, this class is PEP-noncompliant.
 
     # If this class is *NOT* isinstanceable, raise an exception.
-    die_unless_hint_type_isinstanceable(
-        hint=hint,
-        hint_label=hint_label,
+    die_unless_type_isinstanceable(
+        cls=hint,
+        cls_label=hint_label,
         exception_cls=exception_cls,
     )
     # Else, this class is isinstanceable.

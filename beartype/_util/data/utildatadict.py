@@ -10,7 +10,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilMappingException
+from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import get_object_representation
 from collections.abc import Sequence, Mapping

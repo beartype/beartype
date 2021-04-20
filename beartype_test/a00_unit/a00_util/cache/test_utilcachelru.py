@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
-from beartype.roar import _BeartypeUtilLRUCacheException
+from beartype.roar._roarexc import _BeartypeUtilLRUCacheException
 
 
 # ....................{ TESTS                             }....................

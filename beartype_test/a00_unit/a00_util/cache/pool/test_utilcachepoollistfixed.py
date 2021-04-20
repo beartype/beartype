@@ -68,7 +68,7 @@ def test_listfixed_pool_fail() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import (
         acquire_fixed_list)
-    from beartype.roar import _BeartypeUtilCachedFixedListException
+    from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
 
     # Assert that fixed lists may only be acquired with positive integers.
     with raises(_BeartypeUtilCachedFixedListException):
@@ -128,7 +128,7 @@ def test_listfixed_type_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import FixedList
-    from beartype.roar import _BeartypeUtilCachedFixedListException
+    from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
 
     # Fixed list to be tested.
     fixed_list = FixedList(size=8)

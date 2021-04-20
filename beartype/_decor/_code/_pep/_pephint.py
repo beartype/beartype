@@ -26,12 +26,12 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep593Exception,
-    _BeartypeUtilMappingException,
+    BeartypeDecorHintPep3119Exception,
 )
+from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype.vale import SubscriptedIs
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
-    register_typistry_type,
     register_typistry_tuple,
 )
 from beartype._decor._code.codesnip import (
@@ -92,6 +92,10 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 )
 from beartype._util.cache.utilcacheerror import (
     EXCEPTION_CACHED_PLACEHOLDER)
+from beartype._util.cls.utilclstest import (
+    die_unless_type_isinstanceable,
+    is_type_builtin,
+)
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
@@ -142,6 +146,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Callable
 from random import getrandbits
 from typing import Generic, Tuple, NoReturn
@@ -520,7 +525,7 @@ def pep_code_check_hint(
 
     # Human-readable label prefixing the machine-readable representation of the
     # currently visited type hint in exception and warning messages.
-    hint_curr_label = None
+    hint_curr_label: str = None  # type: ignore[assignment]
 
     # ..................{ METADATA                          }..................
     # Tuple of metadata describing the currently visited hint, appended by
@@ -577,8 +582,48 @@ def pep_code_check_hint(
     # Don't Repeat Yourself (DRY) concerns during the breadth-first search
     # (BFS) performed below.
 
-    #FIXME: Refactor all register_typistry_type() calls to call this closure
-    #instead. That should be *ALL* we need to do, there.
+    #FIXME: Externalize this as a new
+    #beartype._util.func.utilfuncscope.add_func_scope_local() resembling:
+    #    def add_func_scope_var(
+    #        # Mandatory parameters.
+    #        scope: CallableScope,
+    #        var: Any,
+    #
+    #        # Optional parameters.
+    #        scope_label: str = 'Globally or locally scoped variable',
+    #    ) -> str:
+    #        assert isinstance(scope, dict), f'{repr(scope)} not dictionary.'
+    #
+    #        # Name of the new optional parameter defaulting to this object.
+    #        var_name = _ARG_NAME_TEMPLATE_OBJECT_format(object_id=id(var))
+    #
+    #        # If a parameter with the same name but differing value has already
+    #        # been passed to the current wrapper function, raise an exception.
+    #        if scope.get(var_name, var) is not var:
+    #            raise _BeartypeUtilMappingException(
+    #                f'{scope_label} "{var_name}" already added with '
+    #                f'differing value:\n'
+    #                f'~~~~[ NEW VALUE ]~~~~\n{repr(var)}\n'
+    #                f'~~~~[ OLD VALUE ]~~~~\n{repr(scope[var_name])}'
+    #            )
+    #        # Else, either no parameter with the same name *OR* a parameter with
+    #        # the same name and value has already been passed.
+    #
+    #        # Add this parameter to the dictionary of all such parameters.
+    #        scope[var_name] = var
+    #
+    #        # Return this name.
+    #        return var_name
+    #
+    #Then replace all calls to _add_func_wrapper_local() below with calls to:
+    #    add_func_scope_var(
+    #        obj={insert obj here},
+    #        scope=func_wrapper_locals,
+    #        scope_label=f'{hint_curr_label} wrapper parameter',
+    #    )
+    #
+    #Lastly, remove "func_wrapper_locals_get" above.
+
     def _add_func_wrapper_local(obj: object) -> str:
         '''
         Pass the passed object to the current wrapper function as a new
@@ -626,6 +671,53 @@ def pep_code_check_hint(
 
         # Return this name.
         return local_name
+
+
+    def _add_func_wrapper_local_type(cls: type) -> str:
+        '''
+        Pass the passed class to the current wrapper function as a new
+        **wrapper parameter** (i.e., attribute passed to that function as an
+        optional private :mod:`beartype`-specific parameter defaulting to this
+        passed object).
+
+        Parameters
+        ----------
+        cls : type
+            Arbitrary class to be passed as a new parameter.
+
+        Returns
+        ----------
+        str
+            Arbitrary name of that parameter created by this closure.
+
+        Raises
+        ----------
+        _BeartypeUtilMappingException
+            If a parameter with the same name but differing value has already
+            been passed to the current wrapper function. As this name is unique
+            to this object, name collisions of this sort should *never* occur.
+            Since this exception should *never* be raised, we intentionally
+            raise a private rather than public exception here.
+        '''
+
+        # If this object is *NOT* an isinstanceable class, raise an exception.
+        die_unless_type_isinstanceable(
+            cls=cls,
+            cls_label=hint_curr_label,
+            exception_cls=BeartypeDecorHintPep3119Exception,
+        )
+        # Else, this object is an isinstanceable class.
+
+        # Return either...
+        return (
+            # If this type is a builtin (i.e., globally accessible C-based type
+            # requiring *no* explicit importation), the unqualified basename of
+            # this type as is, as this type requires no parametrization;
+            get_object_type_basename(cls)
+            if is_type_builtin(cls) else
+            # Else, the name of the new parameter passing this class.
+            _add_func_wrapper_local(cls)
+        )
 
 
     def _enqueue_hint_child(pith_child_expr: str) -> str:
@@ -1259,7 +1351,7 @@ def pep_code_check_hint(
                             # * We would ideally avoid coercing this set into a
                             #   tuple when this set only contains one type by
                             #   passing that type directly to the
-                            #   register_typistry_type() function. Sadly, the
+                            #   _add_func_wrapper_local() function. Sadly, the
                             #   "set" class defines no convenient or efficient
                             #   means of retrieving the only item of a 1-set.
                             #   Indeed, the most efficient means of doing so is
@@ -1379,7 +1471,7 @@ def pep_code_check_hint(
                         # Python expression exposing the type annotated by this
                         # metahint with a new parameter added to the signature
                         # of the current wrapper function.
-                        hint_curr_expr=_add_func_wrapper_local(
+                        hint_curr_expr=_add_func_wrapper_local_type(
                             get_hint_pep593_type(hint_curr)),
                     ))
 
@@ -1619,7 +1711,7 @@ def pep_code_check_hint(
                     pith_curr_assign_expr=pith_curr_assign_expr,
                     # Python expression evaluating to this user-defined type
                     # when accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_type(hint_curr),
+                    hint_curr_expr=_add_func_wrapper_local_type(hint_curr),
                 )
                 # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
@@ -1708,7 +1800,7 @@ def pep_code_check_hint(
                     pith_curr_expr=pith_curr_expr,
                     # Python expression evaluating to this origin type when
                     # accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_type(
+                    hint_curr_expr=_add_func_wrapper_local_type(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
@@ -1745,7 +1837,7 @@ def pep_code_check_hint(
 
                 # Python expression evaluating to this origin type when
                 # accessed with the private "__beartypistry" parameter.
-                hint_curr_expr = register_typistry_type(
+                hint_curr_expr = _add_func_wrapper_local_type(
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
@@ -1907,9 +1999,6 @@ def pep_code_check_hint(
                     # Indentation deferred above for efficiency.
                     indent_curr=indent_curr,
                     pith_curr_assign_expr=pith_curr_assign_expr,
-                    # Python expression evaluating to the builtin "tuple" type
-                    # when accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=register_typistry_type(tuple),
                 )
             # Else, this hint is *NOT* a tuple.
 
@@ -1958,7 +2047,7 @@ def pep_code_check_hint(
                 pith_curr_expr=pith_curr_expr,
                 # Python expression evaluating to this class when accessed via
                 # the private "__beartypistry" parameter.
-                hint_curr_expr=register_typistry_type(hint_curr),
+                hint_curr_expr=_add_func_wrapper_local_type(hint_curr),
             )
 
         # Else, this hint is neither PEP-compliant *NOR* a class. In this

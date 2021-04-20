@@ -6,7 +6,7 @@
 '''
 **Beartype data validation.**
 
-This submodule provides a PEP-compliant hierarchy of subscriptable (indexable)
+This submodule publishes a PEP-compliant hierarchy of subscriptable (indexable)
 classes enabling callers to validate the internal structure of arbitrarily
 complex scalars, data structures, and third-party objects. Like annotation
 objects defined by the :mod:`typing` module (e.g., :attr:`typing.Union`), these

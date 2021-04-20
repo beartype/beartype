@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilCallableException
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
 from typing import Any
@@ -22,44 +22,66 @@ from typing import Any
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
+# ....................{ CONSTANTS                         }....................
+FUNC_NAME_LAMBDA = '<lambda>'
+'''
+Default name of all **pure-Python lambda functions** (i.e., function declared
+as a ``lambda`` expression embedded in a larger statement rather than as a
+full-blown ``def`` statement).
+
+Python initializes the names of *all* lambda functions to this lambda-specific
+placeholder string on lambda definition.
+
+Caveats
+----------
+**Usage of this placeholder to differentiate lambda from non-lambda callables
+invites false positives in unlikely edge cases.** Technically, malicious third
+parties may externally change the name of any lambda function *after* defining
+that function. Pragmatically, no one sane should ever do such a horrible thing.
+While predictably absurd, this is also the only efficient (and thus sane) means
+of differentiating lambda from non-lambda callables. Alternatives require
+AST-based parsing, which comes with its own substantial caveats, concerns,
+edge cases, and false positives. If you must pick your poison, pick this one.
+'''
+
 # ....................{ VALIDATORS                        }....................
-#FIXME: Unit test us up.
-def die_unless_func_lambda(
-    # Mandatory parameters.
-    func: Any,
-
-    # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
-) -> None:
-    '''
-    Raise an exception unless the passed callable is a **pure-Python lambda
-    function** (i.e., function declared as a `lambda` expression embedded in a
-    larger statement rather than as a full-blown `def` statement).
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-    exception_cls : type, optional
-        Type of exception to be raised if this callable is *not* a pure-Python
-        lambda function. Defaults to :class:`_BeartypeUtilCallableException`.
-
-    Raises
-    ----------
-    exception_cls
-         If this callable is *not* a pure-Python lambda function.
-
-    See Also
-    ----------
-    :func:`is_func_lambda`
-        Further details.
-    '''
-
-    # If this callable is *NOT* a lambda function, raise an exception.
-    if not is_func_lambda(func):
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
-        raise exception_cls(f'Callable {repr(func)} not lambda function.')
+#FIXME: Uncomment when needed.
+# def die_unless_func_lambda(
+#     # Mandatory parameters.
+#     func: Any,
+#
+#     # Optional parameters.
+#     exception_cls: type = _BeartypeUtilCallableException,
+# ) -> None:
+#     '''
+#     Raise an exception unless the passed callable is a **pure-Python lambda
+#     function** (i.e., function declared as a `lambda` expression embedded in a
+#     larger statement rather than as a full-blown `def` statement).
+#
+#     Parameters
+#     ----------
+#     func : Callable
+#         Callable to be inspected.
+#     exception_cls : type, optional
+#         Type of exception to be raised if this callable is *not* a pure-Python
+#         lambda function. Defaults to :class:`_BeartypeUtilCallableException`.
+#
+#     Raises
+#     ----------
+#     exception_cls
+#          If this callable is *not* a pure-Python lambda function.
+#
+#     See Also
+#     ----------
+#     :func:`is_func_lambda`
+#         Further details.
+#     '''
+#
+#     # If this callable is *NOT* a lambda function, raise an exception.
+#     if not is_func_lambda(func):
+#         assert isinstance(exception_cls, type), (
+#             f'{repr(exception_cls)} not class.')
+#         raise exception_cls(f'Callable {repr(func)} not lambda function.')
 
 
 def die_unless_func_python(
@@ -112,8 +134,8 @@ def die_unless_func_python(
 def is_func_lambda(func: Callable) -> bool:
     '''
     ``True`` only if the passed callable is a **pure-Python lambda function**
-    (i.e., function declared as a `lambda` expression embedded in a larger
-    statement rather than as a full-blown `def` statement).
+    (i.e., function declared as a ``lambda`` expression embedded in a larger
+    statement rather than as a full-blown ``def`` statement).
 
     Parameters
     ----------
@@ -141,7 +163,7 @@ def is_func_lambda(func: Callable) -> bool:
         # sane) means of differentiating lambda from non-lambda callables.
         # Alternatives require AST-based parsing, which comes with its own
         # substantial caveats, concerns, and edge cases.
-        func.__name__ == '<lambda>'
+        func.__name__ == FUNC_NAME_LAMBDA
     )
 
 

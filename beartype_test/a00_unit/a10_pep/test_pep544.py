@@ -88,7 +88,7 @@ def test_pep544_fail() -> None:
     # Defer heavyweight imports.
     from abc import abstractmethod
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintTypeException
+    from beartype.roar import BeartypeDecorHintPep3119Exception
     from typing import Protocol
 
     # User-defined protocol declaring arbitrary methods, but intentionally
@@ -102,7 +102,7 @@ def test_pep544_fail() -> None:
         def bitter_glass(self) -> str: pass
 
     # @beartype-decorated callable annotated by this user-defined protocol.
-    with raises(BeartypeDecorHintTypeException):
+    with raises(BeartypeDecorHintPep3119Exception):
         @beartype
         def times_of_old(god_slept: TwoTrees) -> str:
             return god_slept.holy_tree() + god_slept.bitter_glass()

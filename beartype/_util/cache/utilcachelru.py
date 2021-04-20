@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from threading import Lock
 from typing import Hashable
-from beartype.roar import _BeartypeUtilLRUCacheException
+from beartype.roar._roarexc import _BeartypeUtilLRUCacheException
 
 
 # ....................{ CLASSES                           }....................

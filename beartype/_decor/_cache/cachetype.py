@@ -12,6 +12,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Remove the now-vestigial register_typistry_type() function as follows:
+#* Improve the add_func_scope_local() function to address relevant "FIXME:"
+#  comments below preceding register_typistry_type().
+#* Replace all remaining calls to register_typistry_type() throughout the
+#  codebase with calls to add_func_scope_local().
+#* Remove register_typistry_type().
+#
+#Note that the Beartypistry.__setitem__() implementation should probably be
+#preserved as is to continue supporting forwardref-deferred types.
+
 #FIXME: For efficiency, register tuples under their numeric hashes rather than
 #strings embedding numeric hashes formatted as "+{numeric_hash}". Thus:
 #* Tuples would be registered instead with numeric hashes.
@@ -26,14 +36,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeDecorHintForwardRefException,
-    _BeartypeDecorBeartypistryException,
+    BeartypeDecorHintTypeException,
 )
+from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
 from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.utilclstest import die_unless_type_isinstanceable
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.utilhinttest import (
-    die_unless_hint_type_isinstanceable)
 from beartype._util.py.utilpymodule import (
     die_unless_module_attr_name,
     import_module_attr,
@@ -224,7 +234,8 @@ def register_typistry_type(hint: type) -> str:
     '''
 
     # If this object is *NOT* an isinstanceable class, raise an exception.
-    die_unless_hint_type_isinstanceable(hint)
+    die_unless_type_isinstanceable(
+        cls=hint, exception_cls=BeartypeDecorHintTypeException)
     # Else, this object is an isinstanceable class.
     #
     # Note that we defer all further validation of this type to the
@@ -653,7 +664,7 @@ class Beartypistry(dict):
 
         # Module attribute whose fully-qualified name is this forward
         # reference, dynamically imported at callable call time.
-        hint_class = import_module_attr(
+        hint_class: type = import_module_attr(
             module_attr_name=hint_classname,
             exception_label='Forward reference',
             exception_cls=BeartypeCallHintForwardRefException,
@@ -661,9 +672,9 @@ class Beartypistry(dict):
 
         # If this attribute is *NOT* an isinstanceable class, raise an
         # exception.
-        die_unless_hint_type_isinstanceable(
-            hint=hint_class,
-            hint_label=f'Forward reference "{hint_classname}" referent ',
+        die_unless_type_isinstanceable(
+            cls=hint_class,
+            cls_label=f'Forward reference "{hint_classname}" referent ',
             exception_cls=BeartypeCallHintForwardRefException,
         )
         # Else, this hint is an isinstanceable class.

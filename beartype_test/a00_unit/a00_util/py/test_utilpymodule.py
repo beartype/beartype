@@ -43,7 +43,7 @@ def test_import_module_attr_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeUtilModuleException
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.py.utilpymodule import import_module_attr
 
     # Assert this function raises the expected exception when passed a

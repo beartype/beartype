@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeCallHintRaiseException
+from beartype.roar._roarexc import _BeartypeCallHintRaiseException
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes

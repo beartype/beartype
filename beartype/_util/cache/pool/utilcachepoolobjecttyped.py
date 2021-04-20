@@ -31,7 +31,7 @@ example:
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
-from beartype.roar import _BeartypeUtilCachedObjectTypedException
+from beartype.roar._roarexc import _BeartypeUtilCachedObjectTypedException
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.

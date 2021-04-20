@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import _BeartypeUtilCachedKeyPoolException
+from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
 from collections import defaultdict
 from collections.abc import Callable, Hashable
 from threading import Lock

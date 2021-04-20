@@ -113,10 +113,10 @@ try:
 
     # Set the HTML theme to this theme.
     html_theme = 'sphinx_rtd_theme'
-# If this theme extension is unavailable, fallback to the default HTML theme...
+# If this theme extension is unavailable:
+# * Fallback to the default Sphinx HTML theme.
+# * Emit a non-fatal warning informing end users of this fallback.
 except ImportError:
-    # Emit a non-fatal warning to warn callers of the performance
-    # pitfalls associated with memoizing keyword arguments.
     warn(
         (
             'Optional Sphinx extension "sphinx_rtd_theme" unimportable; '

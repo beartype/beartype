@@ -132,7 +132,7 @@ def test_get_func_arg_len_standard() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncarg import get_func_args_len_standard
 
     # Arbitrary callable accepting no arguments.

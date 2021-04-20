@@ -81,41 +81,41 @@ def test_api_vale_core_classes_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeSubscriptedIsInstantiationException
+    from beartype.roar import BeartypeValeSubscriptedIsInitException
     from beartype.vale import SubscriptedIs, Is
 
     # Assert that instantiating the "Is" class raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is()
 
     # Assert that subscripting the "Is" class with the empty tuple raises the
     # expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is[()]
 
     # Assert that subscripting the "Is" class with two or more arguments raises
     # the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is['Cannon to right of them,', 'Cannon to left of them,']
 
     # Assert that subscripting the "Is" class with a non-callable argument
     # raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is['Cannon in front of them']
 
     # Assert that subscripting the "Is" class with a C-based callable argument
     # raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is[iter]
 
     # Assert that subscripting the "Is" class with a pure-Python callable that
     # does *NOT* accept exactly one argument raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is[lambda: True]
 
     # Assert that subscripting the "Is" class with a pure-Python callable that
     # does *NOT* accept exactly one argument raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         Is[lambda: True]
 
     # Object produced by subscripting the "Is" class with a valid validator.
@@ -125,14 +125,14 @@ def test_api_vale_core_classes_fail() -> None:
     # with the domain-specific language (DSL) supported by that object and an
     # arbitrary object that is *NOT* an instance of the same class raises the
     # expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         IsNonEmpty & 'While horse and hero fell.'
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         IsNonEmpty | 'While horse and hero fell.'
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # non-string code raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code=b'Into the jaws of Death,',
@@ -141,7 +141,7 @@ def test_api_vale_core_classes_fail() -> None:
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # empty string code raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code='',
@@ -150,7 +150,7 @@ def test_api_vale_core_classes_fail() -> None:
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # non-empty string code but *NO* code locals raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code='Into the mouth of hell',
@@ -160,7 +160,7 @@ def test_api_vale_core_classes_fail() -> None:
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # non-empty string code and code locals such that that code does *NOT*
     # contain the test subject substring "{obj}" raises the expected exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code='Came through the jaws of Death,',
@@ -171,7 +171,7 @@ def test_api_vale_core_classes_fail() -> None:
     # Assert that attempting to instantiate the "SubscriptedIs" class with
     # code locals but *NO* code raises the expected
     # exception.
-    with raises(BeartypeSubscriptedIsInstantiationException):
+    with raises(BeartypeValeSubscriptedIsInitException):
         SubscriptedIs(
             is_valid=lambda text: bool(text),
             is_valid_code_locals={},

@@ -84,7 +84,7 @@ def test_is_func_nested() -> None:
 #     '''
 #
 #     # Defer heavyweight imports.
-#     from beartype.roar import _BeartypeUtilCallableException
+#     from beartype.roar._roarexc import _BeartypeUtilCallableException
 #     from beartype._util.func.utilfuncget import get_func_wrappee
 #     from functools import wraps
 #

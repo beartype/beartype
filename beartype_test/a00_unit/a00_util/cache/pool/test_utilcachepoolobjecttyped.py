@@ -106,7 +106,7 @@ def test_objecttyped_pool_fail() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepoolobjecttyped import (
         acquire_object_typed)
-    from beartype.roar import _BeartypeUtilCachedObjectTypedException
+    from beartype.roar._roarexc import _BeartypeUtilCachedObjectTypedException
 
     # Assert that typed objects may only be acquired with types.
     with raises(_BeartypeUtilCachedObjectTypedException):

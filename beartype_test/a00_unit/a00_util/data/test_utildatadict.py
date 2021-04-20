@@ -200,7 +200,7 @@ def test_merge_mappings_fail() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import _BeartypeUtilMappingException
+    from beartype.roar._roarexc import _BeartypeUtilMappingException
     from beartype._util.data.utildatadict import merge_mappings
 
     # Assert this function rejects two non-empty mappings containing one or

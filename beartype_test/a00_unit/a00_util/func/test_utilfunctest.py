@@ -17,7 +17,29 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ lambda                    }....................
+def test_is_func_lambda() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_lambda` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.func.utilfunctest import is_func_lambda
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+
+    def intimations_of_immortality(): 'from Recollections of Early Childhood'
+
+    # Assert this tester accepts pure-Python lambda functions.
+    assert is_func_lambda(lambda: True) is True
+
+    # Assert this tester rejects pure-Python non-lambda callables.
+    assert is_func_lambda(intimations_of_immortality) is False
+
+    # Assert this tester rejects C-based callables.
+    assert is_func_lambda(iter) is False
+
+# ....................{ TESTS ~ python                    }....................
 def test_die_unless_func_python() -> None:
     '''
     Test the
@@ -26,7 +48,7 @@ def test_die_unless_func_python() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfunctest import die_unless_func_python
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Assert this validator accepts pure-Python callables.
     die_unless_func_python(lambda: True)
@@ -44,7 +66,7 @@ def test_is_func_python() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfunctest import is_func_python
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Assert this tester accepts pure-Python callables.
     assert is_func_python(lambda: True) is True

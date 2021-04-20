@@ -50,7 +50,7 @@ def test_get_func_codeobj() -> None:
     # Defer heavyweight imports.
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype.cave import CallableCodeObjectType
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Instance of that class.
     fireside = OfStagnantWaters()
@@ -82,7 +82,7 @@ def test_get_func_codeobj_or_none() -> None:
     # Defer heavyweight imports.
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
     from beartype.cave import CallableCodeObjectType
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Instance of that class.
     fireside = OfStagnantWaters()
@@ -117,7 +117,7 @@ def test_get_func_unwrapped_codeobj() -> None:
         get_func_unwrapped_codeobj,
     )
     from beartype.cave import CallableCodeObjectType
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Instance of that class.
     fireside = OfStagnantWaters()
@@ -166,7 +166,7 @@ def test_get_func_unwrapped_codeobj_or_none() -> None:
         get_func_unwrapped_codeobj_or_none,
     )
     from beartype.cave import CallableCodeObjectType
-    from beartype.roar import _BeartypeUtilCallableException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Instance of that class.
     fireside = OfStagnantWaters()

@@ -395,7 +395,7 @@ of the current pith (which, by definition, *must* be a standard sequence).
 # ....................{ HINT ~ type : sequence : tuple    }....................
 PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+{indent_curr}    isinstance({pith_curr_assign_expr}, tuple) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against each subscripted child hint of an itemized :class:`typing.Tuple` type

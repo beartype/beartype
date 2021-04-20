@@ -27,12 +27,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #  2. Those variadic parameters.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    _BeartypeUtilCallableCachedException,
-    _BeartypeUtilCallableCachedKwargsWarning,
-)
+from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
+from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
 from beartype._util.func.utilfuncarg import (
-    is_func_argless,
+    # is_func_argless,
     is_func_arg_variadic,
 )
 from beartype._util.text.utiltextlabel import label_callable

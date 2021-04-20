@@ -39,7 +39,7 @@ efficiency, portability, and thrilling puns.
    $ python3
 
 .. code-block:: python
-      
+
    # Import the @beartype decorator.
    >>> from beartype import beartype
 
@@ -392,10 +392,10 @@ whenever:
 
     **Beartype never emits errors, warnings, or exceptions on dynamically-typed
     code,** because Python is not an error.
-    
+
     **Beartype believes dynamic typing is beneficial by default,** because
     Python is beneficial by default.
-    
+
     **Beartype is unopinionated.** That's because ``beartype`` `operates
     exclusively at the higher level of pure-Python callables <Versus Static
     Type Checkers_>`__ rather than the lower level of individual statements
@@ -2854,9 +2854,9 @@ decorators, function calls, and import hooks) include:
 +-------------------+---------+---------------+---------------------------+
 | package           | active  | PEP-compliant | time multiplier [#speed]_ |
 +===================+=========+===============+===========================+
-| ``beartype``      | **yes** | **yes**       | 1.0 ✕ ``beartype``        |
+| ``beartype``      | **yes** | **yes**       | 1 ✕ ``beartype``          |
 +-------------------+---------+---------------+---------------------------+
-| deal_ [#baddeal]_ | **yes** | **yes**       | 20.0 ✕ ``beartype``       |
+| deal_ [#baddeal]_ | **yes** | **yes**       | 20 ✕ ``beartype``         |
 +-------------------+---------+---------------+---------------------------+
 | enforce_          | no      | **yes**       | *unknown*                 |
 +-------------------+---------+---------------+---------------------------+
@@ -2868,18 +2868,17 @@ decorators, function calls, and import hooks) include:
 +-------------------+---------+---------------+---------------------------+
 | typeen_           | no      | no            | *unknown*                 |
 +-------------------+---------+---------------+---------------------------+
-| typeguard_        | **yes** | **yes**       | 20.0 ✕ ``beartype``       |
+| typeguard_        | **yes** | **yes**       | 20 ✕ ``beartype``         |
 +-------------------+---------+---------------+---------------------------+
 
 .. [#speed]
-   The floating-point number listed for each runtime type checker in the *speed
-   multliplier* column is an approximate measure of **how much slower on
-   overage than** ``beartype`` **that checker is** as `timed by our profile
-   suite <Timings_>`__. Ergo, a time multiplier of:
+   The *time multliplier* column approximates **how much slower on average
+   than** ``beartype`` **that checker is** as `timed by our profile suite
+   <Timings_>`__. A time multiplier of:
 
-   * 1.0 means that checker is approximately as fast as ``beartype``, which
+   * "1" means that checker is approximately as fast as ``beartype``, which
      means that checker is probably ``beartype`` itself.
-   * 20.0 means that checker is approximately twenty times slower than
+   * "20" means that checker is approximately twenty times slower than
      ``beartype`` on average.
 
 .. [#baddeal]

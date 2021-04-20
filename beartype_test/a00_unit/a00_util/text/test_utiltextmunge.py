@@ -64,7 +64,7 @@ def test_number_lines():
 def test_replace_str_substrs():
     # Defer heavyweight imports.
     from beartype._util.text.utiltextmunge import replace_str_substrs
-    from beartype.roar import _BeartypeUtilTextException
+    from beartype.roar._roarexc import _BeartypeUtilTextException
 
     with raises(AssertionError):
         replace_str_substrs(text=7, old='Oh No!', new='A non-str value')
