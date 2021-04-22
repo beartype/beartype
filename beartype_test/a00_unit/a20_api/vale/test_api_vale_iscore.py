@@ -52,9 +52,20 @@ def test_api_vale_core_classes_pass() -> None:
     assert IsQuoted.is_valid('Theirs not to reason why,') is False
     assert IsQuoted.is_valid('"Forward, the Light Brigade!"') is True
 
-    # Assert these objects provide neither code nor code locals.
-    assert IsLengthy.is_valid_code is None
-    assert IsLengthy.is_valid_code_locals is None
+    # Assert one such object provides both non-empty code and code locals.
+    assert isinstance(IsLengthy.is_valid_code, str)
+    assert isinstance(IsLengthy.is_valid_code_locals, dict)
+    assert bool(IsLengthy.is_valid_code)
+    assert bool(IsLengthy.is_valid_code_locals)
+
+    # Assert one such object provides the expected machine-readable
+    # representation.
+    IsLengthyRepr = repr(IsLengthy)
+    assert 'len(text) > 30' in IsLengthyRepr
+
+    # Assert that repeated accesses of that representation are memoized by
+    # efficiently returning the same string.
+    assert repr(IsLengthy) is IsLengthyRepr
 
     # Object synthesized from the above objects with the domain-specific
     # language (DSL) supported by those objects.
@@ -69,6 +80,8 @@ def test_api_vale_core_classes_pass() -> None:
         '"Forward, the Light Brigade.') is False
     assert IsLengthyOrUnquotedSentence.is_valid(
         'Into the valley of Death') is False
+
+    #FIXME: Also assert this object has the expected representation.
 
 
 @skip_if_python_version_less_than('3.7.0')

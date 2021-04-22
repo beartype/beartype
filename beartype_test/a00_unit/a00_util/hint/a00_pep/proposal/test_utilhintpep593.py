@@ -41,8 +41,7 @@ def test_is_hint_pep593_beartype() -> None:
         from typing import Annotated
 
         # Assert this tester accepts beartype-specific metahints.
-        assert is_hint_pep593_beartype(Annotated[
-            str, Is[lambda text: bool(text)]]) is True
+        assert is_hint_pep593_beartype(Annotated[str, Is[lambda text: bool(text)]]) is True
 
         # Assert this tester rejects beartype-agnostic metahints.
         assert is_hint_pep593_beartype(Annotated[

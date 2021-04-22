@@ -163,7 +163,7 @@ def pep_code_check_param(
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPep484Exception(
-            f'{hint_label} PEP return hint '
+            f'{hint_label} return hint '
             f'{repr(hint)} invalid as parameter annotation.'
         )
     # Else, this is a standard PEP-compliant type hint.
@@ -188,7 +188,9 @@ def pep_code_check_param(
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            f'{hint_label} kind {repr(param.kind)} unsupported.')
+            f'{hint_label} kind {repr(param.kind)} '
+            f'currently unsupported by @beartype.'
+        )
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
     # Python code snippet localizing this parameter.
@@ -213,16 +215,14 @@ def pep_code_check_param(
             hints_forwardref_class_basename=hints_forwardref_class_basename,
         )
     # If the prior call to the memoized pep_code_check_hint() function raised a
-    # cached exception...
+    # cached exception, reraise this cached exception's memoized
+    # parameter-agnostic message into an unmemoized parameter-specific message.
     except Exception as exception:
-        # Human-readable label describing this parameter.
-        hint_label = label_callable_decorated_param(
-            func=data.func, param_name=param.name)
-
-        # Reraise this cached exception's memoized parameter-agnostic message
-        # into an unmemoized parameter-specific message.
         reraise_exception_cached(
-            exception=exception, target_str=f'{hint_label} PEP type hint')
+            exception=exception,
+            target_str=label_callable_decorated_param(
+                func=data.func, param_name=param.name),
+        )
 
     # Return all metadata required by higher-level callers, including...
     return (
@@ -292,16 +292,13 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
                 f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
             )
         # If the prior call to the memoized pep_code_check_hint() function
-        # raised a cached exception...
+        # raised a cached exception, reraise this cached exception's memoized
+        # return-agnostic message into an unmemoized return-specific message.
         except Exception as exception:
-            # Human-readable label describing this return.
-            hint_label = (
-                f'{label_callable_decorated_return(data.func)} PEP type hint')
-
-            # Reraise this cached exception's memoized return value-agnostic
-            # message into an unmemoized return value-specific message.
             reraise_exception_cached(
-                exception=exception, target_str=hint_label)
+                exception=exception,
+                target_str=label_callable_decorated_return(data.func),
+            )
 
     # Unmemoize this snippet against this return.
     func_wrapper_code = _unmemoize_pep_code(

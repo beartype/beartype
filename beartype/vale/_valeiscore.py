@@ -18,9 +18,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptedIsInitException
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncarg import get_func_args_len_standard
-from beartype._util.func.utilfuncscope import CallableScope
+from beartype._util.func.utilfunccode import get_func_code_or_none
+from beartype._util.func.utilfuncscope import (
+    CallableScope,
+    add_func_scope_attr,
+)
+from beartype._util.func.utilfunctest import is_func_lambda
 from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.text.utiltextrepr import get_object_representation
 from typing import Any, Callable, Optional
@@ -39,8 +45,6 @@ Data validators are suitable for subscripting the :class:`Is` class.
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
-#FIXME: Unit test up "_get_repr", please.
-#FIXME: Docstring up "_get_repr", please.
 class SubscriptedIs(object):
     '''
     **Beartype data validator** (i.e., object encapsulating a caller-defined
@@ -103,6 +107,26 @@ class SubscriptedIs(object):
         generation *or* ``None`` otherwise (i.e., if this data validator does
         *not* support code generation).
     _get_repr : Callable[[], str]
+        **Representer** (i.e., caller-defined callable accepting *no*
+        arguments returning a machine-readable representation of this data
+        validator). Technically, that representation *could* be passed by the
+        caller rather than this callable dynamically generating that
+        representation. Pragmatically, generating that representation is
+        sufficiently slow for numerous types of data validators that deferring
+        their generation until required by a call to the :meth:`__repr__`
+        dunder method externally called by a call to the :func:`repr` builtin`
+        on this data validator is effectively mandatory. Data validators whose
+        representations are particularly slow to generate include:
+
+        * The :class:`Is` class subscripted by a lambda rather than non-lambda
+          function. Generating the representation of that class subscripted by
+          a non-lambda function only requires introspecting the name of that
+          function and is thus trivially fast. However, lambda functions have
+          no names and are thus *only* distinguishable by their source code;
+          ergo, generating the representation of that class subscripted by a
+          lambda function requires parsing the source code of the file
+          declaring that lambda for the exact substring of that code declaring
+          that lambda and is thus non-trivially slow.
 
     See Also
     ----------
@@ -131,17 +155,13 @@ class SubscriptedIs(object):
 
         # Mandatory parameters.
         is_valid: SubscriptedIsValidator,
-
-        #FIXME: Implement us up. Also be sure to validate that:
-        #    get_repr.startswith("f'") and
-        #    get_repr.endswith("'")
         get_repr: Callable[[], str],
+
+        #FIXME: Make these mandatory, please. Doing so will require improving
+        #the operators defined below. *sigh*
 
         # Optional parameters.
         is_valid_code: Optional[str] = None,
-
-        #FIXME: Refactor to be a simple set of arbitrary objects. We absolutely
-        #should *NOT* be mapping scopes here.
         is_valid_code_locals: Optional[CallableScope] = None,
     ) -> None:
         '''
@@ -169,10 +189,33 @@ class SubscriptedIs(object):
         is_valid_code_locals : Optional[CallableScope]
             **Data validator code local scope** (i.e., dictionary mapping from
             the name to value of each local attribute referenced in the
-            :attr:`code` code snippet) required to dynamically compile this
-            data validator code into byte code at runtime if this data
+            :attr:`is_valid_code` code snippet) required to dynamically compile
+            this data validator code into byte code at runtime if this data
             validator supports code generation *or* ``None`` otherwise (i.e.,
             if this data validator does *not* support code generation).
+        get_repr : Callable[[], str]
+            **Representer** (i.e., caller-defined callable accepting *no*
+            arguments returning a machine-readable representation of this data
+            validator). Technically, that representation rather than this
+            callable dynamically generating that representation could be passed
+            by the caller. Pragmatically, generating that representation is
+            sufficiently slow for various types of data validators that
+            deferring their generation until required by a call to the
+            :meth:`__repr__` dunder method externally called by a call to the
+            :func:`repr` builtin` passed this data validator is effectively
+            mandatory. Data validators whose representations are particularly
+            slow to generate include:
+
+            * The :class:`Is` class subscripted by a lambda rather than
+              non-lambda function. Generating the representation of that class
+              subscripted by a non-lambda function only requires introspecting
+              the name of that function and is thus trivially fast. However,
+              lambda functions have no names and are thus *only*
+              distinguishable by their source code; ergo, generating the
+              representation of that class subscripted by a lambda function
+              requires parsing the source code of the file declaring that
+              lambda for the exact substring of that code declaring that lambda
+              and is thus non-trivially slow.
 
         Raises
         ----------
@@ -200,24 +243,24 @@ class SubscriptedIs(object):
               ``None``.
         '''
 
-        # If this class was subscripted by either no arguments or two or more
-        # arguments...
+        # If the parent "Is*" class was subscripted by either no arguments or
+        # two or more arguments...
         if isinstance(is_valid, tuple):
-            # If this class was subscripted by two or more arguments, raise a
-            # human-readable exception.
+            # If that class was subscripted by two or more arguments, raise an
+            # exception.
             if is_valid:
                 raise BeartypeValeSubscriptedIsInitException(
                     f'Class "beartype.vale.Is" subscripted by two or more '
                     f'arguments:\n{get_object_representation(is_valid)}'
                 )
-            # Else, this class was subscripted by *NO* arguments. In this case,
-            # raise a human-readable exception.
+            # Else, that class was subscripted by *NO* arguments. In this case,
+            # raise an exception.
             else:
                 raise BeartypeValeSubscriptedIsInitException(
                     'Class "beartype.vale.Is" subscripted by empty tuple.')
-        # Else, the this class was subscripted by a single argument.
+        # Else, that class was subscripted by a single argument.
         #
-        # If this argument is uncallable, raise a human-readable exception.
+        # If this argument is uncallable, raise an exception.
         elif not callable(is_valid):
             raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted argument '
@@ -225,7 +268,7 @@ class SubscriptedIs(object):
             )
         # Else, this argument is callable.
         #
-        # If this callable is C-based, raise a human-readable exception.
+        # If this callable is C-based, raise an exception.
         elif not is_func_python(is_valid):
             raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted callable '
@@ -233,8 +276,8 @@ class SubscriptedIs(object):
             )
         # Else, this callable is pure-Python.
         #
-        # If this callable does *NOT* accept exactly one argument, raise a
-        # human-readable exception.
+        # If this callable does *NOT* accept exactly one argument, raise an
+        # exception.
         elif get_func_args_len_standard(is_valid) != 1:
             raise BeartypeValeSubscriptedIsInitException(
                 f'Class "beartype.vale.Is" subscripted callable '
@@ -300,6 +343,17 @@ class SubscriptedIs(object):
                 f'{get_object_representation(is_valid_code_locals)}'
             )
         # Else, the caller passed neither code nor code locals.
+
+        # If this representer is either uncallable, a C-based callable, *OR* a
+        # pure-Python callable accepting one or more arguments, raise an
+        # exception.
+        if get_func_args_len_standard(get_repr) != 0:
+            raise BeartypeValeSubscriptedIsInitException(
+                f'Representer {repr(get_repr)} positional or keyword argument '
+                f'count {get_func_args_len_standard(get_repr)} != 0.'
+            )
+        # Else, this representer is a pure-Python callable accepting *NO*
+        # arguments.
 
         # Classify this data validation function, effectively binding this
         # function to this object as an object-specific static method.
@@ -465,13 +519,12 @@ class SubscriptedIs(object):
         )
 
     # ..................{ DUNDERS ~ str                     }..................
-    #FIXME: Implement us up.
-    #FIXME: Docstring us up.
+    @callable_cached
     def __repr__(self) -> str:
         '''
+        Machine-readable representation of this data validator.
 
-        Parameters
-        ----------
+        This function is memoized for efficiency.
         '''
 
         # Fight the dark power with... power.
@@ -739,20 +792,55 @@ class Is(object):
            https://www.python.org/dev/peps/pep-0593
         '''
 
+        # Dictionary mapping from the name to value of each local attribute
+        # referenced in the "is_valid_code" snippet defined below.
+        is_valid_code_locals: CallableScope = {}
+
+        # Name of a new parameter added to the signature of each
+        # @beartype-decorated wrapper function whose value is this validator,
+        # enabling this validator to be called directly in the body of those
+        # functions *WITHOUT* imposing additional stack frames.
+        is_valid_attr_name = add_func_scope_attr(
+            attr=is_valid, attr_scope=is_valid_code_locals)
+
         # One one-liner to rule them all and in "pdb" bind them.
         return SubscriptedIs(
             is_valid=is_valid,
-            get_repr=lambda: f'Is[{_get_func_representation(is_valid)}]'
+            # Python code snippet call this validator via that parameter,
+            # passed an object to be interpolated into this snippet by
+            # downstream logic.
+            is_valid_code = f'{is_valid_attr_name}({{obj}})',
+            is_valid_code_locals=is_valid_code_locals,
+            get_repr=lambda: f'Is[{_get_func_representation(is_valid)}]',
         )
 
 # ....................{ PRIVATE ~ getter                  }....................
-#FIXME: Implement us up.
-#FIXME: Docstring us up.
 def _get_func_representation(func: Callable) -> str:
     '''
+    Machine-readable representation of the passed callable.
+
+    Caveats
+    ----------
+    **This getter is excruciatingly slow.** This getter should *only* be called
+    by a caller that is memoizing or otherwise caching the string returned by
+    this getter.
 
     Parameters
     ----------
+    func : Callable
+        Callable to be represented.
     '''
+    assert callable(func), f'{repr(func)} not callable.'
 
-    pass
+    # Return either...
+    return (
+        # If this callable is a pure-Python lambda function, either:
+        # * If this lambda is defined by an on-disk script or module source
+        #   file, the exact substring of that file defining this lambda.
+        # * Else (e.g., if this lambda is dynamically defined in-memory), a
+        #   placeholder string.
+        get_func_code_or_none(func) or '<lambda>'
+        if is_func_lambda(func) else
+        # Else, the fully-qualified name of this non-lambda function.
+        func.__qualname__
+    )

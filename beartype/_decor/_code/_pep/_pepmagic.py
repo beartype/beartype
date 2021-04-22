@@ -14,10 +14,24 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.cache.utilcacheerror import EXCEPTION_CACHED_PLACEHOLDER
 from itertools import count
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS ~ hint : label          }....................
+FUNC_WRAPPER_LOCAL_LABEL = f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter'
+'''
+Human-readable label describing a new wrapper paramater required by the
+root hint in exception messages.
+'''
+
+
+HINT_ROOT_LABEL = f'{EXCEPTION_CACHED_PLACEHOLDER} type hint'
+'''
+Human-readable label describing the root hint in exception messages.
+'''
 
 # ....................{ CONSTANTS ~ hint : meta           }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely
@@ -131,7 +145,7 @@ indentation appropriate for the currently visited hint).
 # Delete the above counter for safety and sanity in equal measure.
 del __hint_meta_index_counter
 
-# ....................{ CONSTANTS ~ operator              }....................
+# ....................{ CONSTANTS ~ code : operator       }....................
 OPERATOR_SUFFIX_LEN_AND = len(' and')
 '''
 Length of the builtin ``and`` operator when suffixing Python code snippets

@@ -413,7 +413,6 @@ else:
             func=func, exception_cls=exception_cls)
 
 
-#FIXME: Docstring us up.
 get_func_code_or_none.__doc__ = '''
 **Callable source code** (i.e., substring of all lines of the on-disk Python
 script or module declaring the passed pure-Python callable) if that callable

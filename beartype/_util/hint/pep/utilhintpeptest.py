@@ -123,7 +123,7 @@ def die_if_hint_pep(
 
         # Raise an exception of this class.
         raise exception_cls(
-            f'{hint_label} {repr(hint)} PEP type hint '
+            f'{hint_label} {repr(hint)} is PEP type hint '
             f'(e.g., rather than non-"typing" type).'
         )
 
@@ -241,9 +241,7 @@ def die_if_hint_pep_unsupported(
     # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
     # there's no benefit to validating that expectation here.
     raise BeartypeDecorHintPepUnsupportedException(
-        f'{hint_label} PEP type hint "{repr(hint)}" '
-        f'currently unsupported by @beartype.'
-    )
+        f'{hint_label} {repr(hint)} currently unsupported by @beartype.')
 
 
 def die_if_hint_pep_sign_unsupported(
@@ -284,8 +282,9 @@ def die_if_hint_pep_sign_unsupported(
     if not is_hint_pep_sign_supported(hint_sign):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} PEP sign {repr(hint_sign)} '
-            f'currently unsupported by @beartype.')
+            f'{hint_label} sign {repr(hint_sign)} '
+            f'currently unsupported by @beartype.'
+        )
 
 # ....................{ WARNINGS                          }....................
 #FIXME: Resurrect support for the passed "hint_label" parameter. We've
