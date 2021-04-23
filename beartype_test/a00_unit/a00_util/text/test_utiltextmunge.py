@@ -3,13 +3,12 @@
 # Copyright (c) 2014-2021 Beartype authors.
 # See "LICENSE" for further details.
 
-"""
+'''
 **Beartype replace utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.text.utiltextmunge.py` submodule.
-"""
-
+:mod:`beartype._util.text.utiltextmunge` submodule.
+'''
 
 # ....................{ IMPORTS                           }....................
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -19,9 +18,12 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-
-
 def test_uppercase_char_first():
+    '''
+    Test the :func:`beartype._util.text.utiltextmunge.uppercase_char_first`
+    function.
+    '''
+
     # Defer heavyweight imports.
     from beartype._util.text.utiltextmunge import uppercase_char_first
 
@@ -34,6 +36,11 @@ def test_uppercase_char_first():
 
 
 def test_number_lines():
+    '''
+    Test the :func:`beartype._util.text.utiltextmunge.number_lines`
+    function.
+    '''
+
     # Defer heavyweight imports.
     from re import search
     from beartype._util.text.utiltextmunge import number_lines
@@ -62,6 +69,11 @@ def test_number_lines():
 
 
 def test_replace_str_substrs():
+    '''
+    Test the :func:`beartype._util.text.utiltextmunge.replace_str_substrs`
+    function.
+    '''
+
     # Defer heavyweight imports.
     from beartype._util.text.utiltextmunge import replace_str_substrs
     from beartype.roar._roarexc import _BeartypeUtilTextException
@@ -86,6 +98,11 @@ def test_replace_str_substrs():
 
 
 def test_suffix_unless_suffixed():
+    '''
+    Test the :func:`beartype._util.text.utiltextmunge.suffix_unless_suffixed`
+    function.
+    '''
+
     # Defer heavyweight imports.
     from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 

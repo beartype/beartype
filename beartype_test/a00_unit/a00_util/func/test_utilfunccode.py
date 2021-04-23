@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable utility unit tests.**
+**Beartype callable source code utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.func.utilfunccode` submodule.
@@ -37,9 +37,8 @@ def test_get_func_code_or_none() -> None:
         yellow,
     )
 
-    # Assert this getter rejects C-based callables with the expected exception.
-    with raises(_BeartypeUtilCallableException):
-        get_func_code_or_none(iter)
+    # Assert this getter accepts C-based callables with "None"
+    assert get_func_code_or_none(iter) is None
 
     # Assert this getter accepts a dynamically declared callable with "None".
     assert get_func_code_or_none(of_vapours) is None

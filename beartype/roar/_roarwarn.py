@@ -164,6 +164,19 @@ class BeartypeValeSubscriptedIsWarning(BeartypeValeWarning):
 
     pass
 
+
+class BeartypeValeSubscriptedIsLambdaWarning(BeartypeValeSubscriptedIsWarning):
+    '''
+    **Beartype data validation lambda function warning.**
+
+    This warning is emitted on passing the :func:`repr` builtin an instance of
+    the :class:`beartype.vale.Is` class subscripted by a lambda function whose
+    definition is *not* parsable from the script or module file defining that
+    lambda.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util                    }....................
 class _BeartypeUtilWarning(BeartypeWarning):
     '''

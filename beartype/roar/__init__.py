@@ -75,6 +75,7 @@ from beartype.roar._roarwarn import (
     BeartypeDependencyOptionalMissingWarning,
     BeartypeValeWarning,
     BeartypeValeSubscriptedIsWarning,
+    BeartypeValeSubscriptedIsLambdaWarning,
 )
 
 # ....................{ TODO                              }....................

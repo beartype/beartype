@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+from pytest import raises, warns
 
 # ....................{ TESTS ~ tester                    }....................
 def test_is_hint_pep593_beartype() -> None:
@@ -29,7 +29,10 @@ def test_is_hint_pep593_beartype() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintPepException
+    from beartype.roar import (
+        BeartypeDecorHintPepException,
+        BeartypeValeSubscriptedIsLambdaWarning,
+    )
     from beartype.vale._valeiscore import Is
     from beartype._util.hint.pep.proposal.utilhintpep593 import (
         is_hint_pep593_beartype)
@@ -41,7 +44,17 @@ def test_is_hint_pep593_beartype() -> None:
         from typing import Annotated
 
         # Assert this tester accepts beartype-specific metahints.
-        assert is_hint_pep593_beartype(Annotated[str, Is[lambda text: bool(text)]]) is True
+        #
+        # Unfortunately, this test actually induces an error in CPython, which
+        # our codebase emits as a non-fatal warning. Specifically, CPython
+        # reports the "func.__code__.co_firstlineno" attribute of the nested
+        # lambda function defined below to be one less than the expected value.
+        # Since this issue is unlikely to be resolved soon *AND* since we have
+        # no means of monkey-patching CPython itself, we acknowledge the
+        # existence of this warning by simply ignoring it. *sigh*
+        with warns(BeartypeValeSubscriptedIsLambdaWarning):
+            assert is_hint_pep593_beartype(Annotated[
+                str, Is[lambda text: bool(text)]]) is True
 
         # Assert this tester rejects beartype-agnostic metahints.
         assert is_hint_pep593_beartype(Annotated[

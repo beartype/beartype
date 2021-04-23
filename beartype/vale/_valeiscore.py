@@ -17,7 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeValeSubscriptedIsInitException
+from beartype.roar import (
+    BeartypeValeSubscriptedIsInitException,
+    BeartypeValeSubscriptedIsLambdaWarning,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncarg import get_func_args_len_standard
@@ -525,6 +528,13 @@ class SubscriptedIs(object):
         Machine-readable representation of this data validator.
 
         This function is memoized for efficiency.
+
+        Warns
+        ----------
+        BeartypeValeSubscriptedIsLambdaWarning
+            If this data validator is implemented as a pure-Python lambda
+            function whose definition is *not* parsable from the script or
+            module defining that lambda.
         '''
 
         # Fight the dark power with... power.
@@ -829,6 +839,12 @@ def _get_func_representation(func: Callable) -> str:
     ----------
     func : Callable
         Callable to be represented.
+
+    Warns
+    ----------
+    BeartypeValeSubscriptedIsLambdaWarning
+        If this callable is a pure-Python lambda function whose definition is
+        *not* parsable from the script or module defining that lambda.
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -839,7 +855,10 @@ def _get_func_representation(func: Callable) -> str:
         #   file, the exact substring of that file defining this lambda.
         # * Else (e.g., if this lambda is dynamically defined in-memory), a
         #   placeholder string.
-        get_func_code_or_none(func) or '<lambda>'
+        get_func_code_or_none(
+            func=func,
+            warning_cls=BeartypeValeSubscriptedIsLambdaWarning,
+        ) or '<lambda>'
         if is_func_lambda(func) else
         # Else, the fully-qualified name of this non-lambda function.
         func.__qualname__

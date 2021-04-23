@@ -236,6 +236,8 @@ def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
 
 # ....................{ GENERATORS                        }....................
 #FIXME: Unit test us up, please.
+#FIXME: Replace all existing usage of inspect.signature() throughout the
+#codebase with usage of this supremely fast generator instead.
 def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
     Tuple[str, EnumMemberType, Any], None, None]:
     '''

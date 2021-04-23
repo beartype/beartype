@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable origin** (i.e., uncompiled source from which a compiled
-callable originated) utilities.
+Project-wide **callable source code** (i.e., file providing the uncompiled
+pure-Python source code from which a compiled callable originated) utilities.
 
 This private submodule implements supplementary callable-specific utility
 functions required by various :mod:`beartype` facilities, including callables
@@ -15,6 +15,32 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: *FILE UPSTREAM CPYTHON ISSUES.* Unfortunately, this submodule exposed a
+#number of significant issues in the CPython stdlib -- all concerning parsing
+#of lambda functions. These include:
+#
+#1. The inspect.getsourcelines() function raises unexpected
+#   "tokenize.TokenError" exceptions when passed lambda functions preceded by
+#   one or more triple-quoted strings: e.g.,
+#       >>> import inspect
+#       >>> built_to_fail = (
+#       ...     ('''Uh-oh.
+#       ... ''', lambda obj: 'Oh, Gods above and/or below!'
+#       ...     )
+#       ... )
+#       >>> inspect.getsourcelines(built_to_fail[1])}
+#       tokenize.TokenError: ('EOF in multi-line string', (323, 8))
+#2. The "func.__code__.co_firstlineno" attribute is incorrect for syntactic
+#   constructs resembling:
+#       assert is_hint_pep593_beartype(Annotated[        # <--- line 1
+#           str, Is[lambda text: bool(text)]]) is True   # <--- line 2
+#   Given such a construct, the nested lambda function should have a
+#   "func.__code__.co_firstlineno" attribute whose value is "2". Instead, that
+#   attribute's value is "1". This then complicates detection of lambda
+#   functions, which are already non-trivial enough to detect. Specifically,
+#   this causes the inspect.findsource() function to either raise an unexpected
+#   "OSError" *OR* return incorrect source when passed a file containing the
+#   above snippet. In either case, that is bad. *sigh*
 #FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
 #as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
@@ -27,18 +53,12 @@ from ast import (
 from beartype.cave import CallableTypes
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
-from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj,
-    get_func_unwrapped_codeobj_or_none,
-)
-from beartype._util.func.utilfunctest import (
-    die_unless_func_python,
-    is_func_lambda,
-)
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable
 from inspect import findsource, getsource
 from sys import modules
+from traceback import format_exc
 from typing import List, Optional
 from warnings import warn
 
@@ -52,7 +72,7 @@ def get_func_code_lines_or_none(
     func: Callable,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    warning_cls: type = _BeartypeUtilCallableWarning,
 ) -> Optional[str]:
     '''
     **Line-oriented callable source code** (i.e., string concatenating the
@@ -78,9 +98,9 @@ def get_func_code_lines_or_none(
     ----------
     func : Callable
         Callable to be inspected.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`_BeartypeUtilCallableException`.
+    warning_cls : type, optional
+        Type of warning to be emitted in the event of a non-fatal error.
+        Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Returns
     ----------
@@ -92,24 +112,40 @@ def get_func_code_lines_or_none(
           callable.
         * If the passed callable was dynamically declared in-memory, ``None``.
 
-    Raises
+    Warns
     ----------
-    exception_cls
-         If the passed callable is *not* pure-Python.
+    warning_cls
+         If the passed callable is defined by a pure-Python source code file
+         but is *not* parsable from that file. While we could allow any parser
+         exception to percolate up the call stack and halt the active Python
+         process when left unhandled, doing so would render :mod:`beartype`
+         fragile -- gaining us little and costing us much.
     '''
 
-    # If the passed callable is *NOT* pure-Python, raise an exception.
-    die_unless_func_python(func=func, exception_cls=exception_cls)
-    # Else, the passed callable is pure-Python.
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncfile import is_func_file
 
-    # Attempt to defer to the standard inspect.getsource() function.
-    try:
-        return getsource(func)
-    # If that function raised an "OSError" exception, that function failed to
-    # find that callable (e.g., due to that callable being declared in-memory
-    # rather than on-disk). In this case, return "None" instead.
-    except OSError:
-        return None
+    # If the passed callable exists on-disk and is thus pure-Python...
+    if is_func_file(func):
+        # Attempt to defer to the standard inspect.getsource() function.
+        try:
+            return getsource(func)
+        # If that function raised *ANY* exception, reduce that exception to a
+        # non-fatal warning.
+        except Exception:
+            # Avoid circular import dependencies.
+            from beartype._util.text.utiltextlabel import label_callable
+
+            # Reduce this fatal error to a non-fatal warning embedding a full
+            # exception traceback as a formatted string.
+            warn(
+                f'{label_callable(func)} not parsable:\n{format_exc()}',
+                warning_cls,
+            )
+    # Else, the passed callable only exists in-memory.
+
+    # Return "None" as a fallback.
+    return None
 
 
 #FIXME: Unit test us up.
@@ -118,7 +154,7 @@ def get_func_file_code_lines_or_none(
     func: Callable,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    warning_cls: type = _BeartypeUtilCallableWarning,
 ) -> Optional[str]:
     '''
     **Line-oriented callable source file code** (i.e., string concatenating
@@ -135,9 +171,9 @@ def get_func_file_code_lines_or_none(
     ----------
     func : Callable
         Callable to be inspected.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`_BeartypeUtilCallableException`.
+    warning_cls : type, optional
+        Type of warning to be emitted in the event of a non-fatal error.
+        Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Returns
     ----------
@@ -148,37 +184,70 @@ def get_func_file_code_lines_or_none(
           concatenating *all* lines of that file.
         * If the passed callable was dynamically declared in-memory, ``None``.
 
-    Raises
+    Warns
     ----------
-    exception_cls
-         If the passed callable is *not* pure-Python.
+    warning_cls
+         If the passed callable is defined by a pure-Python source code file
+         but is *not* parsable from that file. While we could allow any parser
+         exception to percolate up the call stack and halt the active Python
+         process when left unhandled, doing so would render :mod:`beartype`
+         fragile -- gaining us little and costing us much.
     '''
 
-    # If the passed callable is *NOT* pure-Python, raise an exception.
-    die_unless_func_python(func=func, exception_cls=exception_cls)
-    # Else, the passed callable is pure-Python.
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncfile import is_func_file
 
-    # Attempt to defer to the standard inspect.findsource() function, which
-    # returns a 2-tuple "(file_code_lines, file_code_lineno_start)", where:
-    # * "file_code_lines" is a list of all lines of the script or module
-    #    declaring the passed callable.
-    # * "file_code_lineno_start" is the line number of the first such line
-    #    declaring the passed callable. Since this line number is already
-    #    provided by the "co_firstlineno" instance variable of this callable's
-    #    code object, however, there is *NO* reason whatsoever to return this
-    #    line number. Indeed, it's unclear why that function returns this
-    #    redundant and thus useless metadata in the first place. *sigh*
-    try:
-        # List of all lines of the file declaring the passed callable.
-        func_file_code_lines, _ = findsource(func)
+    # If the passed callable exists on-disk and is thus pure-Python...
+    if is_func_file(func):
+        # Attempt to defer to the standard inspect.findsource() function, which
+        # returns a 2-tuple "(file_code_lines, file_code_lineno_start)", where:
+        # * "file_code_lines" is a list of all lines of the script or module
+        #    declaring the passed callable.
+        # * "file_code_lineno_start" is the line number of the first such line
+        #   declaring the passed callable. Since this line number is already
+        #   provided by the "co_firstlineno" instance variable of this
+        #   callable's code object, however, there is *NO* reason whatsoever to
+        #   return this line number. Indeed, it's unclear why that function
+        #   returns this uselessly redundant metadata in the first place.
+        try:
+            # List of all lines of the file declaring the passed callable.
+            func_file_code_lines, _ = findsource(func)
 
-        # Return this list concatenated into a string.
-        return ''.join(func_file_code_lines)
-    # If that function raised an "OSError" exception, that function failed to
-    # find that callable (e.g., due to that callable being declared in-memory
-    # rather than on-disk). In this case, return "None" instead.
-    except OSError:
-        return None
+            # Return this list concatenated into a string.
+            return ''.join(func_file_code_lines)
+        # If that function raised *ANY* exception, reduce that exception to a
+        # non-fatal warning. While we could permit this exception to percolate
+        # up the call stack and inevitably halt the active Python process when
+        # left unhandled, doing so would render @beartype fragile -- gaining us
+        # little and costing us much.
+        #
+        # Notably, the lower-level inspect.getblock() function internally
+        # called by the higher-level findsource() function prematurely halted
+        # due to an unexpected bug in the pure-Python tokenizer leveraged by
+        # inspect.getblock(). Notably, this occurs when passing lambda
+        # functions preceded by triple-quoted strings: e.g.,
+        #     >>> import inspect
+        #     >>> built_to_fail = (
+        #     ...     ('''Uh-oh.
+        #     ... ''', lambda obj: 'Oh, Gods above and/or below!'
+        #     ...     )
+        #     ... )
+        #     >>> inspect.findsource(built_to_fail[1])}
+        #     tokenize.TokenError: ('EOF in multi-line string', (323, 8))
+        except Exception:
+            # Avoid circular import dependencies.
+            from beartype._util.text.utiltextlabel import label_callable
+
+            # Reduce this fatal error to a non-fatal warning embedding a full
+            # exception traceback as a formatted string.
+            warn(
+                f'{label_callable(func)} not parsable:\n{format_exc()}',
+                warning_cls,
+            )
+    # Else, the passed callable only exists in-memory.
+
+    # Return "None" as a fallback.
+    return None
 
 # ....................{ GETTERS ~ code : lambda           }....................
 # If the active Python interpreter targets Python >= 3.9 and thus defines the
@@ -201,46 +270,63 @@ if IS_PYTHON_AT_LEAST_3_9:
         func: Callable,
 
         # Optional parameters.
-        exception_cls: type = _BeartypeUtilCallableException,
         warning_cls: type = _BeartypeUtilCallableWarning,
     ) -> Optional[str]:
 
+        # Avoid circular import dependencies.
+        from beartype._util.func.utilfunctest import is_func_lambda
+
         # If the passed callable is a pure-Python lambda function...
         if is_func_lambda(func):
-            # String concatenating all lines of the file defining that lambda
-            # if that lambda is defined by a file *OR* "None" otherwise.
-            lambda_file_code = get_func_file_code_lines_or_none(
-                func=func, exception_cls=exception_cls)
+            # Avoid circular import dependencies.
+            from beartype._util.text.utiltextlabel import label_callable
 
-            # If that lambda is defined by a file...
-            if lambda_file_code:
-                # Code object underlying this lambda.
-                func_codeobj = get_func_codeobj(func)
+            # Attempt to parse the substring of the source code defining this
+            # lambda from the file providing that code.
+            #
+            # For safety, this function reduces *ALL* exceptions raised by this
+            # introspection to non-fatal warnings and returns "None". Why?
+            # Because the standard "ast" module in general and our
+            # "_LambdaNodeUnparser" class in specific are sufficiently fragile
+            # as to warrant extreme caution. AST parsing and unparsing is
+            # notoriously unreliable across different versions of different
+            # Python interpreters and compilers.
+            #
+            # Moreover, we *NEVER* call this function in a critical code path;
+            # we *ONLY* call this function to construct human-readable
+            # exception messages. Clearly, raising low-level non-human-readable
+            # exceptions when attempting to raise high-level human-readable
+            # exceptions rather defeats the entire purpose of the latter.
+            #
+            # Lastly, note that "pytest" will still fail any tests emitting
+            # unexpected warnings. In short, raising exceptions here would gain
+            # @beartype little and cost @beartype much.
+            try:
+                # String concatenating all lines of the file defining that
+                # lambda if that lambda is defined by a file *OR* "None".
+                lambda_file_code = get_func_file_code_lines_or_none(
+                    func=func, warning_cls=warning_cls)
 
-                # Human-readable label describing this lambda in exceptions and
-                # warnings emitted below.
-                func_label = (
-                    f'Lambda function {repr(func)} declared on '
-                    f'line {func_codeobj.co_firstlineno} of '
-                    f'file "{func_codeobj.co_filename}" '
-                )
+                # If that lambda is defined by a file...
+                if lambda_file_code:
+                    # Code object underlying this lambda.
+                    func_codeobj = get_func_codeobj(func)
 
-                # If this file exceeds a sane maximum file size, emit a
-                # non-fatal warning and safely ignore this file.
-                if len(lambda_file_code) >= LAMBDA_CODE_FILESIZE_MAX:
-                    warn(
-                        (
-                            f'{func_label} not parsable with standard "ast" '
-                            f'module, as file size exceeds safe maximum '
-                            f'{LAMBDA_CODE_FILESIZE_MAX}MB.'
-                        ),
-                        warning_cls,
-                    )
-                # Else, this file *SHOULD* be safely parsable by the standard
-                # "ast" module without inducing a fatal segmentation fault.
-                else:
-                    # Attempt to...
-                    try:
+                    # If this file exceeds a sane maximum file size, emit a
+                    # non-fatal warning and safely ignore this file.
+                    if len(lambda_file_code) >= LAMBDA_CODE_FILESIZE_MAX:
+                        warn(
+                            (
+                                f'{label_callable(func)} not parsable, '
+                                f'as file size exceeds safe maximum '
+                                f'{LAMBDA_CODE_FILESIZE_MAX}MB.'
+                            ),
+                            warning_cls,
+                        )
+                    # Else, this file *SHOULD* be safely parsable by the
+                    # standard "ast" module without inducing a fatal
+                    # segmentation fault.
+                    else:
                         # Abstract syntax tree (AST) parsed from this file.
                         ast_tree = ast_parse(lambda_file_code)
 
@@ -257,81 +343,84 @@ if IS_PYTHON_AT_LEAST_3_9:
                         # lambda function starting at that line number.
                         lambdas_code = lambda_node_unparser.lambdas_code
 
-                        # If *NO* lambda functions start at that line number,
-                        # raise an exception.
-                        #
-                        # Note that, unlike non-fatal warnings emitted
-                        # elsewhere, this constitutes a fatal error. Why?
-                        # Because this violates expectations. Since the passed
-                        # lambda function claims it originates from some line
-                        # number of some file *AND* since that file exists and
-                        # is parsable as valid Python, we expect that line
-                        # number to define one or more lambda functions.
-                        if not lambdas_code:
-                            raise exception_cls(f'{func_label} not found.')
-                        # Else, one or more lambda functions start at that line
-                        # number.
-                        #
-                        # If two or more lambda functions start at that line
-                        # number, emit a non-fatal warning. Since lambda
-                        # functions only provide a starting line number rather
-                        # than both starting line number *AND* column, we have
-                        # *NO* means of disambiguating between these lambda
-                        # functions and thus *CANNOT* raise an exception.
-                        elif len(lambdas_code) >= 2:
-                            # Human-readable concatenation of the definitions
-                            # of all lambda functions defined on that line.
-                            lambdas_code_str = '\n    '.join(lambdas_code)
+                        # If one or more lambda functions start at that line
+                        # number...
+                        if lambdas_code:
+                            # If two or more lambda functions start at that
+                            # line number, emit a non-fatal warning. Since
+                            # lambda functions only provide a starting line
+                            # number rather than both starting line number
+                            # *AND* column, we have *NO* means of
+                            # disambiguating between these lambda functions and
+                            # thus *CANNOT* raise an exception.
+                            if len(lambdas_code) >= 2:
+                                # Human-readable concatenation of the
+                                # definitions of all lambda functions defined
+                                # on that line.
+                                lambdas_code_str = '\n    '.join(lambdas_code)
 
-                            # Emit this warning.
+                                # Emit this warning.
+                                warn(
+                                    (
+                                        f'{label_callable(func)} ambiguous, '
+                                        f'as that line defines '
+                                        f'{len(lambdas_code)} lambdas; '
+                                        f'arbitrarily selecting first '
+                                        f'lambda:\n{lambdas_code_str}'
+                                    ),
+                                    warning_cls,
+                                )
+                            # Else, that line number defines one lambda.
+
+                            # Return the substring covering that lambda.
+                            return lambdas_code[0]
+                        # Else, *NO* lambda functions start at that line
+                        # number. In this case, emit a non-fatal warning.
+                        #
+                        # Ideally, we would instead raise a fatal exception.
+                        # Why? Because this edge case violates expectations.
+                        # Since the passed lambda function claims it originates
+                        # from some line number of some file *AND* since that
+                        # file both exists and is parsable as valid Python, we
+                        # expect that line number to define one or more lambda
+                        # functions. If it does not, raising an exception seems
+                        # superficially reasonable. Yet, we don't. See above.
+                        else:
                             warn(
-                                (
-                                    f'{func_label} ambiguous, as that line '
-                                    f'defines {len(lambdas_code)} lambdas; '
-                                    f'arbitrarily selecting first lambda:\n'
-                                    f'{lambdas_code_str}'
-                                ),
+                                f'{label_callable(func)} not found.',
                                 warning_cls,
                             )
-                        # Else, that line number defines one lambda function.
-
-                        # Return the substring covering that lambda function.
-                        return lambdas_code[0]
-
-                    # If *ANY* of the "ast" callables called above exceed
-                    # Python's recursion limit by exhausting the call stack,
-                    # reduce this fatal error to a non-fatal warning. Note that
-                    # documentation for ast.unparse() reads:
-                    #     Warning: Trying to unparse a highly complex
-                    #     expression would result with RecursionError.
-                    except RecursionError as exception:
-                        warn(
-                            (
-                                f'{func_label} not parsable with standard '
-                                f'"ast" module, as code complexity exceeds '
-                                f'safe recursion limits '
-                                f'(i.e., "{exception.__class__.__name__}: '
-                                f'{exception}").'
-                            ),
-                            warning_cls,
-                        )
-            # Else, that lambda is dynamically defined in-memory.
+                # Else, that lambda is dynamically defined in-memory.
+            # If *ANY* of the dodgy stdlib callables (e.g., ast.parse(),
+            # inspect.findsource()) called above raise *ANY* other unexpected
+            # exception, reduce this fatal error to a non-fatal warning with an
+            # exception traceback as a formatted string.
+            #
+            # Note that the likeliest (but certainly *NOT* only) type of
+            # exception to be raised is a "RecursionError", as described by the
+            # official documentation for the ast.unparse() function:
+            #     Warning: Trying to unparse a highly complex expression would
+            #     result with RecursionError.
+            except Exception:
+                warn(
+                    f'{label_callable(func)} not parsable:\n{format_exc()}',
+                    warning_cls,
+                )
         # Else, the passed callable is *NOT* a pure-Python lambda function.
 
         # In any case, the above logic failed to introspect code for the passed
         # callable. Defer to the get_func_code_lines_or_none() function.
-        return get_func_code_lines_or_none(
-            func=func, exception_cls=exception_cls)
+        return get_func_code_lines_or_none(func=func, warning_cls=warning_cls)
 
 
     # Helper class instantiated above to decompile AST lambda nodes.
     class _LambdaNodeUnparser(NodeVisitor):
         '''
         **Lambda node unparser** (i.e., object decompiling the abstract syntax
-        tree (AST) nodes of *all* pure-Python lambda functions defined on a
-        caller-specified line of an arbitrary string of source code into the
-        substring of that line defining those lambda functions by applying the
-        visitor design pattern to an AST parsed from that code).
+        tree (AST) nodes of *all* pure-Python lambda functions defined in a
+        caller-specified block of source code into the exact substrings of that
+        block defining those lambda functions by applying the visitor design
+        pattern to an AST parsed from that block).
 
         Attributes
         ----------
@@ -386,15 +475,29 @@ if IS_PYTHON_AT_LEAST_3_9:
                 AST node encapsulating the definition of a lambda function.
             '''
 
-            # If this lambda starts on the requested line number, decompile
-            # this node into the substring of this line defining this lambda.
+            # If the desired lambda starts on the current line number...
             if node.lineno == self._lambda_lineno:
+                # Decompile this node into the substring of this line defining
+                # this lambda.
                 self.lambdas_code.append(ast_unparse(node))
 
-            # Recursively visit all child nodes of this lambda node. While
-            # doing so is largely useless, a sufficient number of dragons are
-            # skulking to warrant an abundance of caution and +1 Magic Swords.
-            self.generic_visit(node)
+                # Recursively visit all child nodes of this lambda node. While
+                # doing so is largely useless, a sufficient number of dragons
+                # are skulking to warrant an abundance of caution and magic.
+                self.generic_visit(node)
+            # Else if the desired lambda starts on a later line number than
+            # the current line number, recursively visit all child nodes of
+            # the current lambda node.
+            elif node.lineno < self._lambda_lineno:
+                self.generic_visit(node)
+            #FIXME: Consider raising an exception here instead like
+            #"StopException" to force a premature halt to this recursion. Of
+            #course, handling exceptions also incurs a performance cost, so...
+            # Else, the desired lambda starts on an earlier line number than
+            # the current line number, the current lambda *CANNOT* be the
+            # desired lambda and is thus ignorable. In this case, avoid
+            # recursively visiting *ANY* child nodes of the current lambda node
+            # to induce a premature halt to this recursive visitation.
 # Else, the active Python interpreter targets only Python < 3.9 and thus does
 # *NOT* define the ast.unparse() function required to decompile AST nodes into
 # source code. In this case...
@@ -404,13 +507,11 @@ else:
         func: Callable,
 
         # Optional parameters.
-        exception_cls: type = _BeartypeUtilCallableException,
         warning_cls: type = _BeartypeUtilCallableWarning,
     ) -> Optional[str]:
 
         # Defer to the get_func_code_lines_or_none() function as is.
-        return get_func_code_lines_or_none(
-            func=func, exception_cls=exception_cls)
+        return get_func_code_lines_or_none(func=func, warning_cls=warning_cls)
 
 
 get_func_code_or_none.__doc__ = '''
@@ -443,9 +544,6 @@ Parameters
 ----------
 func : Callable
     Callable to be inspected.
-exception_cls : type, optional
-    Type of exception to be raised in the event of a fatal error. Defaults to
-    :class:`_BeartypeUtilCallableException`.
 warning_cls : type, optional
     Type of warning to be emitted in the event of a non-fatal error. Defaults
     to :class:`_BeartypeUtilCallableWarning`.
@@ -458,11 +556,6 @@ Optional[str]
     * If the passed callable was physically declared by a file, the exact
       substring of all lines of that file declaring that callable.
     * If the passed callable was dynamically declared in-memory, ``None``.
-
-Raises
-----------
-exception_cls
-    If the passed callable is *not* pure-Python.
 
 Warns
 ----------
@@ -497,6 +590,7 @@ https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a
 '''
 
 # ....................{ GETTERS ~ label                   }....................
+#FIXME: This getter no longer has a sane reason to exist. Consider excising.
 def get_func_code_label(func: Callable) -> str:
     '''
     Human-readable label describing the **origin** (i.e., uncompiled source) of
@@ -557,57 +651,19 @@ def get_func_code_label(func: Callable) -> str:
     # If this callable is a standard callable rather than arbitrary class or
     # object overriding the __call__() dunder method...
     if isinstance(func, CallableTypes):
-        #FIXME: This is probably a bit overkill, as @beartype absolutely
-        #*REQUIRES* pure-Python rather than C-based callables, as the latter
-        #are *NOT* efficiently introspectable at runtime. *shrug*
-
-        # Default this label to the placeholder string specific to C-based
-        # callables to simplify subsequent logic.
-        func_origin_label = '<C-based>'
+        # Avoid circular import dependencies.
+        from beartype._util.func.utilfuncfile import get_func_filename_or_none
+        from beartype._util.func.utilfuncwrap import unwrap_func
 
         # Code object underlying the passed pure-Python callable unwrapped if
         # this callable is pure-Python *OR* "None" otherwise.
-        #
-        # Note that we intentionally do *NOT* test whether this callable is
-        # explicitly pure-Python or C-based: e.g.,
-        #     # If this callable is implemented in C, this callable has no code
-        #     # object with which to inspect the filename declaring this callable. In
-        #     # this case, defer to a C-specific placeholder string.
-        #     if isinstance(func, CallableCTypes):
-        #         func_origin_label = '<C-based>'
-        #     # Else, this callable is implemented in Python. In this case...
-        #     else:
-        #         # If this callable is a bound method wrapping an unbound function,
-        #         # unwrap this method into the function it wraps. Why? Because only
-        #         # the latter provides the code object for this callable.
-        #         if isinstance(func, MethodBoundInstanceOrClassType):
-        #             func = func.__func__
-        #
-        #         # Defer to the absolute filename of the Python file declaring this
-        #         # callable, dynamically retrieved from this callable's code object.
-        #         func_origin_label = func.__code__.co_filename
-        #
-        # Why? Because PyPy. The logic above succeeds for CPython but fails for
-        # PyPy, because *ALL CALLABLES ARE C-BASED IN PYPY.* Adopting the above
-        # approach would unconditionally return the C-specific placeholder
-        # string for all callables -- including those originally declared as
-        # pure-Python in a Python module. So it goes.
-        func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+        func_filename = get_func_filename_or_none(unwrap_func(func))
 
         # If this callable has a code object, set this label to either the
         # absolute filename of the physical Python module or script declaring
-        # this callable if this code object provides that metadata *OR* the
-        # current placeholder string otherwise.
-        #
-        # Note that we intentionally do *NOT* assume all code objects to
-        # provide this metadata (e.g., by unconditionally returning
-        # "func_origin_label = func_codeobj.co_filename"). Why? Because PyPy
-        # yet again. For inexplicable reasons, PyPy provides *ALL* C-based
-        # builtins (e.g., len()) with code objects failing to provide this
-        # metadata. Yes, this is awful. Yes, this is the Python ecosystem.
-        if func_codeobj:
-            func_origin_label = getattr(
-                func_codeobj, 'co_filename', func_origin_label)
+        # this callable if this code object provides that metadata *OR* a
+        # placeholder string specific to C-based callables otherwise.
+        func_origin_label = func_filename if func_filename else '<C-based>'
     # Else, this callable is *NOT* a standard callable. In this case...
     else:
         # If this callable is *NOT* a class (i.e., is an object defining the

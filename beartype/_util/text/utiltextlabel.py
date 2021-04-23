@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.cls.utilclstest import is_classname_builtin
 from beartype._util.utilobject import (
     get_object_scopes_name,
     get_object_type_name,
@@ -40,8 +39,44 @@ def label_callable(func: Callable) -> str:
     '''
     assert callable(func), f'{repr(func)} uncallable.'
 
-    # Create and return this label.
-    return f'{get_object_scopes_name(func)}()'
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncarg import get_func_args_len_standard
+    from beartype._util.func.utilfuncfile import get_func_filename_or_none
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from beartype._util.func.utilfunctest import is_func_lambda
+
+    # If the passed callable is a pure-Python lambda function, that callable
+    # has *NO* unique fully-qualified name. In this case, return a string
+    # uniquely identifying this lambda from various code object metadata.
+    if is_func_lambda(func):
+        # Code object underlying this lambda.
+        func_codeobj = get_func_codeobj(func)
+
+        # Human-readable label describing this lambda.
+        func_label = (
+            f'Lambda function of '
+            f'{get_func_args_len_standard(func_codeobj)} argument(s)'
+        )
+
+        # Absolute filename of the file defining this lambda if this lambda was
+        # defined on-disk *OR* "None" otherwise (i.e., if this lambda was
+        # defined in-memory).
+        func_filename = get_func_filename_or_none(func)
+
+        # If this lambda was defined on-disk, describe the location of this
+        # lambda in that file.
+        if func_filename:
+            func_label += (
+                f' declared on line {func_codeobj.co_firstlineno} of '
+                f'file "{func_filename}"'
+            )
+
+        # Return this label.
+        return func_label
+    # Else, the passed callable is *NOT* a pure-Python lambda function and thus
+    # has a unique fully-qualified name. In this case, simply return that name.
+    else:
+        return f'{get_object_scopes_name(func)}()'
 
 
 def label_callable_decorated(func: Callable) -> str:
@@ -227,6 +262,7 @@ def label_class(cls: type) -> str:
     assert isinstance(cls, type), f'{repr(cls)} not class.'
 
     # Avoid circular import dependencies.
+    from beartype._util.cls.utilclstest import is_classname_builtin
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         is_hint_pep544_protocol)
 
