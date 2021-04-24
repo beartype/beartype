@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
     CallableOrFrameOrCodeType,
     get_func_unwrapped_codeobj,
@@ -206,7 +207,13 @@ def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
     return False
 
 # ....................{ GETTERS                           }....................
-def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
+def get_func_args_len_standard(
+    # Mandatory parameters.
+    func: CallableOrFrameOrCodeType,
+
+    # Optional parameters.
+    exception_cls: type = _BeartypeUtilCallableException,
+) -> int:
     '''
     Number of **standard parameters** (i.e., positional or keyword) accepted by
     the passed pure-Python callable.
@@ -215,6 +222,9 @@ def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
     ----------
     func : Union[Callable, CodeType, FrameType]
         Pure-Python callable, frame, or code object to be inspected.
+    exception_cls : type, optional
+        Type of exception in the event of a fatal error. Defaults to
+        :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -224,12 +234,13 @@ def get_func_args_len_standard(func: CallableOrFrameOrCodeType) -> int:
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(func)
+    func_codeobj = get_func_unwrapped_codeobj(
+        func=func, exception_cls=exception_cls)
 
     # Return the number of standard parameters accepted by this callable.
     return func_codeobj.co_argcount

@@ -41,6 +41,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #   this causes the inspect.findsource() function to either raise an unexpected
 #   "OSError" *OR* return incorrect source when passed a file containing the
 #   above snippet. In either case, that is bad. *sigh*
+#3. Introspecting the source code for two or more lambdas defined on the same
+#   line is infeasible, because code objects only record line numbers rather
+#   than both line and column numbers. Well, that's unfortunate.
 #FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
 #as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174

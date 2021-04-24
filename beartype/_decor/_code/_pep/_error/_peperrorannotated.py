@@ -18,11 +18,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.vale import SubscriptedIs
+from beartype.vale._valeissub import SubscriptedIs
 from beartype._decor._code._pep._error._peperrortype import (
     get_cause_or_none_type)
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._util.func.utilfunccode import get_func_code_or_none
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
@@ -30,7 +29,6 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_type,
 )
 from beartype._util.text.utiltextcause import get_cause_object_representation
-from beartype._util.text.utiltextrepr import get_object_representation
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -59,10 +57,13 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign is HINT_PEP593_SIGN_ANNOTATED, (
         f'{repr(sleuth.hint_sign)} not annotated.')
 
-    # If this pith is *NOT* an instance of the non-"typing" class annotated by
-    # this metahint, defer to the getter handling non-"typing" classes.
-    if not isinstance(sleuth.pith, get_hint_pep593_type(sleuth.hint)):
-        return get_cause_or_none_type(sleuth)
+    # Non-"typing" class annotated by this metahint.
+    hint_annotated = get_hint_pep593_type(sleuth.hint)
+
+    # If this pith is *NOT* an instance of this class, defer to the getter
+    # handling non-"typing" classes.
+    if not isinstance(sleuth.pith, hint_annotated):
+        return get_cause_or_none_type(sleuth.permute(hint=hint_annotated))
     # Else, this pith is an instance of that class.
 
     # For each arbitrary object annotating that class...
@@ -81,7 +82,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
 
         # If this pith fails to satisfy this validator and is thus the cause of
         # this failure, return this cause.
-        if not hint_metadatum.is_valid(sleuth.hint):
+        if not hint_metadatum.is_valid(sleuth.pith):
             return (
                 f'{get_cause_object_representation(sleuth.pith)} violates '
                 f'data constraint {repr(hint_metadatum)}.'

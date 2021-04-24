@@ -486,22 +486,9 @@ class BeartypeValeException(BeartypeException):
     pass
 
 
-class BeartypeValeSubscriptedIsException(BeartypeValeException):
+class BeartypeValeSubscriptionException(BeartypeValeException):
     '''
-    Abstract base class of all **beartype data validation subscription
-    exceptions.**
-
-    Instances of subclasses of this exception are raised when subscripting
-    (indexing) classes published by the :func:`beartype.vale` subpackage.
-    '''
-
-    pass
-
-
-class BeartypeValeSubscriptedIsInitException(
-    BeartypeValeSubscriptedIsException):
-    '''
-    **Beartype data validation subscription initialization exception.**
+    **Beartype data validation subscription exception.**
 
     This exception is raised at instantiation time when subscripting (indexing)
     classes published by the :func:`beartype.vale` subpackage, including

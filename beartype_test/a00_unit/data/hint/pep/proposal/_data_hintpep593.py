@@ -40,7 +40,9 @@ def add_data(data_module: 'ModuleType') -> None:
     # Else, the active Python interpreter targets at least Python >= 3.9 and
     # thus supports PEP 593.
 
+    # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.9-specific imports.
+    from beartype.vale import Is
     from typing import (
         Annotated,
         Any,
@@ -48,6 +50,16 @@ def add_data(data_module: 'ModuleType') -> None:
         Optional,
         Union,
     )
+
+    # ..................{ IMPORTS                           }..................
+    # Beartype-specific data validators defined as lambda functions.
+    IsLengthy = Is[lambda text: len(text) > 30]
+    IsSentence = Is[lambda text: text and text[-1] == '.']
+    IsQuoted = Is[lambda text: '"' in text or "'" in text]
+
+    # Beartype-specific data validator synthesized from the above validators
+    # via the domain-specific language (DSL) implemented by those validators.
+    IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
     # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
@@ -129,4 +141,39 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata('Of a Spicily sated',),
             ),
         ),
+
+        # ................{ ANNOTATED ~ beartype : is         }................
+        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # data validator defined as a lambda function.
+        PepHintMetadata(
+            hint=Annotated[str, IsLengthy],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant satisfying this validator.
+                PepHintPithSatisfiedMetadata(
+                    'To Ɯṙaith‐like‐upwreathed ligaments'),
+                    # ['To Ɯṙaith‐like‐upwreathed ligaments']),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(b'Down-bound'),
+                # String constant violating this validator.
+                PepHintPithUnsatisfiedMetadata('To prayer'),
+            ),
+        ),
+
+        #FIXME: Unit test this:
+        # PepHintMetadata(
+        #     hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
+        #FIXME: Unit test this using the exact same examples as the prior:
+        # PepHintMetadata(
+        #     hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
+        #FIXME: Unit test this:
+        # PepHintMetadata(
+        #     hint=Annotated[str, IsLengthyOrUnquotedSentence],
+
+        #FIXME: Unit test that something like this erroneous type hint
+        #"Annotated[str, IsLengthy, 'Uh oh!']" fails with the expected
+        #exception. We may need to do so elsewhere, sadly -- perhaps in a new
+        #"test_decor_vale.py" submodule.
     ))

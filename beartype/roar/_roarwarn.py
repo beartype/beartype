@@ -150,22 +150,7 @@ class BeartypeValeWarning(BeartypeWarning):
     pass
 
 
-
-class BeartypeValeSubscriptedIsWarning(BeartypeValeWarning):
-    '''
-    Abstract base class of all **beartype data validation warnings.**
-
-    Instances of subclasses of this warning are emitted at usage (e.g.,
-    instantiation, method call) time from the class hierarchy published by the
-    :func:`beartype.vale` subpackage by suspicious (but *not* necessarily
-    erroneous) PEP-compliant type hints warranting non-fatal warnings *without*
-    raising fatal exceptions.
-    '''
-
-    pass
-
-
-class BeartypeValeSubscriptedIsLambdaWarning(BeartypeValeSubscriptedIsWarning):
+class BeartypeValeLambdaWarning(BeartypeValeWarning):
     '''
     **Beartype data validation lambda function warning.**
 

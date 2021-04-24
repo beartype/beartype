@@ -551,9 +551,9 @@ against each subscripted argument of a `PEP 593`_-compliant
 
 
 PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD = '''
-{{indent_curr}}    # True only if this pith satisfies this caller-defined
-{{indent_curr}}    # data validator code of this annotated.
-{{indent_curr}}    {hint_child_expr} and'''
+{indent_curr}    # True only if this pith satisfies this caller-defined
+{indent_curr}    # data validator code of this annotated.
+{indent_curr}    {hint_child_expr} and'''
 '''
 PEP-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
@@ -567,11 +567,6 @@ The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted argument of such a
 :class:`typing.Annotated` type. While there exist alternate and more readable
 means of accomplishing this, this approach is the optimally efficient.
-
-The ``{indent_curr}`` format variable is intentionally brace-protected to
-efficiently defer its interpolation until the complete PEP-compliant code
-snippet type-checking the current pith against *all* subscripted arguments of
-this parent hint has been generated.
 
 .. _PEP 593:
     https://www.python.org/dev/peps/pep-0593

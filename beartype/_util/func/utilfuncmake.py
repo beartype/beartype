@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import die_unless_func_python
+from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
@@ -26,6 +27,7 @@ from typing import Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ COPIERS                           }....................
+#FIXME: Consider excising. Although awesome, this is no longer needed.
 def copy_func_shallow(
     # Mandatory arguments.
     func: Callable,
@@ -250,7 +252,7 @@ def make_func(
         # )
     # If doing so fails for any reason...
     except Exception as exception:
-        # Raise an exception suffixed by this function's declaration such that
+        # Raise an exception suffixed by that function's declaration such that
         # each line of that declaration is prefixed by that line's number. This
         # renders "SyntaxError" exceptions referencing arbitrary line numbers
         # human-readable: e.g.,
@@ -259,12 +261,13 @@ def make_func(
         #          ^
         #     SyntaxError: invalid syntax
         raise exception_cls(
-            f'{func_label} unparseable:\n\n'
+            f'{func_label} unparseable, as @beartype generated '
+            f'invalid code with "{label_exception(exception)}":\n\n'
             f'{number_lines(func_code)}'
         ) from exception
 
-    # If this function's name is *NOT* in this local scope, this code snippet
-    # failed to declare this function. In this case, raise an exception.
+    # If that function's name is *NOT* in this local scope, this code snippet
+    # failed to declare that function. In this case, raise an exception.
     if func_name not in func_locals:
         raise exception_cls(
             f'{func_label} undefined by code snippet:\n\n'
@@ -274,31 +277,31 @@ def make_func(
     # Function declared by this code snippet.
     func: Callable = func_locals[func_name]  # type: ignore[assignment]
 
-    # If this function is uncallable and thus *NOT* a function, raise an
-    # exception.
+    # If that function is uncallable, raise an exception.
     if not callable(func):
         raise exception_cls(
             f'{func_label} defined by code snippet uncallable:\n\n'
             f'{number_lines(func_code)}'
         )
+    # Else, that function is callable.
 
-    # If this function is a wrapper wrapping a wrappee callable, propagate
+    # If that function is a wrapper wrapping a wrappee callable, propagate
     # dunder attributes from that wrappee onto this wrapper.
     if func_wrapped is not None:
         assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
 
-    # If this function is documented...
+    # If that function is documented...
     #
-    # Note this function is intentionally documented *AFTER* propagating dunder
+    # Note that function is intentionally documented *AFTER* propagating dunder
     # attributes to enable callers to explicitly overwrite documentation
     # propagated from that wrappee onto this wrapper.
     if func_doc is not None:
         assert isinstance(func_doc, str), f'{repr(func_doc)} not string.'
         assert func_doc, '"func_doc" empty.'
 
-        # Document this function.
+        # Document that function.
         func.__doc__ = func_doc
 
-    # Return this function.
+    # Return that function.
     return func

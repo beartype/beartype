@@ -28,7 +28,7 @@ from beartype.roar import (
     BeartypeDecorHintPep593Exception,
     BeartypeDecorHintPep3119Exception,
 )
-from beartype.vale import SubscriptedIs
+from beartype.vale._valeissub import SubscriptedIs
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_tuple,
@@ -93,6 +93,7 @@ from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
     is_type_builtin,
 )
+from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
@@ -805,10 +806,10 @@ def pep_code_check_hint(
         # next-to-first.
         elif is_hint_pep593(hint_curr):
             # If this metahint is beartype-specific (i.e., its second argument
-            # is an instance of the "beartype.vale.SubscriptedIs" class produced
-            # by subscripting the "Is" class), ignore all annotations on this
-            # hint by reducing this hint to its origin (e.g., "str" in
-            # "Annotated[str, 50, False]").
+            # is an instance of the "beartype.vale._valeissub.SubscriptedIs"
+            # class produced by subscripting the "Is" class), ignore all
+            # annotations on this hint by reducing this hint to its origin
+            # (e.g., "str" in "Annotated[str, 50, False]").
             if not is_hint_pep593_beartype(hint_curr):
                 hint_curr = get_hint_pep593_type(hint_curr)
             # Else, that argument is beartype-specific. In this case, preserve
@@ -1355,10 +1356,8 @@ def pep_code_check_hint(
             # If this hint is a PEP 593-compliant type metahint, this metahint
             # is guaranteed by the reduction performed above to be
             # beartype-specific (i.e., metahint whose second argument is an
-            # instance of the "beartype.vale.SubscriptedIs" class produced by
-            # subscripting the "Is" class). In this case...
-
-            #FIXME: Unit test us up.
+            # instance of the "beartype.vale._valeissub.SubscriptedIs" class
+            # produced by subscripting the "Is" class). In this case...
             elif hint_curr_sign is HINT_PEP593_SIGN_ANNOTATED:
                 # Initialize the code type-checking the current pith against
                 # this generic to the substring prefixing all such code.
@@ -1401,22 +1400,69 @@ def pep_code_check_hint(
                         )
                     # Else, this argument is beartype-specific.
 
-                    # If this argument provides data validator code (i.e.,
-                    # Python code snippet validating the previously localized
-                    # parameter or return against the same data validation
-                    # performed by the hint_child.is_valid() function)...
-                    if hint_child.is_valid_code is not None:
-                        # Generate and append efficient code type-checking
-                        # this data validator by embedding this code as is.
-                        func_curr_code += (
-                            _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_format(
-                                indent_curr=indent_curr,
-                                # Python expression formatting the current pith
-                                # into the "{obj}" variable already embedded by
-                                # that class into this code.
-                                hint_child_expr=hint_child.is_valid_code.format(
-                                    obj=pith_curr_assigned_expr),
-                            ))
+                    # Generate and append efficient code type-checking
+                    # this data validator by embedding this code as is.
+                    func_curr_code += (
+                        _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_format(
+                            indent_curr=indent_curr,
+                            # Python expression formatting the current pith
+                            # into the "{obj}" variable already embedded by
+                            # that class into this code.
+                            hint_child_expr=hint_child.is_valid_code.format(
+                                obj=pith_curr_assigned_expr),
+                        ))
+
+                    #FIXME: *INEFFICIENT.* We inefficiently call
+                    #merge_mappings_two() in multiple places throughout the
+                    #codebase to safely update an existing dictionary in-place,
+                    #which is *NOT* at all what we should be doing. Instead, we
+                    #should define a new utildatadict.update_mapping() function
+                    #efficiently and safely updating an existing dictionary
+                    #in-place. The implementation is largely trivial:
+                    #
+                    #    def update_mapping(mapping_inplace: Mapping, mapping_other: Mapping) -> None:
+                    #
+                    #        # If the other mapping is empty, silently reduce to a noop.
+                    #        if not mapping_other:
+                    #            return
+                    #        # Else, the other mapping is non-empty.
+                    #
+                    #        # If one or more keys collide (i.e., reside in both
+                    #        # mappings)...
+                    #        #
+                    #        # Note that:
+                    #        # * Since keys are necessarily hashable, this set
+                    #        #   intersection is guaranteed to be safe and thus
+                    #        #   *NEVER* raise a "TypeError" exception.
+                    #        # * Omitting the keys() method call on the latter but
+                    #        #   *NOT* former mapping behaves as expected and offers
+                    #        #   a helpful microoptimization.
+                    #        if mapping_inplace.keys() & mapping_other:  # type: ignore[operator]
+                    #            die_if_mappings_two_items_collide(
+                    #                mapping_inplace, mapping_other)
+                    #
+                    #        mapping_inplace.update(mapping_other)
+                    #
+                    #The only things left to do then are:
+                    #* Define a new
+                    #  utildatadict.die_if_mappings_two_items_collide()
+                    #  function, whose implementation should be stripped out of
+                    #  the body of the existing "if mapping_keys_shared:"
+                    #  branch of the merge_mappings_two() function.
+                    #* Refactor the merge_mappings_two() function to call
+                    #  utildatadict.die_if_mappings_two_items_collide()
+                    #  function instead as the body of that branch.
+                    #* Refactor all existing merge_mappings_two() calls that
+                    #  simply update one of the two passed dictionaries
+                    #  in-place to call update_mapping() instead.
+
+                    # Generate locals safely merging the locals required by
+                    # both this validator code *AND* the current code
+                    # type-checking this entire root hint. Since the latter is
+                    # typically significantly larger than the former, we
+                    # intentionally pass the latter first as an optimization.
+                    func_wrapper_locals = merge_mappings_two(  # type: ignore[assignment]
+                        func_wrapper_locals, hint_child.is_valid_code_locals)
 
                 # Munge this code to...
                 func_curr_code = (

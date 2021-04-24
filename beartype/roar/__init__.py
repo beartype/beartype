@@ -63,8 +63,7 @@ from beartype.roar._roarexc import (
     BeartypeCallHintPepParamException,
     BeartypeCallHintPepReturnException,
     BeartypeValeException,
-    BeartypeValeSubscriptedIsException,
-    BeartypeValeSubscriptedIsInitException,
+    BeartypeValeSubscriptionException,
 )
 
 # Public warning hierarchy.
@@ -74,8 +73,7 @@ from beartype.roar._roarwarn import (
     BeartypeDecorHintPepDeprecatedWarning,
     BeartypeDependencyOptionalMissingWarning,
     BeartypeValeWarning,
-    BeartypeValeSubscriptedIsWarning,
-    BeartypeValeSubscriptedIsLambdaWarning,
+    BeartypeValeLambdaWarning,
 )
 
 # ....................{ TODO                              }....................

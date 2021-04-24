@@ -31,9 +31,9 @@ def test_is_hint_pep593_beartype() -> None:
     # Defer heavyweight imports.
     from beartype.roar import (
         BeartypeDecorHintPepException,
-        BeartypeValeSubscriptedIsLambdaWarning,
+        BeartypeValeLambdaWarning,
     )
-    from beartype.vale._valeiscore import Is
+    from beartype.vale import Is
     from beartype._util.hint.pep.proposal.utilhintpep593 import (
         is_hint_pep593_beartype)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -52,7 +52,7 @@ def test_is_hint_pep593_beartype() -> None:
         # Since this issue is unlikely to be resolved soon *AND* since we have
         # no means of monkey-patching CPython itself, we acknowledge the
         # existence of this warning by simply ignoring it. *sigh*
-        with warns(BeartypeValeSubscriptedIsLambdaWarning):
+        with warns(BeartypeValeLambdaWarning):
             assert is_hint_pep593_beartype(Annotated[
                 str, Is[lambda text: bool(text)]]) is True
 

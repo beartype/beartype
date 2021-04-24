@@ -36,10 +36,7 @@ Instead, callers are expected to (in order):
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.vale._valeiscore import (
-    SubscriptedIs,
-    Is,
-)
+from beartype.vale._valeis import Is
 
 #FIXME: Uncomment *AFTER* defining this subpackage and classes.
 # from beartype.vale._valeismore import (

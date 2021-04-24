@@ -309,3 +309,30 @@ def label_class(cls: type) -> str:
 
     # Return this labelled classname.
     return classname
+
+# ....................{ LABELLERS ~ exception             }....................
+def label_exception(exception: Exception) -> str:
+    '''
+    Human-readable label describing the passed exception.
+
+    Caveats
+    ----------
+    **The label returned by this function does not describe the traceback
+    originating this exception.** To do so, consider calling the standard
+    :func:`traceback.format_exc` function instead.
+
+    Parameters
+    ----------
+    exception : Exception
+        Exception to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this exception.
+    '''
+    assert isinstance(exception, Exception), (
+        f'{repr(exception)} not exception.')
+
+    # Return this exception's label.
+    return f'{exception.__class__.__qualname__}: {str(exception)}'
