@@ -8,24 +8,22 @@
 # a battery of simple (albeit instructive and hopefully unbiased) tests.
 #
 # --------------------( DEPENDENCIES                      )--------------------
-# This script requires as mandatory dependencies these Python 3.x packages:
+# This script only requires "beartype" itself as a mandatory dependencies.
 #
-# * "beartype".
+# This script optionally requires these Python 3.x packages:
+#
+# * "pydantic".
 # * "typeguard".
+# * "typical".
 #
 # These packages are trivially installable via this CLI one-liner:
-#    $ sudo -H pip3 install beartype typeguard
+#    $ sudo -H pip3 install beartype pydantic typeguard typical
 
 # ....................{ TODO                              }....................
-#FIXME: Consider supplanting with airspeed-velocity (asv), a Python-specific
-#space and time profiler oriented towards web-hosted tracking of lifetime
-#performance over all Git commits -- which is pretty awesome, basically:
-#    https://asv.readthedocs.io
-
-#FIXME: The stdlib "timeit" module should be conditionally replaced with the
-#superior third-party drop-in replacement "pyperf" module, if the latter is
-#conditionally available under the active Python interpreter. Indeed,
-#attempting to run "timeit" under PyPy3 emits eggregious warnings.
+#FIXME: Add support for profiling "typical". Doing so will, of course, require
+#us to add a "typical" ebuild to "raiagent". Fortuitously, Portage already
+#provides all mandatory dependencies required by "typical". See also upstream:
+#    https://github.com/seandstewart/typical/blob/main/pyproject.toml
 
 #FIXME: Add support for profiling "enforce" *AFTER* "enforce" finally supports
 #Python >= 3.7, which it currently does *NOT*:
@@ -34,24 +32,67 @@
 #Python >= 3.7, which it currently does *NOT*:
 #    https://github.com/Stewori/pytypes/issues/40
 
+#FIXME: If pydantic is optimized with Cython, print a non-fatal warning, as the
+#resulting timings are likely to be unfairly biased towards pydantic. We'd
+#rather *NOT* go down the Cython route ourselves, as doing so would require
+#duplication across a non-Cython and Cython codebase internal to beartype,
+#which would be absolutely crazy. Instead, a fair test would be to time both
+#pydantic and beartype under PyPy. So, we should suggest that on detecting
+#pydantic Cythonization. *shrug*
+
+#FIXME: The stdlib "timeit" module should be conditionally replaced with the
+#superior third-party drop-in replacement "pyperf" module, if the latter is
+#conditionally available under the active Python interpreter. Indeed,
+#attempting to run "timeit" under PyPy3 emits eggregious warnings.
+
+#FIXME: Consider supplanting with airspeed-velocity (asv), a Python-specific
+#space and time profiler oriented towards web-hosted tracking of lifetime
+#performance over all Git commits -- which is pretty awesome, basically:
+#    https://asv.readthedocs.io
+
 # ....................{ PREAMBLE                          }....................
 # Enable strictness for sanity.
 set -e
 
 # ....................{ CONSTANTS                         }....................
 # Human-readable version of this profiling suite.
-VERSION='0.0.2'
+VERSION='0.0.3'
 
-# Basename of the Python command to be invoked below.
-# PYTHON_COMMAND_BASENAME='python3'
-PYTHON_COMMAND_BASENAME='python3.9'
-# PYTHON_COMMAND_BASENAME='python3.8'
-# PYTHON_COMMAND_BASENAME='pypy3'
+# Array of all arguments with which to invoke new Python interpreter processes.
+# PYTHON_ARGS=( python3 )
+# PYTHON_ARGS=( python3.6 )
+PYTHON_ARGS=( python3.9 )
+# PYTHON_ARGS=( pypy3.7 )
 
 # ....................{ GREETING                          }....................
 # Print a greeting preamble.
 echo "beartype profiler [version]: ${VERSION}"
 echo
+
+# ....................{ FUNCTIONS ~ testers               }....................
+# is_package(module_name: str) -> bool
+#
+# Report success only if a package or module with the passed fully-qualified
+# name is importable and thus installed under the active Python interpreter.
+# This tester is strongly inspired by this StackOverflow post:
+#     https://askubuntu.com/a/588392/415719
+function is_package() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local package_name="${1}"
+
+    # Report success only if this package or module exists.
+    "${PYTHON_ARGS[@]}" -c "import ${package_name}"
+}
+
+# ....................{ CONSTANTS ~ packages              }....................
+# Package-specific booleans defined *AFTER* defining the is_package() tester.
+
+# Non-empty *ONLY* if "typeguard" is installed.
+IS_PACKAGE_TYPEGUARD="$(is_package 'typeguard' && echo 1)"
 
 # ....................{ FUNCTIONS ~ profilers             }....................
 # profile_func(
@@ -162,11 +203,14 @@ for _ in range(${num_loop_calls}):
         "${CODE_DECOR_BEARTYPE}${code_func}" \
         "${num_loop}" "${num_best}"
 
-    # Profile the "typeguard"-decorated definition of this function.
-    profile_snippet 'decoration         [typeguard]: ' \
-        "${CODE_SETUP_TYPEGUARD}${code_setup}" \
-        "${CODE_DECOR_TYPEGUARD}${code_func}" \
-        "${num_loop}" "${num_best}"
+    # If "typeguard" is installed...
+    if [[ -n "${IS_PACKAGE_TYPEGUARD}" ]]; then
+        # Profile the "typeguard"-decorated definition of this function.
+        profile_snippet 'decoration         [typeguard]: ' \
+            "${CODE_SETUP_TYPEGUARD}${code_setup}" \
+            "${CODE_DECOR_TYPEGUARD}${code_func}" \
+            "${num_loop}" "${num_best}"
+    fi
 
     # Profile this undecorated definition and repeated calling of this function
     # as a baseline.
@@ -182,12 +226,15 @@ for _ in range(${num_loop_calls}):
         "${CODE_DECOR_BEARTYPE}${code_func}${code_call_repeat}" \
         "${num_loop}" "${num_best}"
 
-    # Profile the "beartype"-decorated definition and repeated calling of this
-    # function.
-    profile_snippet 'decoration + calls [typeguard]: ' \
-        "${CODE_SETUP_TYPEGUARD}${code_setup}" \
-        "${CODE_DECOR_TYPEGUARD}${code_func}${code_call_repeat}" \
-        "${num_loop}" "${num_best}"
+    # If "typeguard" is installed...
+    if [[ -n "${IS_PACKAGE_TYPEGUARD}" ]]; then
+        # Profile the "beartype"-decorated definition and repeated calling of
+        # this function.
+        profile_snippet 'decoration + calls [typeguard]: ' \
+            "${CODE_SETUP_TYPEGUARD}${code_setup}" \
+            "${CODE_DECOR_TYPEGUARD}${code_func}${code_call_repeat}" \
+            "${num_loop}" "${num_best}"
+    fi
 }
 
 
@@ -236,7 +283,7 @@ function profile_snippet() {
     echo -n "${label}"
 
     # Profile these snippets.
-    command "${PYTHON_COMMAND_BASENAME}" -m timeit \
+    command "${PYTHON_ARGS[@]}" -m timeit \
         -n "${num_loop}" \
         -r "${num_best}" \
         -s "${code_setup}" \
@@ -318,19 +365,40 @@ function is_command() {
 
 # ....................{ VERSIONS                          }....................
 # Print the current basename and version of Python 3.x.
-echo    "python    [basename]: ${PYTHON_COMMAND_BASENAME}"
+echo    "python    [basename]: ${PYTHON_ARGS[*]}"
 echo -n 'python    [version]: '
-command "${PYTHON_COMMAND_BASENAME}" --version
+command "${PYTHON_ARGS[@]}" --version
 
-# Print project versions *BEFORE* profiling for disambiguity. Note that:
-# * The "typeguard" package fails to explicitly publish its version, so we
-#   fallback to the setuptools-based Hard Way.
-command "${PYTHON_COMMAND_BASENAME}" -c '
+# Print the current version of beartype *BEFORE* profiling.
+command "${PYTHON_ARGS[@]}" -c '
 import beartype
 print("beartype  [version]: " + beartype.__version__)'
-command "${PYTHON_COMMAND_BASENAME}" -c '
+
+# If pydantic is installed, print the current version of pydantic as well.
+if is_package 'pydantic'; then
+    command "${PYTHON_ARGS[@]}" -c '
+import pydantic
+print("pydantic  [version]: " + pydantic.version.VERSION)'
+fi
+
+#FIXME: Also call "is_package typeguard" above.
+
+# If typeguard is installed, print the current version of typeguard as well.
+# Note that the "typeguard" package fails to explicitly publish its version, so
+# we fallback to the setuptools-based Hard Way. *sigh*
+if [[ -n "${IS_PACKAGE_TYPEGUARD}" ]]; then
+    command "${PYTHON_ARGS[@]}" -c '
 import pkg_resources
 print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
+fi
+
+#FIXME: Uncomment after implementing "typical" support.
+# If typical is installed, print the current version of typical as well.
+# if is_package 'typical'; then
+#     command "${PYTHON_ARGS[@]}" -c '
+# import pkg_resources
+# print("typeguard [version]: " + pkg_resources.require("typeguard")[0].version)'
+# fi
 
 # ....................{ PROFILE ~ scalar                  }....................
 profile_callable 'str' '' \

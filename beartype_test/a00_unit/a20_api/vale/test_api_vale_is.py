@@ -36,10 +36,21 @@ def test_api_vale_is_pass() -> None:
     from beartype.vale import Is
     from beartype.vale._valeissub import SubscriptedIs
 
-    # Objects produced by subscripting the "Is" class with valid validators.
+    def _is_quoted(text):
+        '''
+        Non-lambda function satisfying the data validator API.
+        '''
+
+        return '"' in text or "'" in text
+
+    # Objects produced by subscripting the "Is" class with lambda functions
+    # satisfying the data validator API.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
-    IsQuoted = Is[lambda text: '"' in text or "'" in text]
+
+    # Object produced by subscripting the "Is" class with a non-lambda function
+    # satisfying the data validator API.
+    IsQuoted = Is[_is_quoted]
 
     # Assert these objects satisfy the expected API.
     assert isinstance(IsLengthy, SubscriptedIs)
@@ -60,9 +71,17 @@ def test_api_vale_is_pass() -> None:
     assert bool(IsLengthy.is_valid_code)
     assert bool(IsLengthy.is_valid_code_locals)
 
-    # Assert one such object provides the expected representation.
+    # Assert an object produced by subscripting the "Is" class with a lambda
+    # function satisfying the data validator API has the expected
+    # representation.
     IsLengthyRepr = repr(IsLengthy)
     assert 'len(text) > 30' in IsLengthyRepr
+
+    # Assert an object produced by subscripting the "Is" class with a
+    # non-lambda function satisfying the data validator API has the expected
+    # representation.
+    IsQuotedRepr = repr(IsQuoted)
+    assert '._is_quoted' in IsQuotedRepr
 
     # Assert that repeated accesses of that representation are memoized by
     # efficiently returning the same string.
@@ -98,6 +117,7 @@ def test_api_vale_is_fail() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype import beartype
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import Is
 
@@ -275,3 +295,35 @@ def test_api_vale_subscriptedis_fail() -> None:
                 'Into the valley of Death',
             **kwargs_good
         )
+
+# ....................{ TESTS ~ decor                     }....................
+@skip_if_python_version_less_than('3.9.0')
+def test_api_vale_decor_fail() -> None:
+    '''
+    Test unsuccessful usage of the public :mod:`beartype.vale.Is` class when
+    used to type hint callables decorated by the :func:`beartype.beartype`
+    decorator if the active Python interpreter targets Python >= 3.9 (and thus
+    supports the :class:`typing.Annotated` class required to do so) *or* skip
+    otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorHintPep593Exception
+    from beartype.vale import Is
+    from typing import Annotated
+
+    # Assert that @beartype raises the expected exception when decorating a
+    # callable annotated by a type metahint whose first argument is a
+    # beartype-specific data validator and whose second argument is a
+    # beartype-agnostic object.
+    with raises(BeartypeDecorHintPep593Exception):
+        @beartype
+        def volleyed_and_thundered(
+            flashed_all_their_sabres_bare: Annotated[
+                str,
+                Is[lambda text: bool('Flashed as they turned in air')],
+                'Sabring the gunners there,',
+            ]
+        ) -> str:
+            return flashed_all_their_sabres_bare + 'Charging an army, while'

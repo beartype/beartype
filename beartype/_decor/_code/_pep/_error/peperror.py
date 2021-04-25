@@ -107,7 +107,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_return_value,
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from typing import Generic, Optional
 
@@ -304,8 +304,8 @@ def raise_pep_call_exception(
 
         # Raise an exception of the desired class embedding this cause.
         raise exception_cls(  # type: ignore[misc]
-            f'{pith_label} violates type hint '
-            f'{repr(hint)}, as {exception_cause_suffixed}'
+            f'{pith_label} violates type hint {repr(hint)}, as '
+            f'{exception_cause_suffixed}'
         )
 
     # Else, this pith satisfies this hint. In this (hopefully uncommon) edge
@@ -314,7 +314,7 @@ def raise_pep_call_exception(
     # *ONLY* call this child helper function when this pith does *NOT* satisfy
     # this hint. In this case, raise an exception encouraging the end user to
     # submit an upstream issue with us.
-    pith_value_repr = get_object_representation(
+    pith_value_repr = represent_object(
         obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
     raise _BeartypeCallHintPepRaiseDesynchronizationException(
         f'{pith_label} violates type hint {repr(hint)}, '

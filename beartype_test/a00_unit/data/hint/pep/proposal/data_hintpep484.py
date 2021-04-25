@@ -1669,6 +1669,7 @@ def add_data(data_module: 'ModuleType') -> None:
             PepHintMetadata(
                 hint=Hashable,
                 pep_sign=Hashable,
+                stdlib_type=collections_abc.Hashable,
                 piths_satisfied_meta=(
                     # String constant.
                     PepHintPithSatisfiedMetadata(
@@ -1686,13 +1687,13 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Of language',
                     ]),
                 ),
-                stdlib_type=collections_abc.Hashable,
             ),
 
             # Unsubscripted "Sized" attribute.
             PepHintMetadata(
                 hint=Sized,
                 pep_sign=Sized,
+                stdlib_type=collections_abc.Sized,
                 piths_satisfied_meta=(
                     # String constant.
                     PepHintPithSatisfiedMetadata('Faire, a'),
@@ -1706,7 +1707,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Boolean constant.
                     PepHintPithUnsatisfiedMetadata(False),
                 ),
-                stdlib_type=collections_abc.Sized,
             ),
         ))
 

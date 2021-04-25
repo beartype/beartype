@@ -18,7 +18,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextlabel import label_class
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from typing import Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -43,7 +43,7 @@ def get_cause_object_representation(pith: object) -> str:
     '''
 
     # Return the machine-readable representation of this object.
-    return f'value {get_object_representation(pith)}'
+    return f'value {represent_object(pith)}'
 
 # ....................{ GETTERS ~ type                    }....................
 #FIXME: Unit test us up.
@@ -82,7 +82,7 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
     # If this pith is actually an instance of this class, raise an exception.
     elif isinstance(pith, hint):
         raise _BeartypeCallHintRaiseException(
-            f'{get_object_representation(pith)} instance of '
+            f'{represent_object(pith)} instance of '
             f'non-PEP type hint {repr(hint)}.'
         )
     # Else, this pith is *NOT* an instance of this type.
@@ -137,7 +137,7 @@ def get_cause_object_not_nonpep_tuple(
     # tuple, raise an exception.
     if isinstance(pith, hint):
         raise _BeartypeCallHintRaiseException(
-            f'{get_object_representation(pith)} instance of one or more '
+            f'{represent_object(pith)} instance of one or more '
             f'classes in non-PEP tuple union:\n{repr(hint)}'
         )
     # Else, this pith is *NOT* an instance of one or more of the classes listed

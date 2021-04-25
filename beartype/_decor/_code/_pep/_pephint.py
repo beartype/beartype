@@ -146,7 +146,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmunge import replace_str_substrs
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Callable
 from random import getrandbits
@@ -1383,8 +1383,6 @@ def pep_code_check_hint(
                 # excluding the first beartype-agnostic argument guaranteed to
                 # be a type...
                 for hint_child in get_hint_pep593_metadata(hint_curr):
-                    #FIXME: Unit test us up.
-
                     # If this argument is *NOT* beartype-specific, raise an
                     # exception. Since the second argument was
                     # beartype-specific, all additional arguments are
@@ -1395,7 +1393,7 @@ def pep_code_check_hint(
                             f'{hint_curr_label} {repr(hint_curr)} subscripted '
                             f'by both @beartype-specific and -agnostic '
                             f'objects '
-                            f'(i.e., {get_object_representation(hint_child)} '
+                            f'(i.e., {represent_object(hint_child)} '
                             f'not subscription of "beartype.vale.Is*" class).'
                         )
                     # Else, this argument is beartype-specific.

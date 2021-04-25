@@ -55,7 +55,10 @@ def add_data(data_module: 'ModuleType') -> None:
     # Beartype-specific data validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
-    IsQuoted = Is[lambda text: '"' in text or "'" in text]
+
+    # Beartype-specific data validators defined as non-lambda functions.
+    def _is_quoted(text): return '"' in text or "'" in text
+    IsQuoted = Is[_is_quoted]
 
     # Beartype-specific data validator synthesized from the above validators
     # via the domain-specific language (DSL) implemented by those validators.
@@ -152,28 +155,122 @@ def add_data(data_module: 'ModuleType') -> None:
                 # String constant satisfying this validator.
                 PepHintPithSatisfiedMetadata(
                     'To Ɯṙaith‐like‐upwreathed ligaments'),
-                    # ['To Ɯṙaith‐like‐upwreathed ligaments']),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(b'Down-bound'),
+                PepHintPithUnsatisfiedMetadata(
+                    pith=b'Down-bound',
+                    # Match that the exception message raised for this object
+                    # embeds the code for this validator's lambda function.
+                    exception_str_match_regexes=(
+                        r'Is\[.*\blen\(text\) > 30\b.*\]',),
+                ),
                 # String constant violating this validator.
                 PepHintPithUnsatisfiedMetadata('To prayer'),
             ),
         ),
 
-        #FIXME: Unit test this:
-        # PepHintMetadata(
-        #     hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
-        #FIXME: Unit test this using the exact same examples as the prior:
-        # PepHintMetadata(
-        #     hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
-        #FIXME: Unit test this:
-        # PepHintMetadata(
-        #     hint=Annotated[str, IsLengthyOrUnquotedSentence],
+        # Annotated of a non-"typing" type annotated by two or more
+        # beartype-specific data validators all defined as functions, specified
+        # with comma-delimited list syntax.
+        PepHintMetadata(
+            hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                PepHintPithSatisfiedMetadata(
+                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=b'Joy.',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\) > 30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating only the first of these validators.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='"Conduct my friar’s wheel"...',
+                    # Match that the exception message raised documents the
+                    # exact validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
+                ),
+            ),
+        ),
 
-        #FIXME: Unit test that something like this erroneous type hint
-        #"Annotated[str, IsLengthy, 'Uh oh!']" fails with the expected
-        #exception. We may need to do so elsewhere, sadly -- perhaps in a new
-        #"test_decor_vale.py" submodule.
+        # Annotated of a non-"typing" type annotated by two or more
+        # beartype-specific data validators all defined as functions, specified
+        # with "&"-delimited operator syntax.
+        PepHintMetadata(
+            hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                PepHintPithSatisfiedMetadata(
+                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=b'Joy.',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\) > 30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating only the first of these validators.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='"Conduct my friar’s wheel"...',
+                    # Match that the exception message raised documents the
+                    # exact validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
+                ),
+            ),
+        ),
+
+        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # data validator synthesized from all possible operators.
+        PepHintMetadata(
+            hint=Annotated[str, IsLengthyOrUnquotedSentence],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                PepHintPithSatisfiedMetadata(
+                    'Dialectical, eclectic mind‐toys'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=b'Of Cycladic impoverishment, cyclically unreeling',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\) > 30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating all of these validators.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='Stay its course, and',
+                    # Match that the exception message raised documents the
+                    # first validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
+                ),
+            ),
+        ),
     ))

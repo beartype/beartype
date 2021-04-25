@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype replace utility unit tests.**
+Project-wide **string munging** utility unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.text.utiltextmunge` submodule.
@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ case                      }....................
 def test_uppercase_char_first():
     '''
     Test the :func:`beartype._util.text.utiltextmunge.uppercase_char_first`
@@ -34,7 +34,7 @@ def test_uppercase_char_first():
     assert uppercase_char_first(text="<bear>") == "<bear>"
     assert uppercase_char_first(text="") == ""
 
-
+# ....................{ TESTS ~ number                    }....................
 def test_number_lines():
     '''
     Test the :func:`beartype._util.text.utiltextmunge.number_lines`
@@ -67,7 +67,7 @@ def test_number_lines():
                       string=numbered_lines_string[line_number]
                       ) is not None
 
-
+# ....................{ TESTS ~ replace                   }....................
 def test_replace_str_substrs():
     '''
     Test the :func:`beartype._util.text.utiltextmunge.replace_str_substrs`
@@ -96,7 +96,7 @@ def test_replace_str_substrs():
                                old="do not think",
                                new="think") == "I think, therefore I am."
 
-
+# ....................{ TESTS ~ [pre|suf]fix              }....................
 def test_suffix_unless_suffixed():
     '''
     Test the :func:`beartype._util.text.utiltextmunge.suffix_unless_suffixed`

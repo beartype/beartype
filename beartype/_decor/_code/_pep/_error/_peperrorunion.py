@@ -23,7 +23,7 @@ from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed, uppercase_char_first)
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -173,7 +173,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     # Else, prior logic appended one or more strings describing these failures.
 
     # Truncated object representation of this pith.
-    pith_repr = get_object_representation(sleuth.pith)
+    pith_repr = represent_object(sleuth.pith)
 
     # If prior logic appended one cause, return this cause as a single-line
     # substring intended to be embedded in a longer string.

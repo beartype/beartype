@@ -46,10 +46,10 @@ pushd "${script_dirname}" >/dev/null
 # Array of all arguments to be passed to "python3" below. Dismantled, this is:
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
-python_args=( python3 -X dev )
-# python_args=( python3.6 -X dev )
-# python_args=( python3.9 -X dev )
-# python_args=( pypy3.7 -X dev )
+PYTHON_ARGS=( python3 -X dev )
+# PYTHON_ARGS=( python3.6 -X dev )
+# PYTHON_ARGS=( python3.9 -X dev )
+# PYTHON_ARGS=( pypy3.7 -X dev )
 
 # Array of all arguments to be passed to "pytest" below. Dismantled, this is:
 #
@@ -84,8 +84,8 @@ python_args=( python3 -X dev )
 #   See the following official documentation for further details, entitled
 #   "Initialization: determining rootdir and inifile":
 #       https://docs.pytest.org/en/latest/customize.html
-pytest_args=( pytest '--color=yes' '--maxfail=1' "${@}" )
-# echo "pytest args: ${pytest_args[*]}"
+PYTEST_ARGS=( pytest '--color=yes' '--maxfail=1' "${@}" )
+# echo "pytest args: ${PYTEST_ARGS[*]}"
 
 # If the external "coverage" command installed by the third-party "coverage"
 # package is installed *AND* the "-k" option was *NOT* passed, then measure
@@ -95,18 +95,18 @@ pytest_args=( pytest '--color=yes' '--maxfail=1' "${@}" )
 # option restricts testing to a subset of tests, guaranteeing that coverage
 # measurements will be misleading at best and trigger test failure at worst
 # (e.g., if the "fail_under" option is enabled in ".coveragerc").
-if hash coverage 2>/dev/null && [[ ! " ${pytest_args[*]} " =~ " -k " ]]; then
+if hash coverage 2>/dev/null && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
     # If run this project's pytest-based test suite with all passed arguments
     # (while measuring coverage) succeeds, generate a terminal coverage report.
-    command "${python_args[@]}" -m \
-        coverage run -m "${pytest_args[@]}" . &&
-    command "${python_args[@]}" -m \
+    command "${PYTHON_ARGS[@]}" -m \
+        coverage run -m "${PYTEST_ARGS[@]}" . &&
+    command "${PYTHON_ARGS[@]}" -m \
         coverage report
 # Else, run this project's pytest-based test suite with all passed arguments
 # *WITHOUT* measuring coverage.
 else
-    command "${python_args[@]}" -m \
-        "${pytest_args[@]}" .
+    command "${PYTHON_ARGS[@]}" -m \
+        "${PYTEST_ARGS[@]}" .
 fi
 
 # 0-based exit code reported by the prior command.

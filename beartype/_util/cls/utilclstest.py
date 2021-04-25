@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Package-wide **unmemoized class tester** (i.e., unmemoized and thus efficient
+Project-wide **unmemoized class tester** (i.e., unmemoized and thus efficient
 callable testing various properties of arbitrary classes) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.

@@ -22,7 +22,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
 from beartype._util.hint.pep.utilhintpepget import get_hint_pep_stdlib_type
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -115,7 +115,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         # If this pith is non-empty and thus fails to satisfy this hint...
         if sleuth.pith:
             # Truncated representation of this tuple.
-            pith_repr = get_object_representation(sleuth.pith)
+            pith_repr = represent_object(sleuth.pith)
 
             # Return a substring describing this failure.
             return f'tuple {pith_repr} non-empty'
@@ -126,7 +126,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         # satisfy this hint. In this case...
         if len(sleuth.pith) != len(sleuth.hint_childs):
             # Truncated representation of this tuple.
-            pith_repr = get_object_representation(sleuth.pith)
+            pith_repr = represent_object(sleuth.pith)
 
             # Return a substring describing this failure.
             return (

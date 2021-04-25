@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.pool.utilcachepool import KeyPool
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
 from collections.abc import Iterable, Sized
 from typing import NoReturn
@@ -129,13 +129,13 @@ class FixedList(list):
     def __iadd__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not addable by '
-            f'{get_object_representation(value)}.')
+            f'{represent_object(value)}.')
 
 
     def __imul__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not multipliable by '
-            f'{get_object_representation(value)}.')
+            f'{represent_object(value)}.')
 
     # ..................{ BAD ~ dunders : setitem           }..................
     def __setitem__(self, index, value):
@@ -195,7 +195,7 @@ class FixedList(list):
         if not isinstance(value, Sized):
             raise _BeartypeUtilCachedFixedListException(
                 f'{self._label} slice {repr(index)} not settable to unsized '
-                f'{get_object_representation(value)}.')
+                f'{represent_object(value)}.')
         # Else, this value is a sized container.
 
         # 0-based first and one-past-the-last indices sliced by this slice.
@@ -212,7 +212,7 @@ class FixedList(list):
         if slice_len != value_len:
             raise _BeartypeUtilCachedFixedListException(
                 f'{self._label} slice {repr(index)} of length {slice_len} not '
-                f'settable to {get_object_representation(value)} of differing '
+                f'settable to {represent_object(value)} of differing '
                 f'length {value_len}.'
             )
 
@@ -223,7 +223,7 @@ class FixedList(list):
     def append(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not appendable by '
-            f'{get_object_representation(obj)}.')
+            f'{represent_object(obj)}.')
 
 
     def clear(self) -> NoReturn:
@@ -234,7 +234,7 @@ class FixedList(list):
     def extend(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not extendable by '
-            f'{get_object_representation(obj)}.')
+            f'{represent_object(obj)}.')
 
 
     def pop(self, *args) -> NoReturn:
@@ -261,7 +261,7 @@ class FixedList(list):
         '''
 
         # One-liners for magnanimous pusillanimousness.
-        return f'Fixed list {get_object_representation(self)}'
+        return f'Fixed list {represent_object(self)}'
 
 # ....................{ SINGLETONS ~ private              }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)

@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Sequence, Mapping
 from typing import Sequence as SequenceHint
 
@@ -242,7 +242,7 @@ def merge_mappings_two_or_more(mappings: SequenceHint[Mapping]) -> Mapping:
         if MAPPINGS_LEN == 1:
             raise _BeartypeUtilMappingException(
                 f'Two or more mappings expected, but only one mapping '
-                f'{get_object_representation(mappings[0])} passed.')
+                f'{represent_object(mappings[0])} passed.')
         # Else, no mappings are passed. Raise an appropriate exception.
         else:
             raise _BeartypeUtilMappingException(

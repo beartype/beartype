@@ -28,10 +28,6 @@
 #  variables. See also:
 #  https://www.python.org/dev/peps/pep-0612
 
-#FIXME: Byte string values aren't displayed properly in messages: e.g.,
-#    ...as value "b"What? Haven't you ever seen a byte-string separator
-#    before?"" not str.
-
 #FIXME: Resurrect memoization support. To do so, we'll probably need to
 #abandon the @callable_cached decorator employed below in favour of a manually
 #implemented dictionary cache resembling:

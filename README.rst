@@ -2868,6 +2868,8 @@ decorators, function calls, and import hooks) include:
 +-------------------+---------+---------------+---------------------------+
 | typeen_           | no      | no            | *unknown*                 |
 +-------------------+---------+---------------+---------------------------+
+| typical_          | **yes** | **yes**       | *unknown*                 |
++-------------------+---------+---------------+---------------------------+
 | typeguard_        | **yes** | **yes**       | 20 ✕ ``beartype``         |
 +-------------------+---------+---------------+---------------------------+
 
@@ -3560,6 +3562,8 @@ rather than Python runtime) include:
    https://github.com/Stewori/pytypes
 .. _typeen:
    https://github.com/k2bd/typen
+.. _typical:
+   https://github.com/seandstewart/typical
 .. _typeguard:
    https://github.com/agronholm/typeguard
 

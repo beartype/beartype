@@ -30,7 +30,7 @@ def test_get_func_code_or_none() -> None:
     from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
     from beartype._util.func.utilfunccode import get_func_code_or_none
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype_test.a00_unit.data.data_utilfunccode import (
+    from beartype_test.a00_unit.a00_util.data.data_utilfunccode import (
         of_vapours,
         will_be_the_dome,
         thou_dirge,

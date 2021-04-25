@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Package-wide **Python interpreter version utilities**.
+Project-wide **Python interpreter version utilities**.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

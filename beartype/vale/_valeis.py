@@ -25,14 +25,14 @@ from beartype.vale._valeissub import (
     SubscriptedIs,
     SubscriptedIsValidator,
 )
-from beartype._util.func.utilfunccode import get_func_code_or_none
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-from beartype._util.func.utilfunctest import is_func_lambda
-from beartype._util.text.utiltextrepr import get_object_representation
-from typing import Callable
+from beartype._util.text.utiltextrepr import (
+    represent_object,
+    represent_func,
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -307,7 +307,7 @@ class Is(object):
             if is_valid:
                 raise BeartypeValeSubscriptionException(
                     f'{repr(Is)} subscripted by two or more arguments:\n'
-                    f'{get_object_representation(is_valid)}'
+                    f'{represent_object(is_valid)}'
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
@@ -335,45 +335,6 @@ class Is(object):
             # downstream logic.
             is_valid_code = f'{is_valid_attr_name}({{obj}})',
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda: f'Is[{_get_func_representation(is_valid)}]',
+            get_repr=lambda:
+                f'Is[{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}]',
         )
-
-# ....................{ PRIVATE ~ getter                  }....................
-def _get_func_representation(func: Callable) -> str:
-    '''
-    Machine-readable representation of the passed callable.
-
-    Caveats
-    ----------
-    **This getter is excruciatingly slow.** This getter should *only* be called
-    by a caller that is memoizing or otherwise caching the string returned by
-    this getter.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be represented.
-
-    Warns
-    ----------
-    BeartypeValeLambdaWarning
-        If this callable is a pure-Python lambda function whose definition is
-        *not* parsable from the script or module defining that lambda.
-    '''
-    assert callable(func), f'{repr(func)} not callable.'
-
-    # Return either...
-    return (
-        # If this callable is a pure-Python lambda function, either:
-        # * If this lambda is defined by an on-disk script or module source
-        #   file, the exact substring of that file defining this lambda.
-        # * Else (e.g., if this lambda is dynamically defined in-memory), a
-        #   placeholder string.
-        get_func_code_or_none(
-            func=func,
-            warning_cls=BeartypeValeLambdaWarning,
-        ) or '<lambda>'
-        if is_func_lambda(func) else
-        # Else, the fully-qualified name of this non-lambda function.
-        func.__qualname__
-    )

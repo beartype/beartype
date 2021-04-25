@@ -23,7 +23,7 @@ from beartype._util.data.utildatadict import merge_mappings_two
 from beartype._util.func.utilfuncarg import get_func_args_len_standard
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_python
-from beartype._util.text.utiltextrepr import get_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from typing import Any, Callable
 
 # See the "beartype.cave" submodule for further commentary.
@@ -233,7 +233,7 @@ class SubscriptedIs(object):
         if not callable(is_valid):
             raise BeartypeValeSubscriptionException(
                 f'Class "beartype.vale.Is" subscripted argument '
-                f'{get_object_representation(is_valid)} not callable.'
+                f'{represent_object(is_valid)} not callable.'
             )
         # Else, this validator is callable.
         #
@@ -265,7 +265,7 @@ class SubscriptedIs(object):
         if not isinstance(is_valid_code, str):
             raise BeartypeValeSubscriptionException(
                 f'Data validator code not string:\n'
-                f'{get_object_representation(is_valid_code)}'
+                f'{represent_object(is_valid_code)}'
             )
         # Else, this code is a string.
         #
@@ -299,7 +299,7 @@ class SubscriptedIs(object):
         if not isinstance(is_valid_code_locals, dict):
             raise BeartypeValeSubscriptionException(
                 f'Data validator locals '
-                f'{get_object_representation(is_valid_code_locals)} not '
+                f'{represent_object(is_valid_code_locals)} not '
                 f'dictionary.'
             )
         # Else, this dictionary of code locals is a dictionary.
@@ -359,7 +359,7 @@ class SubscriptedIs(object):
         if not isinstance(other, SubscriptedIs):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class & operand '
-                f'{get_object_representation(other)} not '
+                f'{represent_object(other)} not '
                 f'subscripted "beartype.vale.Is*" class.'
             )
         # Else, the passed object is also an instance of this class.
@@ -405,7 +405,7 @@ class SubscriptedIs(object):
         if not isinstance(other, SubscriptedIs):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class | operand '
-                f'{get_object_representation(other)} not '
+                f'{represent_object(other)} not '
                 f'subscripted "beartype.vale.Is*" class.'
             )
         # Else, the passed object is also an instance of this class.

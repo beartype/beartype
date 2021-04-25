@@ -4,9 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Package-wide **text label utilities** (i.e., callables generating
-human-readable strings describing prominent objects or types, which are then
-typically interpolated into exception messages).
+Project-wide **text label** (i.e., human-readable strings describing prominent
+objects or types, typically interpolated into error messages) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -184,12 +183,12 @@ def label_callable_decorated_param_value(
     assert isinstance(param_name, str), f'{repr(param_name)} not string.'
 
     # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import get_object_representation
+    from beartype._util.text.utiltextrepr import represent_object
 
     # Create and return this label.
     return (
         f'{label_callable_decorated(func)} parameter '
-        f'{param_name}={get_object_representation(param_value)}'
+        f'{param_name}={represent_object(param_value)}'
     )
 
 # ....................{ LABELLERS ~ callable : return     }....................
@@ -236,12 +235,12 @@ def label_callable_decorated_return_value(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import get_object_representation
+    from beartype._util.text.utiltextrepr import represent_object
 
     # Create and return this label.
     return (
         f'{label_callable_decorated_return(func)} '
-        f'{get_object_representation(return_value)}'
+        f'{represent_object(return_value)}'
     )
 
 # ....................{ LABELLERS ~ callable : class      }....................
