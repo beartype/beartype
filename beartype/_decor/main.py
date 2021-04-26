@@ -263,7 +263,7 @@ def beartype(func: Callable) -> Callable:
     func_data.reinit(func)
 
     # Generate the raw string of Python statements implementing this wrapper.
-    func_wrapper_code, func_wrapper_locals = generate_code(func_data)
+    func_wrapper_code = generate_code(func_data)
 
     # If this callable requires *NO* type-checking, silently reduce to a noop
     # and thus the identity decorator by returning this callable as is.
@@ -351,7 +351,7 @@ def beartype(func: Callable) -> Callable:
     func_wrapper = make_func(
         func_name=func_data.func_wrapper_name,
         func_code=func_wrapper_code,
-        func_locals=func_wrapper_locals,
+        func_locals=func_data.func_wrapper_locals,
         func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
         exception_cls=BeartypeDecorWrapperException,

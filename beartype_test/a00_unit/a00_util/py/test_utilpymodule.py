@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype module utility unit tests.**
+Project-wide **module** utility unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.py.utilpymodule` submodule.
@@ -29,7 +29,7 @@ def test_import_module_attr_pass() -> None:
 
     # Attribute dynamically imported from a module.
     module_attr = import_module_attr(
-        'beartype_test.a00_unit.data.module.data_modulegood.attrgood')
+        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrgood')
 
     # Assert this to be the expected attribute.
     assert isinstance(module_attr, str)
@@ -76,12 +76,11 @@ def test_import_module_attr_fail() -> None:
     # an importable module.
     with raises(_BeartypeUtilModuleException):
         import_module_attr(
-            'beartype_test.a00_unit.data.module.data_modulegood.attrbad')
+            'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrbad')
 
     # Assert this function raises the expected exception when passed the
     # syntactically valid fully-qualified name of a non-existent attribute of
     # an unimportable module.
     with raises(ValueError):
         import_module_attr(
-            'beartype_test.a00_unit.data.module.data_modulebad.attrbad')
-
+            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad.attrbad')

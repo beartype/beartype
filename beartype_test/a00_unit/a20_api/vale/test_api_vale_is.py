@@ -66,10 +66,10 @@ def test_api_vale_is_pass() -> None:
     assert IsQuoted.is_valid('"Forward, the Light Brigade!"') is True
 
     # Assert one such object provides both non-empty code and code locals.
-    assert isinstance(IsLengthy.is_valid_code, str)
-    assert isinstance(IsLengthy.is_valid_code_locals, dict)
-    assert bool(IsLengthy.is_valid_code)
-    assert bool(IsLengthy.is_valid_code_locals)
+    assert isinstance(IsLengthy._is_valid_code, str)
+    assert isinstance(IsLengthy._is_valid_code_locals, dict)
+    assert bool(IsLengthy._is_valid_code)
+    assert bool(IsLengthy._is_valid_code_locals)
 
     # Assert an object produced by subscripting the "Is" class with a lambda
     # function satisfying the data validator API has the expected
@@ -178,7 +178,6 @@ def test_api_vale_subscriptedis_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale._valeissub import SubscriptedIs
 
     # Arbitrary valid data validator.
@@ -200,13 +199,13 @@ def test_api_vale_subscriptedis_pass() -> None:
     # Assert the "SubscriptedIs" class preserves delimited code as is.
     subscriptedis_delimited = SubscriptedIs(
         is_valid_code=is_valid_code_delimited, **kwargs)
-    assert subscriptedis_delimited.is_valid_code is is_valid_code_delimited
+    assert subscriptedis_delimited._is_valid_code is is_valid_code_delimited
 
     # Assert the "SubscriptedIs" class delimits undelimited code.
     subscriptedis_undelimited = SubscriptedIs(
         is_valid_code=is_valid_code_undelimited, **kwargs)
     assert (
-        subscriptedis_undelimited.is_valid_code ==
+        subscriptedis_undelimited._is_valid_code ==
         f'({is_valid_code_undelimited})'
     )
 
@@ -281,8 +280,8 @@ def test_api_vale_subscriptedis_fail() -> None:
         SubscriptedIs(get_repr='All that was left of them,', **kwargs_good)
 
     # Assert that attempting to instantiate the "SubscriptedIs" class with
-    # valid code and code locals but a C-based representer raises the
-    # expected exception.
+    # valid code and code locals but a C-based representer raises the expected
+    # exception.
     with raises(BeartypeValeSubscriptionException):
         SubscriptedIs(get_repr=iter, **kwargs_good)
 

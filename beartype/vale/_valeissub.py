@@ -85,7 +85,7 @@ class SubscriptedIs(object):
         **Data validator** (i.e., caller-defined function accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
         an arbitrary constraint *or* ``False`` otherwise).
-    is_valid_code : Optional[str]
+    _is_valid_code : Optional[str]
         **Data validator code** (i.e., Python code snippet validating the
         previously localized parameter or return value against the same data
         validation performed by the :meth:`is_valid` function) if this data
@@ -94,7 +94,7 @@ class SubscriptedIs(object):
         *must* contain one or more test subject substrings ``{obj}``, which
         code generators globally replace at dynamic execution time with the
         name of the actual object to be validated by this code.
-    is_valid_code_locals : Optional[CallableScope]
+    _is_valid_code_locals : Optional[CallableScope]
         **Data validator code local scope** (i.e., dictionary mapping from the
         name to value of each local attribute referenced in the :attr:`code`
         code snippet) required to dynamically compile this data validator code
@@ -139,8 +139,8 @@ class SubscriptedIs(object):
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'is_valid',
-        'is_valid_code',
-        'is_valid_code_locals',
+        '_is_valid_code',
+        '_is_valid_code_locals',
         '_get_repr',
     )
 
@@ -247,7 +247,10 @@ class SubscriptedIs(object):
         #
         # If this validator does *NOT* accept exactly one argument, raise an
         # exception.
-        elif get_func_args_len_standard(is_valid) != 1:
+        elif get_func_args_len_standard(
+            func=is_valid,
+            exception_cls=BeartypeValeSubscriptionException,
+        ) != 1:
             raise BeartypeValeSubscriptionException(
                 f'Class "beartype.vale.Is" subscripted callable '
                 f'{repr(is_valid)} positional or keyword argument count '
@@ -307,12 +310,10 @@ class SubscriptedIs(object):
         # If this representer is either uncallable, a C-based callable, *OR* a
         # pure-Python callable accepting one or more arguments, raise an
         # exception.
-        if (
-            get_func_args_len_standard(
-                func=get_repr,
-                exception_cls=BeartypeValeSubscriptionException,
-            ) != 0
-        ):
+        if get_func_args_len_standard(
+            func=get_repr,
+            exception_cls=BeartypeValeSubscriptionException,
+        ) != 0:
             raise BeartypeValeSubscriptionException(
                 f'Representer {repr(get_repr)} positional or keyword argument '
                 f'count {get_func_args_len_standard(get_repr)} != 0.'
@@ -323,8 +324,8 @@ class SubscriptedIs(object):
         # Classify this data validation function, effectively binding this
         # function to this object as an object-specific static method.
         self.is_valid = is_valid
-        self.is_valid_code = is_valid_code
-        self.is_valid_code_locals = is_valid_code_locals
+        self._is_valid_code = is_valid_code
+        self._is_valid_code_locals = is_valid_code_locals
         self._get_repr = get_repr
 
     # ..................{ DUNDERS ~ operator                }..................
@@ -365,12 +366,12 @@ class SubscriptedIs(object):
         # Else, the passed object is also an instance of this class.
 
         # Generate code conjunctively performing both validations.
-        is_valid_code = f'({self.is_valid_code} and {other.is_valid_code})'
+        is_valid_code = f'({self._is_valid_code} and {other._is_valid_code})'
 
         # Generate locals safely merging the locals required by the code
         # provided by both this and that validator.
         is_valid_code_locals = merge_mappings_two(
-            self.is_valid_code_locals, other.is_valid_code_locals)
+            self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
         return SubscriptedIs(
@@ -411,12 +412,12 @@ class SubscriptedIs(object):
         # Else, the passed object is also an instance of this class.
 
         # Generate code disjunctively performing both validations.
-        is_valid_code = f'({self.is_valid_code} or {other.is_valid_code})'
+        is_valid_code = f'({self._is_valid_code} or {other._is_valid_code})'
 
         # Generate locals safely merging the locals required by the code
         # provided by both this and that validator.
         is_valid_code_locals = merge_mappings_two(
-            self.is_valid_code_locals, other.is_valid_code_locals)
+            self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
         return SubscriptedIs(
@@ -447,8 +448,8 @@ class SubscriptedIs(object):
             is_valid=lambda obj: not self.is_valid(obj),
             # Inverted data validator code, defined as the trivial boolean
             # negation of this validator.
-            is_valid_code=f'(not {self.is_valid_code})',
-            is_valid_code_locals=self.is_valid_code_locals,
+            is_valid_code=f'(not {self._is_valid_code})',
+            is_valid_code_locals=self._is_valid_code_locals,
             get_repr=lambda: f'~{repr(self)}',
         )
 

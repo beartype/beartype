@@ -40,10 +40,10 @@ from beartype._decor._code._pep._pepsnip import (
 from beartype._decor._data import BeartypeData
 from beartype._decor._cache.cachetype import register_typistry_forwardref
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
+from beartype._util.data.utildatadict import update_mapping
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.hint.utilhintget import (
-    get_hint_forwardref_classname_relative_to_obj,
-)
+    get_hint_forwardref_classname_relative_to_obj)
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
@@ -64,70 +64,18 @@ Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
 callables).
 '''
 
-# ....................{ HINTS                             }....................
-FuncWrapperData = Tuple[str, CallableScope]
-'''
-PEP-compliant type hint matching **function wrapper data.**
-
-Specifically, this hint matches 2-tuples
-``(func_wrapper_code, func_wrapper_locals)`` where:
-
-* ``func_wrapper_code`` is either:
-
-    * If the decorated callable requires *no* type-checking (e.g., due to all
-      type hints annotating this callable being ignorable), the empty string.
-      Note this edge case is distinct from a related edge case at the head of
-      the :func:`beartype.beartype` decorator reducing to a noop for
-      unannotated callables. By compare, this boolean is ``True`` only for
-      callables annotated with **ignorable type hints** (i.e., :class:`object`,
-      :class:`beartype.cave.AnyType`, :class:`typing.Any`): e.g.,
-
-      .. _code-block:: python
-
-          >>> from beartype.cave import AnyType
-          >>> from typing import Any
-          >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
-          >>> muh_func is beartype(muh_func)
-          True
-
-      * Else, a code snippet defining the wrapper function type-checking the
-        decorated callable, including (in order):
-
-        * A signature declaring this wrapper, accepting both beartype-agnostic
-          and -specific parameters. The latter include:
-
-          * A private ``__beartype_func`` parameter initialized to the
-            decorated callable. In theory, this callable should be accessible
-            as a closure-style local in this wrapper. For unknown reasons
-            (presumably, a subtle bug in the exec() builtin), this is *not* the
-            case. Instead, a closure-style local must be simulated by passing
-            this callable at function definition time as the default value of
-            an arbitrary parameter. To ensure this default is *not* overwritten
-            by a function accepting a parameter of the same name, this unlikely
-            edge case is guarded against elsewhere.
-
-        * Statements type checking parameters passed to the decorated callable.
-        * A call to the decorated callable.
-        * A statement type checking the value returned by the decorated
-          callable.
-
-* ``func_wrapper_locals`` is the **local scope** (i.e., dictionary mapping from
-  the name to value of each attribute referenced in the signature) of this
-  wrapper function required by this code snippet.
-'''
-
 # ....................{ CODERS                            }....................
 def pep_code_check_param(
     data: BeartypeData,
     hint: object,
     param: Parameter,
     param_index: int,
-) -> FuncWrapperData:
+) -> str:
     '''
-    Python code type-checking the parameter with the passed signature and index
-    annotated by a **PEP-compliant type hint** (e.g., :mod:`beartype`-agnostic
-    annotation compliant with annotation-centric PEPs) of the decorated
-    callable.
+    Generate a Python code snippet type-checking the parameter with the passed
+    signature and index annotated by a **PEP-compliant type hint** (e.g.,
+    :mod:`beartype`-agnostic annotation compliant with annotation-centric PEPs)
+    of the decorated callable.
 
     Parameters
     ----------
@@ -142,8 +90,8 @@ def pep_code_check_param(
 
     Returns
     ----------
-    FuncWrapperData
-        Generated function wrapper data. See :data:`FuncWrapperData`.
+    str
+        Code type-checking this parameter.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
@@ -207,6 +155,10 @@ def pep_code_check_param(
             hints_forwardref_class_basename,
         ) = pep_code_check_hint(hint)
 
+        # Merge the local scope required to type-check this parameter into the
+        # local scope currently required by the current wrapper function.
+        update_mapping(data.func_wrapper_locals, func_wrapper_locals)
+
         # Unmemoize this snippet against the current parameter.
         func_wrapper_code = _unmemoize_pep_code(
             data=data,
@@ -224,19 +176,15 @@ def pep_code_check_param(
                 func=data.func, param_name=param.name),
         )
 
-    # Return all metadata required by higher-level callers, including...
-    return (
-        # Python code snippet localizing and type-checking this parameter.
-        f'{func_wrapper_code_param_localize}{func_wrapper_code}',
-        func_wrapper_locals,
-    )
+    # Return a Python code snippet localizing and type-checking this parameter.
+    return f'{func_wrapper_code_param_localize}{func_wrapper_code}'
 
 
-def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
+def pep_code_check_return(data: BeartypeData, hint: object) -> str:
     '''
-    Python code type-checking the return value annotated with a **PEP-compliant
-    type hint** (e.g., :mod:`beartype`-agnostic annotation compliant with
-    annotation-centric PEPs) of the decorated callable.
+    Generate a Python code type-checking the return value annotated by a
+    **PEP-compliant type hint** (e.g., :mod:`beartype`-agnostic annotation
+    compliant with annotation-centric PEPs) of the decorated callable.
 
     Parameters
     ----------
@@ -247,8 +195,8 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
 
     Returns
     ----------
-    FuncWrapperData
-        Generated function wrapper data. See :data:`FuncWrapperData`.
+    str
+        Code type-checking this return.
     '''
     # Note this hint need *NOT* be validated as a PEP-compliant type hint
     # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
@@ -259,18 +207,14 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
     # return with an arbitrary name.
     func_wrapper_code: str = None  # type: ignore[assignment]
 
-    # Local scope of this wrapper function required by this code snippet.
-    func_wrapper_locals: CallableScope = {}
+    # Empty tuple, passed below to satisfy the _unmemoize_pep_code() API.
+    hints_forwardref_class_basename = ()
 
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
-    # *ONLY* as a return annotation...
+    # *ONLY* as a return annotation, default this snippet to a pre-generated
+    # snippet validating this callable to *NEVER* successfully return. Absurd!
     if hint is NoReturn:
-        # Default this snippet to a pre-generated snippet validating this
-        # callable to *NEVER* successfully return. Yes, this is absurd.
         func_wrapper_code = PEP484_CODE_CHECK_NORETURN
-
-        # Empty tuple, passed below to satisfy the _unmemoize_pep_code() API.
-        hints_forwardref_class_basename = ()
     # Else, this is a standard PEP-compliant type hint. In this case...
     else:
         # Attempt to...
@@ -282,6 +226,11 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
                 func_wrapper_locals,
                 hints_forwardref_class_basename,
             ) = pep_code_check_hint(hint)
+
+            # Merge the local scope required to type-check this return into
+            # the local scope currently required by the current wrapper
+            # function.
+            update_mapping(data.func_wrapper_locals, func_wrapper_locals)
 
             # Extend this snippet to:
             # * Call the decorated callable and localize its return *AND*...
@@ -308,8 +257,8 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> FuncWrapperData:
         hints_forwardref_class_basename=hints_forwardref_class_basename,
     )
 
-    # Return all metadata required by higher-level callers.
-    return (func_wrapper_code, func_wrapper_locals)
+    # Return this code.
+    return func_wrapper_code
 
 # ....................{ PRIVATE ~ unmemoize               }....................
 def _unmemoize_pep_code(

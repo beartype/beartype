@@ -557,7 +557,7 @@ PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD = '''
 '''
 PEP-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
-:meth:`beartype.vale.SubscriptedIs.is_valid_code` string) of the current child
+:meth:`beartype.vale.SubscriptedIs._is_valid_code` string) of the current child
 :class:`beartype.vale.SubscriptedIs` argument subscripting a parent `PEP
 593`_-compliant :class:`typing.Annotated` type hint.
 

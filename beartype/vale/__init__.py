@@ -37,13 +37,7 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._valeis import Is
-
-#FIXME: Uncomment *AFTER* defining this subpackage and classes.
-# from beartype.vale._valeismore import (
-#     IsEqual,
-#     IsIdentical,
-#     IsMatch,
-# )
+from beartype.vale._valeisoper import IsEqual
 
 # ....................{ TODO                              }....................
 #FIXME: As intelligently requested by @Saphyel at #32, add support for

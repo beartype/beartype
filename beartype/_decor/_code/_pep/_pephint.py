@@ -93,7 +93,7 @@ from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
     is_type_builtin,
 )
-from beartype._util.data.utildatadict import merge_mappings_two
+from beartype._util.data.utildatadict import update_mapping
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
@@ -1406,61 +1406,15 @@ def pep_code_check_hint(
                             # Python expression formatting the current pith
                             # into the "{obj}" variable already embedded by
                             # that class into this code.
-                            hint_child_expr=hint_child.is_valid_code.format(
+                            hint_child_expr=hint_child._is_valid_code.format(
                                 obj=pith_curr_assigned_expr),
                         ))
 
-                    #FIXME: *INEFFICIENT.* We inefficiently call
-                    #merge_mappings_two() in multiple places throughout the
-                    #codebase to safely update an existing dictionary in-place,
-                    #which is *NOT* at all what we should be doing. Instead, we
-                    #should define a new utildatadict.update_mapping() function
-                    #efficiently and safely updating an existing dictionary
-                    #in-place. The implementation is largely trivial:
-                    #
-                    #    def update_mapping(mapping_inplace: Mapping, mapping_other: Mapping) -> None:
-                    #
-                    #        # If the other mapping is empty, silently reduce to a noop.
-                    #        if not mapping_other:
-                    #            return
-                    #        # Else, the other mapping is non-empty.
-                    #
-                    #        # If one or more keys collide (i.e., reside in both
-                    #        # mappings)...
-                    #        #
-                    #        # Note that:
-                    #        # * Since keys are necessarily hashable, this set
-                    #        #   intersection is guaranteed to be safe and thus
-                    #        #   *NEVER* raise a "TypeError" exception.
-                    #        # * Omitting the keys() method call on the latter but
-                    #        #   *NOT* former mapping behaves as expected and offers
-                    #        #   a helpful microoptimization.
-                    #        if mapping_inplace.keys() & mapping_other:  # type: ignore[operator]
-                    #            die_if_mappings_two_items_collide(
-                    #                mapping_inplace, mapping_other)
-                    #
-                    #        mapping_inplace.update(mapping_other)
-                    #
-                    #The only things left to do then are:
-                    #* Define a new
-                    #  utildatadict.die_if_mappings_two_items_collide()
-                    #  function, whose implementation should be stripped out of
-                    #  the body of the existing "if mapping_keys_shared:"
-                    #  branch of the merge_mappings_two() function.
-                    #* Refactor the merge_mappings_two() function to call
-                    #  utildatadict.die_if_mappings_two_items_collide()
-                    #  function instead as the body of that branch.
-                    #* Refactor all existing merge_mappings_two() calls that
-                    #  simply update one of the two passed dictionaries
-                    #  in-place to call update_mapping() instead.
-
                     # Generate locals safely merging the locals required by
                     # both this validator code *AND* the current code
-                    # type-checking this entire root hint. Since the latter is
-                    # typically significantly larger than the former, we
-                    # intentionally pass the latter first as an optimization.
-                    func_wrapper_locals = merge_mappings_two(  # type: ignore[assignment]
-                        func_wrapper_locals, hint_child.is_valid_code_locals)
+                    # type-checking this entire root hint.
+                    update_mapping(
+                        func_wrapper_locals, hint_child._is_valid_code_locals)
 
                 # Munge this code to...
                 func_curr_code = (

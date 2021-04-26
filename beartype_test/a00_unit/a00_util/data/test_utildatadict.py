@@ -128,11 +128,61 @@ Dictionary produced by merging the :data:`FROM_THE_BROW_OF_HIAWATHA`,
 '''
 
 # ....................{ TESTS                             }....................
-def test_merge_mappings_two_pass() -> None:
+def test_die_if_mappings_two_items_collide() -> None:
     '''
-    Test successful usage of the
-    :func:`beartype._util.data.utildatadict.merge_mappings` function passed
-    exactly two mappings.
+    Test the
+    :func:`beartype._util.data.utildatadict.die_if_mappings_two_items_collide`
+    function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilMappingException
+    from beartype._util.data.utildatadict import (
+        die_if_mappings_two_items_collide)
+
+    # Assert this validator raises the expected exception when passed two
+    # non-empty mappings containing one or more key-value collisions.
+    with raises(_BeartypeUtilMappingException):
+        die_if_mappings_two_items_collide(
+            THE_SONG_OF_HIAWATHA, FAREWELL_O_HIAWATHA)
+    with raises(_BeartypeUtilMappingException):
+        die_if_mappings_two_items_collide(
+            FAREWELL_O_HIAWATHA, THE_SONG_OF_HIAWATHA)
+
+# ....................{ TESTS                             }....................
+def test_update_mapping() -> None:
+    '''
+    Test the :func:`beartype._util.data.utildatadict.update_mapping` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.data.utildatadict import update_mapping
+
+    # Shallow copies of arbitrary mappings to be modified below.
+    farewell_o_hiawatha = FAREWELL_O_HIAWATHA.copy()
+    the_song_of_hiawatha = THE_SONG_OF_HIAWATHA.copy()
+
+    # Assert this updater preserves this mapping when updated from an empty
+    # mapping.
+    update_mapping(farewell_o_hiawatha, {})
+    assert farewell_o_hiawatha == FAREWELL_O_HIAWATHA
+
+    # Assert this updater updates this mapping as expected when updating from a
+    # non-empty mapping containing no key or key-value collisions.
+    update_mapping(the_song_of_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
+    assert the_song_of_hiawatha == (
+        THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA)
+
+    # Assert this updater updates this mapping as expected when updating from a
+    # non-empty mapping containing multiple key but no key-value collisions.
+    update_mapping(farewell_o_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
+    assert farewell_o_hiawatha == IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA
+
+# ....................{ TESTS                             }....................
+def test_merge_mappings_two() -> None:
+    '''
+    Test the :func:`beartype._util.data.utildatadict.merge_mappings` function
+    passed exactly two mappings.
     '''
 
     # Defer heavyweight imports.
@@ -146,7 +196,7 @@ def test_merge_mappings_two_pass() -> None:
     assert merge_mappings(THE_SONG_OF_HIAWATHA, {}) == THE_SONG_OF_HIAWATHA
     assert merge_mappings({}, THE_SONG_OF_HIAWATHA) == THE_SONG_OF_HIAWATHA
 
-    # Assert this function merges two non-empty mappings containing no
+    # Assert this function merges two non-empty mappings containing no key or
     # key-value collisions into the expected mapping.
     assert merge_mappings(THE_SONG_OF_HIAWATHA, IN_THE_LODGE_OF_HIAWATHA) == (
         THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA)
@@ -154,18 +204,17 @@ def test_merge_mappings_two_pass() -> None:
         THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA)
 
     # Assert this function merges two non-empty mappings containing multiple
-    # key collisions but no key-value collisions into the expected mapping.
+    # key but no key-value collisions into the expected mapping.
     assert merge_mappings(IN_THE_LODGE_OF_HIAWATHA, FAREWELL_O_HIAWATHA) == (
         IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA)
     assert merge_mappings(FAREWELL_O_HIAWATHA, IN_THE_LODGE_OF_HIAWATHA) == (
         IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA)
 
 
-def test_merge_mappings_three_pass() -> None:
+def test_merge_mappings_three() -> None:
     '''
-    Test successful usage of the
-    :func:`beartype._util.data.utildatadict.merge_mappings` function passed
-    exactly three mappings.
+    Test the :func:`beartype._util.data.utildatadict.merge_mappings` function
+    passed exactly three mappings.
     '''
 
     # Defer heavyweight imports.
@@ -191,31 +240,3 @@ def test_merge_mappings_three_pass() -> None:
         FAREWELL_O_HIAWATHA,
     ) == (
         FROM_THE_BROW_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA)
-
-
-def test_merge_mappings_fail() -> None:
-    '''
-    Test unsuccessful usage of the
-    :func:`beartype._util.data.utildatadict.merge_mappings` function.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.roar._roarexc import _BeartypeUtilMappingException
-    from beartype._util.data.utildatadict import merge_mappings
-
-    # Assert this function rejects two non-empty mappings containing one or
-    # more key-value collisions.
-    with raises(_BeartypeUtilMappingException):
-        merge_mappings(THE_SONG_OF_HIAWATHA, FAREWELL_O_HIAWATHA)
-    with raises(_BeartypeUtilMappingException):
-        merge_mappings(FAREWELL_O_HIAWATHA, THE_SONG_OF_HIAWATHA)
-
-    # Assert this function rejects two non-empty mappings containing one or
-    # more key-value collisions and another non-empty mapping containing no
-    # key-value collisions..
-    with raises(_BeartypeUtilMappingException):
-        merge_mappings(
-            THE_SONG_OF_HIAWATHA,
-            FAREWELL_O_HIAWATHA,
-            FROM_THE_BROW_OF_HIAWATHA,
-        )

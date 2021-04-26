@@ -4,7 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype core data validation classes.**
+**Beartype callable-based data validation classes** (i.e.,
+:mod:`beartype`-specific classes enabling callers to define PEP-compliant data
+validators from arbitrary caller-defined callables *not* efficiently generating
+stack-free code).
 
 This private submodule defines the core low-level class hierarchy driving the
 entire :mod:`beartype` data validation ecosystem.
@@ -40,7 +43,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ CLASSES ~ subscriptable           }....................
 class Is(object):
     '''
-    **Beartype data validator factory** (i.e., class that, when subscripted
+    **Beartype callable validator factory** (i.e., class that, when subscripted
     (indexed) by a caller-defined data validation function returning ``True``
     when an arbitrary object passed to that function satisfies an arbitrary
     constraint, creates a new :class:`SubscriptedIs` object encapsulating that
@@ -48,12 +51,11 @@ class Is(object):
     hints, which then enforce that validation on :mod:`beartype`-decorated
     callable parameters and returns annotated by those hints).
 
-    Subscripting (indexing) this class produces an :class:`SubscriptedIs`
-    object that validates the internal integrity, consistency, and structure of
-    arbitrary objects ranging from simple builtin scalars like integers and
-    strings to complex data structures defined by third-party packages like
-    NumPy arrays and Pandas DataFrames. For portability, :class:`SubscriptedIs`
-    objects are:
+    Subscripting (indexing) this class produces a :class:`SubscriptedIs` object
+    validating the internal integrity, consistency, and structure of arbitrary
+    objects ranging from simple builtin scalars like integers and strings to
+    complex data structures defined by third-party packages like NumPy arrays
+    and Pandas DataFrames. For portability, :class:`SubscriptedIs` objects are:
 
     * **PEP-compliant** and thus guaranteed to *never* violate existing or
       future standards.
@@ -171,7 +173,7 @@ class Is(object):
     subscriptions of this class subscripting :attr:`typing.Annotated` type
     hints.
 
-    **This class incurs a minor time complexity cost at call time.**
+    **This class incurs a minor time performance penalty at call time.**
     Specifically, each type hint of a :mod:`beartype`-decorated callable
     subscripted by a subscription of this class adds one additional stack frame
     to each call of that callable. While negligible (in the average case), this
@@ -188,50 +190,47 @@ class Is(object):
     ----------
     .. _code-block:: python
 
-       from beartype import beartype
-       from beartype.vale import Is
-       from typing import Annotated
+       # Import the requisite machinery.
+       >>> from beartype import beartype
+       >>> from beartype.vale import Is
+       >>> from typing import Annotated
 
-       IsUnquoted = Is[lambda text: '"' not in text and "'" not in text]
-       """
-       Constraint matching only unquoted strings.
-       """
+       # Validator matching only unquoted strings.
+       >>> IsUnquoted = Is[lambda text: '"' not in text and "'" not in text]
 
-       UnquotedString = Annotated[str, IsUnquoted]
-       """
-       Type hint matching only unquoted strings.
-       """
+       # Validator matching only strings with lengths ranging [4, 40].
+       >>> IsRangy = Is[lambda text: 4 <= len(text) <= 40]
 
-       @beartype
-       def quote_text(text: UnquotedString) -> str:
-           """
-           Double-quote the passed unquoted string.
-           """
+       # Type hint matching only unquoted strings.
+       >>> UnquotedString = Annotated[str, IsUnquoted]
 
-           return f'"{text}"'
+       # Type hint matching only quoted strings.
+       >>> QuotedString = Annotated[str, ~IsUnquoted]
 
-       IsLengthy = Is[lambda text: 4 <= len(text) <= 14]
-       """
-       Constraint matching only strings with lengths ranging ``[4, 14]``
-       (inclusive).
-       """
+       # Type hint matching only unquoted strings with lengths ranging [4, 40].
+       >>> UnquotedRangyString = Annotated[str, IsUnquoted & IsRangy]
 
-       UnquotedLengthyString = Annotated[str, IsUnquoted, IsLengthy]
-       """
-       Type hint matching only unquoted strings with lengths ranging ``[4,
-       14]`` (inclusive).
-       """
+       # Annotate callables by those type hints.
+       >>> @beartype
+       ... def quote_text(text: UnquotedString) -> str:
+       ...     """
+       ...     Double-quote the passed unquoted string.
+       ...     """
+       ...     return f'"{text}"'  # The best things in life are one-liners.
+       >>> @beartype
+       ... def snip_text(text: UnquotedRangyString) -> UnquotedString:
+       ...     """
+       ...     Return the prefix spanning characters ``[0, 3]`` of the passed
+       ...     unquoted string with a length ranging ``[4, 40]``.
+       ...     """
+       ...
+       ...     return text[:3]  # "This is guaranteed to work," says @beartype.
 
-       @beartype
-       def snip_text(text: UnquotedLengthyString) -> UnquotedString:
-           """
-           Return the prefix spanning characters ``[0, 3]`` (inclusive) of the
-           passed unquoted string with a length ranging ``[4, 14]``
-           (inclusive).
-           """
-
-           # "This is guaranteed to work," says beartype.
-           return text[:3]
+       # Call those callables with parameters satisfying those validators.
+       >>> quote_text('You know anything about nuclear fusion?')
+       "You know anything about nuclear fusion?"
+       >>> snip_text('Not now, I'm too tired. Maybe later.')
+       Not
 
     .. _PEP 593:
        https://www.python.org/dev/peps/pep-0593
@@ -306,14 +305,14 @@ class Is(object):
             # human-readable exception.
             if is_valid:
                 raise BeartypeValeSubscriptionException(
-                    f'{repr(Is)} subscripted by two or more arguments:\n'
+                    f'{repr(cls)} subscripted by two or more arguments:\n'
                     f'{represent_object(is_valid)}'
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
                 raise BeartypeValeSubscriptionException(
-                    '{repr(Is)} subscripted by empty tuple.')
+                    '{repr(cls)} subscripted by empty tuple.')
         # Else, this class was subscripted by a single argument.
 
         # Dictionary mapping from the name to value of each local attribute
@@ -333,8 +332,11 @@ class Is(object):
             # Python code snippet call this validator via that parameter,
             # passed an object to be interpolated into this snippet by
             # downstream logic.
-            is_valid_code = f'{is_valid_attr_name}({{obj}})',
+            is_valid_code=f'{is_valid_attr_name}({{obj}})',
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda:
-                f'Is[{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}]',
+            get_repr=lambda: (
+                f'{cls.__name__}['
+                f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'
+                f']'
+            ),
         )

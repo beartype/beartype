@@ -41,13 +41,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import inspect
-from beartype.cave import CallableCodeObjectType
-from beartype.roar import BeartypeDecorWrappeeException
-from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
-from beartype._util.text.utiltextlabel import label_callable_decorated
+from beartype._decor._cache.cachetype import bear_typistry
+from beartype._decor._code.codesnip import (
+    ARG_NAME_FUNC,
+    ARG_NAME_RAISE_EXCEPTION,
+    ARG_NAME_TYPISTRY,
+)
+from beartype._decor._code._pep._error.peperror import raise_pep_call_exception
+from beartype._util.func.utilfuncscope import CallableScope
 from collections.abc import Callable
 from inspect import Signature
-from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -102,9 +105,10 @@ class BeartypeData(object):
     func_sig : Optional[inspect.Signature]
         :class:`inspect.Signature` object describing this signature if the
         :meth:`reinit` method has been called *or* ``None`` otherwise.
-
-    Attributes (String)
-    ----------
+    func_wrapper_locals : CallableScope
+        **Local scope** (i.e., dictionary mapping from the name to value of
+        each attribute referenced in the signature) of this wrapper function
+        required by this code snippet.
     func_wrapper_name : Optional[str]
         Machine-readable name of the wrapper function to be generated and
         returned by this decorator if the :meth:`reinit` method has been called
@@ -126,6 +130,7 @@ class BeartypeData(object):
         #FIXME: Uncomment if needed.
         # 'func_codeobj',
         'func_sig',
+        'func_wrapper_locals',
         'func_wrapper_name',
     )
 
@@ -164,13 +169,11 @@ class BeartypeData(object):
         #FIXME: Uncomment if needed.
         # self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
+        self.func_wrapper_locals: CallableScope = {}
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
-    def reinit(
-        self,
-        func: Callable,
-    ) -> None:
+    def reinit(self, func: Callable) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
         acquisition of a previously cached instance of this class from the
@@ -213,6 +216,15 @@ class BeartypeData(object):
         # pure-Python *OR* raise an exception otherwise.
         # self.func_codeobj = get_func_unwrapped_codeobj(
         #     func=func, exception_cls=BeartypeDecorWrappeeException)
+
+        # Efficiently Reduce this local scope back to the dictionary of all
+        # parameters unconditionally required by *ALL* wrapper functions.
+        self.func_wrapper_locals.clear()
+        self.func_wrapper_locals[ARG_NAME_FUNC] = func
+        #FIXME: Actually, this should only be conditionally passed as needed.
+        self.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
+        self.func_wrapper_locals[ARG_NAME_RAISE_EXCEPTION] = (
+            raise_pep_call_exception)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = f'__beartyped_{func.__name__}'
