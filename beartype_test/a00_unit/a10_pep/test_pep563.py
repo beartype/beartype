@@ -213,7 +213,7 @@ def test_pep563_class() -> None:
         get_minecraft_end_txt_unscrambled_stanza(
             minecraft_end_txt_unscrambler, is_stanza_last=True))
     assert isinstance(minecraft_end_txt_unscrambled_stanza, str)
-    assert minecraft_end_txt_unscrambled_stanza.count('dream') is 5
+    assert minecraft_end_txt_unscrambled_stanza.count('dream') == 5
 
 # ....................{ TESTS ~ limit                     }....................
 #FIXME: Hilariously, we can't even unit test whether the

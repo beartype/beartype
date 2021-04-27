@@ -36,6 +36,7 @@ from beartype._util.text.utiltextrepr import (
     represent_object,
     represent_func,
 )
+from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -298,22 +299,10 @@ class Is(object):
            https://www.python.org/dev/peps/pep-0593
         '''
 
-        # If this class was subscripted by either no arguments or two or more
-        # arguments, raise an exception. Specifically...
-        if isinstance(is_valid, tuple):
-            # If this class was subscripted by two or more arguments, raise a
-            # human-readable exception.
-            if is_valid:
-                raise BeartypeValeSubscriptionException(
-                    f'{repr(cls)} subscripted by two or more arguments:\n'
-                    f'{represent_object(is_valid)}'
-                )
-            # Else, this class was subscripted by *NO* arguments. In this case,
-            # raise a human-readable exception.
-            else:
-                raise BeartypeValeSubscriptionException(
-                    '{repr(cls)} subscripted by empty tuple.')
-        # Else, this class was subscripted by a single argument.
+        # If this class was subscripted by either no arguments *OR* two or more
+        # arguments, raise an exception.
+        die_unless_getitem_args_one(obj=cls, args=is_valid)
+        # Else, this class was subscripted by exactly one argument.
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
@@ -340,3 +329,46 @@ class Is(object):
                 f']'
             ),
         )
+
+# ....................{ VALIDATORS                        }....................
+def die_unless_getitem_args_one(obj: Any, args: Any) -> None:
+    '''
+    Raise an exception unless the active Python interpreter passed exactly one
+    argument to the caller dunder method accepting variadic arguments (e.g.,
+    ``__class_getitem__``, ``__getitem__``) of the passed parent object.
+
+    Equivalently, this function raises an exception if this interpreter passed
+    either no *or* two or more arguments to that method.
+
+    Parameters
+    ----------
+    obj : Any
+        Parent object whose dunder method was passed these arguments.
+    args : Any
+        Variadic positional arguments to be inspected.
+
+    Raises
+    ----------
+    BeartypeValeSubscriptionException
+        If the caller dunder method was passed either:
+
+        * No arguments.
+        * Two or more arguments.
+    '''
+
+    # If this object was subscripted by either no arguments or two or more
+    # arguments, raise an exception. Specifically...
+    if isinstance(args, tuple):
+        # If this object was subscripted by two or more arguments, raise a
+        # human-readable exception.
+        if args:
+            raise BeartypeValeSubscriptionException(
+                f'{repr(obj)} subscripted by two or more arguments:\n'
+                f'{represent_object(obj)}'
+            )
+        # Else, this object was subscripted by *NO* arguments. In this case,
+        # raise a human-readable exception.
+        else:
+            raise BeartypeValeSubscriptionException(
+                '{repr(obj)} subscripted by empty tuple.')
+    # Else, this object was subscripted by exactly one argument.

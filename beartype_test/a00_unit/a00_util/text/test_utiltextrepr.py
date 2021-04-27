@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ case                      }....................
+# ....................{ TESTS                             }....................
 def test_represent_object():
     '''
     Test the :func:`beartype._util.text.utiltextrepr.represent_object`

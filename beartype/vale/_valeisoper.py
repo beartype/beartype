@@ -17,22 +17,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeValeSubscriptionException,
-)
-from beartype.vale import Is
-from beartype.vale._valeissub import (
-    SubscriptedIs,
-    SubscriptedIsValidator,
-)
-from beartype._decor._code._pep._pepmagic import OPERATOR_SUFFIX_LEN_OR
+from beartype.roar import BeartypeValeSubscriptionException
+from beartype.vale._valeis import Is
+from beartype.vale._valeissub import SubscriptedIs
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-# from beartype._util.text.utiltextrepr import (
-#     represent_object,
-# )
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
@@ -45,21 +36,13 @@ class IsEqual(Is):
     **Beartype** ``==`` **validator factory.**
 
     This class efficiently validates that callable parameters and returns are
-    equal to (i.e., ``==``) at least one of the one or more arbitrary objects
-    subscripting (indexing) this class. Any :mod:`beartype`-decorated callable
-    parameter or return annotated by a :attr:`typing.Annotated` type hint
-    subscripted (indexed) by this class subscripted (indexed) by any arbitrary
-    object (e.g., of the form ``typing.Annotated[{cls},
-    beartype.vale.IsEqual[{obj}]]`` for any class ``{cls}``  and object
-    ``{obj}`) validates that that parameter or return value is equal to at
-    least one of those objects according to the standard ``==`` operator.
-
-    When subscripted by two or more objects, this class is shorthand for
-    independently subscripting this class by each of those objects conjoined by
-    the ``|`` set operator. These two type hints are semantically equivalent:
-
-    * ``Annotated[str, IsEqual['No talking.', 'No smoking.']]``.
-    * ``Annotated[str, IsEqual['No talking.'] | IsEqual['No smoking.']]``.
+    equal to (i.e., ``==``) exactly the arbitrary object subscripting
+    (indexing) this class. Any :mod:`beartype`-decorated callable parameter or
+    return annotated by a :attr:`typing.Annotated` type hint subscripted
+    (indexed) by this class subscripted (indexed) by any arbitrary object
+    (e.g., ``typing.Annotated[{cls}, beartype.vale.IsEqual[{obj}]]`` for any
+    class ``{cls}``  and object ``{obj}`) validates that parameter or return
+    value equals that object via a standard ``==``-based comparison.
 
     This class is a generalization of the `PEP 586`_-compliant
     :attr:`typing.Literal` type hint, because this class does everything
@@ -77,6 +60,26 @@ class IsEqual(Is):
     incurs a minor time performance penalty, this class efficiently reduces to
     one-line tests in :mod:`beartype`-generated wrapper functions *without*
     calling any callables and thus incurs *no* time performance penalties.
+
+    Caveats
+    ----------
+    **This class is intentionally subscriptable by only a single object.** Why?
+    Disambiguity. When subscripted by variadic positional (i.e., one or more)
+    objects, this class internally treats those objects as items of a tuple to
+    validate equality against rather than as independent objects to iteratively
+    validate equality against. Since this is non-intuitive, callers should
+    avoid subscripting this class by multiple objects. Although non-intuitive,
+    this is also unavoidable. The ``__class_getitem__`` dunder method obeys
+    the same semantics as the ``__getitem__`` dunder method, which is unable to
+    differentiate between being subscripted two or more objects and being
+    subscripted by a tuple of two or more objects. Since being able to validate
+    equality against tuples of two or more objects is essential and since this
+    class being subscripted by two or more objects would trivially reduce to
+    shorthand for the existing ``|`` set operator already supported by this
+    class, this class preserves support for tuples of two or more objects at a
+    cost of non-intuitive results when subscripted by multiple objects.
+
+    Don't blame us. We didn't vote for `PEP 560`_.
 
     Examples
     ----------
@@ -97,7 +100,8 @@ class IsEqual(Is):
        >>> @beartype
        ... def guess_next(series: Annotated[list[int],
        ...     IsEqual[WHOLE_NUMBERS] |
-       ...     IsEqual[WHOLE_NUMBERS_EVEN, WHOLE_NUMBERS_ODD]
+       ...     IsEqual[WHOLE_NUMBERS_EVEN] |
+       ...     IsEqual[WHOLE_NUMBERS_ODD]
        ... ) -> int:
        ...     """
        ...     Guess the next whole number in the passed whole number series.
@@ -115,10 +119,13 @@ class IsEqual(Is):
     ----------
     :class:`beartype.vale.Is`
         Further details.
+
+    .. _PEP 560:
+       https://www.python.org/dev/peps/pep-0560
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __class_getitem__(cls, args: Any) -> SubscriptedIs:
+    def __class_getitem__(cls, obj: Any) -> SubscriptedIs:
         '''
         `PEP 560`_-compliant dunder method dynamically generating a new
         :class:`SubscriptedIs` object validating equality against the passed
@@ -129,17 +136,13 @@ class IsEqual(Is):
 
         Parameters
         ----------
-        args : Any
-            If this class was subscripted by either:
-
-            * No arbitrary objects, the empty tuple.
-            * One arbitrary object, that object as is.
-            * Two or more arbitrary objects, the tuple of those objects.
+        obj : Any
+            Arbitrary object to validate parameters and returns against.
 
         Returns
         ----------
         SubscriptedIs
-            New object encapsulating this equality test.
+            New object encapsulating this validation.
 
         Raises
         ----------
@@ -152,90 +155,41 @@ class IsEqual(Is):
            https://www.python.org/dev/peps/pep-0593
         '''
 
-        # Callable inefficiently testing equality against these objects.
-        is_valid: SubscriptedIsValidator = None  # type: ignore[assignment]
+        # If...
+        if (
+            # This class was subscripted by either no arguments *OR* two or
+            # more arguments *AND*...
+            isinstance(obj, tuple) and
+            # This class was subscripted by no arguments...
+            not obj
+        # Then raise an exception.
+        ):
+            raise BeartypeValeSubscriptionException(
+                '{repr(cls)} subscripted by empty tuple.')
+        # Else, this class was subscripted by one or more arguments. In any
+        # case, accept this object as is. See the class docstring for details.
+        # print(f'IsEqual[{repr(obj)}]')
 
-        # Code snippet efficiently testing equality against these objects.
-        is_valid_code = ''
+        # Callable inefficiently validating against this object.
+        is_valid = lambda pith: pith == obj
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
         is_valid_code_locals: CallableScope = {}
 
-        # If this class was subscripted by either no or two or more objects...
-        if isinstance(args, tuple):
-            # If this class was subscripted by no objects, raise an exception.
-            if not args:
-                raise BeartypeValeSubscriptionException(
-                    '{repr(cls)} subscripted by empty tuple.')
-            # Else, this class was subscripted by two or more objects.
+        # Name of a new parameter added to the signature of wrapper functions
+        # whose value is this object, enabling this object to be tested in
+        # those functions *WITHOUT* additional stack frames.
+        obj_name = add_func_scope_attr(
+            attr=obj, attr_scope=is_valid_code_locals)
 
-            # Callable inefficiently testing equality against these objects.
-            is_valid = lambda obj: any(
-                obj == args_item for args_item in args)
-
-            # For each object subscripting this class...
-            for args_item in args:
-                # Name of a new parameter added to the signature of wrapper
-                # functions whose value is this object, enabling this object to
-                # be tested for directly in the body of those functions
-                # *WITHOUT* imposing additional stack frames.
-                args_item_name = add_func_scope_attr(
-                    attr=args_item, attr_scope=is_valid_code_locals)
-
-                # Append an expression testing equality against this object to
-                # this code.
-                is_valid_code += f'{{obj}} == {args_item_name} or '
-
-            # Strip the erroneous " or" suffix appended by the last subscripted
-            # object from this code.
-            is_valid_code = is_valid_code[:-OPERATOR_SUFFIX_LEN_OR]
-        # Else, this class was subscripted by one object. In this case...
-        else:
-            # Callable inefficiently testing equality against this object.
-            is_valid = lambda obj: obj == args
-
-            # Name of a new parameter added to the signature of wrapper
-            # functions whose value is this object, enabling this object to be
-            # tested for directly in the body of those functions *WITHOUT*
-            # imposing additional stack frames.
-            args_name = add_func_scope_attr(
-                attr=args, attr_scope=is_valid_code_locals)
-
-            # Code snippet efficiently testing equality against this object.
-            is_valid_code=f'{{obj}} == {args_name}'
+        # Code snippet efficiently validating against this object.
+        is_valid_code=f'{{obj}} == {obj_name}'
 
         # Create and return this subscription.
         return SubscriptedIs(
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda: f'{cls.__name__}[{represent_args(args)}]',
+            get_repr=lambda: f'{cls.__name__}[{repr(obj)}]',
         )
-
-
-#FIXME: Shift elsewhere, please.
-#FIXME: Unit test us up.
-#FIXME: Docstring us up.
-def represent_args(args: Any) -> str:
-
-    # If these arguments are tuple, the caller was passed either no arguments
-    # or two or more arguments. In either case...
-    if isinstance(args, tuple):
-        # If the caller was passed two or more arguments...
-        if args:
-            # Machine-readable representation of these arguments.
-            args_repr = repr(args)
-
-            # Return this representation stripped of:
-            # * The "(" character prefixing this tuple.
-            # * The ")" character suffixing this tuple.
-            return args_repr[1:-1]
-        # Else, the caller was passed *NO* arguments. In this case, return the
-        # empty string.
-        else:
-            return ''
-    # Else, the caller was passed exactly one argument. In this case, return
-    # the machine-readable representation of that argument as is.
-    else:
-        return repr(args)

@@ -30,6 +30,27 @@ Arbitrary dictionary to be merged.
 '''
 
 
+THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE = {
+    'By the shore': 'of Gitche Gumee',
+    'By the shining': ['Big-Sea-Water',],
+    'At the': 'doorway of his wigwam',
+    'In the': ['pleasant', 'Summer morning',],
+    'Hiawatha': 'stood and waited.',
+    'All the air': ['was', 'full of freshness,',],
+    'All the earth': 'was bright and joyous,',
+    'And': ['before him,', 'through the sunshine,',],
+    'Westward': 'toward the neighboring forest',
+    'Passed in': ['golden swarms', 'the Ahmo,',],
+    'Passed the': 'bees, the honey-makers,',
+    'Burning,': ['singing', 'in the sunshine.',],
+}
+'''
+Arbitrary dictionary to be merged, intentionally containing two key-value
+collisions with the :data:`THE_SONG_OF_HIAWATHA` dictionary *and* unhashable
+values.
+'''
+
+
 FROM_THE_BROW_OF_HIAWATHA = {
     'From the': 'brow of Hiawatha',
     'Gone was': 'every trace of sorrow,',
@@ -141,13 +162,21 @@ def test_die_if_mappings_two_items_collide() -> None:
         die_if_mappings_two_items_collide)
 
     # Assert this validator raises the expected exception when passed two
-    # non-empty mappings containing one or more key-value collisions.
+    # non-empty mappings containing one or more key-value collisions whose
+    # values are all hashable.
     with raises(_BeartypeUtilMappingException):
         die_if_mappings_two_items_collide(
             THE_SONG_OF_HIAWATHA, FAREWELL_O_HIAWATHA)
     with raises(_BeartypeUtilMappingException):
         die_if_mappings_two_items_collide(
             FAREWELL_O_HIAWATHA, THE_SONG_OF_HIAWATHA)
+
+    # Assert this validator raises the expected exception when passed two
+    # non-empty mappings containing one or more key-value collisions such that
+    # some values of the second mapping are unhashable.
+    with raises(_BeartypeUtilMappingException):
+        die_if_mappings_two_items_collide(
+            THE_SONG_OF_HIAWATHA, THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE)
 
 # ....................{ TESTS                             }....................
 def test_update_mapping() -> None:

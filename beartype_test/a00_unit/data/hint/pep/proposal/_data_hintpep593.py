@@ -42,7 +42,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.9-specific imports.
-    from beartype.vale import Is
+    from beartype.vale import Is, IsEqual
     from typing import (
         Annotated,
         Any,
@@ -51,7 +51,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Union,
     )
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ VALIDATORS ~ is                   }..................
     # Beartype-specific data validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
@@ -63,6 +63,13 @@ def add_data(data_module: 'ModuleType') -> None:
     # Beartype-specific data validator synthesized from the above validators
     # via the domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
+
+    # ..................{ VALIDATORS ~ isequal              }..................
+    # Arbitrary list to validate equality against.
+    AMPLY_IMPISH = ['Amply imp‐ish', 'blandishments to']
+
+    # Beartype-specific data validator validating equality against that list.
+    IsEqualToAmplyImpish = IsEqual[AMPLY_IMPISH]
 
     # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
@@ -271,6 +278,34 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
                 ),
+            ),
+        ),
+
+        # ................{ ANNOTATED ~ beartype : isequal    }................
+        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # equality validator.
+        PepHintMetadata(
+            hint=Annotated[list, IsEqualToAmplyImpish],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # Exact object subscripting this validator.
+                PepHintPithSatisfiedMetadata(AMPLY_IMPISH),
+                # Object *NOT* subscripting this validator but equal to this
+                # object.
+                PepHintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='May Your coarsest, Incessantly cast‐off jobs of a',
+                    # Match that the exception message raised for this object
+                    # embeds a string in the expected list.
+                    exception_str_match_regexes=(
+                        r"IsEqual\[.*'Amply imp‐ish',.*\]",),
+                ),
+                # List of string constants violating this validator.
+                PepHintPithUnsatisfiedMetadata(
+                    ['Hectic,', 'receptacle‐hybernacling caste so',]),
             ),
         ),
     ))

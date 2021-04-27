@@ -60,17 +60,21 @@ def die_if_mappings_two_items_collide(
     if not mapping_keys_shared:
         return
     # Else, one or more keys collide.
+    # print('Key-value collisions!')
 
-    # Set of all item collisions (i.e., items residing in both mappings).
+    # Set of all keys in all item collisions (i.e., items residing in both
+    # mappings). Equivalently, this is the set of all safe key collisions
+    # (i.e., all shared keys associated with the same values in both mappings).
+    #
     # Ideally, we would efficiently intersect these items as follows:
     #     mapping_items_shared = mapping_a.items() & mapping_b.items()
     # Sadly, doing so raises a "TypeError" if one or more values of these
     # mappings are unhashable -- as they typically are in common use cases
     # throughout this codebase. Ergo, we fallback to a less efficient but
     # considerably more robust alternative supporting unhashable values.
-    mapping_items_shared = {
-        # For each key-value pair of the second mapping, that pair...
-        (mapping_b_key, mapping_b_value)
+    mapping_keys_shared_safe = {
+        # For each key-value pair of the second mapping, this key...
+        mapping_b_key
         for mapping_b_key, mapping_b_value in mapping_b.items()
         # If...
         if (
@@ -87,12 +91,7 @@ def die_if_mappings_two_items_collide(
     # values associated with these keys in the former mapping with the
     # values associated with these keys in the latter mapping, raise an
     # exception to notify the caller.
-    if len(mapping_keys_shared) != len(mapping_items_shared):
-        # Set of all safe key collisions (i.e., all colliding keys
-        # associated with the same values in both mappings).
-        mapping_keys_shared_safe = {
-            key_shared for key_shared, _ in mapping_items_shared}
-
+    if len(mapping_keys_shared) != len(mapping_keys_shared_safe):
         # Dictionary of all unsafe key-value pairs (i.e., pairs such that
         # merging these keys would silently override the values associated
         # with these keys in either the first or second mappings) from the
@@ -109,11 +108,13 @@ def die_if_mappings_two_items_collide(
         )
 
         # Raise a human-readable exception.
-        raise _BeartypeUtilMappingException(
+        exception_message = (
             f'Mappings not safely mergeable due to key-value collisions:\n'
             f'~~~~[ mapping_a collisions ]~~~~\n{repr(mapping_a_unsafe)}\n'
             f'~~~~[ mapping_b collisions ]~~~~\n{repr(mapping_b_unsafe)}'
         )
+        # print(exception_message)
+        raise _BeartypeUtilMappingException(exception_message)
     # Else, the number of key and item collisions are the same, implying
     # that all colliding keys are associated with the same values in both
     # mappings, implying that both mappings contain the same colliding

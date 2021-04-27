@@ -19,6 +19,7 @@ from re import (
     sub as re_sub
 )
 from string import punctuation
+from typing import Any
 
 # ....................{ REPRESENTERS                      }....................
 def represent_object(
