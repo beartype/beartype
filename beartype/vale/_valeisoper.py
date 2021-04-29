@@ -18,8 +18,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._valeis import Is
-from beartype.vale._valeissub import SubscriptedIs
+from beartype.vale._valeisabc import _IsABC
+from beartype.vale._valeissub import _SubscriptedIs
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
@@ -30,19 +31,44 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ subscriptable           }....................
-#FIXME: Unit test us up.
-class IsEqual(Is):
+#FIXME: Generalize to support arbitrary binary operators by:
+#* Define a new "_IsOperatorBinaryABC(_IsABC, metaclass=ABCMeta)" superclass.
+#* In that superclass:
+#  * Define a stock __class_getitem__() method whose implementation is
+#    sufficiently generic so as to be applicable to all subclasses. To do so,
+#    this method should access class variables defined by those subclasses.
+#  * Note that there is absolutely no reason or point to define abstract class
+#    methods forcing subclasses to define various metadata, for the unfortunate
+#    reason that abstract class methods do *NOT* actually enforce subclasses
+#    that aren't instantiable anyway to implement those methods. *sigh*
+#* Refactor "IsEqual" to:
+#  * Subclass that superclass.
+#  * Define the following class variables, which the superclass
+#    __class_getitem__() method will internally access to implement itself:
+#    from operator import __eq__
+#
+#    class IsEqual(_IsOperatorBinaryABC):
+#        _operator = __eq__
+#        _operator_code = '=='
+#
+#Ridiculously sweet, eh? We know.
+
+class IsEqual(_IsABC):
     '''
-    **Beartype** ``==`` **validator factory.**
+    **Beartype object equality validator factory** (i.e., class that, when
+    subscripted (indexed) by any object, creates a new :class:`_SubscriptedIs`
+    object suitable for subscripting (indexing) :attr:`typing.Annotated` type
+    hints, validating that :mod:`beartype`-decorated callable parameters and
+    returns annotated by those hints are equal to that object).
 
     This class efficiently validates that callable parameters and returns are
-    equal to (i.e., ``==``) exactly the arbitrary object subscripting
-    (indexing) this class. Any :mod:`beartype`-decorated callable parameter or
-    return annotated by a :attr:`typing.Annotated` type hint subscripted
-    (indexed) by this class subscripted (indexed) by any arbitrary object
-    (e.g., ``typing.Annotated[{cls}, beartype.vale.IsEqual[{obj}]]`` for any
-    class ``{cls}``  and object ``{obj}`) validates that parameter or return
-    value equals that object via a standard ``==``-based comparison.
+    equal to the arbitrary object subscripting (indexing) this class. Any
+    :mod:`beartype`-decorated callable parameter or return annotated by a
+    :attr:`typing.Annotated` type hint subscripted (indexed) by this class
+    subscripted (indexed) by any object (e.g., ``typing.Annotated[{cls},
+    beartype.vale.IsEqual[{obj}]]`` for any class ``{cls}``  and object
+    ``{obj}`) validates that parameter or return value to equal that object
+    under the standard ``==`` equality comparison.
 
     This class is a generalization of the `PEP 586`_-compliant
     :attr:`typing.Literal` type hint, because this class does everything
@@ -90,19 +116,21 @@ class IsEqual(Is):
        >>> from beartype.vale import IsEqual
        >>> from typing import Annotated
 
-       # Lists of the first ten items of well-known whole number series.
+       # Lists of the first ten items of well-known simple whole number series.
        >>> WHOLE_NUMBERS      = [0, 1, 2, 3, 4,  5,  6,  7,  8,  9]
        >>> WHOLE_NUMBERS_EVEN = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
        >>> WHOLE_NUMBERS_ODD  = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
 
-       # Annotate callables by "typing.Annotated" subscripted with
-       # "beartype.vale.IsEqual" subscripted with any object.
-       >>> @beartype
-       ... def guess_next(series: Annotated[list[int],
+       # Type hint matching only lists of integers equal to one of these lists.
+       >>> SimpleWholeNumberSeries = Annotated[list[int],
        ...     IsEqual[WHOLE_NUMBERS] |
        ...     IsEqual[WHOLE_NUMBERS_EVEN] |
        ...     IsEqual[WHOLE_NUMBERS_ODD]
-       ... ) -> int:
+       ... ]
+
+       # Annotate callables by those type hints.
+       >>> @beartype
+       ... def guess_next(series: SimpleWholeNumberSeries) -> int:
        ...     """
        ...     Guess the next whole number in the passed whole number series.
        ...     """
@@ -115,24 +143,37 @@ class IsEqual(Is):
        >>> guess_next([number*2 for number in range(10)])
        20
 
+       # Call those callables with parameters unequal to one of those objects.
+       >>> guess_next([1, 2, 3, 6, 7, 14, 21, 42,])
+       beartype.roar._roarexc.BeartypeCallHintPepParamException: @beartyped
+       guess_next() parameter series=[1, 2, 3, 6, 7, 14, 21, 42] violates type
+       hint typing.Annotated[list[int], IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8,
+       9]] | IsEqual[[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]] | IsEqual[[1, 3, 5,
+       7, 9, 11, 13, 15, 17, 19]]], as value [1, 2, 3, 6, 7, 14, 21, 42]
+       violates data constraint IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]] |
+       IsEqual[[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]] | IsEqual[[1, 3, 5, 7, 9,
+       11, 13, 15, 17, 19]].
+
     See Also
     ----------
     :class:`beartype.vale.Is`
-        Further details.
+        Further commentary.
 
     .. _PEP 560:
        https://www.python.org/dev/peps/pep-0560
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __class_getitem__(cls, obj: Any) -> SubscriptedIs:
+    #FIXME: Unit test memoization, please.
+    @callable_cached
+    def __class_getitem__(cls, obj: Any) -> _SubscriptedIs:
         '''
-        `PEP 560`_-compliant dunder method dynamically generating a new
-        :class:`SubscriptedIs` object validating equality against the passed
+        `PEP 560`_-compliant dunder method creating and returning a new
+        :class:`_SubscriptedIs` object validating equality against the passed
         arbitrary object suitable for subscripting `PEP 593`_-compliant
         :attr:`typing.Annotated` type hints.
 
-        See the class docstring for usage instructions.
+        This method is memoized for efficiency.
 
         Parameters
         ----------
@@ -141,13 +182,18 @@ class IsEqual(Is):
 
         Returns
         ----------
-        SubscriptedIs
+        _SubscriptedIs
             New object encapsulating this validation.
 
         Raises
         ----------
         BeartypeValeSubscriptionException
             If this class was subscripted by *no* arguments.
+
+        See Also
+        ----------
+        :class:`IsEqual`
+            Usage instructions.
 
         .. _PEP 560:
            https://www.python.org/dev/peps/pep-0560
@@ -165,7 +211,7 @@ class IsEqual(Is):
         # Then raise an exception.
         ):
             raise BeartypeValeSubscriptionException(
-                '{repr(cls)} subscripted by empty tuple.')
+                f'{repr(cls)} subscripted by empty tuple.')
         # Else, this class was subscripted by one or more arguments. In any
         # case, accept this object as is. See the class docstring for details.
         # print(f'IsEqual[{repr(obj)}]')
@@ -187,7 +233,7 @@ class IsEqual(Is):
         is_valid_code=f'{{obj}} == {obj_name}'
 
         # Create and return this subscription.
-        return SubscriptedIs(
+        return _SubscriptedIs(
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,

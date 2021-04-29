@@ -30,7 +30,7 @@ def test_api_vale_is_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import Is
-    from beartype.vale._valeissub import SubscriptedIs
+    from beartype.vale._valeissub import _SubscriptedIs
     from collections.abc import Mapping
 
     def _is_quoted(text):
@@ -50,9 +50,9 @@ def test_api_vale_is_pass() -> None:
     IsQuoted = Is[_is_quoted]
 
     # Assert these validators satisfy the expected API.
-    assert isinstance(IsLengthy, SubscriptedIs)
-    assert isinstance(IsSentence, SubscriptedIs)
-    assert isinstance(IsQuoted, SubscriptedIs)
+    assert isinstance(IsLengthy, _SubscriptedIs)
+    assert isinstance(IsSentence, _SubscriptedIs)
+    assert isinstance(IsQuoted, _SubscriptedIs)
 
     # Assert these validators perform the expected validation.
     assert IsLengthy.is_valid('Plunged in the battery-smoke') is False
@@ -168,13 +168,13 @@ def test_api_vale_is_fail() -> None:
 def test_api_vale_subscriptedis_pass() -> None:
     '''
     Test successful usage of the private
-    :mod:`beartype.vale._valeissub.SubscriptedIs` class if the active Python
+    :mod:`beartype.vale._valeissub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
-    from beartype.vale._valeissub import SubscriptedIs
+    from beartype.vale._valeissub import _SubscriptedIs
 
     # Arbitrary valid data validator.
     not_though_the_soldier_knew = lambda text: bool('Someone had blundered.')
@@ -192,13 +192,13 @@ def test_api_vale_subscriptedis_pass() -> None:
     # Code *NOT* already prefixed by "(" and suffixed by ")".
     is_valid_code_undelimited = "{obj} == 'All in the valley of Death'"
 
-    # Assert the "SubscriptedIs" class preserves delimited code as is.
-    subscriptedis_delimited = SubscriptedIs(
+    # Assert the "_SubscriptedIs" class preserves delimited code as is.
+    subscriptedis_delimited = _SubscriptedIs(
         is_valid_code=is_valid_code_delimited, **kwargs)
     assert subscriptedis_delimited._is_valid_code is is_valid_code_delimited
 
-    # Assert the "SubscriptedIs" class delimits undelimited code.
-    subscriptedis_undelimited = SubscriptedIs(
+    # Assert the "_SubscriptedIs" class delimits undelimited code.
+    subscriptedis_undelimited = _SubscriptedIs(
         is_valid_code=is_valid_code_undelimited, **kwargs)
     assert (
         subscriptedis_undelimited._is_valid_code ==
@@ -210,52 +210,52 @@ def test_api_vale_subscriptedis_pass() -> None:
 def test_api_vale_subscriptedis_fail() -> None:
     '''
     Test unsuccessful usage of the private
-    :mod:`beartype.vale._valeissub.SubscriptedIs` class if the active Python
+    :mod:`beartype.vale._valeissub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
-    from beartype.vale._valeissub import SubscriptedIs
+    from beartype.vale._valeissub import _SubscriptedIs
 
     # Arbitrary valid data validator.
     into_the_jaws_of_death = lambda text: bool('Into the mouth of hell')
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # non-string code raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(
+        _SubscriptedIs(
             is_valid=into_the_jaws_of_death,
             is_valid_code=b'Into the jaws of Death,',
             is_valid_code_locals={'yum': into_the_jaws_of_death},
             get_repr=lambda: "Is[lambda text: bool('Into the mouth of hell')]",
         )
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # empty code raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(
+        _SubscriptedIs(
             is_valid=into_the_jaws_of_death,
             is_valid_code='',
             is_valid_code_locals={'yum': into_the_jaws_of_death},
             get_repr=lambda: "Is[lambda text: bool('Into the mouth of hell')]",
         )
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with code
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with code
     # *NOT* containing the substring "{obj}" raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(
+        _SubscriptedIs(
             is_valid=into_the_jaws_of_death,
             is_valid_code='Came through the jaws of Death,',
             is_valid_code_locals={'yum': into_the_jaws_of_death},
             get_repr=lambda: "Is[lambda text: bool('Into the mouth of hell')]",
         )
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # valid code and non-dictionary code locals raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(
+        _SubscriptedIs(
             is_valid=into_the_jaws_of_death,
             is_valid_code="{obj} == 'Back from the mouth of hell,'",
             is_valid_code_locals={'yum', into_the_jaws_of_death},
@@ -269,23 +269,23 @@ def test_api_vale_subscriptedis_fail() -> None:
         is_valid_code_locals={'yum': into_the_jaws_of_death},
     )
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # valid code and code locals but an uncallable representer raises the
     # expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(get_repr='All that was left of them,', **kwargs_good)
+        _SubscriptedIs(get_repr='All that was left of them,', **kwargs_good)
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # valid code and code locals but a C-based representer raises the expected
     # exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(get_repr=iter, **kwargs_good)
+        _SubscriptedIs(get_repr=iter, **kwargs_good)
 
-    # Assert that attempting to instantiate the "SubscriptedIs" class with
+    # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # valid code and code locals but a pure-Python representer accepting one or
     # more arguments raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        SubscriptedIs(
+        _SubscriptedIs(
             get_repr=lambda rode, the, six, hundred:
                 'Into the valley of Death',
             **kwargs_good

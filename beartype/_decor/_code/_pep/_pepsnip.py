@@ -524,13 +524,12 @@ See Also
 
 # ....................{ HINT ~ type : pep593 : union      }....................
 PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX = '''(
-{indent_curr}    # True only if this pith is an instance of this annotated.
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
+{indent_curr}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against each subscripted argument of a `PEP 593`_-compliant
 :class:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale.SubscriptedIs` objects.
+:class:`beartype.vale._SubscriptedIs` objects.
 
 .. _PEP 593:
     https://www.python.org/dev/peps/pep-0593
@@ -543,7 +542,7 @@ PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX = '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
 against each subscripted argument of a `PEP 593`_-compliant
 :class:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale.SubscriptedIs` objects.
+:class:`beartype.vale._SubscriptedIs` objects.
 
 .. _PEP 593:
     https://www.python.org/dev/peps/pep-0593
@@ -552,13 +551,13 @@ against each subscripted argument of a `PEP 593`_-compliant
 
 PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD = '''
 {indent_curr}    # True only if this pith satisfies this caller-defined
-{indent_curr}    # data validator code of this annotated.
+{indent_curr}    # validator of this annotated.
 {indent_curr}    {hint_child_expr} and'''
 '''
 PEP-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
-:meth:`beartype.vale.SubscriptedIs._is_valid_code` string) of the current child
-:class:`beartype.vale.SubscriptedIs` argument subscripting a parent `PEP
+:meth:`beartype.vale._SubscriptedIs._is_valid_code` string) of the current child
+:class:`beartype.vale._SubscriptedIs` argument subscripting a parent `PEP
 593`_-compliant :class:`typing.Annotated` type hint.
 
 Caveats

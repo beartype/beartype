@@ -18,15 +18,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.vale._valeissub import SubscriptedIs
-from beartype._decor._code._pep._error._peperrortype import (
-    get_cause_or_none_type)
+from beartype.vale._valeissub import _SubscriptedIs
 from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
-    get_hint_pep593_type,
+    get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextcause import get_cause_object_representation
 from typing import Optional
@@ -40,7 +38,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed `PEP 593`_-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
-    :class:`SubscriptedIs` objects, each produced by subscripting the
+    :class:`_SubscriptedIs` objects, each produced by subscripting the
     :class:`beartype.vale.Is` class or a subclass of that class) if this object
     actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
     object satisfies this hint).
@@ -57,22 +55,26 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign is HINT_PEP593_SIGN_ANNOTATED, (
         f'{repr(sleuth.hint_sign)} not annotated.')
 
-    # Non-"typing" class annotated by this metahint.
-    hint_annotated = get_hint_pep593_type(sleuth.hint)
+    # PEP-compliant type hint annotated by this metahint.
+    metahint = get_hint_pep593_metahint(sleuth.hint)
 
-    # If this pith is *NOT* an instance of this class, defer to the getter
-    # handling non-"typing" classes.
-    if not isinstance(sleuth.pith, hint_annotated):
-        return get_cause_or_none_type(sleuth.permute(hint=hint_annotated))
-    # Else, this pith is an instance of that class.
+    # Human-readable string describing the failure of this pith to satisfy this
+    # hint if this pith fails to satisfy this hint *or* "None" otherwise.
+    pith_cause = sleuth.permute(
+        pith=sleuth.pith, hint=metahint).get_cause_or_none()
 
-    # For each arbitrary object annotating that class...
+    # If this pith fails to satisfy this hint, return this cause as is.
+    if pith_cause is not None:
+        return pith_cause
+    # Else, this pith satisfies this hint.
+
+    # For each arbitrary object annotating this metahint...
     for hint_metadatum in get_hint_pep593_metadata(sleuth.hint):
         # If this object is *NOT* beartype-specific, raise an exception.
         #
         # Note that this object should already be beartype-specific, as the
         # @beartype decorator enforces this constraint at decoration time.
-        if not isinstance(hint_metadatum, SubscriptedIs):
+        if not isinstance(hint_metadatum, _SubscriptedIs):
             raise _BeartypeCallHintPepRaiseException(
                 f'{sleuth.exception_label} PEP 593 type hint '
                 f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} not '

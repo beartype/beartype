@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
-from beartype.vale._valeissub import SubscriptedIs
+from beartype.vale._valeissub import _SubscriptedIs
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Any, Optional, Tuple
 
@@ -85,7 +85,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             # If this hint is annotated, true only if the PEP-compliant child
             # type hint annotated by this hint hint is ignorable (e.g., the
             # "Any" in "Annotated[Any, 50, False]").
-            is_hint_ignorable(get_hint_pep593_type(hint))
+            is_hint_ignorable(get_hint_pep593_metahint(hint))
             if hint_sign is Annotated else
             # Else, "None".
             None
@@ -171,7 +171,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
     ``True`` only if the first argument subscripting the passed `PEP
     593`-compliant :attr:`typing.Annotated` type hint is
-    :mod:`beartype`-specific (e.g., instance of the :class:`SubscriptedIs` class
+    :mod:`beartype`-specific (e.g., instance of the :class:`_SubscriptedIs` class
     produced by subscripting (indexing) the :class:`Is` class).
 
     Parameters
@@ -206,7 +206,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     #     TypeError: Annotated[...] should be used with at least two
     #     arguments (a type and an annotation).
     try:
-        return isinstance(hint.__metadata__[0], SubscriptedIs)
+        return isinstance(hint.__metadata__[0], _SubscriptedIs)
     # If the metaclass of the first argument subscripting this hint overrides
     # the __isinstancecheck__() dunder method to raise an exception, silently
     # ignore this exception by returning false instead.
@@ -223,7 +223,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
 
     Specifically, this getter returns *all* arguments subscripting this
     metahint excluding the first, which conveys its own semantics and is thus
-    returned by the :func:`get_hint_pep593_type` getter.
+    returned by the :func:`get_hint_pep593_metahint` getter.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -248,7 +248,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     ----------
     :func:`is_hint_pep593`
         Further commentary.
-    :func:`get_hint_pep593_type`
+    :func:`get_hint_pep593_metahint`
         Related getter.
 
     .. _PEP 593:
@@ -264,13 +264,15 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
 
 
 #FIXME: Unit test us up, please.
-def get_hint_pep593_type(hint: Any) -> type:
+def get_hint_pep593_metahint(hint: Any) -> Any:
     '''
-    Class annotated by the passed `PEP 593`_-compliant **type metahint** (i.e.,
-    subscription of the :attr:`typing.Annotated` singleton).
+    PEP-compliant type hint annotated by the passed `PEP 593`_-compliant **type
+    metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
     Specifically, this getter returns the first argument subscripting this
-    metahint. By design, this argument is guaranteed to be a standard class.
+    metahint. By design, this argument is guaranteed to be a PEP-compliant type
+    hint. Note that although that hint *may* be a standard class, this is *not*
+    necessarily the case.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -283,8 +285,8 @@ def get_hint_pep593_type(hint: Any) -> type:
 
     Returns
     ----------
-    type
-        Class annotated by this metahint.
+    Any
+        PEP-compliant type hint annotated by this metahint.
 
     Raises
     ----------

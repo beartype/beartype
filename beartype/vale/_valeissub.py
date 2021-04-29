@@ -40,7 +40,7 @@ Data validators are suitable for subscripting the :class:`Is` class.
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
-class SubscriptedIs(object):
+class _SubscriptedIs(object):
     '''
     **Beartype data validator** (i.e., object encapsulating a caller-defined
     data validation function returning ``True`` when an arbitrary object passed
@@ -331,22 +331,22 @@ class SubscriptedIs(object):
     # ..................{ DUNDERS ~ operator                }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # combine and Override
-    def __and__(self, other: 'SubscriptedIs') -> (
-        'SubscriptedIs'):
+    def __and__(self, other: '_SubscriptedIs') -> (
+        '_SubscriptedIs'):
         '''
         **Conjunction** (i.e., ``self & other``), synthesizing a new
-        :class:`SubscriptedIs` object whose data validator returns ``True`` only
+        :class:`_SubscriptedIs` object whose data validator returns ``True`` only
         when the data validators of both this *and* the passed
-        :class:`SubscriptedIs` objects all return ``True``.
+        :class:`_SubscriptedIs` objects all return ``True``.
 
         Parameters
         ----------
-        other : SubscriptedIs
+        other : _SubscriptedIs
             Object to conjunctively synthesize with this object.
 
         Returns
         ----------
-        SubscriptedIs
+        _SubscriptedIs
             New object conjunctively synthesized with this object.
 
         Raises
@@ -357,7 +357,7 @@ class SubscriptedIs(object):
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, SubscriptedIs):
+        if not isinstance(other, _SubscriptedIs):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class & operand '
                 f'{represent_object(other)} not '
@@ -374,7 +374,7 @@ class SubscriptedIs(object):
             self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
-        return SubscriptedIs(
+        return _SubscriptedIs(
             is_valid=lambda obj: self.is_valid(obj) and other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
@@ -382,28 +382,28 @@ class SubscriptedIs(object):
         )
 
 
-    def __or__(self, other: 'SubscriptedIs') -> (
-        'SubscriptedIs'):
+    def __or__(self, other: '_SubscriptedIs') -> (
+        '_SubscriptedIs'):
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
-        :class:`SubscriptedIs` object whose data validator returns ``True`` only
+        :class:`_SubscriptedIs` object whose data validator returns ``True`` only
         when the data validators of either this *or* the passed
-        :class:`SubscriptedIs` objects return ``True``.
+        :class:`_SubscriptedIs` objects return ``True``.
 
         Parameters
         ----------
-        other : SubscriptedIs
+        other : _SubscriptedIs
             Object to disjunctively synthesize with this object.
 
         Returns
         ----------
-        SubscriptedIs
+        _SubscriptedIs
             New object disjunctively synthesized with this object.
         '''
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, SubscriptedIs):
+        if not isinstance(other, _SubscriptedIs):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class | operand '
                 f'{represent_object(other)} not '
@@ -420,7 +420,7 @@ class SubscriptedIs(object):
             self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
-        return SubscriptedIs(
+        return _SubscriptedIs(
             is_valid=lambda obj: self.is_valid(obj) or other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
@@ -429,22 +429,22 @@ class SubscriptedIs(object):
 
 
     #FIXME: Fun optimization: if inverting something that's already been
-    #inverted, return the original "SubscriptedIs" object sans inversion. :p
-    def __invert__(self) -> 'SubscriptedIs':
+    #inverted, return the original "_SubscriptedIs" object sans inversion. :p
+    def __invert__(self) -> '_SubscriptedIs':
         '''
         **Negation** (i.e., ``~self``), synthesizing a new
-        :class:`SubscriptedIs` object whose data validator returns ``True``
-        only when the data validators of this :class:`SubscriptedIs` object
+        :class:`_SubscriptedIs` object whose data validator returns ``True``
+        only when the data validators of this :class:`_SubscriptedIs` object
         returns ``False``.
 
         Returns
         ----------
-        SubscriptedIs
+        _SubscriptedIs
             New object negating this object.
         '''
 
         # Closures for profound lore.
-        return SubscriptedIs(
+        return _SubscriptedIs(
             is_valid=lambda obj: not self.is_valid(obj),
             # Inverted data validator code, defined as the trivial boolean
             # negation of this validator.

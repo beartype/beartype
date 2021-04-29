@@ -285,7 +285,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # equality validator.
         PepHintMetadata(
-            hint=Annotated[list, IsEqualToAmplyImpish],
+            hint=Annotated[list[str], IsEqualToAmplyImpish],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # Exact object subscripting this validator.
@@ -303,6 +303,9 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         r"IsEqual\[.*'Amply imp‐ish',.*\]",),
                 ),
+                # List of integer constants *NOT* instances of the expected
+                # subtype.
+                PepHintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
                 # List of string constants violating this validator.
                 PepHintPithUnsatisfiedMetadata(
                     ['Hectic,', 'receptacle‐hybernacling caste so',]),

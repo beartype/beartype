@@ -30,7 +30,7 @@ def test_api_vale_isequal_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import IsEqual
-    from beartype.vale._valeissub import SubscriptedIs
+    from beartype.vale._valeissub import _SubscriptedIs
     from collections.abc import Mapping
 
     # Arbitrary tuple objects with which to subscript the "IsEqual" class,
@@ -48,7 +48,7 @@ def test_api_vale_isequal_pass() -> None:
     IsKeenArrows = IsEqual[KEEN_ARROWS]
 
     # Assert this validator satisfies the expected API.
-    assert isinstance(IsUnbodiedJoy, SubscriptedIs)
+    assert isinstance(IsUnbodiedJoy, _SubscriptedIs)
 
     # Assert this validator accepts the object subscripting this validator.
     assert IsUnbodiedJoy.is_valid(UNBODIED_JOY) is True

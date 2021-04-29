@@ -24,8 +24,9 @@ from beartype.roar import (
     BeartypeValeSubscriptionException,
     BeartypeValeLambdaWarning,
 )
+from beartype.vale._valeisabc import _IsABC
 from beartype.vale._valeissub import (
-    SubscriptedIs,
+    _SubscriptedIs,
     SubscriptedIsValidator,
 )
 from beartype._util.func.utilfuncscope import (
@@ -42,30 +43,56 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ subscriptable           }....................
-class Is(object):
+class Is(_IsABC):
     '''
     **Beartype callable validator factory** (i.e., class that, when subscripted
-    (indexed) by a caller-defined data validation function returning ``True``
-    when an arbitrary object passed to that function satisfies an arbitrary
-    constraint, creates a new :class:`SubscriptedIs` object encapsulating that
-    function suitable for subscripting (indexing) :attr:`typing.Annotated` type
-    hints, which then enforce that validation on :mod:`beartype`-decorated
-    callable parameters and returns annotated by those hints).
+    (indexed) by an arbitrary callable returning ``True`` when the object
+    passed to that callable satisfies a caller-defined constraint, creates a
+    new :class:`_SubscriptedIs` object encapsulating that callable suitable for
+    subscripting (indexing) :attr:`typing.Annotated` type hints, enforcing that
+    constraint on :mod:`beartype`-decorated callable parameters and returns
+    annotated by those hints).
 
-    Subscripting (indexing) this class produces a :class:`SubscriptedIs` object
-    validating the internal integrity, consistency, and structure of arbitrary
-    objects ranging from simple builtin scalars like integers and strings to
-    complex data structures defined by third-party packages like NumPy arrays
-    and Pandas DataFrames. For portability, :class:`SubscriptedIs` objects are:
+    This class validates that callable parameters and returns satisfy the
+    arbitrary **callable validator** (i.e., callable whose signature satisfies
+    ``collections.abc.Callable[[typing.Any,], bool]``) subscripting (indexing)
+    this class. Callable validators are caller-defined and may thus validate
+    the internal integrity, consistency, and structure of arbitrary objects
+    ranging from simple builtin scalars like integers and strings to complex
+    data structures defined by third-party packages like NumPy arrays and
+    Pandas DataFrames.
 
-    * **PEP-compliant** and thus guaranteed to *never* violate existing or
+    This class creates one new :class:`_SubscriptedIs` object for each callable
+    validator subscripting (indexing) this class. These objects:
+
+    * Are **PEP-compliant** and thus guaranteed to *never* violate existing or
       future standards.
-    * **Safely ignorable** by *all* static and runtime type checkers other than
-      :mod:`beartype` itself.
+    * Are **Safely ignorable** by *all* static and runtime type checkers other
+      than :mod:`beartype` itself.
+    * **Less efficient** than :class:`_SubscriptedIs` objects created by
+      subscripting every other :mod:`beartype.vale` class. Specifically:
+
+      * Every :class:`_SubscriptedIs` object created by subscripting this class
+        necessarily calls a callable validator and thus incurs at least one
+        additional call stack frame per :mod:`beartype`-decorated callable
+        call.
+      * Every :class:`_SubscriptedIs` object created by subscripting every
+        other :mod:`beartype.vale` class directly calls *no* callable and thus
+        incurs additional call stack frames only when the active Python
+        interpreter internally calls dunder methods (e.g., ``__eq__()``) to
+        satisfy their validation constraint.
 
     Usage
     ----------
-    Callers are expected to (in order):
+    Any :mod:`beartype`-decorated callable parameter or return annotated by a
+    :attr:`typing.Annotated` type hint subscripted (indexed) by this class
+    subscripted (indexed) by a callable validator (e.g.,
+    ``typing.Annotated[{cls}, beartype.vale.Is[lambda obj: {expr}]]`` for any
+    class ``{cls}``  and Python expression ``{expr}` evaluating to a boolean)
+    validates that parameter or return value to be an instance of that class
+    satisfying that callable validator.
+
+    Specifically, callers are expected to (in order):
 
     #. Annotate a callable parameter or return to be validated with a `PEP
        593`_-compliant :attr:`typing.Annotated` type hint.
@@ -73,7 +100,7 @@ class Is(object):
 
        #. The type expected by that parameter or return.
        #. One or more subscriptions (indexations) of this class, each itself
-          subscripted (indexed) by a **data validator** (i.e., function
+          subscripted (indexed) by a **callable validator** (i.e., callable
           accepting a single arbitrary object and returning either ``True`` if
           that object satisfies an arbitrary constraint *or* ``False``
           otherwise). If that hint is subscripted by:
@@ -82,35 +109,35 @@ class Is(object):
             satisfies that hint when both:
 
             * That parameter or return is an instance of the expected type.
-            * That data validator returns ``True`` when passed that parameter
-              or return.
+            * That validator returns ``True`` when passed that parameter or
+              return.
 
           * Two or more subscriptions of this class, that parameter or return
             satisfies that hint when both:
 
             * That parameter or return is an instance of the expected type.
-            * *All* data validators subscripting *all* subscriptions of this
-              class return ``True`` when passed that parameter or return.
+            * *All* callable validators subscripting *all* subscriptions of
+              this class return ``True`` when passed that parameter or return.
 
-          Formally, the signature of each data validator *must* resemble:
+          Formally, the signature of each callable validator *must* resemble:
 
           .. _code-block:: python
 
              def is_object_valid(obj) -> bool:
                  return bool(obj)
 
-          Equivalently, each validator *must* satisfy the type hint
+          Equivalently, each callable validator *must* satisfy the type hint
           ``collections.abc.Callable[[typing.Any,], bool]``. If not the case,
           an exception is raised. Note that:
 
           * If that parameter or return is *not* an instance of the expected
-            type, **no validator is called.** Equivalently, each validator is
-            called *only* when that parameter or return is already an instance
-            of the expected type. Validators need *not* revalidate that type
-            (e.g., by passing that parameter or return and type to the
-            :func:`isinstance` builtin).
-          * The name of each validator is irrelevant. For convenience, most
-            validators are defined as nameless lambda functions.
+            type, **no callable validator is called.** Equivalently, each
+            callable validator is called *only* when that parameter or return
+            is already an instance of the expected type. Callable validators
+            need *not* revalidate that type (e.g., by passing that parameter or
+            return and type to the :func:`isinstance` builtin).
+          * The name of each callable validator is irrelevant. For convenience,
+            most callable validators are defined as nameless lambda functions.
 
     For example, the following type hint only accepts non-empty strings:
 
@@ -118,12 +145,12 @@ class Is(object):
 
        Annotated[str, Is[lambda text: bool(text)]]
 
-    :class:`SubscriptedIs` objects also support an expressive domain-specific
+    :class:`_SubscriptedIs` objects also support an expressive domain-specific
     language (DSL) enabling callers to trivially synthesize new objects from
     existing objects with standard Pythonic math operators:
 
-    * **Negation** (i.e., ``not``). Negating an :class:`SubscriptedIs` object
-      with the ``~`` operator synthesizes a new :class:`SubscriptedIs` object
+    * **Negation** (i.e., ``not``). Negating an :class:`_SubscriptedIs` object
+      with the ``~`` operator synthesizes a new :class:`_SubscriptedIs` object
       whose data validator returns ``True`` only when the data validator of the
       original object returns ``False``. For example, the following type hint
       only accepts strings containing *no* periods:
@@ -133,8 +160,8 @@ class Is(object):
          Annotated[str, ~Is[lambda text: '.' in text]]
 
     * **Conjunction** (i.e., ``and``). Conjunctively combining two or more
-      :class:`SubscriptedIs` objects with the ``&`` operator synthesizes a new
-      :class:`SubscriptedIs` object whose data validator returns ``True`` only
+      :class:`_SubscriptedIs` objects with the ``&`` operator synthesizes a new
+      :class:`_SubscriptedIs` object whose data validator returns ``True`` only
       when all data validators of the original objects return ``True``. For
       example, the following type hint only accepts non-empty strings
       containing *no* periods:
@@ -152,8 +179,8 @@ class Is(object):
       both empty strings *and* non-empty strings containing at least one
       period:
     * **Disjunction** (i.e., ``or``). Disjunctively combining two or more
-      :class:`SubscriptedIs` objects with the ``|`` operator synthesizes a new
-      :class:`SubscriptedIs` object whose data validator returns ``True`` only
+      :class:`_SubscriptedIs` objects with the ``|`` operator synthesizes a new
+      :class:`_SubscriptedIs` object whose data validator returns ``True`` only
       when at least one data validator of the original objects returns
       ``True``. For example, the following type hint accepts both empty strings
       *and* non-empty strings containing at least one period:
@@ -196,11 +223,12 @@ class Is(object):
        >>> from beartype.vale import Is
        >>> from typing import Annotated
 
-       # Validator matching only unquoted strings.
-       >>> IsUnquoted = Is[lambda text: '"' not in text and "'" not in text]
-
        # Validator matching only strings with lengths ranging [4, 40].
        >>> IsRangy = Is[lambda text: 4 <= len(text) <= 40]
+
+       # Validator matching only unquoted strings.
+       >>> IsUnquoted = Is[lambda text:
+       ...     text.count('"') < 2 and text.count("'") < 2]
 
        # Type hint matching only unquoted strings.
        >>> UnquotedString = Annotated[str, IsUnquoted]
@@ -213,73 +241,62 @@ class Is(object):
 
        # Annotate callables by those type hints.
        >>> @beartype
-       ... def quote_text(text: UnquotedString) -> str:
+       ... def doublequote_text(text: UnquotedString) -> QuotedString:
        ...     """
        ...     Double-quote the passed unquoted string.
        ...     """
        ...     return f'"{text}"'  # The best things in life are one-liners.
        >>> @beartype
-       ... def snip_text(text: UnquotedRangyString) -> UnquotedString:
+       ... def singlequote_prefix(text: UnquotedRangyString) -> QuotedString:
        ...     """
-       ...     Return the prefix spanning characters ``[0, 3]`` of the passed
-       ...     unquoted string with a length ranging ``[4, 40]``.
+       ...     Single-quote the prefix spanning characters ``[0, 3]`` of the
+       ...     passed unquoted string with length ranging ``[4, 40]``.
        ...     """
-       ...
-       ...     return text[:3]  # "This is guaranteed to work," says @beartype.
+       ...     return f"'{text[:3]}'"  # "Guaranteed to work," says @beartype.
 
        # Call those callables with parameters satisfying those validators.
-       >>> quote_text('You know anything about nuclear fusion?')
+       >>> doublequote_text("You know anything about nuclear fusion?")
        "You know anything about nuclear fusion?"
-       >>> snip_text('Not now, I'm too tired. Maybe later.')
-       Not
+       >>> singlequote_prefix("Not now, I'm too tired. Maybe later.")
+       'Not'
+
+       # Call those callables with parameters not satisfying those validators.
+       >>> doublequote_text('''"Everybody relax, I'm here."''')
+       beartype.roar._roarexc.BeartypeCallHintPepParamException: @beartyped
+       doublequote_text() parameter text='"Everybody relax, I\'m here."'
+       violates type hint typing.Annotated[str, Is[lambda text: text.count('"')
+       < 2 and text.count("'") < 2]], as value '"Everybody relax, I\'m here."'
+       violates data constraint Is[lambda text: text.count('"') < 2 and
+       text.count("'") < 2].
 
     .. _PEP 593:
        https://www.python.org/dev/peps/pep-0593
     '''
 
-    # ..................{ INITIALIZERS                      }..................
-    def __new__(cls, *args, **kwargs):
-        '''
-        Prohibit direct instantiation by unconditionally raising an exception.
-
-        Like standard type hints (e.g., :attr:`typing.Union`), this class is
-        *only* intended to be subscripted (indexed).
-
-        Raises
-        ----------
-        BeartypeValeSubscriptionException
-            Always.
-        '''
-
-        # Murderbot would know what to do here.
-        raise BeartypeValeSubscriptionException(
-            f'Class "{cls.__name__}" not instantiable; '
-            f'index this class with data validation functions instead '
-            f'(e.g., "{cls.__name__}[lambda obj: bool(obj)]").'
-        )
-
     # ..................{ DUNDERS                           }..................
     def __class_getitem__(
-        cls, is_valid: SubscriptedIsValidator) -> SubscriptedIs:
+        cls, is_valid: SubscriptedIsValidator) -> _SubscriptedIs:
         '''
-        `PEP 560`_-compliant dunder method dynamically generating a new
-        :class:`SubscriptedIs` object from the passed data validation function
-        suitable for subscripting `PEP 593`_-compliant :attr:`typing.Annotated`
-        type hints.
+        `PEP 560`_-compliant dunder method creating and returning a new
+        :class:`_SubscriptedIs` object from the passed **validator callable**
+        (i.e., caller-defined callable accepting a single arbitrary object and
+        returning either ``True`` if that object satisfies an arbitrary
+        constraint *or* ``False`` otherwise), suitable for subscripting `PEP
+        593`_-compliant :attr:`typing.Annotated` type hints.
 
-        See the class docstring for usage instructions.
+        This method is intentionally *not* memoized, as this method is usually
+        subscripted only by subscription-specific lambda functions uniquely
+        defined for each subscription of this class.
 
         Parameters
         ----------
         is_valid : Callable[[Any,], bool]
-            **Data validator** (i.e., caller-defined function accepting a
-            single arbitrary object and returning either ``True`` if that
-            object satisfies an arbitrary constraint *or* ``False`` otherwise).
+            Validator callable to validate parameters and returns against.
 
         Returns
         ----------
-        SubscriptedIs
-            New object encapsulating this data validator.
+        _SubscriptedIs
+            New object encapsulating this validator callable.
 
         Raises
         ----------
@@ -292,6 +309,11 @@ class Is(object):
               * Is *not* callable.
               * Is a C-based rather than pure-Python callable.
               * Is a pure-Python callable accepting two or more arguments.
+
+        See Also
+        ----------
+        :class:`IsAttr`
+            Usage instructions.
 
         .. _PEP 560:
            https://www.python.org/dev/peps/pep-0560
@@ -316,7 +338,7 @@ class Is(object):
             attr=is_valid, attr_scope=is_valid_code_locals)
 
         # One one-liner to rule them all and in "pdb" bind them.
-        return SubscriptedIs(
+        return _SubscriptedIs(
             is_valid=is_valid,
             # Python code snippet call this validator via that parameter,
             # passed an object to be interpolated into this snippet by
@@ -370,5 +392,5 @@ def die_unless_getitem_args_one(obj: Any, args: Any) -> None:
         # raise a human-readable exception.
         else:
             raise BeartypeValeSubscriptionException(
-                '{repr(obj)} subscripted by empty tuple.')
+                f'{repr(obj)} subscripted by empty tuple.')
     # Else, this object was subscripted by exactly one argument.
