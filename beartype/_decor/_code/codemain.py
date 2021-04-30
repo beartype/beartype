@@ -28,7 +28,6 @@ from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._cache.cachehint import coerce_hint_pep
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
-    CODE_INDENT_1,
     CODE_INIT_ARGS_LEN,
     CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
@@ -44,6 +43,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
 )
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from inspect import Parameter, Signature
 
 # See the "beartype.cave" submodule for further commentary.

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Python word size utility unit tests.**
+Project-wide **Python word size** utility unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.py.utilpyword` submodule.

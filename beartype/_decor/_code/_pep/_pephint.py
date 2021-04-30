@@ -35,8 +35,6 @@ from beartype._decor._cache.cachetype import (
 )
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
-    CODE_INDENT_1,
-    CODE_INDENT_2,
 )
 from beartype._decor._code._pep._pepmagic import (
     FUNC_WRAPPER_LOCAL_LABEL,
@@ -45,8 +43,6 @@ from beartype._decor._code._pep._pepmagic import (
     HINT_META_INDEX_PLACEHOLDER,
     HINT_META_INDEX_PITH_EXPR,
     HINT_META_INDEX_INDENT,
-    OPERATOR_SUFFIX_LEN_AND,
-    OPERATOR_SUFFIX_LEN_OR,
 )
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_CHECK_HINT_GENERIC_CHILD,
@@ -145,6 +141,12 @@ from beartype._util.hint.pep.utilhintpeptest import (
     warn_if_hint_pep_sign_deprecated,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.text.utiltextmagic import (
+    CODE_INDENT_1,
+    CODE_INDENT_2,
+    LINE_RSTRIP_INDEX_AND,
+    LINE_RSTRIP_INDEX_OR,
+)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import get_object_type_basename
@@ -183,8 +185,8 @@ def pep_code_check_hint(
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
     _HINT_META_INDEX_INDENT=HINT_META_INDEX_INDENT,
-    _OPERATOR_SUFFIX_LEN_AND=OPERATOR_SUFFIX_LEN_AND,
-    _OPERATOR_SUFFIX_LEN_OR=OPERATOR_SUFFIX_LEN_OR,
+    _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
+    _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 
     # "beartype._decor._code._pep._pepsnip" globals.
     _PEP_CODE_CHECK_HINT_GENERIC_PREFIX=PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
@@ -1338,7 +1340,7 @@ def pep_code_check_hint(
                     func_curr_code = (
                         # Strip the erroneous " or" suffix appended by the
                         # last child hint from this code.
-                        f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_OR]}'
+                        f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
                         f'{PEP484_CODE_CHECK_HINT_UNION_SUFFIX}'
@@ -1407,8 +1409,8 @@ def pep_code_check_hint(
                             f'{hint_curr_label} {repr(hint_curr)} subscripted '
                             f'by both @beartype-specific and -agnostic '
                             f'objects '
-                            f'(i.e., {represent_object(hint_child)} '
-                            f'not subscription of "beartype.vale.Is*" class).'
+                            f'(i.e., {represent_object(hint_child)} not '
+                            f'subscription of "beartype.vale.Is*" class).'
                         )
                     # Else, this argument is beartype-specific.
 
@@ -1421,7 +1423,9 @@ def pep_code_check_hint(
                             # into the "{obj}" variable already embedded by
                             # that class into this code.
                             hint_child_expr=hint_child._is_valid_code.format(
-                                obj=pith_curr_assigned_expr),
+                                indent=indent_curr,
+                                obj=pith_curr_assigned_expr,
+                            ),
                         ))
 
                     # Generate locals safely merging the locals required by
@@ -1434,7 +1438,7 @@ def pep_code_check_hint(
                 func_curr_code = (
                     # Strip the erroneous " and" suffix appended by the last
                     # child hint from this code.
-                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
+                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
                     f'{_PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format(indent_curr=indent_curr)}'
@@ -1603,7 +1607,7 @@ def pep_code_check_hint(
                 func_curr_code = (
                     # Strip the erroneous " and" suffix appended by the last
                     # child hint from this code.
-                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
+                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
                     f'{_PEP_CODE_CHECK_HINT_GENERIC_SUFFIX}'
@@ -1892,7 +1896,7 @@ def pep_code_check_hint(
                 func_curr_code = (
                     # Strip the erroneous " and" suffix appended by the
                     # last child hint from this code.
-                    f'{func_curr_code[:-_OPERATOR_SUFFIX_LEN_AND]}'
+                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
                     f'{_PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'

@@ -13,23 +13,11 @@ functions implementing type-checking for decorated callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ CODE ~ indent                     }....................
-CODE_INDENT_1 = '    '
-'''
-PEP-agnostic code snippet expanding to a single level of indentation.
-'''
+# ....................{ IMPORTS                           }....................
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
-
-CODE_INDENT_2 = CODE_INDENT_1*2
-'''
-PEP-agnostic code snippet expanding to two levels of indentation.
-'''
-
-
-CODE_INDENT_3 = CODE_INDENT_2 + CODE_INDENT_1
-'''
-PEP-agnostic code snippet expanding to three levels of indentation.
-'''
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CODE                              }....................
 CODE_SIGNATURE = f'''def {{func_wrapper_name}}(

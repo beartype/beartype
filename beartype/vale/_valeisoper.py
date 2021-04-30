@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype code-based operator data validation classes** (i.e.,
-:mod:`beartype`-specific classes enabling callers to define PEP-compliant data
+**Beartype code-based operator validation classes** (i.e.,
+:mod:`beartype`-specific classes enabling callers to define PEP-compliant
 validators from arbitrary caller-defined objects tested via explicitly
 supported operators efficiently generating stack-free code).
 
@@ -122,7 +122,8 @@ class IsEqual(_IsABC):
        >>> WHOLE_NUMBERS_ODD  = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
 
        # Type hint matching only lists of integers equal to one of these lists.
-       >>> SimpleWholeNumberSeries = Annotated[list[int],
+       >>> SimpleWholeNumberSeries = Annotated[
+       ...     list[int],
        ...     IsEqual[WHOLE_NUMBERS] |
        ...     IsEqual[WHOLE_NUMBERS_EVEN] |
        ...     IsEqual[WHOLE_NUMBERS_ODD]

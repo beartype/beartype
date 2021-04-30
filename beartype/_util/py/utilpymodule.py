@@ -73,7 +73,7 @@ def die_unless_module_attr_name(
         f'{repr(exception_cls)} not type.')
 
     # Avoid circular import dependencies.
-    from beartype._util.py.utilpyidentifier import is_identifiers_joined
+    from beartype._util.py.utilpyidentifier import is_identifier_qualified
 
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
@@ -94,7 +94,7 @@ def die_unless_module_attr_name(
     #
     # If this string is syntactically invalid as a fully-qualified module
     # attribute name, raise an exception.
-    elif not is_identifiers_joined(module_attr_name):
+    elif not is_identifier_qualified(module_attr_name):
         raise exception_cls(
             f'{exception_label} "{module_attr_name}" '
             f'syntactically invalid as module attribute name.')

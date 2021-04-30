@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Python identifier** (i.e., class, module, or attribute name)
+Project-wide **Python identifier** (i.e., attribute or variable name)
 utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -15,13 +15,29 @@ This private submodule is *not* intended for importation by downstream callers.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                           }....................
-def is_identifiers_joined(text: str) -> bool:
+def is_identifier_qualified(text: str) -> bool:
     '''
     ``True`` only if the passed string is the ``.``-delimited concatenation of
     one or more `PEP 3131`_-compliant syntactically valid **Python
     identifiers** (i.e., class, module, or attribute name), suitable for
     testing whether this string is the fully-qualified name of an arbitrary
     Python object.
+
+    Caveats
+    ----------
+    **This tester is mildly slow,** due to unavoidably splitting this string on
+    ``.`` delimiters and iteratively passing each of the split substrings to
+    the :meth:`str.isidentifier` builtin. Due to the following caveat, this
+    inefficiency is unavoidable.
+
+    **This tester is not optimizable with regular expressions** -- at least,
+    not trivially. Technically, this tester *can* be optimized by leveraging
+    the "General Category" of Unicode filters provided by the third-party
+    :mod:`regex` package. Practically, doing so would require the third-party
+    :mod:`regex` package and would still almost certainly fail in edge cases.
+    Why? Because Python 3 permits Python identifiers to contain Unicode letters
+    and digits in the "General Category" of Unicode code points, which is
+    highly non-trivial to match with the standard :mod:`re` module.
 
     Parameters
     ----------

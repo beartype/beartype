@@ -386,7 +386,7 @@ def die_unless_getitem_args_one(obj: Any, args: Any) -> None:
         if args:
             raise BeartypeValeSubscriptionException(
                 f'{repr(obj)} subscripted by two or more arguments:\n'
-                f'{represent_object(obj)}'
+                f'{represent_object(args)}'
             )
         # Else, this object was subscripted by *NO* arguments. In this case,
         # raise a human-readable exception.
