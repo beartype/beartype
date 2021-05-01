@@ -1423,7 +1423,7 @@ def pep_code_check_hint(
                             # into the "{obj}" variable already embedded by
                             # that class into this code.
                             hint_child_expr=hint_child._is_valid_code.format(
-                                indent=indent_curr,
+                                indent=indent_child,
                                 obj=pith_curr_assigned_expr,
                             ),
                         ))

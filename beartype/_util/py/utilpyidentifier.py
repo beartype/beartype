@@ -55,25 +55,34 @@ def is_identifier_qualified(text: str) -> bool:
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    # Return true only if *ALL*...
-    #
-    # Note that there exists an alternative and significantly more
-    # computationally expensive means of testing this condition, employed by
-    # the typing.ForwardRef.__init__() method to valid the validity of the
-    # passed relative classname:
-    #     try:
-    #         all(
-    #             compile(identifier, '<string>', 'eval')
-    #             for identifier in text.split('.')
-    #         )
-    #         return True
-    #     except SyntaxError:
-    #         return False
-    #
-    # Needless to say, we'll never be doing that.
-    return all(
-        # "."-delimited substrings split from this string are syntactically
-        # valid PEP 3131-compliant Python identifiers.
-        identifier.isidentifier()
-        for identifier in text.split('.')
+    # Return either...
+    return (
+        # If this text contains *NO* "." delimiters and is thus expected to be
+        # an unqualified Python identifier, true only if this is the case;
+        text.isidentifier()
+        if '.' not in text else
+        # Else, this text contains one or more "." delimiters and is thus
+        # expected to be a qualified Python identifier. In this case, true only
+        # if *ALL* "."-delimited substrings split from this string are valid
+        # unqualified Python identifiers.
+        #
+        # Note that:
+        # * Regular expressions report false negatives. See the docstring.
+        # * There exists an alternative and significantly more computationally
+        #   expensive means of testing this condition, employed by the
+        #   typing.ForwardRef.__init__() method to valid the validity of the
+        #   passed relative classname:
+        #       # Needless to say, we'll never be doing this.
+        #       try:
+        #           all(
+        #               compile(identifier, '<string>', 'eval')
+        #               for identifier in text.split('.')
+        #           )
+        #           return True
+        #       except SyntaxError:
+        #           return False
+        all(
+            identifier.isidentifier()
+            for identifier in text.split('.')
+        )
     )

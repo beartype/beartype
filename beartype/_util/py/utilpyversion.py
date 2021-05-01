@@ -25,6 +25,8 @@ IS_PYTHON_AT_LEAST_4_0 = version_info >= (4, 0)
 #FIXME: After dropping Python 3.9 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.10.0')
 IS_PYTHON_AT_LEAST_3_10 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 10)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.10.0.
@@ -34,6 +36,8 @@ IS_PYTHON_AT_LEAST_3_10 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 10)
 #FIXME: After dropping Python 3.8 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.9.0')
 IS_PYTHON_AT_LEAST_3_9 = IS_PYTHON_AT_LEAST_3_10 or version_info >= (3, 9)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.9.0.
@@ -43,6 +47,8 @@ IS_PYTHON_AT_LEAST_3_9 = IS_PYTHON_AT_LEAST_3_10 or version_info >= (3, 9)
 #FIXME: After dropping Python 3.7 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.8.0')
 IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or version_info >= (3, 8)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.8.0.
@@ -52,6 +58,8 @@ IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or version_info >= (3, 8)
 #FIXME: After dropping Python 3.6 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.7.0')
 IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_3_8 or version_info >= (3, 7)
 '''
 ``True`` only if the active Python interpreter targets at least Python 3.7.0.

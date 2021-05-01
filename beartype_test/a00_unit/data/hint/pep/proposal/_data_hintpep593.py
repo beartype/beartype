@@ -42,7 +42,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.9-specific imports.
-    from beartype.vale import Is, IsEqual
+    from beartype.vale import Is, IsAttr, IsEqual
     from typing import (
         Annotated,
         Any,
@@ -60,7 +60,7 @@ def add_data(data_module: 'ModuleType') -> None:
     def _is_quoted(text): return '"' in text or "'" in text
     IsQuoted = Is[_is_quoted]
 
-    # Beartype-specific data validator synthesized from the above validators
+    # Beartype-specific validator synthesized from the above validators
     # via the domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
@@ -68,8 +68,36 @@ def add_data(data_module: 'ModuleType') -> None:
     # Arbitrary list to validate equality against.
     AMPLY_IMPISH = ['Amply imp‐ish', 'blandishments to']
 
-    # Beartype-specific data validator validating equality against that list.
-    IsEqualToAmplyImpish = IsEqual[AMPLY_IMPISH]
+    # Beartype-specific validator validating equality against that list.
+    IsEqualAmplyImpish = IsEqual[AMPLY_IMPISH]
+
+    # ..................{ VALIDATORS ~ isattr               }..................
+    class CathecticallyEnsconceYouIn(object):
+        '''
+        Arbitrary class defining an arbitrary attribute whose value has *no*
+        accessible attributes but satisfies a validator tested below.
+        '''
+
+        def __init__(self) -> None:
+            '''
+            Initialize this object by defining this attribute.
+            '''
+
+            # Initialize this attribute to a shallow copy of this list rather
+            # than this list itself to properly test equality comparison.
+            self.this_mobbed_triste_of = AMPLY_IMPISH[:]
+
+    # Beartype-specific validator validating equality against that attribute.
+    IsAttrThisMobbedTristeOf = IsAttr[
+        'this_mobbed_triste_of', IsEqual[AMPLY_IMPISH]]
+
+    # Instance of this class satisfying this validator.
+    BOSS_EMBOSSED_ORDERING = CathecticallyEnsconceYouIn()
+
+    # Instance of this class *NOT* satisfying this validator.
+    SORDIDLY_FLABBY_WRMCASTINGS = CathecticallyEnsconceYouIn()
+    SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
+        'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
     # ..................{ SETS                              }..................
     # Add PEP 593-specific deeply ignorable test type hints to that set global.
@@ -154,7 +182,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ ANNOTATED ~ beartype : is         }................
         # Annotated of a non-"typing" type annotated by one beartype-specific
-        # data validator defined as a lambda function.
+        # validator defined as a lambda function.
         PepHintMetadata(
             hint=Annotated[str, IsLengthy],
             pep_sign=Annotated,
@@ -176,6 +204,39 @@ def add_data(data_module: 'ModuleType') -> None:
                 PepHintPithUnsatisfiedMetadata('To prayer'),
             ),
         ),
+
+        # Annotated of a listed of a nested non-"typing" type annotated by one
+        # beartype-specific validator defined as a lambda function.
+        PepHintMetadata(
+            hint=list[Annotated[str, IsLengthy]],
+            pep_sign=list,
+            stdlib_type=list,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # List of string constants satisfying this validator.
+                PepHintPithSatisfiedMetadata([
+                    'An‐atomically Island‐stranded, adrift land)',
+                    'That You randily are That worm‐tossed crabapple of',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant *NOT* an instance of the expected type.
+                PepHintPithUnsatisfiedMetadata(
+                    pith="Our Sturm‐sapped disorder's convolution of",
+                    # Match that the exception message raised for this object
+                    # embeds the code for this validator's lambda function.
+                    exception_str_match_regexes=(
+                        r'Is\[.*\blen\(text\) > 30\b.*\]',),
+                ),
+                # List of string constants violating this validator.
+                PepHintPithUnsatisfiedMetadata([
+                    'Volubly liable,',
+                    'Drang‐rang aloofment –',
+                    'ruthlessly',
+                ]),
+            ),
+        ),
+
 
         # Annotated of a non-"typing" type annotated by two or more
         # beartype-specific data validators all defined as functions, specified
@@ -248,7 +309,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Annotated of a non-"typing" type annotated by one beartype-specific
-        # data validator synthesized from all possible operators.
+        # validator synthesized from all possible operators.
         PepHintMetadata(
             hint=Annotated[str, IsLengthyOrUnquotedSentence],
             pep_sign=Annotated,
@@ -285,7 +346,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # equality validator.
         PepHintMetadata(
-            hint=Annotated[list[str], IsEqualToAmplyImpish],
+            hint=Annotated[list[str], IsEqualAmplyImpish],
             pep_sign=Annotated,
             piths_satisfied_meta=(
                 # Exact object subscripting this validator.
@@ -309,6 +370,31 @@ def add_data(data_module: 'ModuleType') -> None:
                 # List of string constants violating this validator.
                 PepHintPithUnsatisfiedMetadata(
                     ['Hectic,', 'receptacle‐hybernacling caste so',]),
+            ),
+        ),
+
+        # ................{ ANNOTATED ~ beartype : isattr     }................
+        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # attribute validator.
+        PepHintMetadata(
+            hint=Annotated[
+                CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
+            pep_sign=Annotated,
+            piths_satisfied_meta=(
+                # Instance of this class satisfying this validator.
+                PepHintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant *NOT* an instance of this class.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='An atoll nuclear broilers newly cleared of',
+                    # Match that the exception message raised for this object
+                    # embeds the name of the expected attribute.
+                    exception_str_match_regexes=(
+                        r"IsAttr\[.*'this_mobbed_triste_of',.*\]",),
+                ),
+                # Instance of this class *NOT* satisfying this validator.
+                PepHintPithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
             ),
         ),
     ))

@@ -235,7 +235,7 @@ def make_func(
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print('\n@beartyped {} wrapper:\n\n{}\n'.format(func_data.func_name, number_lines(func_code)))
+        # print(f'\n@beartyped {func_name} wrapper:\n\n{number_lines(func_code)}\n')
         exec(func_code, func_globals, func_locals)
 
         #FIXME: See above.

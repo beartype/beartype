@@ -37,9 +37,16 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._valeis import Is
+from beartype.vale._valeisobj import IsAttr
 from beartype.vale._valeisoper import IsEqual
 
 # ....................{ TODO                              }....................
+#FIXME: Document this throughout "README.rst", including:
+#* In our "Cheatsheet" section.
+#* In our "Features" matrix.
+#* In a new "Usage" subsection.
+#* In our FAQ.
+
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:
 #
@@ -52,8 +59,6 @@ from beartype.vale._valeisoper import IsEqual
 #  * Country.
 #  * Currency.
 #* Comparison constraints
-#  * EqualTo.
-#  * NotEqualTo.
 #  * IdenticalTo.
 #  * NotIdenticalTo.
 #  * LessThan.
@@ -61,11 +66,17 @@ from beartype.vale._valeisoper import IsEqual
 #  * Range.
 #  * DivisibleBy.
 
-#FIXME: Document this throughout "README.rst", including:
-#* In our "Cheatsheet" section.
-#* In our "Features" matrix.
-#* In a new "Usage" subsection.
-#* In our FAQ.
+#FIXME: Add a new _SubscriptedIs.get_cause_or_none() method with the same
+#signature and docstring as the existing CauseSleuth.get_cause_or_none()
+#method. This new _SubscriptedIs.get_cause_or_none() method should then be
+#called by the "_peperrorannotated" submodule to generate human-readable
+#exception messages. Note that this implies that:
+#* The _SubscriptedIs.__init__() method will need to additionally accept a new
+#  mandatory "get_cause_or_none: Callable[[], Optional[str]]" parameter, which
+#  that method should then localize to "self.get_cause_or_none".
+#* Each __class_getitem__() dunder method of each "_IsABC" subclass will need
+#  to additionally define and pass that callable when creating and returning
+#  its "_SubscriptedIs" instance.
 
 #FIXME: *BRILLIANT IDEA.* Holyshitballstime. The idea here is that we can
 #leverage all of our existing "beartype.is" infrastructure to dynamically

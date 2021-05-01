@@ -31,7 +31,6 @@ def test_api_vale_isequal_pass() -> None:
     # Defer heavyweight imports.
     from beartype.vale import IsEqual
     from beartype.vale._valeissub import _SubscriptedIs
-    from collections.abc import Mapping
 
     # Arbitrary tuple objects with which to subscript the "IsEqual" class,
     # exercising edge cases in the __class_getitem__() dunder method.
@@ -47,34 +46,30 @@ def test_api_vale_isequal_pass() -> None:
     IsUnbodiedJoy = IsEqual[UNBODIED_JOY]
     IsKeenArrows = IsEqual[KEEN_ARROWS]
 
-    # Assert this validator satisfies the expected API.
+    # Assert these validators satisfy the expected API.
     assert isinstance(IsUnbodiedJoy, _SubscriptedIs)
+    assert isinstance(IsKeenArrows, _SubscriptedIs)
 
-    # Assert this validator accepts the object subscripting this validator.
+    # Assert these validators accept the objects subscripting these validators.
     assert IsUnbodiedJoy.is_valid(UNBODIED_JOY) is True
     assert IsKeenArrows.is_valid(KEEN_ARROWS) is True
 
-    # Assert this validator accepts objects *NOT* subscripting this validator
-    # but still equal to the object subscripting this validator.
+    # Assert these validators accept objects *NOT* subscripting these
+    # validators but equal to the objects subscripting these validators.
     assert IsUnbodiedJoy.is_valid(UNBODIED_JOY[:]) is True
     assert IsKeenArrows.is_valid(KEEN_ARROWS[:]) is True
 
-    # Assert this validator rejects objects unequal to the object subscripting
-    # this validator.
+    # Assert these validators reject objects unequal to the objects
+    # subscripting these validators.
     assert IsUnbodiedJoy.is_valid(HARDLY_SEE) is False
     assert IsKeenArrows.is_valid(HARDLY_SEE) is False
 
-    # Assert this validator provides both non-empty code and code locals.
-    assert isinstance(IsUnbodiedJoy._is_valid_code, str)
-    assert isinstance(IsUnbodiedJoy._is_valid_code_locals, Mapping)
-    assert bool(IsUnbodiedJoy._is_valid_code)
-    assert bool(IsUnbodiedJoy._is_valid_code_locals)
-
-    # Assert this validator has the expected representation.
+    # Assert these validators have the expected representation.
     assert repr(UNBODIED_JOY) in repr(IsUnbodiedJoy)
+    assert repr(KEEN_ARROWS) in repr(IsKeenArrows)
 
     # Validator synthesized from the above validators with the domain-specific
-    # language (DSL) supported by those validators.
+    # language (DSL) supported by these validators.
     IsUnbodiedJoyOrKeenArrows = IsUnbodiedJoy | IsKeenArrows
 
     # Assert this object performs the expected validation.
