@@ -38,8 +38,6 @@ from typing import Any, Tuple
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ subscriptable           }....................
-#FIXME: Unit test us up.
-#FIXME: Finalize docstring example.
 class IsAttr(_IsABC):
     '''
     **Beartype object attribute validator factory** (i.e., class that, when
@@ -81,18 +79,28 @@ class IsAttr(_IsABC):
        >>> from beartype.vale import IsAttr, IsEqual
        >>> from typing import Annotated
 
-       # Type hint matching only two-dimensional NumPy arrays of 64-bit floats.
-       >>> Numpy2DArrayOfFloats = typing.Annotated[
-       ...     ndarray,
-       ...     IsAttr['dtype.type', IsEqual[np.float64]],
+       # Type hint matching only two-dimensional NumPy arrays of 64-bit floats,
+       # generating code resembling:
+       #     isinstance(array, np.ndarray) and
+       #     array.ndim == 2
+       #     array.dtype == np.dtype(np.float64)
+       >>> Numpy2DArrayOfFloats = Annotated[
+       ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
+       ...     IsAttr['dtype', IsEqual[np.dtype(np.float64)]],
        ... ]
 
-       # Type hint matching only one-dimensional NumPy arrays of 64-bit floats.
-       >>> Numpy1DArrayOfFloats = typing.Annotated[
-       ...     ndarray,
-       ...     IsAttr['dtype.type', IsEqual[np.float64]],
+       # Type hint matching only one-dimensional NumPy arrays of 64-bit floats,
+       # generating code resembling:
+       #     isinstance(array, np.ndarray) and
+       #     array.ndim == 2
+       #     array.dtype.type == np.float64
+       >>> Numpy1DArrayOfFloats = Annotated[
+       ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
+       ...     # Nested attribute validators test equality against a "."-delimited
+       ...     # attribute lookup (e.g., "dtype.type"), as expected.
+       ...     IsAttr['dtype', IsAttr['type', IsEqual[np.float64]]],
        ... ]
 
        # NumPy arrays of well-known real number series.
@@ -112,14 +120,18 @@ class IsAttr(_IsABC):
        ...     """
        ...     return np.sqrt(array.sum(axis=1))
 
-       #FIXME: Resume here tomorrow, please.
        # Call those callables with parameters satisfying those hints.
        >>> sqrt_sum_2d(FAREY_2D_ARRAY_OF_FLOATS)
-       ????????????????????????????????????
+       [0.35355339 0.55634864 0.67082039 0.78679579 0.88034084]
 
        # Call those callables with parameters not satisfying those hints.
        >>> sqrt_sum_2d(FAREY_1D_ARRAY_OF_FLOATS)
-       ????????????????????????????????????
+       beartype.roar._roarexc.BeartypeCallHintPepParamException: @beartyped
+       sqrt_sum_2d() parameter array="array([0.42857143, 0.5, 0.57142857, 0.6,
+       0.625, ...])" violates type hint typing.Annotated[numpy.ndarray,
+       IsAttr['ndim', IsEqual[2]], IsAttr['dtype', IsEqual[dtype('float64')]]],
+       as value "array([0.42857143, 0.5, 0.57142857, 0.6, 0.625, ...])"
+       violates data constraint IsAttr['ndim', IsEqual[2]].
 
     See Also
     ----------
@@ -128,8 +140,6 @@ class IsAttr(_IsABC):
     '''
 
     # ..................{ DUNDERS                           }..................
-    #FIXME: Implement us up, please.
-    #FIXME: Unit test memoization, please.
     @callable_cached
     def __class_getitem__(
         cls, args: Tuple[str, _SubscriptedIs]) -> _SubscriptedIs:
@@ -291,6 +301,18 @@ class IsAttr(_IsABC):
             # code generated below *AND* the code validating this attribute.
             update_mapping(
                 is_valid_code_locals, attr_validator._is_valid_code_locals)
+
+            #FIXME: Unfortunately, this still isn't sufficiently unique,
+            #because "IsAttr['name', IsAttr['name', IsEqual[True]]]" is a
+            #trivial counter-example where the current approach breaks down.
+            #For true uniquification here, we're going to need to instead:
+            #* Define a global private counter:
+            #  _local_name_obj_attr_value_counter = Counter(0)
+            #* Replace the assignment below with:
+            #  local_name_obj_attr_value = (
+            #      f'{{obj}}_isattr_'
+            #      f'{next(_local_name_obj_attr_value_counter)}'
+            #  )
 
             # Name of a local variable in this code whose:
             # * Name is sufficiently obfuscated as to be hopefully unique to

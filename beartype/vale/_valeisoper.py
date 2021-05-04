@@ -165,7 +165,6 @@ class IsEqual(_IsABC):
     '''
 
     # ..................{ DUNDERS                           }..................
-    #FIXME: Unit test memoization, please.
     @callable_cached
     def __class_getitem__(cls, obj: Any) -> _SubscriptedIs:
         '''

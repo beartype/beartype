@@ -42,7 +42,8 @@ class _IsABC(object, metaclass=ABCMeta):
     # ..................{ INITIALIZERS                      }..................
     # Ideally, this class method should be typed as returning "NoReturn", but
     # doing so causes MyPy to vociferously complain: e.g.,
-    #     beartype/vale/_valeisabc.py:43: error: "__new__" must return a class instance (got "NoReturn")  [misc]
+    #     beartype/vale/_valeisabc.py:43: error: "__new__" must return a class
+    #     instance (got "NoReturn")  [misc]
     def __new__(cls, *args, **kwargs) -> '_IsABC':
         '''
         Prohibit direct instantiation by unconditionally raising an exception.

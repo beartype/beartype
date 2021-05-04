@@ -129,6 +129,24 @@ tl;dr
 News
 ====
 
+2021-05-07: The Day the Bear Validated You
+------------------------------------------
+
+**Beartype 0.7.0** – the culmination of everything you always wanted but were
+too humble to beg @leycec for – now publishes the first `type hint-based
+validator API <Beartype Hints_>`__.
+
+`Beartype validators <Beartype Hints_>`__ enforce arbitrary constraints on the
+internal structure, state, and contents of parameters and returns using simple
+caller-defined lambda functions and declarative expressions – all seamlessly
+composable with `standard type hints <Standard Hints_>`__ via an `expressive
+domain-specific language (DSL) <Beartype DSL_>`__ designed *just for you.*
+
+Because the bear has found your codebase worthy.
+
+2020-12-10: Rejoice! It's Beartype
+----------------------------------
+
 Beartype has a `roadmap forward to our first major milestone <beartype
 1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
 with all annotation standards by late 2021. :sup:`...in theory`
@@ -484,17 +502,37 @@ function decorated by an ``O(1)`` runtime type checker.
 Usage
 =====
 
-Beartype makes type-checking painless, portable, and possibly fun. Just:
+Beartype makes type-checking painless, portable, and purportedly fun. Just:
 
-    Decorate functions and methods annotated by `standard type hints <PEP
-    484_>`__ with the ``@beartype.beartype`` decorator, which wraps those
+    Decorate functions and methods `annotated by standard type hints <Standard
+    Hints_>`__ with the ``@beartype.beartype`` decorator, which wraps those
     functions and methods in performant type-checking dynamically generated
     on-the-fly.
 
-Toy Example
------------
+    When `standard type hints <Standard Hints_>`__ fail to support your use
+    case, annotate functions and methods by `beartype-specific "validator" type
+    hints <Beartype Hints_>`__ instead. Validators enforce arbitrary runtime
+    constraints on the internal structure, state, and contents of parameters
+    and returns using simple caller-defined lambda functions and declarative
+    expressions – all seamlessly composable with `standard type hints <Standard
+    Hints_>`__ via an `expressive domain-specific language (DSL) <Beartype
+    DSL_>`__ designed just for you.
 
-Let's see what that looks like for a ``"Hello, Jungle!"`` toy example. Just:
+"Embrace the bear," says the bear peering over your shoulder as you read this.
+
+Standard Hints
+--------------
+
+Beartype supports *most* `type hints standardized by the developer community
+through Python Enhancement Proposals (PEPs) <Compliance_>`__. Since type
+hinting is its own special hell, we'll start by wading into the
+thalassophobia-inducing waters of type-checking with a sane example – the O(1)
+``@beartype`` way.
+
+Toy Example
+~~~~~~~~~~~
+
+Let's type-check a ``"Hello, Jungle!"`` toy example. Just:
 
 #. Import the ``@beartype.beartype`` decorator:
 
@@ -548,7 +586,7 @@ Let's see what that looks like for a ``"Hello, Jungle!"`` toy example. Just:
       a byte-string separator before?" not str.
 
 Industrial Example
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
 with automated runtime type checking to demonstrate beartype's support for
@@ -636,6 +674,12 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #
 .. #  * `typing.Union`_, enabling .
 
+Beartype Hints
+--------------
+
+Beartype DSL
+~~~~~~~~~~~~
+
 Onward to the cheats!
 
 Cheatsheet
@@ -645,11 +689,9 @@ Let's type-check like `greased lightning`_:
 
 .. code-block:: python
 
+   # ..................{              BEARTYPE              }..................
    # Import the core @beartype decorator.
    from beartype import beartype
-
-   # Import PEP 544-compliant type hints. Note this requires Python ≥ 3.8.
-   from typing import Protocol, runtime_checkable
 
    # Import PEP 585-compliant type hints. Note this requires Python ≥ 3.9.
    from collections.abc import (
@@ -662,7 +704,7 @@ Let's type-check like `greased lightning`_:
    # have been deprecated by PEP 585-compliant type hints under Python ≥ 3.9,
    # where @beartype emits non-fatal deprecation warnings at decoration time.
    # See also: https://docs.python.org/3/library/typing.html
-   from typing import Any, List, Optional, Tuple, TypeVar, Union
+   from typing import Any, List, Optional, Tuple, Union
 
    # Import beartype-specific types to annotate callables with, too.
    from beartype.cave import (
@@ -674,10 +716,20 @@ Let's type-check like `greased lightning`_:
    # Import user-defined classes for use with @beartype, too.
    from my_package.my_module import MyClass
 
+   # ..................{              TYPEVARS              }..................
+   # User-defined PEP 484-compliant type variable. Note that @beartype currently
+   # ignores type variables, but that @beartype 0.9.0 is expected to fully
+   # support type variables. See also: https://github.com/beartype/beartype/issues/7
+   from typing import TypeVar
+   T = TypeVar('T')
+
+   # ..................{              PROTOCOLS             }..................
    # User-defined PEP 544-compliant protocol referenced below in type hints.
    # Note this requires Python ≥ 3.8 and that protocols *MUST* be explicitly
    # decorated by the @runtime_checkable decorator to be usable with @beartype.
-   @runtime_checkable
+   from typing import Protocol, runtime_checkable
+
+   @runtime_checkable   # <---- mandatory boilerplate line. (it is sad.)
    class MyProtocol(Protocol):
        def my_method(self) -> str:
            return (
@@ -685,11 +737,7 @@ Let's type-check like `greased lightning`_:
                'classes define a method with the same signature as this method.'
            )
 
-   # User-defined PEP 484-compliant type variable. Note that @beartype currently
-   # ignores type variables, but that @beartype 0.9.0 is expected to fully
-   # support type variables. See also: https://github.com/beartype/beartype/issues/7
-   T = TypeVar('T')
-
+   # ..................{              FUNCTIONS             }..................
    # Decorate functions with @beartype and...
    @beartype
    def my_function(
@@ -781,11 +829,13 @@ Let's type-check like `greased lightning`_:
    ) -> Union[Integral, 'MyPep585Generic', bool]:
        return 0xDEADBEEF
 
+   # ..................{              GENERATORS            }..................
    # Decorate generators as above but returning a generator type.
    @beartype
    def my_generator() -> Generator[int, None, None]:
        yield from range(0xBEEFBABE, 0xCAFEBABE)
 
+   # ..................{              CLASSES               }..................
    # User-defined class referenced in forward references above.
    class MyOtherClass:
        # Decorate instance methods as above without annotating "self".
@@ -820,6 +870,7 @@ Let's type-check like `greased lightning`_:
        def bare_settermethod(self, bad: Integral = 0xBAAAAAAD) -> None:
            self._scalar = bad if bad else 0xBADDCAFE
 
+   # ..................{              GENERICS              }..................
    # User-defined PEP 585-compliant generic referenced above in type hints.
    # Note this requires Python ≥ 3.9.
    class MyPep585Generic(tuple[int, float]):
@@ -834,6 +885,58 @@ Let's type-check like `greased lightning`_:
        @beartype
        def __new__(cls, *args: str) -> Tuple[str, ...]:
            return tuple.__new__(cls, args)
+
+   # ..................{              VALIDATORS            }..................
+   # Import PEP 593-compliant beartype-specific type hints validating arbitrary
+   # caller constraints. Note this requires Python ≥ 3.9 and beartype ≥ 0.7.0.
+   from beartype.vale import Is, IsAttr, IsEqual
+   from typing import Annotated
+
+   # Import third-party packages to validate.
+   import numpy as np
+
+   # Validator matching only two-dimensional NumPy arrays of 64-bit floats,
+   # specified with a single caller-defined lambda function.
+   NumpyArray2DFloat = Annotated[np.ndarray, Is[
+       lambda array: array.ndim == 2 and array.dtype == np.dtype(np.float64)]]
+
+   # Validator matching only one-dimensional NumPy arrays of 64-bit floats,
+   # specified with two declarative expressions. Although verbose, this
+   # approach generates optimal reusable code that avoids function calls.
+   IsNumpyArray1D = IsAttr['ndim', IsEqual[1]]
+   IsNumpyArrayFloat = IsAttr['dtype', IsEqual[np.dtype(np.float64)]]
+   NumpyArray1DFloat = Annotated[np.ndarray, IsNumpyArray1D, IsNumpyArrayFloat]
+
+   # Validator matching only empty NumPy arrays, equivalent to but faster than:
+   #     NumpyArrayEmpty = Annotated[np.ndarray, Is[lambda array: array.size != 0]]
+   IsNumpyArrayEmpty = IsAttr['size', IsEqual[0]]
+   NumpyArrayEmpty = Annotated[np.ndarray, IsNumpyArrayEmpty]
+
+   # Validator composed with standard operators from the above validators,
+   # permissively matching all of the following:
+   # * Empty NumPy arrays of any dtype *except* 64-bit floats.
+   * * Non-empty one- and two-dimensional NumPy arrays of 64-bit floats.
+   NumpyArrayEmptyNonFloatOrNonEmptyFloat1Or2D = Annotated[np.ndarray,
+       # "&" creates a new validator matching when both operands match, while
+       # "|" creates a new validator matching when one or both operands match;
+       # "~" creates a new validator matching when its operand does not match.
+       # Group operands to enforce semantic intent and avoid precedence woes.
+       (IsNumpyArrayEmpty & ~IsNumpyArrayFloat) | (
+           ~IsNumpyArrayEmpty & IsNumpyArrayFloat (
+               IsNumpyArray1D | IsAttr['ndim', IsEqual[2]]
+           )
+       )
+   ]
+
+   # Decorate functions accepting validators like usual and...
+   @beartype
+   def my_validated_function(
+       # Annotate validators just like standard type hints.
+       param_must_satisfy_validator: NumpyArrayEmptyOrNonemptyFloat1Or2D,
+
+   # Trivially combine validators with standard type hints, too.
+   ) -> list[NumpyArrayEmptyNonFloatOrNonEmptyFloat1Or2D]:
+       return [np.array([i], np.dtype=np.float64) for i in range(0xFEEDFACE)]
 
 Features
 ========

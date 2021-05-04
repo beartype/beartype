@@ -150,6 +150,11 @@ def test_api_vale_isattr_pass() -> None:
     assert isinstance(IsInTheLightOfThought, _SubscriptedIs)
     assert isinstance(IsSingingHymnsUnbidden, _SubscriptedIs)
 
+    # Assert these validators produce the same objects when subscripted by the
+    # same arguments (and are thus memoized on subscripted arguments).
+    assert IsSingingHymnsUnbidden is IsAttr[
+        'what_is_most_like_thee', IsInTheLightOfThought]
+
     # Assert these validators accept objects defining attributes with the same
     # names and values as those subscripting these validators.
     assert IsInTheLightOfThought.is_valid(from_rainbow_clouds) is True

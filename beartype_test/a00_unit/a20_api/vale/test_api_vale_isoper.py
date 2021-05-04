@@ -36,9 +36,13 @@ def test_api_vale_isequal_pass() -> None:
     # exercising edge cases in the __class_getitem__() dunder method.
     UNBODIED_JOY = ('Like an unbodied joy', 'whose race is just begun.')
 
-    # Arbitrary non-tuple objects with which to subscript the "IsEqual" class,
-    # exercising edge cases in the __class_getitem__() dunder method.
-    KEEN_ARROWS = ['Keen as are the arrows', 'Of that silver sphere,']
+    # Arbitrary hashable non-tuple objects with which to subscript the
+    # "IsEqual" class, exercising edge cases in the __class_getitem__() dunder
+    # method.
+    KEEN_ARROWS = frozenset(
+        {'Keen as are the arrows', 'Of that silver sphere,'})
+
+    # Arbitrary non-tuple object we don't particularly care about.
     HARDLY_SEE = ['Until we hardly see,', 'we feel that it is there.']
 
     # Validator produced by subscripting the "IsEqual" class with exactly one
@@ -50,6 +54,11 @@ def test_api_vale_isequal_pass() -> None:
     assert isinstance(IsUnbodiedJoy, _SubscriptedIs)
     assert isinstance(IsKeenArrows, _SubscriptedIs)
 
+    # Assert these validators produce the same objects when subscripted by the
+    # same arguments (and are thus memoized on subscripted arguments).
+    assert IsUnbodiedJoy is IsEqual[UNBODIED_JOY]
+    assert IsKeenArrows is IsEqual[KEEN_ARROWS]
+
     # Assert these validators accept the objects subscripting these validators.
     assert IsUnbodiedJoy.is_valid(UNBODIED_JOY) is True
     assert IsKeenArrows.is_valid(KEEN_ARROWS) is True
@@ -57,7 +66,7 @@ def test_api_vale_isequal_pass() -> None:
     # Assert these validators accept objects *NOT* subscripting these
     # validators but equal to the objects subscripting these validators.
     assert IsUnbodiedJoy.is_valid(UNBODIED_JOY[:]) is True
-    assert IsKeenArrows.is_valid(KEEN_ARROWS[:]) is True
+    assert IsKeenArrows.is_valid(KEEN_ARROWS.copy()) is True
 
     # Assert these validators reject objects unequal to the objects
     # subscripting these validators.
@@ -74,7 +83,7 @@ def test_api_vale_isequal_pass() -> None:
 
     # Assert this object performs the expected validation.
     assert IsUnbodiedJoyOrKeenArrows.is_valid(UNBODIED_JOY[:]) is True
-    assert IsUnbodiedJoyOrKeenArrows.is_valid(KEEN_ARROWS[:]) is True
+    assert IsUnbodiedJoyOrKeenArrows.is_valid(KEEN_ARROWS.copy()) is True
     assert IsUnbodiedJoyOrKeenArrows.is_valid(HARDLY_SEE) is False
 
     # Assert this object provides the expected representation.
