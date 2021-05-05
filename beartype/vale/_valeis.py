@@ -55,7 +55,7 @@ class Is(_IsABC):
 
     This class validates that callable parameters and returns satisfy the
     arbitrary **callable validator** (i.e., callable whose signature satisfies
-    ``collections.abc.Callable[[typing.Any,], bool]``) subscripting (indexing)
+    ``collections.abc.Callable[[typing.Any], bool]``) subscripting (indexing)
     this class. Callable validators are caller-defined and may thus validate
     the internal integrity, consistency, and structure of arbitrary objects
     ranging from simple builtin scalars like integers and strings to complex

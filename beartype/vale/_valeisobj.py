@@ -81,9 +81,9 @@ class IsAttr(_IsABC):
 
        # Type hint matching only two-dimensional NumPy arrays of 64-bit floats,
        # generating code resembling:
-       #     isinstance(array, np.ndarray) and
-       #     array.ndim == 2
-       #     array.dtype == np.dtype(np.float64)
+       #    (isinstance(array, np.ndarray) and
+       #     array.ndim == 2 and
+       #     array.dtype == np.dtype(np.float64))
        >>> Numpy2DArrayOfFloats = Annotated[
        ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
@@ -92,9 +92,9 @@ class IsAttr(_IsABC):
 
        # Type hint matching only one-dimensional NumPy arrays of 64-bit floats,
        # generating code resembling:
-       #     isinstance(array, np.ndarray) and
-       #     array.ndim == 2
-       #     array.dtype.type == np.float64
+       #    (isinstance(array, np.ndarray) and
+       #     array.ndim == 2 and
+       #     array.dtype.type == np.float64)
        >>> Numpy1DArrayOfFloats = Annotated[
        ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
