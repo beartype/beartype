@@ -12,7 +12,11 @@ type hints, PEP-noncompliant type hint, and objects satisfying neither.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype import cave
+from beartype._cave._cavefast import (
+    AnyType,
+    NoneType,
+)
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
     HINTS_PEP_HASHABLE,
@@ -26,7 +30,7 @@ NOT_HINTS_HASHABLE = frozenset((
     # Empty tuple.
     (),
     # Tuple containing an scalar that is neither a type nor string.
-    (list, 'list', 0xFEEDFACE, cave.NoneType,),
+    (list, 'list', 0xFEEDFACE, NoneType,),
 ))
 '''
 Frozen set of various objects that are hashable but nonetheless unsupported by
@@ -99,12 +103,12 @@ HINTS_NONPEP = frozenset((
     # User-defined type.
     NonPepCustom,
     # Beartype cave type.
-    cave.NoneType,
+    NoneType,
     # Non-empty tuple containing two types.
-    cave.NoneTypeOr[cave.AnyType],
+    NoneTypeOr[AnyType],
     # Non-empty tuple containing two types and a fully-qualified forward
     # reference.
-    (int, 'beartype.cave.NoneType', set)
+    (int, 'beartype._cave.._cavefast.NoneType', set)
 ))
 '''
 Frozen set of PEP-noncompliant type hints exercising well-known edge cases.
@@ -115,7 +119,7 @@ HINTS_NONPEP_UNIGNORABLE = (
     # PEP-noncompliant type.
     str,
     # PEP-noncompliant tuple of types.
-    cave.NoneTypeOr[cave.AnyType],
+    NoneTypeOr[AnyType],
 )
 '''
 Frozen set of **unignorable PEP-noncompliant type hints** (i.e.,
@@ -130,7 +134,7 @@ NOT_HINTS_NONPEP = frozenset((
     # PEP-compliant type hints are invalid and thus unsupported.
     {
         # Tuple containing a PEP-compliant type hint.
-        (int, hint_pep_hashable, cave.NoneType,)
+        (int, hint_pep_hashable, NoneType,)
         for hint_pep_hashable in HINTS_PEP_HASHABLE
     } |
     # Set comprehension of hashable PEP-compliant non-class type hints.

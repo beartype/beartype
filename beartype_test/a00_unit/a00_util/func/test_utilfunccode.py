@@ -79,31 +79,32 @@ def test_get_func_code_or_none() -> None:
             "thou_dirge = lambda: 'Of the dying year, to which this closing night'\n")
 
 # ....................{ TESTS ~ label                     }....................
-def test_get_func_code_label() -> None:
-    '''
-    Test usage of the
-    :func:`beartype._util.func.utilfunccode.get_func_code_label` function.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccode import get_func_code_label
-    from beartype_test.a00_unit.data.data_type import (
-        CALLABLES_C,
-        CALLABLES_PYTHON,
-        MODULE_FILENAME,
-        NON_CALLABLES,
-    )
-
-    # Assert this getter returns the expected label for pure-Python callables.
-    for callable_python in CALLABLES_PYTHON:
-        assert get_func_code_label(callable_python) == MODULE_FILENAME
-
-    # Assert this getter returns the expected label for C-based callables.
-    for callable_c in CALLABLES_C:
-        assert get_func_code_label(callable_c) == '<C-based>'
-
-    # Assert this getter raises the expected exception for non-callables.
-    for non_callable in NON_CALLABLES:
-        with raises(_BeartypeUtilCallableException):
-            get_func_code_label(non_callable)
+#FIXME: This getter no longer has a sane reason to exist. Consider excising.
+# def test_get_func_code_label() -> None:
+#     '''
+#     Test usage of the
+#     :func:`beartype._util.func.utilfunccode.get_func_code_label` function.
+#     '''
+#
+#     # Defer test-specific imports.
+#     from beartype.roar._roarexc import _BeartypeUtilCallableException
+#     from beartype._util.func.utilfunccode import get_func_code_label
+#     from beartype_test.a00_unit.data.data_type import (
+#         CALLABLES_C,
+#         CALLABLES_PYTHON,
+#         MODULE_FILENAME,
+#         NON_CALLABLES,
+#     )
+#
+#     # Assert this getter returns the expected label for pure-Python callables.
+#     for callable_python in CALLABLES_PYTHON:
+#         assert get_func_code_label(callable_python) == MODULE_FILENAME
+#
+#     # Assert this getter returns the expected label for C-based callables.
+#     for callable_c in CALLABLES_C:
+#         assert get_func_code_label(callable_c) == '<C-based>'
+#
+#     # Assert this getter raises the expected exception for non-callables.
+#     for non_callable in NON_CALLABLES:
+#         with raises(_BeartypeUtilCallableException):
+#             get_func_code_label(non_callable)

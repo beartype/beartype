@@ -11,7 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import HintGenericSubscriptedType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepDeprecatedWarning,
@@ -19,6 +18,7 @@ from beartype.roar import (
     # BeartypeDecorHintPepIgnorableDeepWarning,
     # BeartypeDecorHintPepUnsupportedWarning,
 )
+from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_DEPRECATED,

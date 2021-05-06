@@ -32,42 +32,43 @@ from beartype.roar import (
 )
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep)
-from typing import Union, Optional
+from typing import Any, Tuple, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_NoneType = type(None)
+_NoneType: type = type(None)
 '''
 Type of the ``None`` singleton, duplicated from the :mod:`beartype.cave`
 submodule to prevent cyclic import dependencies.
 '''
 
 
-_NoneTypes = (_NoneType,)
+_NoneTypes: Tuple[type, ...] = (_NoneType,)
 '''
 Tuple of only the type of the ``None`` singleton.
 '''
 
+# ....................{ HINTS                             }....................
+_TypeTuple = Tuple[Union[type, str], ...]
+'''
+PEP-compliant type hint matching a **type tuple** (i.e., tuple containing only
+types and forward references to deferred types specified as the fully-qualified
+names of those types).
+'''
+
 # ....................{ CLASSES                           }....................
-# This class is documented in the "beartype.cave" for readability.
 class _NoneTypeOrType(dict):
     '''
     :class:`NoneType` **tuple factory type** (i.e., :class:`dict` subclass,
     instances of which are dictionaries mapping from arbitrary types or tuples
     of types to the same types or tuples of types concatenated with the type of
     the ``None`` singleton).
-
-    See Also
-    ----------
-    :class:`beartype.cave.NoneTypeOr`
-        Full documentation for this ad-hoc collection of
-        :mod:`beartype`-specific types.
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __setitem__(self, key: object, value: object) -> None:
+    def __setitem__(self, key: Any, value: Any) -> None:
         '''
         Dunder method explicitly called by the superclass on setting the passed
         key-value pair with``[``- and ``]``-delimited syntax.
@@ -93,7 +94,7 @@ class _NoneTypeOrType(dict):
             f'{repr(self)} externally immutable (i.e., not settable).')
 
 
-    def __missing__(self, hint: Union[type, str, tuple]) -> tuple:
+    def __missing__(self, hint: Union[type, str, _TypeTuple]) -> _TypeTuple:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on getting the passed
@@ -119,13 +120,13 @@ class _NoneTypeOrType(dict):
 
         Parameters
         ----------
-        hint : (type, str, tuple)
+        hint : (type, str, _TypeTuple)
             Type, string, or tuple of one or more types and/or strings *not*
             currently cached by this factory.
 
         Returns
         ----------
-        tuple
+        _TypeTuple
             Tuple of types appending the type of the ``None`` singleton to the
             passed type, string, or tuple of types and/or strings.
 
@@ -150,7 +151,7 @@ class _NoneTypeOrType(dict):
         )
 
         # Tuple of types to be cached and returned by this call.
-        hint_or_none: Optional[tuple] = None
+        hint_or_none: _TypeTuple = None  # type: ignore[assignment]
 
         # If this key is a type...
         if isinstance(hint, type):
@@ -186,3 +187,72 @@ class _NoneTypeOrType(dict):
         # the passed missing key to this new tuple of types by effectively:
         #     self[hint] = hint_or_none
         return hint_or_none
+
+# ....................{ SINGLETONS                        }....................
+NoneTypeOr: Any = _NoneTypeOrType()
+'''
+**:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary
+types or tuples of types to the same types or tuples of types concatenated with
+the type of the ``None`` singleton).
+
+This factory efficiently generates and caches tuples of types containing
+:class:``NoneType`` from arbitrary user-specified types and tuples of types. To
+do so, simply index this factory with any desired type *or* tuple of types; the
+corresponding value will then be another tuple containing :class:``NoneType``
+and that type *or* those types.
+
+Motivation
+----------
+This factory is commonly used to type-hint **optional callable parameters**
+(i.e., parameters defaulting to ``None`` when *not* explicitly passed by the
+caller). Although such parameters may also be type-hinted with a tuple manually
+containing :class:``NoneType``, doing so inefficiently recreates these tuples
+for each optional callable parameter across the entire codebase.
+
+This factory avoids such inefficient recreation. Instead, when indexed with any
+arbitrary key:
+
+* If that key has already been successfully accessed on this factory, this
+  factory returns the existing value (i.e., tuple containing
+  :class:``NoneType`` and that key if that key is a type *or* the items of that
+  key if that key is a tuple) previously mapped and cached to that key.
+* Else, if that key is:
+
+  * A type, this factory:
+
+    #. Creates a new tuple containing that type and :class:``NoneType``.
+    #. Associates that key with that tuple.
+    #. Returns that tuple.
+
+  * A tuple of types, this factory:
+
+    #. Creates a new tuple containing these types and :class:``NoneType``.
+    #. Associates that key with that tuple.
+    #. Returns that tuple.
+
+  * Any other object, raises a human-readable
+    :class:`beartype.roar.BeartypeCaveNoneTypeOrKeyException` exception.
+
+This factory is analogous to the :pep:`484`_-compliant :class:`typing.Optional`
+type despite otherwise *not* complying with :pep:`484`_.
+
+Examples
+----------
+    # Function accepting an optional parameter with neither
+    # "beartype.cave" nor "typing".
+    >>> def to_autumn(season_of_mists: (str, type(None)) = None) -> str
+    ...     return season_of_mists if season_of_mists is not None else (
+    ...         'While barred clouds bloom the soft-dying day,')
+
+    # Function accepting an optional parameter with "beartype.cave".
+    >>> from beartype.cave import NoneTypeOr
+    >>> def to_autumn(season_of_mists: NoneTypeOr[str] = None) -> str
+    ...     return season_of_mists if season_of_mists is not None else (
+    ...         'Then in a wailful choir the small gnats mourn')
+
+    # Function accepting an optional parameter with "typing".
+    >>> from typing import Optional
+    >>> def to_autumn(season_of_mists: Optional[str] = None) -> str
+    ...     return season_of_mists if season_of_mists is not None else (
+    ...         'Or sinking as the light wind lives or dies;')
+'''

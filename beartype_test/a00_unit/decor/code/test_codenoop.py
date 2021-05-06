@@ -107,7 +107,7 @@ def test_decor_noop_hint_ignorable_order() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.cave import AnyType
+    from beartype._cave._cavefast import AnyType
     from typing import Any
 
     # Undecorated annotated function with ignorable type hints.

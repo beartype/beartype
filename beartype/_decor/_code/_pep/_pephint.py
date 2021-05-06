@@ -20,7 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import NoneType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
@@ -28,7 +27,7 @@ from beartype.roar import (
     BeartypeDecorHintPep593Exception,
     BeartypeDecorHintPep3119Exception,
 )
-from beartype.vale._valeissub import _SubscriptedIs
+from beartype._cave._cavefast import NoneType
 from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
     register_typistry_tuple,
@@ -147,6 +146,7 @@ from beartype._util.text.utiltextmagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
+from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import get_object_type_basename
@@ -808,7 +808,7 @@ def pep_code_check_hint(
         # next-to-first.
         elif is_hint_pep593(hint_curr):
             # If this metahint is beartype-specific (i.e., its second argument
-            # is an instance of the "beartype.vale._valeissub._SubscriptedIs"
+            # is an instance of the "beartype._vale._valesub._SubscriptedIs"
             # class produced by subscripting the "Is" class), ignore all
             # annotations on this hint by reducing this hint to its origin
             # (e.g., "str" in "Annotated[str, 50, False]").
@@ -1358,7 +1358,7 @@ def pep_code_check_hint(
             # If this hint is a PEP 593-compliant type metahint, this metahint
             # is guaranteed by the reduction performed above to be
             # beartype-specific (i.e., metahint whose second argument is an
-            # instance of the "beartype.vale._valeissub._SubscriptedIs" class
+            # instance of the "beartype._vale._valesub._SubscriptedIs" class
             # produced by subscripting the "Is" class). In this case...
             elif hint_curr_sign is HINT_PEP593_SIGN_ANNOTATED:
                 # PEP-compliant type hint annotated by this metahint, localized

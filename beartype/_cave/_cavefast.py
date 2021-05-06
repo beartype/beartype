@@ -4,57 +4,16 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype cave.**
+**Beartype fast cave** (i.e., private subset of the public :mod:`beartype.cave`
+subpackage profiled to be efficiently importable at :mod:`beartype` startup and
+thus safely importable throughout the internal :mod:`beartype` codebase).
 
-This submodule collects common types (e.g., :class:`NoneType`, the type of the
-``None`` singleton) and tuples of common types (e.g., :data:`CallableTypes`, a
-tuple of the types of all callable objects).
-
-PEP 484
-----------
-This module is intentionally *not* compliant with the `PEP 484`_ standard
-implemented by the stdlib :mod:`typing` module, which formalizes type hinting
-annotations with a catalogue of generic classes and metaclasses applicable to
-common use cases. :mod:`typing` enables end users to enforce contractual
-guarantees over the contents of arbitrarily complex data structures with the
-assistance of third-party static type checkers (e.g., :mod:`mypy`,
-:mod:`pyre`), runtime type checkers (e.g., :mod:`beartype`, :mod:`typeguard`),
-and integrated development environments (e.g., PyCharm).
-
-Genericity comes at a cost, though. Deeply type checking a container containing
-``n`` items, for example, requires type checking both that container itself
-non-recursively *and* each item in that container recursively. Doing so has
-time complexity ``O(N)`` for ``N >= n`` the total number of items transitively
-contained in this container (i.e., items directly contained in this container
-*and* items directly contained in containers contained in this container).
-While the cost of this operation can be paid either statically *or* amortized
-at runtime over all calls to annotated callables accepting that container, the
-underlying cost itself remains the same.
-
-By compare, this module only contains standard Python classes and tuples of
-such classes intended to be passed as is to the C-based :func:`isinstance`
-builtin and APIs expressed in terms of that builtin (e.g., :mod:`beartype`).
-This module only enables end users to enforce contractual guarantees over the
-types but *not* contents of arbitrarily complex data structures. This
-intentional tradeoff maximizes runtime performance at a cost of ignoring the
-types of items contained in containers.
-
-In summary:
-
-=====================  ====================  ====================================
-feature set            :mod:`beartype.cave`  :mod:`typing`
-=====================  ====================  ====================================
-type checking          **shallow**           **deep**
-type check items?      **no**                **yes**
-`PEP 484`_-compliant?  **no**                **yes**
-time complexity        ``O(1)``              ``O(N)``
-performance            stupid fast           *much* less stupid fast
-implementation         C-based builtin call  pure-Python (meta)class method calls
-low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
-=====================  ====================  ====================================
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
+The public :mod:`beartype.cave` subpackage has been profiled to *not* be
+efficiently importable at :mod:`beartype` startup and thus *not* safely
+importable throughout the internal :mod:`beartype` codebase. Why? Because
+:mod:`beartype.cave` currently imports from expensive third-party packages on
+importation (e.g., :mod:`numpy`) despite :mod:`beartype` itself *never*
+requiring those imports. Until resolved, that subpackage is considered tainted.
 '''
 
 # ....................{ TODO                              }....................
@@ -85,18 +44,9 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 import functools as _functools
 import numbers as _numbers
 import re as _re
-from argparse import (
-    _SubParsersAction,
-    ArgumentParser as _ArgumentParser,
-)
-from beartype.roar import (
-    BeartypeCallUnavailableTypeException as
-    _BeartypeCallCheckUnavailableTypeException
-)
-from beartype._cave.abc import _BoolType
-from beartype._cave.mapping import _NoneTypeOrType
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_9 as _IS_PYTHON_AT_LEAST_3_9)
+from beartype.roar import BeartypeCallUnavailableTypeException
+from beartype._cave._caveabc import BoolType
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections import deque as _deque
 from collections.abc import (
     Collection as _Collection,
@@ -117,17 +67,7 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
-from typing import (
-    Any as _Any,
-    Dict as _Dict,
-    Tuple as _Tuple,
-    # Type as _Type,
-    # Union as _Union,
-)
-from weakref import (
-    ref as _ref,
-    ProxyTypes as _ProxyTypes,
-)
+from typing import Any
 
 # Note that:
 #
@@ -168,10 +108,7 @@ from types import (
 # except ImportError:
 #     _Collection = None
 
-# ....................{ TYPES ~ unavailable               }....................
-# Unavailable types are defined *BEFORE* any subsequent types, as the latter
-# commonly leverage the former.
-
+# ....................{ CLASSES                           }....................
 class UnavailableType(object):
     '''
     **Unavailable type** (i.e., type *not* available under the active Python
@@ -180,21 +117,23 @@ class UnavailableType(object):
     '''
 
     def __instancecheck__(self, obj) -> None:
-        raise _BeartypeCallCheckUnavailableTypeException(
+        raise BeartypeCallUnavailableTypeException(
             f'{self} not passable as the second parameter to isinstance().')
 
     def __subclasscheck__(self, cls) -> None:
-        raise _BeartypeCallCheckUnavailableTypeException(
+        raise BeartypeCallUnavailableTypeException(
             f'{self} not passable as the second parameter to issubclass().')
 
 
-def _get_type_or_unavailable(cls: type) -> type:
+# This is private, as it's unclear whether anyone requires access to this yet.
+class _UnavailableTypesTuple(tuple):
     '''
-    Passed type if non-``None`` *or* :class:`UnavailableType` otherwise (i.e.,
-    if this type is ``None``).
+    Type of any **tuple of unavailable types** (i.e., types *not* available
+    under the active Python interpreter, typically due to insufficient Python
+    version or non-installed third-party dependencies).
     '''
 
-    return UnavailableType if cls is None else cls
+    pass
 
 # ....................{ TYPES ~ core                      }....................
 AnyType = object
@@ -203,7 +142,7 @@ Type of all objects regardless of type.
 '''
 
 
-NoneType: _Any = type(None)
+NoneType: Any = type(None)
 '''
 Type of the ``None`` singleton.
 
@@ -257,7 +196,7 @@ callable of indeterminate origin is in fact wrapped.
 '''
 
 
-CallableCodeObjectType: _Any = type(_get_type_or_unavailable.__code__)
+CallableCodeObjectType: Any = type((lambda: None).__code__)
 '''
 Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
@@ -333,7 +272,7 @@ the ``PyInstanceMethod_Type`` C type explicitly admits that:
 # standard "types.MethodWrapperType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
 # to *ALWAYS* exist is obtained instead.
-MethodBoundInstanceDunderCType: _Any = type(''.__add__)
+MethodBoundInstanceDunderCType: Any = type(''.__add__)
 '''
 Type of all **C-based bound method wrappers** (i.e., callable objects
 implemented in low-level C, associated with special methods of builtin types
@@ -350,7 +289,7 @@ See Also
 # standard "types.ClassMethodDescriptorType" object, this is of no benefit to
 # older versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundClassCType: _Any = type(dict.__dict__['fromkeys'])
+MethodUnboundClassCType: Any = type(dict.__dict__['fromkeys'])
 '''
 Type of all **C-based unbound class method descriptors** (i.e., callable
 objects implemented in low-level C, associated with class methods of
@@ -366,7 +305,7 @@ explicitly passing the intended ``cls`` objects as their first parameters).
 # standard "types.WrapperDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundInstanceDunderCType: _Any = type(str.__add__)
+MethodUnboundInstanceDunderCType: Any = type(str.__add__)
 '''
 Type of all **C-based unbound dunder method wrapper descriptors** (i.e.,
 callable objects implemented in low-level C, associated with dunder methods of
@@ -388,7 +327,7 @@ See Also
 # standard "types.MethodDescriptorType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method descriptor
 # guaranteed to *ALWAYS* exist is obtained instead.
-MethodUnboundInstanceNondunderCType: _Any = type(str.upper)
+MethodUnboundInstanceNondunderCType: Any = type(str.upper)
 '''
 Type of all **C-based unbound non-dunder method descriptors** (i.e., callable
 objects implemented in low-level C, associated with non-dunder methods of
@@ -466,9 +405,7 @@ AsyncGeneratorCType = _AsyncGeneratorType
 '''
 C-based type returned by all **asynchronous pure-Python generators** (i.e.,
 callables implemented in pure Python containing one or more ``yield``
-statements whose declaration is preceded by the ``async`` keyword) if the
-active Python interpreter is at least version 3.6.0 *or*
-:class:`UnavailableType` otherwise.
+statements whose declaration is preceded by the ``async`` keyword).
 
 Caveats
 ----------
@@ -483,8 +420,7 @@ AsyncCoroutineCType = _CoroutineType
 '''
 C-based type returned by all **asynchronous coroutines** (i.e., callables
 implemented in pure Python *not* containing one or more ``yield`` statements
-whose declaration is preceded by the ``async`` keyword) if the active Python
-interpreter is at least version 3.6.0 *or* :class:`UnavailableType` otherwise.
+whose declaration is preceded by the ``async`` keyword).
 
 Caveats
 ----------
@@ -540,16 +476,6 @@ This special-purpose type is a subtype of the more general-purpose
 :class:`GeneratorType`. Whereas the latter applies to *all* generators
 implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
-'''
-
-# ....................{ TYPES ~ call : weakref            }....................
-WeakRefCType = _ref
-'''
-Type of all **unproxied weak references** (i.e., callable objects yielding
-strong references to their referred objects when called).
-
-This type matches both the C-based :class:`weakref.ref` class *and* the
-pure-Python :class:`weakref.WeakMethod` class, which subclasses the former.
 '''
 
 # ....................{ TYPES ~ data                      }....................
@@ -672,8 +598,7 @@ CollectionType = _Collection
 Type of all **collections** (i.e., both concrete and structural instances of
 the abstract :class:`collections.abc.Collection` base class; sized iterable
 containers defining the ``__contains__()``, ``__iter__()``, and ``__len__()``
-dunder methods) if the active Python interpreter is at least version 3.6.0 *or*
-:class:`UnavailableType` otherwise.
+dunder methods).
 
 This type also matches **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class) via structural subtyping.
@@ -801,10 +726,10 @@ define:
 Most callables accepting sequences *never* invoke these edge-case methods and
 should thus be typed to accept NumPy arrays as well. To do so, prefer either:
 
-* The :class:`SequenceOrNumpyArrayTypes` tuple of types matching both sequences
-  and NumPy arrays.
-* The :class:`SequenceMutableOrNumpyArrayTypes` tuple of types matching both
-  mutable sequences and NumPy arrays.
+* The :class:`beartype.cave.SequenceOrNumpyArrayTypes` tuple of types matching
+  both sequences and NumPy arrays.
+* The :class:`beartype.cave.SequenceMutableOrNumpyArrayTypes` tuple of types
+  matching both mutable sequences and NumPy arrays.
 
 See Also
 ----------
@@ -839,8 +764,8 @@ to define:
 
 Most callables accepting mutable sequences *never* invoke these edge-case
 methods and should thus be typed to accept NumPy arrays as well. To do so,
-prefer the :class:`SequenceMutableOrNumpyArrayTypes` tuple of types matching
-both mutable sequences and NumPy arrays.
+prefer the :class:`beartype.cave.SequenceMutableOrNumpyArrayTypes` tuple of
+types matching both mutable sequences and NumPy arrays.
 
 See Also
 ----------
@@ -916,7 +841,15 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ hint                      }....................
-HintGenericSubscriptedType: _Any = UnavailableType
+# Define this type is either...
+HintGenericSubscriptedType: Any = (
+    # If the active Python interpreter targets at least Python >= 3.9 and thus
+    # supports PEP 585, this type;
+    type(list[str])  # type: ignore[misc]
+    if IS_PYTHON_AT_LEAST_3_9 else
+    # Else, a placeholder type.
+    UnavailableType
+)
 '''
 C-based type of all subscripted generics if the active Python interpreter
 targets Python >= 3.9 *or* :class:`UnavailableType` otherwise.
@@ -959,60 +892,7 @@ These include:
     https://www.python.org/dev/peps/pep-0585
 '''
 
-# If the active Python interpreter targets at least Python >= 3.9 and thus
-# supports PEP 585, correctly declare this type.
-if _IS_PYTHON_AT_LEAST_3_9:
-    HintGenericSubscriptedType = type(list[str])  # type: ignore[misc]
-
-#FIXME: Deprecate this. We previously published this ambiguously named type.
-#Perhaps use a module __getattr__() under whatever Python versions support it?
-#Note this requires Python >= 3.7, but that Python 3.6 will simply ignore that
-#dunder method, which is obviously acceptable, because Python 3.6 is dead.
-HintPep585Type = HintGenericSubscriptedType
-
 # ....................{ TYPES ~ scalar                    }....................
-BoolType = _BoolType
-'''
-Type of all **booleans** (i.e., objects defining the ``__bool__()`` dunder
-method; objects reducible in boolean contexts like ``if`` conditionals to
-either ``True`` or ``False``).
-
-This type matches:
-
-* **Builtin booleans** (i.e., instances of the standard :class:`bool` class
-  implemented in low-level C).
-* **NumPy booleans** (i.e., instances of the :class:`numpy.bool_` class
-  implemented in low-level C and Fortran) if :mod:`numpy` is importable.
-
-Usage
-----------
-Non-standard boolean types like NumPy booleans are typically *not*
-interoperable with the standard standard :class:`bool` type. In particular, it
-is typically *not* the case, for any variable ``my_bool`` of non-standard
-boolean type and truthy value, that either ``my_bool is True`` or ``my_bool ==
-True`` yield the desired results. Rather, such variables should *always* be
-coerced into the standard :class:`bool` type before being compared -- either:
-
-* Implicitly (e.g., ``if my_bool: pass``).
-* Explicitly (e.g., ``if bool(my_bool): pass``).
-
-Caveats
-----------
-**There exists no abstract base class governing booleans in Python.** Although
-various Python Enhancement Proposals (PEPs) were authored on the subject, all
-were rejected as of this writing. Instead, this type trivially implements an
-ad-hoc abstract base class (ABC) detecting objects satisfying the boolean
-protocol via structural subtyping. Although no actual real-world classes
-subclass this :mod:`beartype`-specific ABC, the detection implemented by this
-ABC suffices to match *all* boolean types. So it goes.
-
-See Also
-----------
-:class:`ContainerType`
-    Further details on structural subtyping.
-'''
-
-
 StrType = str    # Well, isn't that special.
 '''
 Type of all **unencoded Unicode strings** (i.e., instances of the builtin
@@ -1160,20 +1040,6 @@ See Also
     Further details.
 '''
 
-# ....................{ TYPES ~ stdlib : argparse         }....................
-ArgParserType = _ArgumentParser
-'''
-Type of argument parsers parsing all command-line arguments for either
-top-level commands *or* subcommands of those commands.
-'''
-
-
-ArgSubparsersType = _SubParsersAction
-'''
-Type of argument subparser containers parsing subcommands for parent argument
-parsers parsing either top-level commands *or* subcommands of those commands.
-'''
-
 # ....................{ TYPES ~ stdlib : re               }....................
 # Regular expression types are also sufficiently obscure to warrant
 # formalization here.
@@ -1186,7 +1052,7 @@ parsers parsing either top-level commands *or* subcommands of those commands.
 # nature of Python's regular expression support, this type is *NOT* publicly
 # exposed. While the private "re._pattern_type" attribute does technically
 # provide this type, it does so in a private and hence non-portable manner.
-RegexCompiledType: _Any = type(_re.compile(r''))
+RegexCompiledType: type = type(_re.compile(r''))
 '''
 Type of all **compiled regular expressions** (i.e., objects created and
 returned by the stdlib :func:`re.compile` function).
@@ -1201,50 +1067,15 @@ returned by the stdlib :func:`re.compile` function).
 # type is *NOT* directly importable. Although this type's classname is
 # published to be "_sre.SRE_Match", the "_sre" C extension provides no such
 # type for pure-Python importation. So it goes.
-RegexMatchType: _Any = type(_re.match(r'', ''))
+RegexMatchType: type = type(_re.match(r'', ''))
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
 '''
 
-# ....................{ TYPES ~ lib                       }....................
-# Types conditionally dependent upon the importability of third-party
-# dependencies. These types are subsequently redefined by try-except blocks
-# below and initially default to "UnavailableType" for simple types.
-
-# ....................{ TYPES ~ lib : numpy               }....................
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyArrayType: type = UnavailableType
-'''
-Type of all **NumPy arrays** (i.e., instances of the concrete
-:class:`numpy.ndarray` class implemented in low-level C and Fortran) if
-:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
-:mod:`numpy` is unimportable).
-'''
-
-
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyScalarType: type = UnavailableType
-'''
-Type of all **NumPy scalars** (i.e., instances of the abstract
-:class:`numpy.generic` base class implemented in low-level C and Fortran) if
-:mod:`numpy` is importable *or* :class:`UnavailableType` otherwise (i.e., if
-:mod:`numpy` is unimportable).
-'''
-
 # ....................{ TUPLES ~ unavailable              }....................
 # Unavailable types are defined *BEFORE* any subsequent types, as the latter
 # commonly leverage the former.
-
-# Private, as it's unclear whether anyone desperately wants access to this yet.
-class _UnavailableTypesTuple(tuple):
-    '''
-    Type of any **tuple of unavailable types** (i.e., types *not* available
-    under the active Python interpreter, typically due to insufficient Python
-    version or non-installed third-party dependencies).
-    '''
-    pass
-
 
 UnavailableTypes = _UnavailableTypesTuple()
 '''
@@ -1264,81 +1095,6 @@ Specifically, for any callable parameter or return type annotated with:
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
-# ....................{ TUPLES ~ core                     }....................
-NoneTypeOr: _Any = _NoneTypeOrType()
-'''
-**:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary
-types or tuples of types to the same types or tuples of types concatenated with
-the type of the ``None`` singleton).
-
-This factory efficiently generates and caches tuples of types containing
-:class:``NoneType`` from arbitrary user-specified types and tuples of types. To
-do so, simply index this factory with any desired type *or* tuple of types; the
-corresponding value will then be another tuple containing :class:``NoneType``
-and that type *or* those types.
-
-Motivation
-----------
-This factory is commonly used to type-hint **optional callable parameters**
-(i.e., parameters defaulting to ``None`` when *not* explicitly passed by the
-caller). Although such parameters may also be type-hinted with a tuple manually
-containing :class:``NoneType``, doing so inefficiently recreates these tuples
-for each optional callable parameter across the entire codebase.
-
-This factory avoids such inefficient recreation. Instead, when indexed with any
-arbitrary key:
-
-* If that key has already been successfully accessed on this factory, this
-  factory returns the existing value (i.e., tuple containing
-  :class:``NoneType`` and that key if that key is a type *or* the items of that
-  key if that key is a tuple) previously mapped and cached to that key.
-* Else, if that key is:
-
-  * A type, this factory:
-
-    #. Creates a new tuple containing that type and :class:``NoneType``.
-    #. Associates that key with that tuple.
-    #. Returns that tuple.
-
-  * A tuple of types, this factory:
-
-    #. Creates a new tuple containing these types and :class:``NoneType``.
-    #. Associates that key with that tuple.
-    #. Returns that tuple.
-
-  * Any other object, raises a human-readable
-    :class:`beartype.roar.BeartypeCaveNoneTypeOrKeyException` exception.
-
-This factory is analogous to the `PEP 484`_-compliant :class:`typing.Optional`
-type despite otherwise *not* complying with `PEP 484`_.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
-
-Examples
-----------
-Function accepting an optional parameter with neither :mod:`beartype.cave` nor
-:mod:`typing`:
-
-    >>> def to_autumn(season_of_mists: (str, type(None)) = None) -> str
-    ...     return season_of_mists if season_of_mists is not None else (
-    ...         'While barred clouds bloom the soft-dying day,')
-
-Function accepting an optional parameter with :mod:`beartype.cave`:
-
-    >>> from beartype.cave import NoneTypeOr
-    >>> def to_autumn(season_of_mists: NoneTypeOr[str] = None) -> str
-    ...     return season_of_mists if season_of_mists is not None else (
-    ...         'Then in a wailful choir the small gnats mourn')
-
-Function accepting an optional parameter with :mod:`typing`:
-
-    >>> from typing import Optional
-    >>> def to_autumn(season_of_mists: Optional[str] = None) -> str
-    ...     return season_of_mists if season_of_mists is not None else (
-    ...         'Or sinking as the light wind lives or dies;')
-'''
-
 # ....................{ TUPLES ~ py                       }....................
 ModuleOrStrTypes = (ModuleType, StrType)
 '''
@@ -1346,6 +1102,9 @@ Tuple of both the module *and* string type.
 '''
 
 
+#FIXME: This is probably incorrect under Python >= 3.9, where isinstance() also
+#accepts "|"-delimited unions of types (e.g., float | int | str). What are
+#those types, exactly?
 TestableTypes = (ClassType, tuple)
 '''
 Tuple of all **testable types** (i.e., types suitable for use as the second
@@ -1481,17 +1240,6 @@ callables implemented in pure Python whose declaration is preceded by the
 ``async`` keyword).
 '''
 
-# ....................{ TUPLES ~ call : weakref           }....................
-WeakRefProxyCTypes = _ProxyTypes
-'''
-Tuple of all **C-based weak reference proxy classes** (i.e., classes
-implemented in low-level C whose instances are weak references to other
-instances masquerading as those instances).
-
-This tuple contains classes matching both callable and uncallable weak
-reference proxies.
-'''
-
 # ....................{ TUPLES ~ scalar                   }....................
 BoolOrNumberTypes = (BoolType, NumberType,)
 '''
@@ -1508,155 +1256,6 @@ Perl) typically implicitly convert:
 * ``False`` to ``0`` and vice versa.
 * ``True`` to ``1`` and vice versa.
 '''
-
-# ....................{ TUPLES ~ version                  }....................
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
-VersionComparableTypes: _Tuple[type, ...] = (tuple,)
-'''
-Tuple of all **comparable version types** (i.e., types suitable for use both as
-parameters to callables accepting arbitrary version specifiers *and* as
-operands to numeric operators comparing such specifiers) if
-:mod:`pkg_resources` is importable *or* ``(tuple,)`` otherwise.
-
-This is the proper subset of types listed by the :data:`VersionTypes` tuple
-that are directly comparable, thus excluding the :class:`str` type.
-``.``-delimited version specifier strings are only indirectly comparable after
-conversion to a comparable version type.
-
-Caveats
-----------
-Note that all types listed by this tuple are *only* safely comparable with
-versions of the same type. In particular, the types listed by the
-:class:`SetuptoolsVersionTypes` tuple do *not* necessarily support direct
-comparison with either the :class:`tuple` *or* `class:`str` version types;
-ironically, those types supported both under older but *not* newer versions of
-:mod:`setuptools`. This is why we can't have good things.
-'''
-
-# ....................{ TUPLES ~ lib                      }....................
-# Types conditionally dependent upon the importability of third-party
-# dependencies. These types are subsequently redefined by try-except blocks
-# below and initially default to "UnavailableTypes" for tuples of simple types.
-
-# ....................{ TUPLES ~ lib : numpy              }....................
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceOrNumpyArrayTypes: _Tuple[type, ...] = (SequenceType,)
-'''
-Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
-and structural subclasses of the abstract :class:`collections.abc.Sequence`
-base class; reversible collections whose items are efficiently accessible but
-*not* necessarily modifiable with 0-based integer-indexed lookup) as well as
-the **NumPy array type** (i.e., :class:`numpy.ndarray`) if :mod:`numpy` is
-importable.
-
-The NumPy array type satisfies most but not all of the
-:class:`collections.abc.Sequence` API and *must* thus be matched explicitly.
-
-See Also
-----------
-:class:`ContainerType`
-    Further details on structural subtyping.
-:class:`SequenceType`
-    Further details on the :class:`collections.abc.Sequence` mismatch.
-'''
-
-
-# Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceMutableOrNumpyArrayTypes: _Tuple[type, ...] = (SequenceMutableType,)
-'''
-Tuple of all **mutable sequence types** (i.e., both concrete and structural
-subclasses of the abstract :class:`collections.abc.Sequence` base class;
-reversible collections whose items are both efficiently accessible *and*
-modifiable with 0-based integer-indexed lookup) as well as the the **NumPy
-array type** (i.e., :class:`numpy.ndarray`) if :mod:`numpy` is importable.
-
-The NumPy array type satisfies most but not all of the
-:class:`collections.abc.MutableSequence` API and *must* thus be matched
-explicitly.
-
-See Also
-----------
-:class:`ContainerType`
-    Further details on structural subtyping.
-:class:`SequenceMutableType`
-    Further details on the :class:`collections.abc.MutableSequence` mismatch.
-'''
-
-# ....................{ TUPLES ~ lib : setuptools         }....................
-# Conditionally redefined by the "TUPLES ~ init" subsection below.
-SetuptoolsVersionTypes: _Tuple[type, ...] = UnavailableTypes
-'''
-Tuple of all **:mod:`setuptools`-specific version types** (i.e., types
-instantiated and returned by both the third-party
-:func:`packaging.version.parse` *and* :func:`pkg_resources.parse_version`
-functions bundled with :mod:`setuptools`) if :mod:`pkg_resources` is importable
-*or* :data:`UnavailableTypes` otherwise (i.e., if :mod:`pkg_resources` is
-unimportable).
-
-This tuple matches these types if :mod:`pkg_resources` is importable:
-
-* **Strict `PEP 440`_-compliant versions** (i.e., instances of the
-  :class:`packaging.version.Version` or
-  :class:`pkg_resources.packaging.version.Version` classes).
-* **Less strict `PEP 440`_-noncompliant versions** (i.e., instances of the
-  :class:`packaging.version.LegacyVersion` or
-  :class:`pkg_resources.packaging.version.LegacyVersion` classes).
-
-.. _PEP 440:
-    https://www.python.org/dev/peps/pep-0440
-'''
-
-# ....................{ TUPLES ~ init                     }....................
-# Conditionally define dependency-specific types.
-#
-# Since this submodule is often imported early in application startup, the
-# importability of *ANY* dependency (mandatory or not) at the top level of this
-# submodule remains undecided. Since subsequent logic in application startup is
-# guaranteed to raise human-readable exceptions on missing mandatory
-# dependencies, their absence here is ignorable.
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To avoid polluting the public module namespace, external attributes
-# should be locally imported at module scope *ONLY* under alternate private
-# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
-# than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# If NumPy is importable...
-try:
-    import numpy as _numpy  # type: ignore
-
-    # Define NumPy-specific types.
-    NumpyArrayType  = _numpy.ndarray
-    NumpyScalarType = _numpy.generic
-
-    # Extend NumPy-agnostic types with NumPy-specific types.
-    SequenceOrNumpyArrayTypes        += (NumpyArrayType,)
-    SequenceMutableOrNumpyArrayTypes += (NumpyArrayType,)
-# Else, NumPy is unimportable. We're done here, folks.
-except:
-    pass
-
-
-# If setuptools is importable, conditionally define setuptools-specific types.
-try:
-    import pkg_resources as _pkg_resources  # type: ignore
-
-    #FIXME: Now that "_pkg_resources.packaging.version.LegacyVersion" has been
-    #deprecated, we need to refactor this up as follows:
-    #* Define a new *PRIVATE* alias:
-    #  _SetuptoolsVersionType = _pkg_resources.packaging.version.Version
-    #  VersionComparableTypes += (_SetuptoolsVersionType,)
-    #  Exposing a "setuptools"-specific class was clearly a bad idea.
-    #* Refactor "SetuptoolsVersionTypes" to be deprecated by us, too. *shrug*
-
-    # Define setuptools-specific types.
-    SetuptoolsVersionTypes = (_pkg_resources.packaging.version.Version,)  # type: ignore[attr-defined]
-    VersionComparableTypes += SetuptoolsVersionTypes
-# Else, setuptools is unimportable. While this should typically *NEVER* be the
-# case, edge cases gonna edge case.
-except:
-    pass
 
 # ....................{ TUPLES ~ post-init : container    }....................
 # Tuples of types assuming the above initialization to have been performed.
@@ -1717,179 +1316,4 @@ This tuple matches:
   and returned by the stdlib :func:`re.compile` function).
 * All **textual types** (i.e., types contained in the :class:`StrTypes`
   tuple).
-'''
-
-# ....................{ TUPLES ~ post-init : version      }....................
-VersionTypes = (StrType,) + VersionComparableTypes
-'''
-Tuple of all **version types** (i.e., types suitable for use as parameters to
-callables accepting arbitrary version specifiers) if :mod:`pkg_resources` is
-importable *or* ``(StrType, tuple,)`` otherwise.
-
-This includes:
-
-* :class:`StrType`, specifying versions in ``.``-delimited positive integer
-  format (e.g., ``2.4.14.2.1.356.23``).
-* :class:`tuple`, specifying versions as one or more positive integers (e.g.,
-  ``(2, 4, 14, 2, 1, 356, 23)``),
-* :class:`SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types
-  specify versions as instance variables convertible into both of the prior
-  formats (e.g., ``SetuptoolsVersionTypes[0]('2.4.14.2.1.356.23')``).
-'''
-
-# ....................{ DUNDERS                           }....................
-# Intentionally defined last, as nobody wants to stumble into a full-bore rant
-# first thing in the morning.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-'''
-Special list global referencing a single attribute guaranteed *not* to exist.
-
-The definition of this global effectively prohibits star imports from this
-submodule into downstream modules by raising an :class:`AttributeError`
-exception on the first attempt to do so: e.g.,
-
-.. code-block:: shell-session
-
-   >>> from beartype import *
-   AttributeError: module 'beartype' has no attribute 'STAR_IMPORTS_CONSIDERED_HARMFUL'
-
-All package submodules intentionally define similar ``__all__`` list globals.
-Why? Because ``__all__`` is antithetical to sane API design and facilitates
-antipatterns across the Python ecosystem, including well-known harms associated
-with star imports and lesser-known harms associated with the artificial notion
-of an ``__all__``-driven "virtual public API:" to wit,
-
-* **Competing standards.** Thanks to ``__all__``, Python now provides two
-  conflicting conceptions of what constitutes the public API for a package or
-  module:
-
-  * The **conventional public API.** By convention, all module- and
-    class-scoped attributes *not* prefixed by ``_`` are public and thus
-    comprise the public API. Indeed, the standard interpretation of star
-    imports for packages and modules defining *no* ``__all__`` list globals is
-    exactly this.
-  * The **virtual public API.** By mandate, all module-scoped attributes
-    explicitly listed by the ``__all__`` global are public and thus *also*
-    comprise the public API. Consider the worst case of a module artificially
-    constructing this global to list all private module-scoped attributes
-    prefixed by ``_``; then the intersection of the conventional and virtual
-    public APIs for that module would be the empty list and these two competing
-    standards would be the list negations of one another. Ergo, the virtual
-    public API has no meaningful relation to the conventional public API or any
-    public attributes actually defined by any package or module.
-
-  These conflicting notions are evidenced no more strongly than throughout the
-  Python stdlib itself. Some stdlib modules ignore all notions of a public or
-  private API altogether (e.g., the :mod:`inspect` module, which
-  unconditionally introspects all attributes of various types regardless of
-  nomenclature or listing in ``__all__``); others respect only the conventional
-  public API (e.g., the :mod:`xmlrpc` package, whose server implementation
-  ignores ``_``-prefixed methods); still others respect only the virtual public
-  API (e.g., the :mod:`pickletools` module, which conditionally introspects the
-  :mod:`pickle` module via its ``__all__`` list global); still others respect
-  either depending on context with bizarre exceptions (e.g., the :mod:`pydoc`
-  module, which ignores attributes excluded from ``__all__`` for packages and
-  modules defining ``__all__`` and otherwise ignores ``_``-prefixed attributes
-  excluding :class:`collections.namedtuple` instances, which are considered
-  public because... reasons).
-
-  Which of these conflicted interpretations is correct? None and all of them,
-  since there is no correct interpretation. This is bad. This is even badder
-  for packages contractually adhering to `semver (i.e., semantic versioning)
-  <semver_>`__, despite there existing no uniform agreement in the Python
-  community as to what constitutes a "public Python API."
-* **Turing completeness.** Technically, both the conventional and virtual
-  public APIs are defined only dynamically at runtime by the current
-  Turing-complete Python interpreter. Pragmatically, the conventional public
-  API is usually declared statically; those conventional public APIs that do
-  conditionally declare public attributes (e.g., to circumvent platform
-  portability concerns) often go to great and agonizing pains to declare a
-  uniform API with stubs raising exceptions on undefined edge cases. Deciding
-  the conventional public API for a package or module is thus usually trivial.
-  However, deciding the virtual public API for the same package or module is
-  often non-trivial or even infeasible. While many packages and modules
-  statically define ``__all__`` to be a simple context-independent list, others
-  dynamically append and extend ``__all__`` with context-dependent list
-  operations mystically depending on heterogeneous context *not* decidable at
-  authoring time -- including obscure incantations such as the active platform,
-  flags and options enabled at compilation time for the active Python
-  interpreter and C extensions, the conjunction of celestial bodies in
-  accordance with astrological scripture, and abject horrors like dynamically
-  extending the ``__all__`` exported from one submodule with the ``__all__``
-  exported from another not under the control of the author of the first.
-  (``__all__`` gonna ``__all__``, bro.)
-* **Extrinsic cognitive load.** To decide what constitutes the "public API" for
-  any given package or module, rational decision-making humans supposedly
-  submit to a sadistic heuristic resembling the following:
-
-  * Does the package in question define a non-empty ``__init__`` submodule
-    defining a non-empty ``__all__`` list global? If so, the attributes listed
-    by this global comprise that package's public API. Since ``__all__`` is
-    defined only at runtime by a Turing-complete interpreter, however,
-    deciding these attributes is itself a Turing-complete problem.
-  * Else, all non-underscored attributes comprise that package's public API.
-    Since these attributes are also defined only at runtime by a
-    Turing-complete interpreter, deciding these attributes is again a
-    Turing-complete problem -- albeit typically less so. (See above.)
-
-* **Redundancy.** ``__all__`` violates the DRY (Don't Repeat Yourself)
-  principle, thus inviting accidental desynchronization and omissions between
-  the conventional and virtual public APIs for a package or module. This leads
-  directly to...
-* **Fragility.** By definition, accidentally excluding a public attribute from
-  the conventional public API is infeasible; either an attribute is public by
-  convention or it isn't. Conversely, accidentally omitting a public attribute
-  from the virtual public API is a trivial and all-too-common mishap. Numerous
-  stdlib packages and modules do so. This includes the pivotal :mod:`socket`
-  module, whose implementation in the Python 3.6.x series accidentally excludes
-  the public :func:`socket.socketpair` function from ``__all__`` if and only if
-  the private :mod:`_socket` C extension also defines the same function -- a
-  condition with no reasonable justification. Or *is* there? Dare mo shiranai.
-* **Inconsistency.** Various modules and packages that declare ``__all__``
-  randomly exclude public attributes for spurious and frankly indefensible
-  reasons. This includes the stdlib :mod:`typing` module, whose preamble reads:
-
-      The pseudo-submodules 're' and 'io' are part of the public
-      namespace, but excluded from __all__ because they might stomp on
-      legitimate imports of those modules.
-
-  This is the worst of all possible worlds. A package or module either:
-
-  * Leave ``__all__`` undefined (as most packages and modules do).
-  * Prohibit ``__all__`` (as :mod:`beartype` does).
-  * Define ``__all__`` in a self-consistent manner conforming to
-    well-established semantics, conventions, and expectations.
-
-* **Nonconsensus.** No consensus exists amongst either stdlib developers or the
-  Python community as a whole as to the interpretation of ``__all__``.
-  Third-party authors usually ignore ``__all__`` with respect to its role in
-  declaring a virtual public API, instead treating ``__all__`` as a means of
-  restricting star imports to some well-defined subset of public attributes.
-  This includes SciPy, whose :attr:`scipy.__init__.__all__` list global
-  excludes most public subpackages of interest (e.g., :mod:`scipy.linalg`, a
-  subpackage of linear algebra routines) while paradoxically including some
-  public subpackages of little to no interest (e.g., :attr:`scipy.test`, a unit
-  test scaffold commonly run only by developers and maintainers).
-* **Infeasibility.** We have established that no two packages or modules
-  (including both stdlib and third-party) agree as to the usage of ``__all__``.
-  Respecting the virtual public API would require authors to ignore public
-  attributes omitted from ``__all__``, including those omitted by either
-  accident or due to conflicting interpretations of ``__all__``. Since this is
-  pragmatically infeasible *and* since upstream packages cannot reasonably
-  prohibit downstream packages from importing public attributes either
-  accidentally or intentionally excluded from ``__all__``, most authors
-  justifiably ignore ``__all__``. (*So should you.*)
-* **Insufficiency.** The ``__all__`` list global only applies to module-scoped
-  attributes; there exists no comparable special attribute for classes with
-  which to define a comparable "virtual public class API." Whereas the
-  conventional public API uniformly applies to *all* attributes regardless of
-  scoping, the virtual public API only applies to module-scoped attributes -- a
-  narrower and less broadly applicable use case.
-* **Unnecessity.** The conventional public API already exists. The virtual
-  public API offers no tangible benefits over the conventional public API while0
-  offering all the above harms. Under any rational assessment, the virtual
-  public API can only be "considered harmful."
-
-.. _semver:
-    https://semver.org
 '''

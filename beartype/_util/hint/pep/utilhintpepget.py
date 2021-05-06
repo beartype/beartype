@@ -12,11 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.cave import NoneType
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
 )
+from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE,

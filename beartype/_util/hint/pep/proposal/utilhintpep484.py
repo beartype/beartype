@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import FunctionType
 from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     BeartypeDecorHintPep484Exception,
@@ -25,6 +24,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
+from types import FunctionType
 from typing import Any, Generic, NewType, Optional
 
 # See the "beartype.cave" submodule for further commentary.

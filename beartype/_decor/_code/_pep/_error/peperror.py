@@ -65,16 +65,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #  containers in the exact same order as visited by our testing algorithm.
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import NoneTypeOr
 from beartype.meta import URL_ISSUES
-from beartype.roar import (
+from beartype.roar._roarexc import (
     BeartypeCallHintPepParamException,
     BeartypeCallHintPepReturnException,
-)
-from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._decor._code._pep._error._peperrorannotated import (
     get_cause_or_none_annotated)
 from beartype._decor._code._pep._error._peperrorgeneric import (

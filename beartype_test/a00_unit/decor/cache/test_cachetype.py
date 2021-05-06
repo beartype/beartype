@@ -26,8 +26,8 @@ def test_typistry_register_type_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.cave import RegexCompiledType
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
+    from beartype._cave._cavefast import RegexCompiledType
     from beartype._decor._cache.cachetype import register_typistry_type
     from beartype._util.utilobject import get_object_type_basename
 
@@ -90,8 +90,9 @@ def test_typistry_register_tuple_pass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.cave import CallableTypes, NoneTypeOr
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
+    from beartype._cave._cavefast import CallableTypes
+    from beartype._cave._cavemap import NoneTypeOr
     from beartype._decor._cache.cachetype import register_typistry_tuple
 
     # Assert this function registers a tuple and silently permits

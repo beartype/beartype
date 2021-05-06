@@ -26,7 +26,7 @@ Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 # ....................{ IMPORTS                           }....................
 from __future__ import annotations
 from beartype import beartype
-from beartype.cave import IntType
+from beartype._cave._cavefast import IntType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.data_type import decorator
 from collections.abc import Callable

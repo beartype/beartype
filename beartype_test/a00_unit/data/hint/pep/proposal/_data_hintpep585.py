@@ -43,7 +43,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
     import re
-    from beartype.cave import IntType
+    from beartype._cave._cavefast import IntType
     from collections.abc import (
         ByteString,
         Callable,

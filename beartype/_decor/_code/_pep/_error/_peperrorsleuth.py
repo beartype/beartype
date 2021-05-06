@@ -13,8 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import NoneType, NoneTypeOr
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype._cave._cavefast import NoneType
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_newtype_class,
     is_hint_pep484_newtype,

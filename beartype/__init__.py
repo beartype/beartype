@@ -15,60 +15,18 @@ automation.
 #FIXME: Consider significantly expanding the above module docstring, assuming
 #Sphinx presents this module in its generated frontmatter.
 
-#FIXME: [NEW PROJECT] Consider creating a new public subpackage named either:
-#* "beartype.annotated".
-#* "beartype.bearcat".
-#Okay, definitely "beartype.annotated". "beartype.bearcat" is cute -- but
-#cuteness has its limit. This is that limit.
-#
-#In any case, this subpackage declares a number of public factory classes
-#and/or callables resembling those declared by the "typing" module, intended to
-#be listed after the first argument of any "typing.Annotated" type hint to
-#perform traditional data validation on the internal structure of a passed or
-#returned value annotated with that hint with a beartype-specific constraint:
-#    from beartype import beartype
-#    from beartype.annotated import LengthMinimum, LengthMaximum
-#    from typing import Annotated
-#
-#    @beartype
-#    def muh_func(muh_param: Annotated[
-#        str, LengthMinimum[4], LengthMaximum[44]] -> bool:
-#        '''
-#        ``True`` only if the passed string with 4 <= length <= 44 contains a
-#        particular phrase of no particular import.
-#        '''
-#
-#        return 'The dream that dreams.' in muh_param
-#
-#Let's spin this up as rapidly as possible. To do so, *THE VERY FIRST PUBLIC
-#THING* the "beartype.annotated" subpackage should provide is a public factory
-#class and/or callable named "Constraint", which accepts as subscripted
-#arguments one or more arbitrary caller-defined callables required to have
-#signature resembling "def is_constrained(obj: Any) -> bool" and then validates
-#each passed or returned value annotated with that hint to satisfy those
-#constraints such that each of those caller-defined callables returns true when
-#passed that value: e.g.,
-#    from beartype import beartype
-#    from beartype.annotated import Constraint
-#    from typing import Annotated
-#
-#    @beartype
-#    def muh_func(muh_param: Annotated[
-#        str, Constraint[lambda text: return 4 <= len(text) <= 44]] -> bool:
-#        '''
-#        ``True`` only if the passed string with 4 <= length <= 44 contains a
-#        particular phrase of no particular import.
-#        '''
-#
-#        return 'The dream that dreams.' in muh_param
-#
-#Clearly, the above two examples are equivalent. The advantage of the latter
-#approach, however, is that it dramatically simplifies our life by offloading
-#*MUST* of the work onto the caller. Indeed, given the "Constraint" object, we
-#could then define all higher-level constraints (e.g., "LengthMinimum",
-#"LengthMaximum") in terms of that single lower-level primitive.
-#FIXME: Note that we prominently discuss this topic in this issue comment:
-#    https://github.com/beartype/beartype/issues/32#issuecomment-799796945
+#FIXME: [SPEED] Optimize importation of the top-level "beartype" package, which
+#is currently depressingly slow -- like, on the order of several seconds slow.
+#That's unacceptable; we can certainly do better. Before we actually *DO*
+#anything about this, however, *WE SHOULD PROFILE IMPORTS* using an
+#off-the-shelf standard solution known as an "import profiler." Don't simply
+#start deferring imports without actually profiling, because that would be a
+#waste of everyone's scarce development time. There canonical approach is to:
+#* Install Tuna, a pure-Python package with no dependencies. See:
+#    https://github.com/nschloe/tuna
+#* Run:
+#    $ python -X importttime -c "import beartype" 2> imports.prof
+#    $ tuna imports.prof
 
 #FIXME: [NEW PROJECT] Consider creating a new private "beartype._bearable"
 #subpackage to enable arbitrary O(1) runtime type checking. By "arbitrary," we

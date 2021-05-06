@@ -25,7 +25,7 @@ from beartype.roar import (
     BeartypeValeLambdaWarning,
 )
 from beartype.vale._valeisabc import _IsABC
-from beartype.vale._valeissub import (
+from beartype._vale._valesub import (
     _SubscriptedIs,
     SubscriptedIsValidator,
 )

@@ -49,6 +49,7 @@ pushd "${script_dirname}" >/dev/null
 PYTHON_ARGS=( python3 -X dev )
 # PYTHON_ARGS=( python3.6 -X dev )
 # PYTHON_ARGS=( python3.9 -X dev )
+# PYTHON_ARGS=( python3.10 -X dev )
 # PYTHON_ARGS=( pypy3.7 -X dev )
 
 # Array of all arguments to be passed to "pytest" below. Dismantled, this is:

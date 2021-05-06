@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.cave import HintGenericSubscriptedType
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Any, Set, Tuple

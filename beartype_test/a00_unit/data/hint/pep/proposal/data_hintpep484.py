@@ -30,7 +30,7 @@ Note that:
 
 # ....................{ IMPORTS                           }....................
 import contextlib, re
-from beartype.cave import (
+from beartype._cave._cavefast import (
     NoneType,
     RegexMatchType,
     RegexCompiledType,

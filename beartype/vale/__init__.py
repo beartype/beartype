@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype data validation.**
+**Beartype validators.**
 
 This submodule publishes a PEP-compliant hierarchy of subscriptable (indexable)
 classes enabling callers to validate the internal structure of arbitrarily
@@ -18,15 +18,12 @@ annotations.
 
 Instead, callers are expected to (in order):
 
-#. Annotate callable parameters and returns to be validated with `PEP
-   593`_-compliant :attr:`typing.Annotated` type hints.
+#. Annotate callable parameters and returns to be validated with
+   :pep:`593`_-compliant :attr:`typing.Annotated` type hints.
 #. Subscript those hints with (in order):
 
    #. The type of those parameters and returns.
    #. One or more subscriptions of classes declared by this submodule.
-
-.. _PEP 593:
-   https://www.python.org/dev/peps/pep-0593
 '''
 
 # ....................{ IMPORTS                           }....................

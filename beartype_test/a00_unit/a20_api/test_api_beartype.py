@@ -24,7 +24,7 @@ def test_api_beartype() -> None:
 
     # Import this package and relevant types from the beartype cave.
     import beartype
-    from beartype.cave import DecoratorTypes
+    from beartype._cave._cavefast import DecoratorTypes
 
     # Assert this package's public attributes to be of the expected types.
     assert isinstance(beartype.beartype, DecoratorTypes)

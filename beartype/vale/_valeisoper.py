@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._valeisabc import _IsABC
-from beartype.vale._valeissub import _SubscriptedIs
+from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
     CallableScope,

@@ -168,7 +168,7 @@ def get_object_name(obj: Any) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype.cave import CallableTypes
+    from beartype._cave._cavefast import CallableTypes
     from beartype._util.py.utilpymodule import (
         get_object_module_name_or_none,
         get_object_type_module_name_or_none,

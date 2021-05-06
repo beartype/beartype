@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype.cave import NoneType
+from beartype._cave._cavefast import NoneType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,

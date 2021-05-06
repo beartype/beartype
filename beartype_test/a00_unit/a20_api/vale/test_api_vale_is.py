@@ -30,7 +30,7 @@ def test_api_vale_is_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import Is
-    from beartype.vale._valeissub import _SubscriptedIs
+    from beartype._vale._valesub import _SubscriptedIs
     from collections.abc import Mapping
 
     def _is_quoted(text):
@@ -168,13 +168,13 @@ def test_api_vale_is_fail() -> None:
 def test_api_vale_subscriptedis_pass() -> None:
     '''
     Test successful usage of the private
-    :mod:`beartype.vale._valeissub._SubscriptedIs` class if the active Python
+    :mod:`beartype._vale._valesub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
-    from beartype.vale._valeissub import _SubscriptedIs
+    from beartype._vale._valesub import _SubscriptedIs
 
     # Arbitrary valid data validator.
     not_though_the_soldier_knew = lambda text: bool('Someone had blundered.')
@@ -210,14 +210,14 @@ def test_api_vale_subscriptedis_pass() -> None:
 def test_api_vale_subscriptedis_fail() -> None:
     '''
     Test unsuccessful usage of the private
-    :mod:`beartype.vale._valeissub._SubscriptedIs` class if the active Python
+    :mod:`beartype._vale._valesub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
-    from beartype.vale._valeissub import _SubscriptedIs
+    from beartype._vale._valesub import _SubscriptedIs
 
     # Arbitrary valid data validator.
     into_the_jaws_of_death = lambda text: bool('Into the mouth of hell')

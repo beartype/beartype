@@ -125,7 +125,7 @@ def test_api_vale_isattr_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import IsAttr, IsEqual
-    from beartype.vale._valeissub import _SubscriptedIs
+    from beartype._vale._valesub import _SubscriptedIs
 
     # Instances of valid test classes declared above.
     from_rainbow_clouds = AllTheEarthAndAir()

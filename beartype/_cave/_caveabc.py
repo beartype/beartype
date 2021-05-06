@@ -89,24 +89,53 @@ def _check_methods(C: type, *methods: str):
 
     return True
 
-# ....................{ CLASSES                           }....................
-# This class is documented in the "beartype.cave" for readability.
-class _BoolType(metaclass=ABCMeta):
+# ....................{ SUPERCLASSES                      }....................
+class BoolType(object, metaclass=ABCMeta):
     '''
     Type of all **booleans** (i.e., objects defining the ``__bool__()`` dunder
     method; objects reducible in boolean contexts like ``if`` conditionals to
     either ``True`` or ``False``).
 
-    This abstract base class (ABC) has been implemented ala standard container
-    ABCs in the private stdlib :mod:`_collections_abc` module (e.g., the
-    trivial :mod:`_collections_abc.Sized` type).
+    This type matches:
+
+    * **Builtin booleans** (i.e., instances of the standard :class:`bool` class
+      implemented in low-level C).
+    * **NumPy booleans** (i.e., instances of the :class:`numpy.bool_` class
+      implemented in low-level C and Fortran) if :mod:`numpy` is importable.
+
+    Usage
+    ----------
+    Non-standard boolean types like NumPy booleans are typically *not*
+    interoperable with the standard standard :class:`bool` type. In particular,
+    it is typically *not* the case, for any variable ``my_bool`` of
+    non-standard boolean type and truthy value, that either ``my_bool is True``
+    or ``my_bool == True`` yield the desired results. Rather, such variables
+    should *always* be coerced into the standard :class:`bool` type before
+    being compared -- either:
+
+    * Implicitly (e.g., ``if my_bool: pass``).
+    * Explicitly (e.g., ``if bool(my_bool): pass``).
+
+    Caveats
+    ----------
+    **There exists no abstract base class governing booleans in Python.**
+    Although various Python Enhancement Proposals (PEPs) were authored on the
+    subject, all were rejected as of this writing. Instead, this type trivially
+    implements an ad-hoc abstract base class (ABC) detecting objects satisfying
+    the boolean protocol via structural subtyping. Although no actual
+    real-world classes subclass this :mod:`beartype`-specific ABC, the
+    detection implemented by this ABC suffices to match *all* boolean types.
 
     See Also
     ----------
-    :class:`beartype.cave.BoolType`
-        Full documentation for this ad-hoc :mod:`beartype`-specific type.
+    :class:`beartype.cave.ContainerType`
+        Further details on structural subtyping.
     '''
 
+    # ..................{ DUNDERS                           }..................
+    # This abstract base class (ABC) has been implemented ala standard
+    # container ABCs in the private stdlib "_collections_abc" module (e.g., the
+    # trivial "_collections_abc.Sized" type).
     __slots__ = ()
 
     @abstractmethod
@@ -115,6 +144,6 @@ class _BoolType(metaclass=ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, C):
-        if cls is _BoolType:
+        if cls is BoolType:
             return _check_methods(C, '__bool__')
         return NotImplemented

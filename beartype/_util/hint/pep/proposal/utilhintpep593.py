@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
-from beartype.vale._valeissub import _SubscriptedIs
+from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from typing import Any, Optional, Tuple
 

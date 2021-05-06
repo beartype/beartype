@@ -53,14 +53,11 @@ from ast import (
     NodeVisitor,
     parse as ast_parse,
 )
-from beartype.cave import CallableTypes
-from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable
 from inspect import findsource, getsource
-from sys import modules
 from traceback import format_exc
 from typing import List, Optional
 from warnings import warn
@@ -594,100 +591,104 @@ https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a
 
 # ....................{ GETTERS ~ label                   }....................
 #FIXME: This getter no longer has a sane reason to exist. Consider excising.
-def get_func_code_label(func: Callable) -> str:
-    '''
-    Human-readable label describing the **origin** (i.e., uncompiled source) of
-    the passed callable.
-
-    Specifically, this getter returns either:
-
-    * If that callable is pure-Python *and* physically declared on-disk, the
-      absolute filename of the uncompiled on-disk Python script or module
-      physically declaring that callable.
-    * If that callable is pure-Python *and* dynamically declared in-memory,
-      the placeholder string ``"<string>"``.
-    * If that callable is C-based, the placeholder string ``"<C-based>"``.
-
-    Caveats
-    ----------
-    **This getter is intentionally implemented for speed rather than robustness
-    against unlikely edge cases.** The string returned by this getter is *only*
-    intended to be embedded in human-readable labels, warnings, and exceptions.
-    Avoid using this string for *any* mission-critical purpose.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-
-    Returns
-    ----------
-    str
-        Either:
-
-        * If that callable is physically declared by an uncompiled Python
-          script or module, the absolute filename of this script or module.
-        * Else, the placeholder string ``"<string>"`` implying that callable to
-          have been dynamically declared in-memory.
-
-    Raises
-    ------
-    _BeartypeUtilCallableException
-        If that callable is *not* callable.
-
-    See Also
-    ----------
-    :func:`inspect.getsourcefile`
-        Inefficient stdlib function strongly inspiring this implementation,
-        which has been highly optimized for use by the performance-sensitive
-        :func:`beartype.beartype` decorator.
-    '''
-
-    # If this callable is uncallable, raise an exception.
-    if not callable(func):
-        raise _BeartypeUtilCallableException(f'{repr(func)} not callable.')
-    # Else, this callable is callable.
-
-    # Human-readable label describing the origin of the passed callable.
-    func_origin_label = '<string>'
-
-    # If this callable is a standard callable rather than arbitrary class or
-    # object overriding the __call__() dunder method...
-    if isinstance(func, CallableTypes):
-        # Avoid circular import dependencies.
-        from beartype._util.func.utilfuncfile import get_func_filename_or_none
-        from beartype._util.func.utilfuncwrap import unwrap_func
-
-        # Code object underlying the passed pure-Python callable unwrapped if
-        # this callable is pure-Python *OR* "None" otherwise.
-        func_filename = get_func_filename_or_none(unwrap_func(func))
-
-        # If this callable has a code object, set this label to either the
-        # absolute filename of the physical Python module or script declaring
-        # this callable if this code object provides that metadata *OR* a
-        # placeholder string specific to C-based callables otherwise.
-        func_origin_label = func_filename if func_filename else '<C-based>'
-    # Else, this callable is *NOT* a standard callable. In this case...
-    else:
-        # If this callable is *NOT* a class (i.e., is an object defining the
-        # __call__() method), reduce this callable to the class of this object.
-        if not isinstance(func, type):
-            func = type(func)
-        # In either case, this callable is now a class.
-
-        # Fully-qualified name of the module declaring this class if this class
-        # was physically declared by an on-disk module *OR* "None" otherwise.
-        func_module_name = func.__module__
-
-        # If this class was physically declared by an on-disk module, defer to
-        # the absolute filename of that module.
-        #
-        # Note that arbitrary modules need *NOT* declare the "__file__" dunder
-        # attribute. Unlike most other core Python objects, modules are simply
-        # arbitrary objects that reside in the "sys.modules" dictionary.
-        if func_module_name:
-            func_origin_label = getattr(
-                modules[func_module_name], '__file__', func_origin_label)
-
-    # Return this label.
-    return func_origin_label
+# from beartype.roar._roarexc import _BeartypeUtilCallableException
+# from beartype._cave._cavefast import CallableTypes
+# from sys import modules
+#
+# def get_func_code_label(func: Callable) -> str:
+#     '''
+#     Human-readable label describing the **origin** (i.e., uncompiled source) of
+#     the passed callable.
+#
+#     Specifically, this getter returns either:
+#
+#     * If that callable is pure-Python *and* physically declared on-disk, the
+#       absolute filename of the uncompiled on-disk Python script or module
+#       physically declaring that callable.
+#     * If that callable is pure-Python *and* dynamically declared in-memory,
+#       the placeholder string ``"<string>"``.
+#     * If that callable is C-based, the placeholder string ``"<C-based>"``.
+#
+#     Caveats
+#     ----------
+#     **This getter is intentionally implemented for speed rather than robustness
+#     against unlikely edge cases.** The string returned by this getter is *only*
+#     intended to be embedded in human-readable labels, warnings, and exceptions.
+#     Avoid using this string for *any* mission-critical purpose.
+#
+#     Parameters
+#     ----------
+#     func : Callable
+#         Callable to be inspected.
+#
+#     Returns
+#     ----------
+#     str
+#         Either:
+#
+#         * If that callable is physically declared by an uncompiled Python
+#           script or module, the absolute filename of this script or module.
+#         * Else, the placeholder string ``"<string>"`` implying that callable to
+#           have been dynamically declared in-memory.
+#
+#     Raises
+#     ------
+#     _BeartypeUtilCallableException
+#         If that callable is *not* callable.
+#
+#     See Also
+#     ----------
+#     :func:`inspect.getsourcefile`
+#         Inefficient stdlib function strongly inspiring this implementation,
+#         which has been highly optimized for use by the performance-sensitive
+#         :func:`beartype.beartype` decorator.
+#     '''
+#
+#     # If this callable is uncallable, raise an exception.
+#     if not callable(func):
+#         raise _BeartypeUtilCallableException(f'{repr(func)} not callable.')
+#     # Else, this callable is callable.
+#
+#     # Human-readable label describing the origin of the passed callable.
+#     func_origin_label = '<string>'
+#
+#     # If this callable is a standard callable rather than arbitrary class or
+#     # object overriding the __call__() dunder method...
+#     if isinstance(func, CallableTypes):
+#         # Avoid circular import dependencies.
+#         from beartype._util.func.utilfuncfile import get_func_filename_or_none
+#         from beartype._util.func.utilfuncwrap import unwrap_func
+#
+#         # Code object underlying the passed pure-Python callable unwrapped if
+#         # this callable is pure-Python *OR* "None" otherwise.
+#         func_filename = get_func_filename_or_none(unwrap_func(func))
+#
+#         # If this callable has a code object, set this label to either the
+#         # absolute filename of the physical Python module or script declaring
+#         # this callable if this code object provides that metadata *OR* a
+#         # placeholder string specific to C-based callables otherwise.
+#         func_origin_label = func_filename if func_filename else '<C-based>'
+#     # Else, this callable is *NOT* a standard callable. In this case...
+#     else:
+#         # If this callable is *NOT* a class (i.e., is an object defining the
+#         # __call__() method), reduce this callable to the class of this object.
+#         if not isinstance(func, type):
+#             func = type(func)
+#         # In either case, this callable is now a class.
+#
+#         # Fully-qualified name of the module declaring this class if this class
+#         # was physically declared by an on-disk module *OR* "None" otherwise.
+#         func_module_name = func.__module__
+#
+#         # If this class was physically declared by an on-disk module, defer to
+#         # the absolute filename of that module.
+#         #
+#         # Note that arbitrary modules need *NOT* declare the "__file__" dunder
+#         # attribute. Unlike most other core Python objects, modules are simply
+#         # arbitrary objects that reside in the "sys.modules" dictionary.
+#         if func_module_name:
+#             func_origin_label = getattr(
+#                 modules[func_module_name], '__file__', func_origin_label)
+#
+#     # Return this label.
+#     return func_origin_label
