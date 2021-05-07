@@ -19,6 +19,21 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 #packages until those attributes are explicitly looked up (e.g., by defining a
 #module-scoped __getattr__() dunder method). Note that doing so is likely to
 #prove non-trivial, due to derivative attributes depending on these attributes.
+#FIXME: Actually... this is *ABSURD.* We absolutely should *NOT* be importing
+#anything from any third-party libraries ever -- and this is exactly the case
+#in point why we don't do that. It's (A) slow, (B) fragile, and (C) no one even
+#cares. While importing from stdlib modules is (of course) okay, importing from
+#third-party modules is not. Ergo, deprecate all of the following:
+#
+#* NumpyArrayType.
+#* NumpyScalarType.
+#* SequenceOrNumpyArrayTypes.
+#* SequenceMutableOrNumpyArrayTypes.
+#* SetuptoolsVersionTypes.
+#* VersionComparableTypes.
+#* VersionTypes.
+#
+#...should have done this ages ago, honestly.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
