@@ -158,7 +158,7 @@ def get_func_codeobj(
 
     Code objects have a docstring under CPython resembling:
 
-    .. _code-block:: python
+    .. code-block:: python
 
        Code objects provide these attributes:
            co_argcount         number of arguments (not including *, ** args

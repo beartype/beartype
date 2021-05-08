@@ -87,7 +87,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         if not hint_metadatum.is_valid(sleuth.pith):
             return (
                 f'{get_cause_object_representation(sleuth.pith)} violates '
-                f'data constraint {repr(hint_metadatum)}.'
+                f'validator {repr(hint_metadatum)}.'
             )
         # Else, this pith satisfies this data validator. Ergo, this validator
         # *NOT* the cause of this failure. Silently continue to the next.

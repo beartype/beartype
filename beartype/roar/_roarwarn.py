@@ -39,9 +39,29 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
       the ``doc/Makefile`` file.
     '''
 
-    pass
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, message: str) -> None:
+        '''
+        Initialize this exception.
 
+        This constructor (in order):
 
+        #. Passes all passed arguments as is to the superclass constructor.
+        #. Sanitizes the fully-qualified module name of this
+           exception from the private ``"beartype.roar._roarwarn"`` submodule
+           to the public ``"beartype.roar"`` subpackage to both improve the
+           readability of exception messages and discourage end users from
+           accessing this private submodule.
+        '''
+
+        # Defer to the superclass constructor.
+        super().__init__(message)
+
+        # Sanitize the fully-qualified module name of the class of this
+        # warning. See the docstring for justification.
+        self.__class__.__module__ = 'beartype.roar'
+
+# ....................{ DEPENDENCY                        }....................
 class BeartypeDependencyOptionalMissingWarning(BeartypeWarning):
     '''
     **Beartype missing optional dependency warning.**

@@ -37,7 +37,33 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
       :func:`beartype.beartype` decorator to wrap the original callable.
     '''
 
-    pass
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, message: str) -> None:
+        '''
+        Initialize this exception.
+
+        This constructor (in order):
+
+        #. Passes all passed arguments as is to the superclass constructor.
+        #. Sanitizes the fully-qualified module name of this
+           exception from the private ``"beartype.roar._roarexc"`` submodule to
+           the public ``"beartype.roar"`` subpackage to both improve the
+           readability of exception messages and discourage end users from
+           accessing this private submodule. By default, Python emits less
+           readable and dangerous exception messages resembling:
+
+               beartype.roar._roarexc.BeartypeCallHintPepParamException:
+               @beartyped quote_wiggum_safer() parameter lines=[] violates type
+               hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as
+               value [] violates data constraint Is[lambda lst: bool(lst)].
+        '''
+
+        # Defer to the superclass constructor.
+        super().__init__(message)
+
+        # Sanitize the fully-qualified module name of the class of this
+        # exception. See the docstring for justification.
+        self.__class__.__module__ = 'beartype.roar'
 
 # ....................{ CAVE                              }....................
 class BeartypeCaveException(BeartypeException):

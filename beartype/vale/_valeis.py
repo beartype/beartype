@@ -4,13 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable-based data validation classes** (i.e.,
-:mod:`beartype`-specific classes enabling callers to define PEP-compliant data
-validators from arbitrary caller-defined callables *not* efficiently generating
-stack-free code).
+**Beartype callable-based validation classes** (i.e., :mod:`beartype`-specific
+classes enabling callers to define PEP-compliant validators from arbitrary
+caller-defined callables *not* efficiently generating stack-free code).
 
 This private submodule defines the core low-level class hierarchy driving the
-entire :mod:`beartype` data validation ecosystem.
+entire :mod:`beartype` validation ecosystem.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -121,7 +120,7 @@ class Is(_IsABC):
 
           Formally, the signature of each callable validator *must* resemble:
 
-          .. _code-block:: python
+          .. code-block:: python
 
              def is_object_valid(obj) -> bool:
                  return bool(obj)
@@ -141,7 +140,7 @@ class Is(_IsABC):
 
     For example, the following type hint only accepts non-empty strings:
 
-    .. _code-block:: python
+    .. code-block:: python
 
        Annotated[str, Is[lambda text: bool(text)]]
 
@@ -151,22 +150,22 @@ class Is(_IsABC):
 
     * **Negation** (i.e., ``not``). Negating an :class:`_SubscriptedIs` object
       with the ``~`` operator synthesizes a new :class:`_SubscriptedIs` object
-      whose data validator returns ``True`` only when the data validator of the
-      original object returns ``False``. For example, the following type hint
-      only accepts strings containing *no* periods:
+      whose validator returns ``True`` only when the validator of the original
+      object returns ``False``. For example, the following type hint only
+      accepts strings containing *no* periods:
 
-      .. _code-block:: python
+      .. code-block:: python
 
          Annotated[str, ~Is[lambda text: '.' in text]]
 
     * **Conjunction** (i.e., ``and``). Conjunctively combining two or more
       :class:`_SubscriptedIs` objects with the ``&`` operator synthesizes a new
-      :class:`_SubscriptedIs` object whose data validator returns ``True`` only
-      when all data validators of the original objects return ``True``. For
-      example, the following type hint only accepts non-empty strings
-      containing *no* periods:
+      :class:`_SubscriptedIs` object whose validator returns ``True`` only when
+      all data validators of the original objects return ``True``. For example,
+      the following type hint only accepts non-empty strings containing *no*
+      periods:
 
-      .. _code-block:: python
+      .. code-block:: python
 
          Annotated[str, (
               Is[lambda text: bool(text)] &
@@ -174,18 +173,13 @@ class Is(_IsABC):
          )]
 
     * **Disjunction** (i.e., ``or``). Disjunctively combining two or more
-      subscriptions with the ``|`` operator returns ``True`` only when at least
-      one subscription returns ``True``. For example, this type hint accepts
-      both empty strings *and* non-empty strings containing at least one
-      period:
-    * **Disjunction** (i.e., ``or``). Disjunctively combining two or more
       :class:`_SubscriptedIs` objects with the ``|`` operator synthesizes a new
-      :class:`_SubscriptedIs` object whose data validator returns ``True`` only
-      when at least one data validator of the original objects returns
-      ``True``. For example, the following type hint accepts both empty strings
-      *and* non-empty strings containing at least one period:
+      :class:`_SubscriptedIs` object whose validator returns ``True`` only
+      when at least one validator of the original objects returns ``True``. For
+      example, the following type hint accepts both empty strings *and*
+      non-empty strings containing at least one period:
 
-      .. _code-block:: python
+      .. code-block:: python
 
          Annotated[str, (
              ~Is[lambda text: bool(text)] |
@@ -216,7 +210,7 @@ class Is(_IsABC):
 
     Examples
     ----------
-    .. _code-block:: python
+    .. code-block:: python
 
        # Import the requisite machinery.
        >>> from beartype import beartype

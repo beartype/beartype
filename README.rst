@@ -48,6 +48,12 @@ efficiency, portability, and thrilling puns.
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
 
+   # Call those callables with valid parameters.
+   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
+   “Okay, folks. Show's over!
+    Nothing to see here. Show's…”
+      — Police Chief Wiggum
+
    # Call those callables with invalid parameters.
    >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
    Traceback (most recent call last):
@@ -61,11 +67,25 @@ efficiency, portability, and thrilling puns.
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # Call those callables with valid parameters.
-   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
-   “Okay, folks. Show's over!
-    Nothing to see here. Show's…”
-      — Police Chief Wiggum
+   # Catch additional bugs by refining type hints with beartype validators.
+   # First import the requisite machinery.
+   >>> from beartype.vale import Is
+   >>> from typing import Annotated
+
+   # Then define beartype validators with user-defined lambda functions.
+   >>> NonemptyStringList = Annotated[list[str], Is[lambda lst: bool(lst)]]
+
+   # Lastly, use beartype validators wherever you use standard type hints.
+   >>> @beartype
+   ... def quote_wiggum_safer(lines: NonemptyStringList) -> None:
+   ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
+
+   # Call those callables with invalid parameters.
+   >>> quote_wiggum_safer([])
+   boartype.roar.BeartypeCallHintPepParamException: @beartyped
+   quote_wiggum_safer() parameter lines=[] violates type hint
+   typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value [] violates
+   validator Is[lambda lst: bool(lst)].
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
@@ -102,39 +122,15 @@ developed Python versions <Python status_>`__, `all Python package managers
 
 .. # ------------------( DESCRIPTION                        )------------------
 
-tl;dr
-=====
-
-#. `Install beartype <Install_>`__:
-
-   .. code-block:: bash
-
-      pip3 install beartype
-
-#. `Decorate functions and methods annotated by PEP-compliant type hints
-   with the @beartype.beartype decorator <Usage_>`__:
-
-   .. code-block:: python
-
-      from beartype import beartype
-      from collections.abc import Iterable
-      from typing import Optional
-
-      @beartype
-      def print_messages(messages: Optional[Iterable[str]] = ('Hello, world.',)):
-          print('\n'.join(messages))
-
-*Quality assurance has now been assured.*
-
 News
 ====
 
-2021-05-07: The Day the Bear Validated You
-------------------------------------------
+2021-05-07: The Day the Bear Validated Your Web App's Existence
+---------------------------------------------------------------
 
-**Beartype 0.7.0** (codename: The Culmination of Everything Your QA Guy Wants)
-has been released to crickets chirping, publishing Python's first `type
-hint-based validator API <Beartype Hints_>`__.
+**Beartype 0.7.0** (codename: The Culmination of Everything Your Unpaid QA
+Intern Wants) has been released to crickets chirping, publishing Python's first
+`type hint-based validator API <Beartype Hints_>`__.
 
 `Beartype validators <Beartype Hints_>`__ enforce arbitrary constraints on the
 internal structure, state, and contents of parameters and returns using simple
@@ -677,15 +673,21 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 Beartype Hints
 --------------
 
+.. parsed-literal::
+
+   Validate anything with one-line type hints
+   designed by you ⇄ built by beartype
+
 .. # FIXME: Also please add our "`beartype`" discussion as a new FAQ entry.
 
-When official type hints fail to suffice, create your own PEP-compliant type
-hints "on the fly" with trivial one- and two-line **beartype validators.** 
-Validators enforce runtime constraints on the internal structure and contents
-of parameters and returns with trivial user-defined lambda functions and
-compact declarative expressions – all seamlessly composable, interoperable, and
-reusable with `standard type hints <Standard Hints_>`__ via an `expressive
-domain-specific language (DSL) <Validator Syntax_>`__:
+When official type hints fail to suffice, dynamically design your own
+PEP-compliant type hints "on the fly" with compact one-line **beartype
+validators.** Validators enforce arbitrary runtime constraints on the internal
+structure and contents of parameters and returns using user-defined lambda
+functions, nestable declarative expressions, and familiar typing_ syntax – all
+richly composable with standard set notation and seamlessly interoperable with
+`standard type hints <Standard Hints_>`__ via an `expressive domain-specific
+language (DSL) <Validator Syntax_>`__:
 
 .. code-block:: python
 
@@ -695,8 +697,8 @@ domain-specific language (DSL) <Validator Syntax_>`__:
    from beartype.vale import Is
    from typing import Annotated
 
-   # Validator matching only two-dimensional NumPy arrays of floats of
-   # arbitrary precision.
+   # Type hint designed by you matching only two-dimensional NumPy arrays of
+   # floats of arbitrary precision.
    Numpy2DFloatArray = Annotated[ndarray, Is[lambda array:
        array.ndim == 2 and np.issubdtype(array.dtype, np.floating)]]
 
@@ -718,10 +720,10 @@ Check custom project constraints *now* with PEP-compliant validators without
 waiting for the open-source community to officially standardize, implement, and
 publish those checks first. Filling in the Titanic-sized gaps between `Python's
 patchwork quilt of annotation PEPs <Compliance_>`__, validators accelerate your
-QA workflow with the greatest asset: *yup, it's your brain.*
+QA workflow with the greatest asset. *Yup, it's your brain.*
 
 See `Validator Showcase`_ for further examples – or read gruelling details that
-will make you wish you had a pawful of comfort food.
+might make you wish you had a clawful of comfort berries in your mouth.
 
 Validator Overview
 ~~~~~~~~~~~~~~~~~~
@@ -744,22 +746,26 @@ Beartype provides two kinds of validators, each with its attendant tradeoffs:
   incur *no* function call costs, but are special-purpose and thus support only
   specific validation scenarios.
 
+Where you can, prefer declarative validators; everywhere else, fallback to
+functional validators.
+
 Validator API
 ~~~~~~~~~~~~~
 
-*class* beartype.vale.**Is**\ [collections.abc.Callable[typing.Any], bool]
+*class* beartype.vale.\ **Is**\ [collections.abc.Callable[typing.Any], bool]
 
-    **Functional validator.** Subscript (index) the ``beartype.vale.Is`` class
-    with a caller-defined (lambda) function accepts any arbitrary object and
-    returns ``True`` only when that object satisfies a constraint to create a
-    PEP-compliant type hint enforcing that constraint at runtime:
+    **Functional validator.** Generate a PEP-compliant type hint enforcing any
+    arbitrary runtime constraint by subscripting (indexing) the
+    ``beartype.vale.Is`` class with a caller-defined function accepting any
+    arbitrary object and returning ``True`` only when that object satisfies
+    that constraint:
 
     .. code-block:: python
 
        # Import the requisite machinery.
        from beartype.vale import Is
        from typing import Annotated
-   
+
        # Type hint matching only strings with lengths ranging [4, 40].
        LengthyString = Annotated[str, Is[lambda text: 4 <= len(text) <= 40]]
 
@@ -770,13 +776,13 @@ Validator API
 
     See ``help(beartype.vale.Is)`` for further details.
 
-*class* beartype.vale.**IsAttr**\ [str, beartype.vale.Is\*]
+*class* beartype.vale.\ **IsAttr**\ [str, beartype.vale.Is\*]
 
-    **Declarative attribute validator.** Subscript (index) the
-    ``beartype.vale.IsAttr`` class with the name of an arbitrary object
-    attribute and any subscripted (indexed) ``beartype.vale.Is*`` class
-    enforcing any arbitrary constraint to create a PEP-compliant type hint
-    enforcing that constraint on that object attribute at runtime: 
+    **Declarative attribute validator.** Generate a PEP-compliant type hint
+    enforcing any arbitrary runtime constraint on any object attribute by
+    subscripting (indexing) the ``beartype.vale.IsAttr`` class with the
+    unqualified name of that attribute and any subscripted (indexed)
+    ``beartype.vale.Is*`` class enforcing that constraint:
 
     .. code-block:: python
 
@@ -787,20 +793,20 @@ Validator API
 
        # Type hint matching only two-dimensional NumPy arrays. Given this,
        # @beartype generates efficient validation code resembling:
-       #    (isinstance(array, np.ndarray) and array.ndim == 2)
+       #     isinstance(array, np.ndarray) and array.ndim == 2
        Numpy2DArray = Annotated[np.ndarray, IsAttr['ndim', IsEqual[2]]]
 
     The first argument subscripting this class *must* be a syntactically valid
     unqualified Python identifier string containing only alphanumeric and
     underscore characters (e.g., ``"dtype"``, ``"ndim"``). Fully-qualified
     attributes (e.g., ``"dtype.type"``) may be validated by simply nesting
-    successive ``IsAttr`` classes:
+    successive ``IsAttr`` subscriptions:
 
     .. code-block:: python
 
        # Type hint matching only NumPy arrays of 64-bit floating point numbers.
        # Given this, @beartype generates efficient validation code resembling:
-       #    (isinstance(array, np.ndarray) and array.dtype.type == np.float64)
+       #     isinstance(array, np.ndarray) and array.dtype.type == np.float64
        NumpyFloat64Array = Annotated[np.ndarray,
            IsAttr['dtype', IsAttr['type', IsEqual[np.float64]]]]
 
@@ -819,12 +825,11 @@ Validator API
 
     See ``help(beartype.vale.IsAttr)`` for further details.
 
-*class* beartype.vale.**IsEqual**\ [typing.Any]
+*class* beartype.vale.\ **IsEqual**\ [typing.Any]
 
-    **Declarative equality validator.** Subscript (index) the
-    ``beartype.vale.IsEqual`` class with any arbitrary object to create a
-    PEP-compliant type hint enforcing that parameters and returns annotated by
-    that hint be equal to that object:
+    **Declarative equality validator.** Generate a PEP-compliant type hint
+    enforcing any equality runtime constraint by subscripting (indexing) the
+    ``beartype.vale.IsEqual`` class with any arbitrary object:
 
     .. code-block:: python
 
@@ -833,81 +838,114 @@ Validator API
        from typing import Annotated
 
        # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
-       Numpy2DArray = Annotated[np.ndarray, IsEqual[list(range(42))]]
+       Numpy2DArray = Annotated[list, IsEqual[list(range(42))]]
 
     See ``help(beartype.vale.IsEqual)`` for further details.
 
 Validator Syntax
 ~~~~~~~~~~~~~~~~
 
-.. # FIXME: Generalize to support arbitrary beartype.vale.Is* classes.
 .. # FIXME: Note that these hints are fully compatible with the entirety of the
-.. # PEP-compliant type-hinting landscape and can thus be nested in other.
+.. # PEP-compliant type-hinting landscape and can thus be nested in other
 .. # PEP-compliant type hints.
 
-``@beartype``\ -decorated callables may be annotated by type hints of the form
-``typing.Annotated[{hint}, beartype.vale.Is[lambda obj: {test_expr1}], ...,
-beartype.vale.Is[lambda obj: {test_exprN}]]``, where:
-
-* ``{hint}`` is any arbitrary PEP-compliant type hint (e.g., ``str``,
-  ``list[list[list[str]]]``).
-* ``{test_expr1}`` is any arbitrary expression evaluating to a boolean (e.g.,
-  ``len(obj) <= 80`, `obj.dtype == np.dtype(np.float64)``).
-* ``{test_exprN}`` is any arbitrary expression evaluating to a boolean, too.
-
-.. # FIXME: Generalize to support arbitrary beartype.vale.Is* classes.
-.. # FIXME: Add simple one-line examples like:
-
-    .. code-block:: python
-
-       # Type hint matching only binary integers (i.e., either 0 or 1).
-       IntBinary = Annotated[int, IsEqual[0] | IsEqual[1]]
-
-``beartype.vale.Is`` also supports a rich domain-specific language (DSL)
+All ``beartype.vale.Is*`` classes support a rich domain-specific language (DSL)
 enabling new validators to be synthesized from existing validators with
-overloaded set operators, including:
+standard Python operators:
 
-* **Negation** via ``~beartype.vale.Is[lambda obj: {test_expr}]``, equivalent
-  to `beartype.vale.Is[lambda obj: not {test_expr}]`.
-* **And-ing** via ``beartype.vale.Is[lambda obj: {test_expr1}] &
-  beartype.vale.Is[lambda obj: {test_expr2}]``, equivalent to
-  ``beartype.vale.Is[lambda obj: {test_expr1} and {test_expr2}]``.
-* **Or-ing** via ``beartype.vale.Is[lambda obj: {test_expr1}] |
-  beartype.vale.Is[lambda obj: {test_expr2}]``, equivalent to
-  ``beartype.vale.Is[lambda obj: {test_expr1} or {test_expr2}]``.
+* **Negation** (i.e., ``not``). Negating any subscripted ``beartype.vale.Is*``
+  class with the ``~`` operator synthesizes a new validator returning ``True``
+  only when the validator defined by that subscripted class returns ``False``:
 
-DSL: *it's not just a telecom acronym anymore.*
+  .. code-block:: python
+
+     # Type hint matching only strings containing *no* periods, semantically
+     # equivalent to this type hint:
+     #     PeriodlessString = Annotated[str, Is[lambda text: '.' not in text]]
+     PeriodlessString = Annotated[str, ~Is[lambda text: '.' in text]]
+
+* **Conjunction** (i.e., ``and``). Conjunctively combining two or more
+  subscripted ``beartype.vale.Is*`` classes with the ``&`` operator synthesizes
+  a new validator returning ``True`` only when all validators defined by those
+  subscripted classes return ``True``:
+
+  .. code-block:: python
+
+     # Type hint matching only non-empty strings containing *no* periods,
+     # semantically equivalent to this type hint:
+     #     NonemptyPeriodlessString = Annotated[
+     #         str, Is[lambda text: text and '.' not in text]]
+     NonemptyPeriodlessString = Annotated[str, (
+          Is[lambda text: bool(text)] &
+         ~Is[lambda text: '.' in text]
+     )]
+
+* **Disjunction** (i.e., ``or``). Disjunctively combining two or more
+  subscripted ``beartype.vale.Is*`` classes with the ``|`` operator synthesizes
+  a new validator returning ``True`` only when at least one validator defined
+  by those subscripted classes returns ``True``:
+
+  .. code-block:: python
+
+     # Type hint matching only empty strings *and* non-empty strings containing
+     # one or more periods, semantically equivalent to this type hint:
+     #     EmptyOrPeriodfullString = Annotated[
+     #         str, Is[lambda text: not text or '.' in text]]
+     EmptyOrPeriodfullString = Annotated[str, (
+         ~Is[lambda text: bool(text)] |
+          Is[lambda text: '.' in text]
+     )]
+
+* **Enumeration** (i.e., ``,``). Enumerating (listing) two or or more
+  subscripted ``beartype.vale.Is*`` classes delimited by commas at the top
+  level of a typing.Annotated_ type hint is an alternate syntax for
+  conjunctively combining those subscripted classes with the ``&`` operator,
+  synthesizing a new validator returning ``True`` when all validators defined
+  by those subscripted classes return ``True``:
+
+  .. code-block:: python
+
+     # Type hint matching only non-empty strings containing *no* periods,
+     # semantically equivalent to the "NonemptyPeriodlessString" defined above.
+     NonemptyPeriodlessString = Annotated[str,
+          Is[lambda text: bool(text)],
+         ~Is[lambda text: '.' in text],
+     ]
+
+`Standard Python precedence rules <_operator precedence>`__ may apply. DSL:
+*it's not just a telecom acronym anymore.*
 
 Validator Caveats
 ~~~~~~~~~~~~~~~~~
 
 **‼** **Validators require beartype.** Other static and runtime type checkers
-will silently ignore beartype validators. That's not the worst thing to happen,
-for those who ignore beartype validators do so at their own peril! *You're
-on notice, mypy_.*
+silently ignore beartype validators. That's not the worst thing to happen,
+because those ignoring beartype validators do so at their own peril! *You're on
+notice, mypy.*
 
 **‼** **Validators require Python ≥ 3.9,** because validators piggyback onto
-the typing.Annotated_ class introduced in Python 3.9.0. Since Python 3.9.0 also
-deprecated *most* `PEP 484`_-based typing_ type hints (e.g.,
+the typing.Annotated_ class introduced with Python 3.9.0. Since Python 3.9.0
+also deprecated most `PEP 484`_-based typing_ type hints (e.g.,
 ``typing.List[str]``) with `PEP 585`_-based builtin type hints (e.g.,
-``list[str]``), **this is a good thing.**
+``list[str]``), this is a good thing. No, really!
 
-Regardless of whether you want validators or not, everyone is advised to
-migrate from `PEP 484`_ to `PEP 585`_ (and thus require Python ≥ 3.9) as soon
-as feasible. There is *no* clean migration path from `PEP 484`_ to `PEP 585`_.
-Migrating means manually refactoring imports across your codebase *without* the
-luxury of regex-based global search and replacement. Migrating today will
-reduce the considerable cost of doing so tomorrow. As noted in `PEP 585`_,
-CPython developers have pledged to remove most of the typing_ module by 2026:
+Regardless of whether you want validators or not, we recommend everyone migrate
+from `PEP 484`_ to `PEP 585`_ and thus Python ≥ 3.9 as soon as feasible. There
+is *no* clean migration path from `PEP 484`_ to `PEP 585`_. Migrating means
+manually refactoring imports across your codebase without regex-based global
+search and replacement, because regexes fail to safely handle imports.
+Migrating today will reduce the considerable cost of doing so tomorrow. As
+`PEP 585`_ cautions, CPython developers have pledged to remove most of the
+typing_ module by 2026:
 
     The deprecated functionality will be removed from the ``typing`` module
     in the first Python version released 5 years after the release of
-    Python 3.9.0 **[**\ *i.e., October 5th, 2025*\ **]**.
+    Python 3.9.0 **[**\ *so, October 5th, 2025*\ **]**.
 
 Validator Showcase
 ~~~~~~~~~~~~~~~~~~
 
-Real-world exhibition of beartype validators or it didn't happen, so...
+Real-world unboxing of beartype validators or it didn't happen.
 
 Computational Geometry
 ++++++++++++++++++++++
@@ -926,7 +964,8 @@ the functional validator in that example:
    from typing import Annotated
 
    # Validator matching only two-dimensional NumPy arrays of floats of
-   # arbitrary precision.
+   # arbitrary precision. This time, do it faster than anyone has ever
+   # type-checked NumPy arrays before. Cue Mach 1 sonic boom, Chuck Yeager.
    Numpy2DFloatArray = Annotated[ndarray,
        IsAttr['ndim', IsEqual[2]] &
        IsAttr['dtype', IsEqual[np.float32] | IsEqual[np.float64]]
@@ -946,11 +985,12 @@ the functional validator in that example:
        return np.abs(0.5*np.sum(
            polygon[:,0]*polygon_rolled[:,1] - polygon_rolled[:,0]*polygon[:,1]))
 
-Trashy String Matching
+Trendy String Matching
 ++++++++++++++++++++++
 
 Let's validate strings either at least 80 characters long *or* both quoted and
-suffixed by a period. Look, it doesn't matter. Just do it already, `@beartype`!
+suffixed by a period. Look, it doesn't matter. Just do it already,
+``@beartype``!
 
 .. code-block:: python
 
@@ -974,29 +1014,25 @@ suffixed by a period. Look, it doesn't matter. Just do it already, `@beartype`!
    def desentence_lengthy_quoted_sentence(
        text: Annotated[str, IsLengthy, IsSentence, IsQuoted]]) -> str:
        '''
-       Strip the suffixing period from a lengthy quoted sentence...
-
-       *Just 'cause.*
+       Strip the suffixing period from a lengthy quoted sentence... 'cause.
        '''
 
        return text[:-1]  # this is horrible
 
-   # Combine multiple validators by just "&"-ing them sequentially. Yes, this is
-   # exactly identical to the prior function... just 'cause.
+   # Combine multiple validators by just "&"-ing them sequentially. Yes, this
+   # is exactly identical to the prior function.
    @beartype
    def desentence_lengthy_quoted_sentence_part_deux(
        text: Annotated[str, IsLengthy & IsSentence & IsQuoted]]) -> str:
        '''
-       Strip the suffixing period from a lengthy quoted sentence...
-       
-       *Just 'cause.*
+       Strip the suffixing period from a lengthy quoted sentence... again.
        '''
 
        return text[:-1]  # this is still horrible
 
-   # Combine multiple validators with as many "&", "|", and "~" operators as you
-   # can possibly stuff into a file that your coworkers can stomach. They will
-   # thank you later. Possibly much, much later.
+   # Combine multiple validators with as many "&", "|", and "~" operators as
+   # you can possibly stuff into a module that your coworkers can stomach.
+   # (They will thank you later. Possibly much, much later.)
    @beartype
    def strip_lengthy_or_quoted_sentence(
        text: Annotated[str, IsLengthy | (IsSentence & ~IsQuoted)]]) -> str:
@@ -1010,8 +1046,8 @@ suffixed by a period. Look, it doesn't matter. Just do it already, `@beartype`!
 Full-Fat O(n) Matching
 ++++++++++++++++++++++
 
-Let's validate *all* items of a list of integers in O(n) time, because beartype
-validators mean you no longer have to accept the scraps we feed you:
+Let's validate **all integers in a list of integers in O(n) time**, because
+validators mean you no longer have to accept the QA scraps we feed you:
 
 .. code-block:: python
 
@@ -1020,9 +1056,10 @@ validators mean you no longer have to accept the scraps we feed you:
    from beartype.vale import Is
    from typing import Annotated
 
-   # Validator matching only lists of integers in full-fat O(n) time.
-   IntList = Annotated[list[int], Is[lambda my_list: all(
-       isinstance(item, int) for item in my_list)]]
+   # Validator matching only lists of integers in full-fat O(n) time. Please
+   # don't do this. You still want to though, don't you?
+   IntList = Annotated[list[int], Is[lambda lst: all(
+       isinstance(item, int) for item in lst)]]
 
    @beartype
    def sum_intlist(my_list: IntList) -> int:
@@ -1030,19 +1067,20 @@ validators mean you no longer have to accept the scraps we feed you:
        Integer summation over the passed list of integers.
        '''
 
-       return sum(my_list)  # this is guaranteed not to raise a "TypeError"
+       return sum(my_list)  # oh, gods what have we done
 
-Welcome to **"full-fat type-checking.** In `our disastrous roadmap to beartype
-1.0.0 <beartype 1.0.0_>`__, an upcoming stable release of beartype intends to
-add out-of-the-box support for enabling full-fat type-checking in the code
-generated by the ``@beartype`` decorator. Until that halcyon day, you can force
-the issue by just doing it yourself now. *Fight the bear man.*
+Welcome to **full-fat type-checking.** In `our disastrous roadmap to beartype
+1.0.0 <beartype 1.0.0_>`__, we admit we'd like to augment the ``@beartype``
+decorator with a new parameter generating full-fat type-checking. But don't
+wait on us. Force the issue now by just doing it yourself and then mocking us
+on GitHub! *Fight the bear, man.*
 
-Beartype only validates one random integer of a list of integers in O(1) time.
+Note there are very good reasons for `beartype's type-checking of only one
+random integer in a list of integers in O(1) time <What does beartype do?_>`__.
 Violating this core precept exposes your codebase to scalability and security
-issues, but you're the Big Boss and you promise you know best and in any case
-we can't stop you because we already let the unspayed hissing tomcat out of its
-urine-soaked duffle bag by releasing this API into the wild.
+issues, but you're the Big Boss and you swear you know best and in any case we
+can't stop you because we already let the unneutered tomcat out of his trash
+bin by publishing this API into `the badlands of PyPI <beartype PyPI_>`__.
 
 Coming up: *shocking revelation that cheaters prosper.*
 
@@ -1624,7 +1662,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    $ bin/profile.bash
 
    beartype profiler [version]: 0.0.2
-   
+
    python    [basename]: python3.9
    python    [version]: Python 3.9.0
    beartype  [version]: 0.6.0
@@ -3630,27 +3668,11 @@ rather than Python runtime) include:
 .. _pip:
    https://pip.pypa.io
 
-.. # ------------------( LINKS ~ py : article               )------------------
-.. _Guido van Rossum:
-   https://en.wikipedia.org/wiki/Guido_van_Rossum
-.. _RealPython:
-   https://realpython.com/python-type-checking
-
 .. # ------------------( LINKS ~ py : cli                   )------------------
 .. _-O:
    https://docs.python.org/3/using/cmdline.html#cmdoption-o
 .. _PYTHONOPTIMIZE:
    https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
-
-.. # ------------------( LINKS ~ py : data model            )------------------
-.. _generic alias parameters:
-   https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
-.. _isinstancecheck:
-   https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks
-.. _mro:
-   https://docs.python.org/3/library/stdtypes.html#class.__mro__
-.. _object:
-   https://docs.python.org/3/reference/datamodel.html#basic-customization
 
 .. # ------------------( LINKS ~ py : interpreter           )------------------
 .. _CPython:
@@ -3661,6 +3683,24 @@ rather than Python runtime) include:
    https://numba.pydata.org
 .. _PyPy:
    https://www.pypy.org
+
+.. # ------------------( LINKS ~ py : lang                  )------------------
+.. _generic alias parameters:
+   https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
+.. _isinstancecheck:
+   https://docs.python.org/3/reference/datamodel.html#customizing-instance-and-subclass-checks
+.. _mro:
+   https://docs.python.org/3/library/stdtypes.html#class.__mro__
+.. _object:
+   https://docs.python.org/3/reference/datamodel.html#basic-customization
+.. _operator precedence:
+   https://docs.python.org/3/reference/expressions.html#operator-precedence
+
+.. # ------------------( LINKS ~ py : misc                  )------------------
+.. _Guido van Rossum:
+   https://en.wikipedia.org/wiki/Guido_van_Rossum
+.. _RealPython:
+   https://realpython.com/python-type-checking
 
 .. # ------------------( LINKS ~ py : package               )------------------
 .. _Django:

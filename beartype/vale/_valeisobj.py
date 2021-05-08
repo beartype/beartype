@@ -71,7 +71,7 @@ class IsAttr(_IsABC):
 
     Examples
     ----------
-    .. _code-block:: python
+    .. code-block:: python
 
        # Import the requisite machinery.
        >>> import numpy as np

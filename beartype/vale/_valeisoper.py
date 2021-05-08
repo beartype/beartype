@@ -109,7 +109,7 @@ class IsEqual(_IsABC):
 
     Examples
     ----------
-    .. _code-block:: python
+    .. code-block:: python
 
        # Import the requisite machinery.
        >>> from beartype import beartype

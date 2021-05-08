@@ -109,7 +109,7 @@ def generate_code(data: BeartypeData) -> str:
           :class:`object`, :class:`beartype.cave.AnyType`,
           :class:`typing.Any`): e.g.,
 
-          .. _code-block:: python
+          .. code-block:: python
 
               >>> from beartype.cave import AnyType
               >>> from typing import Any

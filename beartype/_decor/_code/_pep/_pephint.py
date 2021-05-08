@@ -158,6 +158,12 @@ from typing import Generic, Tuple, NoReturn
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CODERS                            }....................
+#FIXME: Attempt to JIT this function with Numba at some point. This will almost
+#certainly either immediately blow up or improve nothing, but we're curious to
+#see what happens. Make it so, Ensign Numba!
+# from numba import jit
+# @jit
+
 @callable_cached
 def pep_code_check_hint(
     # ..................{ PARAMS ~ mandatory                }..................
