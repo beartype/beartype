@@ -125,7 +125,7 @@ developed Python versions <Python status_>`__, `all Python package managers
 News
 ====
 
-2021-05-07: The Day the Bear Validated Your Web App's Existence
+2021-05-15: The Day the Bear Validated Your Web App's Existence
 ---------------------------------------------------------------
 
 **Beartype 0.7.0** (codename: The Culmination of Everything Your Unpaid QA
@@ -728,23 +728,54 @@ might make you wish you had a clawful of comfort berries in your mouth.
 Validator Overview
 ~~~~~~~~~~~~~~~~~~
 
-Beartype provides two kinds of validators, each with its attendant tradeoffs:
+.. parsed-literal::
+
+   Batteries included. Hidden fees excluded.
+
+Beartype validators are **zero-cost code generators.** Like the rest of
+beartype but unlike all *other* validation frameworks, beartype validators
+dynamically generate optimally efficient pure-Python inline test logic with
+*no* hidden function or method calls, undocumented costs, or runtime overhead.
+
+Beartype validator code is thus **frame-explicit.** Since pure-Python stack
+frames encapsulating pure-Python function and method calls are notoriously slow
+in the stock CPython interpreter, the code we generate only calls the
+pure-Python functions and methods you specify when you subscript
+``beartype.vale.Is*`` classes with those functions and methods. That's it. No
+other pure-Python callables are called "behind the scenes." For example:
+
+* The declarative validator ``Annotated[np.ndarray, IsAttr['dtype',
+  IsAttr['type', IsEqual[np.float64]]]]`` detects NumPy arrays of 64-bit
+  floating-point precision by generating the fastest possible inline test
+  expression for doing so:
+
+  .. code-block:: python
+
+     isinstance(array, np.ndarray) and array.dtype.type == np.float64
+
+* The functional validator ``Annotated[np.ndarray, Is[lambda array:
+  array.dtype.type == np.float64]]`` also detects NumPy arrays of 64-bit
+  floating-point precision but by generating a slightly slower inline test
+  expression calling the lambda function subscripting that ``Is`` class.
+
+Beartype validators thus come in two flavours – each with its tradeoffs:
 
 * **Functional validators,** created by subscripting the ``beartype.vale.Is``
   class with a caller-defined function accepting any arbitrary object and
   returning ``True`` only when that object satisfies a caller-defined
-  constraint. Functional validators incur the cost of calling one function at
-  type-check time for each usage of those validators as or within a type hint,
-  but are Turing-complete and thus support all possible validation scenarios.
-  The `validator matching NumPy arrays above <Beartype Hints_>`__ is an example
-  of a functional validator.
+  constraint. A functional validator incurs the cost of calling one function at
+  type-check time for each usage of that validator in a type hint, but are
+  Turing-complete and thus support all possible validation scenarios. The
+  `lambda-based validator matching NumPy arrays above <Beartype Hints_>`__ is
+  an example of a functional validator.
 * **Declarative validators,** created by subscripting any *other* class in the
   ``beartype.vale`` subpackage (e.g., ``beartype.vale.IsEquals``) with
-  caller-defined arguments specific to that class. Declarative validators
-  generate efficient code inlining function-free trivial tests (e.g.,
-  `==`\ -based equality comparison for ``beartype.vale.IsEquals``) and thus
-  incur *no* function call costs, but are special-purpose and thus support only
-  specific validation scenarios.
+  caller-defined arguments specific to that class. A declarative validator
+  generates efficient code inlining function-free test expressions and thus
+  incurs *no* function call costs, but is special-purpose and thus supports
+  only specific validation scenarios. The ``IsAttr``\ - and ``IsEqual``\ -based
+  validators matching NumPy arrays above are both examples of declarative
+  validators.
 
 Where you can, prefer declarative validators; everywhere else, fallback to
 functional validators.
@@ -804,7 +835,7 @@ Validator API
 
     .. code-block:: python
 
-       # Type hint matching only NumPy arrays of 64-bit floating point numbers.
+       # Type hint matching only NumPy arrays of 64-bit floating-point numbers.
        # Given this, @beartype generates efficient validation code resembling:
        #     isinstance(array, np.ndarray) and array.dtype.type == np.float64
        NumpyFloat64Array = Annotated[np.ndarray,

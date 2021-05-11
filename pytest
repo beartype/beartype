@@ -20,37 +20,15 @@
 # this project against all installed Python interpreters and is thus suitable
 # as a full-blown correctness check (e.g., before submitting pull requests).
 
-# ....................{ PATHS                             }....................
-# str canonicalize_path(str pathname)
-#
-# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
-# option would be preferable but is unsupported by macOS's NetBSD-specific
-# version of "readlink". Instead, just defer to Python for portability.
-function canonicalize_path() {
-    command python3 -c "
-import os, sys
-print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
-}
-
-# Absolute or relative filename of this script.
-script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
-
-# Absolute or relative dirname of the directory directly containing this
-# script, equivalent to the top-level directory for this project.
-script_dirname="$(dirname "${script_filename}")"
-
-# ....................{ MAIN                              }....................
-# Temporarily change the current working directory to that of this project.
-pushd "${script_dirname}" >/dev/null
-
+# ....................{ ARRAYS                            }....................
 # Array of all arguments to be passed to "python3" below. Dismantled, this is:
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
-# PYTHON_ARGS=( python3 -X dev )
-# PYTHON_ARGS=( python3.6 -X dev )
-PYTHON_ARGS=( python3.9 -X dev )
-# PYTHON_ARGS=( python3.10 -X dev )
-# PYTHON_ARGS=( pypy3.7 -X dev )
+# PYTHON_ARGS=( command python3 -X dev )
+# PYTHON_ARGS=( command python3.6 -X dev )
+# PYTHON_ARGS=( command python3.9 -X dev )
+PYTHON_ARGS=( command python3.10 -X dev )
+# PYTHON_ARGS=( command pypy3.7 -X dev )
 
 # Array of all arguments to be passed to "pytest" below. Dismantled, this is:
 #
@@ -88,25 +66,76 @@ PYTHON_ARGS=( python3.9 -X dev )
 PYTEST_ARGS=( pytest '--color=yes' '--maxfail=1' "${@}" )
 # echo "pytest args: ${PYTEST_ARGS[*]}"
 
-# If the external "coverage" command installed by the third-party "coverage"
-# package is installed *AND* the "-k" option was *NOT* passed, then measure
-# coverage while running tests.
+# ....................{ FUNCTIONS                         }....................
+# is_package(module_name: str) -> bool
+#
+# Report success only if a package or module with the passed fully-qualified
+# name is importable and thus installed under the active Python interpreter.
+# This tester is strongly inspired by this StackOverflow post:
+#     https://askubuntu.com/a/588392/415719
+function is_package() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local package_name="${1}"
+
+    # Report success only if this package or module exists.
+    "${PYTHON_ARGS[@]}" -c "import ${package_name}" 2>/dev/null
+}
+
+
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname.
+function canonicalize_path() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local pathname="${1}"
+
+    # The "readlink" command's GNU-specific "-f" option would be preferable but
+    # is unsupported by macOS's NetBSD-specific version of "readlink". Instead,
+    # just defer to Python for portability.
+    command python3 -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
+}
+
+# ....................{ PATHS                             }....................
+# Absolute or relative filename of this script.
+script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+script_dirname="$(dirname "${script_filename}")"
+
+# ....................{ MAIN                              }....................
+# Temporarily change the current working directory to that of this project.
+pushd "${script_dirname}" >/dev/null
+
+# If the third-party "coverage" package is installed under the desired Python
+# interpreter *AND* the "-k" option was *NOT* passed, then measure coverage
+# while running tests.
 #
 # If the "-k" option was passed, we avoid measuring coverage. Why? Because that
 # option restricts testing to a subset of tests, guaranteeing that coverage
 # measurements will be misleading at best and trigger test failure at worst
 # (e.g., if the "fail_under" option is enabled in ".coveragerc").
-if hash coverage 2>/dev/null && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
+if is_package coverage && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
     # If run this project's pytest-based test suite with all passed arguments
     # (while measuring coverage) succeeds, generate a terminal coverage report.
-    command "${PYTHON_ARGS[@]}" -m \
+    "${PYTHON_ARGS[@]}" -m \
         coverage run -m "${PYTEST_ARGS[@]}" . &&
-    command "${PYTHON_ARGS[@]}" -m \
+    "${PYTHON_ARGS[@]}" -m \
         coverage report
 # Else, run this project's pytest-based test suite with all passed arguments
 # *WITHOUT* measuring coverage.
 else
-    command "${PYTHON_ARGS[@]}" -m \
+    "${PYTHON_ARGS[@]}" -m \
         "${PYTEST_ARGS[@]}" .
 fi
 

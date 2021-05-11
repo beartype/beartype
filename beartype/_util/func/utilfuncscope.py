@@ -207,6 +207,18 @@ def get_func_globals(
 #  type hints defined by the function declaring the closure.
 #This is incredibly fragile, so tests.
 
+#FIXME: Revise the docstring to note this function is sadly now an
+#O(j k) operation where:
+#* "j" is the distance from the call to this get_func_locals() to the module
+#  lexically containing the declaration of the passed "func" callable on the
+#  current call stack.
+#" "k" is the maximum number of locals in the local scope of every callable
+#  between the parent callable directly declaring the passed "func" callable
+#  and the module lexically containing the declaration of that callable on the
+#  current call stack. Why? Because we iteratively merge local scope
+#  dictionaries for each such callable. Dictionary merging is an amortized
+#  O(k) operation. There you go, folks.
+#Of course, O(j k) reduces to O(n**2) for "n = max(j, k)".
 def get_func_locals(
     # Mandatory parameters.
     func: Callable,
@@ -261,9 +273,10 @@ def get_func_locals(
     **This high-level getter is inefficient and should thus only be called if
     absolutely necessary.** Specifically, deciding the local scope for any
     callable is an ``O(k)`` operation for ``k`` the distance in call stack
-    frames between the call to the current function and the call to the parent
-    scope declaring that callable. Ergo, this decision problem should be
-    deferred as long as feasible to minimize space and time consumption.
+    frames from the call to the current function to the call to the top-most
+    parent scope transitively declaring the passed callable in its submodule.
+    Ergo, this decision problem should be deferred as long as feasible to
+    minimize space and time consumption.
 
     Parameters
     ----------
@@ -306,7 +319,7 @@ def get_func_locals(
     # returned the local scope for this wrappee rather than wrapper callable,
     # we would erroneously return local attributes that this wrappee callable
     # originally had no lexical access to. That's bad. So, we don't do that.
-
+    #
     # If either...
     if (
         # This callable is unnested *OR*
@@ -424,11 +437,10 @@ def get_func_locals(
     #
     # Note this also implicitly skips past all other decorators applied *AFTER*
     # (i.e., lexically above) @beartype to this nested callable: e.g.,
-    #     # This also skips past all decorators listed above @beartype.
-    #     @the_way_of_kings
-    #     @words_of_radiance
-    #     @oathbringer
-    #     @rhythm_of_war
+    #     @the_way_of_kings   <--- skipped past
+    #     @words_of_radiance  <--- skipped past
+    #     @oathbringer        <--- skipped past
+    #     @rhythm_of_war      <--- skipped past
     #     @beartype
     #     def the_stormlight_archive(bruh: str) -> str:
     #         return bruh
@@ -487,7 +499,7 @@ def get_func_locals(
             # Ergo, we have *NO* alternative but to blindly assume the above
             # algorithm correctly collected this scope, which we only do
             # because we have exhaustively tested this with *ALL* edge cases.
-                # print(f'{func_scopes_name_curr}() locals: {repr(func_frame.f_locals)}')
+                # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
                 # Return the local scope of this nested callable. Since this
                 # nested callable is directly declared in the body of this

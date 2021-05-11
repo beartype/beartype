@@ -21,6 +21,7 @@ import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
 from beartype._decor._data import BeartypeData
 from beartype._util.func.utilfuncscope import (
+    CallableScope,
     get_func_globals,
     get_func_locals,
 )
@@ -30,6 +31,7 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype._util.text.utiltextlabel import label_callable_decorated_pith
 from sys import modules as sys_modules
+from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -121,13 +123,19 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     # Else, this callable's annotations are postponed under PEP 563. In this
     # case, resolve these annotations to their referents.
 
-    # Global scope for this callable.
-    func_globals = get_func_globals(
-        func=func, exception_cls=BeartypeDecorHintPep563Exception)
-
     # Dictionary mapping from parameter name to resolved annotation for each
     # annotated parameter and return value of this callable.
     func_hints = {}
+
+    # Global scope for the decorated callable.
+    func_globals = get_func_globals(
+        func=func, exception_cls=BeartypeDecorHintPep563Exception)
+
+    # Local scope for the decorated callable. Since calculating this scope is
+    # O(n**2) for an arbitrary large integer n, defer doing so until we must
+    # (i.e., when that callable's postponed annotations are *NOT* resolvable
+    # given only the global scope of that callable).
+    func_locals: Optional[CallableScope] = None
 
     # For the parameter name (or "return" for the return value) and
     # corresponding annotation of each of this callable's type hints...
@@ -146,27 +154,13 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             # This string is non-empty...
             pith_hint
         ):
-        # Then this hint is a PEP 563-compliant postponed hint.  Note that:
-        # * This test could technically yield a false positive in the unlikely
-        #   edge case that this annotation was previously postponed but has
-        #   since been replaced in-place with its referent, which is itself a
-        #   string matching the PEP 563 format without actually being a
-        #   PEP 563-formatted postponed string. Since there's nothing we can do
-        #   about this, we choose to silently pretend everything will be okay.
-        # * Any local variables referenced by this annotation are now
-        #   inaccessible and *MUST* be ignored, thus raising an exception here
-        #   on attempting to evaluate this annotation against a
-        #   non-inaccessible local. Yes, this is absurd. But what can you do?
-        #   To quote PEP 563:
-        #
-        #   "When running eval(), the value of globals can be gathered in the
-        #    following way:
-        #    * function objects hold a reference to their respective globals in
-        #      an attribute called __globals__;
-        #    ...
-        #    The value of localns cannot be reliably retrieved for functions
-        #    because in all likelihood the stack frame at the time of the call no
-        #    longer exists."
+        # Then this hint is a PEP 563-compliant postponed hint. Note that this
+        # test could technically yield a false positive in the unlikely edge
+        # case that this annotation was previously postponed but has since been
+        # replaced in-place with its referent, which is itself a string
+        # matching the PEP 563 format without actually being a PEP
+        # 563-formatted postponed string. Since there's nothing we can do about
+        # this, we choose to silently pretend everything will be okay.
 
             #FIXME: Since CPython appears to currently be incapable of even
             #defining a deeply nested annotation that would violate this limit,
@@ -180,58 +174,66 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             #_die_if_hint_repr_exceeds_child_limit(
             #    hint_repr=pith_hint, pith_label=pith_label)
 
-            # First, attempt to evaluate this postponed hint against the global
-            # scope defined by the module declaring the decorated callable.
-            #
-            # Note that this first attempt intentionally does *NOT* attempt to
-            # evaluate this postponed hint against both the global and local
-            # scope of the decorated callable. Why? Because:
-            # * The overwhelming majority of real-world type hints are imported
-            #   at module scope (e.g., from "collections.abc" and "typing") and
-            #   thus accessible as global attributes.
-            # * Deciding the local scope of the decorated callable is an O(k)
-            #   operation for k the distance in call stack frames between the
-            #   call to the current function and the call to the parent
-            #   callable or class declaring the decorated callable. Ergo, this
-            #   decision problem should be deferred until as long as possible
-            #   to minimize space and time costs of the @beartype decorator.
-            try:
-                func_hints[pith_name] = eval(pith_hint, func_globals)
-            # If this fails (as it occasionally does)...
-            except Exception as exception:
-                # Local scope for this callable.
-                func_locals = get_func_locals(
-                    func=func,
-                    # Ignore additional frames on the call stack embodying:
-                    # * The current call to this function.
-                    # * The call to the parent
-                    #   beartype._decor._data.BeartypeData.reinit() method.
-                    # * The call to the parent @beartype.beartype() decorator.
-                    func_stack_frames_ignore=3,
-                    exception_cls=BeartypeDecorHintPep563Exception,
-                )
-
+            # If the local scope of the decorated callable has yet to be
+            # decided...
+            if func_locals is None:
+                # Attempt to resolve this hint against the global scope defined
+                # by the module declaring the decorated callable.
+                #
+                # Note that this first attempt intentionally does *NOT* attempt
+                # to evaluate this postponed hint against both the global and
+                # local scope of the decorated callable. Why? Because:
+                # * The overwhelming majority of real-world type hints are
+                #   imported at module scope (e.g., from "collections.abc" and
+                #   "typing") and thus accessible as global attributes.
+                # * Deciding the local scope of the decorated callable is an
+                #   O(n**2) operation for an arbitrarily large integer n. Ergo,
+                #   that decision should be deferred as long as feasible to
+                #   minimize space and time costs of the @beartype decorator.
                 try:
-                    # Last, attempt to evaluate this postponed hint against
-                    # both the global and local scopes for the decorated
-                    # callable.
-                    func_hints[pith_name] = eval(
-                        pith_hint, func_globals, func_locals)
-                # If this also fails...
-                except Exception as exception:
-                    # Human-readable label describing this pith.
-                    pith_label = label_callable_decorated_pith(
-                        func=func, pith_name=pith_name)
+                    func_hints[pith_name] = eval(pith_hint, func_globals)
 
-                    # Wrap this low-level non-human-readable exception with a
-                    # high-level human-readable beartype-specific exception.
-                    raise BeartypeDecorHintPep563Exception(
-                        f'{pith_label} postponed hint '
-                        f'{repr(pith_hint)} syntactically invalid '
-                        f'(i.e., "{str(exception)}") under:\n'
-                        f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
-                        f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
-                    ) from exception
+                    # Continue to the next postponed hint.
+                    continue
+                # If that resolution fails (as it occasionally does)...
+                except Exception:
+                    # Decide the local scope for this callable.
+                    func_locals = get_func_locals(
+                        func=func,
+                        # Ignore additional frames on the call stack embodying:
+                        # * The current call to this function.
+                        # * The call to the parent
+                        #   beartype._decor._data.BeartypeData.reinit() method.
+                        # * The call to the parent @beartype.beartype()
+                        #   decorator.
+                        func_stack_frames_ignore=3,
+                        exception_cls=BeartypeDecorHintPep563Exception,
+                    )
+            # In either case, the local scope of the decorated callable has now
+            # been decided. (Validate this to be the case.)
+            assert func_locals is not None, (
+                f'{func.__qualname__}() local scope undecided.')
+
+            # Attempt to resolve this hint against both the global and local
+            # scopes for the decorated callable.
+            try:
+                func_hints[pith_name] = eval(
+                    pith_hint, func_globals, func_locals)
+            # If that resolution also fails...
+            except Exception as exception:
+                # Human-readable label describing this pith.
+                pith_label = label_callable_decorated_pith(
+                    func=func, pith_name=pith_name)
+
+                # Wrap this low-level non-human-readable exception with a
+                # high-level human-readable beartype-specific exception.
+                raise BeartypeDecorHintPep563Exception(
+                    f'{pith_label} postponed hint '
+                    f'{repr(pith_hint)} syntactically invalid '
+                    f'(i.e., "{str(exception)}") under:\n'
+                    f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
+                    f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
+                ) from exception
         # Else, this annotation is *NOT* a PEP 563-formatted postponed string.
         # Since PEP 563 is active for this callable, this implies this
         # annotation *MUST* have been previously postponed but has since been

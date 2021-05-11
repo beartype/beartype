@@ -204,6 +204,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     # following closure, exercising a significant edge case in PEP 563 support.
     IntLike = Union[float, int]
     ReturnType = Callable
+    InnerReturnType = ListStrType
 
     # Intentionally delimited by two layers of decoration to exercise edges.
     @decorator
@@ -227,7 +228,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
         # following closure, overriding those declared above and again
         # exercising a significant edge case in PEP 563 support.
         StringLike = Union[str, bytes]
-        ReturnType = ListStrType
+        ReturnType = InnerReturnType
 
         # Intentionally delimited by no layers of decoration to exercise edges.
         @beartype
