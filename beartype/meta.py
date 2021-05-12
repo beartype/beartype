@@ -260,6 +260,12 @@ URL_ISSUES = f'{URL_HOMEPAGE}/issues'
 URL of this package's issue tracker.
 '''
 
+
+URL_RELEASES = f'{URL_HOMEPAGE}/issues'
+'''
+URL of this package's release list.
+'''
+
 # ....................{ METADATA ~ libs : runtime         }....................
 LIBS_RUNTIME_OPTIONAL = ()
 '''

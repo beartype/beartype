@@ -22,85 +22,86 @@ from pytest import raises
 AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 
 # ....................{ TESTS ~ make                      }....................
-def test_copy_func_shallow_pass() -> None:
-    '''
-    Test successful usage of the
-    :func:`beartype._util.func.utilfuncmake.copy_func_shallow` function.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorWrapperException
-    from beartype._util.func.utilfuncmake import copy_func_shallow
-
-    # Tuple of the names of all attributes expected to be shallowly copied.
-    ATTRS_NAME_COPIED = (
-        '__annotations__',
-        '__closure__',
-        '__code__',
-        '__defaults__',
-        '__doc__',
-        '__globals__',
-        # '__kwdefaults__',
-        '__module__',
-        '__name__',
-        '__qualname__',
-    )
-
-    # String returned by the in_memoriam() function declared below when passed
-    # an even integer.
-    IN_MEMORIAM_RETURN_IF_PARAM_EVEN = 'And all we met was fair and good,'
-
-    # String returned by the in_memoriam() function declared below when passed
-    # an even integer.
-    IN_MEMORIAM_RETURN_IF_PARAM_ODD = '   And all was good that Time could bring,'
-
-    # String suffixing the string returned by that function.
-    IN_MEMORIAM_RETURN_SUFFIX = 'I sing to him that rests below,'
-
-    # Arbitrary closure to be shallowly copied.
-    def in_memoriam(
-        # Mandatory parameter.
-        the_shadow: int,
-
-        # Optional parameter.
-        the_shroud: str = IN_MEMORIAM_RETURN_SUFFIX,
-    ) -> str:
-        '''
-        The Shadow sits and waits for me.
-        '''
-
-        return (
-            IN_MEMORIAM_RETURN_IF_PARAM_EVEN + the_shroud
-            if the_shadow % 2 == 0 else
-            IN_MEMORIAM_RETURN_IF_PARAM_ODD + the_shroud
-        )
-
-    # Set a custom attribute on this callable to be shallowly copied.
-    in_memoriam.the_clock = '''
-       And in the dusk of thee, the clock
-    Beats out the little lives of men.'''
-
-    # Function shallowly copied from this callable.
-    captive_void = copy_func_shallow(func=in_memoriam)
-
-    # Assert this copy returns the expected value.
-    assert captive_void(27) == (
-        f'{IN_MEMORIAM_RETURN_IF_PARAM_ODD}{IN_MEMORIAM_RETURN_SUFFIX}')
-
-    # Assert this copy shares the same custom attribute as the original.
-    assert captive_void.the_clock == in_memoriam.the_clock
-
-    # Assert this copy contains the same dunder attributes.
-    for attr_name_copied in ATTRS_NAME_COPIED:
-        assert (
-            getattr(captive_void, attr_name_copied) ==
-            getattr(in_memoriam,  attr_name_copied)
-        )
-
-    # Assert this function rejects C-based functions.
-    with raises(BeartypeDecorWrapperException):
-        copy_func_shallow(
-            func=iter, exception_cls=BeartypeDecorWrapperException)
+#FIXME: Consider excising. Although awesome, this is no longer needed.
+# def test_copy_func_shallow_pass() -> None:
+#     '''
+#     Test successful usage of the
+#     :func:`beartype._util.func.utilfuncmake.copy_func_shallow` function.
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype.roar import BeartypeDecorWrapperException
+#     from beartype._util.func.utilfuncmake import copy_func_shallow
+#
+#     # Tuple of the names of all attributes expected to be shallowly copied.
+#     ATTRS_NAME_COPIED = (
+#         '__annotations__',
+#         '__closure__',
+#         '__code__',
+#         '__defaults__',
+#         '__doc__',
+#         '__globals__',
+#         # '__kwdefaults__',
+#         '__module__',
+#         '__name__',
+#         '__qualname__',
+#     )
+#
+#     # String returned by the in_memoriam() function declared below when passed
+#     # an even integer.
+#     IN_MEMORIAM_RETURN_IF_PARAM_EVEN = 'And all we met was fair and good,'
+#
+#     # String returned by the in_memoriam() function declared below when passed
+#     # an even integer.
+#     IN_MEMORIAM_RETURN_IF_PARAM_ODD = '   And all was good that Time could bring,'
+#
+#     # String suffixing the string returned by that function.
+#     IN_MEMORIAM_RETURN_SUFFIX = 'I sing to him that rests below,'
+#
+#     # Arbitrary closure to be shallowly copied.
+#     def in_memoriam(
+#         # Mandatory parameter.
+#         the_shadow: int,
+#
+#         # Optional parameter.
+#         the_shroud: str = IN_MEMORIAM_RETURN_SUFFIX,
+#     ) -> str:
+#         '''
+#         The Shadow sits and waits for me.
+#         '''
+#
+#         return (
+#             IN_MEMORIAM_RETURN_IF_PARAM_EVEN + the_shroud
+#             if the_shadow % 2 == 0 else
+#             IN_MEMORIAM_RETURN_IF_PARAM_ODD + the_shroud
+#         )
+#
+#     # Set a custom attribute on this callable to be shallowly copied.
+#     in_memoriam.the_clock = '''
+#        And in the dusk of thee, the clock
+#     Beats out the little lives of men.'''
+#
+#     # Function shallowly copied from this callable.
+#     captive_void = copy_func_shallow(func=in_memoriam)
+#
+#     # Assert this copy returns the expected value.
+#     assert captive_void(27) == (
+#         f'{IN_MEMORIAM_RETURN_IF_PARAM_ODD}{IN_MEMORIAM_RETURN_SUFFIX}')
+#
+#     # Assert this copy shares the same custom attribute as the original.
+#     assert captive_void.the_clock == in_memoriam.the_clock
+#
+#     # Assert this copy contains the same dunder attributes.
+#     for attr_name_copied in ATTRS_NAME_COPIED:
+#         assert (
+#             getattr(captive_void, attr_name_copied) ==
+#             getattr(in_memoriam,  attr_name_copied)
+#         )
+#
+#     # Assert this function rejects C-based functions.
+#     with raises(BeartypeDecorWrapperException):
+#         copy_func_shallow(
+#             func=iter, exception_cls=BeartypeDecorWrapperException)
 
 # ....................{ TESTS ~ make                      }....................
 def test_make_func_pass() -> None:

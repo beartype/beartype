@@ -42,13 +42,12 @@ source = .
 omit = beartype_test/*
 
 # Measure branch coverage in additional to the default statement coverage.
-# Whereas statement coverage only measures the lower-level unintelligent
-# metric of the total number of executed statements, branch coverage
-# measures the higher-level intelligent metric of the total number of
-# executed branch destinations (i.e., the two or more target statements to
-# which a source branch may "jump" conditionally depending on the decision
-# computed by that branch). Branches include "if", "elif", "else", and
-# "while" statements.
+# Whereas statement coverage only measures the lower-level unintelligent metric
+# of the total number of executed statements, branch coverage measures the
+# higher-level intelligent metric of the total number of executed branch
+# destinations (i.e., the two or more target statements to which a source
+# branch may "jump" conditionally depending on the decision computed by that
+# branch). Branches include "if", "elif", "else", and "while" statements.
 #
 # See also: https://coverage.readthedocs.io/en/latest/branch.html#branch
 branch = True

@@ -539,7 +539,7 @@ def pep_code_check_hint(
     hint_curr_meta: tuple = None  # type: ignore[assignment]
 
     # Fixed list of all metadata describing all visitable hints currently
-    # discovered by the breadth-first search (BFS) below. This lists acts as a
+    # discovered by the breadth-first search (BFS) below. This list acts as a
     # standard First In First Out (FILO) queue, enabling this BFS to be
     # implemented as an efficient imperative algorithm rather than an
     # inefficient (and dangerous, due to both unavoidable stack exhaustion and

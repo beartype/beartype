@@ -146,16 +146,7 @@ def test_pep563_closure_nonnested() -> None:
 #uses to dynamically construct that dictionary on-the-fly. Admittedly, this was
 #an edge case that basically didn't matter until PEP 563 landed -- at which
 #point this edge case *REALLY* mattered.
-#FIXME: *OHSH!T.* Python 3.10 has actually followed suite and now computes
-#"f_locals" in the same exact way as PyPy 3.7; basically, both ignore
-#annotations with respect to their "f_locals" computation. What this means is
-#that we now need to significantly augment our calculation of those locals to
-#crawl up the entire frame stack until hitting an "f_name == '<module>'"
-#boundary, at which point we reverse construct the entire thing via iterative
-#dict.update() merging. This is absurd... but what can you do, eh?
-#FIXME: File an upstream CPython issue. *DO NOT BE ANGRY.* No, really. It's
-#absolutely fine if they want to adopt this implementation as the new standard.
-#It's just important that everything be explicit and clear here. *shrug*
+
 @skip_if_pypy()
 @skip_if_python_version_less_than('3.7.0')
 def test_pep563_closure_nested() -> None:

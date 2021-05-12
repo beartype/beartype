@@ -14,8 +14,6 @@ format, instrumenting most high-level installation tasks for this package.
 #FIXME: Generate documentation from the NumPy-style docstrings embedded
 #throughout this codebase, presumably with Sphinx + napoleon.
 #FIXME: Publish generated documentation to readthedocs.org.
-#FIXME: Automate generation and publication of documentation in a manner
-#synchronized with our stable release (and possibly CI) process.
 
 # ....................{ KLUDGES                           }....................
 # Explicitly register all files and subdirectories of the root directory
@@ -200,11 +198,12 @@ _SETUP_OPTIONS = {
     # Dictionary mapping from arbitrary human-readable terse names describing
     # various package-related URLs to those URLs.
     'project_urls': {
+        'Source':       meta.URL_HOMEPAGE,
+        'Issues':       meta.URL_ISSUES,
+        'Releases':     meta.URL_RELEASES,
+
         #FIXME: Uncomment after we actually have meaningful RTD documentation.
         # 'Documentation': 'https://beartype.readthedocs.io',
-        'Issues': 'https://github.com/beartype/beartype/issues',
-        'Source': 'https://github.com/beartype/beartype',
-        'Releases': 'https://github.com/beartype/beartype/releases',
     },
 
     # ..................{ PYPI                              }..................
@@ -218,7 +217,7 @@ _SETUP_OPTIONS = {
 
     # ..................{ DEPENDENCIES                      }..................
     # Python dependency.
-    'python_requires': '>=' + meta.PYTHON_VERSION_MIN,
+    'python_requires': f'>={meta.PYTHON_VERSION_MIN}',
 
     # Mandatory runtime dependencies. This package intentionally requires no
     # such dependencies and hopefully never will.
@@ -280,8 +279,8 @@ _SETUP_OPTIONS = {
     # commonly accepting such subdirectories as subpackages.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     'packages': setuptools.find_packages(exclude=(
-        meta.PACKAGE_NAME + '_test',
-        meta.PACKAGE_NAME + '_test.*',
+        f'{meta.PACKAGE_NAME}_test',
+        f'{meta.PACKAGE_NAME}_test.*',
         'build',
     )),
 
@@ -329,7 +328,6 @@ _SETUP_OPTIONS = {
     # this project) to explicitly prohibit archival. See also:
     #     https://mypy.readthedocs.io/en/stable/installed_packages.html
     'zip_safe': False,
-
 }
 '''
 Dictionary unpacked as keyword arguments into the subsequent call of the

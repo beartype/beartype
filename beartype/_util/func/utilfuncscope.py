@@ -189,36 +189,6 @@ def get_func_globals(
     return func_wrappee.__globals__  # type: ignore[attr-defined]
 
 
-#FIXME: Exercise all edge cases with a unit test:
-#* Declaring a closure decorated by both @beartype and another
-#  decorator (probably just the identity decorator for simplicity).
-#* Declaring a closure decorated by both @beartype and another
-#  decorator (probably just the identity decorator for simplicity)
-#  nested inside of another closure such that the inner closure is
-#  annotated by type hints defined by the outer scope declaring the
-#  outer closure.
-#* Declaring an instance method decorated by both @beartype and
-#  another decorator (probably just the identity decorator for
-#  simplicity) declared in a class declared in a function.
-#* Declaring an instance method decorated by both @beartype and
-#  another decorator (probably just the identity decorator for
-#  simplicity) declared in a class declared in a closure nested
-#  inside of function such that the instance method is annotated by
-#  type hints defined by the function declaring the closure.
-#This is incredibly fragile, so tests.
-
-#FIXME: Revise the docstring to note this function is sadly now an
-#O(j k) operation where:
-#* "j" is the distance from the call to this get_func_locals() to the module
-#  lexically containing the declaration of the passed "func" callable on the
-#  current call stack.
-#" "k" is the maximum number of locals in the local scope of every callable
-#  between the parent callable directly declaring the passed "func" callable
-#  and the module lexically containing the declaration of that callable on the
-#  current call stack. Why? Because we iteratively merge local scope
-#  dictionaries for each such callable. Dictionary merging is an amortized
-#  O(k) operation. There you go, folks.
-#Of course, O(j k) reduces to O(n**2) for "n = max(j, k)".
 def get_func_locals(
     # Mandatory parameters.
     func: Callable,
@@ -303,11 +273,22 @@ def get_func_locals(
         the parent callable or module directly declaring the passed callable.
     '''
     assert callable(func), f'{repr(func)} not callable.'
-    # print(f'Capturing {func.__qualname__}() local scope...')
+    assert isinstance(func_stack_frames_ignore, int), (
+        f'{func_stack_frames_ignore} not integer.')
+    assert func_stack_frames_ignore >= 0, (
+        f'{func_stack_frames_ignore} negative.')
+    # print(f'\n--------- Capturing nested {func.__qualname__}() local scope...')
 
+    # ..................{ IMPORTS                           }..................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
     from beartype._util.func.utilfuncstack import get_func_stack_frame
+
+    # ..................{ NOOP                              }..................
+    # Fully-qualified name of the module declaring the passed callable if that
+    # callable was physically declared by an on-disk module *OR* "None"
+    # otherwise (i.e., if that callable was dynamically declared in-memory).
+    func_module_name = func.__module__
 
     # Note that we intentionally return the local scope for this wrapper rather
     # than wrappee callable, as local scope can *ONLY* be obtained by
@@ -322,53 +303,53 @@ def get_func_locals(
     #
     # If either...
     if (
-        # This callable is unnested *OR*
+        # The passed callable is dynamically declared in-memory...
+        func_module_name is None or
+        # The passed callable is unnested *OR*...
         not is_func_nested(func) or
-        # This callable is nested but the active Python interpreter fails to
-        # declare the sys._getframe() getter...
+        # The active Python interpreter fails to declare the private
+        # sys._getframe() getter...
         get_func_stack_frame is None
     ):
         # Then silently reduce to a noop by treating this nested callable as
         # module-scoped by preserving "func_locals" as the empty dictionary.
         return {}
-    # Else, this callable is nested *AND* the active Python interpreter
-    # declares the sys._getframe() getter.
-    assert isinstance(func_stack_frames_ignore, int), (
-        f'{func_stack_frames_ignore} not integer.')
-    assert func_stack_frames_ignore >= 0, (
-        f'{func_stack_frames_ignore} negative.')
-
-    # print(f'Capturing nested {func.__qualname__}() local scope...')
-    # ..................{ LOCALS ~ func                     }..................
-    # Fully-qualified name of the module declaring this nested callable if this
-    # nested callable was physically declared by an on-disk module *OR* "None".
-    func_module_name = func.__module__
-
-    # Unqualified name of this nested callable.
-    func_name = func.__name__
+    # Else:
+    # * The passed callable is physically declared on-disk.
+    # * The passed callable is nested.
+    # * The active Python interpreter declares the sys._getframe() getter.
 
     # ..................{ LOCALS ~ scope                    }..................
-    # Fully-qualified name of this callable.
-    func_scopes = func.__qualname__
+    # Local scope of the passed callable to be returned.
+    func_scope: CallableScope = {}
 
-    # Unqualified name of the last lexical scope encapsulating this nested
-    # callable.
+    # ..................{ LOCALS ~ scope : name             }..................
+    # Unqualified name of the passed callable.
+    func_name_unqualified = func.__name__
+
+    # Fully-qualified name of the passed callable.
+    #
+    # Note that, if the passed callable is a nested non-method callable, this
+    # name contains one or more semantically meaningless placeholder substrings
+    # "<locals>" -- each identifying one parent callable lexically containing
+    # the passed callable: e.g.,
+    #       >>> def muh_func():
+    #       ...     def muh_closure(): pass
+    #       ...     return muh_closure()
+    #       >>> muh_func().__qualname__
+    #       'muh_func.<locals>.muh_closure'
+    func_name_qualified = func.__qualname__
+
+    # Non-empty list of the unqualified names of all parent callables lexically
+    # containing the passed callable (excluding that callable itself).
     #
     # Note that:
-    # * If this is a nested non-method callable, this name is the useless
-    #   "<locals>" placeholder substring identifying the parent callable of
-    #   this nested non-method callable: e.g.,
-    #       # For a closure muh_closure() declared in a function muh_func()...
-    #       >>> func.__qualname__
-    #       'muh_func.<locals>.muh_closure'
-    #       >>> func_scopes_name
-    #       ['muh_func', '<locals>', 'muh_closure']
     # * The set of all callables embodied by the current runtime call stack is
     #   a (typically proper) superset of the set of all callables embodied by
-    #   the lexical scopes encapsulating this nested callable. Ergo, some stack
-    #   frames have no corresponding lexical scopes (e.g., stack frames
-    #   embodying callables defined by different modules) but
-    #   *ALL* lexical scopes have a corresponding stack frame.
+    #   the lexical scopes encapsulating this nested callable. Ergo:
+    #   * Some stack frames have no corresponding lexical scopes (e.g., stack
+    #     frames embodying callables defined by different modules).
+    #   * *ALL* lexical scopes have a corresponding stack frame.
     # * Stack frames are only efficiently accessible relative to the initial
     #   stack frame embodying this nested callable, which resides at the end of
     #   the call stack. This implies we *MUST* iteratively search up:
@@ -377,22 +358,31 @@ def get_func_locals(
     #     end of that stack.
     #   * Lexical scopes for scopes with corresponding frames, beginning at the
     #     last lexical scope.
-    func_scopes_name = func_scopes.rsplit(sep='.', maxsplit=3)
+    funcs_scopes_name = func_name_qualified.rsplit(sep='.', maxsplit=3)
 
     # Assert this nested callable is encapsulated by at least two lexical
     # scopes identifying at least this nested callable and the parent callable
     # or class declaring this nested callable.
-    assert len(func_scopes_name) >= 2, (
-        f'{func_name}() not nested (i.e., fully-qualified name '
-        f'"{func_scopes}" is unqualified name "{func_name}").')
-    assert func_scopes_name[-1] == func_name, (
-        f'{func_name}() fully-qualified name "{func_scopes}" invalid '
-        f'(i.e., last lexical scope '
-        f'"{func_scopes_name[-1]}" not unqualified name "{func_name}").')
+    assert len(funcs_scopes_name) >= 2, (
+        f'{func_name_unqualified}() not nested (i.e., fully-qualified name '
+        f'"{func_name_qualified}" == unqualified name '
+        f'"{func_name_unqualified}").')
 
-    # Lexical scope encapsulating the parent callable directly containing and
-    # thus declaring this nested callable -- which by the above validation is
-    # guaranteed.to be the third-to-last string in this list of lexical scopes.
+    # If the unqualified name of the last parent callable lexically containing
+    # the passed callable is *NOT* that callable itself, the caller maliciously
+    # renamed one but *NOT* both of the dunder attributes of that callable
+    # uniquely identifying that callable. In this case, raise an exception.
+    if funcs_scopes_name[-1] != func_name_unqualified:
+        raise exception_cls(
+            f'{func_name_unqualified}() fully-qualified name '
+            f'{func_name_qualified}() invalid (i.e., last lexical scope '
+            f'"{funcs_scopes_name[-1]}" != unqualified name '
+            f'"{func_name_unqualified}").'
+        )
+
+    # Unqualified name of the parent callable directly lexically containing
+    # (and thus declaring) the passed callable -- which by the above validation
+    # is guaranteed to be the third-to-last string in this list of scope names.
     #
     # Note that that parent callable's local runtime scope transitively
     # contains *ALL* local variables accessible to this nested callable
@@ -402,17 +392,27 @@ def get_func_locals(
     # scope). Since that parent callable's local runtime scope is exactly the
     # dictionary to be returned, iteration below searches up the runtime call
     # stack for a stack frame embodying that parent callable and no further.
-    func_scope_name = func_scopes_name[-2]
+    func_scope_name = funcs_scopes_name[-2]
 
-    # If this lexical scope is a placeholder substring specific to nested
-    # non-method callables, ignore this placeholder by preferring the actual
-    # lexical scope preceding this placeholder.
+    # If this name is the placeholder substring specific to nested callables...
     if func_scope_name == '<locals>':
-        assert len(func_scopes_name) >= 3, (
-            f'{func_name}() fully-qualified name "{func_scopes}" invalid '
-            f'(i.e., placeholder substring "<locals>" not preceded by '
-            f'unqualified name of parent callable).')
-        func_scope_name = func_scopes_name[-3]
+        # If this list of unqualified names contains less than three names,
+        # by deduction this name *MUST* have been the first in this list. But
+        # this placeholder substring *MUST* be preceded by the name of a parent
+        # callable. Since this is *NOT* the case, the caller maliciously
+        # renamed the "__qualname__" dunder attributes of the passed callable
+        # to be prefixed by "<locals>". In this case, raise an exception.
+        if len(funcs_scopes_name) < 3:
+            raise exception_cls(
+                f'{func_name_unqualified}() fully-qualified name '
+                f'{func_name_qualified}() invalid (i.e., placeholder '
+                f'substring "<locals>" not preceded by parent callable name).'
+            )
+
+        # Skip over this placeholder to the unqualified name of the parent
+        # callable lexically containing the passed callable.
+        func_scope_name = funcs_scopes_name[-3]
+    # print(f'Searching for parent {func_scope_name}() local scope...')
 
     # ..................{ LOCALS ~ frame                    }..................
     # Next non-ignored frame following the last ignored frame, ignoring an
@@ -459,6 +459,11 @@ def get_func_locals(
             func_frame_name = func_frame_codeobj.co_name
             # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
+            # If that scope is the placeholder string assigned by the active
+            # Python interpreter to all scopes encapsulating the top-most
+            # lexical scope of a module in the current call stack, halt
+            # searching.
+            #
             # If that scope is a module, this search has just crossed a module
             # boundary and is thus no longer searching within the module
             # declaring this nested callable and has thus failed to find the
@@ -467,7 +472,10 @@ def get_func_locals(
             # that of this nested callable. In this case, immediately break and
             # raise an exception.
             if func_frame_name == '<module>':
-                break
+                raise exception_cls(
+                    f'{get_object_scopes_name(func)}() parent lexical scope '
+                    f'{func_scope_name}() not found on call stack.'
+                )
             # Else, that scope is *NOT* a module.
             #
             # If...
@@ -501,12 +509,15 @@ def get_func_locals(
             # because we have exhaustively tested this with *ALL* edge cases.
                 # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
-                # Return the local scope of this nested callable. Since this
-                # nested callable is directly declared in the body of this
-                # parent callable, the local scope of this nested callable is
+                # Local scope of the passed callable. Since this nested
+                # callable is directly declared in the body of this parent
+                # callable, the local scope of this nested callable is
                 # *EXACTLY* the local scope of the body of this parent
                 # callable. Well, isn't that special?
-                return func_frame.f_locals
+                func_scope = func_frame.f_locals
+
+                # Halt iteration.
+                break
             # Else, that callable does *NOT* embody the current lexical scope
             # to be found. In this case, silently ignore that callable and
             # proceed to the next frame in the call stack.
@@ -516,13 +527,8 @@ def get_func_locals(
         # Iterate to the next frame on the call stack.
         func_frame = func_frame.f_back
 
-    # Since the above iteration exhausted itself rather than returning, that
-    # iteration failed to find the frame embodying the parent callable
-    # declaring this nested callable. In this case, raise an exception.
-    raise exception_cls(
-        f'{get_object_scopes_name(func)}() parent lexical scope '
-        f'"{func_scope_name}" not found on call stack.'
-    )
+    # Return the local scope of the passed callable.
+    return func_scope
 
 # ....................{ ADDERS                            }....................
 def add_func_scope_attr(

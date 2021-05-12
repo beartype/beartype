@@ -30,18 +30,44 @@ class WhenOwlsCallTheBreathlessMoon(object):
 
         pass
 
+# ....................{ DECORATORS                        }....................
+def decorator(func):
+    '''
+    Decorator attaching the local scope of the parent callable declaring the
+    passed callable to a new ``func_locals`` attribute of the passed callable.
+    '''
+
+    # Defer scope-specific imports for sanity.
+    from beartype._util.func.utilfuncscope import get_func_locals
+
+    # Attach the local scope of that parent callable to the passed callable.
+    func.func_locals = get_func_locals(func=func, func_stack_frames_ignore=1)
+
+    # Reduce to the identity decorator.
+    return func
+
 # ....................{ CALLABLES                         }....................
 def when_in_the_springtime_of_the_year():
     '''
     Arbitrary callable declaring an arbitrary nested callable.
     '''
 
-    def when_the_trees_are_crowned_with_leaves():
+    # Defer scope-specific imports for sanity.
+    from typing import Union
+
+    # Arbitrary PEP-compliant type hint localized to this parent callable.
+    type_hint = Union[int, str]
+
+    @decorator
+    def when_the_trees_are_crowned_with_leaves() -> type_hint:
         '''
-        Arbitrary nested callable.
+        Arbitrary nested callable annotated by a PEP-compliant type hint
+        localized to the parent callable and decorated by a decorator attaching
+        the local scope of that parent callable to a new ``func_locals``
+        attribute of this nested callable.
         '''
 
-        pass
+        return 42
 
     # Return this nested callable.
     return when_the_trees_are_crowned_with_leaves
@@ -112,6 +138,59 @@ def test_is_func_nested() -> None:
 #         the_journey_begins_with_curiosity)
 
 # ....................{ TESTS ~ getter                    }....................
+def test_get_func_locals() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncscope.get_func_locals` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfuncmake import make_func
+    from beartype._util.func.utilfuncscope import get_func_locals
+
+    # Arbitrary nested callable dynamically declared in-memory.
+    when_the_ash_and_oak_and_the_birch_and_yew = make_func(
+        func_name='when_the_ash_and_oak_and_the_birch_and_yew',
+        func_code='''def when_the_ash_and_oak_and_the_birch_and_yew(): pass''',
+    )
+
+    # Arbitrary nested callables whose unqualified and fully-qualified names
+    # are maliciously desynchronized below, exercising edge cases.
+    def are_dressed_in_ribbons_fair(): pass
+    def in_the_blue_veil_of_the_night(): pass
+    are_dressed_in_ribbons_fair.__qualname__ = (
+        'when_owls_call.the_breathless_moon')
+    in_the_blue_veil_of_the_night.__qualname__ = (
+        '<locals>.in_the_blue_veil_of_the_night')
+
+    # Assert this getter returns the empty dictionary for callables dynamically
+    # declared in-memory.
+    assert get_func_locals(when_the_ash_and_oak_and_the_birch_and_yew) == {}
+
+    # Assert this getter returns the empty dictionary for unnested callables.
+    assert get_func_locals(when_in_the_springtime_of_the_year) == {}
+
+    # Arbitrary nested callable declared by an unnested callable.
+    when_the_trees_are_crowned_with_leaves = (
+        when_in_the_springtime_of_the_year())
+
+    # Assert the local scope attached to this nested callable by its decorator
+    # calling this getter contains the unqualified name of the local variable
+    # annotating the return type of this nested callable.
+    assert 'type_hint' in when_the_trees_are_crowned_with_leaves.func_locals
+
+    # Assert this getter raises the expected exception for nested callables
+    # whose unqualified and fully-qualified names are desynchronized.
+    with raises(_BeartypeUtilCallableException):
+        get_func_locals(are_dressed_in_ribbons_fair)
+
+    # Assert this getter raises the expected exception for nested callables
+    # whose fully-qualified name is prefixed by "<locals>".
+    with raises(_BeartypeUtilCallableException):
+        get_func_locals(in_the_blue_veil_of_the_night)
+
+# ....................{ TESTS ~ adder                     }....................
 def test_add_func_scope_attr() -> None:
     '''
     Test the
