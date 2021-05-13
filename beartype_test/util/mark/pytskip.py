@@ -125,16 +125,17 @@ def skip_if_pypy():
     return skip_if(IS_PYPY, reason='Incompatible with PyPy.')
 
 
-def skip_if_python_version_less_than(minimum_version: str):
+def skip_if_python_version_greater_than_or_equal_to(version: str):
     '''
     Skip the decorated test or fixture if the version of the active Python
-    interpreter is strictly less than the passed minimum version.
+    interpreter is strictly greater than or equal to the passed maximum
+    version.
 
     Parameters
     ----------
-    minimum_version : str
-        Minimum version of the Python interpreter required by this test or
-        fixture as a dot-delimited string (e.g., ``3.5.0``)
+    version : str
+        Maximum version of the Python interpreter required by this test or
+        fixture as a dot-delimited string (e.g., ``3.5.0``).
 
     Returns
     ----------
@@ -147,19 +148,55 @@ def skip_if_python_version_less_than(minimum_version: str):
     :mod:`beartype.meta`
         Similar logic performed at :mod:`beartype` importation time.
     '''
-    assert isinstance(minimum_version, str), (
-        f'{repr(minimum_version)} not string.')
+    assert isinstance(version, str), f'{repr(version)} not string.'
 
     # Defer heavyweight imports.
     from beartype.meta import _convert_version_str_to_tuple
 
-    # Machine-readable minimum version of Python as a tuple of integers.
-    minimum_version_tuple = _convert_version_str_to_tuple(minimum_version)
+    # Machine-readable required version of Python as a tuple of integers.
+    version_tuple = _convert_version_str_to_tuple(version)
 
-    # Skip this test if the current Python version is less than this minimum.
+    # Skip this test if the current Python version exceeds this requirement.
     return skip_if(
-        _PYTHON_VERSION_TUPLE < minimum_version_tuple,
-        reason=f'Python {_PYTHON_VERSION_STR} < {minimum_version}.')
+        _PYTHON_VERSION_TUPLE >= version_tuple,
+        reason=f'Python {_PYTHON_VERSION_STR} >= {version}.')
+
+
+def skip_if_python_version_less_than(version: str):
+    '''
+    Skip the decorated test or fixture if the version of the active Python
+    interpreter is strictly less than the passed minimum version.
+
+    Parameters
+    ----------
+    version : str
+        Minimum version of the Python interpreter required by this test or
+        fixture as a dot-delimited string (e.g., ``3.5.0``).
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator describing these requirements if unmet *or* the identity
+        decorator reducing to a noop otherwise.
+
+    See Also
+    ----------
+    :mod:`beartype.meta`
+        Similar logic performed at :mod:`beartype` importation time.
+    '''
+    assert isinstance(version, str), f'{repr(version)} not string.'
+
+    # Defer heavyweight imports.
+    from beartype.meta import _convert_version_str_to_tuple
+
+    # Machine-readable required version of Python as a tuple of integers.
+    version_tuple = _convert_version_str_to_tuple(version)
+
+    # Skip this test if the current Python version is less than this
+    # requirement.
+    return skip_if(
+        _PYTHON_VERSION_TUPLE < version_tuple,
+        reason=f'Python {_PYTHON_VERSION_STR} < {version}.')
 
 # ....................{ SKIP ~ py : module                }....................
 def skip_unless_package(

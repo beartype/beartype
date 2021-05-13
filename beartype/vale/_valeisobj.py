@@ -241,7 +241,7 @@ class IsAttr(_IsABC):
         #
         # Note that this name has *NOT* yet been validated to be valid Python
         # identifier. While we could do so here by calling our existing
-        # is_identifier_qualified() tester, doing so would inefficiently repeat
+        # is_identifier() tester, doing so would inefficiently repeat
         # the split on "." characters performed below. Instead, we iteratively
         # validate each split substring to be a valid Python identifier below.
 

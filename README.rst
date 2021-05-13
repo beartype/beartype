@@ -1563,7 +1563,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | typing.List_                            | **0.2.0**\ —\ *current*       | **0.3.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | typing.Literal_                         | *none*                        | *none*                    |
+|                  | typing.Literal_                         | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | typing.Mapping_                         | **0.2.0**\ —\ *current*       | *none*                    |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1649,7 +1649,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `585 <PEP 585_>`__                      | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | `586 <PEP 586_>`__                      | *none*                        | *none*                    |
+|                  | `586 <PEP 586_>`__                      | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `589 <PEP 589_>`__                      | *none*                        | *none*                    |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1657,7 +1657,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `593 <PEP 593_>`__                      | **0.4.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | `604 <PEP 604_>`__                      | *none*                        | *none*                    |
+|                  | `604 <PEP 604_>`__                      | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 | packages         | `PyPI <beartype PyPI_>`__               | **0.1.0**\ —\ *current*       | —                         |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1997,16 +1997,16 @@ Compliance
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
 * `PEP 572 -- Assignment Expressions <PEP 572_>`__.
 * `PEP 585 -- Type Hinting Generics In Standard Collections <PEP 585_>`__.
+* `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
+* `PEP 604 -- Allow writing union types as X | Y <PEP 604_>`__.
 
 ``beartype`` is currently *not* compliant whatsoever with these PEPs:
 
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
-* `PEP 586 -- Literal Types <PEP 586_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 * `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
-* `PEP 604 -- Adding a final qualifier to typing <PEP 604_>`__.
 
 See also the **PEP** and **typing** categories of our `features matrix
 <Features_>`__ for further details.
@@ -2030,6 +2030,7 @@ values annotated with these typing_ types:
 * typing.ForwardRef_.
 * typing.Hashable_.
 * typing.List_.
+* typing.Literal_.
 * typing.MutableSequence_.
 * typing.NewType_.
 * typing.NoReturn_.
@@ -2171,11 +2172,6 @@ No Compliance
   type-checking of generically substitutable types), including:
 
   * typing.AnyStr_.
-
-``beartype`` currently raises exceptions at decoration time when passed these
-typing_ types:
-
-* typing.Literal_.
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with

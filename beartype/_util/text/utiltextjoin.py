@@ -12,10 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from collections.abc import Iterable, Sequence
+from typing import Iterable as typing_Iterable
 
 # ....................{ JOINERS                           }....................
 def join_delimited(
-    strs: 'Iterable[str]',
+    strs: typing_Iterable[str],
     delimiter_if_two: str,
     delimiter_if_three_or_more_nonlast: str,
     delimiter_if_three_or_more_last: str
@@ -109,10 +110,10 @@ def join_delimited(
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
 # ....................{ JOINERS ~ disjunction             }....................
-def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
+def join_delimited_disjunction(strs: typing_Iterable[str]) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas
-    and/or the conjunction "or" (conditionally depending on both the length of
+    and/or the disjunction "or" (conditionally depending on both the length of
     this iterable and index of each string in this iterable), yielding a
     human-readable string listing arbitrarily many substrings disjunctively.
 
@@ -121,12 +122,12 @@ def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
     * If this iterable contains no strings, the empty string.
     * If this iterable contains one string, this string as is is unmodified.
     * If this iterable contains two strings, these strings delimited by the
-      conjunction "or".
+      disjunction "or".
     * If this iterable contains three or more strings, a string listing these
       contained strings such that:
 
       * All contained strings except the last two are suffixed by commas.
-      * The last two contained strings are delimited by the conjunction "or".
+      * The last two contained strings are delimited by the disjunction "or".
 
     Parameters
     ----------
@@ -148,10 +149,10 @@ def join_delimited_disjunction(strs: 'Iterable[str]') -> str:
     )
 
 
-def join_delimited_disjunction_classes(classes: 'Iterable[type]') -> str:
+def join_delimited_disjunction_classes(classes: typing_Iterable[type]) -> str:
     '''
     Concatenate the human-readable classname of each class in the passed
-    iterable delimited by commas and/or the conjunction "or" (conditionally
+    iterable delimited by commas and/or the disjunction "or" (conditionally
     depending on both the length of this iterable and index of each string in
     this iterable), yielding a human-readable string listing arbitrarily many
     classnames disjunctively.

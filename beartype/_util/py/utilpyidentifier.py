@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                           }....................
-def is_identifier_qualified(text: str) -> bool:
+def is_identifier(text: str) -> bool:
     '''
     ``True`` only if the passed string is the ``.``-delimited concatenation of
     one or more `PEP 3131`_-compliant syntactically valid **Python

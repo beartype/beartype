@@ -4,12 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 593`_**-compliant type hint utilities.**
+Project-wide :pep:`593`-compliant type hint utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,7 +22,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #FIXME: Unit test us up, please.
 def die_unless_hint_pep593(hint: object) -> None:
     '''
-    Raise an exception unless the passed object is a `PEP 593`_-compliant
+    Raise an exception unless the passed object is a :pep:`593`-compliant
     **type metahint** (i.e., subscription of the :attr:`typing.Annotated`
     singleton).
 
@@ -37,17 +34,13 @@ def die_unless_hint_pep593(hint: object) -> None:
     Raises
     ----------
     BeartypeDecorHintPep593Exception
-        If this object is *not* a `PEP 593`_-compliant type metahint.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
+        If this object is *not* a :pep:`593`-compliant type metahint.
     '''
 
-    # If this object is *NOT* a PEP 593-compliant type metahint, raise an
-    # exception.
+    # If this hint is *NOT* PEP 593-compliant, raise an exception.
     if not is_hint_pep593(hint):
         raise BeartypeDecorHintPep593Exception(
-            f'PEP type hint {repr(hint)} not "typing.Annotated".')
+            f'Type hint {repr(hint)} not "typing.Annotated".')
 
 # ....................{ TESTERS                           }....................
 # If the active Python interpreter targets at least Python >= 3.9 and thus
@@ -56,7 +49,6 @@ if IS_PYTHON_AT_LEAST_3_9:
     # Defer version-dependent imports.
     from typing import Annotated  # type: ignore[attr-defined]
 
-    #FIXME: Unit test us up, please.
     #FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
     #we particularly care about this edge case? Probably not. *shrug*
     def is_hint_pep593(hint: object) -> bool:
@@ -105,7 +97,7 @@ else:
 # ....................{ TESTERS ~ doc                     }....................
 # Docstring for these functions regardless of the implementation details above.
 is_hint_pep593.__doc__ = '''
-    ``True`` only if the passed object is a `PEP 593`_-compliant **type
+    ``True`` only if the passed object is a :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
     This tester is intentionally *not* memoized (e.g., by the
@@ -120,17 +112,14 @@ is_hint_pep593.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 593`_-compliant user-defined
+        ``True`` only if this object is a :pep:`593`-compliant user-defined
         type metahint.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
 
 
 is_hint_pep593_ignorable_or_none.__doc__ = '''
-    ``True`` only if the passed object is a `PEP 593`_-compliant **ignorable
-    type hint,** ``False`` only if this object is a `PEP 593`_-compliant
+    ``True`` only if the passed object is a :pep:`593`-compliant **ignorable
+    type hint,** ``False`` only if this object is a :pep:`593`-compliant
     unignorable type hint, and ``None`` if this object is *not* `PEP
     593`_-compliant.
 
@@ -155,15 +144,12 @@ is_hint_pep593_ignorable_or_none.__doc__ = '''
     Optional[bool]
         Either:
 
-        * If this object is `PEP 593`_-compliant:
+        * If this object is :pep:`593`-compliant:
 
           * If this object is a ignorable, ``True``.
           * Else, ``False``.
 
-        * If this object is *not* `PEP 593`_-compliant, ``None``.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
+        * If this object is *not* :pep:`593`-compliant, ``None``.
     '''
 
 # ....................{ TESTERS ~ beartype                }....................
@@ -188,7 +174,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     Raises
     ----------
     BeartypeDecorHintPep593Exception
-        If this object is *not* a `PEP 593`_-compliant type metahint.
+        If this object is *not* a :pep:`593`-compliant type metahint.
     '''
 
     # If this object is *NOT* a PEP 593-compliant type metahint, raise an
@@ -242,7 +228,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     Raises
     ----------
     BeartypeDecorHintPep593Exception
-        If this object is *not* a `PEP 593`_-compliant type metahint.
+        If this object is *not* a :pep:`593`-compliant type metahint.
 
     See Also
     ----------
@@ -250,9 +236,6 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
         Further commentary.
     :func:`get_hint_pep593_metahint`
         Related getter.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
 
     # If this object is *NOT* a metahint, raise an exception.
@@ -266,7 +249,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
 #FIXME: Unit test us up, please.
 def get_hint_pep593_metahint(hint: Any) -> Any:
     '''
-    PEP-compliant type hint annotated by the passed `PEP 593`_-compliant **type
+    PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
     Specifically, this getter returns the first argument subscripting this
@@ -291,7 +274,7 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
     Raises
     ----------
     BeartypeDecorHintPep593Exception
-        If this object is *not* a `PEP 593`_-compliant type metahint.
+        If this object is *not* a :pep:`593`-compliant type metahint.
 
     See Also
     ----------
@@ -299,9 +282,6 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
         Further commentary.
     :func:`get_hint_pep593_metadata`
         Related getter.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
 
     # If this object is *NOT* a metahint, raise an exception.

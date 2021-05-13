@@ -90,21 +90,34 @@ def test_hint_ref_decor_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintForwardRefException
+    from beartype.roar import (
+        BeartypeDecorHintForwardRefException,
+        BeartypeDecorHintPep563Exception,
+    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
-    # Assert decorating callables annotated by syntactically invalid forward
-    # reference type hints raise the expected exceptions.
-    with raises_uncached(BeartypeDecorHintForwardRefException):
-        # Callable annotated by a blatantly syntactically invalid forward
-        # reference type hint.
+    # Type of exception raised by @beartype when decorating callables annotated
+    # by syntactically invalid forward reference type hints. Due to ambiguities
+    # in PEP 563 unconditionally enabled under Python >= 3.10, @beartype is
+    # unable to reliably differentiate forward references from non-forward
+    # references and thus treats the former as the latter here.
+    exception_cls = (
+        BeartypeDecorHintPep563Exception
+        if IS_PYTHON_AT_LEAST_3_10 else
+        BeartypeDecorHintForwardRefException
+    )
+
+    # Assert @beartype raises the expected exception when decorating a callable
+    # annotated by a syntactically invalid forward reference type hint.
+    with raises_uncached(exception_cls):
         @beartype
         def linnets_wings(evening_full: (
             "There midnight’s all a glimmer, and noon a purple glow,")):
             return evening_full
 
-
-        # Callable annotated by a mildly syntactically invalid forward
-        # reference type hint.
+    # Assert @beartype raises the expected exception when decorating a callable
+    # annotated by a mildly syntactically invalid forward reference type hint.
+    with raises_uncached(exception_cls):
         @beartype
         def deep_hearts_core(i_hear_it: (
             'While.I.stand.on.the.roadway.or.on.the.pavements.0grey')):

@@ -266,21 +266,18 @@ class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
 # ....................{ DECORATOR ~ hint : pep : proposal }....................
 class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 3119`_**-compliant type hint exception.**
+    **Beartype decorator** :pep:`3119`-compliant **type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating `PEP 3119`_ *or* this
-    decorator's implementation of `PEP 3119`_, including:
+    one or more PEP-compliant type hints either violating :pep:`3119` *or* this
+    decorator's implementation of :pep:`3119`, including:
 
     * Hints that are **non-isinstanceable classes** (i.e., classes that
       prohibit being passed as the second parameter to the :func:`isinstance`
       builtin by leveraging metaclasses overriding the ``__instancecheck__()``
       dunder method to raise exceptions). Notably, this includes most public
       classes declared by the standard :mod:`typing` module.
-
-    .. _PEP 3119:
-       https://www.python.org/dev/peps/pep-3119
     '''
 
     pass
@@ -288,18 +285,15 @@ class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 484`_**-compliant type hint exception.**
+    **Beartype decorator** :pep:`484`-compliant **type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating `PEP 484`_ *or* this
-    decorator's implementation of `PEP 484`_, including:
+    one or more PEP-compliant type hints either violating :pep:`484` *or* this
+    decorator's implementation of :pep:`484`, including:
 
     * Hints subscripted by the :attr:`typing.NoReturn` type hint (e.g.,
       ``typing.List[typing.NoReturn]``).
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     pass
@@ -307,15 +301,12 @@ class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 544`_**-compliant type hint exception.**
+    **Beartype decorator** :pep:`544`-compliant **type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating `PEP 544`_ *or* this
-    decorator's implementation of `PEP 544`_.
-
-    .. _PEP 544:
-       https://www.python.org/dev/peps/pep-0544
+    one or more PEP-compliant type hints either violating :pep:`544` *or* this
+    decorator's implementation of :pep:`544`.
     '''
 
     pass
@@ -323,15 +314,25 @@ class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 585`_**-compliant type hint exception.**
+    **Beartype decorator** :pep:`585`-compliant **type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating `PEP 585`_ *or* this
-    decorator's implementation of `PEP 585`_.
+    one or more PEP-compliant type hints either violating :pep:`585` *or* this
+    decorator's implementation of :pep:`585`.
+    '''
 
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
+    pass
+
+
+class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`586`-compliant **type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating :pep:`586` *or* this
+    decorator's implementation of :pep:`586`.
     '''
 
     pass
@@ -339,15 +340,12 @@ class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
 
 class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
     '''
-    **Beartype decorator** `PEP 593`_**-compliant type hint exception.**
+    **Beartype decorator** :pep:`593`-compliant **type hint exception.**
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more PEP-compliant type hints either violating `PEP 593`_ *or* this
-    decorator's implementation of `PEP 593`_.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
+    one or more PEP-compliant type hints either violating :pep:`593` *or* this
+    decorator's implementation of :pep:`593`.
     '''
 
     pass

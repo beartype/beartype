@@ -137,5 +137,5 @@ def test_decor_param_call_keyword_unknown_fail() -> None:
     # interpreter on calling the decorated callable rather than that raised by
     # the wrapper function on type-checking that callable. This message is
     # currently stable across Python versions and thus robustly testable.
-    assert str(exception.value) == (
+    assert str(exception.value).endswith(
         "tau() got an unexpected keyword argument 'nicassar'")

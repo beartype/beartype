@@ -25,6 +25,7 @@ from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
 )
+from beartype._util.py.utilpyidentifier import is_identifier
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_7,
@@ -161,6 +162,7 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
         # matching the PEP 563 format without actually being a PEP
         # 563-formatted postponed string. Since there's nothing we can do about
         # this, we choose to silently pretend everything will be okay.
+            # print(f'Resolving postponed hint {repr(pith_hint)}...')
 
             #FIXME: Since CPython appears to currently be incapable of even
             #defining a deeply nested annotation that would violate this limit,
@@ -221,6 +223,32 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
                     pith_hint, func_globals, func_locals)
             # If that resolution also fails...
             except Exception as exception:
+                # If...
+                if (
+                    # That resolution fails with a "NameError" *AND*...
+                    isinstance(exception, NameError) and
+                    # This hint is a valid Python identifier...
+                    is_identifier(pith_hint)
+                ):
+                    # This hint is *PROBABLY* a forward reference hinted as a
+                    # string. In this case, defer validation of this string as
+                    # a valid forward reference to a class (that presumably has
+                    # yet to be declared) until call time of the decorated
+                    # callable by preserving this string as is.
+                    #
+                    # Insanely, PEP 563 fails to enable runtime type checkers
+                    # to distinguish between forward references hinted as
+                    # strings and non-forward references postponed under PEP
+                    # 563 as strings. Ideally, PEP 563 would postpone the
+                    # former as machine-readable string representations (e.g.,
+                    # converting "muh.class.name" to "'muh.class.name'"). It
+                    # doesn't. Instead, it simply preserves forward references
+                    # hinted as strings! Who approved this appalling
+                    # abomination that breaks CPython itself?
+                    continue
+                # Else, this hint is *PROBABLY NOT* a forward reference hinted
+                # as a string.
+
                 # Human-readable label describing this pith.
                 pith_label = label_callable_decorated_pith(
                     func=func, pith_name=pith_name)
