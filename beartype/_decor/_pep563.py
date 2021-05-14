@@ -38,7 +38,7 @@ from typing import Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ RESOLVERS                         }....................
-def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
+def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     '''
     Resolve all `PEP 563`_-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
@@ -117,16 +117,17 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             getattr(sys_modules[func.__module__], 'annotations', None) is (
                 __future__.annotations)
         )
-    # Then this callable's annotations are *NOT* postponed under PEP 563. In
+    # Then this callable's hints are *NOT* postponed under PEP 563. In
     # this case, silently reduce to a noop.
     ):
         return
-    # Else, this callable's annotations are postponed under PEP 563. In this
-    # case, resolve these annotations to their referents.
+    # Else, these hints are postponed under PEP 563. In this case, resolve
+    # these hints to their referents.
 
-    # Dictionary mapping from parameter name to resolved annotation for each
-    # annotated parameter and return value of this callable.
-    func_hints = {}
+    # Dictionary mapping from parameter name to resolved hint for each
+    # annotated parameter and return value of this callable, initialized to a
+    # copy of the dictionary mapping from parameter name to postponed hint.
+    func_hints = func.__annotations__.copy()
 
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
@@ -195,11 +196,13 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
                 try:
                     func_hints[pith_name] = eval(pith_hint, func_globals)
 
-                    # Continue to the next postponed hint.
+                    # If that succeeded, continue to the next postponed hint.
                     continue
-                # If that resolution fails (as it occasionally does)...
+                # If that resolution failed, it probably did so due to
+                # requiring one or more attributes available only in the local
+                # scope for the decorated callable. In this case...
                 except Exception:
-                    # Decide the local scope for this callable.
+                    # Decide the local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
                         # Ignore additional frames on the call stack embodying:
@@ -256,24 +259,23 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
                 # Wrap this low-level non-human-readable exception with a
                 # high-level human-readable beartype-specific exception.
                 raise BeartypeDecorHintPep563Exception(
-                    f'{pith_label} postponed hint '
+                    f'{pith_label} PEP 563-postponed type hint '
                     f'{repr(pith_hint)} syntactically invalid '
                     f'(i.e., "{str(exception)}") under:\n'
                     f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
                     f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
                 ) from exception
-        # Else, this annotation is *NOT* a PEP 563-formatted postponed string.
-        # Since PEP 563 is active for this callable, this implies this
-        # annotation *MUST* have been previously postponed but has since been
-        # replaced in-place with its referent -- typically due to this callable
-        # being chain-decorated by both @beartype and one or more other
-        # annotation-based decorations.
+        # Else, this hint is *NOT* a PEP 563-formatted postponed string. Since
+        # PEP 563 is active for this callable, this implies this hint *MUST*
+        # have been previously postponed but has since been replaced in-place
+        # with its referent -- typically due to this callable being decorated
+        # by @beartype and one or more other hint-based decorators.
         #
-        # In this case, silently preserve this annotation as is. Since PEP 563
+        # In this case, silently preserve this hint as is. Since PEP 563
         # provides no means of distinguishing expected from unexpected
-        # evaluation of postponed annotations, either emitting a non-fatal
+        # evaluation of postponed hint, either emitting a non-fatal
         # warning *OR* raising a fatal exception here would be overly violent.
-        # Instead, we conservatively assume that this annotation was previously
+        # Instead, we conservatively assume this hint was previously
         # postponed but has already been properly resolved to its referent by
         # external logic elsewhere (e.g., yet another runtime type checker).
         #
@@ -284,14 +286,14 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
         # * Critically breaks backward compatibility throughout the
         #   well-established Python 3 ecosystem.
         # * Unhelpfully provides no general-purpose API for either:
-        #   * Detecting postponed annotations on arbitrary objects.
-        #   * Resolving those annotations.
-        # * Dramatically reduces the efficiency of annotation-based decorators
+        #   * Detecting postponed hints on arbitrary objects.
+        #   * Resolving those hints.
+        # * Dramatically reduces the efficiency of hint-based decorators
         #   for no particularly good reason.
-        # * Non-orthogonally prohibits annotations from accessing local state.
+        # * Non-orthogonally prohibits hints from accessing local state.
         #
         # Because we should probably mention those complaints here.
-        else:
+        # else:
             #FIXME: See above.
             # If the machine-readable representation of this annotation (which
             # internally encapsulates the same structural metadata as the
@@ -310,8 +312,11 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
             #    hint_repr=repr(pith_hint),
             #    pith_label=pith_label)
 
-            # Silently preserve this annotation as is.
-            func_hints[pith_name] = pith_hint
+    # Assert the above resolution resolved the expected number of type hints.
+    assert len(func_hints) == len(func.__annotations__), (
+        f'{func.__qualname__}() PEP 563-postponed type hint resolution mismatch: '
+        f'{len(func_hints)} resolved hints != '
+        f'{len(func.__annotations__)} postponed hints.')
 
     # Atomically (i.e., all-at-once) replace this callable's postponed
     # annotations with these resolved annotations for safety and efficiency.
@@ -322,6 +327,11 @@ def resolve_hints_postponed_if_needed(data: BeartypeData) -> None:
     # resolving postponed annotations for downstream third-party callers is
     # justified. Everyone benefits from replacing useless postponed annotations
     # with useful real annotations; so, we do so.
+    # print(
+    #     f'{func.__name__}() PEP 563-postponed annotations resolved:'
+    #     f'\n\t------[ POSTPONED ]------\n\t{func.__annotations__}'
+    #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints}'
+    # )
     func.__annotations__ = func_hints
 
     #FIXME: We currently no longer require this, but nonetheless preserve this

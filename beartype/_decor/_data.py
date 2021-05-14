@@ -206,7 +206,7 @@ class BeartypeData(object):
         assert callable(func), f'{repr(func)} uncallable.'
 
         # Avoid circular import dependencies.
-        from beartype._decor._pep563 import resolve_hints_postponed_if_needed
+        from beartype._decor._pep563 import resolve_hints_pep563_if_active
 
         # Callable currently being decorated.
         self.func = func
@@ -230,12 +230,12 @@ class BeartypeData(object):
         self.func_wrapper_name = f'__beartyped_{func.__name__}'
 
         # Nullify all remaining attributes for safety *BEFORE* passing this
-        # object to any functions (e.g., resolve_hints_postponed_if_needed()).
+        # object to any functions (e.g., resolve_hints_pep563_if_active()).
         self.func_sig = None  # type: ignore[assignment]
 
         # Resolve all postponed hints on this callable if any *BEFORE* parsing
         # the actual hints these postponed hints refer to.
-        resolve_hints_postponed_if_needed(self)
+        resolve_hints_pep563_if_active(self)
 
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.

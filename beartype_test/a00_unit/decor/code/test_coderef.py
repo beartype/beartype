@@ -144,6 +144,10 @@ def test_hint_ref_call_fail() -> None:
         TwoForwardRefsDivergedInAYellowWood):
         return not_taken
 
+    # Assert calling this callable raises the expected exception.
+    with raises_uncached(BeartypeCallHintForwardRefException):
+        the_road('Two roads diverged in a wood, and I—')
+
     # Decorated callable annotated by a PEP-noncompliant tuple containing
     # standard types and a fully-qualified forward reference referring to a
     # non-existent type.
@@ -155,6 +159,10 @@ def test_hint_ref_call_fail() -> None:
         AndBothForwardRefsThatMorningEquallyLay):
         return had_trodden_black
 
+    # Assert calling this callable raises the expected exception.
+    with raises_uncached(BeartypeCallHintForwardRefException):
+        in_leaves_no_step('I took the one less traveled by,')
+
     # Decorated callable annotated by a PEP-compliant unnested unqualified
     # forward reference referring to a non-existent type.
     @beartype
@@ -162,6 +170,10 @@ def test_hint_ref_call_fail() -> None:
         leads_on_to_way: 'OhIKeptTheFirstForAnotherDay') -> (
         'OhIKeptTheFirstForAnotherDay'):
         return leads_on_to_way
+
+    # Assert calling this callable raises the expected exception.
+    with raises_uncached(BeartypeCallHintForwardRefException):
+        yet_knowing_how_way('And that has made all the difference.')
 
     # Decorated callable annotated by a PEP-compliant unnested unqualified
     # forward reference referring to a non-existent type.
@@ -173,15 +185,7 @@ def test_hint_ref_call_fail() -> None:
         IShallBeTellingThisForwardRefWithASigh):
         return and_ages_hence
 
-    # Assert calling these callables raise the expected exceptions.
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        the_road('Two roads diverged in a wood, and I—')
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        in_leaves_no_step('I took the one less traveled by,')
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        yet_knowing_how_way('And that has made all the difference.')
-    with raises_uncached(BeartypeCallHintForwardRefException):
-        yet_knowing_how_way('And that has made all the difference.')
+    # Assert calling this callable raises the expected exception.
     with raises_uncached(BeartypeCallHintForwardRefException):
         somewhere_ages('I doubted if I should ever come back.')
 
