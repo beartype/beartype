@@ -26,6 +26,9 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPep484Exception,
 )
+from beartype._decor._code.codesnip import (
+    ARG_NAME_TYPISTRY,
+)
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_LOCALIZE,
     PEP_CODE_CHECK_RETURN_PREFIX,
@@ -38,10 +41,12 @@ from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER)
 from beartype._decor._data import BeartypeData
-from beartype._decor._cache.cachetype import register_typistry_forwardref
+from beartype._decor._cache.cachetype import (
+    bear_typistry,
+    register_typistry_forwardref,
+)
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
 from beartype._util.data.utildatadict import update_mapping
-from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj)
 from beartype._util.text.utiltextlabel import (
@@ -51,7 +56,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
 from inspect import Parameter
-from typing import NoReturn, Tuple
+from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -326,6 +331,10 @@ def _unmemoize_pep_code(
     # substrings memoized into this code, unmemoize this code by globally
     # resolving these placeholders relative to the decorated callable.
     if hints_forwardref_class_basename:
+        # Pass the beartypistry singleton as a private "__beartypistry"
+        # parameter to this wrapper function.
+        data.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
+
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
         for hint_forwardref_class_basename in hints_forwardref_class_basename:

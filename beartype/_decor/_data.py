@@ -41,11 +41,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import inspect
-from beartype._decor._cache.cachetype import bear_typistry
 from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
-    ARG_NAME_TYPISTRY,
 )
 from beartype._decor._code._pep._error.peperror import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
@@ -221,8 +219,6 @@ class BeartypeData(object):
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_locals.clear()
         self.func_wrapper_locals[ARG_NAME_FUNC] = func
-        #FIXME: Actually, this should only be conditionally passed as needed.
-        self.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
         self.func_wrapper_locals[ARG_NAME_RAISE_EXCEPTION] = (
             raise_pep_call_exception)
 

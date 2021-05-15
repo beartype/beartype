@@ -11,58 +11,29 @@ classnames of all type hints annotating callables decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Remove the now-vestigial register_typistry_type() function as follows:
-#* Improve the add_func_scope_local() function to address relevant "FIXME:"
-#  comments below preceding register_typistry_type().
-#* Replace all remaining calls to register_typistry_type() throughout the
-#  codebase with calls to add_func_scope_local().
-#* Remove register_typistry_type().
-#
-#Note that the Beartypistry.__setitem__() implementation should probably be
-#preserved as is to continue supporting forwardref-deferred types.
-
-#FIXME: For efficiency, register tuples under their numeric hashes rather than
-#strings embedding numeric hashes formatted as "+{numeric_hash}". Thus:
-#* Tuples would be registered instead with numeric hashes.
-#* Types would continue to be registered with fully-qualified classnames.
-#
-#Note that there's guaranteed to be *NO* key collisions between the two, as
-#the first characters of Python identifiers and thus classnames are prohibited
-#from being digits. Conversely, all characters (and thus the first characters)
-#of numeric hashes are guaranteed to be digits. Ergo, no collisions.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeDecorHintForwardRefException,
-    BeartypeDecorHintTypeException,
 )
 from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
 from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import die_unless_type_isinstanceable
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
-    die_unless_hint_nonpep_tuple)
+from beartype._util.cls.utilclstest import (
+    die_unless_type_isinstanceable,
+    is_classname_builtin,
+)
 from beartype._util.py.utilpymodule import (
     die_unless_module_attr_name,
     import_module_attr,
 )
-from beartype._util.cls.utilclstest import (
-    is_type_builtin,
-    is_classname_builtin,
-)
-from beartype._util.utilobject import (
-    get_object_type_name,
-    get_object_type_basename,
-)
-from typing import Tuple
+from beartype._util.utilobject import get_object_type_name
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
-_TYPISTRY_HINT_NAME_TUPLE_PREFIX = '+'
+TYPISTRY_HINT_NAME_TUPLE_PREFIX = '+'
 '''
 **Beartypistry tuple key prefix** (i.e., substring prefixing the keys of all
 beartypistry key-value pairs whose values are tuples).
@@ -147,295 +118,6 @@ def register_typistry_forwardref(hint_classname: str) -> str:
         f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
     )
 
-# ....................{ REGISTRARS ~ type                 }....................
-#FIXME: Generalize this function to correctly distinguish between subscripted
-#and subscripted generics under Python >= 3.9. For example, given a PEP
-#585-compliant generic "class MuhList(list): pass", support both:
-#* "MuhList", an unsubscripted generic.
-#* "MuhList[int]", a subscripted generic.
-#
-#The core issue is that both of those type hints share the same classname
-#despite being different objects and thus effectively different classes, which
-#is all manner of screwball but something we nonetheless should probably
-#support. We say "should," because it might very well be the responsibility of
-#the parent pep_code_check_hint() function to strip the subscription from this
-#generic if subscripted.
-#
-#In any case, this function *MUST* absolutely be improved to detect when this
-#hint is subscripted (i.e., when "getattr(hint, '__args__', None) is not None")
-#and correctly do something, which could be either:
-#* Raising an exception.
-#* Reducing this subscripted generic to its original unsubscripted class
-#  (i.e., "hint.__origin").
-#
-#Trivial in either case, but worth consideration as to which is preferable.
-#FIXME: Ah-ha! To help us decide, note that subscripted generics are *INVALID*
-#when used in isinstance() calls, which is silly 'cause they could have just
-#deferred to the "__origin__", but there you go. Doing so raises a "TypeError".
-#Given that, we should probably just raise an exception here if this hint is
-#subscripted and require our caller to explicitly strip this subscripted
-#generic to its original unsubscripted class (i.e., "hint.__origin").
-#FIXME: Exercise this with a unit test, please!
-
-# Note this function intentionally does *NOT* accept an optional "hint_labal"
-# parameter as doing so would conflict with memoization.
-@callable_cached
-def register_typistry_type(hint: type) -> str:
-    '''
-    Register the passed **unsubscripted PEP-noncompliant type** (i.e., class
-    neither defined by the :mod:`typing` module *nor* subclassing such a class
-    *nor* generic alias under Python >= 3.9) with the beartypistry singleton
-    *and* return a Python expression evaluating to this type when accessed via
-    the private ``__beartypistry`` parameter implicitly passed to all wrapper
-    functions generated by the :func:`beartype.beartype` decorator.
-
-    This function is syntactic sugar improving consistency throughout the
-    codebase, but is otherwise roughly equivalent to:
-
-        >>> from beartype._decor._cache.cachetype import bear_typistry
-        >>> from beartype._util.utilobject import get_object_type_name
-        >>> bear_typistry[get_object_type_name(hint)] = hint
-
-    This function is memoized for both efficiency *and* safety, preventing
-    accidental re-registration of previously registered types.
-
-    Parameters
-    ----------
-    hint : type
-        Unsubscripted PEP-noncompliant type to be registered.
-
-    Returns
-    ----------
-    str
-        Python expression evaluating to this type when accessed via the private
-        ``__beartypistry`` parameter implicitly passed to all wrapper functions
-        generated by the :func:`beartype.beartype` decorator.
-
-    Raises
-    ----------
-    BeartypeDecorHintTypeException
-        If this object is either:
-
-        * *Not* a class.
-        * **PEP-compliant** (i.e., either a class defined by the :mod:`typing`
-          module *or* subclass of such a class and thus a PEP-compliant type
-          hint, which all violate standard type semantics and thus require
-          PEP-specific handling).
-        * *Not* an *isinstanceable class** (i.e., class whose metaclass does
-          *not* define an ``__instancecheck__()`` dunder method that raises an
-          exception).
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
-    .. _PEP 560:
-        https://www.python.org/dev/peps/pep-0560
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
-    '''
-
-    # If this object is *NOT* an isinstanceable class, raise an exception.
-    die_unless_type_isinstanceable(
-        cls=hint, exception_cls=BeartypeDecorHintTypeException)
-    # Else, this object is an isinstanceable class.
-    #
-    # Note that we defer all further validation of this type to the
-    # Beartypistry.__setitem__() method implicitly invoked on subsequently
-    # assigning this type as a "bear_typistry" key.
-
-    # If this type is a builtin (i.e., globally accessible C-based type
-    # requiring *no* explicit importation), this type requires no registration.
-    # In this case, return the unqualified basename of this type as is.
-    if is_type_builtin(hint):
-        return get_object_type_basename(hint)
-    # Else, this type is *NOT* a builtin and thus requires registration.
-    # assert hint_basename != 'NoneType'
-
-    # Fully-qualified name of this type.
-    hint_classname = get_object_type_name(hint)
-
-    # If this type has yet to be registered with the beartypistry singleton, do
-    # so.
-    #
-    # Note that the beartypistry singleton's __setitem__() dunder method
-    # intentionally raises exceptions on attempts to re-register the same
-    # object twice, as tuple re-registration requires special handling to avoid
-    # hash collisions. Nonetheless, this is a non-issue. Why? Since this
-    # function is memoized, re-registration should *NEVER* happen.
-    bear_typistry[hint_classname] = hint
-
-    # Return a Python expression evaluating to this type.
-    return (
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_classname)}'
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
-    )
-
-# ....................{ REGISTRARS ~ tuple                }....................
-# Note this function intentionally does *NOT* accept an optional "hint_labal"
-# parameter as doing so would conflict with memoization.
-@callable_cached
-def register_typistry_tuple(
-    # Mandatory parameters.
-    hint: Tuple[type, ...],
-
-    # Optional parameters.
-    is_types_unique: bool = False,
-) -> str:
-    '''
-    Register the passed tuple of one or more **PEP-noncompliant types** (i.e.,
-    classes neither defined by the :mod:`typing` module *nor* subclassing such
-    classes) with the beartypistry singleton *and* return a Python
-    expression evaluating to this tuple when accessed via the private
-    ``__beartypistry`` parameter implicitly passed to all wrapper functions
-    generated by the :func:`beartype.beartype` decorator.
-
-    This function is memoized for both efficiency *and* safety, preventing
-    accidental reregistration.
-
-    Design
-    ----------
-    Unlike types, tuples are commonly dynamically constructed on-the-fly by
-    various tuple factories (e.g., :attr:`beartype.cave.NoneTypeOr`,
-    :attr:`typing.Optional`) and hence have no reliable fully-qualified names.
-    Instead, this function synthesizes the string uniquely identifying this
-    tuple as the concatenation of:
-
-    * The magic substring :data:`_TYPISTRY_HINT_NAME_TUPLE_PREFIX`. Since
-      fully-qualified classnames uniquely identifying types as beartypistry
-      keys are guaranteed to *never* contain this substring, this substring
-      prevents collisions between tuple and type names.
-    * This tuple's hash. Note that this tuple's object ID is intentionally
-      *not* embedded in this string. Two tuples with the same items are
-      typically different objects and thus have different object IDs, despite
-      producing identical hashes: e.g.,
-
-          >>> ('Das', 'Kapitel',) is ('Das', 'Kapitel',)
-          False
-          >>> id(('Das', 'Kapitel',)) == id(('Das', 'Kapitel',))
-          False
-          >>> hash(('Das', 'Kapitel',)) == hash(('Das', 'Kapitel',))
-          True
-
-      The exception is the empty tuple, which is a singleton and thus *always*
-      has the same object ID and hash: e.g.,
-
-          >>> () is ()
-          True
-          >>> id(()) == id(())
-          True
-          >>> hash(()) == hash(())
-          True
-
-    Identifying tuples by their hashes enables the beartypistry singleton to
-    transparently cache duplicate tuple unions having distinct object IDs as
-    the same underlying object, reducing space consumption. While hashing
-    tuples *does* impact time performance, the tangible gains are considered
-    worth the cost.
-
-    Parameters
-    ----------
-    hint : Tuple[type]
-        Tuple of all PEP-noncompliant types to be registered.
-    is_types_unique : bool
-        ``True`` only if the caller guarantees this tuple to contain *no*
-        duplicates. If ``False``, this function assumes this tuple to contain
-        duplicates by internally:
-
-        #. Coercing this tuple into a set, thus implicitly ignoring both
-           duplicates and ordering of types in this tuple.
-        #. Coercing that set back into another tuple.
-        #. If these two tuples differ, the passed tuple contains one or more
-           duplicates; in this case, the duplicate-free tuple is registered.
-        #. Else, the passed tuple contains no duplicates; in this case, the
-           passed tuple is registered.
-
-        Ergo, this boolean does *not* simply enable an edge-case optimization
-        (though it certainly does do that). This boolean enables callers to
-        guarantee that this function registers the passed tuple rather than a
-        new tuple internally created by this function.
-
-    Returns
-    ----------
-    str
-        Python expression evaluating to this tuple when accessed via the
-        private ``__beartypistry`` parameter implicitly passed to all wrapper
-        functions generated by the :func:`beartype.beartype` decorator.
-
-    Raises
-    ----------
-    BeartypeDecorHintNonPepException
-        If this tuple is either:
-
-        * *Not* a tuple.
-        * Is a tuple containing any item that is either:
-
-          * *Not* a type.
-          * A **PEP-compliant type** (i.e., class either defined by the
-            :mod:`typing` module *or* subclass of such a class and thus
-            PEP-compliant type hint, which all violate standard type semantics
-            and thus require PEP-specific handling).
-          * *Not* an *isinstanceable class** (i.e., class whose metaclass does
-            *not* define an ``__instancecheck__()`` dunder method that raises
-            an exception).
-    '''
-    assert isinstance(is_types_unique, bool), (
-        f'{repr(is_types_unique)} not bool.')
-
-    # If this object is *NOT* an isinstanceable tuple, raise an exception.
-    die_unless_hint_nonpep_tuple(
-        hint=hint,
-        #FIXME: Actually, we eventually want to permit this to enable
-        #trivial resolution of forward references. For now, this is fine.
-        is_str_valid=False,
-    )
-    # Else, this object is an isinstanceable tuple.
-    #
-    # Note that we defer all further validation of this tuple and its contents
-    # to the Beartypistry.__setitem__() method, implicitly invoked on
-    # subsequently assigning a "bear_typistry" key-value pair.
-
-    # If this tuple only contains one type, register only this type.
-    if len(hint) == 1:
-        return register_typistry_type(hint[0])
-    # Else, this tuple either contains no types or two or more types.
-
-    # If the caller failed to guarantee this tuple to be duplicate-free...
-    if not is_types_unique:
-        # Coerce this tuple into a set (thus ignoring duplicates and ordering).
-        hint_set = set(hint)
-
-        # Coerce this set back into a duplicate-free tuple, replacing the
-        # passed tuple with this tuple.
-        hint = tuple(hint_set)
-    # This tuple is now guaranteed to be duplicate-free.
-
-    # Name uniquely identifying this tuple as a beartypistry key.
-    hint_name = f'{_TYPISTRY_HINT_NAME_TUPLE_PREFIX}{hash(hint)}'
-
-    #FIXME: *WOOPS.* Memoization doesn't help us much here, as we need to
-    #explicitly test for differing tuple objects that have the same items.
-    #FIXME: *UNIT TEST* this up, please.
-
-    # While this name collides with an existing name of a tuple previously
-    # registered with the beartypistry singleton, iteratively disambiguate this
-    # name by appending an arbitrary character to this name.
-    #
-    # Note that, if this name *DOES* collide with one or more existing names of
-    # tuples previously registered with the beartypistry singleton, the passed
-    # tuple is guaranteed to *NOT* be those tuples. Why? Because this function
-    # is memoized, the passed tuple is necessarily distinct from those passed
-    # to all prior calls of this function and thus requires registration.
-    while hint_name in bear_typistry:
-        hint_name += '~'
-
-    # Register this tuple with the beartypistry singleton.
-    bear_typistry[hint_name] = hint
-
-    # Return a Python expression evaluating to this tuple.
-    return (
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_name)}'
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
-    )
-
 # ....................{ CLASSES                           }....................
 class Beartypistry(dict):
     '''
@@ -485,7 +167,7 @@ class Beartypistry(dict):
               of the module attribute defining this type.
             * A tuple of non-:mod:`typing` types, this is a string:
 
-              * Prefixed by the :data:`_TYPISTRY_HINT_NAME_TUPLE_PREFIX`
+              * Prefixed by the :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`
                 substring distinguishing this string from fully-qualified
                 classnames.
               * Hash of these types (ignoring duplicate types and type order in
@@ -534,7 +216,7 @@ class Beartypistry(dict):
               * A tuple but either:
 
                 * This name is *not* prefixed by the magic substring
-                  :data:`_TYPISTRY_HINT_NAME_TUPLE_PREFIX`.
+                  :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`.
                 * This tuple contains one or more items that are either:
 
                   * *Not* types.
@@ -609,10 +291,10 @@ class Beartypistry(dict):
             # trust callers to call the higher-level
             # :func:`register_typistry_tuple` function instead, which already
             # guarantees this constraint to be the case.
-            if not hint_name.startswith(_TYPISTRY_HINT_NAME_TUPLE_PREFIX):
+            if not hint_name.startswith(TYPISTRY_HINT_NAME_TUPLE_PREFIX):
                 raise _BeartypeDecorBeartypistryException(
                     f'Beartypistry key "{hint_name}" not '
-                    f'prefixed by "{_TYPISTRY_HINT_NAME_TUPLE_PREFIX}" for '
+                    f'prefixed by "{TYPISTRY_HINT_NAME_TUPLE_PREFIX}" for '
                     f'tuple {repr(hint)}.'
                 )
         # Else, this hint is neither a class nor a tuple. In this case,

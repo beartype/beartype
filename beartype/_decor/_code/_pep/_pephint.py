@@ -29,11 +29,13 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import NoneType
 from beartype._decor._cache.cachetype import (
+    TYPISTRY_HINT_NAME_TUPLE_PREFIX,
+    bear_typistry,
     register_typistry_forwardref,
-    register_typistry_tuple,
 )
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
+    ARG_NAME_TYPISTRY,
 )
 from beartype._decor._code._pep._pepmagic import (
     FUNC_WRAPPER_LOCAL_LABEL,
@@ -70,6 +72,9 @@ from beartype._decor._code._pep._pepsnip import (
     PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP,
     PEP484_CODE_CHECK_HINT_UNION_PREFIX,
     PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
+    PEP586_CODE_CHECK_HINT_CHILD,
+    PEP586_CODE_CHECK_HINT_PREFIX,
+    PEP586_CODE_CHECK_HINT_SUFFIX,
     PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD,
     PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX,
     PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX,
@@ -105,8 +110,8 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
-from beartype._util.hint.utilhintget import get_hint_forwardref_classname
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.nonpep.utilhintnonpeptest import (
+    die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_newtype_class,
@@ -118,6 +123,8 @@ from beartype._util.hint.pep.proposal.utilhintpep544 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin)
+from beartype._util.hint.pep.proposal.utilhintpep586 import (
+    die_unless_hint_pep586)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -139,6 +146,8 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep_typing,
     warn_if_hint_pep_sign_deprecated,
 )
+from beartype._util.hint.utilhintget import get_hint_forwardref_classname
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmagic import (
     CODE_INDENT_1,
@@ -231,6 +240,12 @@ def pep_code_check_hint(
         PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP.format),
     _PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format: Callable = (
         PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format),
+    _PEP586_CODE_CHECK_HINT_CHILD_format: Callable = (
+        PEP586_CODE_CHECK_HINT_CHILD.format),
+    _PEP586_CODE_CHECK_HINT_PREFIX: Callable = (
+        PEP586_CODE_CHECK_HINT_PREFIX.format),
+    _PEP586_CODE_CHECK_HINT_SUFFIX: Callable = (
+        PEP586_CODE_CHECK_HINT_SUFFIX.format),
     _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX_format: Callable = (
         PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX.format),
     _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format: Callable = (
@@ -569,6 +584,7 @@ def pep_code_check_hint(
     # visited hint (to be appended to the "func_wrapper_code" string).
     func_curr_code: str = None  # type: ignore[assignment]
 
+    # ..................{ FUNC ~ code : locals              }..................
     # Local scope (i.e., dictionary mapping from the name to value of each
     # attribute referenced in the signature) of this wrapper function required
     # by this Python code snippet.
@@ -584,6 +600,147 @@ def pep_code_check_hint(
     # Closures centralizing frequently repeated logic and thus addressing any
     # Don't Repeat Yourself (DRY) concerns during the breadth-first search
     # (BFS) performed below.
+
+    def _add_func_wrapper_local_tuple_types(
+        # Mandatory parameters.
+        tuple_types: Tuple[type, ...],
+
+        # Optional parameters.
+        is_unique: bool = False,
+    ) -> str:
+        '''
+        Pass the passed **isinstanceable tuple** (i.e., tuple of types passable
+        to the :func:`isinstance` builtin) to the current wrapper function as a
+        new **wrapper parameter** (i.e., attribute passed to that function as
+        an optional private :mod:`beartype`-specific parameter defaulting to
+        this passed object).
+
+        This closure additionally caches this tuple with the beartypistry
+        singleton to reduce space consumption for tuples duplicated across the
+        active Python interpreter.
+
+        Design
+        ----------
+        Unlike types, tuples are commonly dynamically constructed on-the-fly by
+        various tuple factories (e.g., :attr:`beartype.cave.NoneTypeOr`,
+        :attr:`typing.Optional`) and hence have no reliable fully-qualified
+        names. Instead, this closure caches this tuple into the beartypistry
+        under a string synthesized as the unique concatenation of:
+
+        * The magic substring :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`. Since
+          fully-qualified classnames uniquely identifying types as beartypistry
+          keys are guaranteed to *never* contain this substring, this substring
+          prevents collisions between tuple and type names.
+        * This tuple's hash. Note that this tuple's object ID is intentionally
+          *not* embedded in this string. Two tuples with the same items are
+          typically different objects and thus have different object IDs,
+          despite producing identical hashes: e.g.,
+
+            >>> ('Das', 'Kapitel',) is ('Das', 'Kapitel',)
+            False
+            >>> id(('Das', 'Kapitel',)) == id(('Das', 'Kapitel',))
+            False
+            >>> hash(('Das', 'Kapitel',)) == hash(('Das', 'Kapitel',))
+            True
+
+        The exception is the empty tuple, which is a singleton and thus
+        *always* has the same object ID and hash: e.g.,
+
+            >>> () is ()
+            True
+            >>> id(()) == id(())
+            True
+            >>> hash(()) == hash(())
+            True
+
+        Identifying tuples by their hashes enables the beartypistry singleton
+        to transparently cache duplicate isinstanceable tuples with distinct
+        object IDs as the same underlying object, reducing space consumption.
+        While hashing tuples *does* impact time performance, the tangible gains
+        are considered worth the cost.
+
+        Parameters
+        ----------
+        tuple_types : Tuple[type, ...]
+            Tuple of arbitrary types to be passed as a new parameter.
+        is_types_unique : bool
+            ``True`` only if the caller guarantees this tuple to contain *no*
+            duplicate types. If ``False``, this function assumes this tuple to
+            contain duplicate types by internally:
+
+            #. Coercing this tuple into a set, thus implicitly ignoring both
+               duplicates and ordering of types in this tuple.
+            #. Coercing that set back into another tuple.
+            #. If these two tuples differ, the passed tuple contains one or
+               more duplicates; in this case, the duplicate-free tuple is
+               cached and passed.
+            #. Else, the passed tuple contains no duplicates; in this case, the
+               passed tuple is cached and passed.
+
+            This boolean does *not* simply enable an edge-case optimization,
+            though it certainly does do that; this boolean enables callers to
+            guarantee that this function caches and passes the passed tuple
+            rather than a new tuple internally created by this function.
+
+        Returns
+        ----------
+        str
+            Arbitrary name of that parameter created by this closure.
+
+        Raises
+        ----------
+        _BeartypeUtilMappingException
+            If a parameter with the same name but differing value has already
+            been passed to the current wrapper function. As this name is unique
+            to this object, name collisions of this sort should *never* occur.
+            Since this exception should *never* be raised, we intentionally
+            raise a private rather than public exception here.
+        '''
+        assert isinstance(is_unique, bool), f'{repr(is_unique)} not bool.'
+
+        # If this object is *NOT* an isinstanceable tuple, raise an exception.
+        die_unless_hint_nonpep_tuple(hint=tuple_types, is_str_valid=False)
+        # Else, this object is an isinstanceable tuple.
+        #
+        # Note that we defer all further validation of this tuple and its
+        # contents to the Beartypistry.__setitem__() method, implicitly invoked
+        # on subsequently assigning a "bear_typistry" key-value pair.
+
+        # If this tuple only contains one type, register only this type.
+        if len(tuple_types) == 1:
+            return _add_func_wrapper_local_type(tuple_types[0])
+        # Else, this tuple either contains no types or two or more types.
+
+        # If the caller failed to guarantee this tuple to be duplicate-free...
+        if not is_unique:
+            # Coerce this tuple into a set (thus ignoring duplicates and ordering).
+            tuple_types_set = set(tuple_types)
+
+            # Coerce this set back into a duplicate-free tuple, replacing the
+            # passed tuple with this tuple.
+            tuple_types = tuple(tuple_types_set)
+        # This tuple is now guaranteed to be duplicate-free.
+
+        # Name uniquely identifying this tuple as a beartypistry key.
+        tuple_types_name = (
+            f'{TYPISTRY_HINT_NAME_TUPLE_PREFIX}{hash(tuple_types)}')
+
+        # If this tuple has *NOT* already been cached with the beartypistry
+        # singleton, do so.
+        if tuple_types_name not in bear_typistry:
+            bear_typistry[tuple_types_name] = tuple_types
+        # Else, this tuple has already been cached with the beartypistry
+        # singleton. In this case, reuse the previously cached tuple.
+        else:
+            tuple_types = bear_typistry[tuple_types_name]
+
+        # Return the name of a new parameter passing this tuple.
+        return _add_func_scope_attr(
+            attr=tuple_types,
+            attr_scope=func_wrapper_locals,
+            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
+        )
+
 
     def _add_func_wrapper_local_type(cls: type) -> str:
         '''
@@ -1284,13 +1441,13 @@ def pep_code_check_hint(
                             # * These parameters are intentionally passed as
                             #   positional rather than keyword arguments for
                             #   optimal memoization efficiency.
-                            hint_curr_expr=register_typistry_tuple(
-                                tuple(hint_childs_nonpep),
+                            hint_curr_expr=_add_func_wrapper_local_tuple_types(
+                                tuple_types=tuple(hint_childs_nonpep),
                                 # Inform this function it needn't attempt to
                                 # uselessly omit duplicates, since the "typing"
                                 # module already does so for all "Union"
                                 # arguments. Well, that's nice.
-                                True,
+                                is_unique=True,
                             )
                         ))
 
@@ -1639,6 +1796,10 @@ def pep_code_check_hint(
                 # If this classname contains one or more "." characters, this
                 # classname is fully-qualified. In this case...
                 if '.' in hint_curr_forwardref_classname:
+                    # Pass the beartypistry singleton as a private
+                    # "__beartypistry" parameter to this wrapper function.
+                    func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
+
                     # Python expression evaluating to this class when accessed
                     # via the private "__beartypistry" parameter.
                     hint_curr_expr = register_typistry_forwardref(
@@ -2014,6 +2175,7 @@ def pep_code_check_hint(
             f'{HINT_ROOT_LABEL} {repr(hint_root)} not type-checked.')
     # Else, the breadth-first search above successfully generated code.
 
+    # ..................{ CODE ~ locals                     }..................
     # PEP-compliant code snippet passing the value of the random integer
     # previously generated for the current call to the exception-handling
     # function call embedded in the "_PEP_CODE_CHECK_HINT_ROOT_SUFFIX" snippet,
@@ -2030,6 +2192,7 @@ def pep_code_check_hint(
         # integer to this wrapper function as an optional hidden parameter.
         func_wrapper_locals[_ARG_NAME_GETRANDBITS] = getrandbits
 
+    # ..................{ CODE ~ suffix                     }..................
     # Suffix this code by a Python code snippet raising a human-readable
     # exception when the root pith violates the root type hint.
     func_wrapper_code += _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format(

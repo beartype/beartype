@@ -22,7 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
-    ARG_NAME_TYPISTRY,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_RANDOM_INT,
 )
@@ -88,24 +87,24 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
     Parameter.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
-    # sentinel value "__beartypistry" guaranteed to never be passed otherwise.
+    # sentinel value "__beartype_raise_exception" guaranteed to never be passed.
     {PEP_CODE_PITH_ROOT_NAME} = (
         args[{{arg_index}}] if {VAR_NAME_ARGS_LEN} > {{arg_index}} else
-        kwargs.get({{arg_name!r}}, {ARG_NAME_TYPISTRY})
+        kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
     )
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_TYPISTRY}:''',
+    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     Parameter.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
-    # "__beartypistry" guaranteed to never be passed otherwise.
-    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {ARG_NAME_TYPISTRY})
+    # "__beartype_raise_exception" guaranteed to never be passed.
+    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_TYPISTRY}:''',
+    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
     Parameter.VAR_POSITIONAL: f'''
@@ -287,7 +286,7 @@ type (e.g., :class:`int`, :class:`str`).
 
 # ....................{ HINT ~ type : generic             }....................
 PEP_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
-{indent_curr}    # True only if this pith is an instance of this generic.
+{indent_curr}    # True only if this pith is of this generic type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
@@ -472,7 +471,7 @@ PEP-compliant Python expression yielding the value of the currently indexed
 item of the current pith (which, by definition, *must* be a tuple).
 '''
 
-# ....................{ HINT ~ type : pep484 : union      }....................
+# ....................{ HINT ~ type : pep 484 : union     }....................
 PEP484_CODE_CHECK_HINT_UNION_PREFIX = '''('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
@@ -522,17 +521,54 @@ See Also
     Further details.
 '''
 
-# ....................{ HINT ~ type : pep593 : union      }....................
+# ....................{ HINT ~ type : pep 586             }....................
+PEP586_CODE_CHECK_HINT_PREFIX = '''(
+{{indent_curr}}    # True only if this pith is of this literal type(s).
+{{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and ('''
+'''
+PEP-compliant code snippet prefixing all code type-checking the current pith
+against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by
+one or more literal objects.
+'''
+
+
+PEP586_CODE_CHECK_HINT_SUFFIX = '''
+{{indent_curr}}))'''
+'''
+PEP-compliant code snippet suffixing all code type-checking the current pith
+against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by
+one or more literal objects.
+'''
+
+
+PEP586_CODE_CHECK_HINT_CHILD = '''
+{{indent_curr}}        # True only if this pith is equal to this literal.
+{{indent_curr}}        {pith_curr_assigned_expr} == {hint_child_expr} or'''
+'''
+PEP-compliant code snippet type-checking the current pith against the current
+child literal object subscripting a :pep:`586`-compliant
+:class:`typing.Literal` type hint.
+
+Caveats
+----------
+The caller is required to manually slice the trailing suffix ``" and"`` after
+applying this snippet to the last subscripted argument of such a
+:class:`typing.Literal` type. While there exist alternate and more readable
+means of accomplishing this, this approach is the optimally efficient.
+
+The ``{indent_curr}`` format variable is intentionally brace-protected to
+efficiently defer its interpolation until the complete PEP-compliant code
+snippet type-checking the current pith against *all* subscripted arguments of
+this parent hint has been generated.
+'''
+
+# ....................{ HINT ~ type : pep 593             }....................
 PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX = '''(
 {indent_curr}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
-against each subscripted argument of a `PEP 593`_-compliant
-:class:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale._SubscriptedIs` objects.
-
-.. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
+against a :pep:`593`-compliant :class:`typing.Annotated` type hint subscripted
+by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
@@ -540,12 +576,8 @@ PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
-against each subscripted argument of a `PEP 593`_-compliant
-:class:`typing.Annotated` type hint subscripted by one or more
-:class:`beartype.vale._SubscriptedIs` objects.
-
-.. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
+against each a :pep:`593`-compliant :class:`typing.Annotated` type hint
+subscripted by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
@@ -556,8 +588,8 @@ PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD = '''
 '''
 PEP-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
-:meth:`beartype.vale._SubscriptedIs._is_valid_code` string) of the current child
-:class:`beartype.vale._SubscriptedIs` argument subscripting a parent `PEP
+:meth:`beartype.vale._SubscriptedIs._is_valid_code` string) of the current
+child :class:`beartype.vale._SubscriptedIs` argument subscripting a parent `PEP
 593`_-compliant :class:`typing.Annotated` type hint.
 
 Caveats
@@ -566,7 +598,4 @@ The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted argument of such a
 :class:`typing.Annotated` type. While there exist alternate and more readable
 means of accomplishing this, this approach is the optimally efficient.
-
-.. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
 '''

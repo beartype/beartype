@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable caching utilities.**
+Project-wide **callable caching** (i.e., general-purpose memoization of
+function and method calls) utilities.
 
 This private submodule implements supplementary cache-specific utility
 functions required by various :mod:`beartype` facilities, including callables
