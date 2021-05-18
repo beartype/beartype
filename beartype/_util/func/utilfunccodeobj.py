@@ -18,7 +18,7 @@ from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncwrap import unwrap_func
 from collections.abc import Callable
 from types import CodeType, FrameType, FunctionType, MethodType
-from typing import Optional, Union
+from typing import Optional, Type, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -35,7 +35,7 @@ def get_func_unwrapped_codeobj(
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
@@ -145,7 +145,7 @@ def get_func_codeobj(
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying

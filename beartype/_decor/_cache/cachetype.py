@@ -104,7 +104,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
     # module attribute which may *NOT* actually exist, raise an exception.
     die_unless_module_attr_name(
         module_attr_name=hint_classname,
-        exception_label='Forward reference',
+        module_attr_label='Forward reference',
         exception_cls=BeartypeDecorHintForwardRefException,
     )
 
@@ -348,7 +348,7 @@ class Beartypistry(dict):
         # reference, dynamically imported at callable call time.
         hint_class: type = import_module_attr(
             module_attr_name=hint_classname,
-            exception_label='Forward reference',
+            module_attr_label='Forward reference',
             exception_cls=BeartypeCallHintForwardRefException,
         )
 
@@ -356,7 +356,7 @@ class Beartypistry(dict):
         # exception.
         die_unless_type_isinstanceable(
             cls=hint_class,
-            cls_label=f'Forward reference "{hint_classname}" referent ',
+            cls_label=f'Forward reference "{hint_classname}" referent',
             exception_cls=BeartypeCallHintForwardRefException,
         )
         # Else, this hint is an isinstanceable class.

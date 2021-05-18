@@ -30,7 +30,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #       ... )
 #       >>> inspect.getsourcelines(built_to_fail[1])}
 #       tokenize.TokenError: ('EOF in multi-line string', (323, 8))
-#2.
 #FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
 #as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
@@ -39,7 +38,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
-from typing import Optional
+from typing import Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -76,7 +75,7 @@ def get_func_filename_or_none(
     func: Callable,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Optional[str]:
     '''
     Absolute filename of the file on the local filesystem providing the

@@ -19,7 +19,7 @@ from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
-from typing import Optional
+from typing import Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -36,7 +36,7 @@ def make_func(
     func_doc: Optional[str] = None,
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Callable:
     '''
     Dynamically create and return a new function with the passed name declared
@@ -226,7 +226,7 @@ def make_func(
 #     func: Callable,
 #
 #     # Optional arguments.
-#     exception_cls: type = _BeartypeUtilCallableException,
+#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 # ) -> Callable:
 #     '''
 #     Create and return a new shallow copy of the passed callable.

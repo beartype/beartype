@@ -18,10 +18,11 @@ during testing.
 
 from contextlib import contextmanager
 from pytest import raises
+from typing import Type
 
 # ....................{ CONTEXTS                          }....................
 @contextmanager
-def raises_uncached(exception_cls: type) -> 'ExceptionInfo':
+def raises_uncached(exception_cls: Type[Exception]) -> 'ExceptionInfo':
     '''
     Context manager validating that the block exercised by this manager raises
     a **cached exception** (i.e., whose message previously containing one or

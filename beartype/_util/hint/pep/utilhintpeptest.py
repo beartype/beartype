@@ -46,7 +46,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import TypeVar
+from typing import Type, TypeVar
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -87,7 +87,7 @@ def die_if_hint_pep(
 
     # Optional parameters.
     hint_label: str = 'Type hint',
-    exception_cls: type = BeartypeDecorHintPepException,
+    exception_cls: Type[Exception] = BeartypeDecorHintPepException,
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-compliant type

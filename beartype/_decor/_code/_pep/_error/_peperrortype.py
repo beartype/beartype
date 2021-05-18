@@ -53,7 +53,7 @@ def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> Optional[str]:
     # User-defined class dynamically imported from this classname.
     hint_forwardref_class = import_module_attr(
         module_attr_name=hint_forwardref_classname,
-        exception_label=(
+        module_attr_label=(
             f'{sleuth.exception_label} forward reference type hint'),
         exception_cls=_BeartypeCallHintPepRaiseException,
     )

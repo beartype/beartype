@@ -11,7 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilTypeException
+from beartype.roar._roarexc import (
+    BeartypeDecorHintPep3119Exception,
+    _BeartypeUtilTypeException,
+)
 from typing import Type
 
 # ....................{ CONSTANTS                          }....................
@@ -70,7 +73,7 @@ def die_unless_type_isinstanceable(
 
     # Optional parameters.
     cls_label: str = 'Annotated',
-    exception_cls: Type[Exception] = _BeartypeUtilTypeException,
+    exception_cls: Type[Exception] = BeartypeDecorHintPep3119Exception,
 ) -> None:
     '''
     Raise an exception unless the passed object is an **isinstanceable class**
@@ -81,18 +84,18 @@ def die_unless_type_isinstanceable(
     hints, notably:
 
     * **Generic aliases** (i.e., subscriptable classes overriding the
-      ``__class_getitem__()`` class dunder method standardized by `PEP 560`_
+      ``__class_getitem__()`` class dunder method standardized by :pep:`560`
       subscripted by an arbitrary object) under Python >= 3.9, whose
       metaclasses define an ``__instancecheck__()`` dunder method to
       unconditionally raise an exception. Generic aliases include:
 
-      * `PEP 484`_-compliant **subscripted generics.**
-      * `PEP 585`_-compliant type hints.
+      * :pep:`484`-compliant **subscripted generics.**
+      * :pep:`585`-compliant type hints.
 
     * User-defined classes whose metaclasses define an ``__instancecheck__()``
       dunder method to unconditionally raise an exception, including:
 
-      * `PEP 544`_-compliant protocols *not* decorated by the
+      * :pep:`544`-compliant protocols *not* decorated by the
         :func:`typing.runtime_checkable` decorator.
 
     Motivation
@@ -137,17 +140,12 @@ def die_unless_type_isinstanceable(
         exception message raised by this function. Defaults to ``"Annotated"``.
     exception_cls : Type[Exception]
         Type of exception to be raised. Defaults to
-        :exc:`_BeartypeUtilTypeException`.
+        :exc:`BeartypeDecorHintPep3119Exception`.
 
     Raises
     ----------
-    BeartypeDecorHintTypeException
+    BeartypeDecorHintPep3119Exception
         If this hint is *not* an isinstanceable class.
-
-    .. _PEP 544:
-        https://www.python.org/dev/peps/pep-0544
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
     '''
 
     # If this hint is *NOT* a class, raise an exception.

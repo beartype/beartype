@@ -25,11 +25,9 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep593Exception,
-    BeartypeDecorHintPep3119Exception,
 )
 from beartype._cave._cavefast import NoneType
 from beartype._decor._cache.cachetype import (
-    TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
     register_typistry_forwardref,
 )
@@ -89,14 +87,11 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.cls.utilclstest import (
-    die_unless_type_isinstanceable,
-    is_type_builtin,
-)
 from beartype._util.data.utildatadict import update_mapping
 from beartype._util.func.utilfuncscope import (
     CallableScope,
-    add_func_scope_attr,
+    add_func_scope_type,
+    add_func_scope_types,
 )
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
@@ -110,8 +105,6 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
-    die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_newtype_class,
@@ -158,7 +151,6 @@ from beartype._util.text.utiltextmagic import (
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Callable
 from random import getrandbits
 from typing import Generic, Tuple, NoReturn
@@ -185,15 +177,12 @@ def pep_code_check_hint(
 
     #FIXME: Declare *ALL* other globals accessed below as optional parameters.
 
-    # "beartype.vale" globals.
-    _SubscriptedIs=_SubscriptedIs,
-
     # "beartype._decor._code.codesnip" globals.
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
 
-    # "beartype._decor._code._pep._pephintmagic" globals.
+    # "beartype._decor._code._pep._pepmagic" globals.
     _FUNC_WRAPPER_LOCAL_LABEL=FUNC_WRAPPER_LOCAL_LABEL,
     _HINT_ROOT_LABEL=HINT_ROOT_LABEL,
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
@@ -252,9 +241,6 @@ def pep_code_check_hint(
         PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX.format),
     _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_format: Callable = (
         PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD.format),
-
-    # "beartype._util.func.utilfuncscope" globals.
-    _add_func_scope_attr = add_func_scope_attr,
 ) -> Tuple[str, CallableScope, Tuple[str, ...]]:
     '''
     Python code snippet type-checking the previously localized parameter or
@@ -600,198 +586,6 @@ def pep_code_check_hint(
     # Closures centralizing frequently repeated logic and thus addressing any
     # Don't Repeat Yourself (DRY) concerns during the breadth-first search
     # (BFS) performed below.
-
-    def _add_func_wrapper_local_tuple_types(
-        # Mandatory parameters.
-        tuple_types: Tuple[type, ...],
-
-        # Optional parameters.
-        is_unique: bool = False,
-    ) -> str:
-        '''
-        Pass the passed **isinstanceable tuple** (i.e., tuple of types passable
-        to the :func:`isinstance` builtin) to the current wrapper function as a
-        new **wrapper parameter** (i.e., attribute passed to that function as
-        an optional private :mod:`beartype`-specific parameter defaulting to
-        this passed object).
-
-        This closure additionally caches this tuple with the beartypistry
-        singleton to reduce space consumption for tuples duplicated across the
-        active Python interpreter.
-
-        Design
-        ----------
-        Unlike types, tuples are commonly dynamically constructed on-the-fly by
-        various tuple factories (e.g., :attr:`beartype.cave.NoneTypeOr`,
-        :attr:`typing.Optional`) and hence have no reliable fully-qualified
-        names. Instead, this closure caches this tuple into the beartypistry
-        under a string synthesized as the unique concatenation of:
-
-        * The magic substring :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`. Since
-          fully-qualified classnames uniquely identifying types as beartypistry
-          keys are guaranteed to *never* contain this substring, this substring
-          prevents collisions between tuple and type names.
-        * This tuple's hash. Note that this tuple's object ID is intentionally
-          *not* embedded in this string. Two tuples with the same items are
-          typically different objects and thus have different object IDs,
-          despite producing identical hashes: e.g.,
-
-            >>> ('Das', 'Kapitel',) is ('Das', 'Kapitel',)
-            False
-            >>> id(('Das', 'Kapitel',)) == id(('Das', 'Kapitel',))
-            False
-            >>> hash(('Das', 'Kapitel',)) == hash(('Das', 'Kapitel',))
-            True
-
-        The exception is the empty tuple, which is a singleton and thus
-        *always* has the same object ID and hash: e.g.,
-
-            >>> () is ()
-            True
-            >>> id(()) == id(())
-            True
-            >>> hash(()) == hash(())
-            True
-
-        Identifying tuples by their hashes enables the beartypistry singleton
-        to transparently cache duplicate isinstanceable tuples with distinct
-        object IDs as the same underlying object, reducing space consumption.
-        While hashing tuples *does* impact time performance, the tangible gains
-        are considered worth the cost.
-
-        Parameters
-        ----------
-        tuple_types : Tuple[type, ...]
-            Tuple of arbitrary types to be passed as a new parameter.
-        is_types_unique : bool
-            ``True`` only if the caller guarantees this tuple to contain *no*
-            duplicate types. If ``False``, this function assumes this tuple to
-            contain duplicate types by internally:
-
-            #. Coercing this tuple into a set, thus implicitly ignoring both
-               duplicates and ordering of types in this tuple.
-            #. Coercing that set back into another tuple.
-            #. If these two tuples differ, the passed tuple contains one or
-               more duplicates; in this case, the duplicate-free tuple is
-               cached and passed.
-            #. Else, the passed tuple contains no duplicates; in this case, the
-               passed tuple is cached and passed.
-
-            This boolean does *not* simply enable an edge-case optimization,
-            though it certainly does do that; this boolean enables callers to
-            guarantee that this function caches and passes the passed tuple
-            rather than a new tuple internally created by this function.
-
-        Returns
-        ----------
-        str
-            Arbitrary name of that parameter created by this closure.
-
-        Raises
-        ----------
-        _BeartypeUtilMappingException
-            If a parameter with the same name but differing value has already
-            been passed to the current wrapper function. As this name is unique
-            to this object, name collisions of this sort should *never* occur.
-            Since this exception should *never* be raised, we intentionally
-            raise a private rather than public exception here.
-        '''
-        assert isinstance(is_unique, bool), f'{repr(is_unique)} not bool.'
-
-        # If this object is *NOT* an isinstanceable tuple, raise an exception.
-        die_unless_hint_nonpep_tuple(hint=tuple_types, is_str_valid=False)
-        # Else, this object is an isinstanceable tuple.
-        #
-        # Note that we defer all further validation of this tuple and its
-        # contents to the Beartypistry.__setitem__() method, implicitly invoked
-        # on subsequently assigning a "bear_typistry" key-value pair.
-
-        # If this tuple only contains one type, register only this type.
-        if len(tuple_types) == 1:
-            return _add_func_wrapper_local_type(tuple_types[0])
-        # Else, this tuple either contains no types or two or more types.
-
-        # If the caller failed to guarantee this tuple to be duplicate-free...
-        if not is_unique:
-            # Coerce this tuple into a set (thus ignoring duplicates and ordering).
-            tuple_types_set = set(tuple_types)
-
-            # Coerce this set back into a duplicate-free tuple, replacing the
-            # passed tuple with this tuple.
-            tuple_types = tuple(tuple_types_set)
-        # This tuple is now guaranteed to be duplicate-free.
-
-        # Name uniquely identifying this tuple as a beartypistry key.
-        tuple_types_name = (
-            f'{TYPISTRY_HINT_NAME_TUPLE_PREFIX}{hash(tuple_types)}')
-
-        # If this tuple has *NOT* already been cached with the beartypistry
-        # singleton, do so.
-        if tuple_types_name not in bear_typistry:
-            bear_typistry[tuple_types_name] = tuple_types
-        # Else, this tuple has already been cached with the beartypistry
-        # singleton. In this case, reuse the previously cached tuple.
-        else:
-            tuple_types = bear_typistry[tuple_types_name]
-
-        # Return the name of a new parameter passing this tuple.
-        return _add_func_scope_attr(
-            attr=tuple_types,
-            attr_scope=func_wrapper_locals,
-            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
-        )
-
-
-    def _add_func_wrapper_local_type(cls: type) -> str:
-        '''
-        Pass the passed class to the current wrapper function as a new
-        **wrapper parameter** (i.e., attribute passed to that function as an
-        optional private :mod:`beartype`-specific parameter defaulting to this
-        passed object).
-
-        Parameters
-        ----------
-        cls : type
-            Arbitrary class to be passed as a new parameter.
-
-        Returns
-        ----------
-        str
-            Arbitrary name of that parameter created by this closure.
-
-        Raises
-        ----------
-        _BeartypeUtilMappingException
-            If a parameter with the same name but differing value has already
-            been passed to the current wrapper function. As this name is unique
-            to this object, name collisions of this sort should *never* occur.
-            Since this exception should *never* be raised, we intentionally
-            raise a private rather than public exception here.
-        '''
-
-        # If this object is *NOT* an isinstanceable class, raise an exception.
-        die_unless_type_isinstanceable(
-            cls=cls,
-            cls_label=hint_curr_label,
-            exception_cls=BeartypeDecorHintPep3119Exception,
-        )
-        # Else, this object is an isinstanceable class.
-
-        # Return either...
-        return (
-            # If this type is a builtin (i.e., globally accessible C-based type
-            # requiring *no* explicit importation), the unqualified basename of
-            # this type as is, as this type requires no parametrization;
-            get_object_type_basename(cls)
-            if is_type_builtin(cls) else
-            # Else, the name of a new parameter passing this class.
-            _add_func_scope_attr(
-                attr=cls,
-                attr_scope=func_wrapper_locals,
-                attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
-            )
-        )
-
 
     def _enqueue_hint_child(pith_child_expr: str) -> str:
         '''
@@ -1441,14 +1235,16 @@ def pep_code_check_hint(
                             # * These parameters are intentionally passed as
                             #   positional rather than keyword arguments for
                             #   optimal memoization efficiency.
-                            hint_curr_expr=_add_func_wrapper_local_tuple_types(
-                                tuple_types=tuple(hint_childs_nonpep),
+                            hint_curr_expr=add_func_scope_types(
+                                types=tuple(hint_childs_nonpep),
+                                types_scope=func_wrapper_locals,
+                                types_label=_FUNC_WRAPPER_LOCAL_LABEL,
                                 # Inform this function it needn't attempt to
                                 # uselessly omit duplicates, since the "typing"
                                 # module already does so for all "Union"
                                 # arguments. Well, that's nice.
                                 is_unique=True,
-                            )
+                            ),
                         ))
 
                 # For each PEP-compliant child hint of this union, generate and
@@ -1781,7 +1577,11 @@ def pep_code_check_hint(
                     pith_curr_assign_expr=pith_curr_assign_expr,
                     # Python expression evaluating to this user-defined type
                     # when accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=_add_func_wrapper_local_type(hint_curr),
+                    hint_curr_expr=add_func_scope_type(
+                        cls=hint_curr,
+                        cls_scope=func_wrapper_locals,
+                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                    ),
                 )
                 # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
@@ -1873,11 +1673,14 @@ def pep_code_check_hint(
                     pith_curr_expr=pith_curr_expr,
                     # Python expression evaluating to this origin type when
                     # accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=_add_func_wrapper_local_type(
+                    hint_curr_expr=add_func_scope_type(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        get_hint_pep_stdlib_type(hint_curr)),
+                        cls=get_hint_pep_stdlib_type(hint_curr),
+                        cls_scope=func_wrapper_locals,
+                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                    ),
                 )
             # Else, this hint is *NOT* its own unsubscripted "typing" attribute
             # (e.g., "typing.List") and is thus subscripted by one or more
@@ -1907,14 +1710,17 @@ def pep_code_check_hint(
             # Then this hint is either a standard sequence *OR* a similar hint
             # semantically resembling a standard sequence, subscripted by one
             # or more child hints.
-
                 # Python expression evaluating to this origin type when
                 # accessed with the private "__beartypistry" parameter.
-                hint_curr_expr = _add_func_wrapper_local_type(
+                hint_curr_expr = add_func_scope_type(
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    get_hint_pep_stdlib_type(hint_curr))
+                    cls=get_hint_pep_stdlib_type(hint_curr),
+                    cls_scope=func_wrapper_locals,
+                    cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                )
+                # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
                 # Assert this sequence is either subscripted by exactly one
                 # argument *OR* a non-standard sequence (e.g., "typing.Tuple").
@@ -2119,7 +1925,11 @@ def pep_code_check_hint(
                 pith_curr_expr=pith_curr_expr,
                 # Python expression evaluating to this class when accessed via
                 # the private "__beartypistry" parameter.
-                hint_curr_expr=_add_func_wrapper_local_type(hint_curr),
+                hint_curr_expr=add_func_scope_type(
+                    cls=hint_curr,
+                    cls_scope=func_wrapper_locals,
+                    cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                ),
             )
 
         # Else, this hint is neither PEP-compliant *NOR* a class. In this

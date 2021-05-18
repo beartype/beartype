@@ -107,7 +107,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
-from typing import Generic, Optional
+from typing import Generic, Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -244,7 +244,7 @@ def raise_pep_call_exception(
     # )'''.format(func, pith_name, pith_value))
 
     # Type of exception to be raised.
-    exception_cls: type = None  # type: ignore[assignment]
+    exception_cls: Type[Exception] = None  # type: ignore[assignment]
 
     # Human-readable label describing this parameter or return value.
     pith_label: str = None  # type: ignore[assignment]

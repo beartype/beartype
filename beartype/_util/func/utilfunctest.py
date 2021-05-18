@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -51,7 +51,7 @@ edge cases, and false positives. If you must pick your poison, pick this one.
 #     func: Any,
 #
 #     # Optional parameters.
-#     exception_cls: type = _BeartypeUtilCallableException,
+#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 # ) -> None:
 #     '''
 #     Raise an exception unless the passed callable is a **pure-Python lambda
@@ -89,7 +89,7 @@ def die_unless_func_python(
     func: Any,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> None:
     '''
     Raise an exception if the passed callable is **C-based** (i.e., implemented

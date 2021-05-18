@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import importlib
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from types import ModuleType
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -24,8 +24,8 @@ def die_unless_module_attr_name(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_label: str = 'Module attribute name',
-    exception_cls: type = _BeartypeUtilModuleException,
+    module_attr_label: str = 'Module attribute name',
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
 ) -> None:
     '''
     Raise an exception unless the passed string is the fully-qualified
@@ -39,7 +39,7 @@ def die_unless_module_attr_name(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be validated.
-    exception_label : str
+    module_attr_label : str
         Human-readable label prefixing this name in the exception message
         raised by this function. Defaults to ``"Module attribute name"``.
     exception_cls : type
@@ -67,8 +67,8 @@ def die_unless_module_attr_name(
           * One or more ``.`` characters but syntactically invalid as a
             classname (e.g., ``0h!muh?G0d.``).
     '''
-    assert isinstance(exception_label, str), (
-        f'{repr(exception_label)} not string.')
+    assert isinstance(module_attr_label, str), (
+        f'{repr(module_attr_label)} not string.')
     assert isinstance(exception_cls, type), (
         f'{repr(exception_cls)} not type.')
 
@@ -78,7 +78,7 @@ def die_unless_module_attr_name(
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
         raise exception_cls(
-            f'{exception_label} {repr(module_attr_name)} not string.')
+            f'{module_attr_label} {repr(module_attr_name)} not string.')
     # Else, this object is a string.
     #
     # If this string contains *NO* "." characters and thus either is relative
@@ -86,9 +86,10 @@ def die_unless_module_attr_name(
     # exception.
     elif '.' not in module_attr_name:
         raise exception_cls(
-            f'{exception_label} "{module_attr_name}" '
+            f'{module_attr_label} "{module_attr_name}" '
             f'relative or refers to builtin object '
-            f'(i.e., due to containing no "." characters).')
+            f'(i.e., due to containing no "." characters).'
+        )
     # Else, this string contains one or more "." characters and is thus the
     # fully-qualified name of a non-builtin type.
     #
@@ -96,8 +97,9 @@ def die_unless_module_attr_name(
     # attribute name, raise an exception.
     elif not is_identifier(module_attr_name):
         raise exception_cls(
-            f'{exception_label} "{module_attr_name}" '
-            f'syntactically invalid as module attribute name.')
+            f'{module_attr_label} "{module_attr_name}" '
+            f'syntactically invalid as module attribute name.'
+        )
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
@@ -323,7 +325,7 @@ def import_module(
     module_name: str,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilModuleException,
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
 ) -> ModuleType:
     '''
     Dynamically import and return the module, package, or C extension with the
@@ -370,7 +372,7 @@ def import_module_attr(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_label: str = 'Module attribute name',
+    module_attr_label: str = 'Module attribute name',
     exception_cls:  type = _BeartypeUtilModuleException,
 ) -> Any:
     '''
@@ -382,7 +384,7 @@ def import_module_attr(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be imported.
-    exception_label : str
+    module_attr_label : str
         Human-readable label prefixing this name in the exception message
         raised by this function. Defaults to ``"Module attribute name"``.
     exception_cls : type
@@ -415,7 +417,7 @@ def import_module_attr(
     # module attribute that may or may not actually exist, raise an exception.
     die_unless_module_attr_name(
         module_attr_name=module_attr_name,
-        exception_label=exception_label,
+        module_attr_label=module_attr_label,
         exception_cls=exception_cls,
     )
     # Else, this object is the fully-qualified syntactically valid name of a
@@ -449,7 +451,9 @@ def import_module_attr(
     # If this module declares *NO* such attribute, raise an exception.
     if module_attr is None:
         raise exception_cls(
-            f'{exception_label} "{module_attr_name}" not found.')
+            f'{module_attr_label} '
+            f'"{module_name}.{module_attr_name}" not found.'
+        )
 
     # Else, return this attribute.
     return module_attr

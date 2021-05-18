@@ -24,7 +24,7 @@ from inspect import (
     CO_VARKEYWORDS,
     Parameter,
 )
-from typing import Any, Generator, Tuple
+from typing import Any, Generator, Tuple, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -212,7 +212,7 @@ def get_func_args_len_standard(
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
-    exception_cls: type = _BeartypeUtilCallableException,
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> int:
     '''
     Number of **standard parameters** (i.e., positional or keyword) accepted by

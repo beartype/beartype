@@ -23,6 +23,7 @@ from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
+from typing import Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -36,7 +37,7 @@ def die_unless_hint_nonpep(
     # Optional parameters.
     hint_label: str = 'Type hint',
     is_str_valid: bool = True,
-    exception_cls: type = BeartypeDecorHintNonPepException,
+    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant type
@@ -175,7 +176,7 @@ def die_unless_hint_nonpep_tuple(
     # Optional parameters.
     hint_label: str = 'Type hint',
     is_str_valid: bool = True,
-    exception_cls: type = BeartypeDecorHintNonPepException,
+    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant tuple**
@@ -295,7 +296,7 @@ def _die_unless_hint_nonpep_type(
 
     # Optional parameters.
     hint_label: str = 'Type hint',
-    exception_cls: type = BeartypeDecorHintNonPepException,
+    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
     Raise an exception unless the passed object is an **isinstanceable type**
@@ -319,38 +320,27 @@ def _die_unless_hint_nonpep_type(
 
     Raises
     ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
+    BeartypeDecorHintPep3119Exception
+        If this object is *not* an isinstanceable class (i.e., class passable
+        as the second argument to the :func:`isinstance` builtin).
     exception_cls
-        If this object is either:
-
-        * *Not* isinstanceable.
-        * A :mod:`typing` type (i.e., class defined by the :mod:`typing`
-          module, whose public classes are used to instantiate PEP-compliant
-          type hints or objects satisfying such hints that typically violate
-          standard class semantics and thus require PEP-specific handling).
+        If this object is a PEP-compliant type hint.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
 
-    # If this class is PEP-compliant, raise an exception.
+    # If this object is a PEP-compliant type hint, raise an exception.
     die_if_hint_pep(
-        hint=hint,
-        hint_label=hint_label,
-        exception_cls=exception_cls,
-    )
-    # Else, this class is PEP-noncompliant.
-
-    # If this class is *NOT* isinstanceable, raise an exception.
-    die_unless_type_isinstanceable(
-        cls=hint,
-        cls_label=hint_label,
-        exception_cls=exception_cls,
-    )
-    # Else, this class is isinstanceable.
+        hint=hint, hint_label=hint_label, exception_cls=exception_cls)
+    # Else, this object is *NOT* a PEP-noncompliant type hint.
+    #
+    # If this object is *NOT* an isinstanceable class, raise an exception.
+    #
+    # Note that this validation is typically slower than the prior validation
+    # and thus intentionally performed last.
+    die_unless_type_isinstanceable(cls=hint, cls_label=hint_label)
+    # If this object is an isinstanceable class.
 
 # ....................{ TESTERS                           }....................
 def is_hint_nonpep(
