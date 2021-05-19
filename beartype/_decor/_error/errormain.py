@@ -12,6 +12,7 @@ PEP-compliant type hint annotating that parameter or return).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
 #FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
 #parameter accepted by the raise_pep_call_exception() function) that enables
 #O(1) rather than O(n) exception handling to containers that do *NOT* provide
@@ -73,22 +74,23 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._decor._code._pep._error._peperrorannotated import (
-    get_cause_or_none_annotated)
-from beartype._decor._code._pep._error._peperrorgeneric import (
+from beartype._decor._error._errorgeneric import (
     get_cause_or_none_generic)
-from beartype._decor._code._pep._error._peperrorsequence import (
+from beartype._decor._error._errorsequence import (
     get_cause_or_none_sequence_standard,
     get_cause_or_none_tuple,
 )
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
-from beartype._decor._code._pep._error._peperrortype import (
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortype import (
     get_cause_or_none_forwardref,
     get_cause_or_none_type_origin,
 )
-from beartype._decor._code._pep._error._peperrorunion import (
-    get_cause_or_none_union,
-)
+from beartype._decor._error._proposal._errorpep484union import (
+    get_cause_or_none_union)
+from beartype._decor._error._proposal._errorpep586 import (
+    get_cause_or_none_literal)
+from beartype._decor._error._proposal._errorpep593 import (
+    get_cause_or_none_annotated)
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
@@ -362,11 +364,12 @@ def _init() -> None:
     # If the active Python interpreter targets at least Python >= 3.9...
     if IS_PYTHON_AT_LEAST_3_9:
         # Defer imports conditionally dependent on this version.
-        from typing import Annotated  # type: ignore[attr-defined]
+        from typing import Annotated, Literal  # type: ignore[attr-defined]
 
         # Map each of the "typing" attributes imported above.
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
             Annotated: get_cause_or_none_annotated,
+            Literal: get_cause_or_none_literal,
         })
 
 

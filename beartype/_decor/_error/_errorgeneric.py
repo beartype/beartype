@@ -13,9 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code._pep._error._peperrortype import (
+from beartype._decor._error._errortype import (
     get_cause_or_none_type)
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)

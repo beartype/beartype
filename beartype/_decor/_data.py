@@ -45,7 +45,7 @@ from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
-from beartype._decor._code._pep._error.peperror import raise_pep_call_exception
+from beartype._decor._error.errormain import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
 from collections.abc import Callable
 from inspect import Signature

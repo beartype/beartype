@@ -7,7 +7,7 @@
 Project-wide **Python identifier** utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.py.utilpyidentifier` submodule.
+:mod:`beartype._util.text.utiltextidentifier` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -19,12 +19,12 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS                             }....................
 def test_is_identifier_qualified() -> None:
     '''
-    Test the :func:`beartype._util.py.utilpyidentifier.is_identifier`
+    Test the :func:`beartype._util.text.utiltextidentifier.is_identifier`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpyidentifier import is_identifier
+    from beartype._util.text.utiltextidentifier import is_identifier
 
     # Assert this tester accepts an unqualified Python identifier prefixed by
     # an underscore and suffixed by a digit.

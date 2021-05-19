@@ -657,7 +657,7 @@ class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     **Beartype PEP-compliant human-readable exception raiser exception.**
 
     This exception is raised by the
-    :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
+    :func:`beartype._decor._error.errormain.raise_pep_call_exception`
     exception raiser function when an unexpected failure occurs.
 
     This exception denotes a critical internal issue and should thus *never* be
@@ -673,7 +673,7 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
     **Beartype human-readable exception raiser desynchronization exception.**
 
     This exception is raised by the
-    :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
+    :func:`beartype._decor._error.errormain.raise_pep_call_exception`
     function (which raises human-readable exceptions from wrapper functions
     when either passed a parameter or returning a value, referred to as the
     "pith" for brevity, annotated by a PEP-compliant type hint fails the
@@ -684,7 +684,7 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
       decorator type-checking this pith triggered a false negative by
       erroneously misdetecting this pith as failing this type check.
     * The
-        :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
+        :func:`beartype._decor._error.errormain.raise_pep_call_exception`
       function re-type-checking this pith triggered a false positive by
       erroneously misdetecting this pith as satisfying this type check when in
       fact this pith fails to do so.

@@ -4,22 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 593`_-compliant :class:`typing.Annotated` **type hint
+**Beartype** :pep:`593`-compliant :class:`typing.Annotated` **type hint
 exception raisers** (i.e., functions raising human-readable exceptions called
 by :mod:`beartype`-decorated callables on the first invalid parameter or return
-value failing a type-check against the `PEP 593`_-compliant
+value failing a type-check against the :pep:`593`-compliant
 :class:`typing.Annotated` type hint annotating that parameter or return).
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 593:
-   https://www.python.org/dev/peps/pep-0593
 '''
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._vale._valesub import _SubscriptedIs
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP593_SIGN_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
@@ -27,6 +23,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextcause import get_cause_object_representation
+from beartype._vale._valesub import _SubscriptedIs
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -36,7 +33,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed `PEP 593`_-compliant :mod:`beartype`-specific
+    to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
     :class:`_SubscriptedIs` objects, each produced by subscripting the
     :class:`beartype.vale.Is` class or a subclass of that class) if this object
@@ -47,9 +44,6 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     ----------
     sleuth : CauseSleuth
         Type-checking error cause sleuth.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HINT_PEP593_SIGN_ANNOTATED, (
@@ -83,16 +77,16 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         # Else, this object is beartype-specific.
 
         # If this pith fails to satisfy this validator and is thus the cause of
-        # this failure, return this cause.
+        # this failure, return a human-readable string describing this failure.
         if not hint_metadatum.is_valid(sleuth.pith):
             return (
                 f'{get_cause_object_representation(sleuth.pith)} violates '
                 f'validator {repr(hint_metadatum)}.'
             )
-        # Else, this pith satisfies this data validator. Ergo, this validator
+        # Else, this pith satisfies this validator. Ergo, this validator is
         # *NOT* the cause of this failure. Silently continue to the next.
 
     # Return "None", as this pith satisfies both this non-"typing" class itself
-    # *AND* all data validators annotating that class, implying this pith to
-    # deeply satisfy this metahint.
+    # *AND* all validators annotating that class, implying this pith to deeply
+    # satisfy this metahint.
     return None

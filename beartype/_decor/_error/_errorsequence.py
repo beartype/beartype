@@ -12,14 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code._pep._error._peperrortype import (
-    get_cause_or_none_type)
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortype import get_cause_or_none_type_origin
 from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
 )
-from beartype._util.hint.pep.utilhintpepget import get_hint_pep_stdlib_type
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object
@@ -55,17 +53,20 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
         f'Standard sequence hint {repr(sleuth.hint)} subscripted by '
         f'multiple arguments.')
 
-    # Non-"typing" class originating this attribute (e.g., "list" for "List").
-    hint_type_origin = get_hint_pep_stdlib_type(sleuth.hint)
+    # Human-readable string describing the failure of this pith to be an
+    # instance of the type originating this hint (e.g., "list" for "list[str]")
+    # if this pith is not an instance of this type *OR* "None" otherwise.
+    pith_cause = get_cause_or_none_type_origin(sleuth)
 
-    # If this pith is *NOT* an instance of this class, defer to the getter
-    # function handling non-"typing" classes.
-    if not isinstance(sleuth.pith, hint_type_origin):
-        return get_cause_or_none_type(sleuth.permute(hint=hint_type_origin))
-
-    # Else, this pith is an instance of this class and is thus a sequence.
-    # Defer to the getter function supporting simple sequences.
-    return _get_cause_or_none_sequence(sleuth)
+    # Return either...
+    return (
+        # If this pith is *NOT* an instance of this type, this string;
+        pith_cause
+        if pith_cause is not None else
+        # Else, this pith is an instance of this type and is thus a sequence.
+        # In this case, defer to the getter function supporting sequences.
+        _get_cause_or_none_sequence(sleuth)
+    )
 
 
 def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
@@ -88,10 +89,14 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE, (
         f'{repr(sleuth.hint_sign)} not tuple hint.')
 
-    # If this pith is *NOT* an instance of this class, defer to the getter
-    # function handling non-"typing" classes.
-    if not isinstance(sleuth.pith, tuple):
-        return get_cause_or_none_type(sleuth.permute(hint=tuple))
+    # Human-readable string describing the failure of this pith to be a tuple
+    # if this pith is not a tuple *OR* "None" otherwise.
+    pith_cause = get_cause_or_none_type_origin(sleuth)
+
+    # If this pith is *NOT* a tuple, return this string.
+    if pith_cause is not None:
+        return pith_cause
+    # Else, this pith is a tuple.
 
     # If this hint is a tuple...
     if (
@@ -254,22 +259,21 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
 
             # For each enumerated item of this (sub)sequence...
             for pith_item_index, pith_item in pith_enumerator:
-                # Human-readable string describing the failure of this item
-                # to satisfy this child hint if this item actually fails to
+                # Human-readable string describing the failure of this item to
+                # satisfy this child hint if this item actually fails to
                 # satisfy this child hint *or* "None" otherwise.
                 pith_item_cause = sleuth.permute(
                     pith=pith_item, hint=hint_child).get_cause_or_none()
 
-                # If this item is the cause of this failure, return a
-                # substring describing this failure by embedding this
-                # failure (itself intended to be embedded in a longer
-                # string).
+                # If this item is the cause of this failure, return a substring
+                # describing this failure by embedding this failure (itself
+                # intended to be embedded in a longer string).
                 if pith_item_cause is not None:
                     return (
                         f'{sleuth.pith.__class__.__name__} item '
                         f'{pith_item_index} {pith_item_cause}')
-                # Else, this item is *NOT* the cause of this failure.
-                # Silently continue to the next.
+                # Else, this item is *NOT* the cause of this failure. Silently
+                # continue to the next.
         # Else, this child hint is ignorable.
     # Else, this sequence is empty, in which case all items of this sequence
     # (of which there are none) are valid. Just go with it, people.

@@ -4,13 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 593`_**-compliant type hint utility unit tests.**
+**Beartype** :pep:`593` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.utilhintpep593` submodule.
-
-.. _PEP 593:
-   https://www.python.org/dev/peps/pep-0593
 '''
 
 # ....................{ IMPORTS                           }....................

@@ -12,7 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype._vale._valesub import _SubscriptedIs
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.hint.data.pep.utilhintdatapepsign import (
+    HINT_PEP593_SIGN_ANNOTATED)
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -40,63 +41,13 @@ def die_unless_hint_pep593(hint: object) -> None:
     # If this hint is *NOT* PEP 593-compliant, raise an exception.
     if not is_hint_pep593(hint):
         raise BeartypeDecorHintPep593Exception(
-            f'Type hint {repr(hint)} not "typing.Annotated".')
+            f'PEP 593 type hint {repr(hint)} not "typing.Annotated".')
 
 # ....................{ TESTERS                           }....................
-# If the active Python interpreter targets at least Python >= 3.9 and thus
-# supports PEP 593, define these functions appropriately.
-if IS_PYTHON_AT_LEAST_3_9:
-    # Defer version-dependent imports.
-    from typing import Annotated  # type: ignore[attr-defined]
-
-    #FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
-    #we particularly care about this edge case? Probably not. *shrug*
-    def is_hint_pep593(hint: object) -> bool:
-
-        # Return true only if the machine-readable representation of this
-        # object implies this object to be a PEP 593-compliant type hint hint.
-        #
-        # Note that this approach has been intentionally designed to apply to
-        # arbitrary and hence possibly PEP-noncompliant type hints. Notably,
-        # this approach avoids the following equally applicable but
-        # considerably less efficient heuristic:
-        #    return (
-        #        is_hint_pep(hint) and get_hint_pep_sign(hint) is Annotated)
-        return repr(hint).startswith('typing.Annotated[')
-
-
-    def is_hint_pep593_ignorable_or_none(
-        hint: object, hint_sign: object) -> Optional[bool]:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.utilhinttest import is_hint_ignorable
-        # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
-
-        # Return either...
-        return (
-            # If this hint is annotated, true only if the PEP-compliant child
-            # type hint annotated by this hint hint is ignorable (e.g., the
-            # "Any" in "Annotated[Any, 50, False]").
-            is_hint_ignorable(get_hint_pep593_metahint(hint))
-            if hint_sign is Annotated else
-            # Else, "None".
-            None
-        )
-# Else, the active Python interpreter targets at most Python < 3.9 and thus
-# fails to support PEP 593. In this case, fallback to defining these functions
-# to unconditionally return False.
-else:
-    def is_hint_pep593(hint: object) -> bool:
-        return False
-
-
-    def is_hint_pep593_ignorable_or_none(
-        hint: object, hint_sign: object) -> Optional[bool]:
-        return None
-
-# ....................{ TESTERS ~ doc                     }....................
-# Docstring for these functions regardless of the implementation details above.
-is_hint_pep593.__doc__ = '''
+#FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
+#we particularly care about this edge case? Probably not. *shrug*
+def is_hint_pep593(hint: object) -> bool:
+    '''
     ``True`` only if the passed object is a :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
@@ -116,8 +67,20 @@ is_hint_pep593.__doc__ = '''
         type metahint.
     '''
 
+    # Return true only if the machine-readable representation of this object
+    # implies this object to be a PEP 593-compliant type hint hint.
+    #
+    # Note that this approach has been intentionally designed to apply to
+    # arbitrary and hence possibly PEP-noncompliant type hints. Notably, this
+    # approach avoids the following equally applicable but considerably less
+    # efficient heuristic:
+    #    return is_hint_pep(hint) and get_hint_pep_sign(hint) is Annotated
+    return repr(hint).startswith('typing.Annotated[')
 
-is_hint_pep593_ignorable_or_none.__doc__ = '''
+
+def is_hint_pep593_ignorable_or_none(
+    hint: object, hint_sign: object) -> Optional[bool]:
+    '''
     ``True`` only if the passed object is a :pep:`593`-compliant **ignorable
     type hint,** ``False`` only if this object is a :pep:`593`-compliant
     unignorable type hint, and ``None`` if this object is *not* `PEP
@@ -151,6 +114,21 @@ is_hint_pep593_ignorable_or_none.__doc__ = '''
 
         * If this object is *not* :pep:`593`-compliant, ``None``.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
+
+    # Return either...
+    return (
+        # If this hint is annotated, true only if the PEP-compliant child type
+        # hint annotated by this hint hint is ignorable (e.g., the "Any" in
+        # "Annotated[Any, 50, False]").
+        is_hint_ignorable(get_hint_pep593_metahint(hint))
+        if hint_sign is HINT_PEP593_SIGN_ANNOTATED else
+        # Else, "None".
+        None
+    )
 
 # ....................{ TESTERS ~ beartype                }....................
 def is_hint_pep593_beartype(hint: Any) -> bool:

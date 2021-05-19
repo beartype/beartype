@@ -59,7 +59,7 @@ efficiency, portability, and thrilling puns.
    Traceback (most recent call last):
      File "<stdin>", line 1, in <module>
      File "<string>", line 30, in __beartyped_quote_wiggum
-     File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/peperror.py", line 220, in raise_pep_call_exception
+     File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/errormain.py", line 220, in raise_pep_call_exception
        raise exception_cls(
    beartype.roar.BeartypeCallHintPepParamException: @beartyped
    quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
@@ -357,7 +357,7 @@ the former as a default behaviour.
    Traceback (most recent call last):
      File "<stdin>", line 6, in <module>
      File "<string>", line 17, in __beartyped_main
-     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/peperror.py", line 218, in raise_pep_call_exception
+     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/errormain.py", line 218, in raise_pep_call_exception
        raise exception_cls(
    beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
    'Goodbye, world.' violates type hint <class 'int'>, as value 'Goodbye,
@@ -3226,9 +3226,9 @@ perform them at runtime):
    *conditionally* performed when the first phase fails by:
 
    * The slow-as-molasses ``raise_pep_call_exception()`` function declared in
-     the `"beartype._decor._code._pep._error.peperror" submodule <beartype
-     peperror_>`__, which generates human-readable exceptions after performing
-     unmemoized O(n) type-checking of an arbitrary object against a
+     the `"beartype._decor._error.errormain" submodule
+     <beartype errormain_>`__, which generates human-readable exceptions after
+     performing unmemoized O(n) type-checking of an arbitrary object against a
      PEP-compliant type hint by recursing over all child hints nested in that
      hint with an unoptimized recursive algorithm prioritizing debuggability,
      readability, and maintainability.
@@ -3525,8 +3525,8 @@ rather than Python runtime) include:
    LICENSE
 
 .. # ------------------( LINKS ~ beartype : local : module  )------------------
-.. _beartype peperror:
-   beartype/_decor/_code/_pep/_error/peperror.py
+.. _beartype errormain:
+   beartype/_decor/_code/_pep/_error/errormain.py
 .. _beartype pephint:
    beartype/_decor/_code/_pep/_pephint.py
 .. _beartype test data pep:

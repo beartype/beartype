@@ -73,7 +73,7 @@ def die_unless_module_attr_name(
         f'{repr(exception_cls)} not type.')
 
     # Avoid circular import dependencies.
-    from beartype._util.py.utilpyidentifier import is_identifier
+    from beartype._util.text.utiltextidentifier import is_identifier
 
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):

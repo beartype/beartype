@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code._pep._error._peperrorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.text.utiltextlabel import label_callable
 
 # See the "beartype.cave" submodule for further commentary.

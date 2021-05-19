@@ -735,7 +735,7 @@ def pep_code_check_hint(
         # ................{ REDUCTION                         }................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the
-        # beartype._decor._code._pep._error._peperrorsleuth.CauseSleuth.__init__()
+        # beartype._decor._error._errorsleuth.CauseSleuth.__init__()
         # method.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Reduce the currently visited hint to a lower-level hint-like object
@@ -1043,7 +1043,7 @@ def pep_code_check_hint(
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.peperror" submodule, which
+            # * "beartype._util.hint.pep.errormain" submodule, which
             #   raises exceptions on the current pith failing this check.
             # * "beartype._util.hint.data.pep.utilhintdatapep.HINT_PEP_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all supported unsubscripted "typing" attributes

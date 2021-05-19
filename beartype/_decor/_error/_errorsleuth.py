@@ -95,7 +95,7 @@ class CauseSleuth(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._decor._code._pep._error.peperror.raise_pep_call_exception`
+        :func:`beartype._decor._error.errormain.raise_pep_call_exception`
         function for further details.
 
     Attributes (Private)
@@ -271,12 +271,12 @@ class CauseSleuth(object):
         ----------
         This getter is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
-        the parent :func:`.peperror.raise_pep_call_exception` function
+        the parent :func:`.errormain.raise_pep_call_exception` function
         calling this getter is *always* passed an object *not* satisfying the
         passed hint, this getter is under no such constraints. Why? Because
         this getter is also called to find which of an arbitrary number of
         objects transitively nested in the object passed to
-        :func:`.peperror.raise_pep_call_exception` fails to satisfy the
+        :func:`.errormain.raise_pep_call_exception` fails to satisfy the
         corresponding hint transitively nested in the hint passed to that
         function.
 
@@ -330,7 +330,7 @@ class CauseSleuth(object):
         # PEP-noncompliant. In this case...
         elif self.hint_sign is None:
             # Avoid circular import dependencies.
-            from beartype._decor._code._pep._error._peperrortype import (
+            from beartype._decor._error._errortype import (
                 get_cause_or_none_type)
 
             # Defer to the getter function supporting non-"typing" classes.
@@ -345,7 +345,7 @@ class CauseSleuth(object):
             # specific to return values...
             if self.hint is NoReturn:
                 # Avoid circular import dependencies.
-                from beartype._decor._code._pep._error._peperrorreturn import (
+                from beartype._decor._error._proposal._errorpep484noreturn import (
                     get_cause_or_none_noreturn)
 
                 # Defer to the getter function specific to this hint.
@@ -355,7 +355,7 @@ class CauseSleuth(object):
             # this hint to originate from an origin type.
             else:
                 # Avoid circular import dependencies.
-                from beartype._decor._code._pep._error._peperrortype import (
+                from beartype._decor._error._errortype import (
                     get_cause_or_none_type_origin)
 
                 # Defer to the getter function supporting hints originating
@@ -388,7 +388,7 @@ class CauseSleuth(object):
             # "typing.List[str]" rather than "typing.List").
 
             # Avoid circular import dependencies.
-            from beartype._decor._code._pep._error.peperror import (
+            from beartype._decor._error.errormain import (
                 PEP_HINT_SIGN_TO_GET_CAUSE_FUNC)
 
             # Getter function returning the desired string for this attribute

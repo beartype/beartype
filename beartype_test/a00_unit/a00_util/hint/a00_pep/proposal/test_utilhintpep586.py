@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`586` **unit tests.**
+**Beartype** :pep:`586` **type hint utility unit tests.**
 
-This submodule unit tests :pep:`586` support implemented in the
-:func:`beartype.beartype` decorator.
+This submodule unit tests the public API of the private
+:mod:`beartype._util.hint.pep.proposal.utilhintpep586` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -78,6 +78,11 @@ def test_is_hint_pep586() -> None:
         # subscripted by two or more such arguments.
         die_unless_hint_pep586(Literal[
             26, "hello world", b"hello world", True, _Color.RED, None])
+
+        # Assert this validator raises the expected exception when passed that
+        # singleton subscripted by the empty tuple.
+        with raises(BeartypeDecorHintPep586Exception):
+            die_unless_hint_pep586(Literal[()])
 
         # Assert this validator raises the expected exception when passed that
         # singleton subscripted by an invalid literal argument.

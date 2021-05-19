@@ -200,8 +200,14 @@ def callable_cached(func: Callable) -> Callable:
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
-    # If the decorated callable accepts variadic arguments, raise an exception.
-    if is_func_arg_variadic(func):
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncwrap import unwrap_func
+
+    # Lowest-level wrappee callable wrapped by this wrapper callable.
+    func_wrappee = unwrap_func(func)
+
+    # If this wrappee accepts variadic arguments, raise an exception.
+    if is_func_arg_variadic(func_wrappee):
         raise _BeartypeUtilCallableCachedException(
             f'@callable_cached {label_callable(func)} '
             f'variadic arguments uncacheable.'

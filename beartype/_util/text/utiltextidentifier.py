@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python identifier** (i.e., attribute or variable name)
-utilities.
+Project-wide **Python identifier** (i.e., attribute, callable, class, module,
+or variable name) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,10 +18,10 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def is_identifier(text: str) -> bool:
     '''
     ``True`` only if the passed string is the ``.``-delimited concatenation of
-    one or more `PEP 3131`_-compliant syntactically valid **Python
-    identifiers** (i.e., class, module, or attribute name), suitable for
-    testing whether this string is the fully-qualified name of an arbitrary
-    Python object.
+    one or more :pep:`3131`-compliant syntactically valid **Python
+    identifiers** (i.e., attribute, callable, class, module, or variable name),
+    suitable for testing whether this string is the fully-qualified name of an
+    arbitrary Python object.
 
     Caveats
     ----------
@@ -49,9 +49,6 @@ def is_identifier(text: str) -> bool:
     bool
         ``True`` only if this string is the ``.``-delimited concatenation of
         one or more syntactically valid Python identifiers.
-
-    .. _PEP 3131:
-       https://www.python.org/dev/peps/pep-3131
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
