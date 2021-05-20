@@ -36,7 +36,7 @@ from beartype._cave._cavefast import (
     RegexCompiledType,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF)
+    HINT_PEP484_TYPE_FORWARDREF)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -316,7 +316,7 @@ def add_data(data_module: 'ModuleType') -> None:
         TypeVar,
 
         # The "ForwardRef" class as is does *NOT* constitute a valid type hint.
-        HINT_PEP484_BASE_FORWARDREF,
+        HINT_PEP484_TYPE_FORWARDREF,
     ))
 
     # ..................{ TUPLES                            }..................

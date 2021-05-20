@@ -316,7 +316,7 @@ def test_add_func_scope_types_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
-    from beartype._cave._cavefast import CallableTypes
+    from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
     from beartype._util.func.utilfuncscope import add_func_scope_types
     from beartype._util.utilobject import get_object_type_basename
@@ -324,7 +324,7 @@ def test_add_func_scope_types_pass() -> None:
     # Arbitrary scope to be added to below.
     types_scope = {}
 
-    # Assert this function adds a tuple and silently readds the same tuple.
+    # Assert this function adds a tuple of one or more standard types.
     #
     # Note that, unlike types, tuples are internally added under different
     # objects than their originals (e.g., to ignore both duplicates and
@@ -333,9 +333,17 @@ def test_add_func_scope_types_pass() -> None:
     types_scope_name = add_func_scope_types(
         types=types, types_scope=types_scope)
     assert set(types) == set(types_scope[types_scope_name])
+
+    # Assert this function readds the same tuple as well.
     types_scope_name_again = add_func_scope_types(
         types=types, types_scope=types_scope)
     assert types_scope_name == types_scope_name_again
+
+    # Assert this function adds a frozenset of one or more standard types.
+    types = frozenset(ModuleOrStrTypes)
+    types_scope_name = add_func_scope_types(
+        types=types, types_scope=types_scope)
+    assert set(types) == set(types_scope[types_scope_name])
 
     # Assert this function does *NOT* add tuples of one non-builtin types but
     # instead simply returns the unqualified basenames of those types.
@@ -440,7 +448,7 @@ def test_add_func_scope_types_fail() -> None:
     # Assert this function raises the expected exception for tuples containing
     # one or more PEP 560-compliant classes whose metaclasses define an
     # __instancecheck__() dunder method to unconditionally raise exceptions.
-    with raises(BeartypeDecorHintPep3119Exception):
+    with raises(BeartypeDecorHintNonPepException):
         add_func_scope_types(
             types=(bool, NonIsinstanceableClass, float,),
             types_scope=types_scope,

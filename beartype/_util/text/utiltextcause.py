@@ -24,27 +24,6 @@ from typing import Tuple
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS                           }....................
-def get_cause_object_representation(pith: object) -> str:
-    '''
-    Truncated machine-readable representation of the passed arbitrary object,
-    intended to be embedded in a human-readable error message describing the
-    failure of this object to satisfy one or more caller-defined constraints.
-
-    Parameters
-    ----------
-    pith : object
-        Object to be represented.
-
-    Returns
-    ----------
-    str
-        Truncated machine-readable representation of this object.
-    '''
-
-    # Return the machine-readable representation of this object.
-    return f'value {represent_object(pith)}'
-
 # ....................{ GETTERS ~ type                    }....................
 #FIXME: Unit test us up.
 def get_cause_object_not_type(pith: object, hint: type) -> str:
@@ -89,7 +68,7 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return f'{get_cause_object_representation(pith)} not {label_class(hint)}'
+    return f'{represent_object(pith)} not {label_class(hint)}'
 
 
 #FIXME: Unit test us up.
@@ -127,10 +106,7 @@ def get_cause_object_not_nonpep_tuple(
     # If this hint is *NOT* a PEP-noncompliant tuple of classes, raise an
     # exception.
     die_unless_hint_nonpep_tuple(
-        hint=hint,
-        is_str_valid=False,
-        exception_cls=_BeartypeCallHintRaiseException,
-    )
+        hint=hint, exception_cls=_BeartypeCallHintRaiseException)
     # Else, this hint is a PEP-noncompliant tuple of classes.
 
     # If this pith is an instance of one or more of the classes listed by this
@@ -146,6 +122,6 @@ def get_cause_object_not_nonpep_tuple(
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'{get_cause_object_representation(pith)} not '
+        f'{represent_object(pith)} not '
         f'{join_delimited_disjunction_classes(hint)}'
     )

@@ -75,7 +75,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # Conditionally add the "typing.ForwardRef" superclass depending on the
 # current Python version, as this superclass was thankfully publicized
 # under Python >= 3.7 after its initial privatization under Python <= 3.6.
-HINT_PEP484_BASE_FORWARDREF = (
+HINT_PEP484_TYPE_FORWARDREF = (
     typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else
     typing._ForwardRef  # type: ignore [attr-defined]
 )
@@ -230,7 +230,7 @@ HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
     NewType,
     NoReturn,
     TypeVar,
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
 
     # PEP 484 explicitly supports the "None" singleton: i.e.,
     #     When used in a type hint, the expression None is considered

@@ -97,7 +97,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
@@ -357,7 +357,7 @@ def _init() -> None:
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
-        HINT_PEP484_BASE_FORWARDREF: get_cause_or_none_forwardref,
+        HINT_PEP484_TYPE_FORWARDREF: get_cause_or_none_forwardref,
         Generic: get_cause_or_none_generic,
     })
 

@@ -23,7 +23,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF)
+    HINT_PEP484_TYPE_FORWARDREF)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -499,7 +499,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     #     >>> repr(t.ForwardRef('str'))
     #     "ForwardRef('str')"
     elif is_hint_forwardref(hint):
-        return HINT_PEP484_BASE_FORWARDREF
+        return HINT_PEP484_TYPE_FORWARDREF
     # If this hint is a PEP 484-compliant new type, return the closure factory
     # function responsible for creating these types.
     #

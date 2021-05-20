@@ -13,13 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION)
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_stdlib_type_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed, uppercase_char_first)
@@ -168,8 +168,9 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     # If prior logic appended *NO* causes, raise an exception.
     if not causes_union:
         raise _BeartypeCallHintPepRaiseException(
-            f'{sleuth.exception_label} PEP type hint '
-            f'{repr(sleuth.hint)} failure causes unknown.')
+            f'{sleuth.exception_label} type hint '
+            f'{repr(sleuth.hint)} failure causes unknown.'
+        )
     # Else, prior logic appended one or more strings describing these failures.
 
     # Truncated object representation of this pith.

@@ -17,7 +17,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP586_SIGN_LITERAL)
-from beartype._util.text.utiltextcause import get_cause_object_representation
+from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -41,34 +42,32 @@ def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign is HINT_PEP586_SIGN_LITERAL, (
         f'{repr(sleuth.hint_sign)} not literal.')
 
-    # For each literal object subscripting this hint...
-    for hint_literal in sleuth.hint_childs:
-        # Human-readable string describing the failure of this pith to be an
-        # instance of the same type as this literal if this pith is an instance
-        # of a differing type *OR* "None" otherwise.
-        #
-        # Note that PEP 586 explicitly requires this pith to be iteratively
-        # validated to be an instance of the same type as this literal *BEFORE*
-        # validated as equal to this literal.
-        pith_cause = sleuth.permute(
-            pith=sleuth.pith, hint=type(hint_literal)).get_cause_or_none()
+    # If this pith is equal to any literal object subscripting this hint, this
+    # pith satisfies this hint. Specifically, if there exists at least one...
+    if any(
+        # Literal object subscripting this hint such that...
+        (
+            # This pith is of the same type as that of this literal *AND*...
+            #
+            # Note that PEP 586 explicitly requires this pith to be validated
+            # to be an instance of the same type as this literal *BEFORE*
+            # validated as equal to this literal, due to subtle edge cases in
+            # equality comparison that could yield false positives.
+            isinstance(sleuth.pith, type(hint_literal)) and
+            # This pith is equal to this literal.
+            sleuth.pith == hint_literal
+        )
+        # For each literal object subscripting this hint...
+        for hint_literal in sleuth.hint_childs
+    # Then return "None", as this pith deeply satisfies this hint.
+    ):
+        return None
+    # Else, this pith fails to satisfy this hint.
 
-        # If this pith is an instance of a differing type, return this string.
-        if pith_cause is not None:
-            return pith_cause
-        # Else, this pith is an instance of the same type as this literal.
-        #
-        # If this pith is unequal to this literal and is thus the cause of this
-        # failure, return a human-readable string describing this failure.
-        elif sleuth.pith != hint_literal:
-            return (
-                f'{get_cause_object_representation(sleuth.pith)} != literal '
-                f'{repr(hint_literal)}.'
-            )
-        # Else, this pith is equal to this literal. Ergo, this literal is *NOT*
-        # the cause of this failure. Silently continue to the next.
+    # Human-readable comma-delimited disjunction of the machine-readable
+    # representations of all literal objects subscripting this hint.
+    cause_literals_unsatisfied = join_delimited_disjunction(
+        repr(hint_literal) for hint_literal in sleuth.hint_childs)
 
-    # Return "None", as this pith is both of the same type *AND* equal to all
-    # literal objects subscripting this hint, implying this pith to deeply
-    # satisfy this hint.
-    return None
+    # Return a human-readable string describing this failure.
+    return f'{represent_object(sleuth.pith)} != {cause_literals_unsatisfied}.'

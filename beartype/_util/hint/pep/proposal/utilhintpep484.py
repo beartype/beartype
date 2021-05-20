@@ -19,7 +19,7 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
@@ -194,7 +194,7 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
 
     # Return true only if this hint is an instance of the PEP 484-compliant
     # forward reference superclass.
-    return isinstance(hint, HINT_PEP484_BASE_FORWARDREF)
+    return isinstance(hint, HINT_PEP484_TYPE_FORWARDREF)
 
 # ....................{ TESTERS ~ generic                 }....................
 # If the active Python interpreter targets at least Python >= 3.7.0, implement

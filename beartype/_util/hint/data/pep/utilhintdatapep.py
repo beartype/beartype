@@ -10,19 +10,6 @@ concerning PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: *WOOPS.* We have fundamental badness here and in similar submodules.
-#Why? Because this submodule is public and thus externally importable *BEFORE*
-#the equally public parent "utilhintdata" submodule. If that happens, then this
-#submodule will *NOT* have been initialized, which is awful. This clearly
-#suggests this entire design to be suspect, frankly; things simply should *NOT*
-#be this fragile.
-#
-#Of course, the trivial fix is just to forcefully import "utilhintdata" from
-#"beartype.__init__" as a hidden import with side effects, but... yikes.
-#That'll do as a temporary fix, but we absolutely need to get this under
-#control with a wide-sweeping rethink.
-
 # ....................{ IMPORTS                           }....................
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_DEPRECATED,

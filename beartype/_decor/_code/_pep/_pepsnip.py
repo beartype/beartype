@@ -509,6 +509,7 @@ this parent hint has been generated.
 
 
 PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP = '''
+{{indent_curr}}    # True only if this pith is of one of these types.
 {{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
@@ -523,8 +524,8 @@ See Also
 
 # ....................{ HINT ~ type : pep 586             }....................
 PEP586_CODE_CHECK_HINT_PREFIX = '''(
-{{indent_curr}}    # True only if this pith is of this literal type(s).
-{{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and ('''
+{{indent_curr}}    # True only if this pith is of one of these literal types.
+{{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_child_types_expr}) and ('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by
@@ -541,7 +542,7 @@ one or more literal objects.
 '''
 
 
-PEP586_CODE_CHECK_HINT_CHILD = '''
+PEP586_CODE_CHECK_HINT_LITERAL = '''
 {{indent_curr}}        # True only if this pith is equal to this literal.
 {{indent_curr}}        {pith_curr_assigned_expr} == {hint_child_expr} or'''
 '''
@@ -563,7 +564,7 @@ this parent hint has been generated.
 '''
 
 # ....................{ HINT ~ type : pep 593             }....................
-PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX = '''(
+PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX = '''(
 {indent_curr}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
@@ -572,7 +573,7 @@ by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
-PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX = '''
+PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
@@ -581,7 +582,7 @@ subscripted by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
-PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD = '''
+PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD = '''
 {indent_curr}    # True only if this pith satisfies this caller-defined
 {indent_curr}    # validator of this annotated.
 {indent_curr}    {hint_child_expr} and'''

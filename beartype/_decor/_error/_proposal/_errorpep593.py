@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
-from beartype._util.text.utiltextcause import get_cause_object_representation
+from beartype._util.text.utiltextrepr import represent_object
 from beartype._vale._valesub import _SubscriptedIs
 from typing import Optional
 
@@ -80,7 +80,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         # this failure, return a human-readable string describing this failure.
         if not hint_metadatum.is_valid(sleuth.pith):
             return (
-                f'{get_cause_object_representation(sleuth.pith)} violates '
+                f'{represent_object(sleuth.pith)} violates '
                 f'validator {repr(hint_metadatum)}.'
             )
         # Else, this pith satisfies this validator. Ergo, this validator is

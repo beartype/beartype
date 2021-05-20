@@ -70,12 +70,12 @@ from beartype._decor._code._pep._pepsnip import (
     PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP,
     PEP484_CODE_CHECK_HINT_UNION_PREFIX,
     PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
-    PEP586_CODE_CHECK_HINT_CHILD,
+    PEP586_CODE_CHECK_HINT_LITERAL,
     PEP586_CODE_CHECK_HINT_PREFIX,
     PEP586_CODE_CHECK_HINT_SUFFIX,
-    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD,
-    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX,
-    PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX,
+    PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD,
+    PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX,
+    PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -90,6 +90,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._util.data.utildatadict import update_mapping
 from beartype._util.func.utilfuncscope import (
     CallableScope,
+    add_func_scope_attr,
     add_func_scope_type,
     add_func_scope_types,
 )
@@ -97,14 +98,17 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
+    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
-    HINT_PEP593_SIGN_ANNOTATED)
+    HINT_PEP586_SIGN_LITERAL,
+    HINT_PEP593_SIGN_ANNOTATED,
+)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_newtype_class,
@@ -175,8 +179,6 @@ def pep_code_check_hint(
     # lookup as local attributes. Yes, this is an absurd microoptimization.
     # *fight me, github developer community*
 
-    #FIXME: Declare *ALL* other globals accessed below as optional parameters.
-
     # "beartype._decor._code.codesnip" globals.
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
@@ -229,18 +231,16 @@ def pep_code_check_hint(
         PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP.format),
     _PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format: Callable = (
         PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format),
-    _PEP586_CODE_CHECK_HINT_CHILD_format: Callable = (
-        PEP586_CODE_CHECK_HINT_CHILD.format),
-    _PEP586_CODE_CHECK_HINT_PREFIX: Callable = (
+    _PEP586_CODE_CHECK_HINT_LITERAL_format: Callable = (
+        PEP586_CODE_CHECK_HINT_LITERAL.format),
+    _PEP586_CODE_CHECK_HINT_PREFIX_format: Callable = (
         PEP586_CODE_CHECK_HINT_PREFIX.format),
-    _PEP586_CODE_CHECK_HINT_SUFFIX: Callable = (
-        PEP586_CODE_CHECK_HINT_SUFFIX.format),
-    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX_format: Callable = (
-        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX.format),
-    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format: Callable = (
-        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX.format),
-    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_format: Callable = (
-        PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD.format),
+    _PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX_format: Callable = (
+        PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX.format),
+    _PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX_format: Callable = (
+        PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX.format),
+    _PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD_format: Callable = (
+        PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD.format),
 ) -> Tuple[str, CallableScope, Tuple[str, ...]]:
     '''
     Python code snippet type-checking the previously localized parameter or
@@ -1096,7 +1096,7 @@ def pep_code_check_hint(
             #   a substantial up-front performance cost of redeclaring these
             #   closures on each invocation of this function.
 
-            # ..............{ UNIONS                            }..............
+            # ..............{ UNION                             }..............
             # If this hint is a union (e.g., "typing.Union[bool, str]",
             # typing.Optional[float]")...
             #
@@ -1210,40 +1210,28 @@ def pep_code_check_hint(
                                 pith_curr_expr
                             ),
                             # Python expression evaluating to a tuple of these
-                            # arguments when accessed via the private
-                            # "__beartypistry" parameter.
+                            # arguments.
                             #
-                            # Note that:
-                            # * We would ideally avoid coercing this set into a
-                            #   tuple when this set only contains one type by
-                            #   passing that type directly to the
-                            #   _add_func_wrapper_local_type() function. Sadly,
-                            #   the "set" class defines no convenient or
-                            #   efficient means of retrieving the only item of
-                            #   a 1-set. Indeed, the most efficient means of
-                            #   doing so is to iterate over that set and
-                            #   immediately break:
+                            # Note that we would ideally avoid coercing this
+                            # set into a tuple when this set only contains one
+                            # type by passing that type directly to the
+                            # _add_func_wrapper_local_type() function. Sadly,
+                            # the "set" class defines no convenient or
+                            # efficient means of retrieving the only item of a
+                            # 1-set. Indeed, the most efficient means of doing
+                            # so is to iterate over that set and break:
                             #     for first_item in muh_set: break
-                            #   While we *COULD* technically leverage that
-                            #   approach here, doing so would also mandate
-                            #   adding a number of intermediate tests, which
-                            #   would certainly reduce any performance gains.
-                            #   Ultimately, we avoid doing so by falling back
-                            #   to the standard approach. See also this
-                            #   relevant self-StackOverflow post:
+                            # While we *COULD* technically leverage that
+                            # approach here, doing so would also mandate adding
+                            # multiple intermediate tests, mitigating any
+                            # performance gains. Ultimately, we avoid doing so
+                            # by falling back to the usual approach. See also
+                            # this relevant self-StackOverflow post:
                             #       https://stackoverflow.com/a/40054478/2809027
-                            # * These parameters are intentionally passed as
-                            #   positional rather than keyword arguments for
-                            #   optimal memoization efficiency.
                             hint_curr_expr=add_func_scope_types(
-                                types=tuple(hint_childs_nonpep),
+                                types=hint_childs_nonpep,
                                 types_scope=func_wrapper_locals,
                                 types_label=_FUNC_WRAPPER_LOCAL_LABEL,
-                                # Inform this function it needn't attempt to
-                                # uselessly omit duplicates, since the "typing"
-                                # module already does so for all "Union"
-                                # arguments. Well, that's nice.
-                                is_unique=True,
                             ),
                         ))
 
@@ -1313,6 +1301,256 @@ def pep_code_check_hint(
                 release_object_typed(hint_childs_pep)
             # Else, this hint is *NOT* a union.
 
+            # ..............{ SHALLOW or ARGUMENTLESS           }..............
+            # If this hint either...
+            elif (
+                # Is its own sign (e.g., "typing.List" rather than
+                # "typing.List[str]") and thus subscripted by no child hints
+                # *OR*...
+                hint_curr is hint_curr_sign or
+                #FIXME: Remove this test *AFTER* deeply supporting all hints.
+                # Is both...
+                (
+                    # Originating from an origin type and thus trivially
+                    # supportable with shallow type-checking *AND*...
+                    hint_curr_sign in HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB and
+                    # Currently unsupported with deep type-checking...
+                    hint_curr_sign not in HINT_PEP_SIGNS_SUPPORTED_DEEP
+                )
+            ):
+            # Then generate trivial code shallowly type-checking the current
+            # pith as an instance of the non-"typing" origin type originating
+            # this sign (e.g., "list" for the sign "typing.List" identifying
+            # hint "typing.List[int]").
+
+                # ............{ NORETURN                          }............
+                # If this hint is the PEP 484-compliant "NoReturn" singleton
+                # valid *ONLY* as the non-nested return annotation of a
+                # callable, raise an exception. This singleton is invalid when
+                # subscripting *ANY* PEP-compliant type hint (e.g.,
+                # "typing.List[typing.NoReturn]"), which is guaranteed to be
+                # the case when this conditional is true. Why? Because the
+                # previously called higher-level pep_code_check_return()
+                # function has already handled the single case in which this
+                # hint is valid, implying this hint to be invalid here.
+                if hint_curr is NoReturn:
+                    raise BeartypeDecorHintPep484Exception(
+                        f'{hint_curr_label} {repr(hint_curr)} child '
+                        f'"typing.NoReturn" invalid (i.e., "typing.NoReturn" '
+                        f'valid only as non-nested return annotation).'
+                    )
+                # Else, this hint is *NOT* "NoReturn".
+
+                # ............{ ORIGIN                            }............
+                # Code type-checking the current pith against this origin type.
+                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                    pith_curr_expr=pith_curr_expr,
+                    # Python expression evaluating to this origin type.
+                    hint_curr_expr=add_func_scope_type(
+                        # Origin type of this hint if any *OR* raise an
+                        # exception -- which should *NEVER* happen, as this
+                        # hint was validated above to be supported.
+                        cls=get_hint_pep_stdlib_type(hint_curr),
+                        cls_scope=func_wrapper_locals,
+                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                    ),
+                )
+            # Else, this hint is *NOT* its own sign and is thus subscripted by
+            # one or more child hints.
+
+            # ............{ SEQUENCES ~ standard OR tuple vari. }..............
+            # If this hint is either...
+            elif (
+                # A standard sequence (e.g., "typing.List[int]") *OR*...
+                hint_curr_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
+                    # A tuple *AND*...
+                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE and
+                    # This tuple is subscripted by exactly two child hints
+                    # *AND*...
+                    hint_childs_len == 2 and
+                    # The second child hint is just an unquoted ellipsis...
+                    hint_childs[1] is Ellipsis
+                )
+                # Then this hint is of the form "Tuple[{typename}, ...]",
+                # typing a tuple accepting a variadic number of items all
+                # satisfying the "{typename}" child hint. Since this case is
+                # semantically equivalent to that of standard sequences, we
+                # transparently handle both here for maintainability.
+                #
+                # See below for logic handling the fixed-length "Tuple" form.
+            # Then this hint is either a standard sequence *OR* a similar hint
+            # semantically resembling a standard sequence, subscripted by one
+            # or more child hints.
+            ):
+                # Python expression evaluating to this origin type.
+                hint_curr_expr = add_func_scope_type(
+                    # Origin type of this attribute if any *OR* raise an
+                    # exception -- which should *NEVER* happen, as all standard
+                    # sequences originate from an origin type.
+                    cls=get_hint_pep_stdlib_type(hint_curr),
+                    cls_scope=func_wrapper_locals,
+                    cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                )
+                # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
+
+                # Assert this sequence is either subscripted by exactly one
+                # argument *OR* a non-standard sequence (e.g., "typing.Tuple").
+                # Note that the "typing" module should have already guaranteed
+                # this on our behalf. Still, we trust nothing and no one:
+                #     >>> import typing as t
+                #     >>> t.List[int, str]
+                #     TypeError: Too many parameters for typing.List; actual 2, expected 1
+                assert (
+                    hint_childs_len == 1 or
+                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE
+                ), (
+                    f'{hint_curr_label} {repr(hint_curr)} sequence '
+                    f'subscripted by multiple arguments.')
+
+                # Lone child hint of this parent hint.
+                hint_child = hint_childs[0]
+
+                # If this child hint is *NOT* ignorable, deeply type-check both
+                # the type of the current pith *AND* a randomly indexed item of
+                # this pith. Specifically...
+                if not is_hint_ignorable(hint_child):
+                    # Record that a pseudo-random integer is now required.
+                    is_var_random_int_needed = True
+
+                    # Code type-checking the current pith against this type.
+                    func_curr_code = (
+                        _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format(
+                            indent_curr=indent_curr,
+                            pith_curr_assign_expr=pith_curr_assign_expr,
+                            pith_curr_assigned_expr=pith_curr_assigned_expr,
+                            hint_curr_expr=hint_curr_expr,
+                            hint_child_placeholder=_enqueue_hint_child(
+                                # Python expression yielding the value of a
+                                # randomly indexed item of the current pith
+                                # (i.e., standard sequence) to be type-checked
+                                # against this child hint.
+                                _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format(
+                                    pith_curr_assigned_expr=(
+                                        pith_curr_assigned_expr))),
+                        ))
+                # Else, this child hint is ignorable. In this case, fallback to
+                # generating trivial code shallowly type-checking the current
+                # pith as an instance of this origin type.
+                else:
+                    func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                        pith_curr_expr=pith_curr_expr,
+                        hint_curr_expr=hint_curr_expr,
+                    )
+            # Else, this hint is neither a standard sequence *NOR* variadic
+            # tuple.
+
+            # ..............{ SEQUENCES ~ tuple : fixed         }..............
+            # If this hint is a tuple, this tuple is *NOT* of the variadic form
+            # and *MUST* thus be of the fixed-length form.
+            #
+            # Note that if this hint is a:
+            # * PEP 484-compliant "typing.Tuple"-based hint, this hint is
+            #   guaranteed to contain one or more child hints. Moreover, if
+            #   this hint contains exactly one child hint that is the empty
+            #   tuple, this hint is the empty fixed-length form
+            #   "typing.Tuple[()]".
+            # * PEP 585-compliant "tuple"-based hint, this hint is *NOT*
+            #   guaranteed to contain one or more child hints. If this hint
+            #   contains *NO* child hints, this hint is equivalent to the empty
+            #   fixed-length PEP 484-compliant form "typing.Tuple[()]". Yes,
+            #   PEP 585 even managed to violate PEP 484-compliance. UUUURGH!
+            #
+            # While tuples are sequences, the "typing.Tuple" singleton that
+            # types tuples violates the syntactic norms established for other
+            # standard sequences by concurrently supporting two different
+            # syntaxes with equally different semantics:
+            # * "typing.Tuple[{typename}, ...]", typing a tuple whose items all
+            #   satisfy the "{typename}" child hint. Note that the "..."
+            #   substring here is a literal ellipses.
+            # * "typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]",
+            #   typing a tuple whose:
+            #   * First item satisfies the "{typename1}" child hint.
+            #   * Second item satisfies the "{typename2}" child hint.
+            #   * Last item satisfies the "{typenameN}" child hint.
+            #   Note that the "..." substring here is *NOT* a literal ellipses.
+            #
+            # This is what happens when non-human-readable APIs are promoted.
+            elif hint_curr_sign in HINT_PEP_SIGNS_TUPLE:
+                # Assert this tuple was subscripted by at least one child hint
+                # if this tuple is PEP 484-compliant. Note that the "typing"
+                # module should have already guaranteed this on our behalf.
+                # Trust is for the weak. See above for further commentary.
+                assert hint_curr_sign is tuple or hint_childs, (
+                    f'{hint_curr_label} {repr(hint_curr)} '
+                    f'fixed-length tuple empty.')
+
+                # Assert this tuple is *NOT* of the syntactic form
+                # "typing.Tuple[{typename}, ...]" handled by prior logic.
+                assert (
+                    hint_childs_len <= 1 or
+                    hint_childs[1] is not Ellipsis
+                ), (
+                    f'{hint_curr_label} {repr(hint_curr)} '
+                    f'variadic tuple unhandled.')
+
+                # Initialize the code type-checking the current pith against
+                # this tuple to the substring prefixing all such code.
+                func_curr_code = _PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
+
+                # If this hint is the empty fixed-length tuple, generate and
+                # append code type-checking the current pith to be the empty
+                # tuple. Yes, this edge case constitutes a code smell.
+                if is_hint_pep_tuple_empty(hint_curr):
+                    func_curr_code += (
+                        _PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format(
+                            pith_curr_assigned_expr=pith_curr_assigned_expr))
+                # Else, that ridiculous edge case does *NOT* apply. In this
+                # case...
+                else:
+                    # Append code type-checking the length of this pith.
+                    func_curr_code += (
+                        _PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format(
+                            pith_curr_assigned_expr=pith_curr_assigned_expr,
+                            hint_childs_len=hint_childs_len,
+                        ))
+
+                    # For each child hint of this tuple...
+                    for hint_child_index, hint_child in enumerate(hint_childs):
+                        # If this child hint is ignorable, skip to the next.
+                        if is_hint_ignorable(hint_child):
+                            continue
+                        # Else, this child hint is unignorable.
+
+                        # Append code type-checking this child pith.
+                        func_curr_code += _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                            hint_child_placeholder=_enqueue_hint_child(
+                                # Python expression yielding the value of
+                                # the currently indexed item of this tuple to
+                                # be type-checked against this child hint.
+                                _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                    pith_curr_assigned_expr=(
+                                        pith_curr_assigned_expr),
+                                    pith_child_index=hint_child_index,
+                                )
+                            ),
+                        )
+
+                # Munge this code to...
+                func_curr_code = (
+                    # Strip the erroneous " and" suffix appended by the
+                    # last child hint from this code.
+                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
+                    # Suffix this code by the substring suffixing all such
+                    # code.
+                    f'{_PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
+                # Format...
+                ).format(
+                    # Indentation deferred above for efficiency.
+                    indent_curr=indent_curr,
+                    pith_curr_assign_expr=pith_curr_assign_expr,
+                )
+            # Else, this hint is *NOT* a tuple.
+
             # ..............{ ANNOTATED                         }..............
             # If this hint is a PEP 593-compliant type metahint, this metahint
             # is guaranteed by the reduction performed above to be
@@ -1335,7 +1573,7 @@ def pep_code_check_hint(
                 # variable names, we safely (but inefficiently) format these
                 # variables into the exact strings known to embed them.
                 func_curr_code = (
-                    _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_PREFIX_format(
+                    _PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX_format(
                         indent_curr=indent_curr,
                         hint_child_placeholder=_enqueue_hint_child(
                             # Python expression yielding the value of the
@@ -1373,10 +1611,10 @@ def pep_code_check_hint(
                         )
                     # Else, this argument is beartype-specific.
 
-                    # Generate and append efficient code type-checking
-                    # this data validator by embedding this code as is.
+                    # Generate and append efficient code type-checking this
+                    # validator by embedding this code as is.
                     func_curr_code += (
-                        _PEP593_CODE_CHECK_HINT_ANNOTATEDIS_CHILD_format(
+                        _PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD_format(
                             indent_curr=indent_curr,
                             # Python expression formatting the current pith
                             # into the "{obj}" variable already embedded by
@@ -1400,9 +1638,58 @@ def pep_code_check_hint(
                     f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    f'{_PEP593_CODE_CHECK_HINT_ANNOTATEDIS_SUFFIX_format(indent_curr=indent_curr)}'
+                    f'{_PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX_format(indent_curr=indent_curr)}'
                 )
             # Else, this hint is *NOT* a metahint.
+
+            # ..............{ FORWARDREF                        }..............
+            # If this hint is a forward reference...
+            elif hint_curr_sign is HINT_PEP484_TYPE_FORWARDREF:
+                # Possibly unqualified classname referred to by this hint.
+                hint_curr_forwardref_classname = get_hint_forwardref_classname(
+                    hint_curr)
+
+                # If this classname contains one or more "." characters, this
+                # classname is fully-qualified. In this case...
+                if '.' in hint_curr_forwardref_classname:
+                    # Pass the beartypistry singleton as a private
+                    # "__beartypistry" parameter to this wrapper function.
+                    func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
+
+                    # Python expression evaluating to this class when accessed
+                    # via the private "__beartypistry" parameter.
+                    hint_curr_expr = register_typistry_forwardref(
+                        hint_curr_forwardref_classname)
+                # Else, this classname is unqualified. In this case...
+                else:
+                    # If the set of unqualified classnames referred to by all
+                    # relative forward references has yet to be instantiated,
+                    # do so.
+                    if hints_forwardref_class_basename is None:
+                        hints_forwardref_class_basename = set()
+                    # In any case, this set now exists.
+
+                    # Add this unqualified classname to this set.
+                    hints_forwardref_class_basename.add(
+                        hint_curr_forwardref_classname)
+
+                    # Placeholder substring to be replaced by the caller with a
+                    # Python expression evaluating to this unqualified
+                    # classname canonicalized relative to the module declaring
+                    # the currently decorated callable when accessed via the
+                    # private "__beartypistry" parameter.
+                    hint_curr_expr = (
+                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
+                        f'{hint_curr_forwardref_classname}'
+                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
+                    )
+
+                # Code type-checking the current pith against this class.
+                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                    pith_curr_expr=pith_curr_expr,
+                    hint_curr_expr=hint_curr_expr,
+                )
+            # Else, this hint is *NOT* a forward reference.
 
             # ..............{ GENERIC or PROTOCOL               }..............
             # If this hint is either a:
@@ -1575,8 +1862,7 @@ def pep_code_check_hint(
                     # Indentation deferred above for efficiency.
                     indent_curr=indent_curr,
                     pith_curr_assign_expr=pith_curr_assign_expr,
-                    # Python expression evaluating to this user-defined type
-                    # when accessed via the private "__beartypistry" parameter.
+                    # Python expression evaluating to this generic type.
                     hint_curr_expr=add_func_scope_type(
                         cls=hint_curr,
                         cls_scope=func_wrapper_locals,
@@ -1586,300 +1872,72 @@ def pep_code_check_hint(
                 # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
             # Else, this hint is *NOT* a generic.
 
-            # ..............{ FORWARDREF                        }..............
-            # If this hint is a forward reference...
-            elif hint_curr_sign is HINT_PEP484_BASE_FORWARDREF:
-                # Possibly unqualified classname referred to by this hint.
-                hint_curr_forwardref_classname = get_hint_forwardref_classname(
-                    hint_curr)
+            # ..............{ LITERAL                           }..............
+            # If this hint is a PEP 586-compliant type hint (i.e., the
+            # "typing.Literal" singleton subscripted by one or more literal
+            # objects), this hint is largely useless and thus intentionally
+            # detected last. Why? Because "typing.Literal" is subscriptable by
+            # objects that are instances of only *SIX* possible types, which is
+            # sufficiently limiting as to render this singleton patently absurd
+            # and a farce that we weep to even implement. In this case...
+            elif hint_curr_sign is HINT_PEP586_SIGN_LITERAL:
+                # If this hint does *NOT* comply with PEP 586 despite being a
+                # "typing.Literal" subscription, raise an exception. *sigh*
+                die_unless_hint_pep586(hint_curr)
+                # Else, this hint complies with PEP 586 and is thus subscripted
+                # by one or more compliant literal objects.
 
-                # If this classname contains one or more "." characters, this
-                # classname is fully-qualified. In this case...
-                if '.' in hint_curr_forwardref_classname:
-                    # Pass the beartypistry singleton as a private
-                    # "__beartypistry" parameter to this wrapper function.
-                    func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
-
-                    # Python expression evaluating to this class when accessed
-                    # via the private "__beartypistry" parameter.
-                    hint_curr_expr = register_typistry_forwardref(
-                        hint_curr_forwardref_classname)
-                # Else, this classname is unqualified. In this case...
-                else:
-                    # If the set of unqualified classnames referred to by all
-                    # relative forward references has yet to be instantiated,
-                    # do so.
-                    if hints_forwardref_class_basename is None:
-                        hints_forwardref_class_basename = set()
-                    # In any case, this set now exists.
-
-                    # Add this unqualified classname to this set.
-                    hints_forwardref_class_basename.add(
-                        hint_curr_forwardref_classname)
-
-                    # Placeholder substring to be replaced by the caller with a
-                    # Python expression evaluating to this unqualified
-                    # classname canonicalized relative to the module declaring
-                    # the currently decorated callable when accessed via the
-                    # private "__beartypistry" parameter.
-                    hint_curr_expr = (
-                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
-                        f'{hint_curr_forwardref_classname}'
-                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
-                    )
-
-                # Code type-checking the current pith against this class.
-                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
-                    pith_curr_expr=pith_curr_expr,
-                    hint_curr_expr=hint_curr_expr,
-                )
-            # Else, this hint is *NOT* a forward reference.
-
-            # ..............{ NORETURN                          }..............
-            # If this hint is the PEP 484-compliant "NoReturn" singleton valid
-            # *ONLY* as the non-nested return annotation of a callable, raise
-            # an exception. This singleton is invalid when subscripting *ANY*
-            # PEP-compliant type hint (e.g., "typing.List[typing.NoReturn]"),
-            # which is guaranteed to be the case if this conditional is true.
-            # Why? Because the previously called higher-level
-            # pep_code_check_return() function has already handled the single
-            # edge case in which this singleton is contextually valid, implying
-            # this singleton to be invalid here.
-            elif hint_curr is NoReturn:
-                raise BeartypeDecorHintPep484Exception(
-                    f'{hint_curr_label} {repr(hint_curr)} child '
-                    f'"typing.NoReturn" invalid (i.e., "typing.NoReturn" '
-                    f'valid only as non-nested return annotation).'
-                )
-            # Else, this hint is *NOT* "NoReturn".
-
-            # ..............{ SHALLOW or ARGUMENTLESS           }..............
-            # If this hint either...
-            elif (
-                # Is not yet deeply supported by this function *OR*...
-                hint_curr_sign not in HINT_PEP_SIGNS_SUPPORTED_DEEP or
-                # Is deeply supported by this function but is its own sign
-                # (e.g., "typing.List" rather than "typing.List[str]") and is
-                # thus subscripted by *NO* child hints...
-                hint_curr is hint_curr_sign
-            ):
-            # Then generate trivial code shallowly type-checking the current
-            # pith as an instance of the non-"typing" origin type originating
-            # this sign (e.g., "list" for the sign "typing.List" identifying
-            # hint "typing.List[int]").
-
-                # Code type-checking the current pith against this origin type.
-                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
-                    pith_curr_expr=pith_curr_expr,
-                    # Python expression evaluating to this origin type when
-                    # accessed via the private "__beartypistry" parameter.
-                    hint_curr_expr=add_func_scope_type(
-                        # Origin type of this hint if any *OR* raise an
-                        # exception -- which should *NEVER* happen, as this
-                        # hint was validated above to be supported.
-                        cls=get_hint_pep_stdlib_type(hint_curr),
-                        cls_scope=func_wrapper_locals,
-                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
-                    ),
-                )
-            # Else, this hint is *NOT* its own unsubscripted "typing" attribute
-            # (e.g., "typing.List") and is thus subscripted by one or more
-            # child hints.
-
-            # ............{ SEQUENCES ~ standard OR tuple vari. }..............
-            # If this hint is either...
-            elif (
-                # A standard sequence (e.g., "typing.List[int]") *OR*...
-                hint_curr_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
-                    # A tuple *AND*...
-                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE and
-                    # This tuple is subscripted by exactly two child hints
-                    # *AND*...
-                    hint_childs_len == 2 and
-                    # The second child hint is just an unquoted ellipsis...
-                    hint_childs[1] is Ellipsis
-                )
-                # Then this hint is of the form "Tuple[{typename}, ...]",
-                # typing a tuple accepting a variadic number of items all
-                # satisfying the "{typename}" child hint. Since this case is
-                # semantically equivalent to that of standard sequences, we
-                # transparently handle both here for maintainability.
-                #
-                # See below for logic handling the fixed-length "Tuple" form.
-            ):
-            # Then this hint is either a standard sequence *OR* a similar hint
-            # semantically resembling a standard sequence, subscripted by one
-            # or more child hints.
-                # Python expression evaluating to this origin type when
-                # accessed with the private "__beartypistry" parameter.
-                hint_curr_expr = add_func_scope_type(
-                    # Origin type of this attribute if any *OR* raise an
-                    # exception -- which should *NEVER* happen, as all standard
-                    # sequences originate from an origin type.
-                    cls=get_hint_pep_stdlib_type(hint_curr),
-                    cls_scope=func_wrapper_locals,
-                    cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
-                )
-                # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
-
-                # Assert this sequence is either subscripted by exactly one
-                # argument *OR* a non-standard sequence (e.g., "typing.Tuple").
-                # Note that the "typing" module should have already guaranteed
-                # this on our behalf. Still, we trust nothing and no one:
-                #     >>> import typing as t
-                #     >>> t.List[int, str]
-                #     TypeError: Too many parameters for typing.List; actual 2, expected 1
-                assert (
-                    hint_childs_len == 1 or
-                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE
-                ), (
-                    f'{hint_curr_label} {repr(hint_curr)} sequence '
-                    f'subscripted by multiple arguments.')
-
-                # Lone child hint of this parent hint.
-                hint_child = hint_childs[0]
-
-                # If this child hint is *NOT* ignorable, deeply type-check both
-                # the type of the current pith *AND* a randomly indexed item of
-                # this pith. Specifically...
-                if not is_hint_ignorable(hint_child):
-                    # Record that a pseudo-random integer is now required.
-                    is_var_random_int_needed = True
-
-                    # Code type-checking the current pith against this type.
-                    func_curr_code = (
-                        _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format(
-                            indent_curr=indent_curr,
-                            pith_curr_assign_expr=pith_curr_assign_expr,
-                            pith_curr_assigned_expr=pith_curr_assigned_expr,
-                            hint_curr_expr=hint_curr_expr,
-                            hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the value of a
-                                # randomly indexed item of the current pith
-                                # (i.e., standard sequence) to be type-checked
-                                # against this child hint.
-                                _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format(
-                                    pith_curr_assigned_expr=(
-                                        pith_curr_assigned_expr))),
-                        ))
-                # Else, this child hint is ignorable. In this case,
-                # fallback to generating trivial code shallowly
-                # type-checking the current pith as an instance of this
-                # origin type.
-                else:
-                    func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
-                        pith_curr_expr=pith_curr_expr,
-                        hint_curr_expr=hint_curr_expr,
-                    )
-            # Else, this hint is neither a standard sequence *NOR* variadic
-            # tuple.
-
-            # ..............{ SEQUENCES ~ tuple : fixed         }..............
-            # If this hint is a tuple, this tuple is *NOT* of the variadic form
-            # and *MUST* thus be of the fixed-length form.
-            #
-            # Note that if this hint is a:
-            # * PEP 484-compliant "typing.Tuple"-based hint, this hint is
-            #   guaranteed to contain one or more child hints. Moreover, if
-            #   this hint contains exactly one child hint that is the empty
-            #   tuple, this hint is the empty fixed-length form
-            #   "typing.Tuple[()]".
-            # * PEP 585-compliant "tuple"-based hint, this hint is *NOT*
-            #   guaranteed to contain one or more child hints. If this hint
-            #   contains *NO* child hints, this hint is equivalent to the empty
-            #   fixed-length PEP 484-compliant form "typing.Tuple[()]". Yes,
-            #   PEP 585 even managed to violate PEP 484-compliance. UUUURGH!
-            #
-            # While tuples are sequences, the "typing.Tuple" singleton that
-            # types tuples violates the syntactic norms established for other
-            # standard sequences by concurrently supporting two different
-            # syntaxes with equally different semantics:
-            # * "typing.Tuple[{typename}, ...]", typing a tuple whose items all
-            #   satisfy the "{typename}" child hint. Note that the "..."
-            #   substring here is a literal ellipses.
-            # * "typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]",
-            #   typing a tuple whose:
-            #   * First item satisfies the "{typename1}" child hint.
-            #   * Second item satisfies the "{typename2}" child hint.
-            #   * Last item satisfies the "{typenameN}" child hint.
-            #   Note that the "..." substring here is *NOT* a literal ellipses.
-            #
-            # This is what happens when non-human-readable APIs are promoted.
-            elif hint_curr_sign in HINT_PEP_SIGNS_TUPLE:
-                # Assert this tuple was subscripted by at least one child hint
-                # if this tuple is PEP 484-compliant. Note that the "typing"
-                # module should have already guaranteed this on our behalf.
-                # Trust is for the weak. See above for further commentary.
-                assert hint_curr_sign is tuple or hint_childs, (
-                    f'{hint_curr_label} {repr(hint_curr)} '
-                    f'fixed-length tuple empty.')
-
-                # Assert this tuple is *NOT* of the syntactic form
-                # "typing.Tuple[{typename}, ...]" handled by prior logic.
-                assert (
-                    hint_childs_len <= 1 or
-                    hint_childs[1] is not Ellipsis
-                ), (
-                    f'{hint_curr_label} {repr(hint_curr)} '
-                    f'variadic tuple unhandled.')
+                # PEP-compliant type hint annotated by this metahint, localized
+                # to the "hint_child" local variable to satisfy the public API
+                # of the _enqueue_hint_child() closure called below.
+                hint_child = get_hint_pep593_metahint(hint_curr)
 
                 # Initialize the code type-checking the current pith against
-                # this tuple to the substring prefixing all such code.
-                func_curr_code = _PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
+                # this hint to the substring prefixing all such code.
+                func_curr_code = _PEP586_CODE_CHECK_HINT_PREFIX_format(
+                    pith_curr_assign_expr=pith_curr_assign_expr,
 
-                # If this hint is the empty fixed-length tuple, generate and
-                # append code type-checking the current pith to be the empty
-                # tuple. Yes, this edge case constitutes a code smell.
-                if is_hint_pep_tuple_empty(hint_curr):
-                    func_curr_code += (
-                        _PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format(
-                            pith_curr_assigned_expr=pith_curr_assigned_expr))
-                # Else, that ridiculous edge case does *NOT* apply. In this
-                # case...
-                else:
-                    # Append code type-checking the length of this pith.
-                    func_curr_code += (
-                        _PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format(
-                            pith_curr_assigned_expr=pith_curr_assigned_expr,
-                            hint_childs_len=hint_childs_len,
-                        ))
+                    #FIXME: If "typing.Literal" is ever extended to support
+                    #substantially more types (and thus actually become
+                    #useful), optimize the construction of the "types" set
+                    #below to instead leverage a similar
+                    #"acquire_object_typed(set)" caching solution as that
+                    #currently employed for unions. For now, we only shrug.
 
-                    # For each child hint of this tuple...
-                    for hint_child_index, hint_child in enumerate(hint_childs):
-                        # If this child hint is ignorable, skip to the next.
-                        if is_hint_ignorable(hint_child):
-                            continue
-                        # Else, this child hint is unignorable.
+                    # Python expression evaluating to a tuple of the unique
+                    # types of all literal objects subscripting this hint.
+                    hint_child_types_expr=add_func_scope_types(
+                        types=set(
+                            type(hint_child) for hint_child in hint_childs),
+                        types_scope=func_wrapper_locals,
+                        types_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                    ),
+                )
 
-                        # Append code type-checking this child pith.
-                        func_curr_code += _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
-                            hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the value of
-                                # the currently indexed item of this tuple to
-                                # be type-checked against this child hint.
-                                _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                    pith_curr_assigned_expr=(
-                                        pith_curr_assigned_expr),
-                                    pith_child_index=hint_child_index,
-                                )
-                            ),
+                # For each literal object subscripting this hint...
+                for hint_child in hint_childs:
+                    # Generate and append efficient code type-checking
+                    # this data validator by embedding this code as is.
+                    func_curr_code += _PEP586_CODE_CHECK_HINT_LITERAL_format(
+                        pith_curr_assigned_expr=pith_curr_assigned_expr,
+                        # Python expression evaluating to this literal
+                        # object.
+                        hint_child_expr=add_func_scope_attr(
+                            attr=hint_child,
+                            attr_scope=func_wrapper_locals,
+                            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                         )
+                    )
 
                 # Munge this code to...
                 func_curr_code = (
-                    # Strip the erroneous " and" suffix appended by the
-                    # last child hint from this code.
-                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
-                    # Suffix this code by the substring suffixing all such
-                    # code.
-                    f'{_PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
-                # Format...
-                ).format(
-                    # Indentation deferred above for efficiency.
-                    indent_curr=indent_curr,
-                    pith_curr_assign_expr=pith_curr_assign_expr,
-                )
-            # Else, this hint is *NOT* a tuple.
+                    # Strip the erroneous " or" suffix appended by the last
+                    # child hint from this code.
+                    f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
+                    # Suffix this code by the substring suffixing this code.
+                    f'{PEP586_CODE_CHECK_HINT_SUFFIX}'
+                ).format(indent_curr=indent_curr)
+            # Else, this hint is *NOT* a PEP 586-compliant type hint.
 
             # ..............{ UNSUPPORTED                       }..............
             # Else, this hint is neither shallowly nor deeply supported and is
@@ -1920,11 +1978,10 @@ def pep_code_check_hint(
             # CAVEATS: Synchronize changes here with similar logic above.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            # Code type-checking the current pith against this class.
+            # Code type-checking the current pith against this type.
             func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                 pith_curr_expr=pith_curr_expr,
-                # Python expression evaluating to this class when accessed via
-                # the private "__beartypistry" parameter.
+                # Python expression evaluating to this type.
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     cls_scope=func_wrapper_locals,

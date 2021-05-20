@@ -15,7 +15,7 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
     HINT_PEP_SIGNS_IGNORABLE,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
 )
 
 # See the "beartype.cave" submodule for further commentary.
@@ -36,7 +36,7 @@ HINT_BASES_FORWARDREF = (
     str,
 
     # PEP 484-compliant forward reference superclass.
-    HINT_PEP484_BASE_FORWARDREF,
+    HINT_PEP484_TYPE_FORWARDREF,
 )
 '''
 Tuple of all **forward reference type hint superclasses** (i.e., superclasses

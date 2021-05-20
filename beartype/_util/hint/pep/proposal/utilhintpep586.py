@@ -38,6 +38,15 @@ def die_unless_hint_pep586(hint: Any) -> None:
     Raise an exception unless the passed object is a :pep:`586`-compliant
     type hint (i.e., subscription of the :attr:`typing.Literal` singleton).
 
+    Ideally, the :attr:`typing.Literal` singleton would internally validate the
+    literal objects subscripting that singleton at subscription time (i.e., in
+    the body of the ``__class_getitem__()`` dunder method). Whereas *all* other
+    :mod:`typing` attributes do just that, :attr:`typing.Literal` permissively
+    accepts all possible arguments like a post-modern philosopher hopped up on
+    too much tenure. For inexplicable reasons, :pep:`586` explicitly requires
+    third-party type checkers (that's us) to validate these hints rather than
+    standardizing that validation in the :mod:`typing` module. Weep, Guido!
+
     Caveats
     ----------
     **This function is slow** and should thus be called only once per
