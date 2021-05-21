@@ -72,7 +72,7 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
 
 
 #FIXME: Unit test us up.
-def get_cause_object_not_nonpep_tuple(
+def get_cause_object_not_types(
     pith: object, hint: Tuple[type, ...]) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary

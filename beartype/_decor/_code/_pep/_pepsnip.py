@@ -534,7 +534,7 @@ one or more literal objects.
 
 
 PEP586_CODE_CHECK_HINT_SUFFIX = '''
-{{indent_curr}}))'''
+{indent_curr}))'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
 against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by

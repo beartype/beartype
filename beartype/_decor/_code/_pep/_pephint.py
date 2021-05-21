@@ -1887,11 +1887,6 @@ def pep_code_check_hint(
                 # Else, this hint complies with PEP 586 and is thus subscripted
                 # by one or more compliant literal objects.
 
-                # PEP-compliant type hint annotated by this metahint, localized
-                # to the "hint_child" local variable to satisfy the public API
-                # of the _enqueue_hint_child() closure called below.
-                hint_child = get_hint_pep593_metahint(hint_curr)
-
                 # Initialize the code type-checking the current pith against
                 # this hint to the substring prefixing all such code.
                 func_curr_code = _PEP586_CODE_CHECK_HINT_PREFIX_format(

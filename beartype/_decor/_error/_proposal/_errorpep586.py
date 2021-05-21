@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortype import get_cause_or_none_type_origin
 from beartype._util.hint.data.pep.utilhintdatapepsign import (
     HINT_PEP586_SIGN_LITERAL)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
@@ -63,6 +64,25 @@ def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
     ):
         return None
     # Else, this pith fails to satisfy this hint.
+
+    # Isinstanceable tuple of the types of all literals subscripting this hint.
+    hint_literal_types = tuple(
+        type(hint_literal) for hint_literal in sleuth.hint_childs)
+
+    # Human-readable string describing the failure of this pith to be an
+    # instance of one or more of these types if this pith is not such an
+    # instance *OR* "None" otherwise.
+    # Human-readable string describing the failure of this pith to satisfy this
+    # hint if this pith fails to satisfy this hint *or* "None" otherwise.
+    pith_cause = sleuth.permute(
+        pith=sleuth.pith, hint=hint_literal_types).get_cause_or_none()
+
+    # If this pith is *NOT* such an instance, return this string.
+    if pith_cause is not None:
+        return pith_cause
+    # Else, this pith is such an instance and thus shallowly satisfies this
+    # hint. Since this pith fails to satisfy this hint, this pith must by
+    # deduction be unequal to all literals subscripting this hint.
 
     # Human-readable comma-delimited disjunction of the machine-readable
     # representations of all literal objects subscripting this hint.

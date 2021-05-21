@@ -19,6 +19,7 @@ from beartype_test.a00_unit.data.hint.pep.proposal import (
     data_hintpep484,
     _data_hintpep544,
     _data_hintpep585,
+    _data_hintpep586,
     _data_hintpep593,
 )
 
@@ -100,6 +101,7 @@ def _init() -> None:
         data_hintpep484,
         _data_hintpep544,
         _data_hintpep585,
+        _data_hintpep586,
         _data_hintpep593,
     )
 

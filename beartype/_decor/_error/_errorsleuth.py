@@ -331,10 +331,21 @@ class CauseSleuth(object):
         elif self.hint_sign is None:
             # Avoid circular import dependencies.
             from beartype._decor._error._errortype import (
-                get_cause_or_none_type)
+                get_cause_or_none_type,
+                get_cause_or_none_types,
+            )
 
-            # Defer to the getter function supporting non-"typing" classes.
-            get_cause_or_none = get_cause_or_none_type
+            # Defer to the getter function supporting either...
+            get_cause_or_none = (
+                # If this hint is a tuple union, tuples of one or more
+                # isinstanceable classes.
+                get_cause_or_none_types
+                if isinstance(self.hint, tuple) else
+                # Else, isinstanceable classes under the generous assumption
+                # this this hint is a type. If this is *NOT* the case, this
+                # getter will raise a human-readable exception.
+                get_cause_or_none_type
+            )
         # Else, this hint is PEP-compliant.
         #
         # If this PEP-compliant hint is its own unsubscripted "typing"

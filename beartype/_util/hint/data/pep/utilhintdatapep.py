@@ -31,9 +31,10 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
     HINT_PEP585_SIGNS_TUPLE,
     HINT_PEP585_SIGNS_TYPE,
 )
+from beartype._util.hint.data.pep.proposal.utilhintdatapep586 import (
+    HINT_PEP586_SIGNS_SUPPORTED_DEEP)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep593 import (
-    HINT_PEP593_SIGNS_SUPPORTED_DEEP,
-)
+    HINT_PEP593_SIGNS_SUPPORTED_DEEP)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -132,6 +133,7 @@ HINT_PEP_SIGNS_SUPPORTED_DEEP = (
     HINT_PEP484_SIGNS_SUPPORTED_DEEP |
     HINT_PEP544_SIGNS_SUPPORTED_DEEP |
     HINT_PEP585_SIGNS_SUPPORTED_DEEP |
+    HINT_PEP586_SIGNS_SUPPORTED_DEEP |
     HINT_PEP593_SIGNS_SUPPORTED_DEEP
 )
 '''

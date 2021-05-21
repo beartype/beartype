@@ -4,10 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 593`_**-compliant type hint test data.**
-
-.. _PEP 593:
-    https://www.python.org/dev/peps/pep-0593
+**Beartype** :pep:`593`**-compliant type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,16 +18,13 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add `PEP 593`_**-compliant type hint test data to various global containers
+    Add :pep:`593`-compliant type hint test data to various global containers
     declared by the passed module.
 
     Parameters
     ----------
     data_module : ModuleType
         Module to be added to.
-
-    .. _PEP 593:
-        https://www.python.org/dev/peps/pep-0593
     '''
 
     # If the active Python interpreter targets less than Python < 3.9, this
@@ -126,7 +120,7 @@ def add_data(data_module: 'ModuleType') -> None:
     ))
 
     # ..................{ TUPLES                            }..................
-    # Add PEP 593-specific test type hints to this dictionary global.
+    # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ ANNOTATED                         }................
         # Hashable annotated of a non-"typing" type annotated by an arbitrary

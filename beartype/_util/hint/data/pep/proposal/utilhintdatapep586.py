@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`593`**-compliant type hint data.**
+**Beartype** :pep:`586`**-compliant type hint data.**
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,14 +17,14 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS ~ sign : supported           }....................
-HINT_PEP593_SIGNS_SUPPORTED_DEEP = frozenset(
-    (typing.Annotated,)  # type: ignore[attr-defined]
+HINT_PEP586_SIGNS_SUPPORTED_DEEP = frozenset(
+    (typing.Literal,)  # type: ignore[attr-defined]
     if IS_PYTHON_AT_LEAST_3_9 else
     ()
 )
 '''
-Frozen set of all :pep:`593`-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`593`-compliant type hints for
+Frozen set of all :pep:`586`-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`586`-compliant type hints for
 which the :func:`beartype.beartype` decorator generates deep type-checking
 code).
 '''

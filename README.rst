@@ -125,12 +125,12 @@ developed Python versions <Python status_>`__, `all Python package managers
 News
 ====
 
-2021-05-15: The Day the Bear Validated Your Web App's Existence
----------------------------------------------------------------
+2021-05-22: Validating Data Day (VD-Day)
+----------------------------------------
 
-**Beartype 0.7.0** (codename: The Culmination of Everything Your Unpaid QA
-Intern Wants) has been released to crickets chirping, publishing Python's first
-`type hint-based validator API <Beartype Hints_>`__.
+**Beartype 0.7.0** (codename: The Culmination of Everything That Is Valid and
+Nothing That Is Not) has been released to crickets chirping, publishing
+Python's first `type hint-based validator API <Beartype Hints_>`__.
 
 `Beartype validators <Beartype Hints_>`__ enforce arbitrary constraints on the
 internal structure, state, and contents of parameters and returns using simple
@@ -860,7 +860,7 @@ Validator API
 
     **Declarative equality validator.** Generate a PEP-compliant type hint
     enforcing any equality runtime constraint by subscripting (indexing) the
-    ``beartype.vale.IsEqual`` class with any arbitrary object:
+    ``beartype.vale.IsEqual`` class with *any* arbitrary object:
 
     .. code-block:: python
 
@@ -871,7 +871,45 @@ Validator API
        # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
        Numpy2DArray = Annotated[list, IsEqual[list(range(42))]]
 
+    ``beartype.vale.IsEqual`` generalizes the comparable `PEP 586`_-compliant
+    typing.Literal_ type hint. Both check equality against user-defined
+    objects. Despite the differing syntax, these two type hints enforce the
+    same semantics:
+
+    .. code-block:: python
+
+       # This beartype validator enforces the same semantics as...
+       IsStringEqualsWithBeartype = Annotated[str,
+           IsEqual['Don’t you envy our pranceful bands?'] |
+           IsEqual['Don’t you wish you had extra hands?']
+       ]
+
+       # This PEP 586-compliant type hint.
+       IsStringEqualsWithPep586 = Literal[
+           'Don’t you envy our pranceful bands?',
+           'Don’t you wish you had extra hands?',
+       ]
+
+    However, the similarities end there:
+
+    * ``beartype.vale.IsEqual`` validates equality against objects of **any
+      arbitrary type.**
+    * typing.Literal_ validates equality against objects of **only six
+      predefined types:**
+
+      * Booleans (i.e., ``bool`` objects).
+      * Byte strings (i.e., ``bytes`` objects).
+      * Integers (i.e., ``int`` objects).
+      * Unicode strings (i.e., ``str`` objects).
+      * enum.Enum_ members. [#enum_type]_
+      * The ``None`` singleton.
+
     See ``help(beartype.vale.IsEqual)`` for further details.
+
+.. [#enum_type]
+   You don't want to know the type of enum.Enum_ members. No. We're serious.
+   You don't. You do? Very well. It's enum.Enum_, of course! *mind blown*
+   :superscript:`frown intensifies`
 
 Validator Syntax
 ~~~~~~~~~~~~~~~~
@@ -3918,6 +3956,10 @@ rather than Python runtime) include:
    https://docs.python.org/3/library/contextlib.html#contextlib.AbstractAsyncContextManager
 .. _contextlib.AbstractContextManager:
    https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
+
+.. # ------------------( LINKS ~ py : stdlib : enum         )------------------
+.. _enum.Enum:
+   https://docs.python.org/3/library/enum.html#enum.Enum
 
 .. # ------------------( LINKS ~ py : stdlib : io           )------------------
 .. _io:
