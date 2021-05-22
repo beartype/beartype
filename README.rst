@@ -128,9 +128,9 @@ News
 2021-05-22: Validating Data Day (VD-Day)
 ----------------------------------------
 
-**Beartype 0.7.0** (codename: The Culmination of Everything That Is Valid and
-Nothing That Is Not) has been released to crickets chirping, publishing
-Python's first `type hint-based validator API <Beartype Hints_>`__.
+**Beartype 0.7.0** (codename: *berry gud*) has been released to crickets
+chirping, publishing Python's first `Turing-complete type hints for validating
+arbitrary data <Beartype Hints_>`__.
 
 `Beartype validators <Beartype Hints_>`__ enforce arbitrary constraints on the
 internal structure, state, and contents of parameters and returns using simple
@@ -675,30 +675,25 @@ Beartype Hints
 
 .. parsed-literal::
 
-   Validate anything with one-line type hints
+   Validate anything with Turing-complete type hints
    designed by you ⇄ built by beartype
 
 .. # FIXME: Also please add our "`beartype`" discussion as a new FAQ entry.
 
 When official type hints fail to suffice, dynamically design your own
-PEP-compliant type hints "on the fly" with compact one-line **beartype
-validators.** Validators enforce arbitrary runtime constraints on the internal
-structure and contents of parameters and returns using user-defined lambda
-functions, nestable declarative expressions, and familiar typing_ syntax – all
-richly composable with standard set notation and seamlessly interoperable with
-`standard type hints <Standard Hints_>`__ via an `expressive domain-specific
-language (DSL) <Validator Syntax_>`__:
+PEP-compliant type hints "on the fly" with compact two-line **beartype
+validators:**
 
 .. code-block:: python
 
    # Import the requisite machinery.
-   import numpy as np
    from beartype import beartype
    from beartype.vale import Is
    from typing import Annotated
+   import numpy as np
 
-   # Type hint designed by you matching only two-dimensional NumPy arrays of
-   # floats of arbitrary precision.
+   # Type hint designed by you matching two-dimensional NumPy arrays of
+   # floating-point numbers of arbitrary precision.
    Numpy2DFloatArray = Annotated[ndarray, Is[lambda array:
        array.ndim == 2 and np.issubdtype(array.dtype, np.floating)]]
 
@@ -716,14 +711,20 @@ language (DSL) <Validator Syntax_>`__:
        return np.abs(0.5*np.sum(
            polygon[:,0]*polygon_rolled[:,1] - polygon_rolled[:,0]*polygon[:,1]))
 
-Check custom project constraints *now* with PEP-compliant validators without
-waiting for the open-source community to officially standardize, implement, and
-publish those checks first. Filling in the Titanic-sized gaps between `Python's
-patchwork quilt of annotation PEPs <Compliance_>`__, validators accelerate your
-QA workflow with the greatest asset. *Yup, it's your brain.*
+Validators enforce arbitrary runtime constraints on the internal structure and
+contents of parameters and returns with user-defined lambda functions and
+nestable declarative expressions leveraging familiar typing_ syntax – all
+seamlessly composable with `standard type hints <Standard Hints_>`__ in an
+`expressive domain-specific language (DSL) <Validator Syntax_>`__.
 
-See `Validator Showcase`_ for further examples – or read gruelling details that
-might make you wish you had a clawful of comfort berries in your mouth.
+Validate custom project constraints *now* without waiting for the open-source
+community to officially standardize, implement, and publish those constraints.
+Filling in the Titanic-sized gaps between `Python's patchwork quilt of PEPs
+<Compliance_>`__, validators accelerate your QA workflow with the greatest
+asset! *Yup, it's your brain.*
+
+See `Validator Showcase`_ for comforting examples – or continue on for
+uncomfortable details you may regret reading.
 
 Validator Overview
 ~~~~~~~~~~~~~~~~~~
