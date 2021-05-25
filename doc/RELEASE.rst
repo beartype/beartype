@@ -188,7 +188,9 @@ beartype is releasable to all supported platforms as follows:
 
       **Beartype 0.0.1** released.
 
-      Changes include:
+      This release brings titillating support for *this*, *that*, and *PEP
+      numbers compliance*. This release resolves **some issues** and merges
+      **some pull requests.** Changes include:
 
       ## Compatibility Improved
 
@@ -350,9 +352,9 @@ beartype is releasable to all supported platforms as follows:
             $ rm -rf /tmp/beartype-pypi /tmp/sample_sim && cd -
 
 #. (\ *Obsolete*\ ) **Manually publish this release to** `PyPI`_.
-   
+
    .. note::
-    
+
       The following instructions have been obsoleted by the GitHub_ Actions
       CI/CD workflow configured by the ``.github/workflows/pythonrelease.yml``
       file, which now automates publication of both source tarballs and binary

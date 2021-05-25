@@ -126,7 +126,7 @@ developed Python versions <Python status_>`__, `all Python package managers
 News
 ====
 
-2021-05-22: Validating Data Day (VD-Day)
+2021-05-25: Validating Data Day (VD-Day)
 ----------------------------------------
 
 **Beartype 0.7.0** (codename: *berry gud*) has been released to crickets
@@ -787,7 +787,7 @@ Validator API
     **Functional validator.** A PEP-compliant type hint enforcing any arbitrary
     runtime constraint, created by subscripting (indexing) the ``Is`` class
     with a function accepting a single parameter and returning either:
-    
+
     * ``True`` if that parameter satisfies that constraint.
     * ``False`` otherwise.
 
@@ -1040,8 +1040,8 @@ Let's unbox beartype validators with a sleazy slo-mo click-bait YouTube video.
 
 :superscript:`Just kidding! It's just real-world industrial-strength examples.`
 
-Computational Geometry
-++++++++++++++++++++++
+Tensor Property Matching
+++++++++++++++++++++++++
 
 Let's validate `the same two-dimensional NumPy array of floats of arbitrary
 precision as in the lead example above <Beartype Validators_>`__ with an
@@ -1711,7 +1711,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `561 <PEP 561_>`__                      | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                  | `563 <PEP 563_>`__                      | **0.1.1**\ —\ *current*       | **0.1.1**\ —\ *current*   |
+|                  | `563 <PEP 563_>`__                      | **0.1.1**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                  | `572 <PEP 572_>`__                      | **0.3.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +------------------+-----------------------------------------+-------------------------------+---------------------------+
