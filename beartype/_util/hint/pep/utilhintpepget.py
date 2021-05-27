@@ -304,7 +304,7 @@ def get_hint_pep_sign(hint: Any) -> object:
 
     Specifically, this function returns either:
 
-    * If this hint is a `PEP 585`_-compliant **builtin** (e.g., C-based type
+    * If this hint is a :pep:`585`-compliant **builtin** (e.g., C-based type
       hint instantiated by subscripting either a concrete builtin container
       class like :class:`list` or :class:`tuple` *or* an abstract base class
       (ABC) declared by the :mod:`collections.abc` submodule like
@@ -312,12 +312,13 @@ def get_hint_pep_sign(hint: Any) -> object:
       :class:`beartype.cave.HintGenericSubscriptedType`.
     * If this hint is a **generic** (i.e., subclasses of the
       :class:`typing.Generic` abstract base class (ABC)),
-      :class:`typing.Generic`. Note this includes `PEP 544`-compliant
+      :class:`typing.Generic`. Note this includes :pep:`544`-compliant
       **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
       which implicitly subclass the :class:`typing.Generic` ABC as well.
     * If this hint is any other class declared by either the :mod:`typing`
       module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
-      submodule (e.g., :class:`beartype.cave.HintGenericSubscriptedType`), that class.
+      submodule (e.g., :class:`beartype.cave.HintGenericSubscriptedType`), that
+      class.
     * If this hint is a **forward reference** (i.e., string or instance of the
       concrete :class:`typing.ForwardRef` class), :class:`typing.ForwardRef`.
     * If this hint is a **type variable** (i.e., instance of the concrete
@@ -330,7 +331,7 @@ def get_hint_pep_sign(hint: Any) -> object:
 
     Motivation
     ----------
-    Both `PEP 484`_ and the :mod:`typing` module implementing `PEP 484`_ are
+    Both :pep:`484` and the :mod:`typing` module implementing :pep:`484` are
     functionally deficient with respect to their public APIs. Neither provide
     external callers any means of deciding the categories of arbitrary
     PEP-compliant type hints. For example, there exists no general-purpose
@@ -381,11 +382,6 @@ def get_hint_pep_sign(hint: Any) -> object:
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
         >>> get_hint_pep_sign(Duplicity)
         typing.Iterable
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
     '''
 
     # Avoid circular import dependencies.
@@ -557,14 +553,35 @@ def get_hint_pep_sign(hint: Any) -> object:
     # conforms to.
     sign_name = repr(hint)
 
-    # If this representation is *NOT* prefixed by "typing,", this hint does
-    # *NOT* originate from the "typing" module and is thus *NOT* PEP-compliant.
-    # But by the validation above, this hint is PEP-compliant. Since this
-    # invokes a world-shattering paradox, raise an exception
-    if not sign_name.startswith('typing.'):
+    # If this representation is prefixed by neither...
+    if not (
+        # "typing" (i.e., Python's official typing module in the sdlib)
+        # *NOR*...
+        sign_name.startswith('typing.')
+
+        #FIXME: Uncomment these two tests *AFTER* we've defined a new
+        #"beartype._util.lib.utilliboptional.IS_LIB_TYPING_EXTENSIONS" global
+        #boolean defined as follows:
+        #    from beartype._util.py.utilpymodule import is_module
+        #
+        #    IS_LIB_TYPING_EXTENSIONS = is_module('typing_extensions)
+
+        # sign_name.startswith('typing.') or
+        # # "typing_extensions" (i.e., a third-party quasi-official typing module
+        # # backporting "typing" hints introduced in newer Python versions to
+        # # older Python versions)...
+        # (
+        #     IS_LIB_TYPING_EXTENSIONS and
+        #     sign_name.startswith('typing_extensions.')
+        # )
+    ):
+    # Then this hint originates from neither the "typing" nor
+    # "typing_extensions" modules and is thus *NOT* PEP-compliant. But by the
+    # validation above, this hint is PEP-compliant. Since this invokes a
+    # world-shattering paradox, raise an exception.
         raise BeartypeDecorHintPepSignException(
-            f'PEP 484 type hint {repr(hint)} '
-            f'representation "{sign_name}" not prefixed by "typing.".'
+            f'Type hint {repr(hint)} representation "{sign_name}" not '
+            f'prefixed by "typing." or "typing_extensions.".'
         )
 
     # Strip the now-harmful "typing." prefix from this representation.
@@ -776,7 +793,7 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     '''
     Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
     originally listed as superclasses prior to their implicit type erasure
-    under `PEP 560`_) of the passed PEP-compliant **generic** (i.e., class
+    under :pep:`560`) of the passed PEP-compliant **generic** (i.e., class
     superficially subclassing at least one non-class PEP-compliant object) if
     this object is a generic *or* raise an exception otherwise (i.e., if this
     object is either not a class *or* is a class subclassing no non-class
@@ -806,16 +823,16 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
 
     Motivation
     ----------
-    `PEP 560`_ (i.e., "Core support for typing module and generic types)
+    :pep:`560` (i.e., "Core support for typing module and generic types)
     formalizes the ``__orig_bases__`` dunder attribute first informally
-    introduced by the :mod:`typing` module's implementation of `PEP 484`_.
-    Naturally, `PEP 560`_ remains as unusable as `PEP 484`_ itself. Ideally,
-    `PEP 560`_ would have generalized the core intention of preserving each
+    introduced by the :mod:`typing` module's implementation of :pep:`484`.
+    Naturally, :pep:`560` remains as unusable as :pep:`484` itself. Ideally,
+    :pep:`560` would have generalized the core intention of preserving each
     original user-specified subclass tuple of superclasses as a full-blown
     ``__orig_mro__`` dunder attribute listing the original method resolution
     order (MRO) of that subclass had that tuple *not* been modified.
 
-    Naturally, `PEP 560`_ did no such thing. The original MRO remains
+    Naturally, :pep:`560` did no such thing. The original MRO remains
     obfuscated and effectively inaccessible. While computing that MRO would
     technically be feasible, doing so would also be highly non-trivial,
     expensive, and fragile. Instead, this function retrieves *only* the tuple
@@ -823,15 +840,15 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     originally attempted (but failed) to subclass.
 
     You are probably now agitatedly cogitating to yourself in the darkness:
-    "But @leycec: what do you mean `PEP 560`_? Wasn't `PEP 560`_ released
-    *after* `PEP 484`_? Surely no public API defined by the Python stdlib would
+    "But @leycec: what do you mean :pep:`560`? Wasn't :pep:`560` released
+    *after* :pep:`484`? Surely no public API defined by the Python stdlib would
     be so malicious as to silently alter the tuple of base classes listed by a
     user-defined subclass?"
 
     As we've established both above and elsewhere throughout the codebase,
-    everything developed for `PEP 484` -- including `PEP 560`_, which derives
-    its entire raison d'etre from `PEP 484`_ -- are fundamentally insane. In
-    this case, `PEP 484`_ is insane by subjecting parametrized :mod:`typing`
+    everything developed for `PEP 484` -- including :pep:`560`, which derives
+    its entire raison d'etre from :pep:`484` -- are fundamentally insane. In
+    this case, :pep:`484` is insane by subjecting parametrized :mod:`typing`
     types employed as base classes to "type erasure," because:
 
          ...it is common practice in languages with generics (e.g. Java,
@@ -883,7 +900,7 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     the generally useless ``__mro__`` dunder tuple. Note, however, that the
     latter *is* still occasionally useful and thus occasionally returned by
     this getter. For inexplicable reasons, **single-inherited protocols**
-    (i.e., classes directly subclassing *only* the `PEP 544`_-compliant
+    (i.e., classes directly subclassing *only* the :pep:`544`-compliant
     :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to
     type erasure and thus constitute a notable exception to this heuristic:
 
@@ -894,7 +911,8 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
         >>> UserDefinedProtocol.__mro__
         (__main__.UserDefinedProtocol, typing.Protocol, typing.Generic, object)
         >>> UserDefinedProtocol.__orig_bases__
-        AttributeError: type object 'UserDefinedProtocol' has no attribute '__orig_bases__'
+        AttributeError: type object 'UserDefinedProtocol' has no attribute
+        '__orig_bases__'
 
     Welcome to :mod:`typing` hell, where even :mod:`typing` types lie broken
     and misshapen on the killing floor of overzealous theory-crafting purists.
@@ -936,13 +954,6 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
          collections.abc.Container,
          typing.Generic,
          object)
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 560:
-       https://www.python.org/dev/peps/pep-0560
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
     '''
 
     # Tuple of either...

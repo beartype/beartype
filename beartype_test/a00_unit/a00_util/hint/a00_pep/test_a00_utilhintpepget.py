@@ -27,7 +27,8 @@ def test_get_hint_pep_sign_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
 
     # Assert this getter returns the expected unsubscripted "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.

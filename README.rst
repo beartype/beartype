@@ -591,18 +591,18 @@ non-trivial combinations of nested type hints compliant with different PEPs:
 
    from beartype import beartype
    from collections.abc import Sequence
-   from numpy import dtype, empty_like, ndarray
    from typing import Optional, Union
+   import numpy as np 
 
    @beartype
    def empty_like_bear(
        prototype: object,
-       dtype: Optional[dtype] = None,
+       dtype: Optional[np.dtype] = None,
        order: str = 'K',
        subok: bool = True,
        shape: Optional[Union[int, Sequence[int]]] = None,
-   ) -> ndarray:
-       return empty_like(prototype, dtype, order, subok, shape)
+   ) -> np.ndarray:
+       return np.empty_like(prototype, dtype, order, subok, shape)
 
 Note the non-trivial hint for the optional ``shape`` parameter, synthesized
 from a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP
@@ -692,7 +692,7 @@ hints with compact two-line **beartype validators:**
 
    # Type hint matching any two-dimensional NumPy array of floats of arbitrary
    # precision. Yup. That's a beartype validator, folks!
-   Numpy2DFloatArray = Annotated[ndarray, Is[lambda array:
+   Numpy2DFloatArray = Annotated[np.ndarray, Is[lambda array:
        array.ndim == 2 and np.issubdtype(array.dtype, np.floating)]]
 
    # Annotate @beartype-decorated callables with beartype validators.
@@ -1059,7 +1059,7 @@ the functional validator in that example:
    # Type hint matching only two-dimensional NumPy arrays of floats of
    # arbitrary precision. This time, do it faster than anyone has ever
    # type-checked NumPy arrays before. (Cue sonic boom, Chuck Yeager.)
-   Numpy2DFloatArray = Annotated[ndarray,
+   Numpy2DFloatArray = Annotated[np.ndarray,
        IsAttr['ndim', IsEqual[2]] &
        IsAttr['dtype',
            IsAttr['type', IsEqual[np.float32] | IsEqual[np.float64]]]
@@ -1153,7 +1153,7 @@ validators mean you no longer have to accept the QA scraps we feed you:
    from typing import Annotated
 
    # Type hint matching all integers in a list of integers in O(n) time. Please
-   # never do this. You want to now, don't you? Why? You know the price! Why?!?
+   # never do this. You now want to, don't you? Why? You know the price! Why?!?
    IntList = Annotated[list[int], Is[lambda lst: all(
        isinstance(item, int) for item in lst)]]
 
@@ -1387,7 +1387,7 @@ Let's type-check like `greased lightning`_:
        def __new__(cls, *args: str) -> Tuple[str, ...]:
            return tuple.__new__(cls, args)
 
-   # ..................{              VALIDATORS            }..................
+   # ..................{             VALIDATORS             }..................
    # Import PEP 593-compliant beartype-specific type hints validating arbitrary
    # caller constraints. Note this requires Python ≥ 3.9 and beartype ≥ 0.7.0.
    from beartype.vale import Is, IsAttr, IsEqual

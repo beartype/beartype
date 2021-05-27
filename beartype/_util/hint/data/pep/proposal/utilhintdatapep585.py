@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype `PEP 585`_**-compliant type hint data.**
+**Beartype :pep:`585`**-compliant type hint data.**
 
 This private submodule is *not* intended for importation by downstream callers.
 
@@ -24,61 +24,46 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 HINT_PEP585_TUPLE_EMPTY = (
     tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota())  # type: ignore[misc]
 '''
-`PEP 585`_-compliant empty fixed-length tuple type hint if the active Python
-interpreter supports at least Python 3.9 and thus `PEP 585`_ *or* a unique
+:pep:`585`-compliant empty fixed-length tuple type hint if the active Python
+interpreter supports at least Python 3.9 and thus :pep:`585` *or* a unique
 placeholder object otherwise to guarantee failure when comparing arbitrary
 objects against this object via equality tests.
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 # ....................{ SETS ~ sign                       }....................
 HINT_PEP585_SIGNS_SUPPORTED_DEEP: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all `PEP 585`_-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying `PEP 585`_-compliant type hints for
+Frozen set of all :pep:`585`-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`585`-compliant type hints for
 which the :func:`beartype.beartype` decorator generates deep type-checking
 code).
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 
 HINT_PEP585_SIGNS_TYPE: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all `PEP 585`_-compliant **standard class signs** (i.e.,
+Frozen set of all :pep:`585`-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
 type hints).
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 # ....................{ SETS ~ sign : category            }....................
 HINT_PEP585_SIGNS_SEQUENCE_STANDARD: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all `PEP 585`_-compliant **standard sequence signs** (i.e.,
-arbitrary objects uniquely identifying `PEP 585`_-compliant type hints
+Frozen set of all :pep:`585`-compliant **standard sequence signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`585`-compliant type hints
 accepting exactly one subscripted type hint argument constraining *all* items
 of compliant sequences, which necessarily satisfy the
 :class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
 across all sequence items).
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 
 HINT_PEP585_SIGNS_TUPLE: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all `PEP 585`_-compliant **tuple signs** (i.e., arbitrary objects
-uniquely identifying `PEP 585`_-compliant type hints accepting exactly one
+Frozen set of all :pep:`585`-compliant **tuple signs** (i.e., arbitrary objects
+uniquely identifying :pep:`585`-compliant type hints accepting exactly one
 subscripted type hint argument constraining *all* items of compliant tuples).
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 # ....................{ INITIALIZERS                      }....................

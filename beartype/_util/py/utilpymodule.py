@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import importlib
 from beartype.roar._roarexc import _BeartypeUtilModuleException
+from sys import modules as sys_modules
 from types import ModuleType
 from typing import Any, Optional, Type
 
@@ -102,6 +103,55 @@ def die_unless_module_attr_name(
         )
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
+
+# ....................{ TESTERS                           }....................
+def is_module(module_name: str) -> bool:
+    '''
+    ``True`` only if the module, package, or C extension with the passed
+    fully-qualified name is importable under the active Python interpreter.
+
+    Caveats
+    ----------
+    **This tester dynamically imports this module as an unavoidable side effect
+    of performing this test.**
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the module to be imported.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this module is importable.
+
+    Raises
+    ----------
+    Exception
+        If a module with this name exists *but* this module is unimportable
+        due to module-scoped side effects at importation time. Since modules
+        may perform arbitrary Turing-complete logic from module scope, callers
+        should be prepared to handle *any* possible exception that might arise.
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+
+    # If this module has already been imported, return true.
+    if module_name in sys_modules:
+        return True
+    # Else, this module has yet to be imported.
+
+    # Attempt to...
+    try:
+        # Dynamically import this module.
+        importlib.import_module(module_name)
+
+        # Return true, since this importation succeeded.
+        return True
+    # If no module this this name exists, return false.
+    except ModuleNotFoundError:
+        return False
+    # If any other exception was raised, silently permit that exception to
+    # unwind the call stack.
 
 # ....................{ GETTERS ~ object : name           }....................
 def get_object_module_name(obj: object) -> str:
