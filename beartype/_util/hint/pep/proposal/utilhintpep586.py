@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype._cave._cavefast import EnumMemberType, NoneType
-from beartype._util.hint.data.pep.utilhintdatapepsign import (
+from beartype._util.hint.data.pep.utilhintdatapepattr import (
     HINT_PEP586_SIGN_LITERAL)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from typing import Any

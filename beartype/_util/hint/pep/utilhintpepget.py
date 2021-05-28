@@ -24,6 +24,8 @@ from beartype._util.hint.data.pep.utilhintdatapep import (
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
+from beartype._util.lib.utilliboptional import (
+    IS_LIB_TYPING_EXTENSIONS)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -39,6 +41,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin,
     is_hint_pep585_generic,
 )
+from beartype._util.py.utilpymodule import import_module
 from typing import Any, Generic, NewType, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
@@ -551,59 +554,47 @@ def get_hint_pep_sign(hint: Any) -> object:
     # Ergo, this string is effectively the *ONLY* sane means of deciding which
     # broad category of behaviour an arbitrary PEP 484-compliant type hint
     # conforms to.
-    sign_name = repr(hint)
+    hint_name = repr(hint)
 
-    # If this representation is prefixed by neither...
+    # Split this representation on the first "." into:
+    # * "hint_module_name", the unqualified name of the module declaring this
+    #   hint.
+    # * "sign_name", the unqualified name of the possibly subscripted attribute
+    #   of this module defining this hint.
+    hint_module_name, _, hint_module_attr_name = hint_name.partition('.')
+
+    # If neither...
     if not (
-        # "typing" (i.e., Python's official typing module in the sdlib)
-        # *NOR*...
-        sign_name.startswith('typing.')
-
-        #FIXME: Uncomment these two tests *AFTER* we've defined a new
-        #"beartype._util.lib.utilliboptional.IS_LIB_TYPING_EXTENSIONS" global
-        #boolean defined as follows:
-        #    from beartype._util.py.utilpymodule import is_module
-        #
-        #    IS_LIB_TYPING_EXTENSIONS = is_module('typing_extensions)
-
-        # sign_name.startswith('typing.') or
-        # # "typing_extensions" (i.e., a third-party quasi-official typing module
-        # # backporting "typing" hints introduced in newer Python versions to
-        # # older Python versions)...
-        # (
-        #     IS_LIB_TYPING_EXTENSIONS and
-        #     sign_name.startswith('typing_extensions.')
-        # )
+        # This module is "typing" (i.e., the official typing module bundled
+        # with the Python stdlib) *NOR*...
+        hint_module_name == 'typing' or (
+            # The third-party "typing_extensions" module (i.e., a third-party
+            # quasi-official typing module backporting "typing" hints
+            # introduced in newer Python versions to older Python versions) is
+            # importable under the active Python interpreter *AND*...
+            IS_LIB_TYPING_EXTENSIONS and
+            # This module is "typing_extensions"...
+            hint_module_name == 'typing_extensions.'
+        )
     ):
     # Then this hint originates from neither the "typing" nor
     # "typing_extensions" modules and is thus *NOT* PEP-compliant. But by the
     # validation above, this hint is PEP-compliant. Since this invokes a
     # world-shattering paradox, raise an exception.
         raise BeartypeDecorHintPepSignException(
-            f'Type hint {repr(hint)} representation "{sign_name}" not '
+            f'Type hint {repr(hint)} representation "{hint_name}" not '
             f'prefixed by "typing." or "typing_extensions.".'
         )
 
-    # Strip the now-harmful "typing." prefix from this representation.
-    # Preserving this prefix would raise an "AttributeError" exception from
-    # the subsequent call to the getattr() builtin.
-    sign_name = sign_name[7:]  # hardcode us up the bomb
+    #FIXME: Probably faster to just call:
+    #    sign_name, _, _ =  sign_name.partition('[')
 
-    # 0-based index of the first "[" delimiter in this representation if
-    # any *OR* -1 otherwise.
-    sign_name_bracket_index = sign_name.find('[')
-
-    # If this representation contains such a delimiter, this is a subscripted
-    # type hint. In this case, reduce this representation to its unsubscripted
-    # form by truncating the suffixing parametrization from this representation
-    # (e.g., from "typing.Union[str, typing.Sequence[int]]" to merely
-    # "typing.Union").
-    #
-    # Note that this is the common case and thus explicitly tested first.
-    if sign_name_bracket_index > 0:
-        sign_name = sign_name[:sign_name_bracket_index]
-    # Else, this representation contains no such delimiter and is thus already
-    # unsubscripted. In this case, preserve this representation as is.
+    # Unqualified name of this unsubscripted attribute. Specifically, if the
+    # unqualified name of this possibly subscripted attribute was:
+    # * Already unsubscripted (e.g., "List"), this is the same name unmodified.
+    # * Subscripted (e.g., "List[str]"), this is the prefix of that name
+    #   preceding the first "[" delimiter in that name.
+    sign_name, _, _ = hint_module_attr_name.partition('[')
 
     # If this name erroneously refers to a non-existing "typing" attribute,
     # rewrite this name to refer to the actual existing "typing" attribute
@@ -612,18 +603,25 @@ def get_hint_pep_sign(hint: Any) -> object:
     # "typing.ContextManager" attribute).
     sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
 
-    # "typing" attribute with this name if any *OR* "None" otherwise.
-    sign = getattr(typing, sign_name, None)
+    # Module declaring this unsubscripted attribute if importable *OR* raise
+    # an exception otherwise (i.e., if this module is unimportable).
+    hint_module = import_module(
+        module_name=hint_module_name,
+        exception_cls=BeartypeDecorHintPepSignException,
+    )
 
-    # If this "typing" attribute does *NOT* exist...
+    # Unsubscripted attribute with this name declared by this module if any
+    # *OR* "None" otherwise.
+    sign = getattr(hint_module, sign_name, None)
+
+    # If this module declares *NO* such attribute, raise an exception.
     if sign is None:
         raise BeartypeDecorHintPepSignException(
-            f'PEP 484 type hint {repr(hint)} '
-            f'attribute "typing.{sign_name}" not found.'
+            f'Type hint {repr(hint)} attribute "typing.{sign_name}" not found.'
         )
-    # Else, this "typing" attribute exists.
+    # Else, this module declares this attribute.
 
-    # Return this "typing" attribute.
+    # Return this attribute.
     return sign
 
 # ....................{ GETTERS ~ type : generic          }....................

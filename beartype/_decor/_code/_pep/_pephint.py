@@ -105,7 +105,7 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
-from beartype._util.hint.data.pep.utilhintdatapepsign import (
+from beartype._util.hint.data.pep.utilhintdatapepattr import (
     HINT_PEP586_SIGN_LITERAL,
     HINT_PEP593_SIGN_ANNOTATED,
 )

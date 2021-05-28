@@ -34,7 +34,7 @@ def test_raise_pep_call_exception() -> None:
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._decor._error.errormain import (
         raise_pep_call_exception)
-    from beartype._util.hint.data.pep.utilhintdatapepsign import (
+    from beartype._util.hint.data.pep.utilhintdatapepattr import (
         HINT_PEP_SIGN_LIST,
         HINT_PEP_SIGN_TUPLE,
     )
