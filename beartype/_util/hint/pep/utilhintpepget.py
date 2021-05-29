@@ -19,18 +19,12 @@ from beartype.roar import (
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.utilhintdatapep import (
+    HINT_PEP_MODULE_NAMES,
     HINT_PEP_SIGNS_TYPE,
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
-from beartype._util.lib.utilliboptional import (
-    IS_LIB_TYPING_EXTENSIONS)
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_3_6,
-    IS_PYTHON_AT_LEAST_3_7,
-    IS_PYTHON_AT_LEAST_3_9,
-)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype,
@@ -42,6 +36,11 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_generic,
 )
 from beartype._util.py.utilpymodule import import_module
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_6,
+    IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_AT_LEAST_3_9,
+)
 from typing import Any, Generic, NewType, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
@@ -563,31 +562,17 @@ def get_hint_pep_sign(hint: Any) -> object:
     #   of this module defining this hint.
     hint_module_name, _, hint_module_attr_name = hint_name.partition('.')
 
-    # If neither...
-    if not (
-        # This module is "typing" (i.e., the official typing module bundled
-        # with the Python stdlib) *NOR*...
-        hint_module_name == 'typing' or (
-            # The third-party "typing_extensions" module (i.e., a third-party
-            # quasi-official typing module backporting "typing" hints
-            # introduced in newer Python versions to older Python versions) is
-            # importable under the active Python interpreter *AND*...
-            IS_LIB_TYPING_EXTENSIONS and
-            # This module is "typing_extensions"...
-            hint_module_name == 'typing_extensions.'
-        )
-    ):
-    # Then this hint originates from neither the "typing" nor
-    # "typing_extensions" modules and is thus *NOT* PEP-compliant. But by the
-    # validation above, this hint is PEP-compliant. Since this invokes a
-    # world-shattering paradox, raise an exception.
+    # If the name of this module is *NOT* that of a well-known hinting module
+    # (i.e., module declaring attributes usable for creating PEP-compliant
+    # type hints accepted by both static and runtime type checkers), this hint
+    # does *NOT* originate from such a module and is thus by definition *NOT*
+    # PEP-compliant. But by the validation above, this hint is PEP-compliant.
+    # Since this invokes a world-shattering paradox, raise an exception.
+    if hint_module_name not in HINT_PEP_MODULE_NAMES:
         raise BeartypeDecorHintPepSignException(
             f'Type hint {repr(hint)} representation "{hint_name}" not '
             f'prefixed by "typing." or "typing_extensions.".'
         )
-
-    #FIXME: Probably faster to just call:
-    #    sign_name, _, _ =  sign_name.partition('[')
 
     # Unqualified name of this unsubscripted attribute. Specifically, if the
     # unqualified name of this possibly subscripted attribute was:
@@ -596,12 +581,40 @@ def get_hint_pep_sign(hint: Any) -> object:
     #   preceding the first "[" delimiter in that name.
     sign_name, _, _ = hint_module_attr_name.partition('[')
 
+    #FIXME: Under Python >= 3.9, we also need to map from "collections.abc.Set"
+    #to "AbstractSet" for disambiguity with "Set" (which represents the builtin
+    #"set" type). Trivial, but let's not forget!
+    #FIXME: Explicitly test "typing.AbstractSet", "collections.abc.Set", and
+    #the builtin "set" support to ensure we get this right, folks.
+
     # If this name erroneously refers to a non-existing "typing" attribute,
     # rewrite this name to refer to the actual existing "typing" attribute
     # corresponding to this sign (e.g., from the non-existing
     # "typing.AbstractContextManager" attribute to the existing
     # "typing.ContextManager" attribute).
     sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
+
+    #FIXME: Refactor as follows:
+    #* Define a new global dictionary constant in "utilhintdatapep" like:
+    #     from beartype._util.hint.data.pep import utilhintdatapepsign
+    #     HINT_PEP_SIGN_NAME_TO_SIGN = utilhintdatapepsign.__dict__
+    #     del HINT_PEP_SIGN_NAME_TO_SIGN[Iota]
+    #* Reduce the following to simply:
+    #     from beartype._util.hint.data.pep import utilhintdatapepsign
+    #
+    #     # Unsubscripted attribute with this name declared by this module if any
+    #     # *OR* "None" otherwise.
+    #     sign = HINT_PEP_SIGN_NAME_TO_SIGN.get(sign_name)
+    #
+    #     # If this module declares *NO* such attribute, raise an exception.
+    #     if sign is None:
+    #         raise BeartypeDecorHintPepSignException(
+    #             f'Type hint {repr(hint)} currently unsupported by @beartype. '
+    #             f'A type-checking bear growls in sympathy with your codebase. '
+    #             f'You suddenly feel encouraged to report this to '
+    #             f'the beartype issue tracker at: {URL_ISSUES}'
+    #         )
+    #     # Else, this module declares this attribute.
 
     # Module declaring this unsubscripted attribute if importable *OR* raise
     # an exception otherwise (i.e., if this module is unimportable).

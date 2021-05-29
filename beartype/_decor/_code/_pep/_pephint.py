@@ -106,8 +106,8 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
 )
 from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.utilhintdatapepattr import (
-    HINT_PEP586_SIGN_LITERAL,
-    HINT_PEP593_SIGN_ANNOTATED,
+    HINT_PEP586_ATTR_LITERAL,
+    HINT_PEP593_ATTR_ANNOTATED,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
@@ -1557,7 +1557,7 @@ def pep_code_check_hint(
             # beartype-specific (i.e., metahint whose second argument is an
             # instance of the "beartype._vale._valesub._SubscriptedIs" class
             # produced by subscripting the "Is" class). In this case...
-            elif hint_curr_sign is HINT_PEP593_SIGN_ANNOTATED:
+            elif hint_curr_sign is HINT_PEP593_ATTR_ANNOTATED:
                 # PEP-compliant type hint annotated by this metahint, localized
                 # to the "hint_child" local variable to satisfy the public API
                 # of the _enqueue_hint_child() closure called below.
@@ -1880,7 +1880,7 @@ def pep_code_check_hint(
             # objects that are instances of only *SIX* possible types, which is
             # sufficiently limiting as to render this singleton patently absurd
             # and a farce that we weep to even implement. In this case...
-            elif hint_curr_sign is HINT_PEP586_SIGN_LITERAL:
+            elif hint_curr_sign is HINT_PEP586_ATTR_LITERAL:
                 # If this hint does *NOT* comply with PEP 586 despite being a
                 # "typing.Literal" subscription, raise an exception. *sigh*
                 die_unless_hint_pep586(hint_curr)

@@ -305,4 +305,3 @@ def make_func(
 #
 #     # Return this copy.
 #     return func_copy
-

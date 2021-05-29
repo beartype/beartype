@@ -35,17 +35,17 @@ def test_raise_pep_call_exception() -> None:
     from beartype._decor._error.errormain import (
         raise_pep_call_exception)
     from beartype._util.hint.data.pep.utilhintdatapepattr import (
-        HINT_PEP_SIGN_LIST,
-        HINT_PEP_SIGN_TUPLE,
+        HINT_PEP_ATTR_LIST,
+        HINT_PEP_ATTR_TUPLE,
     )
     from typing import Union
 
     def forest_unknown(
-        secret_orchard: HINT_PEP_SIGN_LIST[str],
+        secret_orchard: HINT_PEP_ATTR_LIST[str],
         achromatic_voice,
         to_bid_you_farewell: str,
         amaranth_symbol: 42,
-    ) -> Union[int, HINT_PEP_SIGN_TUPLE[str, ...]]:
+    ) -> Union[int, HINT_PEP_ATTR_TUPLE[str, ...]]:
         return achromatic_voice
 
     # Assert this function raises the expected exception when passed a

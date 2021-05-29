@@ -35,9 +35,33 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep586 import (
     HINT_PEP586_SIGNS_SUPPORTED_DEEP)
 from beartype._util.hint.data.pep.proposal.utilhintdatapep593 import (
     HINT_PEP593_SIGNS_SUPPORTED_DEEP)
+from beartype._util.lib.utilliboptional import (
+    IS_LIB_TYPING_EXTENSIONS)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ MODULES                           }....................
+HINT_PEP_MODULE_NAMES = frozenset(
+    (
+        # Name of the official typing module bundled with the Python stdlib.
+        'typing',
+    ) + (
+        # If the third-party "typing_extensions" module backporting "typing"
+        # hints introduced in newer Python versions to older Python versions is
+        # importable under the active Python interpreter, a 1-tuple of the name
+        # of that module;
+        ('typing_extensions',)
+        if IS_LIB_TYPING_EXTENSIONS else
+        # Else, the empty tuple.
+        ()
+    )
+)
+'''
+Frozen set of the unqualified names of all top-level **hinting modules** (i.e.,
+modules declaring attributes usable for creating PEP-compliant type hints
+accepted by both static and runtime type checkers).
+'''
 
 # ....................{ SIGNS                             }....................
 HINT_PEP_SIGNS_DEPRECATED = (
@@ -65,7 +89,7 @@ See Also
     Further commentary.
 '''
 
-# ....................{ SETS ~ category                   }....................
+# ....................{ SIGNS ~ category                  }....................
 HINT_PEP_SIGNS_SEQUENCE_STANDARD = (
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD |
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD
@@ -117,7 +141,7 @@ PEP-compliant type hints accepting exactly one subscripted type hint argument
 constraining *all* items of compliant tuples).
 '''
 
-# ....................{ SETS ~ supported                  }....................
+# ....................{ SIGNS ~ supported                 }....................
 HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
     HINT_PEP484_SIGNS_SUPPORTED_SHALLOW
 )
@@ -148,7 +172,7 @@ generating code deeply type-checking the current pith against the PEP-compliant
 type hint annotated by a subscription of that attribute.
 '''
 
-# ....................{ SETS ~ type                       }....................
+# ....................{ SIGNS ~ type                      }....................
 HINT_PEP_SIGNS_TYPE = (
     HINT_PEP484_SIGNS_TYPE |
     HINT_PEP585_SIGNS_TYPE
@@ -180,7 +204,7 @@ this dictionary are shallowly type-checkable from wrapper functions generated
 by the :func:`beartype.beartype` decorator.
 '''
 
-# ....................{ SETS ~ supported : all            }....................
+# ....................{ SIGNS ~ supported : all           }....................
 HINT_PEP_SIGNS_SUPPORTED = (
     # Set of all deeply supported signs.
     HINT_PEP_SIGNS_SUPPORTED_DEEP |

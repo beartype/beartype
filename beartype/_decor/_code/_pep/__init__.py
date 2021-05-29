@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                              }....................
-#FIXME: Add support for Python 3.10 and thus:
+#FIXME: Add support for Python 3.10-specific PEPs and thus:
 #* PEP 604-compliance (e.g., "def square(number: int | float): pass"). Note
 #  PEP 604 thankfully preserves backward compatibility with "typing.Union":
 #      The existing typing.Union and | syntax should be equivalent.
@@ -27,6 +27,20 @@
 #  singletons are actually a new unique category of callable-specific type
 #  variables. See also:
 #  https://www.python.org/dev/peps/pep-0612
+#* PEP 647-compliance. PEP 647 introduces a silly new subscriptable
+#  "typing.TypeGuard" attribute. With respect to runtime type-checking, *ALL*
+#  "typing.TypeGuard" subscriptions unconditionally reduce to "bool": e.g.,
+#      from typing import TypeGuard, Union
+#
+#      # This...
+#      def muh_func(muh_param: object) -> TypeGuard[str]:
+#          return isinstance(muh_param, str)  # <-- gods help us
+#
+#      # This conveys the exact same runtime semantics as this.
+#      def muh_func(muh_param: object) -> bool:
+#          return isinstance(muh_param, str)  # <-- gods help us
+#  Lastly, note that (much like "typing.NoReturn") "typing.TypeGuard"
+#  subscriptions are *ONLY* usable as return annotations. Raise exceptions, yo.
 
 #FIXME: Resurrect memoization support. To do so, we'll probably need to
 #abandon the @callable_cached decorator employed below in favour of a manually

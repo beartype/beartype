@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._util.hint.data.pep.utilhintdatapepattr import (
-    HINT_PEP586_SIGN_LITERAL)
+    HINT_PEP586_ATTR_LITERAL)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from typing import Any
 
@@ -81,7 +81,7 @@ def die_unless_hint_pep586(hint: Any) -> None:
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
 
     # If this hint is *NOT* PEP 586-compliant, raise an exception.
-    if get_hint_pep_sign(hint) is not HINT_PEP586_SIGN_LITERAL:
+    if get_hint_pep_sign(hint) is not HINT_PEP586_ATTR_LITERAL:
         raise BeartypeDecorHintPep586Exception(
             f'PEP 586 type hint {repr(hint)} not "typing.Literal".')
     # Else, this hint is PEP 586-compliant.

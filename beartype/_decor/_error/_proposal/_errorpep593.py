@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.data.pep.utilhintdatapepattr import (
-    HINT_PEP593_SIGN_ANNOTATED)
+    HINT_PEP593_ATTR_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -46,7 +46,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HINT_PEP593_SIGN_ANNOTATED, (
+    assert sleuth.hint_sign is HINT_PEP593_ATTR_ANNOTATED, (
         f'{repr(sleuth.hint_sign)} not annotated.')
 
     # PEP-compliant type hint annotated by this metahint.

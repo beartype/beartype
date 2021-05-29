@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.hint.data.pep.utilhintdatapepattr import (
-    HINT_PEP593_SIGN_ANNOTATED)
+    HINT_PEP593_ATTR_ANNOTATED)
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -125,7 +125,7 @@ def is_hint_pep593_ignorable_or_none(
         # hint annotated by this hint hint is ignorable (e.g., the "Any" in
         # "Annotated[Any, 50, False]").
         is_hint_ignorable(get_hint_pep593_metahint(hint))
-        if hint_sign is HINT_PEP593_SIGN_ANNOTATED else
+        if hint_sign is HINT_PEP593_ATTR_ANNOTATED else
         # Else, "None".
         None
     )

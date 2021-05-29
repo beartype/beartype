@@ -64,6 +64,10 @@ Human-readable name of the license this package is licensed under.
 # ....................{ PYTHON ~ version                  }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this section *MUST* be synchronized with:
+# * Signs declared by the private
+#   "beartype._util.hint.data.pep.utilhintdatapepsign" submodule, which *MUST*
+#   be synchronized against the "__all__" dunder list global of the "typing"
+#   module bundled with the most recent CPython release.
 # * Continuous integration test matrices, including:
 #   * The top-level "tox.ini" file.
 #   * The "jobs/tests/strategy/matrix/python-version" subkey of the
