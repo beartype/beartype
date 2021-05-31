@@ -11,10 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.data.pep.utilhintdatapep import (
+from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_IGNORABLE,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
 )
 

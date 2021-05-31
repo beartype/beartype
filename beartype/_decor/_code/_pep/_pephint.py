@@ -94,18 +94,18 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_type,
     add_func_scope_types,
 )
-from beartype._util.hint.data.pep.utilhintdatapep import (
+from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.data.utilhintdata import HINTS_IGNORABLE_SHALLOW
-from beartype._util.hint.data.pep.utilhintdatapepattr import (
+from beartype._util.hint.data.datahint import HINTS_IGNORABLE_SHALLOW
+from beartype._util.hint.data.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL,
     HINT_PEP593_ATTR_ANNOTATED,
 )
@@ -1045,7 +1045,7 @@ def pep_code_check_hint(
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.errormain" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.data.pep.utilhintdatapep.HINT_PEP_SIGNS_SUPPORTED_DEEP"
+            # * "beartype._util.hint.data.pep.datapep.HINT_PEP_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all supported unsubscripted "typing" attributes
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

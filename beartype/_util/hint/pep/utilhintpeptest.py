@@ -20,15 +20,15 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.data.pep.utilhintdatapep import (
+from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_DEPRECATED,
     HINT_PEP_SIGNS_SUPPORTED,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
     HINT_PEP484_TUPLE_EMPTY,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
+from beartype._util.hint.data.pep.proposal.datapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
@@ -753,7 +753,7 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
     '''
-    # from beartype._util.hint.data.pep.utilhintdatapep import (
+    # from beartype._util.hint.data.pep.datapep import (
     #     HINT_PEP_SIGNS_SUPPORTED_DEEP)
     # print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
     # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')

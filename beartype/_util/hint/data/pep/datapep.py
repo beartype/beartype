@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_DEPRECATED,
     HINT_PEP484_SIGNS_IGNORABLE,
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD,
@@ -21,19 +21,19 @@ from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
     HINT_PEP484_SIGNS_TYPE,
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep544 import (
+from beartype._util.hint.data.pep.proposal.datapep544 import (
     HINT_PEP544_SIGNS_IGNORABLE,
     HINT_PEP544_SIGNS_SUPPORTED_DEEP,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep585 import (
+from beartype._util.hint.data.pep.proposal.datapep585 import (
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP585_SIGNS_SUPPORTED_DEEP,
     HINT_PEP585_SIGNS_TUPLE,
     HINT_PEP585_SIGNS_TYPE,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep586 import (
+from beartype._util.hint.data.pep.proposal.datapep586 import (
     HINT_PEP586_SIGNS_SUPPORTED_DEEP)
-from beartype._util.hint.data.pep.proposal.utilhintdatapep593 import (
+from beartype._util.hint.data.pep.proposal.datapep593 import (
     HINT_PEP593_SIGNS_SUPPORTED_DEEP)
 from beartype._util.lib.utilliboptional import (
     IS_LIB_TYPING_EXTENSIONS)
@@ -85,7 +85,7 @@ identifying PEP-compliant type hints unconditionally ignored by the
 
 See Also
 ----------
-:attr:`beartype._util.hint.data.utilhintdata.HINTS_IGNORABLE_SHALLOW`
+:attr:`beartype._util.hint.data.datahint.HINTS_IGNORABLE_SHALLOW`
     Further commentary.
 '''
 

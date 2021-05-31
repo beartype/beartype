@@ -53,7 +53,7 @@ def test_codemain() -> None:
         # BeartypeDecorHintPepDeprecatedWarning,
     )
     from beartype._util.utilobject import is_object_context_manager
-    from beartype._util.hint.data.pep.utilhintdatapep import (
+    from beartype._util.hint.data.pep.datapep import (
         HINT_PEP_SIGNS_DEPRECATED)
     from beartype_test.a00_unit.data.hint.data_hintmeta import (
         PepHintMetadata,

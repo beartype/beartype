@@ -22,7 +22,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.hint.data.utilhintdata import (
+from beartype._util.hint.data.datahint import (
     HINT_BASES_FORWARDREF,
     HINTS_IGNORABLE_SHALLOW,
 )

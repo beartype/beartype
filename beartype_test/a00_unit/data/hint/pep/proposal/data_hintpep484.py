@@ -35,7 +35,7 @@ from beartype._cave._cavefast import (
     RegexMatchType,
     RegexCompiledType,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
@@ -1662,7 +1662,7 @@ def add_data(data_module: 'ModuleType') -> None:
         data_module.HINTS_PEP_META.extend((
             # ..............{ UNSUBSCRIPTED                     }..............
             # See the
-            # "beartype._util.hint.data.pep.utilhintdatapep.TYPING_ATTR_TO_TYPE_ORIGIN"
+            # "beartype._util.hint.data.pep.datapep.TYPING_ATTR_TO_TYPE_ORIGIN"
             # dictionary for detailed discussion.
 
             # Unsubscripted "Hashable" attribute.

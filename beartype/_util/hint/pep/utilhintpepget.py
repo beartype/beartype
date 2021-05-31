@@ -18,13 +18,15 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.data.pep.utilhintdatapep import (
+from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_MODULE_NAMES,
     HINT_PEP_SIGNS_TYPE,
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+from typing import Generic
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype,
@@ -41,7 +43,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
-from typing import Any, Generic, NewType, Optional, Tuple, TypeVar
+from typing import Any, NewType, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -288,10 +290,16 @@ get_hint_pep_typevars.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ sign                    }....................
+#FIXME: Refactor as follows *AFTER* finalizing our sign refactoring:
+# from beartype._util.hint.data.pep.sign.datapepsigncls import HintSignOrType
+# @callable_cached
+# def get_hint_pep_sign_or_cls(hint: Any) -> HintSignOrType:
+#FIXME: Test that our "testing_extensions.Annotated" support actually works.
+#FIXME: Revise us up the docstring, most of which is now obsolete.
 @callable_cached
 def get_hint_pep_sign(hint: Any) -> object:
     '''
-    **Sign** (i.e., arbitrary object) uniquely identifying the passed
+    **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
     PEP-compliant type hint if this hint is PEP-compliant *or* raise an
     exception otherwise (i.e., if this hint is *not* PEP-compliant).
 
@@ -313,10 +321,10 @@ def get_hint_pep_sign(hint: Any) -> object:
       :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
       :class:`beartype.cave.HintGenericSubscriptedType`.
     * If this hint is a **generic** (i.e., subclasses of the
-      :class:`typing.Generic` abstract base class (ABC)),
-      :class:`typing.Generic`. Note this includes :pep:`544`-compliant
-      **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
-      which implicitly subclass the :class:`typing.Generic` ABC as well.
+      :class:`typing.Generic` abstract base class (ABC)), :class:`SignGeneric`.
+      Note this includes :pep:`544`-compliant **protocols** (i.e., subclasses
+      of the :class:`typing.Protocol` ABC), which implicitly subclass the
+      :class:`typing.Generic` ABC as well.
     * If this hint is any other class declared by either the :mod:`typing`
       module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
       submodule (e.g., :class:`beartype.cave.HintGenericSubscriptedType`), that
@@ -380,7 +388,7 @@ def get_hint_pep_sign(hint: Any) -> object:
         typing.TypeVar
         >>> class Genericity(typing.Generic[T]): pass
         >>> get_hint_pep_sign(Genericity)
-        typing.Generic
+        SignGeneric
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
         >>> get_hint_pep_sign(Duplicity)
         typing.Iterable
@@ -414,13 +422,13 @@ def get_hint_pep_sign(hint: Any) -> object:
     #
     # If this hint is a PEP-compliant generic (i.e., class
     # superficially subclassing at least one non-class PEP-compliant object),
-    # return the "typing.Generic" abstract base class (ABC) generically -- get
-    # it? -- identifying PEP-compliant generics. Note that:
+    # return the "SignGeneric" object generically -- get it? -- identifying
+    # PEP-compliant generics. Note that:
     #
     # * Generics *CANNOT* be detected by the general-purpose logic performed
-    #   below, as this ABC does *NOT* define a __repr__() dunder method
-    #   returning a string prefixed by the "typing." substring. Ergo, we
-    #   necessarily detect generics with an explicit test instead.
+    #   below, as the "typing.Generic" ABC does *NOT* define a __repr__()
+    #   dunder method returning a string prefixed by the "typing." substring.
+    #   Ergo, we necessarily detect generics with an explicit test instead.
     # * *ALL* PEP 484-compliant generics and PEP 544-compliant protocols are
     #   guaranteed by the "typing" module to subclass this ABC regardless of
     #   whether those generics originally did so explicitly. How? By type
@@ -595,26 +603,72 @@ def get_hint_pep_sign(hint: Any) -> object:
     sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
 
     #FIXME: Refactor as follows:
-    #* Define a new global dictionary constant in "utilhintdatapep" like:
-    #     from beartype._util.hint.data.pep import utilhintdatapepsign
-    #     HINT_PEP_SIGN_NAME_TO_SIGN = utilhintdatapepsign.__dict__
-    #     del HINT_PEP_SIGN_NAME_TO_SIGN[Iota]
+    #* Define a new global dictionary constant in "datapep" like:
+    #     from beartype._util.hint.data.pep import datapepsign
+    #     # Either this...
+    #     HINT_PEP_SIGN_NAME_TO_SIGN = datapepsign.__dict__  # <-- wow
+    #     # Or better yet this for disambiguity.
+    #     HINT_PEP_NAME_TO_SIGN = {
+    #         f'typing.{sign_name}': sign
+    #         for sign_name, sign in datapepsign.__dict__.items()
+    #     }
+    #
+    #     if IS_LIB_TYPING_EXTENSIONS:
+    #         HINT_PEP_NAME_TO_SIGN.update({
+    #             f'typing_extensions.{sign_name}': sign
+    #             for sign_name, sign in datapepsign.__dict__.items()
+    #         })
+    #
+    #     # Then, if this is Python >= 3.9, we also need to add everything
+    #     # else in the stdlib: e.g.,
+    #     if IS_PYTHON_AT_LEAST_3_9:
+    #         HINT_PEP_NAME_TO_SIGN.update({
+    #             'collections.abc.Set': datapepsign.AbstractSet,
+    #             ...
+    #         })
     #* Reduce the following to simply:
-    #     from beartype._util.hint.data.pep import utilhintdatapepsign
+    #     from beartype._util.hint.data.pep import datapepsign
+    #
+    #     #FIXME: This suggests we can probably refactor away a bit of the
+    #     #logic above, thankfully. Namely, we just need to call
+    #     #str.partition('['). There's probably no need to parse the individual
+    #     #"hint_module_name" anymore. *sigh*
+    #     hint_pep_name = f'{hint_module_name}.{hint_module_attr_name}'
     #
     #     # Unsubscripted attribute with this name declared by this module if any
     #     # *OR* "None" otherwise.
-    #     sign = HINT_PEP_SIGN_NAME_TO_SIGN.get(sign_name)
+    #     sign = HINT_PEP_NAME_TO_SIGN.get(hint_pep_name)
     #
     #     # If this module declares *NO* such attribute, raise an exception.
     #     if sign is None:
     #         raise BeartypeDecorHintPepSignException(
     #             f'Type hint {repr(hint)} currently unsupported by @beartype. '
-    #             f'A type-checking bear growls in sympathy with your codebase. '
+    #             f'Type-checking bear growls in sympathy with your codebase. '
     #             f'You suddenly feel encouraged to report this to '
     #             f'the beartype issue tracker at: {URL_ISSUES}'
     #         )
     #     # Else, this module declares this attribute.
+    #FIXME: That suffices for PEP 484, but... pretty much *EVERYTHING* above
+    #and thus elsewhere will also need to be heavily refactored. Oh, boy. We
+    #really should have done this right the first time, shouldn't we? In
+    #particular:
+    #* PEP 585 types should now be handled by the exact same logic. But we need
+    #  to differentiate them from standard classes, will still require the same
+    #  logic as we currently have. Be cautious here.
+    #
+    #Given all of that, the safest way to approach this is follows:
+    #* Before doing anything, begin by testing generics with respect to errors.
+    #  We appear to have neglected to do that. *sigh*
+    #* Next, iteratively refactor each single "typing" attribute explicitly
+    #  mentioned above to use "datapepsign" signs instead. This means:
+    #  * Forward references.
+    #  * "Generic".
+    #  * "NewType".
+    #  * "TypeVar".
+    #  * etc.
+    #* Next, make PEP 484 and 585 happen. These need to happen at the exact
+    #  same time and will probably be quite painful, so defer this as long as
+    #  feasible, please. *THIS WILL TEMPORARILY BREAK EVERYTHING.*
 
     # Module declaring this unsubscripted attribute if importable *OR* raise
     # an exception otherwise (i.e., if this module is unimportable).
@@ -889,7 +943,7 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     Since there exists no counterpart to the :class:`typing.Generic`
     superclass, the :mod:`typing` module preserves that superclass in
     unparametrized form. Naturally, this is useless, as an unparametrized
-    :class:`typing.Generic` superclass conveys no meaningful type annotation.
+    :class:`typing.Generic` superclass conveys no meaningful type information.
     All other superclasses are reduced to their non-:mod:`typing`
     counterparts: e.g.,
 

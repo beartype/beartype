@@ -155,7 +155,7 @@ def _init() -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
-    from beartype._util.hint.data.pep.utilhintdatapepattr import (
+    from beartype._util.hint.data.pep.datapepattr import (
         HINT_PEP_ATTR_LIST)
     from typing import (
         Any,

@@ -91,12 +91,12 @@ from beartype._decor._error._proposal._errorpep586 import (
     get_cause_or_none_literal)
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
-from beartype._util.hint.data.pep.utilhintdatapep import (
+from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP_SIGNS_TUPLE,
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.utilhintdatapep484 import (
+from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
