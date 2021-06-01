@@ -64,6 +64,10 @@ accepted by both static and runtime type checkers).
 '''
 
 # ....................{ SIGNS                             }....................
+#FIXME: Rename to "HINT_PEP_ATTRS_BARE_DEPRECATED" and likewise for all
+#upstream frozen sets used to define this frozen set.
+#FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
+#rather than signs, whose meaning will now be entirely different.
 HINT_PEP_SIGNS_DEPRECATED = (
     HINT_PEP484_SIGNS_DEPRECATED
 )
@@ -74,6 +78,10 @@ more recent PEPs).
 '''
 
 
+#FIXME: Rename to "HINT_PEP_ATTRS_BARE_IGNORABLE" and likewise for all
+#upstream frozen sets used to define this frozen set.
+#FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
+#rather than signs, whose meaning will now be entirely different.
 HINT_PEP_SIGNS_IGNORABLE = (
     HINT_PEP484_SIGNS_IGNORABLE |
     HINT_PEP544_SIGNS_IGNORABLE
@@ -90,6 +98,11 @@ See Also
 '''
 
 # ....................{ SIGNS ~ category                  }....................
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
+#FIXME: Remove "HINT_PEP484_SIGNS_SEQUENCE_STANDARD" and
+#"HINT_PEP585_SIGNS_SEQUENCE_STANDARD" entirely.
 HINT_PEP_SIGNS_SEQUENCE_STANDARD = (
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD |
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD
@@ -131,6 +144,11 @@ This set intentionally excludes the:
 '''
 
 
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
+#FIXME: Remove "HINT_PEP484_SIGNS_TUPLE" and "HINT_PEP585_SIGNS_TUPLE"
+#entirely.
 HINT_PEP_SIGNS_TUPLE = (
     HINT_PEP484_SIGNS_TUPLE |
     HINT_PEP585_SIGNS_TUPLE
@@ -142,6 +160,10 @@ constraining *all* items of compliant tuples).
 '''
 
 # ....................{ SIGNS ~ supported                 }....................
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
+#FIXME: Remove "HINT_PEP484_SIGNS_SUPPORTED_SHALLOW" entirely.
 HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
     HINT_PEP484_SIGNS_SUPPORTED_SHALLOW
 )
@@ -153,6 +175,10 @@ originating from a non-:mod:`typing` origin type for which the
 '''
 
 
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
+#FIXME: Remove all upstream sets entirely.
 HINT_PEP_SIGNS_SUPPORTED_DEEP = (
     HINT_PEP484_SIGNS_SUPPORTED_DEEP |
     HINT_PEP544_SIGNS_SUPPORTED_DEEP |
@@ -173,16 +199,28 @@ type hint annotated by a subscription of that attribute.
 '''
 
 # ....................{ SIGNS ~ type                      }....................
+#FIXME: Unclear whether this is actually useful anymore. Signs no longer have
+#anything whatsoever to do with "typing" attributes. Ergo, by definition, there
+#are *NO* such things as "instanceable class signs." Fortunately, this is only
+#ever used in one place throughout the codebase: naturally, in a single test in
+#get_hint_pep_sign(). Given that, let's initially try just commenting this out
+#entirely both here and in get_hint_pep_sign(). That will probably cause test
+#failures under Python 3.6, but we can do with that when we get that far. :p
 HINT_PEP_SIGNS_TYPE = (
     HINT_PEP484_SIGNS_TYPE |
     HINT_PEP585_SIGNS_TYPE
 )
 '''
-Frozen set of all **standard class signs** (i.e., instances of the builtin
-:mod:`type` type uniquely identifying PEP-compliant type hints).
+Frozen set of all **isinstanceable class signs** (i.e., classes uniquely
+identifying PEP-compliant type hints that are also passable as the second
+argument to the :func:`isinstance` builtin).
 '''
 
 
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
+#FIXME: Remove all upstream sets entirely.
 HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB = (
     HINT_PEP484_SIGNS_TYPE_ORIGIN |
     # Since all PEP 585-compliant type hints originate from an origin type, the
@@ -205,6 +243,9 @@ by the :func:`beartype.beartype` decorator.
 '''
 
 # ....................{ SIGNS ~ supported : all           }....................
+#FIXME: Shift this frozen set into a new
+#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#name of this frozen set should remain the same.
 HINT_PEP_SIGNS_SUPPORTED = (
     # Set of all deeply supported signs.
     HINT_PEP_SIGNS_SUPPORTED_DEEP |

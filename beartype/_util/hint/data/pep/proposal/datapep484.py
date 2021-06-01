@@ -394,7 +394,7 @@ def _init() -> None:
 
     # ..................{ SETS ~ signs                      }..................
     HINT_PEP484_SIGNS_TYPE = frozenset((
-        # The "Generic" superclass is explicitly equivalent under PEP 484 to the
+        # The "Generic" superclass is explicitly equivalent in PEP 484 to the
         # "Generic[Any]" subscription and thus valid as a standard class sign.
         Generic,
     )) | (
