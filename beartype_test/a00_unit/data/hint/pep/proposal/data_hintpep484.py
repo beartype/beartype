@@ -37,6 +37,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -545,7 +546,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single unsubscripted "typing" type.
         PepHintMetadata(
             hint=Pep484GenericUnsubscriptedSingle,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUnsubscriptedSingle,
             is_subscripted=False,
             is_type_typing=False,
@@ -571,7 +572,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single unparametrized "typing" type.
         PepHintMetadata(
             hint=Pep484GenericUntypevaredSingle,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUntypevaredSingle,
             is_subscripted=False,
             is_type_typing=False,
@@ -597,7 +598,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single parametrized "typing" type.
         PepHintMetadata(
             hint=Pep484GenericTypevaredSingle,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredSingle,
             is_typevared=True,
             is_type_typing=False,
@@ -618,7 +619,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # parametrized by the same type variables in the same order.
         PepHintMetadata(
             hint=Pep484GenericTypevaredSingle[S, T],
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredSingle,
             is_typevared=True,
             # The type of subscripted PEP 484-compliant generics is:
@@ -644,7 +645,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # non-"typing" abstract base class (ABC).
         PepHintMetadata(
             hint=Pep484GenericUntypevaredMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUntypevaredMultiple,
             is_subscripted=False,
             is_type_typing=False,
@@ -669,7 +670,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple parametrized "typing" types.
         PepHintMetadata(
             hint=Pep484GenericTypevaredShallowMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredShallowMultiple,
             is_typevared=True,
             is_type_typing=False,
@@ -692,7 +693,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # *AND* a non-"typing" abstract base class (ABC).
         PepHintMetadata(
             hint=Pep484GenericTypevaredDeepMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredDeepMultiple,
             is_typevared=True,
             is_type_typing=False,
@@ -1720,7 +1721,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # indistinguishable from PEP 585-compliant type hints.
                 PepHintMetadata(
                     hint=Pep484GenericUnsubscriptedSingle[str],
-                    pep_sign=Generic,
+                    pep_sign=HintSignGeneric,
                     generic_type=Pep484GenericUnsubscriptedSingle,
                     is_type_typing=False,
                     piths_satisfied_meta=(

@@ -100,6 +100,7 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextlabel import (
@@ -109,7 +110,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
-from typing import Generic, Optional, Type
+from typing import Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -358,7 +359,7 @@ def _init() -> None:
     # attribute to that getter.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
         HINT_PEP484_TYPE_FORWARDREF: get_cause_or_none_forwardref,
-        Generic: get_cause_or_none_generic,
+        HintSignGeneric: get_cause_or_none_generic,
     })
 
     # If the active Python interpreter targets at least Python >= 3.9...

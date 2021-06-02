@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._decor._error._errortype import (
     get_cause_or_none_type)
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
@@ -24,7 +24,8 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_generic_type_or_none)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
-from typing import Generic, Optional
+from beartype._util.hint.utilhinttest import is_hint_ignorable
+from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -46,7 +47,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is Generic, (
+    assert sleuth.hint_sign is HintSignGeneric, (
         f'{repr(sleuth.hint_sign)} not generic.')
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
@@ -54,10 +55,14 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     sleuth.hint = get_hint_pep_generic_type_or_none(sleuth.hint)
     assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
-    # If this pith is *NOT* an instance of this generic, defer to the getter
-    # handling non-"typing" classes.
-    if not isinstance(sleuth.pith, sleuth.hint):
-        return get_cause_or_none_type(sleuth)
+    # Human-readable string describing the failure of this pith to be an
+    # instance of this generic if this pith is not an instance of this generic
+    # *OR* "None" otherwise.
+    pith_cause = get_cause_or_none_type(sleuth)
+
+    # If this pith is *NOT* an instance of this generic, return this string.
+    if pith_cause is not None:
+        return pith_cause
     # Else, this pith is an instance of this generic.
 
     # For each pseudo-superclass of this generic...

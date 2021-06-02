@@ -44,6 +44,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.8-specific imports.
     import re
     from beartype._cave._cavefast import IntType
+    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
     from collections.abc import (
         ByteString,
         Callable,
@@ -58,11 +59,7 @@ def add_data(data_module: 'ModuleType') -> None:
         contextmanager,
     )
     from re import Match, Pattern
-    from typing import (
-        Any,
-        Generic,
-        TypeVar,
-    )
+    from typing import Any, TypeVar
 
     # ..................{ TYPEVARS                          }..................
     S = TypeVar('S')
@@ -403,7 +400,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single unparametrized builtin container.
         PepHintMetadata(
             hint=Pep585GenericUntypevaredSingle,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredSingle,
             is_pep585_generic=True,
             is_subscripted=False,
@@ -429,7 +426,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single parametrized builtin containerr.
         PepHintMetadata(
             hint=Pep585GenericTypevaredSingle,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevared=True,
@@ -456,7 +453,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # parametrized by the same type variables in the same order.
         PepHintMetadata(
             hint=Pep585GenericTypevaredSingle[S, T],
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevared=True,
@@ -484,7 +481,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         PepHintMetadata(
             hint=Pep585GenericUntypevaredMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredMultiple,
             is_pep585_generic=True,
             is_subscripted=False,
@@ -510,7 +507,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # base classes (ABCs).
         PepHintMetadata(
             hint=Pep585GenericTypevaredShallowMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredShallowMultiple,
             is_pep585_generic=True,
             is_typevared=True,
@@ -534,7 +531,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # unparametrized "collections.abc" ABC.
         PepHintMetadata(
             hint=Pep585GenericTypevaredDeepMultiple,
-            pep_sign=Generic,
+            pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredDeepMultiple,
             is_pep585_generic=True,
             is_typevared=True,

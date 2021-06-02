@@ -26,7 +26,6 @@ from beartype._util.hint.data.pep.datapep import (
 from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
 from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
-from typing import Generic
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype,
@@ -296,6 +295,8 @@ get_hint_pep_typevars.__doc__ = '''
 # def get_hint_pep_sign_or_cls(hint: Any) -> HintSignOrType:
 #FIXME: Test that our "testing_extensions.Annotated" support actually works.
 #FIXME: Revise us up the docstring, most of which is now obsolete.
+#FIXME: Validate that the value of the "pep_sign" parameter passed to the
+#PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
 @callable_cached
 def get_hint_pep_sign(hint: Any) -> object:
     '''
@@ -321,10 +322,10 @@ def get_hint_pep_sign(hint: Any) -> object:
       :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
       :class:`beartype.cave.HintGenericSubscriptedType`.
     * If this hint is a **generic** (i.e., subclasses of the
-      :class:`typing.Generic` abstract base class (ABC)), :class:`SignGeneric`.
-      Note this includes :pep:`544`-compliant **protocols** (i.e., subclasses
-      of the :class:`typing.Protocol` ABC), which implicitly subclass the
-      :class:`typing.Generic` ABC as well.
+      :class:`typing.Generic` abstract base class (ABC)),
+      :class:`HintSignGeneric`. Note this includes :pep:`544`-compliant
+      **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
+      which implicitly subclass the :class:`typing.Generic` ABC as well.
     * If this hint is any other class declared by either the :mod:`typing`
       module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
       submodule (e.g., :class:`beartype.cave.HintGenericSubscriptedType`), that
@@ -388,7 +389,7 @@ def get_hint_pep_sign(hint: Any) -> object:
         typing.TypeVar
         >>> class Genericity(typing.Generic[T]): pass
         >>> get_hint_pep_sign(Genericity)
-        SignGeneric
+        HintSignGeneric
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
         >>> get_hint_pep_sign(Duplicity)
         typing.Iterable
@@ -447,7 +448,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     # non-ideal, the failure of PEP 585-compliant generics to subclass a common
     # superclass leaves us with little alternative.
     elif is_hint_pep_generic(hint):
-        return Generic
+        return HintSignGeneric
     # Else, this hint is *NOT* a generic.
     #
     # If this hint is a PEP 585-compliant type hint, return the origin type

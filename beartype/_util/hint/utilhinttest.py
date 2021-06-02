@@ -205,7 +205,7 @@ def is_hint_ignorable(hint: object) -> bool:
         if hint in HINTS_IGNORABLE_SHALLOW:
             return True
         # Else, this hint is *NOT* shallowly ignorable.
-    # If this hint is unhashable, hint is *NOT* shallowly ignorable.
+    # If this hint is unhashable, this hint is *NOT* shallowly ignorable.
     except TypeError:
         pass
 

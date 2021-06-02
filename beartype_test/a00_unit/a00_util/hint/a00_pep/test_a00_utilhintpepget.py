@@ -73,11 +73,11 @@ def test_get_hint_pep_generic_type_or_none() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_generic_type_or_none)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
-    from typing import Generic
 
     # Assert this getter returns the expected type origin for all
     # PEP-compliant type hint generics. While we could support non-generics as
@@ -85,7 +85,7 @@ def test_get_hint_pep_generic_type_or_none() -> None:
     # we assert this getter only returns the expected type origin for a small
     # subset of type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        if hint_pep_meta.pep_sign is Generic:
+        if hint_pep_meta.pep_sign is HintSignGeneric:
             assert get_hint_pep_generic_type_or_none(
                 hint_pep_meta.hint) is hint_pep_meta.generic_type
 
@@ -176,18 +176,18 @@ def test_get_hint_pep_generic_bases_unerased() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
+    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilhintpepget import (
         get_hint_pep_generic_bases_unerased)
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
-    from typing import Generic
 
     # Assert this getter...
     for hint_pep_meta in HINTS_PEP_META:
         # Returns one or more unerased pseudo-superclasses for PEP-compliant
         # generics.
-        if hint_pep_meta.pep_sign is Generic:
+        if hint_pep_meta.pep_sign is HintSignGeneric:
             hint_pep_bases = get_hint_pep_generic_bases_unerased(
                 hint_pep_meta.hint)
             assert isinstance(hint_pep_bases, tuple)

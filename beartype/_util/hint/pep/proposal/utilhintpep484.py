@@ -22,6 +22,7 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
 from types import FunctionType
@@ -115,13 +116,14 @@ def is_hint_pep484_ignorable_or_none(
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_args
-    # print(f'!!!!!!!Received 484 hint: {repr(hint)} [{repr(hint_sign)}]')
+    # print(f'Testing PEP 484 hint {repr(hint)} [{repr(hint_sign)}] deep ignorability...')
 
     # If this hint is a PEP 484-compliant generic...
     #
     # Note that the "beartype._util.hint.data.pep.proposal.datapep484"
     # submodule already ignores the unsubscripted "typing.Generic" ABC itself.
-    if hint_sign is Generic:
+    if hint_sign is HintSignGeneric:
+        # print(f'Testing generic hint {repr(hint)} deep ignorability...')
         # If this generic is the "typing.Generic" superclass directly
         # parametrized by one or more type variables (e.g.,
         # "typing.Generic[T]"), return true.
@@ -131,6 +133,7 @@ def is_hint_pep484_ignorable_or_none(
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if getattr(hint, '__origin__', None) is Generic:
+            # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
             return True
         # Else, this generic is *NOT* the "typing.Generic" superclass directly
         # parametrized by one or more type variables and thus *NOT* an
@@ -140,6 +143,7 @@ def is_hint_pep484_ignorable_or_none(
         # this hint to be unignorable. Notably, the type origin originating
         # both ignorable and unignorable protocols is "Protocol" rather than
         # "Generic". Ergo, this generic could still be an ignorable protocol.
+        # print(f'Testing generic hint {repr(hint)} deep ignorability... False')
     # Else, this hint is *NOT* a generic.
     #
     # If this hint is a new type, return true only if this new type aliases an
@@ -259,7 +263,6 @@ if IS_PYTHON_AT_LEAST_3_7:
         # whether that tuple is non-empty or not in no way guarantees this
         # object to be a PEP-compliant generic.
         return is_object_subclass(hint, Generic)  # type: ignore[arg-type]
-
 # Else, the active Python interpreter targets Python 3.6.x. In this case,
 # implement this function specific to this Python version.
 else:
@@ -276,11 +279,9 @@ else:
 
         # If this hint is *NOT* a class, reduce this hint to the object
         # originating this hint if any. See the above tester for details.
-        hint = get_hint_pep_generic_type_or_none(hint)
+        hint_type = get_hint_pep_generic_type_or_none(hint)
 
-        # Return true only if this hint is a subclass *NOT* defined by the
-        # "typing" module whose class is the "typing.GenericMeta" metaclass, in
-        # which case this hint is a user-defined generic.
+        # Return true only if...
         #
         # Note that:
         # * The Python >= 3.7.0-specific implementation of this tester does
@@ -298,12 +299,21 @@ else:
         #   * *MOST* container and iterable types (e.g., "typing.Dict",
         #     "typing.List", "typing.Mapping", "typing.Tuple").
         #
-        #   If this tester returned true for *ALL* generics, downstream callers
-        #   would have no means of distinguishing genuine generics from
-        #   disingenuous "typing" pseudo-generics.
+        # If this tester returned true for *ALL* generics, downstream callers
+        # would have no means of distinguishing genuine generics from
+        # disingenuous "typing" pseudo-generics.
         return (
-            isinstance(hint, GenericMeta) and
-            not is_hint_pep_type_typing(hint)
+            # The metaclass of this hint is the "typing.GenericMeta" metaclass
+            # *AND*...
+            isinstance(hint_type, GenericMeta) and
+            # This hint is either...
+            (
+                # A parametrization of the "typing.Generic" class (e.g.,
+                # "Generic[S, T]") *OR*...
+                hint_type is Generic or
+                # A subclass *NOT* defined by the "typing" module. See above.
+                not is_hint_pep_type_typing(hint_type)
+            )
         )
 
 

@@ -29,18 +29,18 @@ def test_is_hint_pep_generic() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
-    from typing import Generic
 
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
         assert is_hint_pep_generic(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is Generic)
+            hint_pep_meta.pep_sign is HintSignGeneric)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:

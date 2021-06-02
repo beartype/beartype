@@ -15,6 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype._cave._cavefast import NoneType
+from beartype._util.hint.data.pep.sign.datapepsigns import (
+    HintSignGeneric,
+)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -249,7 +252,7 @@ hints *not* originating from a non-:mod:`typing` origin type for which the
 
 
 HINT_PEP484_SIGNS_SUPPORTED_DEEP = frozenset((
-    Generic,
+    HintSignGeneric,
     List,
     MutableSequence,
     Sequence,

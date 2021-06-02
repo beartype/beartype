@@ -625,6 +625,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
+    # print(f'Testing PEP hint {repr(hint)} deep ignorability...')
 
     #FIXME: Remove this *AFTER* properly supporting type variables. For
     #now, ignoring type variables is required ta at least shallowly support

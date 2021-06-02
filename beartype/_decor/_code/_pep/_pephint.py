@@ -94,6 +94,7 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_type,
     add_func_scope_types,
 )
+from beartype._util.hint.data.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_SUPPORTED_DEEP,
     HINT_PEP_SIGNS_SEQUENCE_STANDARD,
@@ -104,11 +105,11 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.data.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.hint.data.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL,
     HINT_PEP593_ATTR_ANNOTATED,
 )
+from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_newtype_class,
@@ -157,7 +158,7 @@ from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
-from typing import Generic, Tuple, NoReturn
+from typing import Tuple, NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -1702,7 +1703,7 @@ def pep_code_check_hint(
             # * PEP 585-compliant generic (i.e., user-defined class subclassing
             #   at least one non-class PEP 585-compliant pseudo-superclasses).
             # Then this hint is a PEP-compliant generic. In this case...
-            elif hint_curr_sign is Generic:
+            elif hint_curr_sign is HintSignGeneric:
                 #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate *ALL*
                 #child type hints subscripting a generic up to *ALL*
                 #pseudo-superclasses of that generic (e.g., the "int" child
