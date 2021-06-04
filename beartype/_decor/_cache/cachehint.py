@@ -98,8 +98,6 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
   temporarily caching hints in an LRU cache is pointless, as there are *no*
   space savings in dropping stale references to unused hints.
 
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 .. _PEP 563:
     https://www.python.org/dev/peps/pep-0563
 .. _PEP 585:
@@ -127,11 +125,11 @@ def coerce_hint_pep(
     * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
       more standard classes and forward references to standard classes):
 
-      * Coerces this tuple union into the equivalent `PEP 484`_-compliant
+      * Coerces this tuple union into the equivalent :pep:`484`-compliant
         union.
       * Replaces this tuple union in the ``__annotations__`` dunder tuple of
-        this callable with this `PEP 484`_-compliant union.
-      * Returns this `PEP 484`_-compliant union.
+        this callable with this :pep:`484`-compliant union.
+      * Returns this :pep:`484`-compliant union.
 
     * Else if this hint is already PEP-compliant, preserves and returns this
       hint unmodified as is.
@@ -171,9 +169,6 @@ def coerce_hint_pep(
 
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # If this hint is a PEP-noncompliant tuple union, coerce this union into
@@ -230,10 +225,10 @@ def cache_hint_nonpep563(
        one or more standard classes and forward references to standard
        classes), this function:
 
-       * Coerces this tuple union into the equivalent `PEP 484`_-compliant
+       * Coerces this tuple union into the equivalent :pep:`484`-compliant
          union.
        * Replaces this tuple union in the ``__annotations__`` dunder tuple of
-         this callable with this `PEP 484`_-compliant union.
+         this callable with this :pep:`484`-compliant union.
 
     #. Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
        thus unsupported by :mod:`beartype`), this function raises an exception.
@@ -255,7 +250,7 @@ def cache_hint_nonpep563(
     ------
     This function does *not* bother caching **self-cached type hints** (i.e.,
     type hints that externally cache themselves), as these hints are already
-    cached elsewhere. Self-cached type hints include most `PEP 484`_-compliant
+    cached elsewhere. Self-cached type hints include most :pep:`484`-compliant
     type hints declared by the :mod:`typing` module, which means that
     subscripting type hints declared by the :mod:`typing` module with the same
     child type hints reuses the exact same internally cached objects rather
@@ -334,8 +329,6 @@ def cache_hint_nonpep563(
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
 
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
     .. _PEP 563:
         https://www.python.org/dev/peps/pep-0563
     .. _PEP 585:

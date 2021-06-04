@@ -72,6 +72,21 @@ singleton).
 '''
 
 # ....................{ CODE ~ var                        }....................
+VAR_NAME_PREFIX_PITH = '__beartype_pith_'
+'''
+Substring prefixing all local variables providing a **pith** (i.e., either the
+current parameter or return value *or* item contained in the current parameter
+or return value being type-checked by the current call).
+'''
+
+
+VAR_NAME_PITH_ROOT = f'{VAR_NAME_PREFIX_PITH}0'
+'''
+Name of the local variable providing the **root pith** (i.e., value of the
+current parameter or return value being type-checked by the current call).
+'''
+
+
 VAR_NAME_ARGS_LEN = '__beartype_args_len'
 '''
 Name of the local variable providing the **positional argument count** (i.e.,
@@ -192,4 +207,25 @@ CODE_RETURN_UNCHECKED = f'''
 '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
+'''
+
+
+PEP484_CODE_CHECK_NORETURN = f'''
+    # Call this function with all passed parameters and localize the value
+    # returned from this call.
+    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+
+    # Since this function annotated by "typing.NoReturn" successfully returned
+    # a value rather than raising an exception or halting the active Python
+    # interpreter, unconditionally raise an exception.
+    {ARG_NAME_RAISE_EXCEPTION}(
+        func={ARG_NAME_FUNC},
+        pith_name='return',
+        pith_value={VAR_NAME_PITH_ROOT},
+    )'''
+'''
+:pep:`484`-compliant code snippet calling the decorated callable annotated by
+the :attr:`typing.NoReturn` singleton and raising an exception if this call
+successfully returned a value rather than raising an exception or halting the
+active Python interpreter.
 '''

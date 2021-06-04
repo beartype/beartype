@@ -326,34 +326,37 @@ class CauseSleuth(object):
             return None
         # Else, this hint is unignorable.
         #
-        # If *NO* sign uniquely identifies this hint, this hint is
-        # PEP-noncompliant. In this case...
+        # If *NO* sign uniquely identifies this hint, this hint is either
+        # PEP-noncompliant *OR* only contextually PEP-compliant in certain
+        # specific use cases. In either case...
         elif self.hint_sign is None:
-            # Avoid circular import dependencies.
-            from beartype._decor._error._errortype import (
-                get_cause_or_none_type,
-                get_cause_or_none_types,
-            )
+            # If this hint is a tuple union...
+            if isinstance(self.hint, tuple):
+                # Avoid circular import dependencies.
+                from beartype._decor._error._errortype import (
+                    get_cause_or_none_types)
 
-            # Defer to the getter function supporting either...
-            get_cause_or_none = (
-                # If this hint is a tuple union, tuples of one or more
-                # isinstanceable classes.
-                get_cause_or_none_types
-                if isinstance(self.hint, tuple) else
-                # Else, isinstanceable classes under the generous assumption
-                # this this hint is a type. If this is *NOT* the case, this
-                # getter will raise a human-readable exception.
-                get_cause_or_none_type
-            )
+                # Defer to the getter function specific to tuple unions.
+                get_cause_or_none = get_cause_or_none_types
+            # Else, this hint *NOT* is a tuple union. In this case, assume this
+            # hint to be an isinstanceable class. If this is *NOT* the case,
+            # the getter deferred to below raises a human-readable exception.
+            else:
+                # Avoid circular import dependencies.
+                from beartype._decor._error._errortype import (
+                    get_cause_or_none_type)
+
+                # Defer to the getter function specific to classes.
+                get_cause_or_none = get_cause_or_none_type
         # Else, this hint is PEP-compliant.
         #
         # If this PEP-compliant hint is its own unsubscripted "typing"
         # attribute (e.g., "typing.List" rather than "typing.List[str]") and is
-        # thus subscripted by *NO* child hints...
+        # thus subscripted by *NO* child hints, we assume this hint to
+        # originate from an origin type. In this case...
         elif self.hint is self.hint_sign:
-            # If this hint is the non-standard "typing.NoReturn" type hint
-            # specific to return values...
+            # If this is the PEP 484-compliant "typing.NoReturn" type hint
+            # permitted *ONLY* as a return annotation...
             if self.hint is NoReturn:
                 # Avoid circular import dependencies.
                 from beartype._decor._error._proposal._errorpep484noreturn import (
@@ -361,9 +364,9 @@ class CauseSleuth(object):
 
                 # Defer to the getter function specific to this hint.
                 get_cause_or_none = get_cause_or_none_noreturn
-            # Else, this hint is a standard PEP-compliant type hint supported
-            # by both parameters and return values. In this case, we assume
-            # this hint to originate from an origin type.
+            # Else, this hint is *NOT "typing.NoReturn". In this case, assume
+            # this is a standard PEP-compliant type hint supported by both
+            # parameters and return values originating from an origin type.
             else:
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (

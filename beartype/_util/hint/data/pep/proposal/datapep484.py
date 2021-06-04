@@ -4,12 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype `PEP 484`_**-compliant type hint data.**
+**Beartype :pep:`484`**-compliant type hint data.**
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -58,7 +55,6 @@ from typing import (
     MutableSequence,
     MutableSet,
     NewType,
-    NoReturn,
     Optional,
     Pattern,
     Reversible,
@@ -84,31 +80,22 @@ HINT_PEP484_TYPE_FORWARDREF = (
 )
 '''
 **Forward reference sign** (i.e., arbitrary objects uniquely identifying a
-`PEP 484`_-compliant type hint unifying one or more subscripted type hint
+:pep:`484`-compliant type hint unifying one or more subscripted type hint
 arguments into a disjunctive set union of these arguments).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ HINTS                             }....................
 HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 '''
-`PEP 484`_-compliant empty fixed-length tuple type hint.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
+:pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
 # ....................{ SETS ~ sign                       }....................
 HINT_PEP484_SIGNS_DEPRECATED: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all `PEP 484`_-compliant **deprecated signs** (i.e., arbitrary
-objects uniquely identifying outdated `PEP 484`_-compliant type hints that have
+Frozen set of all :pep:`484`-compliant **deprecated signs** (i.e., arbitrary
+objects uniquely identifying outdated :pep:`484`-compliant type hints that have
 since been obsoleted by more recent PEPs).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 
@@ -168,12 +155,9 @@ HINT_PEP484_SIGNS_IGNORABLE = frozenset((
     Union,
 ))
 '''
-Frozen set of all `PEP 484`_-compliant **ignorable signs** (i.e., arbitrary
-objects uniquely identifying `PEP 484`_-compliant type hints unconditionally
+Frozen set of all :pep:`484`-compliant **ignorable signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`-compliant type hints unconditionally
 ignored by the :func:`beartype.beartype` decorator).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ SETS ~ sign : category            }....................
@@ -183,33 +167,27 @@ HINT_PEP484_SIGNS_SEQUENCE_STANDARD = frozenset((
     Sequence,
 ))
 '''
-Frozen set of all `PEP 484`_-compliant **standard sequence signs** (i.e.,
-arbitrary objects uniquely identifying `PEP 484`_-compliant type hints
+Frozen set of all :pep:`484`-compliant **standard sequence signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`484`-compliant type hints
 accepting exactly one subscripted type hint argument constraining *all* items
 of compliant sequences, which necessarily satisfy the
 :class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
 across all sequence items).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 
 HINT_PEP484_SIGNS_TUPLE = frozenset((Tuple,))
 '''
-Frozen set of all `PEP 484`_-compliant **tuple signs** (i.e., arbitrary objects
-uniquely identifying `PEP 484`_-compliant type hints accepting exactly one
+Frozen set of all :pep:`484`-compliant **tuple signs** (i.e., arbitrary objects
+uniquely identifying :pep:`484`-compliant type hints accepting exactly one
 subscripted type hint argument constraining *all* items of compliant tuples).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 
 HINT_PEP484_SIGNS_UNION = frozenset((Optional, Union))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-`PEP 484`_-compliant type hints unifying one or more subscripted type hint
+:pep:`484`-compliant type hints unifying one or more subscripted type hint
 arguments into a disjunctive set union of these arguments).
 
 If the active Python interpreter targets:
@@ -222,16 +200,15 @@ If the active Python interpreter targets:
   membership are ``O(1)``, this set incurs no significant performance penalty
   versus direct usage of the :attr:`typing.Union` attribute and is thus
   unconditionally used as is irrespective of Python version.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ SETS ~ sign : supported           }....................
 HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
+    # Note that the "NoReturn" type hint is invalid in almost all possible
+    # syntactic contexts and thus intentionally omitted here. See the
+    # "datapepsigns" submodule for further commentary.
     Any,
     NewType,
-    NoReturn,
     TypeVar,
     HINT_PEP484_TYPE_FORWARDREF,
 
@@ -241,13 +218,10 @@ HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
     NoneType,
 ))
 '''
-Frozen set of all `PEP 484`_-compliant **shallowly supported non-originative
-signs** (i.e., arbitrary objects uniquely identifying `PEP 484`_-compliant type
+Frozen set of all :pep:`484`-compliant **shallowly supported non-originative
+signs** (i.e., arbitrary objects uniquely identifying :pep:`484`-compliant type
 hints *not* originating from a non-:mod:`typing` origin type for which the
 :func:`beartype.beartype` decorator generates shallow type-checking code).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 
@@ -267,36 +241,27 @@ HINT_PEP484_SIGNS_SUPPORTED_DEEP = frozenset((
     Optional,
 ))
 '''
-Frozen set of all `PEP 484`_-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying `PEP 484`_-compliant type hints for
+Frozen set of all :pep:`484`-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`484`-compliant type hints for
 which the :func:`beartype.beartype` decorator generates deep type-checking
 code).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ SETS ~ sign : type                }....................
 # Initialized by the _init() function below due to conditional complexity.
 HINT_PEP484_SIGNS_TYPE: frozenset = None  # type: ignore[assignment]
 '''
-Frozen set of all `PEP 484`_-compliant **standard class signs** (i.e.,
+Frozen set of all :pep:`484`-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
 type hints).
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 
 # Initialized by the _init() function below due to conditional complexity.
 HINT_PEP484_SIGNS_TYPE_ORIGIN: frozenset = None  # type: ignore[assignment]
 '''
-Frozen set of all signs uniquely identifying `PEP 484`_-compliant type hints
+Frozen set of all signs uniquely identifying :pep:`484`-compliant type hints
 originating from an origin type.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ INITIALIZERS                      }....................

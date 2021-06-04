@@ -11,12 +11,9 @@ wrapper function type-checking all annotated parameters and return value of the
 the callable currently being decorated by the :func:`beartype.beartype`
 decorator in a general-purpose manner. For genericity, this relatively
 high-level submodule implements *no* support for annotation-based PEPs (e.g.,
-`PEP 484`_); other lower-level submodules do so instead.
+:pep:`484`); other lower-level submodules do so instead.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ TODO                              }....................
@@ -32,6 +29,7 @@ from beartype._decor._code.codesnip import (
     CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
+    PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor._code._pep.pepcode import (
     pep_code_check_param,
@@ -45,6 +43,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from inspect import Parameter, Signature
+from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -155,9 +154,6 @@ def generate_code(data: BeartypeData) -> str:
         erroneously declares an optional private beartype-specific parameter of
         the same name with differing default value. Since this should *never*
         happen, a private non-human-readable exception is raised in this case.
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
@@ -417,6 +413,13 @@ def _code_check_return(data: BeartypeData) -> str:
     if hint is _RETURN_HINT_EMPTY:
         func_wrapper_code = CODE_RETURN_UNCHECKED
     # Else, this return is annotated.
+    #
+    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
+    # *ONLY* as a return annotation, default this snippet to a pre-generated
+    # snippet validating this callable to *NEVER* successfully return. Yup!
+    elif hint is NoReturn:
+        func_wrapper_code = PEP484_CODE_CHECK_NORETURN
+    # Else, this is *NOT* "typing.NoReturn". In this case...
     else:
         # PEP-compliant type hint converted from this PEP-noncompliant type
         # hint if this hint is PEP-noncompliant, this hint as is if this hint

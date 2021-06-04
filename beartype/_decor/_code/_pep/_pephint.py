@@ -23,7 +23,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
-    BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep593Exception,
 )
 from beartype._cave._cavefast import NoneType
@@ -34,6 +33,8 @@ from beartype._decor._cache.cachetype import (
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
     ARG_NAME_TYPISTRY,
+    VAR_NAME_PREFIX_PITH,
+    VAR_NAME_PITH_ROOT,
 )
 from beartype._decor._code._pep._pepmagic import (
     FUNC_WRAPPER_LOCAL_LABEL,
@@ -64,8 +65,6 @@ from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
-    PEP_CODE_PITH_NAME_PREFIX,
-    PEP_CODE_PITH_ROOT_NAME,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP,
     PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP,
     PEP484_CODE_CHECK_HINT_UNION_PREFIX,
@@ -158,7 +157,7 @@ from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
-from typing import Tuple, NoReturn
+from typing import Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -332,7 +331,7 @@ def pep_code_check_hint(
 
     # Python code snippet evaluating to the current passed parameter or return
     # value to be type-checked against the root hint.
-    pith_root_expr = PEP_CODE_PITH_ROOT_NAME
+    pith_root_expr = VAR_NAME_PITH_ROOT
 
     # ..................{ HINT ~ current                    }..................
     # Currently visited hint.
@@ -455,7 +454,7 @@ def pep_code_check_hint(
     # * The currently visited hint is *NOT* the root hint (i.e., "hint_root").
     #   If the currently visited hint is the root hint, the current pith has
     #   already been localized to a local variable whose name is the value of
-    #   the "PEP_CODE_PITH_ROOT_NAME" string global and thus need *NOT* be
+    #   the "VAR_NAME_PITH_ROOT" string global and thus need *NOT* be
     #   relocalized to another local variable using an assignment expression.
     #
     # This is a necessary and sufficient condition for deciding whether a
@@ -1023,7 +1022,7 @@ def pep_code_check_hint(
                 # Reduce the current pith expression to the name of this local
                 # variable.
                 pith_curr_assigned_expr = (
-                    f'{PEP_CODE_PITH_NAME_PREFIX}'
+                    f'{VAR_NAME_PREFIX_PITH}'
                     f'{pith_curr_assign_expr_name_counter}'
                 )
 
@@ -1334,12 +1333,14 @@ def pep_code_check_hint(
                 # previously called higher-level pep_code_check_return()
                 # function has already handled the single case in which this
                 # hint is valid, implying this hint to be invalid here.
-                if hint_curr is NoReturn:
-                    raise BeartypeDecorHintPep484Exception(
-                        f'{hint_curr_label} {repr(hint_curr)} child '
-                        f'"typing.NoReturn" invalid (i.e., "typing.NoReturn" '
-                        f'valid only as non-nested return annotation).'
-                    )
+
+                #FIXME: This shouldn't be needed anymore. Excise if true!
+                # if hint_curr is NoReturn:
+                #     raise BeartypeDecorHintPep484Exception(
+                #         f'{hint_curr_label} {repr(hint_curr)} child '
+                #         f'"typing.NoReturn" invalid (i.e., "typing.NoReturn" '
+                #         f'valid only as non-nested return annotation).'
+                #     )
                 # Else, this hint is *NOT* "NoReturn".
 
                 # ............{ ORIGIN                            }............

@@ -110,7 +110,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
-from typing import Optional, Type
+from typing import NoReturn, Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -281,9 +281,13 @@ def raise_pep_call_exception(
     # PEP-compliant type hint annotating this parameter or return value.
     hint = func.__annotations__[pith_name]
 
-    # If type hint is *NOT* a supported type hint, raise an exception.
-    die_unless_hint(hint=hint, hint_label=f'{pith_label} type hint')
-    # Else, this type hint is supported.
+    # If this is *NOT* the PEP 484-compliant "typing.NoReturn" type hint
+    # permitted *ONLY* as a return annotation, this is a standard type hint
+    # generally supported by both parameters and return values. In this case...
+    if hint is not NoReturn:
+        # If type hint is *NOT* a supported type hint, raise an exception.
+        die_unless_hint(hint=hint, hint_label=f'{pith_label} type hint')
+        # Else, this type hint is supported.
 
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,

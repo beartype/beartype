@@ -64,7 +64,7 @@ accepted by both static and runtime type checkers).
 '''
 
 # ....................{ SIGNS                             }....................
-#FIXME: Rename to "HINT_PEP_ATTRS_BARE_DEPRECATED" and likewise for all
+#FIXME: Rename to "HINT_PEP_ATTRS_DEPRECATED" and likewise for all
 #upstream frozen sets used to define this frozen set.
 #FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
 #rather than signs, whose meaning will now be entirely different.
@@ -78,7 +78,7 @@ more recent PEPs).
 '''
 
 
-#FIXME: Rename to "HINT_PEP_ATTRS_BARE_IGNORABLE" and likewise for all
+#FIXME: Rename to "HINT_PEP_ATTRS_IGNORABLE" and likewise for all
 #upstream frozen sets used to define this frozen set.
 #FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
 #rather than signs, whose meaning will now be entirely different.
@@ -164,7 +164,7 @@ constraining *all* items of compliant tuples).
 #"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove "HINT_PEP484_SIGNS_SUPPORTED_SHALLOW" entirely.
-HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
+_HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
     HINT_PEP484_SIGNS_SUPPORTED_SHALLOW
 )
 '''
@@ -251,7 +251,7 @@ HINT_PEP_SIGNS_SUPPORTED = (
     HINT_PEP_SIGNS_SUPPORTED_DEEP |
     # Set of all shallowly supported signs *NOT* originating from a
     # non-"typing" origin type.
-    HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
+    _HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a non-"typing"
     # origin type.
     HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB

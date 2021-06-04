@@ -23,6 +23,7 @@ from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_ARGS_LEN,
+    VAR_NAME_PITH_ROOT,
     VAR_NAME_RANDOM_INT,
 )
 from inspect import Parameter
@@ -34,21 +35,6 @@ Python >= 3.8-specific assignment expression assigning the full Python
 expression yielding the value of the current pith to a unique local variable,
 enabling PEP-compliant child hints to obtain this pith via this efficient
 variable rather than via this inefficient full Python expression.
-'''
-
-
-PEP_CODE_PITH_NAME_PREFIX = '__beartype_pith_'
-'''
-Substring prefixing all local variables providing a **pith** (i.e., either the
-current parameter or return value *or* item contained the current parameter or
-return value being type-checked by the current call).
-'''
-
-# ....................{ PITH ~ root                       }....................
-PEP_CODE_PITH_ROOT_NAME = f'{PEP_CODE_PITH_NAME_PREFIX}0'
-'''
-Name of the local variable providing the **root pith** (i.e., value of the
-current parameter or return value being type-checked by the current call).
 '''
 
 
@@ -88,28 +74,28 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     Parameter.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
     # sentinel value "__beartype_raise_exception" guaranteed to never be passed.
-    {PEP_CODE_PITH_ROOT_NAME} = (
+    {VAR_NAME_PITH_ROOT} = (
         args[{{arg_index}}] if {VAR_NAME_ARGS_LEN} > {{arg_index}} else
         kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
     )
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_RAISE_EXCEPTION}:''',
+    if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     Parameter.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartype_raise_exception" guaranteed to never be passed.
-    {PEP_CODE_PITH_ROOT_NAME} = kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
+    {VAR_NAME_PITH_ROOT} = kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
 
     # If this parameter was passed...
-    if {PEP_CODE_PITH_ROOT_NAME} is not {ARG_NAME_RAISE_EXCEPTION}:''',
+    if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
     Parameter.VAR_POSITIONAL: f'''
     # For all passed positional variadic parameters...
-    for {PEP_CODE_PITH_ROOT_NAME} in args[{{arg_index!r}}:]:''',
+    for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the
@@ -121,7 +107,7 @@ that callable's next parameter to be type-checked.
 PEP_CODE_CHECK_RETURN_PREFIX = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {PEP_CODE_PITH_ROOT_NAME} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
 
     # Noop required to artifically increase indentation level. Note that
     # CPython implicitly optimizes this conditional away - which is nice.
@@ -147,7 +133,7 @@ https://stackoverflow.com/a/18124151/2809027
 
 
 PEP_CODE_CHECK_RETURN_SUFFIX = f'''
-    return {PEP_CODE_PITH_ROOT_NAME}'''
+    return {VAR_NAME_PITH_ROOT}'''
 '''
 PEP-compliant code snippet returning from the wrapper function the successfully
 type-checked value returned from the decorated callable.
@@ -155,30 +141,6 @@ type-checked value returned from the decorated callable.
 Note that this snippet intentionally terminates on a line containing only the
 ``)`` character, which closes the corresponding character terminating the
 :data:`PEP_CODE_GET_RETURN` snippet.
-'''
-
-# ....................{ RETURN ~ noreturn                 }....................
-PEP484_CODE_CHECK_NORETURN = f'''
-    # Call this function with all passed parameters and localize the value
-    # returned from this call.
-    {PEP_CODE_PITH_ROOT_NAME} = {ARG_NAME_FUNC}(*args, **kwargs)
-
-    # Since this function annotated by "typing.NoReturn" successfully returned
-    # a value rather than raising an exception or halting the active Python
-    # interpreter, unconditionally raise an exception.
-    {ARG_NAME_RAISE_EXCEPTION}(
-        func={ARG_NAME_FUNC},
-        pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
-        pith_value={PEP_CODE_PITH_ROOT_NAME},
-    )'''
-'''
-`PEP 484`_-compliant code snippet calling the decorated callable annotated by
-the :attr:`typing.NoReturn` singleton and raising an exception if this call
-successfully returned a value rather than raising an exception or halting the
-active Python interpreter.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ HINT ~ placeholder : child        }....................
@@ -241,7 +203,7 @@ PEP_CODE_CHECK_HINT_ROOT_SUFFIX = f''':
             {ARG_NAME_RAISE_EXCEPTION}(
                 func={ARG_NAME_FUNC},
                 pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
-                pith_value={PEP_CODE_PITH_ROOT_NAME},{{random_int_if_any}}
+                pith_value={VAR_NAME_PITH_ROOT},{{random_int_if_any}}
             )
 '''
 '''
@@ -290,7 +252,7 @@ PEP_CODE_CHECK_HINT_GENERIC_PREFIX = '''(
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
+against each unerased pseudo-superclass subclassed by a :pep:`484`-compliant
 **generic** (i.e., PEP-compliant type hint subclassing a combination of one or
 more of the :mod:`typing.Generic` superclass, the :mod:`typing.Protocol`
 superclass, and/or other :mod:`typing` non-class objects).
@@ -301,9 +263,6 @@ The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 
@@ -311,11 +270,8 @@ PEP_CODE_CHECK_HINT_GENERIC_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a `PEP 484`_-compliant
+against each unerased pseudo-superclass subclassed by a :pep:`484`-compliant
 generic.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 
@@ -325,7 +281,7 @@ PEP_CODE_CHECK_HINT_GENERIC_CHILD = '''
 {{indent_curr}}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
-unerased pseudo-superclass subclassed by a `PEP 484`_-compliant generic.
+unerased pseudo-superclass subclassed by a :pep:`484`-compliant generic.
 
 Caveats
 ----------

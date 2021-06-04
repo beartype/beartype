@@ -35,6 +35,19 @@ from beartype._util.hint.data.pep.sign.datapepsigncls import HintSign
 # * Preserve attributes here that have since been removed from the "typing"
 #   module in that CPython release to ensure their continued usability when
 #   running beartype against older CPython releases.
+#
+# Lastly, note that:
+# * "NoReturn" is contextually valid *ONLY* as a top-level return hint. Since
+#   this use case is extremely limited, we explicitly generate code for this
+#   use case outside of the general-purpose code generation pathway for
+#   standard type hints. Since "NoReturn" is an unsubscriptable singleton, we
+#   explicitly detect this type hint with an identity test and thus require
+#   *NO* sign to uniquely identify this type hint. Indeed, explicitly defining
+#   a sign uniquely identifying this type hint would erroneously encourage us
+#   to use that sign elsewhere. We should *NOT* do that, because "NoReturn" is
+#   invalid in almost all possible contexts. Of course, we actually previously
+#   did define a "NoReturn" sign and erroneously use that sign elsewhere, which
+#   is exactly why we do *NOT* do so now. In short, "NoReturn" is insane.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
@@ -116,7 +129,7 @@ HintSignAnyStr = HintSign()
 HintSignNewType = HintSign()
 # no_type_check   <-- unusable as a type hint
 # no_type_check_decorator   <-- unusable as a type hint
-HintSignNoReturn = HintSign()
+# NoReturn   <-- generally unusable as a type hint (see above for commentary)
 # overload   <-- unusable as a type hint
 HintSignParamSpecArgs = HintSign()
 HintSignParamSpecKwargs = HintSign()

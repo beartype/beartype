@@ -22,16 +22,13 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     '''
     Human-readable string describing the failure of the decorated callable to
-    *not* return a value in violation of the `PEP 484`_-compliant
+    *not* return a value in violation of the :pep:`484`-compliant
     :attr:`typing.NoReturn` type hint.
 
     Parameters
     ----------
     sleuth : CauseSleuth
         Type-checking error cause sleuth.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 

@@ -11,31 +11,22 @@ parameters and return values annotated with **PEP-compliant type hints**
 (i.e., :mod:`beartype`-agnostic annotations compliant with
 annotation-centric PEPs) of the decorated callable.
 
-This private submodule implements `PEP 484`_ (i.e., "Type Hints") support by
+This private submodule implements :pep:`484` (i.e., "Type Hints") support by
 transparently converting high-level objects and types defined by the
 :mod:`typing` module into low-level code snippets independent of that module.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeDecorHintPepException,
-    BeartypeDecorHintPep484Exception,
-)
-from beartype._decor._code.codesnip import (
-    ARG_NAME_TYPISTRY,
-)
+from beartype.roar import BeartypeDecorHintPepException
+from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_LOCALIZE,
     PEP_CODE_CHECK_RETURN_PREFIX,
     PEP_CODE_CHECK_RETURN_SUFFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
-    PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
@@ -56,7 +47,6 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
 from inspect import Parameter
-from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -106,20 +96,6 @@ def pep_code_check_param(
         f'{repr(param)} not parameter metadata.')
     assert isinstance(param_index, int), (
         f'{repr(param_index)} not integer.')
-
-    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
-    # *ONLY* as a return annotation...
-    if hint is NoReturn:
-        # Human-readable label describing this parameter.
-        hint_label = label_callable_decorated_param(
-            func=data.func, param_name=param.name)
-
-        # Raise an exception embedding this label.
-        raise BeartypeDecorHintPep484Exception(
-            f'{hint_label} return hint '
-            f'{repr(hint)} invalid as parameter annotation.'
-        )
-    # Else, this is a standard PEP-compliant type hint.
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
@@ -215,44 +191,36 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
     # Empty tuple, passed below to satisfy the _unmemoize_pep_code() API.
     hints_forwardref_class_basename = ()
 
-    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
-    # *ONLY* as a return annotation, default this snippet to a pre-generated
-    # snippet validating this callable to *NEVER* successfully return. Absurd!
-    if hint is NoReturn:
-        func_wrapper_code = PEP484_CODE_CHECK_NORETURN
-    # Else, this is a standard PEP-compliant type hint. In this case...
-    else:
-        # Attempt to...
-        try:
-            # Generate a memoized parameter-agnostic code snippet type-checking
-            # any parameter or return value with an arbitrary name.
-            (
-                func_wrapper_code,
-                func_wrapper_locals,
-                hints_forwardref_class_basename,
-            ) = pep_code_check_hint(hint)
+    # Attempt to...
+    try:
+        # Generate a memoized parameter-agnostic code snippet type-checking any
+        # parameter or return value with an arbitrary name.
+        (
+            func_wrapper_code,
+            func_wrapper_locals,
+            hints_forwardref_class_basename,
+        ) = pep_code_check_hint(hint)
 
-            # Merge the local scope required to type-check this return into
-            # the local scope currently required by the current wrapper
-            # function.
-            update_mapping(data.func_wrapper_locals, func_wrapper_locals)
+        # Merge the local scope required to type-check this return into the
+        # local scope currently required by the current wrapper function.
+        update_mapping(data.func_wrapper_locals, func_wrapper_locals)
 
-            # Extend this snippet to:
-            # * Call the decorated callable and localize its return *AND*...
-            # * Type-check this return *AND*...
-            # * Return this return from this wrapper function.
-            func_wrapper_code = (
-                f'{PEP_CODE_CHECK_RETURN_PREFIX}{func_wrapper_code}'
-                f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
-            )
-        # If the prior call to the memoized pep_code_check_hint() function
-        # raised a cached exception, reraise this cached exception's memoized
-        # return-agnostic message into an unmemoized return-specific message.
-        except Exception as exception:
-            reraise_exception_cached(
-                exception=exception,
-                target_str=label_callable_decorated_return(data.func),
-            )
+        # Extend this snippet to:
+        # * Call the decorated callable and localize its return *AND*...
+        # * Type-check this return *AND*...
+        # * Return this return from this wrapper function.
+        func_wrapper_code = (
+            f'{PEP_CODE_CHECK_RETURN_PREFIX}{func_wrapper_code}'
+            f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
+        )
+    # If the prior call to the memoized pep_code_check_hint() function raised a
+    # cached exception, reraise this cached exception's memoized
+    # return-agnostic message into an unmemoized return-specific message.
+    except Exception as exception:
+        reraise_exception_cached(
+            exception=exception,
+            target_str=label_callable_decorated_return(data.func),
+        )
 
     # Unmemoize this snippet against this return.
     func_wrapper_code = _unmemoize_pep_code(

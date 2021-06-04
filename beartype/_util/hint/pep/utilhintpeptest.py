@@ -15,8 +15,7 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepDeprecatedWarning,
     BeartypeDecorHintPepUnsupportedException,
-    # BeartypeDecorHintPepIgnorableDeepWarning,
-    # BeartypeDecorHintPepUnsupportedWarning,
+    BeartypeDecorHintPep484Exception,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
@@ -46,7 +45,7 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
 from beartype._util.py.utilpymodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import Type, TypeVar
+from typing import NoReturn, Type, TypeVar
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -218,6 +217,11 @@ def die_if_hint_pep_unsupported(
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint but is currently
         unsupported by the :func:`beartype.beartype` decorator.
+    BeartypeDecorHintPep484Exception
+        If this object is the PEP-compliant :attr:`typing.NoReturn` type hint,
+        which is contextually valid in only a single use case and thus
+        supported externally by the :mod:`beartype._decor._code.codemain`
+        submodule rather than with general-purpose automation.
     '''
 
     # If this object is a supported PEP-compliant type hint, reduce to a noop.
@@ -234,14 +238,25 @@ def die_if_hint_pep_unsupported(
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, hint_label=hint_label)
 
-    # Else, this hint is PEP-compliant. In this case, raise an exception.
+    # Else, this hint is PEP-compliant.
     #
-    # Note that, by definition, the unsubscripted "typing" argument uniquely
-    # identifying this hint *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set.
-    # Regardless of whether it is or isn't, we raise a similar exception. Ergo,
-    # there's no benefit to validating that expectation here.
-    raise BeartypeDecorHintPepUnsupportedException(
-        f'{hint_label} {repr(hint)} currently unsupported by @beartype.')
+    # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
+    # *ONLY* as a return annotation, raise an exception specific to this hint.
+    if hint is NoReturn:
+        raise BeartypeDecorHintPep484Exception(
+            f'{hint_label} {repr(hint)} invalid (i.e., "typing.NoReturn" '
+            f'valid only as non-nested return annotation).'
+        )
+    # Else, this is any PEP-compliant type hint other than "typing.NoReturn".
+    # In this case, raise a general-purpose exception.
+    #
+    # Note that, by definition, the sign uniquely identifying this hint
+    # *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set. Regardless of whether
+    # it is or isn't, we raise a similar exception. Ergo, there's no benefit to
+    # validating that expectation here.
+    else:
+        raise BeartypeDecorHintPepUnsupportedException(
+            f'{hint_label} {repr(hint)} currently unsupported by @beartype.')
 
 
 def die_if_hint_pep_sign_unsupported(
@@ -759,8 +774,7 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
     # print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
     # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')
 
-    # Return true only if this hint is a supported unsubscripted "typing"
-    # attribute.
+    # Return true only if this hint is a supported sign.
     return hint in HINT_PEP_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................

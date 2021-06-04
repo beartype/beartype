@@ -25,7 +25,9 @@ from beartype._util.hint.data.pep.datapep import (
 )
 from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
-from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+from beartype._util.hint.data.pep.sign.datapepsigns import (
+    HintSignGeneric,
+)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype,
@@ -293,6 +295,10 @@ get_hint_pep_typevars.__doc__ = '''
 # from beartype._util.hint.data.pep.sign.datapepsigncls import HintSignOrType
 # @callable_cached
 # def get_hint_pep_sign_or_cls(hint: Any) -> HintSignOrType:
+#FIXME: Refactor all functions throughout the codebase that accept or return
+#signs to be annotated ideally by "HintSign" (or, if necessary, by
+#"HintSignOrType"). These include:
+#* is_hint_pep_sign_supported().
 #FIXME: Test that our "testing_extensions.Annotated" support actually works.
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Validate that the value of the "pep_sign" parameter passed to the
@@ -663,7 +669,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     #* Next, iteratively refactor each single "typing" attribute explicitly
     #  mentioned above to use "datapepsign" signs instead. This means:
     #  * Forward references.
-    #  * "Generic".
+    #  * "NoReturn".
     #  * "NewType".
     #  * "TypeVar".
     #  * etc.
