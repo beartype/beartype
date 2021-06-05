@@ -4,12 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 484`_**-compliant type hint utilities.**
+Project-wide :pep:`484`-compliant type hint utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,11 +19,14 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+from beartype._util.hint.data.pep.sign.datapepsigns import (
+    HintSignGeneric,
+    HintSignNewType,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
 from types import FunctionType
-from typing import Any, Generic, NewType, Optional
+from typing import Any, Generic, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -35,13 +35,13 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def is_hint_pep484_ignorable_or_none(
     hint: object, hint_sign: object) -> Optional[bool]:
     '''
-    ``True`` only if the passed object is a `PEP 484`_-compliant **ignorable
-    type hint,** ``False`` only if this object is a `PEP 484`_-compliant
+    ``True`` only if the passed object is a :pep:`484`-compliant **ignorable
+    type hint,** ``False`` only if this object is a :pep:`484`-compliant
     unignorable type hint, and ``None`` if this object is *not* `PEP
     484`_-compliant.
 
     Specifically, this tester function returns ``True`` only if this object is
-    a deeply ignorable `PEP 484`_-compliant type hint, including:
+    a deeply ignorable :pep:`484`-compliant type hint, including:
 
     * A parametrization of the :class:`typing.Generic` abstract base class
       (ABC) by one or more type variables. As the name implies, this ABC is
@@ -102,15 +102,12 @@ def is_hint_pep484_ignorable_or_none(
     Optional[bool]
         Either:
 
-        * If this object is `PEP 484`_-compliant:
+        * If this object is :pep:`484`-compliant:
 
           * If this object is a ignorable, ``True``.
           * Else, ``False``.
 
-        * If this object is *not* `PEP 484`_-compliant, ``None``.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+        * If this object is *not* :pep:`484`-compliant, ``None``.
     '''
 
     # Avoid circular import dependencies.
@@ -148,7 +145,7 @@ def is_hint_pep484_ignorable_or_none(
     #
     # If this hint is a new type, return true only if this new type aliases an
     # ignorable child type hint.
-    elif hint_sign is NewType:
+    elif hint_sign is HintSignNewType:
         return is_hint_ignorable(get_hint_pep484_newtype_class(hint))
     # Else, this hint is *NOT* a new type.
     #
@@ -167,7 +164,7 @@ def is_hint_pep484_ignorable_or_none(
 # ....................{ TESTERS ~ forwardref              }....................
 def is_hint_pep484_forwardref(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a `PEP 484`_-compliant **forward
+    ``True`` only if the passed object is a :pep:`484`-compliant **forward
     reference type hint** (i.e., instance of the :class:`typing.ForwardRef`
     class implicitly replacing all string arguments subscripting :mod:`typing`
     objects).
@@ -189,11 +186,8 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 484`_-compliant forward
+        ``True`` only if this object is a :pep:`484`-compliant forward
         reference type hint.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Return true only if this hint is an instance of the PEP 484-compliant
@@ -328,7 +322,7 @@ is_hint_pep484_generic.__doc__ = '''
 
     * At least one of:
 
-      * The `PEP 484`_-compliant :mod:`typing.Generic` superclass.
+      * The :pep:`484`-compliant :mod:`typing.Generic` superclass.
       * The `PEP 544`-_compliant :mod:`typing.Protocol` superclass.
 
     * Zero or more non-class :mod:`typing` pseudo-superclasses (e.g.,
@@ -341,17 +335,17 @@ is_hint_pep484_generic.__doc__ = '''
 
     Design
     ----------
-    Since *all* :mod:`typing` generics subclass the `PEP 484`_-compliant
-    :mod:`typing.Generic` superclass first introduced with `PEP 484`_, this
+    Since *all* :mod:`typing` generics subclass the :pep:`484`-compliant
+    :mod:`typing.Generic` superclass first introduced with :pep:`484`, this
     tester is intentionally:
 
-    * Defined in the `PEP 484`_-specific submodule rather than either the `PEP
+    * Defined in the :pep:`484`-specific submodule rather than either the `PEP
       585`_-specific submodule *or* higher-level PEP-agnostic test submodule.
     * Named ``is_hint_pep484_generic`` rather than
       ``is_hint_pep484or544_generic`` or ``is_hint_pep_typing_generic``.
 
     From the end user perspective, *all* :mod:`typing` generics are effectively
-    indistinguishable from `PEP 484`_-compliant generics and should typically
+    indistinguishable from :pep:`484`-compliant generics and should typically
     be generically treated as such.
 
     Parameters
@@ -363,15 +357,12 @@ is_hint_pep484_generic.__doc__ = '''
     ----------
     bool
         ``True`` only if this object is a :mod:`typing` generic.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
 # ....................{ TESTERS ~ newtype                 }....................
 def is_hint_pep484_newtype(hint: object) -> bool:
     '''
-    ``True`` only if the passed object either is a `PEP 484`_-compliant **new
+    ``True`` only if the passed object either is a :pep:`484`-compliant **new
     type** (i.e., closure created and returned by the :func:`typing.NewType`
     closure factory function).
 
@@ -401,10 +392,7 @@ def is_hint_pep484_newtype(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 484`_-compliant new type.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+        ``True`` only if this object is a :pep:`484`-compliant new type.
     '''
 
     # Return true only if...
@@ -446,7 +434,7 @@ def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
     '''
     **Unqualified classname** (i.e., name of a class *not* containing a ``.``
     delimiter and thus relative to the fully-qualified name of the submodule
-    declaring that class) referred to by the passed `PEP 484`_-compliant
+    declaring that class) referred to by the passed :pep:`484`-compliant
     **forward reference type hint** (i.e., instance of the
     :class:`typing.ForwardRef` class implicitly replacing all string arguments
     subscripting :mod:`typing` objects).
@@ -463,21 +451,18 @@ def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
     Returns
     ----------
     str
-        Unqualified classname referred to by this `PEP 484`_-compliant forward
+        Unqualified classname referred to by this :pep:`484`-compliant forward
         reference type hint.
 
     Raises
     ----------
     BeartypeDecorHintForwardRefException
-        If this object is *not* a `PEP 484`_-compliant forward reference.
+        If this object is *not* a :pep:`484`-compliant forward reference.
 
     See Also
     ----------
     :func:`is_hint_pep484_forwardref`
         Further commentary.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # If this object is *NOT* a PEP 484-compliant forward reference type hint,
@@ -501,7 +486,7 @@ def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
 # ....................{ GETTERS ~ newtype                 }....................
 def get_hint_pep484_newtype_class(hint: Any) -> type:
     '''
-    User-defined class aliased by the passed `PEP 484`_-compliant **new type**
+    User-defined class aliased by the passed :pep:`484`-compliant **new type**
     (i.e., closure created and returned by the :func:`typing.NewType` closure
     factory function).
 
@@ -517,20 +502,17 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
     Returns
     ----------
     type
-        User-defined class aliased by this `PEP 484`_-compliant new type.
+        User-defined class aliased by this :pep:`484`-compliant new type.
 
     Raises
     ----------
     BeartypeDecorHintPep484Exception
-        If this object is *not* a `PEP 484`_-compliant new type.
+        If this object is *not* a :pep:`484`-compliant new type.
 
     See Also
     ----------
     :func:`is_hint_pep484_newtype`
         Further commentary.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # If this object is *NOT* a PEP 484-compliant new type hint, raise an
@@ -550,7 +532,7 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
 @callable_cached
 def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     '''
-    Erased superclass originating the passed `PEP 484`_-compliant **unerased
+    Erased superclass originating the passed :pep:`484`-compliant **unerased
     pseudo-superclass** (i.e., :mod:`typing` object originally listed as a
     superclass prior to its implicit type erasure by the :mod:`typing` module).
 
@@ -561,19 +543,19 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     Parameters
     ----------
     hint : object
-        `PEP 484`_-compliant unerased pseudo-superclass to be reduced to its
+        :pep:`484`-compliant unerased pseudo-superclass to be reduced to its
         erased superclass.
 
     Returns
     ----------
     type
-        Erased superclass originating this `PEP 484`_-compliant unerased
+        Erased superclass originating this :pep:`484`-compliant unerased
         pseudo-superclass.
 
     Raises
     ----------
     BeartypeDecorHintPep484Exception
-        if this object is *not* a `PEP 484`_-compliant unerased
+        if this object is *not* a :pep:`484`-compliant unerased
         pseudo-superclass.
     '''
 
@@ -598,7 +580,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     '''
     Tuple of all unerased :mod:`typing` **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
-    implicit type erasure under `PEP 560`_) of the passed `PEP 484`-compliant
+    implicit type erasure under :pep:`560`) of the passed :pep:`484`-compliant
     **generic** (i.e., class subclassing at least one non-class :mod:`typing`
     object).
 
@@ -632,7 +614,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
         * *Not* a :mod:`typing` generic.
         * A :mod:`typing` generic that erased *none* of its superclasses but
           whose method resolution order (MRO) lists strictly less than four
-          classes. Valid `PEP 484`_-compliant generics should list at least
+          classes. Valid :pep:`484`-compliant generics should list at least
           four classes, including (in order):
 
           #. This class itself.
@@ -645,11 +627,6 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     ----------
     :func:`beartype._util.hint.pep.utilhintget.get_hint_pep_generic_bases_unerased`
         Further details.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 560:
-       https://www.python.org/dev/peps/pep-0560
     '''
 
     #FIXME: This tuple appears to be implemented erroneously -- at least under

@@ -27,6 +27,7 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
 from beartype._util.hint.data.pep.sign.datapepsigns import (
     HintSignGeneric,
+    HintSignNewType,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
@@ -44,7 +45,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
-from typing import Any, NewType, Optional, Tuple, TypeVar
+from typing import Any, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -525,7 +526,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
     elif is_hint_pep484_newtype(hint):
-        return NewType
+        return HintSignNewType
     # If this hint is a type variable, return the class of all type variables.
     #
     # Note that type variables *CANNOT* be detected by the general-purpose
@@ -669,8 +670,6 @@ def get_hint_pep_sign(hint: Any) -> object:
     #* Next, iteratively refactor each single "typing" attribute explicitly
     #  mentioned above to use "datapepsign" signs instead. This means:
     #  * Forward references.
-    #  * "NoReturn".
-    #  * "NewType".
     #  * "TypeVar".
     #  * etc.
     #* Next, make PEP 484 and 585 happen. These need to happen at the exact
@@ -800,7 +799,7 @@ def get_hint_pep_stdlib_type(hint: object) -> type:
     # If this type does *NOT* exist, raise an exception.
     if hint_type_origin is None:
         raise BeartypeDecorHintPepException(
-            f'PEP type hint {repr(hint)} not originative '
+            f'Type hint {repr(hint)} not originative '
             f'(i.e., does not originate from external class).'
         )
     # Else, this type exists.

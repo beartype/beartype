@@ -37,7 +37,10 @@ from beartype._cave._cavefast import (
 )
 from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
-from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+from beartype._util.hint.data.pep.sign.datapepsigns import (
+    HintSignGeneric,
+    HintSignNewType,
+)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
     IS_PYTHON_AT_LEAST_3_7,
@@ -863,7 +866,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # New type aliasing a non-ignorable type.
         PepHintMetadata(
             hint=NewType('TotallyNotAStr', str),
-            pep_sign=NewType,
+            pep_sign=HintSignNewType,
             is_subscripted=False,
             # New types are merely pure-Python functions of the pure-Python
             # function type, which is *NOT* defined by the "typing" module.

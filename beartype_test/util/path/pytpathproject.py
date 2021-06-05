@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**:mod:`pytest` **path** (i.e., directory and file) utilities.**
+Test-specific **path** (e.g., directory, file) utilities.
 '''
 
 # ....................{ IMPORTS                           }....................

@@ -14,6 +14,7 @@ import typing
 from beartype._cave._cavefast import NoneType
 from beartype._util.hint.data.pep.sign.datapepsigns import (
     HintSignGeneric,
+    HintSignNewType,
 )
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
@@ -54,7 +55,6 @@ from typing import (
     MutableMapping,
     MutableSequence,
     MutableSet,
-    NewType,
     Optional,
     Pattern,
     Reversible,
@@ -208,7 +208,7 @@ HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
     # syntactic contexts and thus intentionally omitted here. See the
     # "datapepsigns" submodule for further commentary.
     Any,
-    NewType,
+    HintSignNewType,
     TypeVar,
     HINT_PEP484_TYPE_FORWARDREF,
 
