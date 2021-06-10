@@ -28,6 +28,7 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
 from beartype._util.hint.data.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTypeVar,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
@@ -41,11 +42,11 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 )
 from beartype._util.py.utilpymodule import import_module
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_3_6,
-    IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_3_6,
 )
-from typing import Any, Optional, Tuple, TypeVar
+from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -320,29 +321,28 @@ def get_hint_pep_sign(hint: Any) -> object:
     these attributes are sufficiently unique to enable callers to distinguish
     between numerous broad categories of :mod:`typing` behaviour and logic.
 
-    Specifically, this function returns either:
+    Specifically, if this hint is:
 
-    * If this hint is a :pep:`585`-compliant **builtin** (e.g., C-based type
+    * A :pep:`585`-compliant **builtin** (e.g., C-based type
       hint instantiated by subscripting either a concrete builtin container
       class like :class:`list` or :class:`tuple` *or* an abstract base class
       (ABC) declared by the :mod:`collections.abc` submodule like
       :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
-      :class:`beartype.cave.HintGenericSubscriptedType`.
-    * If this hint is a **generic** (i.e., subclasses of the
-      :class:`typing.Generic` abstract base class (ABC)),
-      :class:`HintSignGeneric`. Note this includes :pep:`544`-compliant
-      **protocols** (i.e., subclasses of the :class:`typing.Protocol` ABC),
-      which implicitly subclass the :class:`typing.Generic` ABC as well.
-    * If this hint is any other class declared by either the :mod:`typing`
-      module (e.g., :class:`typing.TypeVar`) *or* the :mod:`beartype.cave`
-      submodule (e.g., :class:`beartype.cave.HintGenericSubscriptedType`), that
-      class.
-    * If this hint is a **forward reference** (i.e., string or instance of the
-      concrete :class:`typing.ForwardRef` class), :class:`typing.ForwardRef`.
-    * If this hint is a **type variable** (i.e., instance of the concrete
-      :class:`typing.TypeVar` class), :class:`typing.TypeVar`.
-    * Else, the unsubscripted :mod:`typing` attribute dynamically retrieved by
-      inspecting this hint's **object representation** (i.e., the
+      this function returns ::class:`beartype.cave.HintGenericSubscriptedType`.
+    * A **generic** (i.e., subclass of the :class:`typing.Generic` abstract
+      base class (ABC)), this function returns :class:`HintSignGeneric`. Note
+      this includes :pep:`544`-compliant **protocols** (i.e., subclasses of the
+      :class:`typing.Protocol` ABC), which implicitly subclass the
+      :class:`typing.Generic` ABC as well.
+    * A **forward reference** (i.e., string or instance of the concrete
+      :class:`typing.ForwardRef` class), this function returns
+      :class:`typing.ForwardRef`.
+    * A **type variable** (i.e., instance of the concrete
+      :class:`typing.TypeVar` class), this function returns
+      :class:`HintSignTypeVar`.
+    * Any other class, that class as is.
+    * Anything else, the unsubscripted :mod:`typing` attribute dynamically
+      retrieved by inspecting this hint's **object representation** (i.e., the
       non-human-readable string returned by the :func:`repr` builtin).
 
     This getter function is memoized for efficiency.
@@ -393,7 +393,7 @@ def get_hint_pep_sign(hint: Any) -> object:
         typing.Union
         >>> T = typing.TypeVar('T')
         >>> get_hint_pep_sign(T)
-        typing.TypeVar
+        HintSignTypeVar
         >>> class Genericity(typing.Generic[T]): pass
         >>> get_hint_pep_sign(Genericity)
         HintSignGeneric
@@ -543,7 +543,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     # this API was designed by incorrigible monkeys who profoundly hate the
     # Python language. This is why we can't have sane things.
     elif is_hint_pep_typevar(hint):
-        return TypeVar
+        return HintSignTypeVar
     #FIXME: Drop this like hot lead after dropping Python 3.6 support.
     # If the active Python interpreter targets Python 3.6 *AND* this hint is a
     # poorly designed Python 3.6-specific "type alias", this hint is a
@@ -670,7 +670,6 @@ def get_hint_pep_sign(hint: Any) -> object:
     #* Next, iteratively refactor each single "typing" attribute explicitly
     #  mentioned above to use "datapepsign" signs instead. This means:
     #  * Forward references.
-    #  * "TypeVar".
     #  * etc.
     #* Next, make PEP 484 and 585 happen. These need to happen at the exact
     #  same time and will probably be quite painful, so defer this as long as

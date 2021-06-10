@@ -15,6 +15,7 @@ from beartype._cave._cavefast import NoneType
 from beartype._util.hint.data.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTypeVar,
 )
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
@@ -62,7 +63,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeVar,
     Union,
     ValuesView,
 )
@@ -209,7 +209,7 @@ HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
     # "datapepsigns" submodule for further commentary.
     Any,
     HintSignNewType,
-    TypeVar,
+    HintSignTypeVar,
     HINT_PEP484_TYPE_FORWARDREF,
 
     # PEP 484 explicitly supports the "None" singleton: i.e.,

@@ -17,7 +17,6 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.data.pep.datapep import (
     HINT_PEP_SIGNS_DEPRECATED,
@@ -29,6 +28,8 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
 )
 from beartype._util.hint.data.pep.proposal.datapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
+from beartype._util.hint.data.pep.sign.datapepsigns import (
+    HintSignTypeVar)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
@@ -642,17 +643,18 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
     # print(f'Testing PEP hint {repr(hint)} deep ignorability...')
 
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign(hint)
+
     #FIXME: Remove this *AFTER* properly supporting type variables. For
     #now, ignoring type variables is required ta at least shallowly support
     #generics parametrized by one or more type variables.
 
     # If this hint is a type variable, return true. Type variables require
     # non-trivial and currently unimplemented decorator support.
-    if is_hint_pep_typevar(hint):
+    if hint_sign is HintSignTypeVar:
         return True
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
+    # Else, this hint is *NOT* a type variable.
 
     # For each PEP-specific function testing whether this hint is an ignorable
     # type hint fully compliant with that PEP...
@@ -959,57 +961,58 @@ is_hint_pep_type_typing.__doc__ = '''
 
 # ....................{ TESTERS ~ subscript               }....................
 #FIXME: Consider removal, as we don't actually call this anywhere.
-def is_hint_pep_subscripted(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a PEP-compliant type hint
-    subscripted by one or more **arguments** (i.e., PEP-compliant child type
-    hints) and/or **type variables** (i.e., instances of the :class:`TypeVar`
-    class).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a PEP-compliant type hint subscripted
-        by one or more arguments and/or type variables.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
-        get_hint_pep_args,
-        get_hint_pep_typevars,
-    )
-
-    # Return true only if this hint is either...
-    return (
-        # A PEP-compliant subscripted generic under Python >= 3.9, including:
-        # * A PEP 484- or 585-compliant subscripted generic.
-        # * A PEP 585-compliant builtin type hint.
-        #
-        # Note this test is technically redundant, since all subscripted
-        # generics *MUST* necessarily be subscripted by one or more arguments
-        # and/or type variables, subsequently tested for. Nonetheless, this
-        # test efficiently reduces to a builtin call and is thus preferable.
-        isinstance(hint, HintGenericSubscriptedType) or
-        # Any other PEP-compliant type hint subscripted by one or more
-        # arguments and/or type variables. Note that this test is *NOT*
-        # reducible to merely:
-        #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
-        # Frankly, we have no idea why. We suspect we'd probably have to
-        # change the "or" operator in the above expression to the "+" operator,
-        # at which point the resulting operation is likely to be substantially
-        # slower than the simple series of tests performed here.
-        bool(get_hint_pep_args(hint)) or
-        bool(get_hint_pep_typevars(hint))
-    )
+# from beartype._cave._cavefast import HintGenericSubscriptedType
+# def is_hint_pep_subscripted(hint: object) -> bool:
+#     '''
+#     ``True`` only if the passed object is a PEP-compliant type hint
+#     subscripted by one or more **arguments** (i.e., PEP-compliant child type
+#     hints) and/or **type variables** (i.e., instances of the :class:`TypeVar`
+#     class).
+#
+#     This tester is intentionally *not* memoized (e.g., by the
+#     :func:`callable_cached` decorator), as the implementation trivially reduces
+#     to an efficient one-liner.
+#
+#     Parameters
+#     ----------
+#     hint : object
+#         Object to be inspected.
+#
+#     Returns
+#     ----------
+#     bool
+#         ``True`` only if this object is a PEP-compliant type hint subscripted
+#         by one or more arguments and/or type variables.
+#     '''
+#
+#     # Avoid circular import dependencies.
+#     from beartype._util.hint.pep.utilhintpepget import (
+#         get_hint_pep_args,
+#         get_hint_pep_typevars,
+#     )
+#
+#     # Return true only if this hint is either...
+#     return (
+#         # A PEP-compliant subscripted generic under Python >= 3.9, including:
+#         # * A PEP 484- or 585-compliant subscripted generic.
+#         # * A PEP 585-compliant builtin type hint.
+#         #
+#         # Note this test is technically redundant, since all subscripted
+#         # generics *MUST* necessarily be subscripted by one or more arguments
+#         # and/or type variables, subsequently tested for. Nonetheless, this
+#         # test efficiently reduces to a builtin call and is thus preferable.
+#         isinstance(hint, HintGenericSubscriptedType) or
+#         # Any other PEP-compliant type hint subscripted by one or more
+#         # arguments and/or type variables. Note that this test is *NOT*
+#         # reducible to merely:
+#         #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+#         # Frankly, we have no idea why. We suspect we'd probably have to
+#         # change the "or" operator in the above expression to the "+" operator,
+#         # at which point the resulting operation is likely to be substantially
+#         # slower than the simple series of tests performed here.
+#         bool(get_hint_pep_args(hint)) or
+#         bool(get_hint_pep_typevars(hint))
+#     )
 
 # ....................{ TESTERS ~ subscript : typevar     }....................
 def is_hint_pep_typevar(hint: object) -> bool:

@@ -40,6 +40,7 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
 from beartype._util.hint.data.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTypeVar,
 )
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_6,
@@ -387,7 +388,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic type variable.
         PepHintMetadata(
             hint=T,
-            pep_sign=TypeVar,
+            pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_subscripted=False,
@@ -407,7 +408,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # String type variable.
         PepHintMetadata(
             hint=AnyStr,
-            pep_sign=TypeVar,
+            pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_subscripted=False,
