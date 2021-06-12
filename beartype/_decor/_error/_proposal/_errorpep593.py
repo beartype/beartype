@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.hint.data.pep.datapepattr import (
+from beartype._util.data.hint.pep.datapepattr import (
     HINT_PEP593_ATTR_ANNOTATED)
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,

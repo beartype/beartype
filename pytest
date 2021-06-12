@@ -26,6 +26,8 @@
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
 PYTHON_ARGS=( command python3 -X dev )
 # PYTHON_ARGS=( command python3.6 -X dev )
+# PYTHON_ARGS=( command python3.7 -X dev )
+# PYTHON_ARGS=( command python3.8 -X dev )
 # PYTHON_ARGS=( command python3.9 -X dev )
 # PYTHON_ARGS=( command python3.10 -X dev )
 # PYTHON_ARGS=( command pypy3.7 -X dev )

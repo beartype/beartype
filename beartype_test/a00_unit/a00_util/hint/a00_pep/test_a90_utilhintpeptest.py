@@ -29,7 +29,7 @@ def test_is_hint_pep_generic() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -316,20 +316,20 @@ def test_die_unless_hint_pep_sign_supported() -> None:
     )
     from beartype._util.hint.pep.utilhintpeptest import (
         die_if_hint_pep_sign_unsupported)
-    from beartype._util.hint.data.pep.datapep import (
-        HINT_PEP_SIGNS_SUPPORTED)
+    from beartype._util.data.hint.pep.datapep import (
+        HINT_SIGNS_SUPPORTED)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_HASHABLE)
 
     # Assert this tester accepts all supported signs.
-    for pep_signs_supported in HINT_PEP_SIGNS_SUPPORTED:
+    for pep_signs_supported in HINT_SIGNS_SUPPORTED:
         die_if_hint_pep_sign_unsupported(pep_signs_supported)
 
     # Assert this tester rejects PEP-compliant type hints that are *NOT*
     # supported signs.
     for hint_pep in HINTS_PEP_HASHABLE:
-        if hint_pep not in HINT_PEP_SIGNS_SUPPORTED:
+        if hint_pep not in HINT_SIGNS_SUPPORTED:
             with raises(BeartypeDecorHintPepUnsupportedException):
                 die_if_hint_pep_sign_unsupported(hint_pep)
 
@@ -338,6 +338,6 @@ def test_die_unless_hint_pep_sign_supported() -> None:
     # also supported signs include *ALL* PEP 585-compliant type origins under
     # Python >= 3.9 (e.g., "dict", "list", "collections.abc.Sequence").
     for not_hint_pep in NOT_HINTS_PEP:
-        if not_hint_pep not in HINT_PEP_SIGNS_SUPPORTED:
+        if not_hint_pep not in HINT_SIGNS_SUPPORTED:
             with raises(BeartypeDecorHintPepException):
                 die_if_hint_pep_sign_unsupported(not_hint_pep)

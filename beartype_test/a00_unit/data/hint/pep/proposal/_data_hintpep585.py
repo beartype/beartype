@@ -44,7 +44,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.8-specific imports.
     import re
     from beartype._cave._cavefast import IntType
-    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
     from collections.abc import (
         ByteString,
         Callable,

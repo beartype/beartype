@@ -58,7 +58,7 @@ efficiency, portability, and thrilling puns.
    >>> quote_wiggum([b"Oh, my God! A horrible plane crash!", b"Hey, everybody! Get a load of this flaming wreckage!",])
    Traceback (most recent call last):
      File "<stdin>", line 1, in <module>
-     File "<string>", line 30, in __beartyped_quote_wiggum
+     File "<string>", line 30, in quote_wiggum
      File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/errormain.py", line 220, in raise_pep_call_exception
        raise exception_cls(
    beartype.roar.BeartypeCallHintPepParamException: @beartyped
@@ -355,7 +355,7 @@ the former as a default behaviour.
    Hello, world!
    Traceback (most recent call last):
      File "<stdin>", line 6, in <module>
-     File "<string>", line 17, in __beartyped_main
+     File "<string>", line 17, in main
      File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/errormain.py", line 218, in raise_pep_call_exception
        raise exception_cls(
    beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
@@ -2780,7 +2780,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 
 .. code-block:: python
 
-   def __beartyped_law_of_the_jungle_4(
+   def law_of_the_jungle_4(
        *args,
        __beartype_func=__beartype_func,
        __beartypistry=__beartypistry,
@@ -2813,7 +2813,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 Let's dismantle this bit by bit:
 
 * The code comments above are verbatim as they appear in the generated code.
-* ``__beartyped_law_of_the_jungle_4()`` is the ad-hoc function name
+* ``law_of_the_jungle_4()`` is the ad-hoc function name
   ``@beartype`` assigned this wrapper function.
 * ``__beartype_func`` is the original ``law_of_the_jungle_4()`` function.
 * ``__beartypistry`` is a thread-safe global registry of all types, tuples of
@@ -2857,7 +2857,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 
 .. code-block:: python
 
-   def __beartyped_law_of_the_jungle_5(
+   def law_of_the_jungle_5(
        *args,
        __beartype_func=__beartype_func,
        __beartypistry=__beartypistry,
@@ -2919,7 +2919,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 
 .. code-block:: python
 
-   def __beartyped_law_of_the_jungle_6(
+   def law_of_the_jungle_6(
        *args,
        __beartype_func=__beartype_func,
        __beartypistry=__beartypistry,
@@ -2977,7 +2977,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 
 .. code-block:: python
 
-   def __beartyped_law_of_the_jungle_7(
+   def law_of_the_jungle_7(
        *args,
        __beartype_func=__beartype_func,
        __beartypistry=__beartypistry,
@@ -3062,7 +3062,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 
 .. code-block:: python
 
-   def __beartyped_law_of_the_jungle_8(
+   def law_of_the_jungle_8(
        *args,
        __beartype_func=__beartype_func,
        __beartypistry=__beartypistry,
@@ -3368,10 +3368,10 @@ you will want to at least:
   iteration or other expensive operations should be memoized via our internal
   `@callable_cached`_ decorator.
 * Define a new data utility submodule for this PEP residing under the
-  `"beartype._util.hint.data.pep.proposal" subpackage <beartype util data
+  `"beartype._util.data.hint.pep.proposal" subpackage <beartype util data
   pep_>`__ adding various signs (i.e., arbitrary objects uniquely identifying
   type hints compliant with this PEP) to various global variables defined by
-  the parent `"beartype._util.hint.data.pep.utilhintdatapep" submodule
+  the parent `"beartype._util.data.hint.pep.utilhintdatapep" submodule
   <_beartype util data pep parent>`__.
 * Define a new test data submodule for this PEP residing under the
   `"beartype_test.unit.data.hint.pep.proposal" subpackage <beartype test data

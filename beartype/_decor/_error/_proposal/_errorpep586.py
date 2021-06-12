@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortype import get_cause_or_none_type_origin
-from beartype._util.hint.data.pep.datapepattr import (
+from beartype._util.data.hint.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_object

@@ -4,14 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint globals** (i.e., constant global variables
-concerning PEP-compliant type hints).
+Project-wide **PEP-compliant type hint globals** (i.e., global constants
+pertaining to PEP-compliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.data.pep.proposal.datapep484 import (
+from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_DEPRECATED,
     HINT_PEP484_SIGNS_IGNORABLE,
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD,
@@ -21,19 +21,19 @@ from beartype._util.hint.data.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_TYPE,
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
 )
-from beartype._util.hint.data.pep.proposal.datapep544 import (
+from beartype._util.data.hint.pep.proposal.datapep544 import (
     HINT_PEP544_SIGNS_IGNORABLE,
     HINT_PEP544_SIGNS_SUPPORTED_DEEP,
 )
-from beartype._util.hint.data.pep.proposal.datapep585 import (
+from beartype._util.data.hint.pep.proposal.datapep585 import (
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP585_SIGNS_SUPPORTED_DEEP,
     HINT_PEP585_SIGNS_TUPLE,
     HINT_PEP585_SIGNS_TYPE,
 )
-from beartype._util.hint.data.pep.proposal.datapep586 import (
+from beartype._util.data.hint.pep.proposal.datapep586 import (
     HINT_PEP586_SIGNS_SUPPORTED_DEEP)
-from beartype._util.hint.data.pep.proposal.datapep593 import (
+from beartype._util.data.hint.pep.proposal.datapep593 import (
     HINT_PEP593_SIGNS_SUPPORTED_DEEP)
 from beartype._util.lib.utilliboptional import (
     IS_LIB_TYPING_EXTENSIONS)
@@ -64,11 +64,9 @@ accepted by both static and runtime type checkers).
 '''
 
 # ....................{ SIGNS                             }....................
-#FIXME: Rename to "HINT_PEP_ATTRS_DEPRECATED" and likewise for all
-#upstream frozen sets used to define this frozen set.
 #FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
 #rather than signs, whose meaning will now be entirely different.
-HINT_PEP_SIGNS_DEPRECATED = (
+HINT_PEP_ATTRS_DEPRECATED = (
     HINT_PEP484_SIGNS_DEPRECATED
 )
 '''
@@ -82,7 +80,7 @@ more recent PEPs).
 #upstream frozen sets used to define this frozen set.
 #FIXME: Refactor all usage of this frozen set to test unsubscripted attributes
 #rather than signs, whose meaning will now be entirely different.
-HINT_PEP_SIGNS_IGNORABLE = (
+HINT_SIGNS_IGNORABLE = (
     HINT_PEP484_SIGNS_IGNORABLE |
     HINT_PEP544_SIGNS_IGNORABLE
 )
@@ -93,17 +91,17 @@ identifying PEP-compliant type hints unconditionally ignored by the
 
 See Also
 ----------
-:attr:`beartype._util.hint.data.datahint.HINTS_IGNORABLE_SHALLOW`
+:attr:`beartype._util.data.hint.datahint.HINTS_IGNORABLE_SHALLOW`
     Further commentary.
 '''
 
 # ....................{ SIGNS ~ category                  }....................
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove "HINT_PEP484_SIGNS_SEQUENCE_STANDARD" and
 #"HINT_PEP585_SIGNS_SEQUENCE_STANDARD" entirely.
-HINT_PEP_SIGNS_SEQUENCE_STANDARD = (
+HINT_SIGNS_SEQUENCE_STANDARD = (
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD |
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD
 )
@@ -145,11 +143,11 @@ This set intentionally excludes the:
 
 
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove "HINT_PEP484_SIGNS_TUPLE" and "HINT_PEP585_SIGNS_TUPLE"
 #entirely.
-HINT_PEP_SIGNS_TUPLE = (
+HINT_SIGNS_TUPLE = (
     HINT_PEP484_SIGNS_TUPLE |
     HINT_PEP585_SIGNS_TUPLE
 )
@@ -161,7 +159,7 @@ constraining *all* items of compliant tuples).
 
 # ....................{ SIGNS ~ supported                 }....................
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove "HINT_PEP484_SIGNS_SUPPORTED_SHALLOW" entirely.
 _HINT_PEP_SIGNS_SUPPORTED_SHALLOW = (
@@ -176,10 +174,10 @@ originating from a non-:mod:`typing` origin type for which the
 
 
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove all upstream sets entirely.
-HINT_PEP_SIGNS_SUPPORTED_DEEP = (
+HINT_SIGNS_SUPPORTED_DEEP = (
     HINT_PEP484_SIGNS_SUPPORTED_DEEP |
     HINT_PEP544_SIGNS_SUPPORTED_DEEP |
     HINT_PEP585_SIGNS_SUPPORTED_DEEP |
@@ -206,7 +204,7 @@ type hint annotated by a subscription of that attribute.
 #get_hint_pep_sign(). Given that, let's initially try just commenting this out
 #entirely both here and in get_hint_pep_sign(). That will probably cause test
 #failures under Python 3.6, but we can do with that when we get that far. :p
-HINT_PEP_SIGNS_TYPE = (
+HINT_SIGNS_TYPE = (
     HINT_PEP484_SIGNS_TYPE |
     HINT_PEP585_SIGNS_TYPE
 )
@@ -218,10 +216,10 @@ argument to the :func:`isinstance` builtin).
 
 
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
 #FIXME: Remove all upstream sets entirely.
-HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB = (
+HINT_SIGNS_TYPE_ORIGIN_STDLIB = (
     HINT_PEP484_SIGNS_TYPE_ORIGIN |
     # Since all PEP 585-compliant type hints originate from an origin type, the
     # set of all PEP 585-compliant standard class signs also doubles as the
@@ -244,17 +242,17 @@ by the :func:`beartype.beartype` decorator.
 
 # ....................{ SIGNS ~ supported : all           }....................
 #FIXME: Shift this frozen set into a new
-#"beartype._util.hint.data.pep.sign.datapepsignset" submodule. Note that the
+#"beartype._util.data.hint.pep.sign.datapepsignset" submodule. Note that the
 #name of this frozen set should remain the same.
-HINT_PEP_SIGNS_SUPPORTED = (
+HINT_SIGNS_SUPPORTED = (
     # Set of all deeply supported signs.
-    HINT_PEP_SIGNS_SUPPORTED_DEEP |
+    HINT_SIGNS_SUPPORTED_DEEP |
     # Set of all shallowly supported signs *NOT* originating from a
     # non-"typing" origin type.
     _HINT_PEP_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a non-"typing"
     # origin type.
-    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB
+    HINT_SIGNS_TYPE_ORIGIN_STDLIB
 )
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely

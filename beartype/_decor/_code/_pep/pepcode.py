@@ -99,7 +99,7 @@ def pep_code_check_param(
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
-    PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(
+    PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(  # type: ignore
         param.kind, None)
 
     # If this kind of parameter is unsupported...

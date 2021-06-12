@@ -18,17 +18,17 @@ from beartype.roar import (
     BeartypeDecorHintPep484Exception,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.data.pep.datapep import (
-    HINT_PEP_SIGNS_DEPRECATED,
-    HINT_PEP_SIGNS_SUPPORTED,
+from beartype._util.data.hint.pep.datapep import (
+    HINT_PEP_ATTRS_DEPRECATED,
+    HINT_SIGNS_SUPPORTED,
 )
-from beartype._util.hint.data.pep.proposal.datapep484 import (
+from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
     HINT_PEP484_TUPLE_EMPTY,
 )
-from beartype._util.hint.data.pep.proposal.datapep585 import (
+from beartype._util.data.hint.pep.proposal.datapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
-from beartype._util.hint.data.pep.sign.datapepsigns import (
+from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
@@ -252,7 +252,7 @@ def die_if_hint_pep_unsupported(
     # In this case, raise a general-purpose exception.
     #
     # Note that, by definition, the sign uniquely identifying this hint
-    # *SHOULD* be in the "HINT_PEP_SIGNS_SUPPORTED" set. Regardless of whether
+    # *SHOULD* be in the "HINT_SIGNS_SUPPORTED" set. Regardless of whether
     # it is or isn't, we raise a similar exception. Ergo, there's no benefit to
     # validating that expectation here.
     else:
@@ -344,7 +344,7 @@ def warn_if_hint_pep_sign_deprecated(
     '''
 
     # If this sign is deprecated...
-    if hint_sign in HINT_PEP_SIGNS_DEPRECATED:
+    if hint_sign in HINT_PEP_ATTRS_DEPRECATED:
         #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
         #FIXME: Unit test that this string contains *NO* non-human-readable
         #placeholder substrings. Note that the existing
@@ -771,13 +771,13 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All supported type hints are hashable.
     '''
-    # from beartype._util.hint.data.pep.datapep import (
-    #     HINT_PEP_SIGNS_SUPPORTED_DEEP)
-    # print(f'HINT_PEP_SIGNS_SUPPORTED: {HINT_PEP_SIGNS_SUPPORTED}')
-    # print(f'HINT_PEP_SIGNS_SUPPORTED_DEEP: {HINT_PEP_SIGNS_SUPPORTED_DEEP}')
+    # from beartype._util.data.hint.pep.datapep import (
+    #     HINT_SIGNS_SUPPORTED_DEEP)
+    # print(f'HINT_SIGNS_SUPPORTED: {HINT_SIGNS_SUPPORTED}')
+    # print(f'HINT_SIGNS_SUPPORTED_DEEP: {HINT_SIGNS_SUPPORTED_DEEP}')
 
     # Return true only if this hint is a supported sign.
-    return hint in HINT_PEP_SIGNS_SUPPORTED
+    return hint in HINT_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: This test returns false negatives for PEP 593-compliant

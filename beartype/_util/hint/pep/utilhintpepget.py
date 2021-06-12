@@ -18,14 +18,13 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.data.pep.datapep import (
+from beartype._util.data.hint.pep.datapep import (
     HINT_PEP_MODULE_NAMES,
-    HINT_PEP_SIGNS_TYPE,
-    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
+    HINT_SIGNS_TYPE,
+    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.datapep484 import (
-    HINT_PEP484_TYPE_FORWARDREF)
-from beartype._util.hint.data.pep.sign.datapepsigns import (
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignForwardRef,
     HintSignGeneric,
     HintSignNewType,
     HintSignTypeVar,
@@ -294,7 +293,7 @@ get_hint_pep_typevars.__doc__ = '''
 
 # ....................{ GETTERS ~ sign                    }....................
 #FIXME: Refactor as follows *AFTER* finalizing our sign refactoring:
-# from beartype._util.hint.data.pep.sign.datapepsigncls import HintSignOrType
+# from beartype._util.data.hint.pep.sign.datapepsigncls import HintSignOrType
 # @callable_cached
 # def get_hint_pep_sign_or_cls(hint: Any) -> HintSignOrType:
 #FIXME: Refactor all functions throughout the codebase that accept or return
@@ -336,14 +335,15 @@ def get_hint_pep_sign(hint: Any) -> object:
       :class:`typing.Generic` ABC as well.
     * A **forward reference** (i.e., string or instance of the concrete
       :class:`typing.ForwardRef` class), this function returns
-      :class:`typing.ForwardRef`.
+      :class:`HintSignTypeVar`.
     * A **type variable** (i.e., instance of the concrete
       :class:`typing.TypeVar` class), this function returns
       :class:`HintSignTypeVar`.
-    * Any other class, that class as is.
-    * Anything else, the unsubscripted :mod:`typing` attribute dynamically
-      retrieved by inspecting this hint's **object representation** (i.e., the
-      non-human-readable string returned by the :func:`repr` builtin).
+    * Any other class, this function returns that class as is.
+    * Anything else, this function returns the unsubscripted :mod:`typing`
+      attribute dynamically retrieved by inspecting this hint's **object
+      representation** (i.e., the non-human-readable string returned by the
+      :func:`repr` builtin).
 
     This getter function is memoized for efficiency.
 
@@ -488,10 +488,10 @@ def get_hint_pep_sign(hint: Any) -> object:
     ):
         # If this class is *NOT* explicitly allowed as a sign, raise an
         # exception.
-        if hint not in HINT_PEP_SIGNS_TYPE:
+        if hint not in HINT_SIGNS_TYPE:
             raise BeartypeDecorHintPepSignException(
                 f'Unsubscripted non-generic class {repr(hint)} invalid as '
-                f'sign (i.e., not in {repr(HINT_PEP_SIGNS_TYPE)}).'
+                f'sign (i.e., not in {repr(HINT_SIGNS_TYPE)}).'
             )
         # Else, this class is explicitly allowed as a sign.
 
@@ -513,7 +513,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     #     >>> repr(t.ForwardRef('str'))
     #     "ForwardRef('str')"
     elif is_hint_forwardref(hint):
-        return HINT_PEP484_TYPE_FORWARDREF
+        return HintSignForwardRef
     # If this hint is a PEP 484-compliant new type, return the closure factory
     # function responsible for creating these types.
     #
@@ -597,11 +597,28 @@ def get_hint_pep_sign(hint: Any) -> object:
     #   preceding the first "[" delimiter in that name.
     sign_name, _, _ = hint_module_attr_name.partition('[')
 
-    #FIXME: Under Python >= 3.9, we also need to map from "collections.abc.Set"
-    #to "AbstractSet" for disambiguity with "Set" (which represents the builtin
-    #"set" type). Trivial, but let's not forget!
-    #FIXME: Explicitly test "typing.AbstractSet", "collections.abc.Set", and
-    #the builtin "set" support to ensure we get this right, folks.
+    #FIXME: Under Python >= 3.9, we also need to map from:
+    #* "collections.abc.Set" to "HintSignAbstractSet" for disambiguity with
+    #  "HintSignSet" (which represents the builtin "set" type).
+    #* "contextlib.AbstractAsyncContextManager" to
+    #  "HintSignAsyncContextManager" -- not for disambiguity but just because
+    #  this is the mapping.
+    #* "contextlib.AbstractContextManager" to "HintSignContextManager" -- not
+    #  for disambiguity but just because this is the mapping.
+    #FIXME: Explicitly test "typing.AbstractSet", "collections.abc.Set", the
+    #builtin "set", as well as those context manager types to ensure we get
+    #this right, folks.
+    #FIXME: Under all Python versions, we also need to map from:
+    #* The "typing.Hashable" non-class to the "collections.abc.Hashable" class.
+    #  Although the two are *NOT* the same object nor, the former is simply a
+    #  crude alias to the latter and should thus be globally replaced
+    #  everywhere by the latter. Indeed, the former is now deprecated.
+    #* The "typing.Sized" non-class to the "collections.abc.Sized" class for
+    #  the same exact reasons.
+    #Ideally, we can effect this here with a simple global dictionary mapping
+    #(say, "_HINT_TYPING_DEPRECATED_ATTR_TO_TYPE"). Note that a deprecation
+    #warning should still be emitted despite this mapping. Ensure this mapping
+    #preserves that warning, please.
 
     # If this name erroneously refers to a non-existing "typing" attribute,
     # rewrite this name to refer to the actual existing "typing" attribute
@@ -612,7 +629,7 @@ def get_hint_pep_sign(hint: Any) -> object:
 
     #FIXME: Refactor as follows:
     #* Define a new global dictionary constant in "datapep" like:
-    #     from beartype._util.hint.data.pep import datapepsign
+    #     from beartype._util.data.hint.pep import datapepsign
     #     # Either this...
     #     HINT_PEP_SIGN_NAME_TO_SIGN = datapepsign.__dict__  # <-- wow
     #     # Or better yet this for disambiguity.
@@ -635,7 +652,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     #             ...
     #         })
     #* Reduce the following to simply:
-    #     from beartype._util.hint.data.pep import datapepsign
+    #     from beartype._util.data.hint.pep import datapepsign
     #
     #     #FIXME: This suggests we can probably refactor away a bit of the
     #     #logic above, thankfully. Namely, we just need to call
@@ -665,12 +682,6 @@ def get_hint_pep_sign(hint: Any) -> object:
     #  logic as we currently have. Be cautious here.
     #
     #Given all of that, the safest way to approach this is follows:
-    #* Before doing anything, begin by testing generics with respect to errors.
-    #  We appear to have neglected to do that. *sigh*
-    #* Next, iteratively refactor each single "typing" attribute explicitly
-    #  mentioned above to use "datapepsign" signs instead. This means:
-    #  * Forward references.
-    #  * etc.
     #* Next, make PEP 484 and 585 happen. These need to happen at the exact
     #  same time and will probably be quite painful, so defer this as long as
     #  feasible, please. *THIS WILL TEMPORARILY BREAK EVERYTHING.*
@@ -853,7 +864,7 @@ def get_hint_pep_stdlib_type_or_none(hint: Any) -> Optional[type]:
     return (
         # If this sign originates from an origin type, that type.
         _get_hint_pep_origin_object_or_none(hint)
-        if hint_sign in HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB else
+        if hint_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB else
         # Else, "None".
         None
     )

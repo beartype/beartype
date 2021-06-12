@@ -12,7 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import typing
 from beartype._cave._cavefast import NoneType
-from beartype._util.hint.data.pep.sign.datapepsigns import (
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignForwardRef,
     HintSignGeneric,
     HintSignNewType,
     HintSignTypeVar,
@@ -208,9 +209,9 @@ HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
     # syntactic contexts and thus intentionally omitted here. See the
     # "datapepsigns" submodule for further commentary.
     Any,
+    HintSignForwardRef,
     HintSignNewType,
     HintSignTypeVar,
-    HINT_PEP484_TYPE_FORWARDREF,
 
     # PEP 484 explicitly supports the "None" singleton: i.e.,
     #     When used in a type hint, the expression None is considered

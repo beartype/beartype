@@ -93,22 +93,23 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_type,
     add_func_scope_types,
 )
-from beartype._util.hint.data.datahint import HINTS_IGNORABLE_SHALLOW
-from beartype._util.hint.data.pep.datapep import (
-    HINT_PEP_SIGNS_SUPPORTED_DEEP,
-    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
-    HINT_PEP_SIGNS_TUPLE,
-    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
+from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
+from beartype._util.data.hint.pep.datapep import (
+    HINT_SIGNS_SUPPORTED_DEEP,
+    HINT_SIGNS_SEQUENCE_STANDARD,
+    HINT_SIGNS_TUPLE,
+    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.datapep484 import (
-    HINT_PEP484_TYPE_FORWARDREF,
-    HINT_PEP484_SIGNS_UNION,
-)
-from beartype._util.hint.data.pep.datapepattr import (
+from beartype._util.data.hint.pep.proposal.datapep484 import (
+    HINT_PEP484_SIGNS_UNION)
+from beartype._util.data.hint.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL,
     HINT_PEP593_ATTR_ANNOTATED,
 )
-from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignForwardRef,
+    HintSignGeneric,
+)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
     get_hint_pep484_newtype_class,
@@ -1045,7 +1046,7 @@ def pep_code_check_hint(
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.errormain" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.hint.data.pep.datapep.HINT_PEP_SIGNS_SUPPORTED_DEEP"
+            # * "beartype._util.data.hint.pep.datapep.HINT_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all supported unsubscripted "typing" attributes
             #   for which this function generates deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1313,9 +1314,9 @@ def pep_code_check_hint(
                 (
                     # Originating from an origin type and thus trivially
                     # supportable with shallow type-checking *AND*...
-                    hint_curr_sign in HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB and
+                    hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB and
                     # Currently unsupported with deep type-checking...
-                    hint_curr_sign not in HINT_PEP_SIGNS_SUPPORTED_DEEP
+                    hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
                 )
             ):
             # Then generate trivial code shallowly type-checking the current
@@ -1364,9 +1365,9 @@ def pep_code_check_hint(
             # If this hint is either...
             elif (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...
-                hint_curr_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
+                hint_curr_sign in HINT_SIGNS_SEQUENCE_STANDARD or (
                     # A tuple *AND*...
-                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE and
+                    hint_curr_sign in HINT_SIGNS_TUPLE and
                     # This tuple is subscripted by exactly two child hints
                     # *AND*...
                     hint_childs_len == 2 and
@@ -1404,7 +1405,7 @@ def pep_code_check_hint(
                 #     TypeError: Too many parameters for typing.List; actual 2, expected 1
                 assert (
                     hint_childs_len == 1 or
-                    hint_curr_sign in HINT_PEP_SIGNS_TUPLE
+                    hint_curr_sign in HINT_SIGNS_TUPLE
                 ), (
                     f'{hint_curr_label} {repr(hint_curr)} sequence '
                     f'subscripted by multiple arguments.')
@@ -1477,7 +1478,7 @@ def pep_code_check_hint(
             #   Note that the "..." substring here is *NOT* a literal ellipses.
             #
             # This is what happens when non-human-readable APIs are promoted.
-            elif hint_curr_sign in HINT_PEP_SIGNS_TUPLE:
+            elif hint_curr_sign in HINT_SIGNS_TUPLE:
                 # Assert this tuple was subscripted by at least one child hint
                 # if this tuple is PEP 484-compliant. Note that the "typing"
                 # module should have already guaranteed this on our behalf.
@@ -1646,7 +1647,7 @@ def pep_code_check_hint(
 
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
-            elif hint_curr_sign is HINT_PEP484_TYPE_FORWARDREF:
+            elif hint_curr_sign is HintSignForwardRef:
                 # Possibly unqualified classname referred to by this hint.
                 hint_curr_forwardref_classname = get_hint_forwardref_classname(
                     hint_curr)

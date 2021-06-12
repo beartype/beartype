@@ -14,8 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.hint.data.pep.proposal.datapep484 import (
-    HINT_PEP484_TYPE_FORWARDREF)
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.utilhintpepget import (
@@ -47,7 +46,7 @@ def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HINT_PEP484_TYPE_FORWARDREF, (
+    assert sleuth.hint_sign is HintSignForwardRef, (
         f'PEP type hint sign {repr(sleuth.hint_sign)} not forward reference.')
 
     # Fully-qualified classname referred to by this forward reference relative

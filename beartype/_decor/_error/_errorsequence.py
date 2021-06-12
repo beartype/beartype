@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortype import get_cause_or_none_type_origin
-from beartype._util.hint.data.pep.datapep import (
-    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
-    HINT_PEP_SIGNS_TUPLE,
+from beartype._util.data.hint.pep.datapep import (
+    HINT_SIGNS_SEQUENCE_STANDARD,
+    HINT_SIGNS_TUPLE,
 )
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -44,7 +44,7 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD, (
+    assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_STANDARD, (
         f'{repr(sleuth.hint)} not standard sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
@@ -86,7 +86,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE, (
+    assert sleuth.hint_sign in HINT_SIGNS_TUPLE, (
         f'{repr(sleuth.hint_sign)} not tuple hint.')
 
     # Human-readable string describing the failure of this pith to be a tuple
@@ -198,8 +198,8 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
     # expected variadic sequence, as the caller guarantees this to be the case.
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
-        sleuth.hint_sign in HINT_PEP_SIGNS_SEQUENCE_STANDARD or (
-            sleuth.hint_sign in HINT_PEP_SIGNS_TUPLE and
+        sleuth.hint_sign in HINT_SIGNS_SEQUENCE_STANDARD or (
+            sleuth.hint_sign in HINT_SIGNS_TUPLE and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis
         )

@@ -5,7 +5,7 @@
 
 '''
 Project-wide **Python version-agnostic signs** (i.e., instances of the
-:class:`beartype._util.hint.data.pep.sign.datapepsigncls.HintSign` class
+:class:`beartype._util.data.hint.pep.sign.datapepsigncls.HintSign` class
 uniquely identifying PEP-compliant type hints in a safe, non-deprecated manner
 regardless of the Python version targeted by the active Python interpreter).
 
@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.data.pep.sign.datapepsigncls import HintSign
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ SIGNS                             }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -69,11 +69,11 @@ HintSignTypeVar = HintSign()
 HintSignUnion = HintSign()
 
 # ABCs (from collections.abc).
-HintSignAbstractSet = HintSign
+HintSignAbstractSet = HintSign()
 HintSignByteString = HintSign()
 HintSignContainer = HintSign()
 HintSignContextManager = HintSign()
-HintSignHashable = HintSign()
+# Hashable   <-- not a useful type hint (alias for "collections.abc.Hashable")
 HintSignItemsView = HintSign()
 HintSignIterable = HintSign()
 HintSignIterator = HintSign()
@@ -84,7 +84,7 @@ HintSignMutableMapping = HintSign()
 HintSignMutableSequence = HintSign()
 HintSignMutableSet = HintSign()
 HintSignSequence = HintSign()
-HintSignSized = HintSign()
+# Sized   <-- not a useful type hint (alias for "collections.abc.Sized")
 HintSignValuesView = HintSign()
 HintSignAwaitable = HintSign()
 HintSignAsyncIterator = HintSign()
@@ -119,7 +119,7 @@ HintSignTypedDict = HintSign()
 HintSignGenerator = HintSign()
 
 # One-off things.
-HintSignAnyStr = HintSign()
+# AnyStr   <-- not a unique type hint (just a constrained "TypeVar")
 # cast   <-- unusable as a type hint
 # final   <-- unusable as a type hint
 # get_args   <-- unusable as a type hint
@@ -134,10 +134,17 @@ HintSignNewType = HintSign()
 HintSignParamSpecArgs = HintSign()
 HintSignParamSpecKwargs = HintSign()
 # runtime_checkable   <-- unusable as a type hint
-HintSignText = HintSign()
+# Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
 HintSignTypeAlias = HintSign()
 HintSignTypeGuard = HintSign()
+
+# Wrapper namespace for re type aliases.
+#
+# Note that "typing.__all__" intentionally omits the "Match" and "Pattern"
+# attributes, which it oddly considers to comprise another namespace. *shrug*
+HintSignMatch = HintSign()
+HintSignPattern = HintSign()
 
 # ....................{ CLEANUP                           }....................
 # Prevent all attributes imported above from polluting this namespace. Why?

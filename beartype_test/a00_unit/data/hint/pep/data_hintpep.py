@@ -44,7 +44,7 @@ HINTS_PEP_IGNORABLE_DEEP = set()
 Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in
 the low-level
-:attr:`beartype._util.hint.data.datahint.HINTS_IGNORABLE_SHALLOW` set, but
+:attr:`beartype._util.data.hint.datahint.HINTS_IGNORABLE_SHALLOW` set, but
 which are nonetheless ignorable and thus require dynamic testing by the
 high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
 function to demonstrate this fact).

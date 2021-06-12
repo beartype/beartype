@@ -56,7 +56,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
-    from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
     from typing import (
         BinaryIO,
         IO,

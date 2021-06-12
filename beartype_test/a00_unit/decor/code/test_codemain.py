@@ -53,8 +53,8 @@ def test_codemain() -> None:
         # BeartypeDecorHintPepDeprecatedWarning,
     )
     from beartype._util.utilobject import is_object_context_manager
-    from beartype._util.hint.data.pep.datapep import (
-        HINT_PEP_SIGNS_DEPRECATED)
+    from beartype._util.data.hint.pep.datapep import (
+        HINT_PEP_ATTRS_DEPRECATED)
     from beartype_test.a00_unit.data.hint.data_hintmeta import (
         PepHintMetadata,
         PepHintPithSatisfiedMetadata,
@@ -96,7 +96,7 @@ def test_codemain() -> None:
             # declaration to emit non-fatal deprecation warnings.
             if (
                 isinstance(hint_meta, PepHintMetadata) and
-                hint_meta.pep_sign in HINT_PEP_SIGNS_DEPRECATED
+                hint_meta.pep_sign in HINT_PEP_ATTRS_DEPRECATED
             ):
                 #FIXME: For unknown and probably uninteresting reasons, the
                 #pytest.warns() context manager appears to be broken on our

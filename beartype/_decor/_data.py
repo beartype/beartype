@@ -223,7 +223,7 @@ class BeartypeData(object):
             raise_pep_call_exception)
 
         # Machine-readable name of the wrapper function to be generated.
-        self.func_wrapper_name = f'__beartyped_{func.__name__}'
+        self.func_wrapper_name = func.__name__
 
         # Nullify all remaining attributes for safety *BEFORE* passing this
         # object to any functions (e.g., resolve_hints_pep563_if_active()).

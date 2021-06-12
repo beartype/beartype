@@ -15,11 +15,11 @@ from beartype.roar import (
     BeartypeDecorHintPep484Exception,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.data.pep.proposal.datapep484 import (
+from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
-from beartype._util.hint.data.pep.sign.datapepsigns import (
+from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
 )
@@ -117,7 +117,7 @@ def is_hint_pep484_ignorable_or_none(
 
     # If this hint is a PEP 484-compliant generic...
     #
-    # Note that the "beartype._util.hint.data.pep.proposal.datapep484"
+    # Note that the "beartype._util.data.hint.pep.proposal.datapep484"
     # submodule already ignores the unsubscripted "typing.Generic" ABC itself.
     if hint_sign is HintSignGeneric:
         # print(f'Testing generic hint {repr(hint)} deep ignorability...')

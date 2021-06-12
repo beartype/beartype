@@ -91,16 +91,17 @@ from beartype._decor._error._proposal._errorpep586 import (
     get_cause_or_none_literal)
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
-from beartype._util.hint.data.pep.datapep import (
-    HINT_PEP_SIGNS_SEQUENCE_STANDARD,
-    HINT_PEP_SIGNS_TUPLE,
-    HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB,
+from beartype._util.data.hint.pep.datapep import (
+    HINT_SIGNS_SEQUENCE_STANDARD,
+    HINT_SIGNS_TUPLE,
+    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
-from beartype._util.hint.data.pep.proposal.datapep484 import (
-    HINT_PEP484_TYPE_FORWARDREF,
-    HINT_PEP484_SIGNS_UNION,
+from beartype._util.data.hint.pep.proposal.datapep484 import (
+    HINT_PEP484_SIGNS_UNION)
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignForwardRef,
+    HintSignGeneric,
 )
-from beartype._util.hint.data.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextlabel import (
@@ -340,17 +341,17 @@ def _init() -> None:
     # Map each originative "typing" attribute to the appropriate getter
     # *BEFORE* mapping any other attributes. This is merely a generalized
     # fallback subsequently replaced by attribute-specific getters.
-    for pep_sign_type_origin in HINT_PEP_SIGNS_TYPE_ORIGIN_STDLIB:
+    for pep_sign_type_origin in HINT_SIGNS_TYPE_ORIGIN_STDLIB:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
             get_cause_or_none_type_origin)
 
     # Map each standard sequence "typing" attribute to the appropriate getter.
-    for pep_sign_sequence_standard in HINT_PEP_SIGNS_SEQUENCE_STANDARD:
+    for pep_sign_sequence_standard in HINT_SIGNS_SEQUENCE_STANDARD:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_standard] = (
             get_cause_or_none_sequence_standard)
 
     # Map each tuple "typing" attribute to the appropriate getter.
-    for pep_sign_tuple in HINT_PEP_SIGNS_TUPLE:
+    for pep_sign_tuple in HINT_SIGNS_TUPLE:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_tuple] = (
             get_cause_or_none_tuple)
 
@@ -362,7 +363,7 @@ def _init() -> None:
     # Map each "typing" attribute validated by a unique getter specific to that
     # attribute to that getter.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
-        HINT_PEP484_TYPE_FORWARDREF: get_cause_or_none_forwardref,
+        HintSignForwardRef: get_cause_or_none_forwardref,
         HintSignGeneric: get_cause_or_none_generic,
     })
 
