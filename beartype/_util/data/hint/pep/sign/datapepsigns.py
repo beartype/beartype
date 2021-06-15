@@ -13,19 +13,33 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Attributes imported here at module scope *MUST* be explicitly
+# deleted from this module's namespace below.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ SIGNS                             }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Attributes defined by this module are intentionally synchronized
 # with the "__all__" dunder list global of the "typing" module bundled with the
-# most recent CPython release. For that reason, these attributes are
+# most recent CPython release. For that reason, these attributes are:
 # * Intentionally declared in the exact same order prefixed by the exact same
 #   inline comments as for that list global.
 # * Intentionally *NOT* commented with docstrings, both because:
 #   * These docstrings would all trivially reduce to a single-line sentence
 #     fragment resembling "Alias of typing attribute."
 #   * These docstrings would inhibit diffing and synchronization by inspection.
+# * Intentionally *NOT* conditionally isolated to the specific range of Python
+#   versions whose "typing" module lists these attributes. For example, the
+#   "HintSignAsyncContextManager" sign identifying the
+#   "typing.AsyncContextManager" attribute that only exists under Python >=
+#   3.7 could be conditionally isolated to that range of Python versions.
+#   Technically, there exsits *NO* impediment to doing so; pragmatically, doing
+#   so would be ineffectual. Why? Because attributes *NOT* defined by the
+#   "typing" module of the active Python interpreter cannot (by definition) be
+#   used to annotate callables decorated by the @beartype decorator.
 #
 # When bumping beartype to support a new CPython release:
 # * Declare one new attribute here for each new "typing" attribute added by
@@ -73,7 +87,7 @@ HintSignAbstractSet = HintSign()
 HintSignByteString = HintSign()
 HintSignContainer = HintSign()
 HintSignContextManager = HintSign()
-# Hashable   <-- not a useful type hint (alias for "collections.abc.Hashable")
+HintSignHashable = HintSign()
 HintSignItemsView = HintSign()
 HintSignIterable = HintSign()
 HintSignIterator = HintSign()
@@ -84,7 +98,7 @@ HintSignMutableMapping = HintSign()
 HintSignMutableSequence = HintSign()
 HintSignMutableSet = HintSign()
 HintSignSequence = HintSign()
-# Sized   <-- not a useful type hint (alias for "collections.abc.Sized")
+HintSignSized = HintSign()
 HintSignValuesView = HintSign()
 HintSignAwaitable = HintSign()
 HintSignAsyncIterator = HintSign()
@@ -96,13 +110,13 @@ HintSignAsyncContextManager = HintSign()
 
 # Structural checks, a.k.a. protocols.
 HintSignReversible = HintSign()
-HintSignSupportsAbs = HintSign()
-HintSignSupportsBytes = HintSign()
-HintSignSupportsComplex = HintSign()
-HintSignSupportsFloat = HintSign()
-HintSignSupportsIndex = HintSign()
-HintSignSupportsInt = HintSign()
-HintSignSupportsRound = HintSign()
+# SupportsAbs   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsBytes   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsComplex   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsFloat   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsIndex   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsInt   <-- not a useful type hint (already an isinstanceable ABC)
+# SupportsRound   <-- not a useful type hint (already an isinstanceable ABC)
 
 # Concrete collection types.
 HintSignChainMap = HintSign()

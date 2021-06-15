@@ -35,8 +35,7 @@ from beartype._util.data.hint.pep.proposal.datapep586 import (
     HINT_PEP586_SIGNS_SUPPORTED_DEEP)
 from beartype._util.data.hint.pep.proposal.datapep593 import (
     HINT_PEP593_SIGNS_SUPPORTED_DEEP)
-from beartype._util.lib.utilliboptional import (
-    IS_LIB_TYPING_EXTENSIONS)
+from beartype._util.lib.utilliboptional import IS_LIB_TYPING_EXTENSIONS
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

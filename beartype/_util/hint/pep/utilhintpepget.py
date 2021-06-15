@@ -597,29 +597,6 @@ def get_hint_pep_sign(hint: Any) -> object:
     #   preceding the first "[" delimiter in that name.
     sign_name, _, _ = hint_module_attr_name.partition('[')
 
-    #FIXME: Under Python >= 3.9, we also need to map from:
-    #* "collections.abc.Set" to "HintSignAbstractSet" for disambiguity with
-    #  "HintSignSet" (which represents the builtin "set" type).
-    #* "contextlib.AbstractAsyncContextManager" to
-    #  "HintSignAsyncContextManager" -- not for disambiguity but just because
-    #  this is the mapping.
-    #* "contextlib.AbstractContextManager" to "HintSignContextManager" -- not
-    #  for disambiguity but just because this is the mapping.
-    #FIXME: Explicitly test "typing.AbstractSet", "collections.abc.Set", the
-    #builtin "set", as well as those context manager types to ensure we get
-    #this right, folks.
-    #FIXME: Under all Python versions, we also need to map from:
-    #* The "typing.Hashable" non-class to the "collections.abc.Hashable" class.
-    #  Although the two are *NOT* the same object nor, the former is simply a
-    #  crude alias to the latter and should thus be globally replaced
-    #  everywhere by the latter. Indeed, the former is now deprecated.
-    #* The "typing.Sized" non-class to the "collections.abc.Sized" class for
-    #  the same exact reasons.
-    #Ideally, we can effect this here with a simple global dictionary mapping
-    #(say, "_HINT_TYPING_DEPRECATED_ATTR_TO_TYPE"). Note that a deprecation
-    #warning should still be emitted despite this mapping. Ensure this mapping
-    #preserves that warning, please.
-
     # If this name erroneously refers to a non-existing "typing" attribute,
     # rewrite this name to refer to the actual existing "typing" attribute
     # corresponding to this sign (e.g., from the non-existing
@@ -628,41 +605,21 @@ def get_hint_pep_sign(hint: Any) -> object:
     sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
 
     #FIXME: Refactor as follows:
-    #* Define a new global dictionary constant in "datapep" like:
-    #     from beartype._util.data.hint.pep import datapepsign
-    #     # Either this...
-    #     HINT_PEP_SIGN_NAME_TO_SIGN = datapepsign.__dict__  # <-- wow
-    #     # Or better yet this for disambiguity.
-    #     HINT_PEP_NAME_TO_SIGN = {
-    #         f'typing.{sign_name}': sign
-    #         for sign_name, sign in datapepsign.__dict__.items()
-    #     }
-    #
-    #     if IS_LIB_TYPING_EXTENSIONS:
-    #         HINT_PEP_NAME_TO_SIGN.update({
-    #             f'typing_extensions.{sign_name}': sign
-    #             for sign_name, sign in datapepsign.__dict__.items()
-    #         })
-    #
-    #     # Then, if this is Python >= 3.9, we also need to add everything
-    #     # else in the stdlib: e.g.,
-    #     if IS_PYTHON_AT_LEAST_3_9:
-    #         HINT_PEP_NAME_TO_SIGN.update({
-    #             'collections.abc.Set': datapepsign.AbstractSet,
-    #             ...
-    #         })
     #* Reduce the following to simply:
-    #     from beartype._util.data.hint.pep import datapepsign
+    #     from beartype._util.data.hint.pep.sign.datapepsignmap import (
+    #         HINT_BARE_NAME_TO_SIGN)
     #
     #     #FIXME: This suggests we can probably refactor away a bit of the
     #     #logic above, thankfully. Namely, we just need to call
     #     #str.partition('['). There's probably no need to parse the individual
     #     #"hint_module_name" anymore. *sigh*
+    #     #Namely, we probably just want to do this instead:
+    #     #    hint_bare_name, _, _ = repr(hint).partition('[')
     #     hint_pep_name = f'{hint_module_name}.{hint_module_attr_name}'
     #
     #     # Unsubscripted attribute with this name declared by this module if any
     #     # *OR* "None" otherwise.
-    #     sign = HINT_PEP_NAME_TO_SIGN.get(hint_pep_name)
+    #     sign = HINT_BARE_NAME_TO_SIGN.get(hint_pep_name)
     #
     #     # If this module declares *NO* such attribute, raise an exception.
     #     if sign is None:
