@@ -167,29 +167,28 @@ def test_is_hint_pep() -> None:
         assert is_hint_pep(not_hint_pep) is False
 
 
-#FIXME: Consider removal, as we don't actually call this anywhere.
-# def test_is_hint_pep_subscripted() -> None:
-#     '''
-#     Test the
-#     :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_subscripted`
-#     tester.
-#     '''
-#
-#     # Defer heavyweight imports.
-#     from beartype._util.hint.pep.utilhintpeptest import (
-#         is_hint_pep_subscripted)
-#     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-#     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-#         HINTS_PEP_META)
-#
-#     # Assert this tester accepts PEP-compliant subscripted type hints.
-#     for hint_pep_meta in HINTS_PEP_META:
-#         assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
-#             hint_pep_meta.is_subscripted)
-#
-#     # Assert this tester rejects non-PEP-compliant type hints.
-#     for not_hint_pep in NOT_HINTS_PEP:
-#         assert is_hint_pep_subscripted(not_hint_pep) is False
+def test_is_hint_pep_subscripted() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_subscripted`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilhintpeptest import (
+        is_hint_pep_subscripted)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert this tester accepts PEP-compliant subscripted type hints.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
+            hint_pep_meta.is_subscripted)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_subscripted(not_hint_pep) is False
 
 
 #FIXME: Implement us up, please.

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint tester utilities** (i.e., callables
+Project-wide **EP-compliant type hint tester utilities** (i.e., callables
 validating arbitrary objects to be PEP-compliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -17,6 +17,7 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
+from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapep import (
     HINT_PEP_ATTRS_DEPRECATED,
@@ -293,8 +294,7 @@ def die_if_hint_pep_sign_unsupported(
         unsupported by the :func:`beartype.beartype` decorator.
     '''
 
-    # If this hint is *NOT* a supported unsubscripted "typing" attribute, raise
-    # an exception.
+    # If this hint is *NOT* a supported sign, raise an exception.
     if not is_hint_pep_sign_supported(hint_sign):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
@@ -472,12 +472,12 @@ def is_hint_pep(hint: object) -> bool:
     :func:`isinstance` or :func:`issubclass` builtins. This is the
     well-established Pythonic standard for deciding conformance to an API.
 
-    Insanely, `PEP 484`_ *and* the :mod:`typing` module implementing `PEP 484`_
+    Insanely, :pep:`484` *and* the :mod:`typing` module implementing :pep:`484`
     reject community standards by explicitly preventing callers from calling
     either the :func:`isinstance` or :func:`issubclass` builtins on most but
-    *not* all `PEP 484`_ objects and types. Moreover, neither `PEP 484`_ nor
+    *not* all :pep:`484` objects and types. Moreover, neither :pep:`484` nor
     :mod:`typing` implement public APIs for testing whether arbitrary objects
-    comply with `PEP 484`_ or :mod:`typing`.
+    comply with :pep:`484` or :mod:`typing`.
 
     Thus this function, which "fills in the gaps" by implementing this
     laughably critical oversight.
@@ -491,9 +491,6 @@ def is_hint_pep(hint: object) -> bool:
     ----------
     bool
         ``True`` only if this object is a PEP-compliant type hint.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Avoid circular import dependencies.
@@ -548,13 +545,13 @@ def is_hint_pep_uncached(hint: object) -> bool:
 
     * ``True`` for only:
 
-      * `PEP 484`_-compliant subscripted generics under Python >= 3.9 (e.g.,
+      * :pep:`484`-compliant subscripted generics under Python >= 3.9 (e.g.,
         ``from typing import List; class MuhPep484List(List): pass;
         MuhPep484List[int]``). See below for further commentary.
-      * `PEP 585`_-compliant type hints, including both:
+      * :pep:`585`-compliant type hints, including both:
 
-        * Builtin `PEP 585`_-compliant type hints (e.g., ``list[int]``).
-        * User-defined `PEP 585`_-compliant generics (e.g.,
+        * Builtin :pep:`585`-compliant type hints (e.g., ``list[int]``).
+        * User-defined :pep:`585`-compliant generics (e.g.,
           ``class MuhPep585List(list): pass; MuhPep585List[int]``).
 
     * ``False`` for *all* other PEP-compliant type hints.
@@ -569,7 +566,7 @@ def is_hint_pep_uncached(hint: object) -> bool:
     should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
     submodule for further details.
 
-    This tester intentionally returns a false negative for `PEP 484`_-compliant
+    This tester intentionally returns a false negative for :pep:`484`-compliant
     generics subscripted by type variables under Python < 3.9. Although those
     hints are technically non-self-cached, this tester falsely reports those
     hints to be self-cached by returning ``False``. Why? Because correctly
@@ -591,11 +588,6 @@ def is_hint_pep_uncached(hint: object) -> bool:
     ----------
     bool
         ``True`` only if this object is a PEP-compliant type hint.
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
     '''
 
     # Return true only if this hint is either:
@@ -741,13 +733,11 @@ def is_hint_pep_supported(hint: object) -> bool:
     return is_hint_pep_sign_supported(hint_pep_sign)
 
 
-def is_hint_pep_sign_supported(hint: object) -> bool:
+def is_hint_pep_sign_supported(hint_sign: object) -> bool:
     '''
-    ``True`` only if the passed object is a **PEP-compliant supported
-    unsubscripted typing attribute** (i.e., public attribute of the
-    :mod:`typing` module without arguments uniquely identifying a category of
-    PEP-compliant type hints currently supported by the
-    :func:`beartype.beartype` decorator).
+    ``True`` only if the passed object is a **supported sign** (i.e., arbitrary
+    object uniquely identifying a category of PEP-compliant type hints
+    currently supported by the :func:`beartype.beartype` decorator).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -755,29 +745,28 @@ def is_hint_pep_sign_supported(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
-        Object to be tested.
+    sign : object
+        Sign to be tested.
 
     Returns
     ----------
     bool
-        ``True`` only if this object is a PEP-compliant supported unsubscripted
-        typing attribute.
+        ``True`` only if this object is a supported sign.
 
     Raises
     ----------
     TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
+        If this sign is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
+        dictionaries and sets). All signs are hashable by definition.
     '''
     # from beartype._util.data.hint.pep.datapep import (
     #     HINT_SIGNS_SUPPORTED_DEEP)
     # print(f'HINT_SIGNS_SUPPORTED: {HINT_SIGNS_SUPPORTED}')
     # print(f'HINT_SIGNS_SUPPORTED_DEEP: {HINT_SIGNS_SUPPORTED_DEEP}')
 
-    # Return true only if this hint is a supported sign.
-    return hint in HINT_SIGNS_SUPPORTED
+    # Return true only if this sign is supported.
+    return hint_sign in HINT_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: This test returns false negatives for PEP 593-compliant
@@ -960,59 +949,54 @@ is_hint_pep_type_typing.__doc__ = '''
     '''
 
 # ....................{ TESTERS ~ subscript               }....................
-#FIXME: Consider removal, as we don't actually call this anywhere.
-# from beartype._cave._cavefast import HintGenericSubscriptedType
-# def is_hint_pep_subscripted(hint: object) -> bool:
-#     '''
-#     ``True`` only if the passed object is a PEP-compliant type hint
-#     subscripted by one or more **arguments** (i.e., PEP-compliant child type
-#     hints) and/or **type variables** (i.e., instances of the :class:`TypeVar`
-#     class).
-#
-#     This tester is intentionally *not* memoized (e.g., by the
-#     :func:`callable_cached` decorator), as the implementation trivially reduces
-#     to an efficient one-liner.
-#
-#     Parameters
-#     ----------
-#     hint : object
-#         Object to be inspected.
-#
-#     Returns
-#     ----------
-#     bool
-#         ``True`` only if this object is a PEP-compliant type hint subscripted
-#         by one or more arguments and/or type variables.
-#     '''
-#
-#     # Avoid circular import dependencies.
-#     from beartype._util.hint.pep.utilhintpepget import (
-#         get_hint_pep_args,
-#         get_hint_pep_typevars,
-#     )
-#
-#     # Return true only if this hint is either...
-#     return (
-#         # A PEP-compliant subscripted generic under Python >= 3.9, including:
-#         # * A PEP 484- or 585-compliant subscripted generic.
-#         # * A PEP 585-compliant builtin type hint.
-#         #
-#         # Note this test is technically redundant, since all subscripted
-#         # generics *MUST* necessarily be subscripted by one or more arguments
-#         # and/or type variables, subsequently tested for. Nonetheless, this
-#         # test efficiently reduces to a builtin call and is thus preferable.
-#         isinstance(hint, HintGenericSubscriptedType) or
-#         # Any other PEP-compliant type hint subscripted by one or more
-#         # arguments and/or type variables. Note that this test is *NOT*
-#         # reducible to merely:
-#         #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
-#         # Frankly, we have no idea why. We suspect we'd probably have to
-#         # change the "or" operator in the above expression to the "+" operator,
-#         # at which point the resulting operation is likely to be substantially
-#         # slower than the simple series of tests performed here.
-#         bool(get_hint_pep_args(hint)) or
-#         bool(get_hint_pep_typevars(hint))
-#     )
+def is_hint_pep_subscripted(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **subscripted PEP-compliant type
+    hint** (i.e., PEP-compliant type hint indexed by one or more objects).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a subscripted PEP-compliant type hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import (
+        get_hint_pep_args,
+        get_hint_pep_typevars,
+    )
+
+    # Return true only if this hint is either...
+    return (
+        # A PEP-compliant subscripted generic under Python >= 3.9, including:
+        # * A PEP 484- or 585-compliant subscripted generic.
+        # * A PEP 585-compliant builtin type hint.
+        #
+        # Note this test is technically redundant, since all subscripted
+        # generics *MUST* necessarily be subscripted by one or more arguments
+        # and/or type variables, subsequently tested for. Nonetheless, this
+        # test efficiently reduces to a builtin call and is thus preferable.
+        isinstance(hint, HintGenericSubscriptedType) or
+        # Any other PEP-compliant type hint subscripted by one or more
+        # arguments and/or type variables. Note that this test is *NOT*
+        # reducible to merely:
+        #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
+        # Frankly, we have no idea why. We suspect we'd probably have to
+        # change the "or" operator in the above expression to the "+" operator,
+        # at which point the resulting operation is likely to be substantially
+        # slower than the simple series of tests performed here.
+        bool(get_hint_pep_args(hint)) or
+        bool(get_hint_pep_typevars(hint))
+    )
 
 # ....................{ TESTERS ~ subscript : typevar     }....................
 def is_hint_pep_typevar(hint: object) -> bool:
@@ -1040,9 +1024,6 @@ def is_hint_pep_typevar(hint: object) -> bool:
     ----------
     bool
         ``True`` only if this object is a type variable.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Return true only if the type of this hint is that of all type variables.
@@ -1150,9 +1131,9 @@ def is_hint_pep_generic(hint: object) -> bool:
     Specifically, this tester returns ``True`` only if this object is a class
     that is either:
 
-    * A `PEP 585`_-compliant generic as tested by the lower-level
+    * A :pep:`585`-compliant generic as tested by the lower-level
       :func:`is_hint_pep585_generic` function.
-    * A `PEP 484`_-compliant generic as tested by the lower-level
+    * A :pep:`484`-compliant generic as tested by the lower-level
       :func:`is_hint_pep484_generic` function.
 
     This tester is memoized for efficiency. Although the implementation
@@ -1174,11 +1155,6 @@ def is_hint_pep_generic(hint: object) -> bool:
     ----------
     :func:`is_hint_pep_typevared`
         Commentary on the relation between generics and parametrized hints.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
     '''
 
     # Return true only if this hint is...
@@ -1198,8 +1174,6 @@ def is_hint_pep_tuple_empty(hint: object) -> bool:
     ``True`` only if the passed object is a PEP-compliant **empty fixed-length
     tuple hint** (i.e., PEP-compliant type hint constraining piths to be the
     empty tuple).
-
-    This tester r
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this tester is only called under
@@ -1221,9 +1195,6 @@ def is_hint_pep_tuple_empty(hint: object) -> bool:
     ----------
     bool
         ``True`` only if this object is a type variable.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Return true only if this hint resembles either the PEP 484- or

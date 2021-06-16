@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint getter utilities** (i.e., callables querying
-arbitrary objects for attributes specific to PEP-compliant type hints).
+Project-wide **PEP-compliant type hint getter utilities** (i.e., callables
+querying arbitrary objects for attributes specific to PEP-compliant type
+hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -635,8 +636,8 @@ def get_hint_pep_sign(hint: Any) -> object:
     #really should have done this right the first time, shouldn't we? In
     #particular:
     #* PEP 585 types should now be handled by the exact same logic. But we need
-    #  to differentiate them from standard classes, will still require the same
-    #  logic as we currently have. Be cautious here.
+    #  to differentiate them from standard classes, which still require the
+    #  same logic as we currently have. Be cautious here.
     #
     #Given all of that, the safest way to approach this is follows:
     #* Next, make PEP 484 and 585 happen. These need to happen at the exact

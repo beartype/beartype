@@ -140,6 +140,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
+    is_hint_pep_subscripted,
     is_hint_pep_tuple_empty,
     is_hint_pep_typing,
     warn_if_hint_pep_sign_deprecated,
@@ -1302,49 +1303,24 @@ def pep_code_check_hint(
                 release_object_typed(hint_childs_pep)
             # Else, this hint is *NOT* a union.
 
-            # ..............{ SHALLOW or ARGUMENTLESS           }..............
-            # If this hint either...
+            # ..............{ SHALLOW                           }..............
+            # If this hint both...
             elif (
-                # Is its own sign (e.g., "typing.List" rather than
-                # "typing.List[str]") and thus subscripted by no child hints
-                # *OR*...
-                hint_curr is hint_curr_sign or
-                #FIXME: Remove this test *AFTER* deeply supporting all hints.
-                # Is both...
-                (
-                    # Originating from an origin type and thus trivially
-                    # supportable with shallow type-checking *AND*...
-                    hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB and
+                # Originates from an origin type and may thus be shallowly
+                # type-checked against that type *AND is either...
+                hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB and (
+                    # Unsubscripted *OR*...
+                    not is_hint_pep_subscripted(hint_curr) or
+                    #FIXME: Remove this branch *AFTER* deeply supporting all
+                    #hints.
                     # Currently unsupported with deep type-checking...
                     hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
                 )
             ):
             # Then generate trivial code shallowly type-checking the current
-            # pith as an instance of the non-"typing" origin type originating
-            # this sign (e.g., "list" for the sign "typing.List" identifying
-            # hint "typing.List[int]").
+            # pith as an instance of the origin type originating this sign
+            # (e.g., "list" for the hint "typing.List[int]").
 
-                # ............{ NORETURN                          }............
-                # If this hint is the PEP 484-compliant "NoReturn" singleton
-                # valid *ONLY* as the non-nested return annotation of a
-                # callable, raise an exception. This singleton is invalid when
-                # subscripting *ANY* PEP-compliant type hint (e.g.,
-                # "typing.List[typing.NoReturn]"), which is guaranteed to be
-                # the case when this conditional is true. Why? Because the
-                # previously called higher-level pep_code_check_return()
-                # function has already handled the single case in which this
-                # hint is valid, implying this hint to be invalid here.
-
-                #FIXME: This shouldn't be needed anymore. Excise if true!
-                # if hint_curr is NoReturn:
-                #     raise BeartypeDecorHintPep484Exception(
-                #         f'{hint_curr_label} {repr(hint_curr)} child '
-                #         f'"typing.NoReturn" invalid (i.e., "typing.NoReturn" '
-                #         f'valid only as non-nested return annotation).'
-                #     )
-                # Else, this hint is *NOT* "NoReturn".
-
-                # ............{ ORIGIN                            }............
                 # Code type-checking the current pith against this origin type.
                 func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
                     pith_curr_expr=pith_curr_expr,
@@ -1358,8 +1334,8 @@ def pep_code_check_hint(
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     ),
                 )
-            # Else, this hint is *NOT* its own sign and is thus subscripted by
-            # one or more child hints.
+            # Else, this hint is either subscripted, not shallowly
+            # type-checkable, *OR* deeply type-checkable.
 
             # ............{ SEQUENCES ~ standard OR tuple vari. }..............
             # If this hint is either...
