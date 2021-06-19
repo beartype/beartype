@@ -4,12 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype `PEP 544`_**-compliant type hint data.**
+Project-wide **:pep:`544`**-compliant type hint data.**
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 544:
-    https://www.python.org/dev/peps/pep-0544
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -32,8 +29,8 @@ by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
 defined by this submodule).
 '''
 
-# ..................{ SETS ~ sign                       }..................
-HINT_PEP544_SIGNS_IGNORABLE = frozenset(
+# ..................{ SETS ~ attr                       }..................
+HINT_PEP544_ATTRS_IGNORABLE = frozenset(
     # Note that ignoring the "typing.Protocol" superclass is vital here. For
     # unknown and presumably uninteresting reasons, *ALL* possible objects
     # satisfy this superclass. Ergo, this superclass is synonymous with the
@@ -48,33 +45,27 @@ HINT_PEP544_SIGNS_IGNORABLE = frozenset(
     (typing.Protocol,) if IS_PYTHON_AT_LEAST_3_8 else ()
 )
 '''
-Frozen set of all `PEP 544`_-compliant **ignorable signs** (i.e., arbitrary
-objects uniquely identifying `PEP 544`_-compliant type hints unconditionally
+Frozen set of all :pep:`544`-compliant **ignorable typing attributes** (i.e.,
+unsubscripted :pep:`544`-compliant :mod:`typing` type hints unconditionally
 ignored by the :func:`beartype.beartype` decorator).
-
-.. _PEP 544:
-    https://www.python.org/dev/peps/pep-0544
 '''
 
-
+# ..................{ SETS ~ sign                       }..................
 HINT_PEP544_SIGNS_SUPPORTED_DEEP = frozenset(
     (typing.Protocol,) if IS_PYTHON_AT_LEAST_3_8 else ()
 )
 '''
-Frozen set of all `PEP 544`_-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying `PEP 544`_-compliant type hints for
+Frozen set of all :pep:`544`-compliant **deeply supported signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`544`-compliant type hints for
 which the :func:`beartype.beartype` decorator generates deep type-checking
 code).
-
-.. _PEP 544:
-    https://www.python.org/dev/peps/pep-0544
 '''
 
 # ....................{ PRIVATE ~ classes                 }....................
 # Conditionally initialized by the _init() function below.
 _Pep544IO: Any = None
 '''
-`PEP 544`_-compliant protocol base class for :class:`_Pep544TextIO` and
+:pep:`544`-compliant protocol base class for :class:`_Pep544TextIO` and
 :class:`_Pep544BinaryIO`.
 
 This is an abstract, generic version of the return of open().
@@ -119,8 +110,6 @@ that no solutions exist, that the existing non-solution suffices, and instead
 do nothing. Welcome to :mod:`typing`, where no one cares that nothing works as
 advertised (or at all)... *and no one ever will.*
 
-.. _PEP 544:
-   https://www.python.org/dev/peps/pep-0544
 .. _typeshed:
    https://github.com/python/typeshed/issues/3225#issuecomment-529277448
 '''

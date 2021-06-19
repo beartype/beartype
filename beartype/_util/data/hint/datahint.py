@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.data.hint.pep.datapep import HINT_SIGNS_IGNORABLE
+from beartype._util.data.hint.pep.datapep import HINT_PEP_ATTRS_IGNORABLE
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF)
 
@@ -42,7 +42,7 @@ of these superclasses).
 '''
 
 
-HINTS_IGNORABLE_SHALLOW = HINT_SIGNS_IGNORABLE | {
+HINTS_IGNORABLE_SHALLOW = HINT_PEP_ATTRS_IGNORABLE | {
     # The PEP-noncompliant builtin "object" type is the transitive superclass
     # of all classes, parameters and return values annotated as "object"
     # unconditionally match *ALL* objects under isinstance()-based type

@@ -91,16 +91,15 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ SETS ~ sign                       }....................
-HINT_PEP484_SIGNS_DEPRECATED: FrozenSet[Any] = frozenset()
+# ....................{ SETS ~ attr                       }....................
+HINT_PEP484_ATTRS_DEPRECATED: FrozenSet[Any] = frozenset()
 '''
-Frozen set of all :pep:`484`-compliant **deprecated signs** (i.e., arbitrary
-objects uniquely identifying outdated :pep:`484`-compliant type hints that have
-since been obsoleted by more recent PEPs).
+Frozen set of all :pep:`484`-compliant **deprecated typing attributes** (i.e.,
+:pep:`484`-compliant :mod:`typing` type hints obsoleted by more recent PEPs).
 '''
 
 
-HINT_PEP484_SIGNS_IGNORABLE = frozenset((
+HINT_PEP484_ATTRS_IGNORABLE = frozenset((
     # The "Any" singleton is semantically synonymous with the ignorable
     # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
     Any,
@@ -156,8 +155,8 @@ HINT_PEP484_SIGNS_IGNORABLE = frozenset((
     Union,
 ))
 '''
-Frozen set of all :pep:`484`-compliant **ignorable signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`-compliant type hints unconditionally
+Frozen set of all :pep:`484`-compliant **ignorable typing attributes** (i.e.,
+unsubscripted :pep:`484`-compliant :mod:`typing` type hints unconditionally
 ignored by the :func:`beartype.beartype` decorator).
 '''
 
@@ -250,7 +249,7 @@ code).
 
 # ....................{ SETS ~ sign : type                }....................
 # Initialized by the _init() function below due to conditional complexity.
-HINT_PEP484_SIGNS_TYPE: frozenset = None  # type: ignore[assignment]
+HINT_PEP484_ATTRS_ISINSTANCEABLE: frozenset = None  # type: ignore[assignment]
 '''
 Frozen set of all :pep:`484`-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
@@ -274,8 +273,8 @@ def _init() -> None:
     # ..................{ GLOBALS                           }..................
     # Submodule globals to be redefined below.
     global \
-        HINT_PEP484_SIGNS_DEPRECATED, \
-        HINT_PEP484_SIGNS_TYPE, \
+        HINT_PEP484_ATTRS_DEPRECATED, \
+        HINT_PEP484_ATTRS_ISINSTANCEABLE, \
         HINT_PEP484_SIGNS_TYPE_ORIGIN
 
     # ..................{ SETS ~ signs : type : origin      }..................
@@ -362,7 +361,7 @@ def _init() -> None:
         _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
 
     # ..................{ SETS ~ signs                      }..................
-    HINT_PEP484_SIGNS_TYPE = frozenset((
+    HINT_PEP484_ATTRS_ISINSTANCEABLE = frozenset((
         # The "Generic" superclass is explicitly equivalent in PEP 484 to the
         # "Generic[Any]" subscription and thus valid as a standard class sign.
         Generic,
@@ -383,7 +382,7 @@ def _init() -> None:
     # signs uniquely identifying PEP 484-compliant type hints originating from
     # origin types.
     if IS_PYTHON_AT_LEAST_3_9:
-        HINT_PEP484_SIGNS_DEPRECATED = HINT_PEP484_SIGNS_TYPE_ORIGIN
+        HINT_PEP484_ATTRS_DEPRECATED = HINT_PEP484_SIGNS_TYPE_ORIGIN
 
 
 # Initialize this submodule.

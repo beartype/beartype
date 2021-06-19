@@ -58,7 +58,7 @@ class HintSign(object):
         Machine-readable representation of this sign.
         '''
 
-        return f'HintSign({self.name})'
+        return f'HintSign({repr(self.name)})'
 
 # ....................{ HINTS                             }....................
 HintSignOrType = Union[HintSign, type]

@@ -40,7 +40,7 @@ code).
 '''
 
 
-HINT_PEP585_SIGNS_TYPE: FrozenSet[Any] = frozenset()
+HINT_PEP585_ATTRS_ISINSTANCEABLE: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all :pep:`585`-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
@@ -129,7 +129,7 @@ def _init() -> None:
         HINT_PEP585_SIGNS_SEQUENCE_STANDARD, \
         HINT_PEP585_SIGNS_SUPPORTED_DEEP, \
         HINT_PEP585_SIGNS_TUPLE, \
-        HINT_PEP585_SIGNS_TYPE
+        HINT_PEP585_ATTRS_ISINSTANCEABLE
 
     # ..................{ SETS ~ sign                       }..................
     HINT_PEP585_SIGNS_SUPPORTED_DEEP = frozenset((
@@ -139,7 +139,7 @@ def _init() -> None:
         MutableSequence,
         Sequence,
     ))
-    HINT_PEP585_SIGNS_TYPE = frozenset((
+    HINT_PEP585_ATTRS_ISINSTANCEABLE = frozenset((
         defaultdict,
         deque,
         dict,

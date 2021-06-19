@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
+from beartype.meta import URL_ISSUES
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
@@ -20,8 +21,8 @@ from beartype.roar import (
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapep import (
+    HINT_PEP_ATTRS_ISINSTANCEABLE,
     HINT_PEP_MODULE_NAMES,
-    HINT_SIGNS_TYPE,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.data.hint.pep.sign.datapepsigns import (
@@ -408,6 +409,7 @@ def get_hint_pep_sign(hint: Any) -> object:
     from beartype._util.hint.pep.utilhintpeptest import (
         die_unless_hint_pep,
         is_hint_pep_generic,
+        is_hint_pep_subscripted,
         is_hint_pep_typevar,
     )
 
@@ -469,13 +471,8 @@ def get_hint_pep_sign(hint: Any) -> object:
         return hint.__origin__
     # Else, this hint is *NOT* a PEP 585-compliant type hint.
     #
-    # If this hint is...
-    elif (
-        # A class...
-        isinstance(hint, type) and
-        # *NOT* subscripted by one or more child hints or type variables...
-        not (get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
-    # Then this class is a standard class. In this case...
+    # If this hint is an unsubscripted class doubling as an explicitly
+    # PEP-compliant type hint...
     #
     # Note that this is principally useful under Python 3.6, which
     # idiosyncratically defines subscriptions of "typing" objects as classes:
@@ -486,16 +483,20 @@ def get_hint_pep_sign(hint: Any) -> object:
     # While we *COULD* technically fence this conditional behind a Python 3.6
     # check, doing so would render this getter less robust against unwarranted
     # stdlib changes. Ergo, we preserve this as is for forward-proofing.
-    ):
+    elif isinstance(hint, type) and not is_hint_pep_subscripted(hint):
         # If this class is *NOT* explicitly allowed as a sign, raise an
         # exception.
-        if hint not in HINT_SIGNS_TYPE:
+        if hint not in HINT_PEP_ATTRS_ISINSTANCEABLE:
             raise BeartypeDecorHintPepSignException(
-                f'Unsubscripted non-generic class {repr(hint)} invalid as '
-                f'sign (i.e., not in {repr(HINT_SIGNS_TYPE)}).'
+                f'Unsubscripted non-generic typing class {repr(hint)} invalid '
+                f'as type hint '
+                f'(i.e., not in {repr(HINT_PEP_ATTRS_ISINSTANCEABLE)}).'
             )
         # Else, this class is explicitly allowed as a sign.
 
+        #FIXME: Actually... we need to map this to an actual "HintSign" now.
+        #Honestly, can't we just remove all of this and defer to
+        #"hint.__qualname__" below to automate this mapping?
         # Return this class as is.
         return hint
     # Else, this hint is either not a class *OR* or class subscripted by one or
@@ -605,8 +606,28 @@ def get_hint_pep_sign(hint: Any) -> object:
     # "typing.ContextManager" attribute).
     sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
 
+    # Module declaring this unsubscripted attribute if importable *OR* raise
+    # an exception otherwise (i.e., if this module is unimportable).
+    hint_module = import_module(
+        module_name=hint_module_name,
+        exception_cls=BeartypeDecorHintPepSignException,
+    )
+
+    # Unsubscripted attribute with this name declared by this module if any
+    # *OR* "None" otherwise.
+    sign = getattr(hint_module, sign_name, None)
+
+    # If this module declares *NO* such attribute, raise an exception.
+    if sign is None:
+        raise BeartypeDecorHintPepSignException(
+            f'Type hint {repr(hint)} attribute "typing.{sign_name}" not found.'
+        )
+    # Else, this module declares this attribute.
+
     #FIXME: Refactor as follows:
-    #* Reduce the following to simply:
+    #* Iteratively add *ALL* explicitly deeply supported signs to this test.
+    #* Once complete, remove:
+    # if sign is None:
     #     from beartype._util.data.hint.pep.sign.datapepsignmap import (
     #         HINT_BARE_NAME_TO_SIGN)
     #
@@ -631,36 +652,6 @@ def get_hint_pep_sign(hint: Any) -> object:
     #             f'the beartype issue tracker at: {URL_ISSUES}'
     #         )
     #     # Else, this module declares this attribute.
-    #FIXME: That suffices for PEP 484, but... pretty much *EVERYTHING* above
-    #and thus elsewhere will also need to be heavily refactored. Oh, boy. We
-    #really should have done this right the first time, shouldn't we? In
-    #particular:
-    #* PEP 585 types should now be handled by the exact same logic. But we need
-    #  to differentiate them from standard classes, which still require the
-    #  same logic as we currently have. Be cautious here.
-    #
-    #Given all of that, the safest way to approach this is follows:
-    #* Next, make PEP 484 and 585 happen. These need to happen at the exact
-    #  same time and will probably be quite painful, so defer this as long as
-    #  feasible, please. *THIS WILL TEMPORARILY BREAK EVERYTHING.*
-
-    # Module declaring this unsubscripted attribute if importable *OR* raise
-    # an exception otherwise (i.e., if this module is unimportable).
-    hint_module = import_module(
-        module_name=hint_module_name,
-        exception_cls=BeartypeDecorHintPepSignException,
-    )
-
-    # Unsubscripted attribute with this name declared by this module if any
-    # *OR* "None" otherwise.
-    sign = getattr(hint_module, sign_name, None)
-
-    # If this module declares *NO* such attribute, raise an exception.
-    if sign is None:
-        raise BeartypeDecorHintPepSignException(
-            f'Type hint {repr(hint)} attribute "typing.{sign_name}" not found.'
-        )
-    # Else, this module declares this attribute.
 
     # Return this attribute.
     return sign

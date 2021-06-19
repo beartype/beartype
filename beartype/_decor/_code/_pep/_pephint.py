@@ -147,7 +147,10 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_7,
+)
 from beartype._util.text.utiltextmagic import (
     CODE_INDENT_1,
     CODE_INDENT_2,
@@ -1309,8 +1312,20 @@ def pep_code_check_hint(
                 # Originates from an origin type and may thus be shallowly
                 # type-checked against that type *AND is either...
                 hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB and (
+                    #FIXME: Ideally, this line should just resemble:
+                    #    not is_hint_pep_subscripted(hint_curr)
+                    #Unfortunately, unsubscripted type hints under Python 3.6
+                    #like "typing.List" are technically subscripted due to
+                    #subclassing subscripted superclasses, which is insane. Due
+                    #to this insanity, we currently ignore type variables for
+                    #purposes of detecting subscription. Since this is awful,
+                    #drop this as soon as we drop Python 3.6 support.
                     # Unsubscripted *OR*...
-                    not is_hint_pep_subscripted(hint_curr) or
+                    not (
+                        is_hint_pep_subscripted(hint_curr)
+                        if IS_PYTHON_AT_LEAST_3_7 else
+                        hint_childs_len
+                    ) or
                     #FIXME: Remove this branch *AFTER* deeply supporting all
                     #hints.
                     # Currently unsupported with deep type-checking...
@@ -1379,12 +1394,14 @@ def pep_code_check_hint(
                 #     >>> import typing as t
                 #     >>> t.List[int, str]
                 #     TypeError: Too many parameters for typing.List; actual 2, expected 1
+                assert hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
+                assert is_hint_pep_subscripted(hint_curr)
                 assert (
                     hint_childs_len == 1 or
                     hint_curr_sign in HINT_SIGNS_TUPLE
                 ), (
                     f'{hint_curr_label} {repr(hint_curr)} sequence '
-                    f'subscripted by multiple arguments.')
+                    f'subscripted by {hint_childs_len} arguments.')
 
                 # Lone child hint of this parent hint.
                 hint_child = hint_childs[0]
