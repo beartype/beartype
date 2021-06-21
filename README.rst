@@ -592,7 +592,7 @@ non-trivial combinations of nested type hints compliant with different PEPs:
    from beartype import beartype
    from collections.abc import Sequence
    from typing import Optional, Union
-   import numpy as np 
+   import numpy as np
 
    @beartype
    def empty_like_bear(
@@ -1782,7 +1782,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    python    [version]: Python 3.9.0
    beartype  [version]: 0.6.0
    typeguard [version]: 2.9.1
-   
+
    ===================================== str =====================================
    profiling regime:
       number of meta-loops:      3
@@ -3478,8 +3478,6 @@ decorators, function calls, and import hooks) include:
 +===================+=========+===============+===========================+
 | ``beartype``      | **yes** | **yes**       | 1 ✕ ``beartype``          |
 +-------------------+---------+---------------+---------------------------+
-| deal_ [#baddeal]_ | **yes** | **yes**       | 20 ✕ ``beartype``         |
-+-------------------+---------+---------------+---------------------------+
 | enforce_          | no      | **yes**       | *unknown*                 |
 +-------------------+---------+---------------+---------------------------+
 | enforce_typing_   | no      | **yes**       | *unknown*                 |
@@ -3504,11 +3502,6 @@ decorators, function calls, and import hooks) include:
      means that checker is probably ``beartype`` itself.
    * "20" means that checker is approximately twenty times slower than
      ``beartype`` on average.
-
-.. [#baddeal]
-   With respect to runtime type checking, deal_ is just a thin shim wrapping
-   typeguard_. Since deal_ **currently has no open issue tracker,** prefer
-   typeguard_ over deal_ if you absolutely *must* use one or the other.
 
 Like `static type checkers <Static Type Checkers_>`__, runtime type checkers
 *always* require callables to be annotated by type hints. Unlike `static type
@@ -4196,8 +4189,6 @@ rather than Python runtime) include:
    https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
 
 .. # ------------------( LINKS ~ py : type : runtime        )------------------
-.. _deal:
-   https://github.com/life4/deal
 .. _enforce:
    https://github.com/RussBaz/enforce
 .. _enforce_typing:
