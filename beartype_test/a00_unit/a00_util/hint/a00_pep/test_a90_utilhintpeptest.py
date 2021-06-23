@@ -175,8 +175,7 @@ def test_is_hint_pep_subscripted() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import (
-        is_hint_pep_subscripted)
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_subscripted
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)

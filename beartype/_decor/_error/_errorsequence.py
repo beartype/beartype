@@ -13,11 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortype import get_cause_or_none_type_origin
+from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
 from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_SEQUENCE_STANDARD,
-    HINT_SIGNS_TUPLE,
+    HINT_SIGNS_SEQUENCE_ARGS_ONE,
 )
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object
@@ -44,7 +44,7 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_STANDARD, (
+    assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE, (
         f'{repr(sleuth.hint)} not standard sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
@@ -56,7 +56,7 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to be an
     # instance of the type originating this hint (e.g., "list" for "list[str]")
     # if this pith is not an instance of this type *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_origin(sleuth)
+    pith_cause = get_cause_or_none_type_stdlib(sleuth)
 
     # Return either...
     return (
@@ -86,12 +86,12 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_SIGNS_TUPLE, (
+    assert sleuth.hint_sign is HintSignTuple, (
         f'{repr(sleuth.hint_sign)} not tuple hint.')
 
     # Human-readable string describing the failure of this pith to be a tuple
     # if this pith is not a tuple *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_origin(sleuth)
+    pith_cause = get_cause_or_none_type_stdlib(sleuth)
 
     # If this pith is *NOT* a tuple, return this string.
     if pith_cause is not None:
@@ -198,8 +198,8 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
     # expected variadic sequence, as the caller guarantees this to be the case.
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
-        sleuth.hint_sign in HINT_SIGNS_SEQUENCE_STANDARD or (
-            sleuth.hint_sign in HINT_SIGNS_TUPLE and
+        sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE or (
+            sleuth.hint_sign is HintSignTuple and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis
         )

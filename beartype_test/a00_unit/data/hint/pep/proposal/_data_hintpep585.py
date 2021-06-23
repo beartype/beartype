@@ -4,13 +4,13 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 585`_**-compliant type hint test data.**
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
+Project-wide :pep:`585`**-compliant type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignTuple,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
@@ -21,16 +21,13 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add `PEP 585`_**-compliant type hint test data to various global containers
+    Add :pep:`585`**-compliant type hint test data to various global containers
     declared by the passed module.
 
     Parameters
     ----------
     data_module : ModuleType
         Module to be added to.
-
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
     '''
 
     # If the active Python interpreter targets less than Python < 3.9, this
@@ -95,10 +92,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ----------
         https://www.python.org/dev/peps/pep-0484/#id39
             ``echo_round`` function strongly inspiring this implementation,
-            copied verbatim from this subsection of `PEP 484`_.
-
-        .. _PEP 484:
-           https://www.python.org/dev/peps/pep-0484
+            copied verbatim from this subsection of :pep:`484`.
         '''
 
         # Initial value externally sent to this generator.
@@ -113,11 +107,8 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ CLASSES ~ generics : single       }..................
     class Pep585GenericUntypevaredSingle(list[str]):
         '''
-        `PEP 585`_-compliant user-defined generic subclassing a single
+        :pep:`585`-compliant user-defined generic subclassing a single
         subscripted (but unparametrized) builtin type.
-
-        .. _PEP 585:
-           https://www.python.org/dev/peps/pep-0585
         '''
 
         # Redefine this generic's representation for debugging purposes.
@@ -127,11 +118,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
     class Pep585GenericTypevaredSingle(list[S, T]):
         '''
-        `PEP 585`_-compliant user-defined generic subclassing a single
+        :pep:`585`-compliant user-defined generic subclassing a single
         parametrized builtin type.
-
-        .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
         '''
 
         # Redefine this generic's representation for debugging purposes.
@@ -142,12 +130,9 @@ def add_data(data_module: 'ModuleType') -> None:
     class Pep585GenericUntypevaredMultiple(
         Callable, AbstractContextManager[str], Sequence[str]):
         '''
-        `PEP 585`_-compliant user-defined generic subclassing multiple
+        :pep:`585`-compliant user-defined generic subclassing multiple
         subscripted (but unparametrized) :mod:`collection.abc` abstract base
         classes (ABCs) *and* an unsubscripted :mod:`collection.abc` ABC.
-
-        .. _PEP 585:
-           https://www.python.org/dev/peps/pep-0585
         '''
 
         # ..................{ INITIALIZERS                      }..................
@@ -189,11 +174,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
     class Pep585GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
         '''
-        `PEP 585`_-compliant user-defined generic subclassing multiple directly
+        :pep:`585`-compliant user-defined generic subclassing multiple directly
         parametrized :mod:`collections.abc` abstract base classes (ABCs).
-
-        .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
         '''
 
         # ................{ INITIALIZERS                      }................
@@ -217,13 +199,10 @@ def add_data(data_module: 'ModuleType') -> None:
     class Pep585GenericTypevaredDeepMultiple(
         Sized, Iterable[tuple[S, T]], Container[tuple[S, T]]):
         '''
-        `PEP 585`_-compliant user-defined generic subclassing multiple
+        :pep:`585`-compliant user-defined generic subclassing multiple
         indirectly parametrized (but unsubscripted) :mod:`collections.abc`
         abstract base classes (ABCs) *and* an unsubscripted and unparametrized
         :mod:`collections.abc` ABC.
-
-        .. _PEP 585:
-           https://www.python.org/dev/peps/pep-0585
         '''
 
         # ................{ INITIALIZERS                      }................
@@ -723,7 +702,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     TypeError: Parameters to generic types must be types. Got [].
         PepHintMetadata(
             hint=tuple[()],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -749,7 +728,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fixed-length tuple of only ignorable child hints.
         PepHintMetadata(
             hint=tuple[Any, object,],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -775,7 +754,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
             hint=tuple[float, Any, str,],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -825,7 +804,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Nested fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
             hint=tuple[tuple[float, Any, str,], ...],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -877,7 +856,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic fixed-length tuple.
         PepHintMetadata(
             hint=tuple[S, T],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_typevared=True,
             is_pep585_builtin=True,
@@ -903,7 +882,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Variadic tuple.
         PepHintMetadata(
             hint=tuple[str, ...],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -937,7 +916,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic variadic tuple.
         PepHintMetadata(
             hint=tuple[T, ...],
-            pep_sign=tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_typevared=True,
             is_pep585_builtin=True,

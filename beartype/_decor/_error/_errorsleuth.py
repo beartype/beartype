@@ -33,15 +33,14 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
+    get_hint_pep_type_stdlib_or_none,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_generic,
-    is_hint_pep_tuple_empty,
-    is_hint_pep_typevar,
+    is_hint_pep_subscripted,
 )
 from beartype._util.hint.utilhinttest import (
-    is_hint_forwardref,
     is_hint_ignorable,
 )
 from typing import Any, Callable, NoReturn, Optional, Tuple
@@ -317,7 +316,7 @@ class CauseSleuth(object):
         '''
 
         # Getter function returning the desired string.
-        get_cause_or_none = None
+        get_cause_or_none: Callable[[CauseSleuth], Optional[str]] = None  # type: ignore[assignment]
 
         # If this hint is ignorable, all possible objects satisfy this hint,
         # implying this hint *CANNOT* by definition be the cause of this
@@ -326,6 +325,16 @@ class CauseSleuth(object):
             return None
         # Else, this hint is unignorable.
         #
+        # If this is the PEP 484-compliant "typing.NoReturn" type hint
+        # contextually permitted *ONLY* as a return annotation and thus
+        # identified by *NO* general-purpose sign...
+        elif self.hint is NoReturn:
+            # Avoid circular import dependencies.
+            from beartype._decor._error._proposal._errorpep484noreturn import (
+                get_cause_or_none_noreturn)
+
+            # Defer to the getter function specific to this hint.
+            get_cause_or_none = get_cause_or_none_noreturn
         # If *NO* sign uniquely identifies this hint, this hint is either
         # PEP-noncompliant *OR* only contextually PEP-compliant in certain
         # specific use cases. In either case...
@@ -350,57 +359,26 @@ class CauseSleuth(object):
                 get_cause_or_none = get_cause_or_none_type
         # Else, this hint is PEP-compliant.
         #
-        # If this PEP-compliant hint is its own unsubscripted "typing"
-        # attribute (e.g., "typing.List" rather than "typing.List[str]") and is
-        # thus subscripted by *NO* child hints, we assume this hint to
-        # originate from an origin type. In this case...
-        elif self.hint is self.hint_sign:
-            # If this is the PEP 484-compliant "typing.NoReturn" type hint
-            # permitted *ONLY* as a return annotation...
-            if self.hint is NoReturn:
-                # Avoid circular import dependencies.
-                from beartype._decor._error._proposal._errorpep484noreturn import (
-                    get_cause_or_none_noreturn)
+        # If this hint is neither...
+        elif not (
+            # Subscripted *NOR*...
+            is_hint_pep_subscripted(self.hint) or
+            # Originating from a standard type origin...
+            get_hint_pep_type_stdlib_or_none(self.hint) is None
+        # Then this hint is both unsubscripted and originating from a standard
+        # type origin. In this case, this hint was type-checked shallowly.
+        ):
+            # Avoid circular import dependencies.
+            from beartype._decor._error._errortype import (
+                get_cause_or_none_type_stdlib)
 
-                # Defer to the getter function specific to this hint.
-                get_cause_or_none = get_cause_or_none_noreturn
-            # Else, this hint is *NOT "typing.NoReturn". In this case, assume
-            # this is a standard PEP-compliant type hint supported by both
-            # parameters and return values originating from an origin type.
-            else:
-                # Avoid circular import dependencies.
-                from beartype._decor._error._errortype import (
-                    get_cause_or_none_type_origin)
-
-                # Defer to the getter function supporting hints originating
-                # from origin types.
-                get_cause_or_none = get_cause_or_none_type_origin
-        # Else, this PEP-compliant hint is *NOT* its own unsubscripted "typing"
-        # attribute. In this case...
+            # Defer to the getter function supporting hints originating
+            # from origin types.
+            get_cause_or_none = get_cause_or_none_type_stdlib
+        # Else, this hint is either subscripted *OR* unsubscripted but not
+        # originating from a standard type origin. In either case, this hint
+        # was type-checked deeply.
         else:
-            # If this hint is neither...
-            if not (
-                # Subscripted by no child hints *NOR*...
-                self.hint_childs or
-                # An empty fixed-length tuple hint, whose PEP 585 (but *NOT*
-                # PEP 484)-compliant implementation is subscripted by no child
-                # hints *NOR*...
-                is_hint_pep_tuple_empty(self.hint) or
-                # A forward reference nor type variable, whose designs reside
-                # well outside the standard "typing" dunder variable API and
-                # are thus *NEVER* subscripted by child hints...
-                is_hint_forwardref(self.hint) or
-                is_hint_pep_typevar(self.hint)
-            ):
-            # Then this hint should have been subscripted by one or more child
-            # hints but wasn't. In this case, raise an exception.
-                raise _BeartypeCallHintPepRaiseException(
-                    f'{self.exception_label} PEP type hint '
-                    f'{repr(self.hint)} unsubscripted.'
-                )
-            # Else, this hint is subscripted by one or more child hints (e.g.,
-            # "typing.List[str]" rather than "typing.List").
-
             # Avoid circular import dependencies.
             from beartype._decor._error.errormain import (
                 PEP_HINT_SIGN_TO_GET_CAUSE_FUNC)
@@ -408,7 +386,7 @@ class CauseSleuth(object):
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
             get_cause_or_none = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
-                self.hint_sign, None)
+                self.hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.

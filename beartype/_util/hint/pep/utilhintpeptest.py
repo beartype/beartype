@@ -21,7 +21,7 @@ from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapep import (
     HINT_PEP_ATTRS_DEPRECATED,
-    HINT_SIGNS_SUPPORTED,
+    HINT_SIGNS_SUPPORTED as HINT_SIGNS_SUPPORTED_BAD,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
@@ -31,6 +31,8 @@ from beartype._util.data.hint.pep.proposal.datapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar)
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SUPPORTED)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
@@ -766,7 +768,11 @@ def is_hint_pep_sign_supported(hint_sign: object) -> bool:
     # print(f'HINT_SIGNS_SUPPORTED_DEEP: {HINT_SIGNS_SUPPORTED_DEEP}')
 
     # Return true only if this sign is supported.
-    return hint_sign in HINT_SIGNS_SUPPORTED
+    return (
+        hint_sign in HINT_SIGNS_SUPPORTED or
+        #FIXME: Remove this condition after finalizing this refactoring!
+        hint_sign in HINT_SIGNS_SUPPORTED_BAD
+    )
 
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: This test returns false negatives for PEP 593-compliant
@@ -958,6 +964,19 @@ def is_hint_pep_subscripted(hint: object) -> bool:
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
+    Caveats
+    ----------
+    **Callers should not assume that the objects originally subscripting this
+    hint are still accessible.** Although *most* hints preserve their
+    subscripted objects over their lifetimes, a small subset of edge-case hints
+    erase those objects at subscription time. This includes:
+
+    * :pep:`585`-compliant empty tuple type hints (i.e., ``tuple[()]``), which
+      despite being explicitly subscripted erroneously erase that subscription
+      at subscription time. This does *not* extend to :pep:`484`-compliant
+      empty tuple type hints (i.e., ``typing.Tuple[()]``), which correctly
+      preserve that subscripted empty tuple.
+
     Parameters
     ----------
     hint : object
@@ -981,10 +1000,12 @@ def is_hint_pep_subscripted(hint: object) -> bool:
         # * A PEP 484- or 585-compliant subscripted generic.
         # * A PEP 585-compliant builtin type hint.
         #
-        # Note this test is technically redundant, since all subscripted
-        # generics *MUST* necessarily be subscripted by one or more arguments
-        # and/or type variables, subsequently tested for. Nonetheless, this
-        # test efficiently reduces to a builtin call and is thus preferable.
+        # Surprisingly, this test is *NOT* simply an optimization. Although
+        # most subscripted generics do preserve their subscripted objects as
+        # one or more arguments and/or type variables, PEP 585-compliant empty
+        # tuple type hints (i.e., "tuple[()]") do *NOT*. Thankfully, this
+        # simple and efficient test conveniently handles all edge cases
+        # associated with PEP 585.
         isinstance(hint, HintGenericSubscriptedType) or
         # Any other PEP-compliant type hint subscripted by one or more
         # arguments and/or type variables. Note that this test is *NOT*
@@ -1211,14 +1232,14 @@ def is_hint_pep_tuple_empty(hint: object) -> bool:
     #         # A PEP 585-compliant "tuple"-based hint subscripted by no
     #         # child hints *OR*...
     #         (
-    #             hint_curr_sign is tuple and
+    #             hint.__origin__ is tuple and
     #             hint_childs_len == 0
     #         ) or
     #         # A PEP 484-compliant "typing.Tuple"-based hint subscripted
     #         # by exactly one child hint *AND* this child hint is the
     #         # empty tuple,..
     #         (
-    #             hint_curr_sign is Tuple and
+    #             hint.__origin__ is Tuple and
     #             hint_childs_len == 1 and
     #             hint_childs[0] == ()
     #         )

@@ -58,14 +58,6 @@ of compliant sequences, which necessarily satisfy the
 across all sequence items).
 '''
 
-
-HINT_PEP585_SIGNS_TUPLE: FrozenSet[Any] = frozenset()
-'''
-Frozen set of all :pep:`585`-compliant **tuple signs** (i.e., arbitrary objects
-uniquely identifying :pep:`585`-compliant type hints accepting exactly one
-subscripted type hint argument constraining *all* items of compliant tuples).
-'''
-
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
     '''
@@ -128,7 +120,6 @@ def _init() -> None:
     global \
         HINT_PEP585_SIGNS_SEQUENCE_STANDARD, \
         HINT_PEP585_SIGNS_SUPPORTED_DEEP, \
-        HINT_PEP585_SIGNS_TUPLE, \
         HINT_PEP585_ATTRS_ISINSTANCEABLE
 
     # ..................{ SETS ~ sign                       }..................
@@ -187,7 +178,6 @@ def _init() -> None:
         MutableSequence,
         Sequence,
     ))
-    HINT_PEP585_SIGNS_TUPLE = frozenset((tuple,))
 
 
 # Initialize this submodule.

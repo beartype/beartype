@@ -17,7 +17,6 @@ from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP484_SIGNS_SUPPORTED_DEEP,
     HINT_PEP484_SIGNS_SUPPORTED_SHALLOW,
-    HINT_PEP484_SIGNS_TUPLE,
     HINT_PEP484_ATTRS_ISINSTANCEABLE,
     HINT_PEP484_SIGNS_TYPE_ORIGIN,
 )
@@ -28,7 +27,6 @@ from beartype._util.data.hint.pep.proposal.datapep544 import (
 from beartype._util.data.hint.pep.proposal.datapep585 import (
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD,
     HINT_PEP585_SIGNS_SUPPORTED_DEEP,
-    HINT_PEP585_SIGNS_TUPLE,
     HINT_PEP585_ATTRS_ISINSTANCEABLE,
 )
 from beartype._util.data.hint.pep.proposal.datapep586 import (
@@ -106,7 +104,7 @@ See Also
 
 #FIXME: Remove "HINT_PEP484_SIGNS_SEQUENCE_STANDARD" and
 #"HINT_PEP585_SIGNS_SEQUENCE_STANDARD" entirely.
-HINT_SIGNS_SEQUENCE_STANDARD = (
+HINT_SIGNS_SEQUENCE_ARGS_ONE = (
     HINT_PEP484_SIGNS_SEQUENCE_STANDARD |
     HINT_PEP585_SIGNS_SEQUENCE_STANDARD
 )
@@ -144,18 +142,6 @@ This set intentionally excludes the:
 
 .. _collections.deque:
    https://docs.python.org/3/library/collections.html#collections.deque
-'''
-
-
-#FIXME: Remove this, "HINT_PEP484_SIGNS_TUPLE", and "HINT_PEP585_SIGNS_TUPLE".
-HINT_SIGNS_TUPLE = (
-    HINT_PEP484_SIGNS_TUPLE |
-    HINT_PEP585_SIGNS_TUPLE
-)
-'''
-Frozen set of all **tuple signs** (i.e., arbitrary objects uniquely identifying
-PEP-compliant type hints accepting exactly one subscripted type hint argument
-constraining *all* items of compliant tuples).
 '''
 
 # ....................{ SIGNS ~ supported                 }....................

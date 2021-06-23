@@ -15,19 +15,6 @@ automation.
 #FIXME: Consider significantly expanding the above module docstring, assuming
 #Sphinx presents this module in its generated frontmatter.
 
-#FIXME: [SPEED] Optimize importation of the top-level "beartype" package, which
-#is currently depressingly slow -- like, on the order of several seconds slow.
-#That's unacceptable; we can certainly do better. Before we actually *DO*
-#anything about this, however, *WE SHOULD PROFILE IMPORTS* using an
-#off-the-shelf standard solution known as an "import profiler." Don't simply
-#start deferring imports without actually profiling, because that would be a
-#waste of everyone's scarce development time. There canonical approach is to:
-#* Install Tuna, a pure-Python package with no dependencies. See:
-#    https://github.com/nschloe/tuna
-#* Run:
-#    $ python -X importttime -c "import beartype" 2> imports.prof
-#    $ tuna imports.prof
-
 #FIXME: [NEW PROJECT] Consider creating a new private "beartype._bearable"
 #subpackage to enable arbitrary O(1) runtime type checking. By "arbitrary," we
 #mean just that: O(1) runtime type checking that anyone can perform in any

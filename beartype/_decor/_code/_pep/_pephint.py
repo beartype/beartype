@@ -86,18 +86,10 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.kind.utilkinddict import update_mapping
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-    add_func_scope_type,
-    add_func_scope_types,
-)
 from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_SEQUENCE_STANDARD,
-    HINT_SIGNS_TUPLE,
+    HINT_SIGNS_SUPPORTED_DEEP as HINT_SIGNS_SUPPORTED_DEEP_BAD,
+    HINT_SIGNS_SEQUENCE_ARGS_ONE,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
@@ -109,6 +101,17 @@ from beartype._util.data.hint.pep.datapepattr import (
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
+    HintSignTuple,
+)
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SUPPORTED_DEEP,
+    HINT_SIGNS_TYPE_STDLIB,
+)
+from beartype._util.func.utilfuncscope import (
+    CallableScope,
+    add_func_scope_attr,
+    add_func_scope_type,
+    add_func_scope_types,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased,
@@ -133,7 +136,7 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
-    get_hint_pep_stdlib_type,
+    get_hint_pep_type_stdlib,
     get_hint_pep_generic_type_or_none,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
@@ -147,6 +150,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
 )
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_7,
@@ -205,10 +209,6 @@ def pep_code_check_hint(
     _PEP_CODE_CHECK_HINT_ROOT_PREFIX=PEP_CODE_CHECK_HINT_ROOT_PREFIX,
     _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT=(
         PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX=(
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX=(
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX),
 
     # "beartype._decor._code._pep._pepsnip" string globals required only for
     # their bound "str.format" methods.
@@ -1311,7 +1311,11 @@ def pep_code_check_hint(
             elif (
                 # Originates from an origin type and may thus be shallowly
                 # type-checked against that type *AND is either...
-                hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB and (
+                (
+                    hint_curr_sign in HINT_SIGNS_TYPE_STDLIB or
+                    #FIXME: Remove this shuddering horror after refactoring!
+                    hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
+                ) and (
                     #FIXME: Ideally, this line should just resemble:
                     #    not is_hint_pep_subscripted(hint_curr)
                     #Unfortunately, unsubscripted type hints under Python 3.6
@@ -1329,7 +1333,11 @@ def pep_code_check_hint(
                     #FIXME: Remove this branch *AFTER* deeply supporting all
                     #hints.
                     # Currently unsupported with deep type-checking...
-                    hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
+                    (
+                        hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP and
+                        #FIXME: Remove this shuddering horror after refactoring!
+                        hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP_BAD
+                    )
                 )
             ):
             # Then generate trivial code shallowly type-checking the current
@@ -1344,7 +1352,7 @@ def pep_code_check_hint(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        cls=get_hint_pep_stdlib_type(hint_curr),
+                        cls=get_hint_pep_type_stdlib(hint_curr),
                         cls_scope=func_wrapper_locals,
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     ),
@@ -1352,13 +1360,13 @@ def pep_code_check_hint(
             # Else, this hint is either subscripted, not shallowly
             # type-checkable, *OR* deeply type-checkable.
 
-            # ............{ SEQUENCES ~ standard OR tuple vari. }..............
+            # ............{ SEQUENCES ~ variadic                }..............
             # If this hint is either...
             elif (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...
-                hint_curr_sign in HINT_SIGNS_SEQUENCE_STANDARD or (
+                hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE or (
                     # A tuple *AND*...
-                    hint_curr_sign in HINT_SIGNS_TUPLE and
+                    hint_curr_sign is HintSignTuple and
                     # This tuple is subscripted by exactly two child hints
                     # *AND*...
                     hint_childs_len == 2 and
@@ -1381,7 +1389,7 @@ def pep_code_check_hint(
                     # Origin type of this attribute if any *OR* raise an
                     # exception -- which should *NEVER* happen, as all standard
                     # sequences originate from an origin type.
-                    cls=get_hint_pep_stdlib_type(hint_curr),
+                    cls=get_hint_pep_type_stdlib(hint_curr),
                     cls_scope=func_wrapper_locals,
                     cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                 )
@@ -1394,12 +1402,8 @@ def pep_code_check_hint(
                 #     >>> import typing as t
                 #     >>> t.List[int, str]
                 #     TypeError: Too many parameters for typing.List; actual 2, expected 1
-                assert hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
-                assert is_hint_pep_subscripted(hint_curr)
                 assert (
-                    hint_childs_len == 1 or
-                    hint_curr_sign in HINT_SIGNS_TUPLE
-                ), (
+                    hint_childs_len == 1 or hint_curr_sign is HintSignTuple), (
                     f'{hint_curr_label} {repr(hint_curr)} sequence '
                     f'subscripted by {hint_childs_len} arguments.')
 
@@ -1471,27 +1475,17 @@ def pep_code_check_hint(
             #   Note that the "..." substring here is *NOT* a literal ellipses.
             #
             # This is what happens when non-human-readable APIs are promoted.
-            elif hint_curr_sign in HINT_SIGNS_TUPLE:
-                # Assert this tuple was subscripted by at least one child hint
-                # if this tuple is PEP 484-compliant. Note that the "typing"
-                # module should have already guaranteed this on our behalf.
-                # Trust is for the weak. See above for further commentary.
-                assert hint_curr_sign is tuple or hint_childs, (
-                    f'{hint_curr_label} {repr(hint_curr)} '
-                    f'fixed-length tuple empty.')
-
+            elif hint_curr_sign is HintSignTuple:
                 # Assert this tuple is *NOT* of the syntactic form
                 # "typing.Tuple[{typename}, ...]" handled by prior logic.
                 assert (
-                    hint_childs_len <= 1 or
-                    hint_childs[1] is not Ellipsis
-                ), (
+                    hint_childs_len <= 1 or hint_childs[1] is not Ellipsis), (
                     f'{hint_curr_label} {repr(hint_curr)} '
                     f'variadic tuple unhandled.')
 
                 # Initialize the code type-checking the current pith against
                 # this tuple to the substring prefixing all such code.
-                func_curr_code = _PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
+                func_curr_code = PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
 
                 # If this hint is the empty fixed-length tuple, generate and
                 # append code type-checking the current pith to be the empty
@@ -1538,7 +1532,7 @@ def pep_code_check_hint(
                     f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                     # Suffix this code by the substring suffixing all such
                     # code.
-                    f'{_PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
+                    f'{PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
                 # Format...
                 ).format(
                     # Indentation deferred above for efficiency.

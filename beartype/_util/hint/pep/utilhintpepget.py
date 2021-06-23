@@ -25,6 +25,10 @@ from beartype._util.data.hint.pep.datapep import (
     HINT_PEP_MODULE_NAMES,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
+from beartype._util.data.hint.pep.sign.datapepsignmap import (
+    HINT_REPR_PREFIX_TO_SIGN)
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_TYPE_STDLIB)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
@@ -464,10 +468,16 @@ def get_hint_pep_sign(hint: Any) -> object:
     # If this hint is a PEP 585-compliant type hint, return the origin type
     # originating this hint (e.g., "list" for "list[str]").
     #
-    # Note that the get_hint_pep_stdlib_type() getter is intentionally *NOT*
+    # Note that the get_hint_pep_type_stdlib() getter is intentionally *NOT*
     # called here. Why? Because doing so would induce an infinite recursive
     # loop, since that function internally calls this function. *sigh*
-    elif is_hint_pep585_builtin(hint):
+
+    #FIXME: Remove this entire branch as soon as feasible, please. Ugh!
+    elif is_hint_pep585_builtin(hint) and not (
+        hint.__origin__ not in {
+            tuple,
+        }
+    ):
         return hint.__origin__
     # Else, this hint is *NOT* a PEP 585-compliant type hint.
     #
@@ -497,6 +507,27 @@ def get_hint_pep_sign(hint: Any) -> object:
         #FIXME: Actually... we need to map this to an actual "HintSign" now.
         #Honestly, can't we just remove all of this and defer to
         #"hint.__qualname__" below to automate this mapping?
+        #FIXME: Indeed, it seems increasingly likely that we can dramatically
+        #compact this method now by performing three iterative detection
+        #attempts:
+        #1. First, get this object's class and try to look up that class in a
+        #   new dictionary mapping from classnames to signs. We try this first
+        #   because it's both fast and covers common things: e.g.,
+        #   HINT_TYPE_TO_SIGN = {
+        #       'typing.ForwardRef': HintSignForwardRef,
+        #       'typing.TypeVar': HintSignTypeVar,
+        #       # Note that PEP 585-compliant type hints *CANNOT* be trivially
+        #       # detected by their classes, because we need to validate that
+        #       # they're subscripted as well. Otherwise, they're just classes.
+        #       ...
+        #   }
+        #2. Next, attempt the repr()-based approach given below. We try this
+        #   next because, although slow, it covers basically everything.
+        #3. Last, we fallback to extremely slow manual detection for the few
+        #   remaining categories of type hints *NOT* amenable to any of the
+        #   above automated detection schemes. We're fairly certain this *ONLY*
+        #   includes "typing.NewType", but there might be others as well.
+
         # Return this class as is.
         return hint
     # Else, this hint is either not a class *OR* or class subscripted by one or
@@ -615,10 +646,10 @@ def get_hint_pep_sign(hint: Any) -> object:
 
     # Unsubscripted attribute with this name declared by this module if any
     # *OR* "None" otherwise.
-    sign = getattr(hint_module, sign_name, None)
+    hint_sign = getattr(hint_module, sign_name, None)
 
     # If this module declares *NO* such attribute, raise an exception.
-    if sign is None:
+    if hint_sign is None:
         raise BeartypeDecorHintPepSignException(
             f'Type hint {repr(hint)} attribute "typing.{sign_name}" not found.'
         )
@@ -627,34 +658,38 @@ def get_hint_pep_sign(hint: Any) -> object:
     #FIXME: Refactor as follows:
     #* Iteratively add *ALL* explicitly deeply supported signs to this test.
     #* Once complete, remove:
-    # if sign is None:
-    #     from beartype._util.data.hint.pep.sign.datapepsignmap import (
-    #         HINT_BARE_NAME_TO_SIGN)
-    #
-    #     #FIXME: This suggests we can probably refactor away a bit of the
-    #     #logic above, thankfully. Namely, we just need to call
-    #     #str.partition('['). There's probably no need to parse the individual
-    #     #"hint_module_name" anymore. *sigh*
-    #     #Namely, we probably just want to do this instead:
-    #     #    hint_bare_name, _, _ = repr(hint).partition('[')
-    #     hint_pep_name = f'{hint_module_name}.{hint_module_attr_name}'
-    #
-    #     # Unsubscripted attribute with this name declared by this module if any
-    #     # *OR* "None" otherwise.
-    #     sign = HINT_BARE_NAME_TO_SIGN.get(hint_pep_name)
-    #
-    #     # If this module declares *NO* such attribute, raise an exception.
-    #     if sign is None:
-    #         raise BeartypeDecorHintPepSignException(
-    #             f'Type hint {repr(hint)} currently unsupported by @beartype. '
-    #             f'Type-checking bear growls in sympathy with your codebase. '
-    #             f'You suddenly feel encouraged to report this to '
-    #             f'the beartype issue tracker at: {URL_ISSUES}'
-    #         )
-    #     # Else, this module declares this attribute.
+    from typing import (
+        Any,
+        Optional,
+        Tuple,
+    )
+    if hint_sign in {Tuple,}:
+        #FIXME: Refactor away most of the logic above, thankfully. There's
+        #probably no need to parse the individual "hint_module_name" anymore.
+
+        # Substring of the machine-readable representation of this hint
+        # preceding the first "[" delimiter if this representation contains
+        # that delimiter *OR* this representation as is otherwise.
+        #
+        # Note that the str.partition() method has been profiled to be the
+        # optimally efficient means of parsing trivial prefixes.
+        hint_repr_prefix, _, _ = repr(hint).partition('[')
+
+        # Sign uniquely identifying this hint if any *OR* "None" otherwise.
+        hint_sign = HINT_REPR_PREFIX_TO_SIGN.get(hint_repr_prefix)
+
+        # If *NO* sign uniquely identifies this hint, raise an exception.
+        if hint_sign is None:
+            raise BeartypeDecorHintPepSignException(
+                f'Type hint {repr(hint)} currently unsupported by beartype. '
+                f'You suddenly feel encouraged to submit '
+                f'a feature request for this hint to '
+                f'the beartype issue tracker at:\n\t{URL_ISSUES}'
+            )
+        # Else, this module declares this attribute.
 
     # Return this attribute.
-    return sign
+    return hint_sign
 
 # ....................{ GETTERS ~ type : generic          }....................
 @callable_cached
@@ -720,13 +755,13 @@ def get_hint_pep_generic_type_or_none(hint: Any) -> Optional[type]:
         return None
 
 # ....................{ GETTERS ~ type : stdlib           }....................
-def get_hint_pep_stdlib_type(hint: object) -> type:
+def get_hint_pep_type_stdlib(hint: object) -> type:
     '''
-    **Standard library origin type** (i.e., non-:mod:`typing` class such that
-    *all* objects satisfying the passed PEP-compliant type hint are instances
-    of this class) originating this hint if this hint originates from a
-    non-:mod:`typing` class *or* raise an exception otherwise (i.e., if this
-    hint does *not* originate from a standard library origin type).
+    **Standard origin type** (i.e., isinstanceable class declared by Python's
+    standard library such that *all* objects satisfying the passed
+    PEP-compliant type hint are instances of this class) originating this hint
+    if this hint originates from such a type *or* raise an exception otherwise
+    (i.e., if this hint does *not* originate from such a type).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -740,41 +775,42 @@ def get_hint_pep_stdlib_type(hint: object) -> type:
     Returns
     ----------
     type
-        Standard library origin type originating this hint.
+        Standard origin type originating this hint.
 
     Raises
     ----------
     BeartypeDecorHintPepException
-        If this hint does *not* originate from a standard library origin type.
+        If this hint does *not* originate from a standard origin type.
 
     See Also
     ----------
-    :func:`get_hint_pep_stdlib_type_or_none`
+    :func:`get_hint_pep_type_stdlib_or_none`
+        Related getter.
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_stdlib_type_or_none(hint)
+    hint_type_stdlib = get_hint_pep_type_stdlib_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
-    if hint_type_origin is None:
+    if hint_type_stdlib is None:
         raise BeartypeDecorHintPepException(
             f'Type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from external class).'
+            f'(i.e., does not originate from isinstanceable class declared by '
+            f"Python's standard library)."
         )
     # Else, this type exists.
 
     # Return this type.
-    return hint_type_origin
+    return hint_type_stdlib
 
 
-def get_hint_pep_stdlib_type_or_none(hint: Any) -> Optional[type]:
+def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
     '''
-    **Standard library origin type** (i.e., non-:mod:`typing` class defined by
-    Python's standard library such that *all* objects satisfying the passed
+    **Standard origin type** (i.e., isinstanceable class declared by Python's
+    standard library such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
-    if this hint originates from a non-:mod:`typing` class *or* ``None``
-    otherwise (i.e., if this hint does *not* originate from a standard library
-    origin type).
+    if this hint originates from such a type *or* ``None`` otherwise (i.e., if
+    this hint does *not* originate from such a type).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -796,12 +832,13 @@ def get_hint_pep_stdlib_type_or_none(hint: Any) -> Optional[type]:
     Optional[type]
         Either:
 
-        * If this hint originates from a standard library origin type, that
-          type.
+        * If this hint originates from a standard origin type, that type.
         * Else, ``None``.
 
     See Also
     ----------
+    :func:`get_hint_pep_type_stdlib`
+        Related getter.
     :func:`_get_hint_pep_origin_object_or_none`
         Further details.
     '''
@@ -813,7 +850,11 @@ def get_hint_pep_stdlib_type_or_none(hint: Any) -> Optional[type]:
     return (
         # If this sign originates from an origin type, that type.
         _get_hint_pep_origin_object_or_none(hint)
-        if hint_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB else
+        if (
+            hint_sign in HINT_SIGNS_TYPE_STDLIB or
+            #FIXME: Remove this condition after finalizing this refactoring!
+            hint_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
+        ) else
         # Else, "None".
         None
     )
@@ -1084,7 +1125,7 @@ _get_hint_pep_origin_object_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_stdlib_type_or_none` function should
+    **The high-level** :func:`get_hint_pep_type_stdlib_or_none` function should
     always be called in lieu of this low-level function.** Whereas the former
     is guaranteed to return either a class or ``None``, this function enjoys no
     such guarantees and instead returns what the caller can only safely assume

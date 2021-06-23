@@ -18,7 +18,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.utilhintpepget import (
-    get_hint_pep_stdlib_type_or_none)
+    get_hint_pep_type_stdlib_or_none)
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_object)
 from beartype._util.mod.utilmodule import import_module_attr
@@ -99,7 +99,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> Optional[str]:
     return get_cause_object_not_type(pith=sleuth.pith, hint=sleuth.hint)
 
 
-def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> Optional[str]:
+def get_cause_or_none_type_stdlib(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant originative type hint** (i.e.,
@@ -115,10 +115,10 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> Optional[str]:
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 
     # Origin type originating this hint if any *OR* "None" otherwise.
-    hint_type_origin = get_hint_pep_stdlib_type_or_none(sleuth.hint)
+    hint_type_stdlib = get_hint_pep_type_stdlib_or_none(sleuth.hint)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
-    if hint_type_origin is None:
+    if hint_type_stdlib is None:
         raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} type hint '
             f'{repr(sleuth.hint)} not originated from an origin type.'
@@ -126,7 +126,7 @@ def get_cause_or_none_type_origin(sleuth: CauseSleuth) -> Optional[str]:
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
-    return get_cause_or_none_type(sleuth.permute(hint=hint_type_origin))
+    return get_cause_or_none_type(sleuth.permute(hint=hint_type_stdlib))
 
 # ....................{ GETTERS ~ types                   }....................
 def get_cause_or_none_types(sleuth: CauseSleuth) -> Optional[str]:

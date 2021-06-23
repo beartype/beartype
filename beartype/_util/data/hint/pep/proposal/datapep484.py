@@ -176,14 +176,6 @@ across all sequence items).
 '''
 
 
-HINT_PEP484_SIGNS_TUPLE = frozenset((Tuple,))
-'''
-Frozen set of all :pep:`484`-compliant **tuple signs** (i.e., arbitrary objects
-uniquely identifying :pep:`484`-compliant type hints accepting exactly one
-subscripted type hint argument constraining *all* items of compliant tuples).
-'''
-
-
 HINT_PEP484_SIGNS_UNION = frozenset((Optional, Union))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying

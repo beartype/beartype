@@ -126,7 +126,7 @@ def is_hint_pep484_ignorable_or_none(
         # "typing.Generic[T]"), return true.
         #
         # Note that we intentionally avoid calling the
-        # get_hint_pep_stdlib_type_or_none() function here, which has been
+        # get_hint_pep_type_stdlib_or_none() function here, which has been
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if getattr(hint, '__origin__', None) is Generic:

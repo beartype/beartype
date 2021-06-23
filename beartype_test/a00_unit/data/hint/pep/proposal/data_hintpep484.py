@@ -4,28 +4,25 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 484`_**-compliant type hint test data.**
+Project-wide :pep:`484`**-compliant type hint test data.**
 
 Caveats
 ----------
 Note that:
 
-* The `PEP 484`_-compliant annotated builtin containers created and returned by
+* The :pep:`484`-compliant annotated builtin containers created and returned by
   the :func:`typing.NamedTuple` and :func:`typing.TypedDict` factory functions
   are *mostly* indistinguishable from PEP-noncompliant types and thus
   intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544` submodule
-  rather than here despite being specified by `PEP 484`_.
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544`
+  submodule rather than here despite being specified by :pep:`484`.
 * The ``typing.Supports*`` family of abstract base classes (ABCs) are
   intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544` submodule
-  rather than here despite being specified by `PEP 484`_ and available under
-  Python < 3.8. Why? Because the implementation of these ABCs under Python <
-  3.8 is unusable at runtime, which is nonsensical and awful, but that's
-  :mod:`typing` for you. What you goin' do?
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544`
+  submodule rather than here despite being specified by :pep:`484` and
+  available under Python < 3.8. Why? Because the implementation of these ABCs
+  under Python < 3.8 is unusable at runtime, which is nonsensical and awful,
+  but that's :mod:`typing` for you. What you goin' do?
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -40,6 +37,7 @@ from beartype._util.data.hint.pep.proposal.datapep484 import (
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTuple,
     HintSignTypeVar,
 )
 from beartype._util.py.utilpyversion import (
@@ -95,7 +93,7 @@ User-defined generic :mod:`typing` type variable.
 # ....................{ GENERICS ~ single                 }....................
 class Pep484GenericUnsubscriptedSingle(List):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing a single
+    :pep:`484`-compliant user-defined generic subclassing a single
     unsubscripted :mod:`typing` type.
 
     .. _PEP 484:
@@ -107,7 +105,7 @@ class Pep484GenericUnsubscriptedSingle(List):
 
 class Pep484GenericUntypevaredSingle(List[str]):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing a single
+    :pep:`484`-compliant user-defined generic subclassing a single
     unparametrized :mod:`typing` type.
 
     .. _PEP 484:
@@ -119,7 +117,7 @@ class Pep484GenericUntypevaredSingle(List[str]):
 
 class Pep484GenericTypevaredSingle(Generic[S, T]):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing a single parametrized
+    :pep:`484`-compliant user-defined generic subclassing a single parametrized
     :mod:`typing` type.
 
     .. _PEP 484:
@@ -132,7 +130,7 @@ class Pep484GenericTypevaredSingle(Generic[S, T]):
 class Pep484GenericUntypevaredMultiple(
     collections_abc.Callable, ContextManager[str], Sequence[str]):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing multiple
+    :pep:`484`-compliant user-defined generic subclassing multiple
     unparametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
     class (ABC).
 
@@ -179,7 +177,7 @@ class Pep484GenericUntypevaredMultiple(
 
 class Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing multiple directly
+    :pep:`484`-compliant user-defined generic subclassing multiple directly
     parametrized :mod:`typing` types.
 
     .. _PEP 484:
@@ -207,7 +205,7 @@ class Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
 class Pep484GenericTypevaredDeepMultiple(
     collections_abc.Sized, Iterable[Tuple[S, T]], Container[Tuple[S, T]]):
     '''
-    `PEP 484`_-compliant user-defined generic subclassing multiple indirectly
+    :pep:`484`-compliant user-defined generic subclassing multiple indirectly
     parametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
     class (ABC).
 
@@ -255,7 +253,7 @@ def _make_generator_yield_int_send_float_return_str() -> (
     ----------
     https://www.python.org/dev/peps/pep-0484/#id39
         ``echo_round`` function strongly inspiring this implementation, copied
-        verbatim from this subsection of `PEP 484`_.
+        verbatim from this subsection of :pep:`484`.
 
     .. _PEP 484:
     https://www.python.org/dev/peps/pep-0484
@@ -273,7 +271,7 @@ def _make_generator_yield_int_send_float_return_str() -> (
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add `PEP 484`_**-compliant type hint test data to various global containers
+    Add :pep:`484`**-compliant type hint test data to various global containers
     declared by the passed module.
 
     Parameters
@@ -968,7 +966,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # container types. Non-orthogonality, thy name is the "typing" module.
         PepHintMetadata(
             hint=Tuple,
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
@@ -997,7 +995,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     TypeError: Parameters to generic types must be types. Got [].
         PepHintMetadata(
             hint=Tuple[()],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Empty tuple.
@@ -1022,7 +1020,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fixed-length tuple of only ignorable child hints.
         PepHintMetadata(
             hint=Tuple[Any, object,],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
@@ -1047,7 +1045,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
             hint=Tuple[float, Any, str,],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number, string, and integer
@@ -1096,7 +1094,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Nested fixed-length tuple of at least one ignorable child hint.
         PepHintMetadata(
             hint=Tuple[Tuple[float, Any, str,], ...],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing tuples containing a floating-point number,
@@ -1148,7 +1146,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic fixed-length tuple.
         PepHintMetadata(
             hint=Tuple[S, T],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             is_typevared=True,
             stdlib_type=tuple,
             piths_satisfied_meta=(
@@ -1173,7 +1171,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Variadic tuple.
         PepHintMetadata(
             hint=Tuple[str, ...],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
@@ -1206,7 +1204,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic variadic tuple.
         PepHintMetadata(
             hint=Tuple[T, ...],
-            pep_sign=Tuple,
+            pep_sign=HintSignTuple,
             is_typevared=True,
             stdlib_type=tuple,
             piths_satisfied_meta=(

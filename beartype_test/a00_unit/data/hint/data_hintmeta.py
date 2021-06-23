@@ -225,8 +225,9 @@ class PepHintMetadata(NonPepHintMetadata):
             is_subscripted = (
                 # This hint is parametrized *OR*...
                 is_typevared or
-                # This hint is *NOT* its own sign (e.g., "Any", "Sized").
-                self.hint is not pep_sign
+                # The machine-readable representation of this hint contains the
+                # "[" delimiter (e.g., "List[str]").
+                '[' in repr(self.hint)
             )
         if is_type_typing is None:
             # Default this parameter to the negation of all PEP 585-compliant

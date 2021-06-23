@@ -62,7 +62,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS ~ sequence                   }....................
 # Initialized below in the _init() function.
-HINT_BARE_NAME_TO_SIGN = {}
+HINT_REPR_PREFIX_TO_SIGN = {}
 '''
 Dictionary mapping from the unsubscripted machine-readable representations
 (i.e., strings returned by the :func:`repr` builtin suffixed by *no* "["- and
@@ -90,14 +90,14 @@ def _init() -> None:
         # officially accepted by both static and runtime type checkers)...
         for typing_module_name in HINT_PEP_MODULE_NAMES:
             # Map from that attribute to this sign.
-            HINT_BARE_NAME_TO_SIGN[
+            HINT_REPR_PREFIX_TO_SIGN[
                 f'{typing_module_name}.{typing_attr_name}'] = sign
 
     # If the active Python interpreter is Python >= 3.9, also map from the
     # unsubscripted name of each class now subscriptable as a PEP 585-compliant
     # generic alias type hint to the sign identifying that class.
     if IS_PYTHON_AT_LEAST_3_9:
-        HINT_BARE_NAME_TO_SIGN.update({
+        HINT_REPR_PREFIX_TO_SIGN.update({
             # For synchronicity, these key-value pairs are intentionally defined
             # in the same order as the list in PEP 585.
             'tuple': HintSignTuple,
