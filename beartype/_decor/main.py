@@ -147,13 +147,15 @@ from beartype._decor._data import BeartypeData
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed, release_object_typed)
 from beartype._util.func.utilfuncmake import make_func
-from typing import Callable, TYPE_CHECKING
+from typing import Any, Callable, TypeVar, TYPE_CHECKING
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
+T = TypeVar('T', bound=Callable[..., Any])
+
 # ....................{ DECORATORS                        }....................
-def beartype(func: Callable) -> Callable:
+def beartype(func: T) -> T:
     '''
     Decorate the passed **pure-Python callable** (e.g., function or method
     declared in Python rather than C) to validate both all annotated parameters
@@ -393,7 +395,7 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-    def beartype(func: Callable) -> Callable:
+    def beartype(func: T) -> T:
         '''
         Identity decorator.
 
