@@ -4,11 +4,15 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`593`**-compliant type hint test data.**
+Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignAnnotated,
+    HintSignList,
+)
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
     PepHintPithSatisfiedMetadata,
@@ -127,7 +131,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # hashable object.
         PepHintMetadata(
             hint=Annotated[str, int],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant.
                 PepHintPithSatisfiedMetadata(
@@ -144,7 +148,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # unhashable mutable container.
         PepHintMetadata(
             hint=Annotated[str, []],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant.
                 PepHintPithSatisfiedMetadata(
@@ -160,7 +164,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a "typing" type.
         PepHintMetadata(
             hint=Annotated[list[str], int],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # List of string constants.
                 PepHintPithSatisfiedMetadata([
@@ -179,7 +183,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # validator defined as a lambda function.
         PepHintMetadata(
             hint=Annotated[str, IsLengthy],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying this validator.
                 PepHintPithSatisfiedMetadata(
@@ -203,7 +207,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # beartype-specific validator defined as a lambda function.
         PepHintMetadata(
             hint=list[Annotated[str, IsLengthy]],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -237,7 +241,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # with comma-delimited list syntax.
         PepHintMetadata(
             hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
                 PepHintPithSatisfiedMetadata(
@@ -272,7 +276,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # with "&"-delimited operator syntax.
         PepHintMetadata(
             hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
                 PepHintPithSatisfiedMetadata(
@@ -306,7 +310,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # validator synthesized from all possible operators.
         PepHintMetadata(
             hint=Annotated[str, IsLengthyOrUnquotedSentence],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
                 PepHintPithSatisfiedMetadata(
@@ -341,7 +345,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # equality validator.
         PepHintMetadata(
             hint=Annotated[list[str], IsEqualAmplyImpish],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # Exact object subscripting this validator.
                 PepHintPithSatisfiedMetadata(AMPLY_IMPISH),
@@ -373,7 +377,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Annotated[
                 CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
-            pep_sign=Annotated,
+            pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # Instance of this class satisfying this validator.
                 PepHintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),

@@ -4,10 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 544`_**-compliant type hint test data.**
-
-.. _PEP 544:
-    https://www.python.org/dev/peps/pep-0544
+Project-wide :pep:`544`-compliant **type hint test data.**
 '''
 
 # ....................{ TODO                              }....................
@@ -18,6 +15,7 @@
 # ....................{ IMPORTS                           }....................
 import pathlib
 from abc import abstractmethod
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
@@ -35,16 +33,13 @@ cross-platform IO testing purposes by the :func:`add_data` function.
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add `PEP 544`_**-compliant type hint test data to various global containers
+    Add :pep:`544`-compliant type hint test data to various global containers
     declared by the passed module.
 
     Parameters
     ----------
     data_module : ModuleType
         Module to be added to.
-
-    .. _PEP 544:
-        https://www.python.org/dev/peps/pep-0544
     '''
 
     # If the active Python interpreter targets less than Python < 3.8, this
@@ -56,7 +51,6 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
-    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
     from typing import (
         BinaryIO,
         IO,

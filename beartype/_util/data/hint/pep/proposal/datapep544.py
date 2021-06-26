@@ -29,38 +29,6 @@ by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
 defined by this submodule).
 '''
 
-# ..................{ SETS ~ attr                       }..................
-HINT_PEP544_ATTRS_IGNORABLE = frozenset(
-    # Note that ignoring the "typing.Protocol" superclass is vital here. For
-    # unknown and presumably uninteresting reasons, *ALL* possible objects
-    # satisfy this superclass. Ergo, this superclass is synonymous with the
-    # "object" root superclass: e.g.,
-    #     >>> import typing as t
-    #     >>> isinstance(object(), t.Protocol)
-    #     True
-    #     >>> isinstance('wtfbro', t.Protocol)
-    #     True
-    #     >>> isinstance(0x696969, t.Protocol)
-    #     True
-    (typing.Protocol,) if IS_PYTHON_AT_LEAST_3_8 else ()
-)
-'''
-Frozen set of all :pep:`544`-compliant **ignorable typing attributes** (i.e.,
-unsubscripted :pep:`544`-compliant :mod:`typing` type hints unconditionally
-ignored by the :func:`beartype.beartype` decorator).
-'''
-
-# ..................{ SETS ~ sign                       }..................
-HINT_PEP544_SIGNS_SUPPORTED_DEEP = frozenset(
-    (typing.Protocol,) if IS_PYTHON_AT_LEAST_3_8 else ()
-)
-'''
-Frozen set of all :pep:`544`-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`544`-compliant type hints for
-which the :func:`beartype.beartype` decorator generates deep type-checking
-code).
-'''
-
 # ....................{ PRIVATE ~ classes                 }....................
 # Conditionally initialized by the _init() function below.
 _Pep544IO: Any = None
@@ -144,10 +112,8 @@ def _init() -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
-    from beartype._util.data.hint.pep.datapepattr import (
-        HINT_PEP_ATTR_LIST)
+    from beartype._util.data.hint.pep.datapepattr import HINT_PEP_ATTR_LIST
     from typing import (
-        Any,
         AnyStr,
         BinaryIO,
         IO,

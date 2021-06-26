@@ -4,10 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`586`**-compliant type hint test data.**
+Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignList,
+    HintSignLiteral,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
@@ -57,7 +61,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Literal "None" singleton. Look, this is ridiculous. What can you do?
         PepHintMetadata(
             hint=Literal[None],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # "None" singleton defined by the same syntax.
                 PepHintPithSatisfiedMetadata(None),
@@ -81,7 +85,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Literal arbitrary boolean. (Not that there are many of those...)
         PepHintMetadata(
             hint=Literal[True],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Boolean constant defined by the same syntax.
                 PepHintPithSatisfiedMetadata(True),
@@ -111,7 +115,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Literal arbitrary integer.
         PepHintMetadata(
             hint=Literal[0x2a],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Integer constant defined by the same syntax.
                 PepHintPithSatisfiedMetadata(0x2a),
@@ -142,7 +146,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Literal[
                 b"Worthy, 'vain truthiness of (very invective-elected)"],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Byte string constant defined by the same syntax.
                 PepHintPithSatisfiedMetadata(
@@ -179,7 +183,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Literal arbitrary Unicode string.
         PepHintMetadata(
             hint=Literal['Thanklessly classed, nominal'],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Unicode string constant defined by the same syntax.
                 PepHintPithSatisfiedMetadata('Thanklessly classed, nominal'),
@@ -213,7 +217,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=Literal[
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Enumeration member accessed by the same syntax.
                 PepHintPithSatisfiedMetadata(
@@ -249,7 +253,7 @@ def add_data(data_module: 'ModuleType') -> None:
         PepHintMetadata(
             hint=list[Literal[
                 'ç‐omically gnomical whitebellied burden’s empathy of']],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -300,7 +304,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 'Thanklessly classed, nominal',
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF,
             ],
-            pep_sign=Literal,
+            pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Literal objects subscripting this literal union.
                 PepHintPithSatisfiedMetadata(None),

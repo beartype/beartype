@@ -53,6 +53,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignFrozenSet,
     HintSignGenerator,
     HintSignGeneric,
+    HintSignHashable,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -73,6 +74,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
+    HintSignSized,
     HintSignTuple,
     HintSignType,
     HintSignTypeVar,
@@ -84,7 +86,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SIGNS ~ bare                      }....................
-HINT_SIGNS_BARE_IGNORABLE = frozenset((
+HINT_BARE_SIGNS_IGNORABLE = frozenset((
     # ..................{ PEP (484|585)                     }..................
     # The "Any" singleton is semantically synonymous with the ignorable
     # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
@@ -156,8 +158,8 @@ HINT_SIGNS_BARE_IGNORABLE = frozenset((
 ))
 '''
 Frozen set of all **bare ignorable signs** (i.e., arbitrary objects uniquely
-identifying type hints that, where unsubscripted, are unconditionally ignorable
-by the :func:`beartype.beartype` decorator).
+identifying unsubscripted type hints that are unconditionally ignorable by the
+:func:`beartype.beartype` decorator).
 '''
 
 # ....................{ SIGNS ~ origin                    }....................
@@ -201,6 +203,27 @@ HINT_SIGNS_TYPE_STDLIB = frozenset((
     HintSignTuple,
     HintSignType,
     HintSignValuesView,
+
+    #FIXME: This likely requires special handling under Python 3.6. Perhaps
+    #simply detect for Python 3.6 and remove them or avoid adding them here?
+
+    # Although the Python 3.6-specific implementation of the "typing"
+    # module *DOES* technically supply these attributes, it does so
+    # only non-deterministically. For unknown reasons (whose underlying
+    # cause appears to be unwise abuse of private fields of the
+    # critical stdlib "abc.ABCMeta" metaclass), the "typing.Hashable"
+    # and "typing.Sized" abstract base classes (ABCs) spontaneously
+    # interchange themselves with the corresponding
+    # "collections.abc.Hashable" and "collections.abc.Sized" ABCs after
+    # indeterminate importations and/or reference to these ABCs.
+    #
+    # This issue is significantly concerning that we would ideally
+    # simply drop Python 3.6 support. Unfortunately, that would also
+    # mean dropping PyPy3 support, which has yet to stabilize Python
+    # 3.7 support. Ergo, we reluctantly preserve Python 3.6 and thus
+    # PyPy3 support for the interim.
+    HintSignHashable,
+    HintSignSized,
 ))
 '''
 Frozen set of all signs uniquely identifying PEP-compliant type hints
@@ -245,11 +268,11 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     # ..................{ PEP 484                           }..................
     # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
     # under Python <= 3.9. The implementations of the "typing" module under
-    # those older Python versions transparently reduced "typing.Optional"
-    # to "typing.Union" at runtime. Since this reduction is no longer the
-    # case, both *MUST* now be explicitly listed here.
-    HintSignUnion,
+    # those older Python versions transparently reduced "typing.Optional" to
+    # "typing.Union" at runtime. Since this reduction is no longer the case,
+    # both *MUST* now be explicitly listed here.
     HintSignOptional,
+    HintSignUnion,
 
     # ..................{ PEP (484|585)                     }..................
     HintSignByteString,
@@ -294,8 +317,8 @@ Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints).
 '''
 
-# ....................{ SETS ~ kind : sequence            }....................
-HINT_SIGNS_SEQUENCE_ARGS_ONE = frozenset((
+# ....................{ SETS ~ kind                       }....................
+HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
     # ..................{ PEP (484|585)                     }..................
     HintSignByteString,
     HintSignList,
@@ -336,4 +359,23 @@ This set intentionally excludes the:
 
 .. _collections.deque:
    https://docs.python.org/3/library/collections.html#collections.deque
+'''
+
+
+HINT_SIGNS_UNION = frozenset((HintSignOptional, HintSignUnion))
+'''
+Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
+:pep:`484`-compliant type hints unifying one or more subscripted type hint
+arguments into a disjunctive set union of these arguments).
+
+If the active Python interpreter targets:
+
+* Python >= 3.9, the :attr:`typing.Optional` and :attr:`typing.Union`
+  attributes are distinct.
+* Python < 3.9, the :attr:`typing.Optional` attribute reduces to the
+  :attr:`typing.Union` attribute, in which case this set is technically
+  semantically redundant. Since tests of both object identity and set
+  membership are ``O(1)``, this set incurs no significant performance penalty
+  versus direct usage of the :attr:`typing.Union` attribute and is thus
+  unconditionally used as is irrespective of Python version.
 '''

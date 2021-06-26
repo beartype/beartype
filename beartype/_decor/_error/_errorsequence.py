@@ -14,10 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
-from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_SEQUENCE_ARGS_ONE,
-)
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignTuple
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SEQUENCE_ARGS_1)
 from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object
@@ -27,7 +26,7 @@ from typing import Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ sequence                }....................
-def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
+def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant standard sequence type hint** (i.e.,
@@ -44,7 +43,7 @@ def get_cause_or_none_sequence_standard(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE, (
+    assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1, (
         f'{repr(sleuth.hint)} not standard sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
@@ -191,14 +190,14 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     # Assert this type hint to describe a variadic sequence. See the parent
-    # get_cause_or_none_sequence_standard() and get_cause_or_none_tuple()
+    # get_cause_or_none_sequence_args_1() and get_cause_or_none_tuple()
     # functions for derivative logic.
     #
     # Note that this pith need *NOT* be validated to be an instance of the
     # expected variadic sequence, as the caller guarantees this to be the case.
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert (
-        sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE or (
+        sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1 or (
             sleuth.hint_sign is HintSignTuple and
             len(sleuth.hint_childs) == 2 and
             sleuth.hint_childs[1] is Ellipsis

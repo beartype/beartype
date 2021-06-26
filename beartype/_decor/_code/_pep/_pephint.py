@@ -89,7 +89,6 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.data.hint.pep.datapep import (
     HINT_SIGNS_SUPPORTED_DEEP as HINT_SIGNS_SUPPORTED_DEEP_BAD,
-    HINT_SIGNS_SEQUENCE_ARGS_ONE,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
@@ -104,6 +103,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
 )
 from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_TYPE_STDLIB,
 )
@@ -1364,7 +1364,7 @@ def pep_code_check_hint(
             # If this hint is either...
             elif (
                 # A standard sequence (e.g., "typing.List[int]") *OR*...
-                hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_ONE or (
+                hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1 or (
                     # A tuple *AND*...
                     hint_curr_sign is HintSignTuple and
                     # This tuple is subscripted by exactly two child hints

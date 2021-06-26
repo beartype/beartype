@@ -24,9 +24,13 @@ from beartype._util.data.hint.pep.datapep import (
     HINT_PEP_ATTRS_ISINSTANCEABLE,
     HINT_PEP_MODULE_NAMES,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
+    HINT_PEP_ATTRS_REFACTORED,
 )
 from beartype._util.data.hint.pep.sign.datapepsignmap import (
-    HINT_REPR_PREFIX_TO_SIGN)
+    HINT_BARE_REPR_TO_SIGN,
+    HINT_NAME_IF_TYPE_TO_SIGN,
+    HINT_TYPE_NAME_TO_SIGN,
+)
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_TYPE_STDLIB)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
@@ -310,6 +314,8 @@ get_hint_pep_typevars.__doc__ = '''
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Validate that the value of the "pep_sign" parameter passed to the
 #PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
+#FIXME: Clean up the "datapep" submodule, please.
+#FIXME: Clean up the "data.hint.pep.proposal" subpackage, please.
 @callable_cached
 def get_hint_pep_sign(hint: Any) -> object:
     '''
@@ -425,23 +431,74 @@ def get_hint_pep_sign(hint: Any) -> object:
     die_unless_hint_pep(hint)
     # Else, this hint is PEP-compliant.
 
-    # Note that these tests are intentionally ordered in descending specificity
-    # (i.e., ascending genericity) rather than descending likelihood of a
-    # match, which would return erroneous signs in common cases.
+    # For efficiency, this tester identifies the sign of this type hint with
+    # multiple phases performed in ascending order of average time complexity.
+
+    # ..................{ PHASE ~ repr                      }..................
+    # This phase attempts to map from the unsubscripted machine-readable
+    # representation of this hint to a sign identifying *ALL* hints of that
+    # representation.
     #
-    # If this hint is the PEP 484-compliant "None" singleton, return the type
-    # of that singleton.
-    if hint is None:
-        return NoneType
-    # Else, this hint is *NOT* the PEP 484-compliant "None" singleton.
+    # Since doing so requires both calling the repr() builtin on this hint
+    # *AND* munging the string returned by that builtin, this phase is
+    # significantly slower than the prior phase and thus *NOT* performed first.
+    # Although slower, this phase identifies a large subset of possible hints.
+
+    # Substring of the machine-readable representation of this hint preceding
+    # the first "[" delimiter if this representation contains that delimiter
+    # *OR* this representation as is otherwise.
     #
-    # If this hint is a PEP-compliant generic (i.e., class
-    # superficially subclassing at least one non-class PEP-compliant object),
-    # return the "SignGeneric" object generically -- get it? -- identifying
-    # PEP-compliant generics. Note that:
+    # Note that the str.partition() method has been profiled to be the
+    # optimally efficient means of parsing trivial prefixes.
+    hint_repr_prefix, _, _ = repr(hint).partition('[')
+
+    # Sign identifying this hint if this hint is identifiable by its
+    # representation *OR* "None" otherwise.
+    hint_sign = HINT_BARE_REPR_TO_SIGN.get(hint_repr_prefix)
+
+    # If this hint is identifiable by its representation, return this sign.
+    if hint_sign is not None:
+        return hint_sign
+    # Else, this hint is *NOT* identifiable by its representation.
+
+    # ..................{ PHASE ~ classname                 }..................
+    # This phase attempts to map from the fully-qualified classname of this
+    # hint to a sign identifying *ALL* hints that are instances of that class.
     #
+    # Since the "object.__class__.__qualname__" attribute is both guaranteed to
+    # exist and efficiently accessible for all hints, this phase is the fastest
+    # and thus performed first. Although this phase identifies only a small
+    # subset of possible hints, those hints are extremely common.
+
+    # Class of this hint.
+    hint_type = hint.__class__
+
+    # Fully-qualified name of this class.
+    hint_type_name = f'{hint_type.__module__}.{hint_type.__qualname__}'
+
+    # Sign identifying this hint if this hint is identifiable by its classname
+    # *OR* "None" otherwise.
+    hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
+
+    # If this hint is identifiable by its classname, return this sign.
+    if hint_sign is not None:
+        return hint_sign
+    # Else, this hint is *NOT* identifiable by its classname.
+
+    # ..................{ PHASE ~ manual                    }..................
+    # This phase attempts to manually identify the signs of all hints *NOT*
+    # efficiently identifiably by the prior phases.
+    #
+    # For minor efficiency gains, the following tests are intentionally ordered
+    # in descending likelihood of a match.
+
+    # If this hint is a PEP 484- or 585-compliant generic (i.e., user-defined
+    # class superficially subclassing at least one PEP 484- or 585-compliant
+    # type hint), return that sign
+    #
+    # However, note that:
     # * Generics *CANNOT* be detected by the general-purpose logic performed
-    #   below, as the "typing.Generic" ABC does *NOT* define a __repr__()
+    #   above, as the "typing.Generic" ABC does *NOT* define a __repr__()
     #   dunder method returning a string prefixed by the "typing." substring.
     #   Ergo, we necessarily detect generics with an explicit test instead.
     # * *ALL* PEP 484-compliant generics and PEP 544-compliant protocols are
@@ -458,125 +515,24 @@ def get_hint_pep_sign(hint: Any) -> object:
     #   are also either PEP 484- or 544-compliant. Indeed, PEP 585-compliant
     #   generics subclass *NO* common superclass.
     #
-    # Ergo, this ABC uniquely identifies many but *NOT* all generics. Although
-    # non-ideal, the failure of PEP 585-compliant generics to subclass a common
-    # superclass leaves us with little alternative.
-    elif is_hint_pep_generic(hint):
+    # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
+    # generics. While non-ideal, the failure of PEP 585-compliant generics to
+    # subclass a common superclass leaves us with little alternative.
+    if is_hint_pep_generic(hint):
         return HintSignGeneric
-    # Else, this hint is *NOT* a generic.
+    # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
-    # If this hint is a PEP 585-compliant type hint, return the origin type
-    # originating this hint (e.g., "list" for "list[str]").
-    #
-    # Note that the get_hint_pep_type_stdlib() getter is intentionally *NOT*
-    # called here. Why? Because doing so would induce an infinite recursive
-    # loop, since that function internally calls this function. *sigh*
-
-    #FIXME: Remove this entire branch as soon as feasible, please. Ugh!
-    elif is_hint_pep585_builtin(hint) and not (
-        hint.__origin__ not in {
-            tuple,
-        }
-    ):
-        return hint.__origin__
-    # Else, this hint is *NOT* a PEP 585-compliant type hint.
-    #
-    # If this hint is an unsubscripted class doubling as an explicitly
-    # PEP-compliant type hint...
-    #
-    # Note that this is principally useful under Python 3.6, which
-    # idiosyncratically defines subscriptions of "typing" objects as classes:
-    #     >>> import typing
-    #     >>> isinstance(typing.List[int], type)
-    #     True     # <-- this is balls cray-cray, too.
-    #
-    # While we *COULD* technically fence this conditional behind a Python 3.6
-    # check, doing so would render this getter less robust against unwarranted
-    # stdlib changes. Ergo, we preserve this as is for forward-proofing.
-    elif isinstance(hint, type) and not is_hint_pep_subscripted(hint):
-        # If this class is *NOT* explicitly allowed as a sign, raise an
-        # exception.
-        if hint not in HINT_PEP_ATTRS_ISINSTANCEABLE:
-            raise BeartypeDecorHintPepSignException(
-                f'Unsubscripted non-generic typing class {repr(hint)} invalid '
-                f'as type hint '
-                f'(i.e., not in {repr(HINT_PEP_ATTRS_ISINSTANCEABLE)}).'
-            )
-        # Else, this class is explicitly allowed as a sign.
-
-        #FIXME: Actually... we need to map this to an actual "HintSign" now.
-        #Honestly, can't we just remove all of this and defer to
-        #"hint.__qualname__" below to automate this mapping?
-        #FIXME: Indeed, it seems increasingly likely that we can dramatically
-        #compact this method now by performing three iterative detection
-        #attempts:
-        #1. First, get this object's class and try to look up that class in a
-        #   new dictionary mapping from classnames to signs. We try this first
-        #   because it's both fast and covers common things: e.g.,
-        #   HINT_TYPE_TO_SIGN = {
-        #       'typing.ForwardRef': HintSignForwardRef,
-        #       'typing.TypeVar': HintSignTypeVar,
-        #       # Note that PEP 585-compliant type hints *CANNOT* be trivially
-        #       # detected by their classes, because we need to validate that
-        #       # they're subscripted as well. Otherwise, they're just classes.
-        #       ...
-        #   }
-        #2. Next, attempt the repr()-based approach given below. We try this
-        #   next because, although slow, it covers basically everything.
-        #3. Last, we fallback to extremely slow manual detection for the few
-        #   remaining categories of type hints *NOT* amenable to any of the
-        #   above automated detection schemes. We're fairly certain this *ONLY*
-        #   includes "typing.NewType", but there might be others as well.
-
-        # Return this class as is.
-        return hint
-    # Else, this hint is either not a class *OR* or class subscripted by one or
-    # more child hints or type variables and is thus *NOT* a standard class. In
-    # either case, continue (i.e., attempt to handle this class as a PEP
-    # 484-compliant type hint defined by the "typing" module).
-    #
-    # If this hint is a forward reference, return the class of all PEP
-    # 484-compliant (but *NOT* PEP 585-compliant) forward references.
-    #
-    # Note that PEP 484-compliant forward references *CANNOT* be detected by
-    # the general-purpose logic performed below, as the ForwardRef.__repr__()
-    # dunder method returns a standard representation rather than a string
-    # prefixed by the module name "typing." -- unlike most "typing" objects:
-    #     >>> import typing as t
-    #     >>> repr(t.ForwardRef('str'))
-    #     "ForwardRef('str')"
-    elif is_hint_forwardref(hint):
-        return HintSignForwardRef
-    # If this hint is a PEP 484-compliant new type, return the closure factory
-    # function responsible for creating these types.
+    # If this hint is a PEP 484-compliant new type, return that sign.
     #
     # Note that these types *CANNOT* be detected by the general-purpose logic
-    # performed below, as the __repr__() dunder methods of the closures created
-    # and returned by the NewType() closure factory function returns a
-    # standard representation rather than a string prefixed by the module name
-    # "typing." -- unlike most "typing" objects:
+    # performed above, as the __repr__() dunder methods of the closures created
+    # and returned by the NewType() closure factory function returns a standard
+    # representation rather than string prefixed by "typing.": e.g.,
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
     elif is_hint_pep484_newtype(hint):
         return HintSignNewType
-    # If this hint is a type variable, return the class of all type variables.
-    #
-    # Note that type variables *CANNOT* be detected by the general-purpose
-    # logic performed below, as the TypeVar.__repr__() dunder method insanely
-    # returns a string prefixed by the non-human-readable character "~" rather
-    # than the module name "typing." -- unlike most "typing" objects:
-    #     >>> import typing as t
-    #     >>> repr(t.TypeVar('T'))
-    #     ~T
-    #
-    # Of course, that brazenly violates Pythonic standards. __repr__() is
-    # generally assumed to return an evaluatable Python expression that, when
-    # evaluated, instantiates an object equal to the original object. Instead,
-    # this API was designed by incorrigible monkeys who profoundly hate the
-    # Python language. This is why we can't have sane things.
-    elif is_hint_pep_typevar(hint):
-        return HintSignTypeVar
     #FIXME: Drop this like hot lead after dropping Python 3.6 support.
     # If the active Python interpreter targets Python 3.6 *AND* this hint is a
     # poorly designed Python 3.6-specific "type alias", this hint is a
@@ -589,107 +545,42 @@ def get_hint_pep_sign(hint: Any) -> object:
     # Gods... this is horrible. Thanks for nuthin', Python 3.6.
     elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
         return getattr(typing, hint.name)
-    # Else, this hint *MUST* be a standard PEP 484-compliant type hint defined
-    # by the "typing" module.
 
-    # Machine-readable string representation of this hint also serving as the
-    # fully-qualified name of the public "typing" attribute uniquely associated
-    # with this hint (e.g., "typing.Tuple[str, ...]").
+    # ..................{ PHASE ~ name if class             }..................
+    # This phase attempts to map from the fully-qualified name of this hint if
+    # this hint is itself a class to a sign identifying this hint.
     #
-    # Although the "typing" module provides *NO* sane public API, it does
-    # reliably implement the __repr__() dunder method across most objects and
-    # types to return a string prefixed "typing." regardless of Python version.
-    # Ergo, this string is effectively the *ONLY* sane means of deciding which
-    # broad category of behaviour an arbitrary PEP 484-compliant type hint
-    # conforms to.
-    hint_name = repr(hint)
+    # Since the "object.__qualname__" attribute is *NOT* guaranteed to exist in
+    # general, this phase is the slower than the first phase and thus performed
+    # next. Moreover, this phase identifies only a small subset of extremely
+    # uncommon hints. While this phase could be reordered to precede the
+    # repr()-based phase, doing so would induce undesirable costs in the common
+    # case of PEP 585-compliant type hints (e.g., "list[int]") -- all of which
+    # are technically classes and would thus uselessly enter this conditional.
+    elif isinstance(hint, type):
+        # Fully-qualified name of this class.
+        hint_type_name = f'{hint.__module__}.{hint.__qualname__}'
 
-    # Split this representation on the first "." into:
-    # * "hint_module_name", the unqualified name of the module declaring this
-    #   hint.
-    # * "sign_name", the unqualified name of the possibly subscripted attribute
-    #   of this module defining this hint.
-    hint_module_name, _, hint_module_attr_name = hint_name.partition('.')
+        # Sign identifying this hint if this hint is identifiable by its name
+        # *OR* "None" otherwise.
+        hint_sign = HINT_NAME_IF_TYPE_TO_SIGN.get(hint_type_name)
 
-    # If the name of this module is *NOT* that of a well-known hinting module
-    # (i.e., module declaring attributes usable for creating PEP-compliant
-    # type hints accepted by both static and runtime type checkers), this hint
-    # does *NOT* originate from such a module and is thus by definition *NOT*
-    # PEP-compliant. But by the validation above, this hint is PEP-compliant.
-    # Since this invokes a world-shattering paradox, raise an exception.
-    if hint_module_name not in HINT_PEP_MODULE_NAMES:
-        raise BeartypeDecorHintPepSignException(
-            f'Type hint {repr(hint)} representation "{hint_name}" not '
-            f'prefixed by "typing." or "typing_extensions.".'
-        )
+        # If this hint is identifiable by its name, return this sign.
+        if hint_sign is not None:
+            return hint_sign
+        # Else, this hint is *NOT* identifiable by its name.
 
-    # Unqualified name of this unsubscripted attribute. Specifically, if the
-    # unqualified name of this possibly subscripted attribute was:
-    # * Already unsubscripted (e.g., "List"), this is the same name unmodified.
-    # * Subscripted (e.g., "List[str]"), this is the prefix of that name
-    #   preceding the first "[" delimiter in that name.
-    sign_name, _, _ = hint_module_attr_name.partition('[')
+    # ..................{ ERROR                             }..................
+    # Else, this hint is identifiable by *NO* sign. But (by the above
+    # validation) this hint is PEP-compliant and should thus be identifiable by
+    # some sign. Since this is paradoxically bad, raise an exception.
 
-    # If this name erroneously refers to a non-existing "typing" attribute,
-    # rewrite this name to refer to the actual existing "typing" attribute
-    # corresponding to this sign (e.g., from the non-existing
-    # "typing.AbstractContextManager" attribute to the existing
-    # "typing.ContextManager" attribute).
-    sign_name = _HINT_PEP_TYPING_NAME_BAD_TO_GOOD.get(sign_name, sign_name)
-
-    # Module declaring this unsubscripted attribute if importable *OR* raise
-    # an exception otherwise (i.e., if this module is unimportable).
-    hint_module = import_module(
-        module_name=hint_module_name,
-        exception_cls=BeartypeDecorHintPepSignException,
+    raise BeartypeDecorHintPepSignException(
+        f'Type hint {repr(hint)} currently unsupported by beartype. '
+        f'You suddenly feel encouraged to submit '
+        f'a feature request for this hint to our '
+        f'friendly issue tracker at:\n\t{URL_ISSUES}'
     )
-
-    # Unsubscripted attribute with this name declared by this module if any
-    # *OR* "None" otherwise.
-    hint_sign = getattr(hint_module, sign_name, None)
-
-    # If this module declares *NO* such attribute, raise an exception.
-    if hint_sign is None:
-        raise BeartypeDecorHintPepSignException(
-            f'Type hint {repr(hint)} attribute "typing.{sign_name}" not found.'
-        )
-    # Else, this module declares this attribute.
-
-    #FIXME: Refactor as follows:
-    #* Iteratively add *ALL* explicitly deeply supported signs to this test.
-    #* Once complete, remove:
-    from typing import (
-        Any,
-        Optional,
-        Tuple,
-    )
-    if hint_sign in {Tuple,}:
-        #FIXME: Refactor away most of the logic above, thankfully. There's
-        #probably no need to parse the individual "hint_module_name" anymore.
-
-        # Substring of the machine-readable representation of this hint
-        # preceding the first "[" delimiter if this representation contains
-        # that delimiter *OR* this representation as is otherwise.
-        #
-        # Note that the str.partition() method has been profiled to be the
-        # optimally efficient means of parsing trivial prefixes.
-        hint_repr_prefix, _, _ = repr(hint).partition('[')
-
-        # Sign uniquely identifying this hint if any *OR* "None" otherwise.
-        hint_sign = HINT_REPR_PREFIX_TO_SIGN.get(hint_repr_prefix)
-
-        # If *NO* sign uniquely identifies this hint, raise an exception.
-        if hint_sign is None:
-            raise BeartypeDecorHintPepSignException(
-                f'Type hint {repr(hint)} currently unsupported by beartype. '
-                f'You suddenly feel encouraged to submit '
-                f'a feature request for this hint to '
-                f'the beartype issue tracker at:\n\t{URL_ISSUES}'
-            )
-        # Else, this module declares this attribute.
-
-    # Return this attribute.
-    return hint_sign
 
 # ....................{ GETTERS ~ type : generic          }....................
 @callable_cached

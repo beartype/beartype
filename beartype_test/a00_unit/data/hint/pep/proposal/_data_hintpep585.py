@@ -4,12 +4,26 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`585`**-compliant type hint test data.**
+Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
+import re
+from beartype._cave._cavefast import IntType
 from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignAbstractContextManager,
+    HintSignByteString,
+    HintSignCallable,
+    HintSignDict,
+    HintSignGenerator,
+    HintSignGeneric,
+    HintSignList,
+    HintSignMatch,
+    HintSignMutableSequence,
+    HintSignPattern,
+    HintSignSequence,
     HintSignTuple,
+    HintSignType,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
@@ -17,11 +31,13 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintPithSatisfiedMetadata,
     PepHintPithUnsatisfiedMetadata,
 )
+from re import Match, Pattern
+from typing import Any, TypeVar, Union
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add :pep:`585`**-compliant type hint test data to various global containers
+    Add :pep:`585`-compliant type hint test data to various global containers
     declared by the passed module.
 
     Parameters
@@ -39,15 +55,13 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
-    import re
-    from beartype._cave._cavefast import IntType
-    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
     from collections.abc import (
         ByteString,
         Callable,
         Container,
         Generator,
         Iterable,
+        MutableSequence,
         Sequence,
         Sized,
     )
@@ -55,8 +69,6 @@ def add_data(data_module: 'ModuleType') -> None:
         AbstractContextManager,
         contextmanager,
     )
-    from re import Match, Pattern
-    from typing import Any, TypeVar
 
     # ..................{ TYPEVARS                          }..................
     S = TypeVar('S')
@@ -135,7 +147,7 @@ def add_data(data_module: 'ModuleType') -> None:
         classes (ABCs) *and* an unsubscripted :mod:`collection.abc` ABC.
         '''
 
-        # ..................{ INITIALIZERS                      }..................
+        # ................{ INITIALIZERS                      }................
         def __init__(self, sequence: tuple) -> None:
             '''
             Initialize this generic from the passed tuple.
@@ -240,7 +252,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # conveys no information and is thus nonsensical. Welcome to PEP 585.
         PepHintMetadata(
             hint=ByteString[int],
-            pep_sign=ByteString,
+            pep_sign=HintSignByteString,
             stdlib_type=ByteString,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -257,7 +269,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # "numbers.Integral" protocol.
         PepHintMetadata(
             hint=ByteString[IntType],
-            pep_sign=ByteString,
+            pep_sign=HintSignByteString,
             stdlib_type=ByteString,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -275,7 +287,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Callable accepting no parameters and returning a string.
         PepHintMetadata(
             hint=Callable[[], str],
-            pep_sign=Callable,
+            pep_sign=HintSignCallable,
             stdlib_type=Callable,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -292,7 +304,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Context manager yielding strings.
         PepHintMetadata(
             hint=AbstractContextManager[str],
-            pep_sign=AbstractContextManager,
+            pep_sign=HintSignAbstractContextManager,
             stdlib_type=AbstractContextManager,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -314,7 +326,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Flat dictionary.
         PepHintMetadata(
             hint=dict[int, str],
-            pep_sign=dict,
+            pep_sign=HintSignDict,
             stdlib_type=dict,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -334,7 +346,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic dictionary.
         PepHintMetadata(
             hint=dict[S, T],
-            pep_sign=dict,
+            pep_sign=HintSignDict,
             stdlib_type=dict,
             is_typevared=True,
             is_pep585_builtin=True,
@@ -355,7 +367,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Flat generator.
         PepHintMetadata(
             hint=Generator[int, float, str],
-            pep_sign=Generator,
+            pep_sign=HintSignGenerator,
             stdlib_type=Generator,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -540,7 +552,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Nested list of PEP 585-compliant generics.
         PepHintMetadata(
             hint=list[Pep585GenericUntypevaredMultiple],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -575,7 +587,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # List of ignorable objects.
         PepHintMetadata(
             hint=list[object],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -598,7 +610,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # List of non-"typing" objects.
         PepHintMetadata(
             hint=list[str],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -633,7 +645,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic list.
         PepHintMetadata(
             hint=list[T],
-            pep_sign=list,
+            pep_sign=HintSignList,
             stdlib_type=list,
             is_typevared=True,
             is_pep585_builtin=True,
@@ -657,7 +669,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Regular expression match of only strings.
         PepHintMetadata(
             hint=Match[str],
-            pep_sign=Match,
+            pep_sign=HintSignMatch,
             stdlib_type=Match,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -677,7 +689,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Regular expression pattern of only strings.
         PepHintMetadata(
             hint=Pattern[str],
-            pep_sign=Pattern,
+            pep_sign=HintSignPattern,
             stdlib_type=Pattern,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -692,9 +704,9 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ TUPLE ~ fixed                     }................
-        # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal with
-        # standard sequence syntax, which supports no comparable notion of an
-        # "empty {insert-standard-sequence-here}" (e.g., empty list). For example:
+        # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
+        # with standard sequence syntax, which supports no comparable notion of
+        # an "empty {insert-standard-sequence-here}" (e.g., empty list): e.g.,
         #     >>> import typing
         #     >>> List[()]
         #     TypeError: Too few parameters for List; actual 0, expected 1
@@ -716,9 +728,9 @@ def add_data(data_module: 'ModuleType') -> None:
                         'They shucked',
                         '(Or huckstered, knightly rupturing veritas)',
                     ),
-                    # Match that the exception message raised for this object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
-                        # Identify this tuple as non-empty.
+                        # Identifies this tuple as non-empty.
                         r'\bnon-empty\b',
                     ),
                 ),
@@ -742,9 +754,9 @@ def add_data(data_module: 'ModuleType') -> None:
                 # Tuple containing fewer items than required.
                 PepHintPithUnsatisfiedMetadata(
                     pith=('Obeisance',),
-                    # Match that the exception message raised for this object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
-                        # Compare this tuple's length to the expected length.
+                        # Compares this tuple's length to the expected length.
                         r'\b1 not 2\b',
                     ),
                 ),
@@ -776,9 +788,9 @@ def add_data(data_module: 'ModuleType') -> None:
                         999.888,
                         'Obese, slipshodly muslin‐shod priests had maudlin solo',
                     ),
-                    # Match that the exception message raised for this object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
-                        # Compare this tuple's length to the expected length.
+                        # Compares this tuple's length to the expected length.
                         r'\b2 not 3\b',
                     ),
                 ),
@@ -790,10 +802,10 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Unwholesome gentry ventings',
                         False,
                     ),
-                    # Match that the exception message raised for this object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
-                        # Declares the index and expected type of a fixed
-                        # tuple item *NOT* satisfying this hint.
+                        # Declares the index and expected type of a fixed tuple
+                        # item *NOT* satisfying this hint.
                         r'\s[Tt]uple item 2\s',
                         r'\bstr\b',
                     ),
@@ -824,7 +836,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 )),
             ),
             piths_unsatisfied_meta=(
-                # Tuple containing a tuple containing fewer items than required.
+                # Tuple containing a tuple containing fewer items than needed.
                 PepHintPithUnsatisfiedMetadata((
                     (
                         888.999,
@@ -841,7 +853,7 @@ def add_data(data_module: 'ModuleType') -> None:
                             True,
                         ),
                     ),
-                    # Match that the exception message raised for this object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
                         # Declares the index and expected type of a random
                         # tuple item of a fixed tuple item *NOT* satisfying
@@ -901,8 +913,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # enables us to match the explicit index at fault below.
                 PepHintPithUnsatisfiedMetadata(
                     pith=((53,)),
-                    # Match that the exception message raised for this
-                    # object...
+                    # Match that the raised exception message...
                     exception_str_match_regexes=(
                         # Declares the index and expected type of this tuple's
                         # problematic item.
@@ -938,7 +949,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Builtin type.
         PepHintMetadata(
             hint=type[dict],
-            pep_sign=type,
+            pep_sign=HintSignType,
             stdlib_type=type,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -954,7 +965,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic type.
         PepHintMetadata(
             hint=type[T],
-            pep_sign=type,
+            pep_sign=HintSignType,
             stdlib_type=type,
             is_pep585_builtin=True,
             is_typevared=True,
@@ -965,6 +976,158 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # String constant.
                 PepHintPithUnsatisfiedMetadata('Obligation, and'),
+            ),
+        ),
+
+        # ................{ UNION ~ nested                    }................
+        # Nested unions exercising edge cases induced by Python >= 3.8
+        # optimizations leveraging PEP 572-style assignment expressions.
+
+        # Nested union of multiple non-"typing" types.
+        PepHintMetadata(
+            hint=list[Union[int, str,]],
+            pep_sign=HintSignList,
+            stdlib_type=list,
+            piths_satisfied_meta=(
+                # List containing a mixture of integer and string constants.
+                PepHintPithSatisfiedMetadata([
+                    'Un‐seemly preening, pliant templar curs; and',
+                    272,
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='Un‐seemly preening, pliant templar curs; and',
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bint\b',
+                        r'\bstr\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+
+                # List of bytestring items.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=[
+                        b'Blamelessly Slur-chastened rights forthwith, affrighting',
+                        b"Beauty's lurid, beleaguered knolls, eland-leagued and",
+                    ],
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random list item *NOT* satisfying this hint.
+                        r'\bint\b',
+                        r'\bstr\b',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\b[Ll]ist item \d+\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Nested union of one non-"typing" type and one "typing" type.
+        PepHintMetadata(
+            hint=Sequence[Union[str, ByteString]],
+            pep_sign=HintSignSequence,
+            stdlib_type=Sequence,
+            piths_satisfied_meta=(
+                # Sequence of string and bytestring constants.
+                PepHintPithSatisfiedMetadata((
+                    b'For laconically formulaic, knavish,',
+                    u'Or sordidly sellsword‐',
+                    f'Horded temerities, bravely unmerited',
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # Integer constant.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=7898797,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bByteString\b',
+                        r'\bstr\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+
+                # Sequence of integer items.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random tuple item *NOT* satisfying this hint.
+                        r'\bByteString\b',
+                        r'\bstr\b',
+                        # Declares the index of the random tuple item *NOT*
+                        # satisfying this hint.
+                        r'\b[Tt]uple item \d+\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # Nested union of no non-"typing" type and multiple "typing" types.
+        PepHintMetadata(
+            hint=MutableSequence[Union[ByteString, Callable]],
+            pep_sign=HintSignMutableSequence,
+            stdlib_type=MutableSequence,
+            piths_satisfied_meta=(
+                # Mutable sequence of string and bytestring constants.
+                PepHintPithSatisfiedMetadata([
+                    b"Canonizing Afrikaans-kennelled Mine canaries,",
+                    lambda: 'Of a floridly torrid, hasty love — that league',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                PepHintPithUnsatisfiedMetadata(
+                    pith='Effaced.',
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bByteString\b',
+                        r'\bCallable\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+
+                # Mutable sequence of string constants.
+                PepHintPithUnsatisfiedMetadata(
+                    pith=[
+                        'Of genteel gentle‐folk — that that Ƹsper',
+                        'At my brand‐defaced, landless side',
+                    ],
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares all non-"typing" types *NOT* satisfied by a
+                        # random list item *NOT* satisfying this hint.
+                        r'\bByteString\b',
+                        r'\bCallable\b',
+                        # Declares the index of the random list item *NOT*
+                        # satisfying this hint.
+                        r'\b[Ll]ist item \d+\b',
+                    ),
+                ),
             ),
         ),
     ))

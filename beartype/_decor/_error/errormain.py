@@ -77,7 +77,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._decor._error._errorgeneric import (
     get_cause_or_none_generic)
 from beartype._decor._error._errorsequence import (
-    get_cause_or_none_sequence_standard,
+    get_cause_or_none_sequence_args_1,
     get_cause_or_none_tuple,
 )
 from beartype._decor._error._errorsleuth import CauseSleuth
@@ -92,7 +92,6 @@ from beartype._decor._error._proposal._errorpep586 import (
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
 from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_SEQUENCE_ARGS_ONE,
     HINT_SIGNS_TYPE_ORIGIN_STDLIB,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
@@ -101,6 +100,9 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignTuple,
+)
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SEQUENCE_ARGS_1,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -346,9 +348,9 @@ def _init() -> None:
             get_cause_or_none_type_stdlib)
 
     # Map each standard sequence "typing" attribute to the appropriate getter.
-    for pep_sign_sequence_standard in HINT_SIGNS_SEQUENCE_ARGS_ONE:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_standard] = (
-            get_cause_or_none_sequence_standard)
+    for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
+            get_cause_or_none_sequence_args_1)
 
     # Map each unifying "typing" attribute to the appropriate getter.
     for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:

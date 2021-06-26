@@ -284,7 +284,7 @@ class CauseSleuth(object):
         and the list ``list(range(256)) + [False,]`` consisting of the integers
         0 through 255 followed by boolean ``False``. Since this list is a
         standard sequence, the
-        :func:`._peperrorsequence.get_cause_or_none_sequence_standard`
+        :func:`._peperrorsequence.get_cause_or_none_sequence_args_1`
         function must decide the cause of this list's failure to comply with
         this hint by finding the list item that is neither an integer nor a
         string, implemented by by iteratively passing each list item to the
@@ -292,7 +292,7 @@ class CauseSleuth(object):
         the first 256 items of this list are integers satisfying this hint,
         :func:`._peperrorunion.get_cause_or_none_union` returns
         ``None`` to
-        :func:`._peperrorsequence.get_cause_or_none_sequence_standard`
+        :func:`._peperrorsequence.get_cause_or_none_sequence_args_1`
         before finally finding the non-compliant boolean item and returning the
         human-readable cause.
 

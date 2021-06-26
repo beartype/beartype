@@ -98,147 +98,6 @@ Frozen set of all :pep:`484`-compliant **deprecated typing attributes** (i.e.,
 :pep:`484`-compliant :mod:`typing` type hints obsoleted by more recent PEPs).
 '''
 
-
-HINT_PEP484_ATTRS_IGNORABLE = frozenset((
-    # The "Any" singleton is semantically synonymous with the ignorable
-    # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
-    Any,
-
-    # The "Generic" superclass imposes no constraints and is thus also
-    # semantically synonymous with the ignorable PEP-noncompliant
-    # "beartype.cave.AnyType" and hence "object" types. Since PEP
-    # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-    # singleton including "typing.Generic" semantically expands to that
-    # singelton subscripted by an implicit "Any" argument, "Generic"
-    # semantically expands to the implicit "Generic[Any]" singleton.
-    Generic,
-
-    # The unsubscripted "Optional" singleton semantically expands to the
-    # implicit "Optional[Any]" singleton by the same argument. Since PEP
-    # 484 also stipulates that all "Optional[t]" singletons semantically
-    # expand to "Union[t, type(None)]" singletons for arbitrary arguments
-    # "t", "Optional[Any]" semantically expands to merely "Union[Any,
-    # type(None)]". Since all unions subscripted by "Any" semantically
-    # reduce to merely "Any", the "Optional" singleton also reduces to
-    # merely "Any".
-    #
-    # This intentionally excludes "Optional[type(None)]", which the
-    # "typing" module physically reduces to merely "type(None)". *shrug*
-    Optional,
-
-    # The unsubscripted "Union" singleton semantically expands to the
-    # implicit "Union[Any]" singleton by the same argument. Since PEP 484
-    # stipulates that a union of one type semantically reduces to only that
-    # type, "Union[Any]" semantically reduces to merely "Any". Despite
-    # their semantic equivalency, however, these objects remain
-    # syntactically distinct with respect to object identification: e.g.,
-    #     >>> Union is not Union[Any]
-    #     True
-    #     >>> Union is not Any
-    #     True
-    #
-    # This intentionally excludes:
-    #
-    # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
-    #   module physically reduces:
-    #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
-    #     this frozen set already contains.
-    #   * "Union[object]" to merely "object" (i.e., "Union[object] is
-    #     object"), which this frozen set also already contains.
-    # * "Union" singleton subscripted by one or more ignorable type hints
-    #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
-    #   exist a countably infinite number of these subscriptions, these
-    #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
-    #   these subscriptions are dynamically detected by the high-level
-    #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
-    #   function and thus referred to as deeply ignorable type hints.
-    Union,
-))
-'''
-Frozen set of all :pep:`484`-compliant **ignorable typing attributes** (i.e.,
-unsubscripted :pep:`484`-compliant :mod:`typing` type hints unconditionally
-ignored by the :func:`beartype.beartype` decorator).
-'''
-
-# ....................{ SETS ~ sign : category            }....................
-HINT_PEP484_SIGNS_SEQUENCE_STANDARD = frozenset((
-    List,
-    MutableSequence,
-    Sequence,
-))
-'''
-Frozen set of all :pep:`484`-compliant **standard sequence signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`484`-compliant type hints
-accepting exactly one subscripted type hint argument constraining *all* items
-of compliant sequences, which necessarily satisfy the
-:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
-across all sequence items).
-'''
-
-
-HINT_PEP484_SIGNS_UNION = frozenset((Optional, Union))
-'''
-Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-:pep:`484`-compliant type hints unifying one or more subscripted type hint
-arguments into a disjunctive set union of these arguments).
-
-If the active Python interpreter targets:
-
-* At least Python 3.9.0, the :attr:`typing.Optional` and
-  :attr:`typing.Union` attributes are distinct.
-* Less than Python 3.9.0, the :attr:`typing.Optional` attribute reduces to the
-  :attr:`typing.Union` attribute, in which case this set is technically
-  semantically redundant. Since tests of both object identity and set
-  membership are ``O(1)``, this set incurs no significant performance penalty
-  versus direct usage of the :attr:`typing.Union` attribute and is thus
-  unconditionally used as is irrespective of Python version.
-'''
-
-# ....................{ SETS ~ sign : supported           }....................
-HINT_PEP484_SIGNS_SUPPORTED_SHALLOW = frozenset((
-    # Note that the "NoReturn" type hint is invalid in almost all possible
-    # syntactic contexts and thus intentionally omitted here. See the
-    # "datapepsigns" submodule for further commentary.
-    Any,
-    HintSignForwardRef,
-    HintSignNewType,
-    HintSignTypeVar,
-
-    # PEP 484 explicitly supports the "None" singleton: i.e.,
-    #     When used in a type hint, the expression None is considered
-    #     equivalent to type(None).
-    NoneType,
-))
-'''
-Frozen set of all :pep:`484`-compliant **shallowly supported non-originative
-signs** (i.e., arbitrary objects uniquely identifying :pep:`484`-compliant type
-hints *not* originating from a non-:mod:`typing` origin type for which the
-:func:`beartype.beartype` decorator generates shallow type-checking code).
-'''
-
-
-HINT_PEP484_SIGNS_SUPPORTED_DEEP = frozenset((
-    HintSignGeneric,
-    List,
-    MutableSequence,
-    Sequence,
-    Tuple,
-
-    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-    # under Python <= 3.9. The implementations of the "typing" module under
-    # those older Python versions transparently reduced "typing.Optional"
-    # to "typing.Union" at runtime. Since this reduction is no longer the
-    # case, both *MUST* now be explicitly listed here.
-    Union,
-    Optional,
-))
-'''
-Frozen set of all :pep:`484`-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`484`-compliant type hints for
-which the :func:`beartype.beartype` decorator generates deep type-checking
-code).
-'''
-
 # ....................{ SETS ~ sign : type                }....................
 # Initialized by the _init() function below due to conditional complexity.
 HINT_PEP484_ATTRS_ISINSTANCEABLE: frozenset = None  # type: ignore[assignment]
@@ -345,9 +204,6 @@ def _init() -> None:
             # release Python 3.7.2. Yes, this is insane. Yes, this is "typing".
             _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.OrderedDict)
 
-            if IS_PYTHON_AT_LEAST_3_8:
-                _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.SupportsIndex)  # type: ignore[attr-defined]
-
     # Coerce this list into a frozen set for subsequent constant-time lookup.
     HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(
         _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
@@ -379,4 +235,3 @@ def _init() -> None:
 
 # Initialize this submodule.
 _init()
-

@@ -31,31 +31,11 @@ objects against this object via equality tests.
 '''
 
 # ....................{ SETS ~ sign                       }....................
-HINT_PEP585_SIGNS_SUPPORTED_DEEP: FrozenSet[Any] = frozenset()
-'''
-Frozen set of all :pep:`585`-compliant **deeply supported signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`585`-compliant type hints for
-which the :func:`beartype.beartype` decorator generates deep type-checking
-code).
-'''
-
-
 HINT_PEP585_ATTRS_ISINSTANCEABLE: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all :pep:`585`-compliant **standard class signs** (i.e.,
 instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
 type hints).
-'''
-
-# ....................{ SETS ~ sign : category            }....................
-HINT_PEP585_SIGNS_SEQUENCE_STANDARD: FrozenSet[Any] = frozenset()
-'''
-Frozen set of all :pep:`585`-compliant **standard sequence signs** (i.e.,
-arbitrary objects uniquely identifying :pep:`585`-compliant type hints
-accepting exactly one subscripted type hint argument constraining *all* items
-of compliant sequences, which necessarily satisfy the
-:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
-across all sequence items).
 '''
 
 # ....................{ INITIALIZERS                      }....................
@@ -117,19 +97,9 @@ def _init() -> None:
 
     # ..................{ GLOBALS                           }..................
     # Submodule globals to be redefined below.
-    global \
-        HINT_PEP585_SIGNS_SEQUENCE_STANDARD, \
-        HINT_PEP585_SIGNS_SUPPORTED_DEEP, \
-        HINT_PEP585_ATTRS_ISINSTANCEABLE
+    global HINT_PEP585_ATTRS_ISINSTANCEABLE
 
     # ..................{ SETS ~ sign                       }..................
-    HINT_PEP585_SIGNS_SUPPORTED_DEEP = frozenset((
-        list,
-        tuple,
-        ByteString,
-        MutableSequence,
-        Sequence,
-    ))
     HINT_PEP585_ATTRS_ISINSTANCEABLE = frozenset((
         defaultdict,
         deque,
@@ -169,14 +139,6 @@ def _init() -> None:
         Sequence,
         Set,
         ValuesView,
-    ))
-
-    # ..................{ SETS ~ sign : category            }..................
-    HINT_PEP585_SIGNS_SEQUENCE_STANDARD = frozenset((
-        list,
-        ByteString,
-        MutableSequence,
-        Sequence,
     ))
 
 
