@@ -18,22 +18,18 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
 )
-from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_TYPE_STDLIB,
-)
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsignmap import (
     HINT_BARE_REPR_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
-from beartype._util.data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_TYPE_STDLIB)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
-    HintSignForwardRef,
     HintSignGeneric,
     HintSignNewType,
-    HintSignTypeVar,
+)
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_TYPE_STDLIB,
 )
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_bases_unerased,
@@ -42,10 +38,8 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     get_hint_pep585_generic_bases_unerased,
     get_hint_pep585_generic_typevars,
-    is_hint_pep585_builtin,
     is_hint_pep585_generic,
 )
-from beartype._util.mod.utilmodule import import_module
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,
@@ -298,10 +292,6 @@ get_hint_pep_typevars.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ sign                    }....................
-#FIXME: Refactor as follows *AFTER* finalizing our sign refactoring:
-# from beartype._util.data.hint.pep.sign.datapepsigncls import HintSignOrType
-# @callable_cached
-# def get_hint_pep_sign_or_cls(hint: Any) -> HintSignOrType:
 #FIXME: Refactor all functions throughout the codebase that accept or return
 #signs to be annotated ideally by "HintSign" (or, if necessary, by
 #"HintSignOrType"). These include:
@@ -310,10 +300,8 @@ get_hint_pep_typevars.__doc__ = '''
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Validate that the value of the "pep_sign" parameter passed to the
 #PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
-#FIXME: Clean up the "datapep" submodule, please.
-#FIXME: Clean up the "data.hint.pep.proposal" subpackage, please.
 @callable_cached
-def get_hint_pep_sign(hint: Any) -> object:
+def get_hint_pep_sign(hint: Any) -> HintSign:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
     PEP-compliant type hint if this hint is PEP-compliant *or* raise an
@@ -411,13 +399,8 @@ def get_hint_pep_sign(hint: Any) -> object:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_forwardref
     from beartype._util.hint.pep.utilhintpeptest import (
-        die_unless_hint_pep,
-        is_hint_pep_generic,
-        is_hint_pep_subscripted,
-        is_hint_pep_typevar,
-    )
+        die_unless_hint_pep, is_hint_pep_generic)
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     #
@@ -712,11 +695,7 @@ def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
     return (
         # If this sign originates from an origin type, that type.
         _get_hint_pep_origin_object_or_none(hint)
-        if (
-            hint_sign in HINT_SIGNS_TYPE_STDLIB or
-            #FIXME: Remove this condition after finalizing this refactoring!
-            hint_sign in HINT_SIGNS_TYPE_STDLIB
-        ) else
+        if hint_sign in HINT_SIGNS_TYPE_STDLIB else
         # Else, "None".
         None
     )

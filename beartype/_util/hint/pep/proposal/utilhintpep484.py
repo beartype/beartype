@@ -19,6 +19,7 @@ from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
     HINT_PEP484_SIGNS_UNION,
 )
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
@@ -33,7 +34,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep484_ignorable_or_none(
-    hint: object, hint_sign: object) -> Optional[bool]:
+    hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **ignorable
     type hint,** ``False`` only if this object is a :pep:`484`-compliant
@@ -94,7 +95,7 @@ def is_hint_pep484_ignorable_or_none(
     ----------
     hint : object
         Type hint to be inspected.
-    hint_sign : object
+    hint_sign : HintSign
         **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns

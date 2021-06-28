@@ -20,15 +20,18 @@ from beartype.roar import (
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapeprepr import (
-    HINT_PEP_BARE_REPRS_DEPRECATED)
+    HINT_PEP_BARE_REPRS_DEPRECATED,
+)
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_BARE_REPRS_DEPRECATED,
     HINT_PEP484_TUPLE_EMPTY,
 )
 from beartype._util.data.hint.pep.proposal.datapep585 import (
     HINT_PEP585_TUPLE_EMPTY)
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import (
-    HintSignTypeVar)
+    HintSignTypeVar,
+)
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
@@ -263,7 +266,7 @@ def die_if_hint_pep_unsupported(
 
 def die_if_hint_pep_sign_unsupported(
     # Mandatory parameters.
-    hint_sign: object,
+    hint_sign: HintSign,
 
     # Optional parameters.
     hint_label: str = 'Annotation sign',
@@ -279,8 +282,8 @@ def die_if_hint_pep_sign_unsupported(
 
     Parameters
     ----------
-    hint : object
-        Object to be validated.
+    hint : HintSign
+        Sign to be validated.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to 'Annotation'.
@@ -738,7 +741,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     return is_hint_pep_sign_supported(hint_pep_sign)
 
 
-def is_hint_pep_sign_supported(hint_sign: object) -> bool:
+def is_hint_pep_sign_supported(hint_sign: HintSign) -> bool:
     '''
     ``True`` only if the passed object is a **supported sign** (i.e., arbitrary
     object uniquely identifying a category of PEP-compliant type hints
@@ -750,7 +753,7 @@ def is_hint_pep_sign_supported(hint_sign: object) -> bool:
 
     Parameters
     ----------
-    sign : object
+    sign : HintSign
         Sign to be tested.
 
     Returns
@@ -765,17 +768,15 @@ def is_hint_pep_sign_supported(hint_sign: object) -> bool:
         :func:`hash` function and thus unusable in hash-based containers like
         dictionaries and sets). All signs are hashable by definition.
     '''
+    assert isinstance(hint_sign, HintSign), f'{repr(hint_sign)} not sign.'
+
     # from beartype._util.data.hint.pep.datapep import (
     #     HINT_SIGNS_SUPPORTED_DEEP)
     # print(f'HINT_SIGNS_SUPPORTED: {HINT_SIGNS_SUPPORTED}')
     # print(f'HINT_SIGNS_SUPPORTED_DEEP: {HINT_SIGNS_SUPPORTED_DEEP}')
 
     # Return true only if this sign is supported.
-    return (
-        hint_sign in HINT_SIGNS_SUPPORTED or
-        #FIXME: Remove this condition after finalizing this refactoring!
-        hint_sign in HINT_SIGNS_SUPPORTED_BAD
-    )
+    return hint_sign in HINT_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: This test returns false negatives for PEP 593-compliant

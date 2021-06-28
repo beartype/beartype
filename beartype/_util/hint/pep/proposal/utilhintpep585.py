@@ -4,12 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 585`_**-compliant type hint utilities.**
+Project-wide :pep:`585`:-compliant type hint utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,9 +22,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ VALIDATORS                        }....................
 def die_unless_hint_pep585_generic(hint: object) -> None:
     '''
-    Raise an exception unless the passed object is a `PEP 585`_-compliant
+    Raise an exception unless the passed object is a :pep:`585`:-compliant
     **generic** (i.e., class superficially subclassing at least one subscripted
-    `PEP 585`_-compliant pseudo-superclass).
+    :pep:`585`:-compliant pseudo-superclass).
 
     Parameters
     ----------
@@ -37,10 +34,7 @@ def die_unless_hint_pep585_generic(hint: object) -> None:
     Raises
     ----------
     BeartypeDecorHintPep585Exception
-        If this hint is *not* a `PEP 585`_-compliant generic.
-
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
+        If this hint is *not* a :pep:`585`:-compliant generic.
     '''
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception
@@ -128,7 +122,7 @@ else:
 # Docstring for this function regardless of implementation details.
 # Docstring for this function regardless of implementation details.
 is_hint_pep585_builtin.__doc__ = '''
-    ``True`` only if the passed object is a C-based `PEP 585`_-compliant
+    ``True`` only if the passed object is a C-based :pep:`585`:-compliant
     **builtin type hint** (i.e., C-based type hint instantiated by subscripting
     either a concrete builtin container class like :class:`list` or
     :class:`tuple` *or* an abstract base class (ABC) declared by the
@@ -141,17 +135,18 @@ is_hint_pep585_builtin.__doc__ = '''
 
     Caveats
     ----------
-    **This test returns false for** `PEP 585`_-compliant **generics,** which
-    fail to satisfy the same API as all other `PEP 585`_-compliant type hints.
-    Why? Because `PEP 560`_-type erasure erases this API on `PEP
-    585`_-compliant generics immediately after those generics are declared,
-    preventing their subsequent detection as `PEP 585`_-compliant. Instead,
-    `PEP 585`_-compliant generics are only detectable by calling either:
+    **This test returns false for** :pep:`585`:-compliant **generics,** which
+    fail to satisfy the same API as all other :pep:`585`:-compliant type hints.
+    Why? Because :pep:`560`-type erasure erases this API on
+    :pep:`585`-compliant generics immediately after those generics are
+    declared, preventing their subsequent detection as :pep:`585`:-compliant.
+    Instead, :pep:`585`:-compliant generics are only detectable by calling
+    either:
 
     * The high-level PEP-agnostic
       :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic`
       tester.
-    * The low-level `PEP 585`_-specific :func:`is_hint_pep585_generic` tester.
+    * The low-level :pep:`585`:-specific :func:`is_hint_pep585_generic` tester.
 
     Parameters
     ----------
@@ -161,17 +156,12 @@ is_hint_pep585_builtin.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 585`_-compliant type hint.
-
-    .. _PEP 560:
-       https://www.python.org/dev/peps/pep-0585
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
+        ``True`` only if this object is a :pep:`585`:-compliant type hint.
     '''
 
 
 is_hint_pep585_generic.__doc__ = '''
-    ``True`` only if the passed object is a `PEP 585`_-compliant **generic**
+    ``True`` only if the passed object is a :pep:`585`:-compliant **generic**
     (i.e., class superficially subclassing at least one subscripted `PEP
     585`_-compliant pseudo-superclass).
 
@@ -185,16 +175,13 @@ is_hint_pep585_generic.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a `PEP 585`_-compliant generic.
-
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
+        ``True`` only if this object is a :pep:`585`:-compliant generic.
     '''
 
 # ....................{ GETTERS                           }....................
 def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     '''
-    Tuple of all unerased `PEP 585`_-compliant **pseudo-superclasses** (i.e.,
+    Tuple of all unerased :pep:`585`:-compliant **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
     implicit type erasure under `PEP 560`_) of the passed `PEP 585`-compliant
     **generic** (i.e., class subclassing at least one non-class `PEP
@@ -213,20 +200,17 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     ----------
     Tuple[object]
         Tuple of the one or more unerased pseudo-superclasses of this
-        `PEP 585`_-compliant generic.
+        :pep:`585`:-compliant generic.
 
     Raises
     ----------
     BeartypeDecorHintPep585Exception
-        If this hint is *not* a `PEP 585`_-compliant generic.
+        If this hint is *not* a :pep:`585`:-compliant generic.
 
     See Also
     ----------
     :func:`beartype._util.hint.pep.utilhintget.get_hint_pep_generic_bases_unerased`
         Further details.
-
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
     '''
 
     # Avoid circular import dependencies.
@@ -251,7 +235,7 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
-    instances of the passed `PEP 585`_-compliant generic listed by the caller
+    instances of the passed :pep:`585`:-compliant generic listed by the caller
     at hint declaration time ignoring duplicates) if any *or* the empty tuple
     otherwise.
 
@@ -259,12 +243,12 @@ def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
 
     Motivation
     ----------
-    The current implementation of `PEP 585`_ under at least Python 3.9 is
+    The current implementation of :pep:`585`: under at least Python 3.9 is
     fundamentally broken with respect to parametrized generics. While `PEP
     484`_-compliant generics properly propagate type variables from
-    pseudo-superclasses to subclasses, `PEP 585`_ fails to do so. This function
+    pseudo-superclasses to subclasses, :pep:`585`: fails to do so. This function
     "fills in the gaps" by recovering these type variables from parametrized
-    `PEP 585`_-compliant generics by iteratively constructing a new tuple from
+    :pep:`585`:-compliant generics by iteratively constructing a new tuple from
     the type variables parametrizing all pseudo-superclasses of this generic.
 
     Parameters
@@ -277,19 +261,14 @@ def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     Tuple[TypeVar, ...]
         Either:
 
-        * If this `PEP 585`_-compliant generic defines a ``__parameters__``
+        * If this :pep:`585`:-compliant generic defines a ``__parameters__``
           dunder attribute, the value of that attribute.
         * Else, the empty tuple.
 
     Raises
     ----------
     BeartypeDecorHintPep585Exception
-        If this hint is *not* a `PEP 585`_-compliant generic.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
+        If this hint is *not* a :pep:`585`:-compliant generic.
     '''
 
     # Avoid circular import dependencies.
