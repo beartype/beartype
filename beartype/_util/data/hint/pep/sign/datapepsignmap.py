@@ -74,7 +74,6 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     # HintSignUnion,
     HintSignValuesView,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_3_6
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -149,26 +148,12 @@ by *no* "["- and "]"-delimited subscription representations) of all hints
 uniquely identifiable by those representations to their identifying signs.
 '''
 
-# ....................{ MAPPINGS ~ type : name            }....................
+# ....................{ MAPPINGS ~ type                   }....................
+# The majority of this dictionary is initialized with automated inspection
+# below in the _init() function. The *ONLY* key-value pairs explicitly defined
+# here are those *NOT* amenable to such inspection.
 HINT_TYPE_NAME_TO_SIGN = {
     # ..................{ PEP 484                           }..................
-    # Identify all PEP 484-compliant forward references (which are necessarily
-    # instances of the same class) by this sign.
-    'typing.ForwardRef':            HintSignForwardRef,
-    'typing_extensions.ForwardRef': HintSignForwardRef,
-
-    # Identify the unsubscripted PEP 484-compliant "Generic" superclass (which
-    # is explicitly equivalent under PEP 484 to the "Generic[Any]"
-    # subscription and thus slightly conveys meaningful semantics) by this
-    # sign.
-    'typing.Generic':            HintSignGeneric,
-    'typing_extensions.Generic': HintSignGeneric,
-
-    # Identify all PEP 484-compliant type variables (which are necessarily
-    # instances of the same class) by this sign.
-    'typing.TypeVar':            HintSignTypeVar,
-    'typing_extensions.TypeVar': HintSignTypeVar,
-
     # Identify the PEP 484-compliant "None" singleton by the type of that
     # singleton. Although we could identify this singleton by an ad-hoc
     # "HintSignNone" or "HintSignNoneType" object, doing so would be senseless;
@@ -188,26 +173,49 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    # Tuple of the names of *ALL* typing modules (i.e., modules declaring
-    # official PEP-compliant type hints) regardless of whether those modules
-    # are actually installed.
-    HINT_PEP_MODULE_NAMES = ('typing', 'typing_extensions')
+    # Defer initialization-specific imports.
+    from beartype._util.data.hint.pep.datapepmodule import (
+        HINT_PEP_MODULE_NAMES)
 
     # Length of the ignorable substring prefixing the name of each sign.
-    SIGN_PREFIX_LEN = len('HintSign')
+    _HINT_SIGN_PREFIX_LEN = len('HintSign')
 
-    # For the name of each sign and that sign...
-    for sign_name, sign in datapepsigns.__dict__.items():
-        # Unsubscripted name of the "typing" attribute identified by this sign.
-        typing_attr_name = sign_name[SIGN_PREFIX_LEN:]
+    # Dictionary mapping from the unqualified name of each classes defined by
+    # typing modules uniquely identifying PEP-compliant type hints to their
+    # corresponding signs.
+    _HINT_TYPE_BASENAMES_TO_SIGN = {
+        # ................{ PEP 484                           }................
+        # All PEP 484-compliant forward references are necessarily instances of
+        # the same class.
+        'ForwardRef': HintSignForwardRef,
 
-        # For the name of each top-level hinting modules (i.e., module whose
-        # attributes are usable for creating PEP-compliant type hints
-        # officially accepted by both static and runtime type checkers)...
-        for typing_module_name in HINT_PEP_MODULE_NAMES:
-            # Map from that attribute to this sign.
+        # The unsubscripted PEP 484-compliant "Generic" superclass is
+        # explicitly equivalent under PEP 484 to the "Generic[Any]"
+        # subscription and thus slightly conveys meaningful semantics.
+        'Generic': HintSignGeneric,
+
+        # All PEP 484-compliant type variables are necessarily instances of the
+        # same class.
+        'TypeVar': HintSignTypeVar,
+    }
+
+    # For the name of each top-level hinting module...
+    for typing_module_name in HINT_PEP_MODULE_NAMES:
+        # For the name of each sign and that sign...
+        for hint_sign_name, hint_sign in datapepsigns.__dict__.items():
+            # Unqualified name of the typing attribute identified by this sign.
+            typing_attr_name = hint_sign_name[_HINT_SIGN_PREFIX_LEN:]
+
+            # Map from that attribute in this module to this sign.
             HINT_BARE_REPR_TO_SIGN[
-                f'{typing_module_name}.{typing_attr_name}'] = sign
+                f'{typing_module_name}.{typing_attr_name}'] = hint_sign
+
+        # For the unqualified classname identifying each sign to that sign...
+        for hint_type_basename, hint_sign in (
+            _HINT_TYPE_BASENAMES_TO_SIGN.items()):
+            # Map from that classname in this module to this sign.
+            HINT_TYPE_NAME_TO_SIGN[
+                f'{typing_module_name}.{hint_type_basename}'] = hint_sign
 
 # Initialize this submodule.
 _init()

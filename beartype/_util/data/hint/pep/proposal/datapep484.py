@@ -11,62 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 import typing
-from beartype._cave._cavefast import NoneType
-from beartype._util.data.hint.pep.sign.datapepsigns import (
-    HintSignForwardRef,
-    HintSignGeneric,
-    HintSignNewType,
-    HintSignTypeVar,
-)
+from beartype._util.data.hint.pep.datapepmodule import HINT_PEP_MODULE_NAMES
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_3_6,
-    IS_PYTHON_AT_LEAST_3_7,
-    IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_7,
 )
-from sys import version_info
-from typing import (
-    AbstractSet,
-    Any,
-    AsyncGenerator,
-    AsyncIterable,
-    AsyncIterator,
-    Awaitable,
-    ByteString,
-    Callable,
-    ChainMap,
-    Collection,
-    Container,
-    ContextManager,
-    Coroutine,
-    Counter,
-    DefaultDict,
-    Deque,
-    Dict,
-    FrozenSet,
-    Generator,
-    Generic,
-    ItemsView,
-    Iterable,
-    Iterator,
-    KeysView,
-    List,
-    MappingView,
-    Mapping,
-    Match,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
-    Optional,
-    Pattern,
-    Reversible,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    ValuesView,
-)
+from typing import Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -91,119 +41,67 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ SETS ~ attr                       }....................
-HINT_PEP484_BARE_ATTRS_DEPRECATED: FrozenSet[Any] = frozenset()
+# ....................{ SETS                              }....................
+HINT_PEP484_BARE_REPRS_DEPRECATED = frozenset(
+    # If the active Python interpreter targets Python >= 3.9 and thus
+    # supports PEP 585, list all bare PEP 484-compliant representations (e.g.,
+    # "typing.List") that have since been obsoleted by equivalent bare PEP
+    # 585-compliant representations (e.g., "list"), defined as...
+    (
+        # Each representation relative to each module name...
+        f'{typing_module_name}.{hint_bare_repr}'
+        # For each bare deprecated PEP 484-compliant representation...
+        for hint_bare_repr in {
+            'AbstractSet',
+            'AbstractSet',
+            'AsyncContextManager',
+            'AsyncGenerator',
+            'AsyncIterable',
+            'AsyncIterator',
+            'Awaitable',
+            'ByteString',
+            'Callable',
+            'ChainMap',
+            'Collection',
+            'Container',
+            'ContextManager',
+            'Coroutine',
+            'Counter',
+            'DefaultDict',
+            'Deque',
+            'Dict',
+            'FrozenSet',
+            'Generator',
+            'Hashable',
+            'ItemsView',
+            'Iterable',
+            'Iterator',
+            'KeysView',
+            'List',
+            'MappingView',
+            'Mapping',
+            'Match',
+            'MutableMapping',
+            'MutableSequence',
+            'MutableSet',
+            'OrderedDict',
+            'Pattern',
+            'Reversible',
+            'Sequence',
+            'Set',
+            'Sized',
+            'Tuple',
+            'Type',
+            'ValuesView',
+        }
+        # For the name of each top-level hinting module...
+        for typing_module_name in HINT_PEP_MODULE_NAMES
+    ) if IS_PYTHON_AT_LEAST_3_9 else
+    # Else, the active Python interpreter only targets Python < 3.9 and thus
+    # fails to support PEP 585. In this case, deprecate nothing.
+    ()
+)
 '''
 Frozen set of all :pep:`484`-compliant **deprecated typing attributes** (i.e.,
 :pep:`484`-compliant :mod:`typing` type hints obsoleted by more recent PEPs).
 '''
-
-# ....................{ INITIALIZERS                      }....................
-def _init() -> None:
-    '''
-    Initialize this submodule.
-    '''
-
-    # ..................{ VARS                              }..................
-    # Submodule globals to be redefined below.
-    global \
-        HINT_PEP484_ATTRS_DEPRECATED, \
-        HINT_PEP484_ATTRS_ISINSTANCEABLE, \
-
-    # Set of all PEP 484-compliant unsubscripted attributes originating from an
-    # origin type.
-    _HINT_PEP484_ATTRS_TYPE_STDLIB: set = None  # type: ignore[assignment]
-
-    # List of all signs uniquely identifying PEP 484-compliant type hints
-    # originating from an origin type.
-    __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST = [
-        AbstractSet,
-        AsyncGenerator,
-        AsyncIterable,
-        AsyncIterator,
-        Awaitable,
-        ByteString,
-        Callable,
-        ChainMap,
-        Collection,
-        Container,
-        ContextManager,
-        Coroutine,
-        Counter,
-        DefaultDict,
-        Deque,
-        Dict,
-        FrozenSet,
-        Generator,
-        ItemsView,
-        Iterable,
-        Iterator,
-        KeysView,
-        List,
-        MappingView,
-        Mapping,
-        Match,
-        MutableMapping,
-        MutableSequence,
-        MutableSet,
-        Pattern,
-        Reversible,
-        Sequence,
-        Set,
-        Tuple,
-        Type,
-        ValuesView,
-    ]
-
-    # If the active Python interpreter targets at least various Python
-    # versions, add PEP 484-specific signs introduced in those versions.
-    if IS_PYTHON_AT_LEAST_3_7:
-        __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST.extend((
-            typing.AsyncContextManager,
-
-            # Although the Python 3.6-specific implementation of the "typing"
-            # module *DOES* technically supply these attributes, it does so
-            # only non-deterministically. For unknown reasons (whose underlying
-            # cause appears to be unwise abuse of private fields of the
-            # critical stdlib "abc.ABCMeta" metaclass), the "typing.Hashable"
-            # and "typing.Sized" abstract base classes (ABCs) spontaneously
-            # interchange themselves with the corresponding
-            # "collections.abc.Hashable" and "collections.abc.Sized" ABCs after
-            # indeterminate importations and/or reference to these ABCs.
-            #
-            # This issue is significantly concerning that we would ideally
-            # simply drop Python 3.6 support. Unfortunately, that would also
-            # mean dropping PyPy3 support, which has yet to stabilize Python
-            # 3.7 support. Ergo, we reluctantly preserve Python 3.6 and thus
-            # PyPy3 support for the interim.
-            typing.Hashable,
-            typing.Sized,
-        ))
-
-        # If the active Python interpreter targets Python >= 3.7.2...
-        #
-        # Note that this is the *ONLY* test against Python >= 3.7.2 in the
-        # codebase and thus done manually rather than with a global boolean.
-        if version_info >= (3, 7, 2):
-            # Add the "typing.OrderedDict" sign first introduced by the patch
-            # release Python 3.7.2. Yes, this is insane. Yes, this is "typing".
-            __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST.append(typing.OrderedDict)
-
-    # Coerce this list into a frozen set for subsequent constant-time lookup.
-    _HINT_PEP484_ATTRS_TYPE_STDLIB = frozenset(
-        __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST)
-
-    # ..................{ SETS ~ signs                      }..................
-    # If the active Python interpreter targets at least Python >= 3.9 and thus
-    # supports PEP 585, add all signs uniquely identifying outdated PEP
-    # 484-compliant type hints (e.g., "typing.List[int]") that have since been
-    # obsoleted by the equivalent PEP 585-compliant type hints (e.g.,
-    # "list[int]"). Happily, this is exactly the set of all PEP 484-compliant
-    # signs uniquely identifying PEP 484-compliant type hints originating from
-    # origin types.
-    if IS_PYTHON_AT_LEAST_3_9:
-        HINT_PEP484_ATTRS_DEPRECATED = _HINT_PEP484_ATTRS_TYPE_STDLIB
-
-
-# Initialize this submodule.
-_init()

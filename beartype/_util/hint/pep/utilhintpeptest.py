@@ -19,12 +19,10 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.datapep import (
-    HINT_PEP_ATTRS_DEPRECATED,
-    HINT_SIGNS_SUPPORTED as HINT_SIGNS_SUPPORTED_BAD,
-)
+from beartype._util.data.hint.pep.datapeprepr import (
+    HINT_PEP_BARE_REPRS_DEPRECATED)
 from beartype._util.data.hint.pep.proposal.datapep484 import (
-    HINT_PEP484_SIGNS_TYPE_ORIGIN,
+    HINT_PEP484_BARE_REPRS_DEPRECATED,
     HINT_PEP484_TUPLE_EMPTY,
 )
 from beartype._util.data.hint.pep.proposal.datapep585 import (
@@ -312,19 +310,17 @@ def die_if_hint_pep_sign_unsupported(
 #replace such substrings with human-readable equivalents. Can we perform a
 #similar replacement for warnings?
 
-def warn_if_hint_pep_sign_deprecated(
+def warn_if_hint_pep_deprecated(
     # Mandatory parameters.
     hint: object,
-    hint_sign: object,
 
     # Optional parameters.
     hint_label: str = 'Annotated',
 ) -> None:
     '''
-    Emit a non-fatal warning only if the passed PEP-compliant sign uniquely
-    identifying the passed PEP-compliant type hint is **deprecated** (e.g., due
-    to this outdated PEP-compliant type hint having since been obsoleted by one
-    or more recent PEPs).
+    Emit a non-fatal warning if the passed PEP-compliant type hint is
+    **deprecated** (i.e., obsoleted by an equivalent type hint or set of type
+    hints standardized under one or more recent PEPs).
 
     This validator is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -333,9 +329,7 @@ def warn_if_hint_pep_sign_deprecated(
     Parameters
     ----------
     hint : object
-        PEP-compliant type hint to be validated.
-    hint_sign : object
-        Arbitrary object uniquely identifying this hint.
+        PEP-compliant type hint to be inspected.
     hint_label : Optional[str]
         Human-readable label prefixing this object's representation in the
         warning message emitted by this function. Defaults to ``"Annotated"``.
@@ -343,11 +337,19 @@ def warn_if_hint_pep_sign_deprecated(
     Warns
     ----------
     BeartypeDecorHintPepDeprecatedWarning
-        If this sign is deprecated.
+        If this hint is deprecated.
     '''
 
-    # If this sign is deprecated...
-    if hint_sign in HINT_PEP_ATTRS_DEPRECATED:
+    # Substring of the machine-readable representation of this hint preceding
+    # the first "[" delimiter if this representation contains that delimiter
+    # *OR* this representation as is otherwise.
+    #
+    # Note that the str.partition() method has been profiled to be the
+    # optimally efficient means of parsing trivial prefixes.
+    hint_bare_repr, _, _ = repr(hint).partition('[')
+
+    # If this representation is deprecated...
+    if hint_bare_repr in HINT_PEP_BARE_REPRS_DEPRECATED:
         #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
         #FIXME: Unit test that this string contains *NO* non-human-readable
         #placeholder substrings. Note that the existing
@@ -368,7 +370,7 @@ def warn_if_hint_pep_sign_deprecated(
         # has been deprecated by the equivalent PEP 585-compliant sign (e.g.,
         # "list[int]"). In this case, suffix this warning message with
         # pragmatic suggestions for resolving this deprecation.
-        if hint_sign in HINT_PEP484_SIGNS_TYPE_ORIGIN:
+        if hint_bare_repr in HINT_PEP484_BARE_REPRS_DEPRECATED:
             warning_message += (
                 ' by PEP 585. To resolve this, globally replace this hint by '
                 'the equivalent PEP 585 type hint '

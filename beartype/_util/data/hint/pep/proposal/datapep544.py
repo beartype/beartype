@@ -103,12 +103,12 @@ def _init() -> None:
     '''
 
     # ..................{ VERSIONS                          }..................
-    # If the active Python interpreter does *NOT* target at least Python >= 3.8
-    # and thus fails to support PEP 544, silently reduce to a noop.
+    # If the active Python interpreter only targets Python < 3.8 and thus fails
+    # to support PEP 544, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_8:
         return
-    # Else, the active Python interpreter targets at least Python >= 3.8 and
-    # thus supports PEP 593.
+    # Else, the active Python interpreter targets Python >= 3.8 and thus
+    # supports PEP 593.
 
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.

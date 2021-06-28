@@ -16,7 +16,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import SENTINEL
 from typing import Any
 
-# ....................{ ATTRS ~ declare                   }....................
+# ....................{ ATTRS                             }....................
 # Default *ALL* signs (particularly signs with *NO* sane fallbacks) to a
 # sentinel guaranteed to *NEVER* match.
 

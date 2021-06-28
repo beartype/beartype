@@ -45,12 +45,12 @@ def _init() -> None:
     '''
 
     # ..................{ VERSIONS                          }..................
-    # If the active Python interpreter does *NOT* target at least Python >= 3.9
-    # and thus fails to support PEP 585, silently reduce to a noop.
+    # If the active Python interpreter only targets Python < 3.9 and thus fails
+    # to support PEP 585, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_9:
         return
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 585.
+    # Else, the active Python interpreter targets Python >= 3.9 and thus
+    # supports PEP 585.
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.9-specific imports.
