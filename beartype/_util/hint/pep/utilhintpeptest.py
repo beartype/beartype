@@ -311,6 +311,7 @@ def die_if_hint_pep_sign_unsupported(
 #"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
 #replace such substrings with human-readable equivalents. Can we perform a
 #similar replacement for warnings?
+
 def warn_if_hint_pep_sign_deprecated(
     # Mandatory parameters.
     hint: object,
@@ -360,7 +361,7 @@ def warn_if_hint_pep_sign_deprecated(
         # warning_message = f'{hint_label} PEP type hint {repr(hint)} deprecated'
 
         # Warning message to be emitted.
-        warning_message = f'PEP type hint {repr(hint)} deprecated'
+        warning_message = f'Type hint {repr(hint)} deprecated'
 
         # If this sign uniquely identifies PEP 484-compliant type hints
         # originating from origin types (e.g., "typing.List[int]"), this sign

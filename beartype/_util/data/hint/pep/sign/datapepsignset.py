@@ -13,20 +13,6 @@ of PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Remove the following obsolete upstream frozen sets:
-#* HINT_PEP484_SIGNS_SEQUENCE_STANDARD.
-#* HINT_PEP484_SIGNS_SUPPORTED_SHALLOW.
-#* HINT_PEP484_SIGNS_SUPPORTED_DEEP.
-#* HINT_PEP484_ATTRS_ISINSTANCEABLE.
-#* HINT_PEP484_SIGNS_TYPE_ORIGIN.
-#* HINT_PEP544_SIGNS_SUPPORTED_DEEP.
-#* HINT_PEP585_SIGNS_SEQUENCE_STANDARD.
-#* HINT_PEP585_SIGNS_SUPPORTED_DEEP.
-#* HINT_PEP585_ATTRS_ISINSTANCEABLE.
-#* HINT_PEP586_SIGNS_SUPPORTED_DEEP.
-#* HINT_PEP593_SIGNS_SUPPORTED_DEEP.
-
 # ....................{ IMPORTS                           }....................
 from beartype._cave._cavefast import NoneType
 from beartype._util.data.hint.pep.sign.datapepsigns import (

@@ -92,7 +92,7 @@ from beartype._decor._error._proposal._errorpep586 import (
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
 from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
+    HINT_SIGNS_TYPE_STDLIB,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_UNION)
@@ -343,7 +343,7 @@ def _init() -> None:
     # Map each originative "typing" attribute to the appropriate getter
     # *BEFORE* mapping any other attributes. This is merely a generalized
     # fallback subsequently replaced by attribute-specific getters.
-    for pep_sign_type_origin in HINT_SIGNS_TYPE_ORIGIN_STDLIB:
+    for pep_sign_type_origin in HINT_SIGNS_TYPE_STDLIB:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
             get_cause_or_none_type_stdlib)
 

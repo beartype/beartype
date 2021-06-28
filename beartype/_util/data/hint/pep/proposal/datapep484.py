@@ -92,27 +92,10 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 '''
 
 # ....................{ SETS ~ attr                       }....................
-HINT_PEP484_ATTRS_DEPRECATED: FrozenSet[Any] = frozenset()
+HINT_PEP484_BARE_ATTRS_DEPRECATED: FrozenSet[Any] = frozenset()
 '''
 Frozen set of all :pep:`484`-compliant **deprecated typing attributes** (i.e.,
 :pep:`484`-compliant :mod:`typing` type hints obsoleted by more recent PEPs).
-'''
-
-# ....................{ SETS ~ sign : type                }....................
-# Initialized by the _init() function below due to conditional complexity.
-HINT_PEP484_ATTRS_ISINSTANCEABLE: frozenset = None  # type: ignore[assignment]
-'''
-Frozen set of all :pep:`484`-compliant **standard class signs** (i.e.,
-instances of the builtin :mod:`type` type uniquely identifying PEP-compliant
-type hints).
-'''
-
-
-# Initialized by the _init() function below due to conditional complexity.
-HINT_PEP484_SIGNS_TYPE_ORIGIN: frozenset = None  # type: ignore[assignment]
-'''
-Frozen set of all signs uniquely identifying :pep:`484`-compliant type hints
-originating from an origin type.
 '''
 
 # ....................{ INITIALIZERS                      }....................
@@ -121,17 +104,19 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    # ..................{ GLOBALS                           }..................
+    # ..................{ VARS                              }..................
     # Submodule globals to be redefined below.
     global \
         HINT_PEP484_ATTRS_DEPRECATED, \
         HINT_PEP484_ATTRS_ISINSTANCEABLE, \
-        HINT_PEP484_SIGNS_TYPE_ORIGIN
 
-    # ..................{ SETS ~ signs : type : origin      }..................
+    # Set of all PEP 484-compliant unsubscripted attributes originating from an
+    # origin type.
+    _HINT_PEP484_ATTRS_TYPE_STDLIB: set = None  # type: ignore[assignment]
+
     # List of all signs uniquely identifying PEP 484-compliant type hints
     # originating from an origin type.
-    _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST = [
+    __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST = [
         AbstractSet,
         AsyncGenerator,
         AsyncIterable,
@@ -173,7 +158,7 @@ def _init() -> None:
     # If the active Python interpreter targets at least various Python
     # versions, add PEP 484-specific signs introduced in those versions.
     if IS_PYTHON_AT_LEAST_3_7:
-        _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.extend((
+        __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST.extend((
             typing.AsyncContextManager,
 
             # Although the Python 3.6-specific implementation of the "typing"
@@ -202,26 +187,13 @@ def _init() -> None:
         if version_info >= (3, 7, 2):
             # Add the "typing.OrderedDict" sign first introduced by the patch
             # release Python 3.7.2. Yes, this is insane. Yes, this is "typing".
-            _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST.append(typing.OrderedDict)
+            __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST.append(typing.OrderedDict)
 
     # Coerce this list into a frozen set for subsequent constant-time lookup.
-    HINT_PEP484_SIGNS_TYPE_ORIGIN = frozenset(
-        _HINT_PEP484_SIGNS_TYPE_ORIGIN_LIST)
+    _HINT_PEP484_ATTRS_TYPE_STDLIB = frozenset(
+        __HINT_PEP484_ATTRS_TYPE_STDLIB_LIST)
 
     # ..................{ SETS ~ signs                      }..................
-    HINT_PEP484_ATTRS_ISINSTANCEABLE = frozenset((
-        # The "Generic" superclass is explicitly equivalent in PEP 484 to the
-        # "Generic[Any]" subscription and thus valid as a standard class sign.
-        Generic,
-    )) | (
-        # If the active Python interpreter targets Python 3.6, add all signs
-        # uniquely identifying PEP 484-compliant type hints originating from an
-        # origin type to the set of all standard class signs. Insanely, the
-        # Python 3.6 implementation of the "typing" module defines *ALL* these
-        # signs as unique public classes.
-        HINT_PEP484_SIGNS_TYPE_ORIGIN if IS_PYTHON_3_6 else frozenset()
-    )
-
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 585, add all signs uniquely identifying outdated PEP
     # 484-compliant type hints (e.g., "typing.List[int]") that have since been
@@ -230,7 +202,7 @@ def _init() -> None:
     # signs uniquely identifying PEP 484-compliant type hints originating from
     # origin types.
     if IS_PYTHON_AT_LEAST_3_9:
-        HINT_PEP484_ATTRS_DEPRECATED = HINT_PEP484_SIGNS_TYPE_ORIGIN
+        HINT_PEP484_ATTRS_DEPRECATED = _HINT_PEP484_ATTRS_TYPE_STDLIB
 
 
 # Initialize this submodule.

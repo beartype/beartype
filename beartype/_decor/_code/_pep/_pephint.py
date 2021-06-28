@@ -89,7 +89,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.data.hint.pep.datapep import (
     HINT_SIGNS_SUPPORTED_DEEP as HINT_SIGNS_SUPPORTED_DEEP_BAD,
-    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
+    HINT_SIGNS_TYPE_STDLIB,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_SIGNS_UNION)
@@ -1314,7 +1314,7 @@ def pep_code_check_hint(
                 (
                     hint_curr_sign in HINT_SIGNS_TYPE_STDLIB or
                     #FIXME: Remove this shuddering horror after refactoring!
-                    hint_curr_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
+                    hint_curr_sign in HINT_SIGNS_TYPE_STDLIB
                 ) and (
                     #FIXME: Ideally, this line should just resemble:
                     #    not is_hint_pep_subscripted(hint_curr)

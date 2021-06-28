@@ -22,9 +22,9 @@ from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ SIGNS                             }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Attributes defined by this module are intentionally synchronized
-# with the "__all__" dunder list global of the "typing" module bundled with the
-# most recent CPython release. For that reason, these attributes are:
+# CAUTION: Signs defined by this module are synchronized with the "__all__"
+# list global of the "typing" module bundled with the most recent CPython
+# release. For that reason, these signs are:
 # * Intentionally declared in the exact same order prefixed by the exact same
 #   inline comments as for that list global.
 # * Intentionally *NOT* commented with docstrings, both because:

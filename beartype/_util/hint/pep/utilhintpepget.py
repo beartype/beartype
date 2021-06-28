@@ -21,14 +21,10 @@ from beartype.roar import (
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapep import (
-    HINT_PEP_ATTRS_ISINSTANCEABLE,
-    HINT_PEP_MODULE_NAMES,
-    HINT_SIGNS_TYPE_ORIGIN_STDLIB,
-    HINT_PEP_ATTRS_REFACTORED,
+    HINT_SIGNS_TYPE_STDLIB,
 )
 from beartype._util.data.hint.pep.sign.datapepsignmap import (
     HINT_BARE_REPR_TO_SIGN,
-    HINT_NAME_IF_TYPE_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
 from beartype._util.data.hint.pep.sign.datapepsignset import (
@@ -546,35 +542,10 @@ def get_hint_pep_sign(hint: Any) -> object:
     elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
         return getattr(typing, hint.name)
 
-    # ..................{ PHASE ~ name if class             }..................
-    # This phase attempts to map from the fully-qualified name of this hint if
-    # this hint is itself a class to a sign identifying this hint.
-    #
-    # Since the "object.__qualname__" attribute is *NOT* guaranteed to exist in
-    # general, this phase is the slower than the first phase and thus performed
-    # next. Moreover, this phase identifies only a small subset of extremely
-    # uncommon hints. While this phase could be reordered to precede the
-    # repr()-based phase, doing so would induce undesirable costs in the common
-    # case of PEP 585-compliant type hints (e.g., "list[int]") -- all of which
-    # are technically classes and would thus uselessly enter this conditional.
-    elif isinstance(hint, type):
-        # Fully-qualified name of this class.
-        hint_type_name = f'{hint.__module__}.{hint.__qualname__}'
-
-        # Sign identifying this hint if this hint is identifiable by its name
-        # *OR* "None" otherwise.
-        hint_sign = HINT_NAME_IF_TYPE_TO_SIGN.get(hint_type_name)
-
-        # If this hint is identifiable by its name, return this sign.
-        if hint_sign is not None:
-            return hint_sign
-        # Else, this hint is *NOT* identifiable by its name.
-
     # ..................{ ERROR                             }..................
     # Else, this hint is identifiable by *NO* sign. But (by the above
     # validation) this hint is PEP-compliant and should thus be identifiable by
     # some sign. Since this is paradoxically bad, raise an exception.
-
     raise BeartypeDecorHintPepSignException(
         f'Type hint {repr(hint)} currently unsupported by beartype. '
         f'You suddenly feel encouraged to submit '
@@ -744,7 +715,7 @@ def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
         if (
             hint_sign in HINT_SIGNS_TYPE_STDLIB or
             #FIXME: Remove this condition after finalizing this refactoring!
-            hint_sign in HINT_SIGNS_TYPE_ORIGIN_STDLIB
+            hint_sign in HINT_SIGNS_TYPE_STDLIB
         ) else
         # Else, "None".
         None
