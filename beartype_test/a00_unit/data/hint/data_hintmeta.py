@@ -11,7 +11,14 @@ higher-level :mod:`beartype_test.a00_unit.data.hint.pep.data_hintpep` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from typing import Optional
+
+# ....................{ HINTS                             }....................
+_NoneTypeOrType = (type, type(None))
+'''
+2-tuple matching both classes and the ``None`` singleton.
+'''
 
 # ....................{ CLASSES ~ hint : superclass       }....................
 class NonPepHintMetadata(object):
@@ -145,7 +152,7 @@ class PepHintMetadata(NonPepHintMetadata):
     is_typing : Optional[bool]
         ``True`` only if this hint itself is defined by the :mod:`typing`
         module. Defaults to ``is_type_typing``.
-    pep_sign : object
+    pep_sign : HintSign
         **Sign** (i.e., arbitrary object uniquely identifying this
         PEP-compliant type hint) if this hint is uniquely identified by such a
         sign *or* ``None`` otherwise. Examples of PEP-compliant type hints
@@ -177,7 +184,7 @@ class PepHintMetadata(NonPepHintMetadata):
         self,
 
         # Mandatory parameters.
-        pep_sign: object,
+        pep_sign: HintSign,
 
         # Optional parameters.
         is_pep585_builtin: Optional[bool] = False,
@@ -190,12 +197,10 @@ class PepHintMetadata(NonPepHintMetadata):
         generic_type: Optional[type] = None,
         **kwargs
     ) -> None:
-        # 2-tuple matching both classes and "None".
-        NoneTypeOrType = (type, type(None))
-
         assert isinstance(is_typevared, bool), (
             f'{repr(is_typevared)} not bool.')
-        assert isinstance(stdlib_type, NoneTypeOrType), (
+        assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
+        assert isinstance(stdlib_type, _NoneTypeOrType), (
             f'{repr(stdlib_type)} neither class nor "None".')
 
         # Initialize our superclass with all passed keyword arguments.
@@ -255,7 +260,7 @@ class PepHintMetadata(NonPepHintMetadata):
             f'{repr(is_type_typing)} not bool.')
         assert isinstance(is_typing, bool), (
             f'{repr(is_typing)} not bool.')
-        assert isinstance(generic_type, NoneTypeOrType), (
+        assert isinstance(generic_type, _NoneTypeOrType), (
             f'{repr(generic_type)} neither class nor "None".')
 
         # Validate that the "is_pep585_builtin" and "is_type_typing" are *NOT* both true.

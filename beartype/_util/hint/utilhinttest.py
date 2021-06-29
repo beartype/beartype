@@ -22,10 +22,8 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.data.hint.datahint import (
-    HINT_BASES_FORWARDREF,
-    HINTS_IGNORABLE_SHALLOW,
-)
+from beartype._util.data.hint.datahint import HINT_BASES_FORWARDREF
+from beartype._util.data.hint.pep.datapeprepr import HINT_REPRS_IGNORABLE
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -177,37 +175,25 @@ def is_hint(hint: object) -> bool:
 @callable_cached
 def is_hint_ignorable(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is an **ignorable type hint.**
+    ``True`` only if the passed type hint is **ignorable.**
 
     This tester function is memoized for efficiency.
 
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        Type hint to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this object is an ignorable type hint.
-
-    Raises
-    ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
+        ``True`` only if this type hint is ignorable.
     '''
 
-    # Attempt to...
-    try:
-        # If this hint is shallowly ignorable, return true.
-        if hint in HINTS_IGNORABLE_SHALLOW:
-            return True
-        # Else, this hint is *NOT* shallowly ignorable.
-    # If this hint is unhashable, this hint is *NOT* shallowly ignorable.
-    except TypeError:
-        pass
+    # If this hint is shallowly ignorable, return true.
+    if repr(hint) in HINT_REPRS_IGNORABLE:
+        return True
+    # Else, this hint is *NOT* shallowly ignorable.
 
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):

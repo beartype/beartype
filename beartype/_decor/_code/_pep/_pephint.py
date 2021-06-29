@@ -87,12 +87,6 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed,
 )
 from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
-from beartype._util.data.hint.pep.datapep import (
-    HINT_SIGNS_SUPPORTED_DEEP as HINT_SIGNS_SUPPORTED_DEEP_BAD,
-    HINT_SIGNS_TYPE_STDLIB,
-)
-from beartype._util.data.hint.pep.proposal.datapep484 import (
-    HINT_PEP484_SIGNS_UNION)
 from beartype._util.data.hint.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL,
     HINT_PEP593_ATTR_ANNOTATED,
@@ -106,6 +100,7 @@ from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_UNION,
 )
 from beartype._util.func.utilfuncscope import (
     CallableScope,
@@ -1050,9 +1045,9 @@ def pep_code_check_hint(
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.errormain" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.data.hint.pep.datapep.HINT_SIGNS_SUPPORTED_DEEP"
-            #   frozen set of all supported unsubscripted "typing" attributes
-            #   for which this function generates deeply type-checking code.
+            # * "beartype._util.data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
+            #   frozen set of all signs for which this function generates
+            #   deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             #FIXME: Python 3.10 provides proper syntactic support for "case"
@@ -1115,7 +1110,7 @@ def pep_code_check_hint(
             # benefit from Python >= 3.8-specific assignment expressions. This
             # differs from "typing" pseudo-containers, which narrow the current
             # pith expression and thus do benefit from these expressions.
-            if hint_curr_sign in HINT_PEP484_SIGNS_UNION:
+            if hint_curr_sign in HINT_SIGNS_UNION:
                 # Assert this union is subscripted by one or more child hints.
                 # Note this should *ALWAYS* be the case, as:
                 #
@@ -1333,11 +1328,7 @@ def pep_code_check_hint(
                     #FIXME: Remove this branch *AFTER* deeply supporting all
                     #hints.
                     # Currently unsupported with deep type-checking...
-                    (
-                        hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP and
-                        #FIXME: Remove this shuddering horror after refactoring!
-                        hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP_BAD
-                    )
+                    hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
                 )
             ):
             # Then generate trivial code shallowly type-checking the current

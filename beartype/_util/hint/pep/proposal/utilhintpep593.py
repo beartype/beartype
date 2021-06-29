@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype._vale._valesub import _SubscriptedIs
-from beartype._util.data.hint.pep.datapepattr import (
-    HINT_PEP593_ATTR_ANNOTATED)
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -79,12 +79,11 @@ def is_hint_pep593(hint: object) -> bool:
 
 
 def is_hint_pep593_ignorable_or_none(
-    hint: object, hint_sign: object) -> Optional[bool]:
+    hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''
-    ``True`` only if the passed object is a :pep:`593`-compliant **ignorable
-    type hint,** ``False`` only if this object is a :pep:`593`-compliant
-    unignorable type hint, and ``None`` if this object is *not* `PEP
-    593`_-compliant.
+    ``True`` only if the passed object is a :pep:`593`-compliant ignorable type
+    hint, ``False`` only if this object is a :pep:`593`-compliant unignorable
+    type hint, and ``None`` if this object is *not* :pep:`593`-compliant.
 
     Specifically, this tester function returns ``True`` only if this object is
     the :data:`Annotated` singleton whose first subscripted argument is an
@@ -99,7 +98,7 @@ def is_hint_pep593_ignorable_or_none(
     ----------
     hint : object
         Type hint to be inspected.
-    hint_sign : object
+    hint_sign : HintSign
         **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns
@@ -125,7 +124,7 @@ def is_hint_pep593_ignorable_or_none(
         # hint annotated by this hint hint is ignorable (e.g., the "Any" in
         # "Annotated[Any, 50, False]").
         is_hint_ignorable(get_hint_pep593_metahint(hint))
-        if hint_sign is HINT_PEP593_ATTR_ANNOTATED else
+        if hint_sign is HintSignAnnotated else
         # Else, "None".
         None
     )
@@ -133,15 +132,16 @@ def is_hint_pep593_ignorable_or_none(
 # ....................{ TESTERS ~ beartype                }....................
 def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
-    ``True`` only if the first argument subscripting the passed `PEP
-    593`-compliant :attr:`typing.Annotated` type hint is
-    :mod:`beartype`-specific (e.g., instance of the :class:`_SubscriptedIs` class
-    produced by subscripting (indexing) the :class:`Is` class).
+    ``True`` only if the first argument subscripting the passed
+    :pep:`593`-compliant :attr:`typing.Annotated` type hint is
+    :mod:`beartype`-specific (e.g., instance of the :class:`_SubscriptedIs`
+    class produced by subscripting (indexing) the :class:`Is` class).
 
     Parameters
     ----------
     hint : Any
-        `PEP 593`-compliant :attr:`typing.Annotated` type hint to be inspected.
+        :pep:`593`-compliant :attr:`typing.Annotated` type hint to be
+        inspected.
 
     Returns
     ----------
@@ -181,8 +181,8 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 #FIXME: Unit test us up, please.
 def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     '''
-    Tuple of one or more arbitrary objects annotating the passed `PEP
-    593`_-compliant **type metahint** (i.e., subscription of the
+    Tuple of one or more arbitrary objects annotating the passed
+    :pep:`593`-compliant **type metahint** (i.e., subscription of the
     :attr:`typing.Annotated` singleton).
 
     Specifically, this getter returns *all* arguments subscripting this
@@ -242,7 +242,7 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
     Parameters
     ----------
     hint : object
-        `PEP 593`-compliant type metahint to be inspected.
+        :pep:`593`-compliant type metahint to be inspected.
 
     Returns
     ----------

@@ -23,7 +23,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ BASES                             }....................
+
 # Conditionally add the "typing.ForwardRef" superclass depending on the
 # current Python version, as this superclass was thankfully publicized
 # under Python >= 3.7 after its initial privatization under Python <= 3.6.

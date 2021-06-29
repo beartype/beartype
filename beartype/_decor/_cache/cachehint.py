@@ -49,7 +49,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                           }....................
-from beartype._cave._cavefast import NotImplementedType
+from beartype._cave._cavefast import NotImplementedType, NoneType
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from collections.abc import Callable
@@ -67,13 +67,13 @@ hints).**
 
 This dictionary caches:
 
-* `PEP 585`_-compliant type hints, which do *not* cache themselves.
-* `PEP 563`_-compliant **deferred type hints** (i.e., type hints persisted as
+* :pep:`585`-compliant type hints, which do *not* cache themselves.
+* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
   evaluatable strings rather than actual type hints), enabled if the active
   Python interpreter targets either:
 
   * Python 3.7.0 *and* the module declaring this callable explicitly enables
-    `PEP 563`_ support with a leading dunder importation of the form ``from
+    :pep:`563` support with a leading dunder importation of the form ``from
     __future__ import annotations``.
   * Python 4.0.0, where `PEP 563`_ is expected to be mandatory.
 
@@ -99,11 +99,6 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
   instead persisted for the lifetime of the active Python process. Ergo,
   temporarily caching hints in an LRU cache is pointless, as there are *no*
   space savings in dropping stale references to unused hints.
-
-.. _PEP 563:
-    https://www.python.org/dev/peps/pep-0563
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
 '''
 
 # ....................{ CACHERS                           }....................
@@ -178,15 +173,25 @@ def coerce_hint_pep(
     # Original instance of this hint *PRIOR* to being subsequently coerced.
     hint_old = hint
 
+    # ..................{ PEP 484                           }..................
+    # If this hint is the PEP 484-compliant "None" singleton, coerce this hint
+    # into the type of that singleton. This is explicitly required by PEP 484
+    # *and* implicitly required by Python convention, where the bodies of
+    # callables annotated as returning "None" are understood to contain *no*
+    # explicit "return" statements and thus implicitly return "None".
+    if hint is None:
+        hint = NoneType
+    # Else, this hint is *NOT* the PEP 484-compliant "None" singleton.
+    #
     # ..................{ MYPY                              }..................
     # If...
-    if (
+    elif (
         # This hint annotates the return for the decorated callable *AND*...
         pith_name == 'return' and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
         func.__name__ in METHOD_NAMES_BINARY_DUNDER
     ):
-        # Expand this hint to accept both booleans *AND* the "NotImplemented"
+        # Expand this hint to accept both this hint *AND* the "NotImplemented"
         # singleton as valid returns from this method. Why? Because this
         # expansion has been codified by mypy and is thus a de-facto typing
         # standard, albeit one currently lacking formal PEP standardization.
@@ -231,16 +236,18 @@ def coerce_hint_pep(
         # this edge case by effectively performing the same type expansion as
         # performed here. *applause*
         hint = Union[hint, NotImplementedType]
+    # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
+    #
     # ..................{ NON-PEP                           }..................
-    # If this hint is a PEP-noncompliant tuple union...
+    # If this hint is a PEP-noncompliant tuple union, coerce this union into
+    # the equivalent PEP-compliant union subscripted by the same child hints.
+    # By definition, PEP-compliant unions are a superset of PEP-noncompliant
+    # tuple unions and thus accept all child hints accepted by the latter.
     elif isinstance(hint, tuple):
-        # Coerce this union into the equivalent PEP-compliant union subscripted
-        # by the same child hints. By definition, PEP-compliant unions are a
-        # strict superset of PEP-noncompliant tuple unions and thus accept all
-        # child hints accepted by the latter.
         hint = Union.__getitem__(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
+    # ..................{ COERCION                          }..................
     # If this hint was coerced above into a different instance, replace the
     # original instance of this hint in the annotations dunder dictionary
     # attached to the decorated callable with the new instance of this hint.

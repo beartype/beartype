@@ -10,7 +10,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
+# import typing
 from abc import abstractmethod
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from typing import Any, Dict
