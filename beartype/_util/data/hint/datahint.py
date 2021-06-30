@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-agnostic type hint globals** (i.e., constant global variables
-concerning PEP-agnostic type hints).
+Project-wide **PEP-agnostic type hint globals** (i.e., global constants
+describing PEP-agnostic type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

@@ -7,16 +7,12 @@
 **Beartype decorator PEP 484-compliant type hint unit tests.**
 
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
-to **PEP 484-compliant type hints** (i.e., :mod:`beartype`-agnostic annotations
-specifically compliant with `PEP 484`_).
+to :pep:`484`-compliant type hints.
 
 See Also
 ----------
-:mod:`beartype_test.a00_unit.decor.code.test_code_pep`
+:mod:`beartype_test.a00_unit.decor.code.test_codepep`
     Submodule generically unit testing PEP-compliant type hints.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -32,10 +28,7 @@ from typing import NoReturn, Union, no_type_check
 def test_pep484_decor_no_type_check() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
-    `PEP 484`_-compliant :attr:`typing.no_type_check` decorator.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+    :pep:`484`-compliant :attr:`typing.no_type_check` decorator.
     '''
 
     # Defer heavyweight imports.
@@ -58,11 +51,8 @@ def test_pep484_decor_no_type_check() -> None:
 def test_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
-    `PEP 484`_-compliant :attr:`typing.NoReturn` type hint, which is
+    :pep:`484`-compliant :attr:`typing.NoReturn` type hint, which is
     contextually permissible *only* as an unsubscripted return annotation.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
     '''
 
     # Defer heavyweight imports.

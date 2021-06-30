@@ -7,7 +7,7 @@
 Project-wide **mapping utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.data.utildatadict` submodule.
+:mod:`beartype._util.kind.utilkinddict` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -152,13 +152,13 @@ Dictionary produced by merging the :data:`FROM_THE_BROW_OF_HIAWATHA`,
 def test_die_if_mappings_two_items_collide() -> None:
     '''
     Test the
-    :func:`beartype._util.data.utildatadict.die_if_mappings_two_items_collide`
+    :func:`beartype._util.kind.utilkinddict.die_if_mappings_two_items_collide`
     function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
-    from beartype._util.data.utildatadict import (
+    from beartype._util.kind.utilkinddict import (
         die_if_mappings_two_items_collide)
 
     # Assert this validator raises the expected exception when passed two
@@ -181,11 +181,11 @@ def test_die_if_mappings_two_items_collide() -> None:
 # ....................{ TESTS                             }....................
 def test_update_mapping() -> None:
     '''
-    Test the :func:`beartype._util.data.utildatadict.update_mapping` function.
+    Test the :func:`beartype._util.kind.utilkinddict.update_mapping` function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.data.utildatadict import update_mapping
+    from beartype._util.kind.utilkinddict import update_mapping
 
     # Shallow copies of arbitrary mappings to be modified below.
     farewell_o_hiawatha = FAREWELL_O_HIAWATHA.copy()
@@ -210,12 +210,12 @@ def test_update_mapping() -> None:
 # ....................{ TESTS                             }....................
 def test_merge_mappings_two() -> None:
     '''
-    Test the :func:`beartype._util.data.utildatadict.merge_mappings` function
+    Test the :func:`beartype._util.kind.utilkinddict.merge_mappings` function
     passed exactly two mappings.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.data.utildatadict import merge_mappings
+    from beartype._util.kind.utilkinddict import merge_mappings
 
     # Assert this function merges two empty mappings into a new empty mapping.
     assert merge_mappings({}, {}) == {}
@@ -242,12 +242,12 @@ def test_merge_mappings_two() -> None:
 
 def test_merge_mappings_three() -> None:
     '''
-    Test the :func:`beartype._util.data.utildatadict.merge_mappings` function
+    Test the :func:`beartype._util.kind.utilkinddict.merge_mappings` function
     passed exactly three mappings.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.data.utildatadict import merge_mappings
+    from beartype._util.kind.utilkinddict import merge_mappings
 
     # Assert this function merges three empty mappings into a new empty
     # mapping.

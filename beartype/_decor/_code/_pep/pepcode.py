@@ -37,7 +37,7 @@ from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
 )
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
-from beartype._util.data.utildatadict import update_mapping
+from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_obj)
 from beartype._util.text.utiltextlabel import (

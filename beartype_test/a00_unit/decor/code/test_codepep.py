@@ -25,7 +25,6 @@ See Also
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pyterror import raises_uncached
-from typing import Any, Union
 
 # ....................{ TESTS ~ pass : param : kind       }....................
 def test_pep_param_kind_positional_or_keyword_pass() -> None:
@@ -40,6 +39,7 @@ def test_pep_param_kind_positional_or_keyword_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from typing import Union
 
     # Decorated callable to be exercised.
     @beartype
@@ -70,6 +70,7 @@ def test_pep_param_kind_variadic_and_keyword_only_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from typing import Union
 
     # Decorated callable to be exercised.
     @beartype
@@ -115,6 +116,7 @@ def test_pep_param_kind_variadic_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintPepException
+    from typing import Union
 
     # Decorated callable to be exercised.
     @beartype

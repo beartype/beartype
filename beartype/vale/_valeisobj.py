@@ -21,7 +21,7 @@ from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._valeisabc import _IsABC
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.utildatadict import update_mapping
+from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,

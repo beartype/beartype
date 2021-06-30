@@ -368,7 +368,7 @@ def beartype(func: T) -> T:
     release_object_typed(func_data)
 
     # Return this wrapper.
-    return func_wrapper
+    return func_wrapper  # type: ignore[return-value]
 
 # ....................{ OPTIMIZATION                      }....................
 # If the active Python interpreter is either...

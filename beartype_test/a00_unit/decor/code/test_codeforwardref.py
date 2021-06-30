@@ -21,7 +21,7 @@ from beartype_test.util.pyterror import raises_uncached
 from typing import Union
 
 # ....................{ TESTS ~ pass                      }....................
-def test_hint_ref_data_pass() -> None:
+def test_hint_forwardref_data_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
     respect to both PEP-compliant and -noncompliant forward references by
@@ -51,7 +51,7 @@ def test_hint_ref_data_pass() -> None:
     assert the_woods_are_lovely(KNOW) == KNOW
 
 
-def test_hint_ref_param_pass() -> None:
+def test_hint_forwardref_param_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     callable passed a parameter annotated with a PEP-noncompliant
@@ -81,7 +81,7 @@ def test_hint_ref_param_pass() -> None:
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
 
 # ....................{ TESTS ~ fail                      }....................
-def test_hint_ref_decor_fail() -> None:
+def test_hint_forwardref_decor_fail() -> None:
     '''
     Test unsuccessful decorator-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -124,7 +124,7 @@ def test_hint_ref_decor_fail() -> None:
             return i_hear_it
 
 
-def test_hint_ref_call_fail() -> None:
+def test_hint_forwardref_call_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -190,7 +190,7 @@ def test_hint_ref_call_fail() -> None:
         somewhere_ages('I doubted if I should ever come back.')
 
 
-def test_hint_ref_call_param_fail() -> None:
+def test_hint_forwardref_call_param_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator for callables passed parameters annotated with PEP-noncompliant

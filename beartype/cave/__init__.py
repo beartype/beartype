@@ -122,6 +122,7 @@ from beartype._cave._cavefast import (
     MethodUnboundInstanceNondunderCType,
     ModuleType,
     NoneType,
+    NotImplementedType,
     NumberRealType,
     NumberType,
     SizedType,

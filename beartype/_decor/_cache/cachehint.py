@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: The coercion function(s) defined below should also coerce PEP
 #544-compatible protocols *NOT* decorated by @typing.runtime_checkable to be
 #decorated by that decorator, as such protocols are unusable at runtime. Yes,
-#we should always try something *REALY* sneaky and clever.
+#we should always try something *REALLY* sneaky and clever.
 #
 #Specifically, rather than accept "typing" nonsense verbatim, we could instead:
 #* Detect PEP 544-compatible protocol type hints *NOT* decorated by
@@ -49,7 +49,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                           }....................
+from beartype._cave._cavefast import NotImplementedType
 from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from collections.abc import Callable
 from typing import Any, Dict, Union
 
@@ -170,18 +172,82 @@ def coerce_hint_pep(
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
+    assert callable(func), f'{repr(func)} not callable.'
+    assert isinstance(pith_name, str), f'{pith_name} not string.'
 
-    # If this hint is a PEP-noncompliant tuple union, coerce this union into
-    # the equivalent PEP-compliant union subscripted by the same child hints.
-    # By definition, PEP-compliant unions are a strict superset of
-    # PEP-noncompliant tuple unions and thus accept all child hints accepted by
-    # the latter.
-    if isinstance(hint, tuple):
-        assert callable(func), f'{repr(func)} not callable.'
-        assert isinstance(pith_name, str), f'{pith_name} not string.'
+    # Original instance of this hint *PRIOR* to being subsequently coerced.
+    hint_old = hint
 
-        hint = func.__annotations__[pith_name] = Union.__getitem__(hint)
+    # ..................{ MYPY                              }..................
+    # If...
+    if (
+        # This hint is the builtin "bool" type *AND*...
+        hint is bool and
+        # This hint annotates the return for the decorated callable *AND*...
+        pith_name == 'return' and
+        # The decorated callable is a binary dunder method (e.g., __eq__())...
+        func.__name__ in METHOD_NAMES_BINARY_DUNDER
+    ):
+        # Expand this hint to accept both booleans *AND* the "NotImplemented"
+        # singleton as valid returns from this method. Why? Because this
+        # expansion has been codified by mypy and is thus a de-facto typing
+        # standard, albeit one currently lacking formal PEP standardization.
+        #
+        # Consider this representative binary dunder method:
+        #     class MuhClass:
+        #         @beartype
+        #         def __eq__(self, other: object) -> bool:
+        #             if isinstance(other, TheCloud):
+        #                 return self is other
+        #             return NotImplemented
+        #
+        # Technically, that method *COULD* be retyped to return:
+        #         def __eq__(self, other: object) -> Union[
+        #             bool, type(NotImplemented)]:
+        #
+        # Pragmatically, mypy and other static type checkers do *NOT* currently
+        # support the type() builtin in a sane manner and thus raise errors
+        # given the otherwise valid logic above. This means that the following
+        # equivalent approach also yields the same errors:
+        #     NotImplementedType = type(NotImplemented)
+        #     class MuhClass:
+        #         @beartype
+        #         def __eq__(self, other: object) -> Union[
+        #             bool, NotImplementedType]:
+        #             if isinstance(other, TheCloud):
+        #                 return self is other
+        #             return NotImplemented
+        #
+        # Of course, the latter approach can be manually rectified by
+        # explicitly typing that type as "Any": e.g.,
+        #     NotImplementedType: Any = type(NotImplemented)
+        #
+        # Of course, expecting users to be aware of these ludicrous sorts of
+        # mypy idiosyncrasies merely to annotate an otherwise normal binary
+        # dunder method is one expectation too far.
+        #
+        # Ideally, official CPython developers would resolve this by declaring
+        # a new "types.NotImplementedType" type global resembling the existing
+        # "types.NoneType" type global. As that has yet to happen, mypy has
+        # instead taken the surprisingly sensible course of silently ignoring
+        # this edge case by effectively performing the same type expansion as
+        # performed here. *applause*
+        hint = Union[bool, NotImplementedType]
+    # ..................{ NON-PEP                           }..................
+    # If this hint is a PEP-noncompliant tuple union...
+    elif isinstance(hint, tuple):
+        # Coerce this union into the equivalent PEP-compliant union subscripted
+        # by the same child hints. By definition, PEP-compliant unions are a
+        # strict superset of PEP-noncompliant tuple unions and thus accept all
+        # child hints accepted by the latter.
+        hint = Union.__getitem__(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
+
+    # If this hint was coerced above into a different instance, replace the
+    # original instance of this hint in the annotations dunder dictionary
+    # attached to the decorated callable with the new instance of this hint.
+    if hint_old is not hint:
+        func.__annotations__[pith_name] = hint
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.

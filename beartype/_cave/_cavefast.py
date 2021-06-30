@@ -142,6 +142,26 @@ Type of all objects regardless of type.
 '''
 
 
+ClassType = type
+'''
+Type of all types.
+'''
+
+
+FileType = _IOBase
+'''
+Abstract base class of all **file-like objects** (i.e., objects implementing
+the standard ``read()``, ``write()``, and ``close()`` methods).
+'''
+
+
+ModuleType = _ModuleType
+'''
+Type of all **C- and Python-based modules** (i.e., importable files implemented
+either as C extensions or in pure Python).
+'''
+
+# ....................{ TYPES ~ core : singleton          }....................
 NoneType: Any = type(None)
 '''
 Type of the ``None`` singleton.
@@ -162,23 +182,9 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
-ClassType = type
+NotImplementedType: Any = type(NotImplemented)
 '''
-Type of all types.
-'''
-
-# ....................{ TYPES ~ py                        }....................
-FileType = _IOBase
-'''
-Abstract base class of all **file-like objects** (i.e., objects implementing
-the standard ``read()``, ``write()``, and ``close()`` methods).
-'''
-
-
-ModuleType = _ModuleType
-'''
-Type of all **C- and Python-based modules** (i.e., importable files implemented
-either as C extensions or in pure Python).
+Type of the ``NotImplemented`` singleton.
 '''
 
 # ....................{ TYPES ~ call                      }....................
@@ -841,7 +847,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ hint                      }....................
-# Define this type is either...
+# Define this type as either...
 HintGenericSubscriptedType: Any = (
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 585, this type;

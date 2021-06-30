@@ -579,7 +579,7 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     **Beartype mapping utility exception.**
 
     This exception is raised by public functions of the private
-    :mod:`beartype._util.utildata.utildatadict` submodule.
+    :mod:`beartype._util.kind.utilkinddict` submodule.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
