@@ -300,6 +300,16 @@ get_hint_pep_typevars.__doc__ = '''
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Validate that the value of the "pep_sign" parameter passed to the
 #PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
+#FIXME: Refactor as follows:
+#* Shift the majority of this function's body into a new
+#  get_hint_pep_sign_or_none() getter.
+#* Refactor the following functions to mostly defer to that new
+#  get_hint_pep_sign_or_none() function:
+#  * This function.
+#  * The is_hint_pep() function.
+#* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
+#  dramatically simpler approach, we no longer require the excessive glut of
+#  PEP-specific testers we previously required.
 @callable_cached
 def get_hint_pep_sign(hint: Any) -> HintSign:
     '''
