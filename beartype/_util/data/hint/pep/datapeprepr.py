@@ -174,7 +174,7 @@ hints, often by equivalent hints standardized under more recent PEPs).
 
 
 # Initialized with automated inspection below in the _init() function.
-HINT_PEP484_BARE_REPRS_DEPRECATED: FrozenSet[str] = None  # type: ignore[assignment]
+HINT_PEP484_BARE_REPRS_DEPRECATED: FrozenSet[str] = set()  # type: ignore[assignment]
 '''
 Frozen set of all **bare deprecated** :pep:`484`-compliant **type hint
 representations** (i.e., machine-readable strings returned by the :func:`repr`
@@ -254,6 +254,7 @@ def _init() -> None:
     # Permit redefinition of these globals below.
     global \
         HINT_BARE_REPRS_DEPRECATED, \
+        HINT_PEP484_BARE_REPRS_DEPRECATED, \
         HINT_REPRS_IGNORABLE
 
     # ..................{ HINTS                             }..................
@@ -263,7 +264,7 @@ def _init() -> None:
     # ..................{ HINTS ~ deprecated                }..................
     # Set of the unqualified names of all deprecated PEP 484-compliant typing
     # attributes.
-    _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED: Set[str] = {}
+    _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED: Set[str] = set()
 
     # If the active Python interpreter targets Python >= 3.9 and thus
     # supports PEP 585, add the names of all deprecated PEP 484-compliant
@@ -427,11 +428,10 @@ def _init() -> None:
                 f'{typing_module_name}.{hint_type_basename}'] = hint_sign
 
     # ..................{ SYNTHESIS                         }..................
-    # Synthesize the frozen set of all bare deprecated PEP-compliant type hint
-    # representations from lower-level PEP-specific sets.
-    HINT_BARE_REPRS_DEPRECATED = frozenset(HINT_PEP484_BARE_REPRS_DEPRECATED)
-
-    # Freeze the set of all shallowly ignorable type hint representations.
+    # Freeze all relevant global sets for safety.
+    HINT_PEP484_BARE_REPRS_DEPRECATED = frozenset(
+        HINT_PEP484_BARE_REPRS_DEPRECATED)
+    HINT_BARE_REPRS_DEPRECATED = HINT_PEP484_BARE_REPRS_DEPRECATED
     HINT_REPRS_IGNORABLE = frozenset(HINT_REPRS_IGNORABLE)
 
 # Initialize this submodule.

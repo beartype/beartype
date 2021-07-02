@@ -53,10 +53,7 @@ def test_codemain() -> None:
         # BeartypeDecorHintPepDeprecatedWarning,
     )
     from beartype._util.utilobject import is_object_context_manager
-    from beartype._util.data.hint.pep.datapep import (
-        HINT_PEP_ATTRS_DEPRECATED)
     from beartype_test.a00_unit.data.hint.data_hintmeta import (
-        PepHintMetadata,
         PepHintPithSatisfiedMetadata,
         PepHintPithUnsatisfiedMetadata,
     )
@@ -91,28 +88,30 @@ def test_codemain() -> None:
             # Decorated callable declared below.
             func_typed = None
 
-            # If this is a deprecated PEP-compliant type hint, declare this
-            # decorated callable under a context manager asserting this
-            # declaration to emit non-fatal deprecation warnings.
-            if (
-                isinstance(hint_meta, PepHintMetadata) and
-                hint_meta.pep_sign in HINT_PEP_ATTRS_DEPRECATED
-            ):
-                #FIXME: For unknown and probably uninteresting reasons, the
-                #pytest.warns() context manager appears to be broken on our
-                #local machine. We have no recourse but to unconditionally
-                #ignore this warning at the module level. So much rage!
-                #FIXME: It's likely this has something to do with the fact that
-                #Python filters deprecation warnings by default. This is almost
-                #certainly a pytest issue. Since this has become fairly
-                #unctuous, we should probably submit a pytest issue report.
-                # with pytest.warns(BeartypeDecorHintPepDeprecatedWarning):
-                #     func_typed = beartype(func_untyped)
-                func_typed = beartype(func_untyped)
-            # Else, this is *NOT* a deprecated PEP-compliant type hint. In this
-            # case, declare this decorated callable as is.
-            else:
-                func_typed = beartype(func_untyped)
+            #FIXME: For unknown and probably uninteresting reasons, the
+            #pytest.warns() context manager appears to be broken on our
+            #local machine. We have no recourse but to unconditionally
+            #ignore this warning at the module level. So much rage!
+            #FIXME: It's likely this has something to do with the fact that
+            #Python filters deprecation warnings by default. This is almost
+            #certainly a pytest issue. Since this has become fairly
+            #unctuous, we should probably submit a pytest issue report.
+            # # If this is a deprecated PEP-compliant type hint, declare this
+            # # decorated callable under a context manager asserting this
+            # # declaration to emit non-fatal deprecation warnings.
+            # if (
+            #     isinstance(hint_meta, PepHintMetadata) and
+            #     hint_meta.pep_sign in HINT_PEP_ATTRS_DEPRECATED
+            # ):
+            #     with pytest.warns(BeartypeDecorHintPepDeprecatedWarning):
+            #         func_typed = beartype(func_untyped)
+            # # Else, this is *NOT* a deprecated PEP-compliant type hint. In this
+            # # case, declare this decorated callable as is.
+            # else:
+            #     func_typed = beartype(func_untyped)
+
+            # @beartype-generated wrapper function type-checking this callable.
+            func_typed = beartype(func_untyped)
 
             # For each pith satisfying this hint...
             for pith_satisfied_meta in hint_meta.piths_satisfied_meta:

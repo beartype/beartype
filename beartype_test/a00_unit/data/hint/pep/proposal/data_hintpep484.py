@@ -1657,10 +1657,6 @@ def add_data(data_module: 'ModuleType') -> None:
     if IS_PYTHON_AT_LEAST_3_7:
         data_module.HINTS_PEP_META.extend((
             # ..............{ UNSUBSCRIPTED                     }..............
-            # See the
-            # "beartype._util.data.hint.pep.datapep.TYPING_ATTR_TO_TYPE_ORIGIN"
-            # dictionary for detailed discussion.
-
             # Unsubscripted "Hashable" attribute.
             PepHintMetadata(
                 hint=Hashable,

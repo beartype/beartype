@@ -312,10 +312,10 @@ def test_die_unless_hint_pep_sign_supported() -> None:
         BeartypeDecorHintPepException,
         BeartypeDecorHintPepUnsupportedException,
     )
+    from beartype._util.data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_SUPPORTED)
     from beartype._util.hint.pep.utilhintpeptest import (
         die_if_hint_pep_sign_unsupported)
-    from beartype._util.data.hint.pep.datapep import (
-        HINT_SIGNS_SUPPORTED)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_HASHABLE)
