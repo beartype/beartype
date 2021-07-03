@@ -17,9 +17,9 @@ from beartype._cave._cavefast import (
     NoneType,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
     HINTS_PEP_HASHABLE,
+    HINTS_PEP_IGNORABLE_SHALLOW,
     HINTS_PEP_IGNORABLE_DEEP,
 )
 
@@ -161,8 +161,8 @@ well-known edge cases.
 
 # ....................{ NOT ~ tuples                      }....................
 HINTS_IGNORABLE = (
-    # Shallowly ignorable type hints.
-    HINTS_IGNORABLE_SHALLOW |
+    # Shallowly ignorable PEP-compliant type hints.
+    HINTS_PEP_IGNORABLE_SHALLOW |
     # Deeply ignorable PEP-compliant type hints.
     HINTS_PEP_IGNORABLE_DEEP
 )

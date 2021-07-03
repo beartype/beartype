@@ -47,13 +47,13 @@ class NonPepHintMetadata(object):
     is_supported : bool
         ``True`` only if this hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to ``True``.
-    piths_satisfied_meta : Tuple[PepHintPithSatisfiedMetadata]
-        Tuple of zero or more :class:`PepHintPithSatisfiedMetadata` instances,
+    piths_satisfied_meta : Tuple[HintPithSatisfiedMetadata]
+        Tuple of zero or more :class:`HintPithSatisfiedMetadata` instances,
         each describing an object satisfying this hint when either passed as a
         parameter *or* returned as a value annotated by this hint. Defaults to
         the empty tuple.
-    piths_unsatisfied_meta : Tuple[PepHintPithUnsatisfiedMetadata]
-        Tuple of zero or more :class:`PepHintPithUnsatisfiedMetadata`
+    piths_unsatisfied_meta : Tuple[HintPithUnsatisfiedMetadata]
+        Tuple of zero or more :class:`HintPithUnsatisfiedMetadata`
         instances, each describing an object *not* satisfying this hint when
         either passed as a parameter *or* returned as a value annotated by this
         hint. Defaults to the empty tuple.
@@ -69,8 +69,8 @@ class NonPepHintMetadata(object):
         # Optional parameters.
         is_ignorable: bool = False,
         is_supported: bool = True,
-        piths_satisfied_meta: 'Tuple[PepHintPithSatisfiedMetadata]' = (),
-        piths_unsatisfied_meta: 'Tuple[PepHintPithUnsatisfiedMetadata]' = (),
+        piths_satisfied_meta: 'Tuple[HintPithSatisfiedMetadata]' = (),
+        piths_unsatisfied_meta: 'Tuple[HintPithUnsatisfiedMetadata]' = (),
     ) -> None:
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
@@ -79,17 +79,17 @@ class NonPepHintMetadata(object):
         assert isinstance(piths_unsatisfied_meta, tuple), (
             f'{repr(piths_unsatisfied_meta)} not tuple.')
         assert all(
-            isinstance(pith_satisfied_meta, PepHintPithSatisfiedMetadata)
+            isinstance(pith_satisfied_meta, HintPithSatisfiedMetadata)
             for pith_satisfied_meta in piths_satisfied_meta
         ), (
             f'{repr(piths_satisfied_meta)} not tuple of '
-            f'"PepHintPithSatisfiedMetadata" instances.')
+            f'"HintPithSatisfiedMetadata" instances.')
         assert all(
-            isinstance(pith_unsatisfied_meta, PepHintPithUnsatisfiedMetadata)
+            isinstance(pith_unsatisfied_meta, HintPithUnsatisfiedMetadata)
             for pith_unsatisfied_meta in piths_unsatisfied_meta
         ), (
             f'{repr(piths_unsatisfied_meta)} not tuple of '
-            f'"PepHintPithUnsatisfiedMetadata" instances.')
+            f'"HintPithUnsatisfiedMetadata" instances.')
 
         # Classify all passed parameters.
         self.hint = hint
@@ -307,7 +307,7 @@ class PepHintMetadata(NonPepHintMetadata):
         ))
 
 # ....................{ CLASSES ~ hint : [un]satisfied    }....................
-class PepHintPithSatisfiedMetadata(object):
+class HintPithSatisfiedMetadata(object):
     '''
     **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
     variables describe an object satisfying a type hint when either passed as a
@@ -370,7 +370,7 @@ class PepHintPithSatisfiedMetadata(object):
         ))
 
 
-class PepHintPithUnsatisfiedMetadata(object):
+class HintPithUnsatisfiedMetadata(object):
     '''
     **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
     variables describe an object *not* satisfying a type hint when either

@@ -187,7 +187,13 @@ subscriptable classes).
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINT_REPRS_IGNORABLE = {
+HINT_REPRS_IGNORABLE_SHALLOW = {
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize changes to this set with the corresponding
+    # testing-specific set
+    # "beartype_test.a00_unit.data.hint.pep.data_hintpep.HINTS_PEP_IGNORABLE_SHALLOW".
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # ..................{ NON-PEP                           }..................
     # The PEP-noncompliant builtin "object" type is the transitive superclass
     # of all classes, parameters and return values annotated as "object"
@@ -201,9 +207,9 @@ HINT_REPRS_IGNORABLE = {
     # semantically synonymous with the ignorable PEP-noncompliant
     # "beartype.cave.AnyType" and hence "object" types. Since PEP
     # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-    # singleton including "typing.Generic" semantically expands to that
-    # singelton subscripted by an implicit "Any" argument, "Generic"
-    # semantically expands to the implicit "Generic[Any]" singleton.
+    #     singleton including "typing.Generic" semantically expands to that
+    #     singelton subscripted by an implicit "Any" argument, "Generic"
+    #     semantically expands to the implicit "Generic[Any]" singleton.
     "<class 'typing.Generic'>",
     "<class 'typing_extensions.Generic'>",
 
@@ -255,7 +261,7 @@ def _init() -> None:
     global \
         HINT_BARE_REPRS_DEPRECATED, \
         HINT_PEP484_BARE_REPRS_DEPRECATED, \
-        HINT_REPRS_IGNORABLE
+        HINT_REPRS_IGNORABLE_SHALLOW
 
     # ..................{ HINTS                             }..................
     # Length of the ignorable substring prefixing the name of each sign.
@@ -408,7 +414,7 @@ def _init() -> None:
         # For each shallowly ignorable typing attribute name...
         for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
             # Add that attribute relative to this module to this set.
-            HINT_REPRS_IGNORABLE.add(
+            HINT_REPRS_IGNORABLE_SHALLOW.add(
                 f'{typing_module_name}.{typing_attr_name}')
 
         # For the name of each sign and that sign...
@@ -432,7 +438,7 @@ def _init() -> None:
     HINT_PEP484_BARE_REPRS_DEPRECATED = frozenset(
         HINT_PEP484_BARE_REPRS_DEPRECATED)
     HINT_BARE_REPRS_DEPRECATED = HINT_PEP484_BARE_REPRS_DEPRECATED
-    HINT_REPRS_IGNORABLE = frozenset(HINT_REPRS_IGNORABLE)
+    HINT_REPRS_IGNORABLE_SHALLOW = frozenset(HINT_REPRS_IGNORABLE_SHALLOW)
 
 # Initialize this submodule.
 _init()

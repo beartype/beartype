@@ -15,8 +15,8 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 from enum import Enum
 
@@ -64,15 +64,15 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # "None" singleton defined by the same syntax.
-                PepHintPithSatisfiedMetadata(None),
+                HintPithSatisfiedMetadata(None),
                 # "None" singleton defined by different syntax but semantically
                 # equal to the "None" singleton.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     {}.get('Looting Uncouth, ruddy Bȴood and')),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Worthily untrust-',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected type.
@@ -88,14 +88,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Boolean constant defined by the same syntax.
-                PepHintPithSatisfiedMetadata(True),
+                HintPithSatisfiedMetadata(True),
                 # Boolean constant defined by different syntax but semantically
                 # equal to the same boolean.
-                PepHintPithSatisfiedMetadata(data_module is data_module),
+                HintPithSatisfiedMetadata(data_module is data_module),
             ),
             piths_unsatisfied_meta=(
                 # Boolean constant *NOT* equal to the same boolean.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=False,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
@@ -103,7 +103,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Integer constant semantically equal to the same boolean but
                 # of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=1,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected type.
@@ -118,14 +118,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Integer constant defined by the same syntax.
-                PepHintPithSatisfiedMetadata(0x2a),
+                HintPithSatisfiedMetadata(0x2a),
                 # Integer constant defined by different syntax but semantically
                 # equal to the same integer.
-                PepHintPithSatisfiedMetadata(42),
+                HintPithSatisfiedMetadata(42),
             ),
             piths_unsatisfied_meta=(
                 # Integer constant *NOT* equal to the same integer.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=41,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
@@ -133,7 +133,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Floating-point constant semantically equal to the same
                 # integer but of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=42.0,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected type.
@@ -149,18 +149,18 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Byte string constant defined by the same syntax.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     b"Worthy, 'vain truthiness of (very invective-elected)"),
                 # Byte string constant defined by different syntax but
                 # semantically equal to the same byte string.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     b"Worthy, 'vain truthiness of "
                     b"(very invective-elected)"
                 ),
             ),
             piths_unsatisfied_meta=(
                 # Byte string constant *NOT* equal to the same byte string.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b"Thanes within",
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
@@ -168,7 +168,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Unicode string constant semantically equal to the same byte
                 # string but of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(
                         "Worthy, 'vain truthiness of "
                         "(very invective-elected)"
@@ -186,17 +186,17 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Unicode string constant defined by the same syntax.
-                PepHintPithSatisfiedMetadata('Thanklessly classed, nominal'),
+                HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
                 # Unicode string constant defined by different syntax but
                 # semantically equal to the same Unicode string.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'Thanklessly classed, '
                     'nominal'
                 ),
             ),
             piths_unsatisfied_meta=(
                 # Unicode string constant *NOT* equal to the same string.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Mass and',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
@@ -204,7 +204,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Byte string constant semantically equal to the same Unicode
                 # string but of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Thanklessly classed, nominal',
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected type.
@@ -220,16 +220,16 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Enumeration member accessed by the same syntax.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF),
                 # Enumeration member accessed by different syntax but
                 # semantically equal to the same enumeration member.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich(0)),
             ),
             piths_unsatisfied_meta=(
                 # Enumeration member *NOT* equal to the same member.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=_MasterlessDecreeVenomlessWhich.NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
@@ -238,7 +238,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Integer constant semantically equal to the same index of this
                 # enumeration member but of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=0,
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected type.
@@ -259,7 +259,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # List of Unicode string constants semantically equal to the
                 # same Unicode string.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'ç‐omically gnomical whitebellied burden’s empathy of',
                     (
                         'ç‐omically gnomical '
@@ -271,7 +271,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # List of Unicode string constants *NOT* equal to the same
                 # Unicode string.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=[
                         'Earpiece‐piecemealed, mealy straw headpiece‐',
                         'Earned peace appeasement easements',
@@ -281,7 +281,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(r'\bgnomical\b',),
                 ),
                 # List of byte string constants.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=[
                         b'Than',
                         b"Thankful strumpet's",
@@ -307,20 +307,20 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
                 # Literal objects subscripting this literal union.
-                PepHintPithSatisfiedMetadata(None),
-                PepHintPithSatisfiedMetadata(True),
-                PepHintPithSatisfiedMetadata(0x2a),
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(None),
+                HintPithSatisfiedMetadata(True),
+                HintPithSatisfiedMetadata(0x2a),
+                HintPithSatisfiedMetadata(
                     b"Worthy, 'vain truthiness of (very invective-elected)"),
-                PepHintPithSatisfiedMetadata('Thanklessly classed, nominal'),
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
+                HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF),
             ),
             piths_unsatisfied_meta=(
                 # Arbitrary object of the same type as one or more literal
                 # objects subscripting this literal union but unequal to any
                 # objects subscripting this literal union.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Empirism‐Tṙumpeted,',
                     # Match that the exception message raised for this object
                     # embeds the representation of all expected literals.
@@ -337,7 +337,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # subscripting this literal union.
                 # Integer constant semantically equal to the same index of this
                 # enumeration member but of a differing type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=42.0,
                     # Match that the exception message raised for this object
                     # embeds the representation of all expected types.

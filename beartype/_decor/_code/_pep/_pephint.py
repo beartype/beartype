@@ -86,11 +86,12 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.data.hint.datahint import HINTS_IGNORABLE_SHALLOW
 from beartype._util.data.hint.pep.datapepattr import (
     HINT_PEP586_ATTR_LITERAL,
     HINT_PEP593_ATTR_ANNOTATED,
 )
+from beartype._util.data.hint.pep.datapeprepr import (
+    HINT_REPRS_IGNORABLE_SHALLOW)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
@@ -141,7 +142,7 @@ from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep_subscripted,
     is_hint_pep_tuple_empty,
     is_hint_pep_typing,
-    warn_if_hint_pep_sign_deprecated,
+    warn_if_hint_pep_deprecated,
 )
 from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -857,14 +858,10 @@ def pep_code_check_hint(
                 hint_sign=hint_curr_sign, hint_label=hint_curr_label)
             # Else, this attribute is supported.
 
-            # If this sign and thus this hint is deprecated, emit a non-fatal
-            # warning warning users of this deprecation.
+            # If this hint is deprecated, emit a non-fatal warning.
             # print(f'Testing {hint_curr_label} hint {repr(hint_curr)} for deprecation...')
-            warn_if_hint_pep_sign_deprecated(
-                hint=hint_curr,
-                hint_sign=hint_curr_sign,
-                hint_label=hint_curr_label,
-            )
+            warn_if_hint_pep_deprecated(
+                hint=hint_curr, hint_label=hint_curr_label)
 
             # Tuple of all arguments subscripting this hint if any *OR* the
             # empty tuple otherwise (e.g., if this hint is its own unsubscripted
@@ -1111,13 +1108,12 @@ def pep_code_check_hint(
             # differs from "typing" pseudo-containers, which narrow the current
             # pith expression and thus do benefit from these expressions.
             if hint_curr_sign in HINT_SIGNS_UNION:
-                # Assert this union is subscripted by one or more child hints.
-                # Note this should *ALWAYS* be the case, as:
-                #
+                # Assert this union to be subscripted by one or more child
+                # hints. Note this should *ALWAYS* be the case, as:
                 # * The unsubscripted "typing.Union" object is explicitly
-                #   listed in the "HINTS_IGNORABLE_SHALLOW" set and should thus
-                #   have already been ignored when present.
-                # * The "typing" module explicitly prohibits empty
+                #   listed in the "HINT_REPRS_IGNORABLE_SHALLOW" set and should
+                #   thus have already been ignored when present.
+                # * The "typing" module explicitly prohibits empty union
                 #   subscription: e.g.,
                 #       >>> typing.Union[]
                 #       SyntaxError: invalid syntax
@@ -1127,7 +1123,7 @@ def pep_code_check_hint(
                     f'{hint_curr_label} {repr(hint_curr)} unsubscripted.')
                 # Else, this union is subscripted by two or more arguments. Why
                 # two rather than one? Because the "typing" module reduces
-                # unions of one argument to that argument: e.g.,
+                # unions of one argument to simply that argument: e.g.,
                 #     >>> import typing
                 #     >>> typing.Union[int]
                 #     int
@@ -1156,7 +1152,7 @@ def pep_code_check_hint(
                     # have already been ignored after a call to the
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
-                    assert hint_child not in HINTS_IGNORABLE_SHALLOW, (
+                    assert repr(hint) not in HINT_REPRS_IGNORABLE_SHALLOW, (
                         f'{hint_curr_label} {repr(hint_curr)} child '
                         f'{repr(hint_child)} ignorable but not ignored.')
 

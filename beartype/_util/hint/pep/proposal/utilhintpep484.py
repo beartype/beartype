@@ -17,13 +17,13 @@ from beartype.roar import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_TYPE_FORWARDREF,
-    HINT_PEP484_SIGNS_UNION,
 )
 from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
 )
+from beartype._util.data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import is_object_subclass
 from types import FunctionType
@@ -80,11 +80,11 @@ def is_hint_pep484_ignorable_or_none(
       shallowly ignorable child hints is thus the widest possible union,
       which is so wide as to constrain nothing and convey no meaningful
       semantics. Since there exist a countably infinite number of possible
-      :data:`Union` subscriptions by one or more shallowly ignorable type
-      hints, these subscriptions *cannot* be explicitly listed in the
-      :data:`HINTS_IGNORABLE_SHALLOW` frozenset. Instead, these subscriptions
-      are dynamically detected by this tester at runtime and thus referred to
-      as **deeply ignorable type hints.**
+      :data:`Union` subscriptions by one or more ignorable type hints, these
+      subscriptions *cannot* be explicitly listed in the
+      :data:`HINT_REPRS_IGNORABLE_SHALLOW` frozenset. Instead, these
+      subscriptions are dynamically detected by this tester at runtime and thus
+      referred to as **deeply ignorable type hints.**
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this tester is only safely callable
@@ -152,7 +152,7 @@ def is_hint_pep484_ignorable_or_none(
     #
     # If this hint is a union, return true only if one or more child hints of
     # this union are recursively ignorable. See the function docstring.
-    elif hint_sign in HINT_PEP484_SIGNS_UNION:
+    elif hint_sign in HINT_SIGNS_UNION:
         return any(
             is_hint_ignorable(hint_child)
             for hint_child in get_hint_pep_args(hint)

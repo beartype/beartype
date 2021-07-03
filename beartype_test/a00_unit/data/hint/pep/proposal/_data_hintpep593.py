@@ -15,8 +15,8 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 )
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 
 # ....................{ ADDERS                            }....................
@@ -134,12 +134,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'Towards a timely, wines‐enticing gate'),
             ),
             piths_unsatisfied_meta=(
                 # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     'Of languished anger’s sap‐spated rushings',]),
             ),
         ),
@@ -151,12 +151,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'Papally Ľust‐besmirched Merchet laws'),
             ),
             piths_unsatisfied_meta=(
                 # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
             ),
         ),
@@ -167,14 +167,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # List of string constants.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'MINERVA‐unnerving, verve‐sapping enervations',
                     'Of a magik-stoned Shinto rivery',
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Of a Spicily sated',),
+                HintPithUnsatisfiedMetadata('Of a Spicily sated',),
             ),
         ),
 
@@ -186,12 +186,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying this validator.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'To Ɯṙaith‐like‐upwreathed ligaments'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Down-bound',
                     # Match that the exception message raised for this object
                     # embeds the code for this validator's lambda function.
@@ -199,7 +199,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'Is\[.*\blen\(text\) > 30\b.*\]',),
                 ),
                 # String constant violating this validator.
-                PepHintPithUnsatisfiedMetadata('To prayer'),
+                HintPithUnsatisfiedMetadata('To prayer'),
             ),
         ),
 
@@ -212,14 +212,14 @@ def add_data(data_module: 'ModuleType') -> None:
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List of string constants satisfying this validator.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'An‐atomically Island‐stranded, adrift land)',
                     'That You randily are That worm‐tossed crabapple of',
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith="Our Sturm‐sapped disorder's convolution of",
                     # Match that the exception message raised for this object
                     # embeds the code for this validator's lambda function.
@@ -227,7 +227,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'Is\[.*\blen\(text\) > 30\b.*\]',),
                 ),
                 # List of string constants violating this validator.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     'Volubly liable,',
                     'Drang‐rang aloofment –',
                     'ruthlessly',
@@ -244,12 +244,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     '"Into piezo‐electrical, dun‐dappled lights" and...'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Joy.',
                     # Match that the exception message raised...
                     exception_str_match_regexes=(
@@ -261,7 +261,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
                 # String constant violating only the first of these validators.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='"Conduct my friar’s wheel"...',
                     # Match that the exception message raised documents the
                     # exact validator violated by this string.
@@ -279,12 +279,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     '"Into piezo‐electrical, dun‐dappled lights" and...'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Joy.',
                     # Match that the exception message raised...
                     exception_str_match_regexes=(
@@ -296,7 +296,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
                 # String constant violating only the first of these validators.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='"Conduct my friar’s wheel"...',
                     # Match that the exception message raised documents the
                     # exact validator violated by this string.
@@ -313,12 +313,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying these validators.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'Dialectical, eclectic mind‐toys'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Of Cycladic impoverishment, cyclically unreeling',
                     # Match that the exception message raised...
                     exception_str_match_regexes=(
@@ -330,7 +330,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
                 # String constant violating all of these validators.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Stay its course, and',
                     # Match that the exception message raised documents the
                     # first validator violated by this string.
@@ -348,14 +348,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # Exact object subscripting this validator.
-                PepHintPithSatisfiedMetadata(AMPLY_IMPISH),
+                HintPithSatisfiedMetadata(AMPLY_IMPISH),
                 # Object *NOT* subscripting this validator but equal to this
                 # object.
-                PepHintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
+                HintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
             ),
             piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of the expected type.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='May Your coarsest, Incessantly cast‐off jobs of a',
                     # Match that the exception message raised for this object
                     # embeds a string in the expected list.
@@ -364,9 +364,9 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # List of integer constants *NOT* instances of the expected
                 # subtype.
-                PepHintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
+                HintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
                 # List of string constants violating this validator.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     ['Hectic,', 'receptacle‐hybernacling caste so',]),
             ),
         ),
@@ -380,11 +380,11 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # Instance of this class satisfying this validator.
-                PepHintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
+                HintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
             ),
             piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of this class.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='An atoll nuclear broilers newly cleared of',
                     # Match that the exception message raised for this object
                     # embeds the name of the expected attribute.
@@ -392,7 +392,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r"IsAttr\[.*'this_mobbed_triste_of',.*\]",),
                 ),
                 # Instance of this class *NOT* satisfying this validator.
-                PepHintPithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
+                HintPithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
             ),
         ),
     ))

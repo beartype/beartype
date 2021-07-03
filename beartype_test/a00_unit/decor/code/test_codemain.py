@@ -54,8 +54,8 @@ def test_codemain() -> None:
     )
     from beartype._util.utilobject import is_object_context_manager
     from beartype_test.a00_unit.data.hint.data_hintmeta import (
-        PepHintPithSatisfiedMetadata,
-        PepHintPithUnsatisfiedMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
     )
     from beartype_test.a00_unit.data.hint.nonpep.data_hintnonpep import (
         HINTS_NONPEP_META)
@@ -117,7 +117,7 @@ def test_codemain() -> None:
             for pith_satisfied_meta in hint_meta.piths_satisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
                 assert isinstance(
-                    pith_satisfied_meta, PepHintPithSatisfiedMetadata)
+                    pith_satisfied_meta, HintPithSatisfiedMetadata)
                 # print('PEP-testing {!r} against {!r}...'.format(hint_pep, pith_satisfied))
 
                 # Pith to be type-checked against this hint, defined as...
@@ -158,7 +158,7 @@ def test_codemain() -> None:
             for pith_unsatisfied_meta in hint_meta.piths_unsatisfied_meta:
                 # Assert this metadata is an instance of the desired dataclass.
                 assert isinstance(
-                    pith_unsatisfied_meta, PepHintPithUnsatisfiedMetadata)
+                    pith_unsatisfied_meta, HintPithUnsatisfiedMetadata)
 
                 # Assert that iterables of uncompiled regular expression
                 # expected to match and *NOT* match this message are *NOT*

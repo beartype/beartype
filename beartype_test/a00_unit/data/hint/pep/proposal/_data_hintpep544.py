@@ -19,8 +19,8 @@ from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 
 # ....................{ CONSTANTS                         }....................
@@ -117,6 +117,23 @@ def add_data(data_module: 'ModuleType') -> None:
             return 42
 
     # ..................{ SETS                              }..................
+    # Add PEP 544-specific shallowly ignorable test type hints to that set
+    # global.
+    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
+        # Note that ignoring the "typing.Protocol" superclass is vital here.
+        # For unknown and presumably uninteresting reasons, *ALL* possible
+        # objects satisfy this superclass. Ergo, this superclass is synonymous
+        # with the "object" root superclass: e.g.,
+        #     >>> import typing as t
+        #     >>> isinstance(object(), t.Protocol)
+        #     True
+        #     >>> isinstance('wtfbro', t.Protocol)
+        #     True
+        #     >>> isinstance(0x696969, t.Protocol)
+        #     True
+        Protocol,
+    ))
+
     # Add PEP 544-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Parametrizations of the "typing.Protocol" abstract base class (ABC).
@@ -135,14 +152,14 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             piths_satisfied_meta=(
                 # Open read-only file handle to this submodule.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'r'),
                     is_pith_factory=True,
                 ),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'To piously magistrate, dis‐empower, and'),
             ),
         ),
@@ -155,14 +172,14 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # Open read-only binary file handle to this submodule.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'rb'),
                     is_pith_factory=True,
                 ),
             ),
             piths_unsatisfied_meta=(
                 # Bytestring constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     b"Of a thieved imagination's reveries"),
             ),
         ),
@@ -175,14 +192,14 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # Open read-only text file handle to this submodule.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'r'),
                     is_pith_factory=True,
                 ),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Statistician’s anthemed meme athame'),
             ),
         ),
@@ -198,11 +215,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             piths_satisfied_meta=(
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(73),
+                HintPithSatisfiedMetadata(73),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Scour Our flowering'),
+                HintPithUnsatisfiedMetadata('Scour Our flowering'),
             ),
         ),
 
@@ -220,7 +237,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # defined by the "pathlib" module, which is why we instantiate
                 # such an atypical class here. See also:
                 #     https://stackoverflow.com/questions/45522536/where-can-the-bytes-method-be-found
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     pith=lambda: pathlib.Path('/'),
                     is_context_manager=True,
                     is_pith_factory=True,
@@ -228,7 +245,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Fond suburb’s gibbet‐ribbed castrati'),
             ),
         ),
@@ -247,7 +264,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     ),
         #     piths_unsatisfied_meta=(
         #         # String constant.
-        #         PepHintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
+        #         HintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
         #     ),
         # ),
 
@@ -259,11 +276,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(92),
+                HintPithSatisfiedMetadata(92),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Be’yond a'),
+                HintPithUnsatisfiedMetadata('Be’yond a'),
             ),
         ),
 
@@ -276,11 +293,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(29),
+                HintPithSatisfiedMetadata(29),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Self-ishly'),
+                HintPithUnsatisfiedMetadata('Self-ishly'),
             ),
         ),
 
@@ -292,13 +309,13 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # Floating-point number constant.
-                PepHintPithSatisfiedMetadata(25.78),
+                HintPithSatisfiedMetadata(25.78),
                 # Structurally subtyped instance.
-                PepHintPithSatisfiedMetadata(ProtocolSupportsInt()),
+                HintPithSatisfiedMetadata(ProtocolSupportsInt()),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Ungentlemanly self‐righteously, and'),
             ),
         ),
@@ -313,11 +330,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             piths_satisfied_meta=(
                 # Floating-point number constant.
-                PepHintPithSatisfiedMetadata(87.52),
+                HintPithSatisfiedMetadata(87.52),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Our Fathers vowed, indulgently,'),
             ),
         ),
@@ -339,11 +356,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             is_type_typing=False,
             piths_satisfied_meta=(
-                PepHintPithSatisfiedMetadata(protocol_custom_structural),
+                HintPithSatisfiedMetadata(protocol_custom_structural),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('For durance needs.'),
+                HintPithUnsatisfiedMetadata('For durance needs.'),
             ),
         ),
 
@@ -355,11 +372,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             is_type_typing=False,
             piths_satisfied_meta=(
-                PepHintPithSatisfiedMetadata(protocol_custom_structural),
+                HintPithSatisfiedMetadata(protocol_custom_structural),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Machist-'),
+                HintPithUnsatisfiedMetadata('Machist-'),
             ),
         ),
 
@@ -372,11 +389,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             is_typing=False,
             piths_satisfied_meta=(
-                PepHintPithSatisfiedMetadata(protocol_custom_structural),
+                HintPithSatisfiedMetadata(protocol_custom_structural),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Black and white‐bit, bilinear linaements'),
             ),
         ),

@@ -4,32 +4,29 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 484`_**-compliant PEP-noncompliant type hint test data.**
+Project-wide :pep:`484`-compliant PEP-noncompliant type hint test data.
 
-`PEP 484`_-compliant type hints *mostly* indistinguishable from
+:pep:`484`-compliant type hints *mostly* indistinguishable from
 PEP-noncompliant type hints include:
 
 * :func:`typing.NamedTuple`, a high-level factory function deferring to the
-    lower-level :func:`collections.namedtuple` factory function creating and
-    returning :class:`tuple` instances annotated by PEP-compliant type hints.
+  lower-level :func:`collections.namedtuple` factory function creating and
+  returning :class:`tuple` instances annotated by PEP-compliant type hints.
 * :func:`typing.TypedDict`, a high-level factory function creating and
-    returning :class:`dict` instances annotated by PEP-compliant type hints.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
+  returning :class:`dict` instances annotated by PEP-compliant type hints.
 '''
 
 # ....................{ IMPORTS                           }....................
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     NonPepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 from typing import (
     NamedTuple,
 )
 
-# ....................{ COLLECTIONS                       }....................
+# ....................{ GLOBALS                           }....................
 NamedTupleType = NamedTuple(
     'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 '''
@@ -40,22 +37,38 @@ PEP-compliant annotations.
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add `PEP 484`_**-compliant PEP-noncompliant type hint test data to various
+    Add :pep:`484`**-compliant PEP-noncompliant type hint test data to various
     global containers declared by the passed module.
 
     Parameters
     ----------
     data_module : ModuleType
         Module to be added to.
-
-    .. _PEP 484:
-        https://www.python.org/dev/peps/pep-0484
     '''
 
     # ..................{ TUPLES                            }..................
     # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
     # global.
     data_module.HINTS_NONPEP_META.extend((
+        # ................{ UNSUBSCRIPTED                     }................
+        # "None" singleton, which transparently reduces to "types.NoneType" and
+        # *MUST* thus be handled as a non-"typing" type hint. While not
+        # explicitly defined by the "typing" module, PEP 484 explicitly
+        # supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        NonPepHintMetadata(
+            hint=None,
+            piths_satisfied_meta=(
+                # "None" singleton.
+                HintPithSatisfiedMetadata(None),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
+            ),
+        ),
+
         # ................{ NAMEDTUPLE                        }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
@@ -63,16 +76,16 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=NamedTupleType,
             piths_satisfied_meta=(
                 # Named tuple containing correctly typed items.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     NamedTupleType(fumarole='Leviathan', enrolled=37)),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
+                HintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
 
                 #FIXME: Uncomment after implementing "NamedTuple" support.
                 # # Named tuple containing incorrectly typed items.
-                # PepHintPithUnsatisfiedMetadata(
+                # HintPithUnsatisfiedMetadata(
                 #     pith=NamedTupleType(fumarole='Leviathan', enrolled=37),
                 #     # Match that the exception message raised for this object...
                 #     exception_str_match_regexes=(
@@ -85,6 +98,6 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ COLLECTIONS ~ typeddict           }................
         # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that "TypeDict" was first
-        #introduced with Python 3.8.
+        #FIXME: Implement us up, but note when doing so that "TypeDict" was
+        #first introduced with Python 3.8.
     ))

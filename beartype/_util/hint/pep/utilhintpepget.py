@@ -19,11 +19,11 @@ from beartype.roar import (
     BeartypeDecorHintPepSignException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsignmap import (
+from beartype._util.data.hint.pep.datapeprepr import (
     HINT_BARE_REPR_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,

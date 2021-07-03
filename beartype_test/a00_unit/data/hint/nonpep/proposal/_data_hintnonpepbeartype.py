@@ -16,8 +16,8 @@ Beartype-specific PEP-noncompliant type hints include:
 # ....................{ IMPORTS                           }....................
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     NonPepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 
 # ....................{ ADDERS                            }....................
@@ -42,11 +42,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=(str,),
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata('Pinioned coin tokens'),
+                HintPithSatisfiedMetadata('Pinioned coin tokens'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Murkily',
                     # Match that the exception message raised for this pith
                     # declares the types *NOT* satisfied by this object.
@@ -68,13 +68,13 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=(int, str),
             piths_satisfied_meta=(
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(12),
+                HintPithSatisfiedMetadata(12),
                 # String constant.
-                PepHintPithSatisfiedMetadata('Smirk‐opined — openly'),
+                HintPithSatisfiedMetadata('Smirk‐opined — openly'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Betokening',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -98,11 +98,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=str,
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata('Glassily lassitudinal bȴood-'),
+                HintPithSatisfiedMetadata('Glassily lassitudinal bȴood-'),
             ),
             piths_unsatisfied_meta=(
                 # Byte-string constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=b'Stains, disdain-fully ("...up-stairs!"),',
                     # Match that the exception message raised for this pith
                     # declares the types *NOT* satisfied by this object.

@@ -91,8 +91,6 @@ from beartype._decor._error._proposal._errorpep586 import (
     get_cause_or_none_literal)
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
-from beartype._util.data.hint.pep.proposal.datapep484 import (
-    HINT_PEP484_SIGNS_UNION)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
@@ -101,6 +99,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_UNION,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -351,7 +350,7 @@ def _init() -> None:
             get_cause_or_none_sequence_args_1)
 
     # Map each unifying "typing" attribute to the appropriate getter.
-    for pep_sign_type_union in HINT_PEP484_SIGNS_UNION:
+    for pep_sign_type_union in HINT_SIGNS_UNION:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
             get_cause_or_none_union)
 

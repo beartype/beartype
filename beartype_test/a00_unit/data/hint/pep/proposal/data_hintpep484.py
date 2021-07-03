@@ -63,8 +63,8 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype_test.a00_unit.data.hint.data_hintmeta import (
     PepHintMetadata,
-    PepHintPithSatisfiedMetadata,
-    PepHintPithUnsatisfiedMetadata,
+    HintPithSatisfiedMetadata,
+    HintPithUnsatisfiedMetadata,
 )
 from collections import abc as collections_abc
 from contextlib import contextmanager
@@ -287,6 +287,19 @@ def add_data(data_module: 'ModuleType') -> None:
     _IS_SIGN_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
 
     # ..................{ SETS                              }..................
+    # Add PEP 484-specific shallowly ignorable test type hints to that set
+    # global.
+    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
+        # The "Generic" superclass imposes no constraints and is thus also
+        # semantically synonymous with the ignorable PEP-noncompliant
+        # "beartype.cave.AnyType" and hence "object" types. Since PEP
+        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        # singleton including "typing.Generic" semantically expands to that
+        # singelton subscripted by an implicit "Any" argument, "Generic"
+        # semantically expands to the implicit "Generic[Any]" singleton.
+        Generic,
+    ))
+
     # Add PEP 484-specific deeply ignorable test type hints to that set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Parametrizations of the "typing.Generic" abstract base class (ABC).
@@ -329,26 +342,6 @@ def add_data(data_module: 'ModuleType') -> None:
             is_ignorable=True,
         ),
 
-        # Unsubscripted "None" singleton. While not explicitly defined by the
-        # "typing" module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        PepHintMetadata(
-            hint=None,
-            pep_sign=NoneType,
-            is_subscripted=False,
-            is_type_typing=False,
-            piths_satisfied_meta=(
-                # "None" singleton.
-                PepHintPithSatisfiedMetadata(None),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                PepHintPithUnsatisfiedMetadata(
-                    'Betossing Bilious libidos, and'),
-            ),
-        ),
-
         # Unsubscripted "ByteString" singleton. Bizarrely, note that:
         # * "collections.abc.ByteString" is subscriptable under PEP 585.
         # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
@@ -361,15 +354,15 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=collections_abc.ByteString,
             piths_satisfied_meta=(
                 # Byte string constant.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     b'By nautical/particle consciousness'),
                 # Byte array initialized from a byte string constant.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     bytearray(b"Hour's straight fates, (distemperate-ly)")),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'At that atom-nestled canticle'),
             ),
         ),
@@ -387,9 +380,9 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typing=IS_PYTHON_3_6,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
-                PepHintPithSatisfiedMetadata(int),
+                HintPithSatisfiedMetadata(int),
                 # String constant.
-                PepHintPithSatisfiedMetadata('Oblate weapon Stacks (actually'),
+                HintPithSatisfiedMetadata('Oblate weapon Stacks (actually'),
             ),
             # By definition, *ALL* objects satisfy *ALL* type variables.
             piths_unsatisfied_meta=(),
@@ -404,16 +397,16 @@ def add_data(data_module: 'ModuleType') -> None:
             is_subscripted=False,
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata('We were mysteries, unwon'),
+                HintPithSatisfiedMetadata('We were mysteries, unwon'),
                 # Byte string constant.
-                PepHintPithSatisfiedMetadata(b'We donned apportionments'),
+                HintPithSatisfiedMetadata(b'We donned apportionments'),
             ),
             #FIXME: Uncomment after fully supporting type variables.
             # piths_unsatisfied_meta=(
             #     # Integer constant.
             #     728,
             #     # List of string constants.
-            #     PepHintPithUnsatisfiedMetadata([
+            #     HintPithUnsatisfiedMetadata([
             #         'Of Politico‐policed diction maledictions,',
             #         'Of that numeral addicts’ “—Additive game,” self‐',
             #     ]),
@@ -428,11 +421,11 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=collections_abc.Callable,
             piths_satisfied_meta=(
                 # Lambda function returning a string constant.
-                PepHintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
+                HintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('...grant we heal'),
+                HintPithUnsatisfiedMetadata('...grant we heal'),
             ),
         ),
 
@@ -444,7 +437,7 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=contextlib.AbstractContextManager,
             piths_satisfied_meta=(
                 # Context manager.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     pith=lambda: _make_context_manager(
                         'We were mysteries, unwon'),
                     is_context_manager=True,
@@ -453,7 +446,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('We donned apportionments'),
+                HintPithUnsatisfiedMetadata('We donned apportionments'),
             ),
         ),
 
@@ -466,14 +459,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary containing arbitrary key-value pairs.
-                PepHintPithSatisfiedMetadata({
+                HintPithSatisfiedMetadata({
                     'Of':         'our disappointment’s purse‐anointed ire',
                     'Offloading': '1. Coffer‐bursed statehood ointments;',
                 }),
             ),
             piths_unsatisfied_meta=(
                 # Set containing arbitrary items.
-                PepHintPithUnsatisfiedMetadata({
+                HintPithUnsatisfiedMetadata({
                     '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
                     'Untiringly,'
                 }),
@@ -487,14 +480,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary mapping integer keys to string values.
-                PepHintPithSatisfiedMetadata({
+                HintPithSatisfiedMetadata({
                     1: 'For taxing',
                     2: "To a lax and golden‐rendered crucifixion, affix'd",
                 }),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'To that beep‐prattling, LED‐ and lead-rattling crux'),
             ),
         ),
@@ -507,14 +500,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary mapping string keys to integer values.
-                PepHintPithSatisfiedMetadata({
+                HintPithSatisfiedMetadata({
                     'Less-ons"-chastened': 2,
                     'Chanson': 1,
                 }),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Swansong.'),
+                HintPithUnsatisfiedMetadata('Swansong.'),
             ),
         ),
 
@@ -527,12 +520,12 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Generator yielding integers, accepting floating-point numbers
                 # sent to this generator by the caller, and returning strings.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     _make_generator_yield_int_send_float_return_str()),
             ),
             piths_unsatisfied_meta=(
                 # Lambda function returning a string constant.
-                PepHintPithUnsatisfiedMetadata(lambda: 'Cessation'),
+                HintPithUnsatisfiedMetadata(lambda: 'Cessation'),
             ),
         ),
 
@@ -546,17 +539,17 @@ def add_data(data_module: 'ModuleType') -> None:
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
-                PepHintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
+                HintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
                     'Ibid., incredibly indelible, edible craws a',
                     'Of a liturgically upsurging, Θṙgiast‐ic holiness, and',
                 ))),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'To pare their geognostic screeds'),
                 # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     'Of voluntary simplicities, Creed‐crinkled cities',
                     'Of a liberal quiet, and',
                 ]),
@@ -572,17 +565,17 @@ def add_data(data_module: 'ModuleType') -> None:
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
-                PepHintPithSatisfiedMetadata(Pep484GenericUntypevaredSingle((
+                HintPithSatisfiedMetadata(Pep484GenericUntypevaredSingle((
                     'Forgive our Vocation’s vociferous publications',
                     'Of',
                 ))),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Hourly sybaritical, pub sabbaticals'),
                 # List of string constants.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     'Materially ostracizing, itinerant‐',
                     'Anchoretic digimonks initiating',
                 ]),
@@ -598,11 +591,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic.
-                PepHintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
+                HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'An arterially giving, triage nature — '
                     'like this agat‐adzing likeness'
                 ),
@@ -624,11 +617,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic.
-                PepHintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
+                HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Token welfare’s malformed keening fare, keenly despaired'
                 ),
             ),
@@ -645,16 +638,16 @@ def add_data(data_module: 'ModuleType') -> None:
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
-                PepHintPithSatisfiedMetadata(Pep484GenericUntypevaredMultiple((
+                HintPithSatisfiedMetadata(Pep484GenericUntypevaredMultiple((
                     'Into a viscerally Eviscerated eras’ meditative hallways',
                     'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                 ))),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Initiations'),
+                HintPithUnsatisfiedMetadata('Initiations'),
                 # 2-tuple of string constants.
-                PepHintPithUnsatisfiedMetadata((
+                HintPithUnsatisfiedMetadata((
                     "Into a fat mendicant’s",
                     'Endgame‐defendant, dedicate rants',
                 )),
@@ -670,7 +663,7 @@ def add_data(data_module: 'ModuleType') -> None:
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of string constants.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     Pep484GenericTypevaredShallowMultiple((
                         "Of foliage's everliving antestature —",
                         'In us, Leviticus‐confusedly drunk',
@@ -679,7 +672,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata("In Usufructose truth's"),
+                HintPithUnsatisfiedMetadata("In Usufructose truth's"),
             ),
         ),
 
@@ -694,7 +687,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     Pep484GenericTypevaredDeepMultiple((
                         (
                             'Inertially tragicomipastoral, pastel anticandour —',
@@ -709,7 +702,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Invitations'),
+                HintPithUnsatisfiedMetadata('Invitations'),
             ),
         ),
 
@@ -721,7 +714,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     Pep484GenericUntypevaredMultiple((
                         'Stalling inevit‐abilities)',
                         'For carbined',
@@ -734,10 +727,10 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'that forced triforced, farcically carcinogenic Obelisks'),
                 # List of 2-tuples of string constants.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     (
                         'Obliterating their literate decency',
                         'Of a cannabis‐enthroning regency',
@@ -755,9 +748,9 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=_IS_SIGN_TYPEVARED,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
-                PepHintPithSatisfiedMetadata([]),
+                HintPithSatisfiedMetadata([]),
                 # Listing containing arbitrary items.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'Of an Autos‐respirating, ăutonomies‐gnashing machineries‐',
                     'Laxity, and taxonomic attainment',
                     3,
@@ -765,9 +758,9 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Of acceptance.'),
+                HintPithUnsatisfiedMetadata('Of acceptance.'),
                 # Tuple containing arbitrary items.
-                PepHintPithUnsatisfiedMetadata((
+                HintPithUnsatisfiedMetadata((
                     'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
                     '3. And Utter‐most, gutterly gut‐rending posts, glutton',
                     3.1415,
@@ -782,9 +775,9 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
-                PepHintPithSatisfiedMetadata([]),
+                HintPithSatisfiedMetadata([]),
                 # List of arbitrary objects.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'Of philomathematically bliss‐postulating Seas',
                     'Of actuarial postponement',
                     23.75,
@@ -792,7 +785,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Of actual change elevating alleviation — that'),
             ),
         ),
@@ -804,20 +797,20 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=list,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
-                PepHintPithSatisfiedMetadata([]),
+                HintPithSatisfiedMetadata([]),
                 # List of strings.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'Ously overmoist, ov‐ertly',
                     'Deverginating vertigo‐originating',
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
+                HintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
                 # List containing exactly one integer. Since list items are
                 # only randomly type-checked, only a list of exactly one item
                 # enables us to match the explicit index at fault below.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=[73,],
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -839,16 +832,16 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=True,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
-                PepHintPithSatisfiedMetadata([]),
+                HintPithSatisfiedMetadata([]),
                 # List of strings.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'Lesion this ice-scioned',
                     'Legion',
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Lest we succumb, indelicately, to'),
             ),
         ),
@@ -866,12 +859,12 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typing=True,
             piths_satisfied_meta=(
                 # String constant.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     'Ishmælite‐ish, aberrant control'),
             ),
             piths_unsatisfied_meta=(
                 # Tuple of string constants.
-                PepHintPithUnsatisfiedMetadata((
+                HintPithUnsatisfiedMetadata((
                     'Of Common Street‐harrying barrens',
                     'Of harmony, harm’s abetting Harlem bedlam, and',
                 )),
@@ -887,14 +880,14 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=_IS_SIGN_TYPEVARED,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
-                PepHintPithSatisfiedMetadata(re.search(
+                HintPithSatisfiedMetadata(re.search(
                     r'\b[a-z]+ance[a-z]+\b',
                     'æriferous Elements’ dance, entranced',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Formless, demiurgic offerings, preliminarily,'),
             ),
         ),
@@ -906,14 +899,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=RegexMatchType,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
-                PepHintPithSatisfiedMetadata(re.search(
+                HintPithSatisfiedMetadata(re.search(
                     r'\b[a-z]+itiat[a-z]+\b',
                     'Vitiating novitiate Succubæ – a',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Into Elitistly'),
+                HintPithUnsatisfiedMetadata('Into Elitistly'),
             ),
         ),
 
@@ -926,12 +919,12 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevared=_IS_SIGN_TYPEVARED,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     re.compile(r'\b[A-Z]+ANCE[A-Z]+\b')),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Legal indiscretions'),
+                HintPithUnsatisfiedMetadata('Legal indiscretions'),
             ),
         ),
 
@@ -942,12 +935,12 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=RegexCompiledType,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
-                PepHintPithSatisfiedMetadata(
+                HintPithSatisfiedMetadata(
                     re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Obsessing men'),
+                HintPithUnsatisfiedMetadata('Obsessing men'),
             ),
         ),
 
@@ -962,14 +955,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'a Steely dittied',
                     'Steel ‘phallus’ ballast',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # List containing arbitrary items.
-                PepHintPithUnsatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     'In this Tellus‐cloistered, pre‐mature pop nomenclature',
                     'Of irremediable Media mollifications',
                 ]),
@@ -991,11 +984,11 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Empty tuple.
-                PepHintPithSatisfiedMetadata(()),
+                HintPithSatisfiedMetadata(()),
             ),
             piths_unsatisfied_meta=(
                 # Non-empty tuple containing arbitrary items.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(
                         'They shucked',
                         '(Or huckstered, knightly rupturing veritas)',
@@ -1016,14 +1009,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'Surseance',
                     'Of sky, the God, the surly',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # Tuple containing fewer items than required.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=('Obeisance',),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -1042,7 +1035,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number, string, and integer
                 # (in that exact order).
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     20.09,
                     'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
                     "Nightly tolled, pindololy, ol'",
@@ -1050,10 +1043,10 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Jangling (brinkmanship “Ironside”) jingoisms'),
                 # Tuple containing fewer items than required.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(
                         999.888,
                         'Obese, slipshodly muslin‐shod priests had maudlin solo',
@@ -1066,7 +1059,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Tuple containing a floating-point number, a string, and a
                 # boolean (in that exact order).
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(
                         75.83,
                         'Unwholesome gentry ventings',
@@ -1091,7 +1084,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Tuple containing tuples containing a floating-point number,
                 # string, and integer (in that exact order).
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     (
                         90.02,
                         'Father — "Abstracted, OH WE LOVE YOU',
@@ -1107,7 +1100,7 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # Tuple containing a tuple containing fewer items than
                 # required.
-                PepHintPithUnsatisfiedMetadata((
+                HintPithUnsatisfiedMetadata((
                     (
                         888.999,
                         'Oboes‐obsoleting tines',
@@ -1115,7 +1108,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 )),
                 # Tuple containing a tuple containing a floating-point number,
                 # string, and boolean (in that exact order).
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(
                         (
                             75.83,
@@ -1144,16 +1137,16 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     33.77,
                     'Legal indiscretions',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Leisurely excreted by'),
+                HintPithUnsatisfiedMetadata('Leisurely excreted by'),
                 # Tuple containing fewer items than required.
-                PepHintPithUnsatisfiedMetadata((
+                HintPithUnsatisfiedMetadata((
                     'Market states‐created, stark abscess',
                 )),
             ),
@@ -1167,19 +1160,19 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'Of a scantly raptured Overture,'
                     'Ur‐churlishly',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Of Toll‐descanted grant money'),
                 # Tuple containing exactly one integer. Since tuple items are
                 # only randomly type-checked, only a tuple of exactly one item
                 # enables us to match the explicit index at fault below.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=((53,)),
                     # Match that the exception message raised for this
                     # object...
@@ -1201,14 +1194,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=tuple,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'Loquacious s‐age, salaciously,',
                     'Of regal‐seeming, freemen‐sucking Hovels, a',
                 )),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     'Concubine enthralling contractually novel'),
             ),
         ),
@@ -1222,13 +1215,13 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=type,
             piths_satisfied_meta=(
                 # Transitive superclass of all superclasses.
-                PepHintPithSatisfiedMetadata(object),
+                HintPithSatisfiedMetadata(object),
                 # Builtin class.
-                PepHintPithSatisfiedMetadata(str),
+                HintPithSatisfiedMetadata(str),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Samely:'),
+                HintPithUnsatisfiedMetadata('Samely:'),
             ),
         ),
 
@@ -1239,11 +1232,11 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=type,
             piths_satisfied_meta=(
                 # Builtin "dict" class itself.
-                PepHintPithSatisfiedMetadata(dict),
+                HintPithSatisfiedMetadata(dict),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Namely,'),
+                HintPithUnsatisfiedMetadata('Namely,'),
             ),
         ),
 
@@ -1255,11 +1248,11 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=type,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
-                PepHintPithSatisfiedMetadata(int),
+                HintPithSatisfiedMetadata(int),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata('Obligation, and'),
+                HintPithUnsatisfiedMetadata('Obligation, and'),
             ),
         ),
 
@@ -1298,9 +1291,9 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignUnion,
             piths_satisfied_meta=(
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(21),
+                HintPithSatisfiedMetadata(21),
                 # Sequence of string items.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'To claim all ͼarth a number, penumbraed'
                     'By blessed Pendragon’s flagon‐bedraggling constancies',
                 )),
@@ -1312,7 +1305,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # here, as strings are technically sequences of strings of
                 # length one commonly referred to as Unicode code points or
                 # simply characters.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=802.11,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1329,7 +1322,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # Tuple of integers.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -1355,14 +1348,14 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignUnion,
             piths_satisfied_meta=(
                 # Empty dictionary.
-                PepHintPithSatisfiedMetadata({}),
+                HintPithSatisfiedMetadata({}),
                 # Floating-point number constant.
-                PepHintPithSatisfiedMetadata(777.777),
+                HintPithSatisfiedMetadata(777.777),
                 # Integer constant.
-                PepHintPithSatisfiedMetadata(777),
+                HintPithSatisfiedMetadata(777),
                 # Sequence of dictionary, floating-point number, integer, and
                 # sequence of string constant items.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     # Non-empty dictionary.
                     {
                         'Of': 'charnal memories,',
@@ -1381,7 +1374,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # Complex number constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=356+260j,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1400,7 +1393,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # Sequence of bytestring items.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=(b"May they rest their certainties' Solicitousness to",),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -1414,7 +1407,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # Sequence of mutable sequences of bytestring items.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=([b'Untaint these ties',],),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -1454,14 +1447,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=list,
             piths_satisfied_meta=(
                 # List containing a mixture of integer and string constants.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     'Un‐seemly preening, pliant templar curs; and',
                     272,
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Un‐seemly preening, pliant templar curs; and',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1478,7 +1471,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # List of bytestring items.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=[
                         b'Blamelessly Slur-chastened rights forthwith, affrighting',
                         b"Beauty's lurid, beleaguered knolls, eland-leagued and",
@@ -1504,7 +1497,7 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=collections_abc.Sequence,
             piths_satisfied_meta=(
                 # Sequence of string and bytestring constants.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     b'For laconically formulaic, knavish,',
                     u'Or sordidly sellsword‐',
                     f'Horded temerities, bravely unmerited',
@@ -1512,7 +1505,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             piths_unsatisfied_meta=(
                 # Integer constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=7898797,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1529,7 +1522,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # Sequence of integer items.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
                     # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
@@ -1552,14 +1545,14 @@ def add_data(data_module: 'ModuleType') -> None:
             stdlib_type=collections_abc.MutableSequence,
             piths_satisfied_meta=(
                 # Mutable sequence of string and bytestring constants.
-                PepHintPithSatisfiedMetadata([
+                HintPithSatisfiedMetadata([
                     b"Canonizing Afrikaans-kennelled Mine canaries,",
                     lambda: 'Of a floridly torrid, hasty love — that league',
                 ]),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith='Effaced.',
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1576,7 +1569,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
 
                 # Mutable sequence of string constants.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=[
                         'Of genteel gentle‐folk — that that Ƹsper',
                         'At my brand‐defaced, landless side',
@@ -1621,7 +1614,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
             piths_satisfied_meta=(
                 # Sequence of string items.
-                PepHintPithSatisfiedMetadata((
+                HintPithSatisfiedMetadata((
                     'Of cuticular currents (...wide, wildly articulate,',
                     'And canting free, physico-stipulatingly) -',
                 )),
@@ -1633,7 +1626,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 # here, as strings are technically sequences of strings of
                 # length one commonly referred to as Unicode code points or
                 # simply characters.
-                PepHintPithUnsatisfiedMetadata(
+                HintPithUnsatisfiedMetadata(
                     pith=802.2,
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
@@ -1664,17 +1657,17 @@ def add_data(data_module: 'ModuleType') -> None:
                 stdlib_type=collections_abc.Hashable,
                 piths_satisfied_meta=(
                     # String constant.
-                    PepHintPithSatisfiedMetadata(
+                    HintPithSatisfiedMetadata(
                         "Oh, importunate Θ Fortuna'd afforded"),
                     # Tuple of string constants.
-                    PepHintPithSatisfiedMetadata((
+                    HintPithSatisfiedMetadata((
                         'Us vis‐a‐vis conduit fjords',
                         'Of weal‐th, and well‐heeled,',
                     )),
                 ),
                 piths_unsatisfied_meta=(
                     # List of string constants.
-                    PepHintPithUnsatisfiedMetadata([
+                    HintPithUnsatisfiedMetadata([
                         'Oboes‐obsoleting tines',
                         'Of language',
                     ]),
@@ -1688,16 +1681,16 @@ def add_data(data_module: 'ModuleType') -> None:
                 stdlib_type=collections_abc.Sized,
                 piths_satisfied_meta=(
                     # String constant.
-                    PepHintPithSatisfiedMetadata('Faire, a'),
+                    HintPithSatisfiedMetadata('Faire, a'),
                     # Tuple of string constants.
-                    PepHintPithSatisfiedMetadata((
+                    HintPithSatisfiedMetadata((
                         'Farthing scrap',
                         'Of comfort’s ‘om’‐Enwrapped, rapt appeal — that',
                     )),
                 ),
                 piths_unsatisfied_meta=(
                     # Boolean constant.
-                    PepHintPithUnsatisfiedMetadata(False),
+                    HintPithUnsatisfiedMetadata(False),
                 ),
             ),
         ))
@@ -1717,7 +1710,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     is_type_typing=False,
                     piths_satisfied_meta=(
                         # Subclass-specific generic list of string constants.
-                        PepHintPithSatisfiedMetadata(
+                        HintPithSatisfiedMetadata(
                             Pep484GenericUnsubscriptedSingle((
                                 'Volubly vi‐brant libations',
                                 'To blubber‐lubed Bacchus — hustling',
@@ -1726,9 +1719,9 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     piths_unsatisfied_meta=(
                         # String constant.
-                        PepHintPithUnsatisfiedMetadata('O’ the frock'),
+                        HintPithUnsatisfiedMetadata('O’ the frock'),
                         # List of string constants.
-                        PepHintPithUnsatisfiedMetadata([
+                        HintPithUnsatisfiedMetadata([
                             'O’ Friday’s squealing — Sounding',
                             'Freedom’s unappealing, Passive delights',
                         ]),

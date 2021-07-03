@@ -348,7 +348,11 @@ This set intentionally excludes the:
 '''
 
 
-HINT_SIGNS_UNION = frozenset((HintSignOptional, HintSignUnion))
+HINT_SIGNS_UNION = frozenset((
+    # ..................{ PEP 484                           }..................
+    HintSignOptional,
+    HintSignUnion,
+))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
 :pep:`484`-compliant type hints unifying one or more subscripted type hint
