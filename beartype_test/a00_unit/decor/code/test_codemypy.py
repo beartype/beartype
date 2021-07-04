@@ -31,6 +31,12 @@ def test_decor_mypy_notimplemented() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintPepReturnException
 
+    # Without this, the forward reference in the return type of
+    # TheCloud.__add__ (below) will fail because bear desperately yearns to
+    # find it at the module level. And who are we to be so cruel as to hide the
+    # object of her desires any more deeply than that?
+    global TheCloud
+
     class TheCloud:
         '''
         Arbitrary class declaring a method exercising this test.
@@ -49,6 +55,26 @@ def test_decor_mypy_notimplemented() -> None:
                 return self is other
 
             # Else, return the "NotImplemented" singleton.
+            return NotImplemented
+
+
+        @beartype
+        def __add__(self, other: object) -> "TheCloud":
+            '''
+            Another arbitrary binary dunder method correctly returning the
+            ``NotImplemented`` singleton.
+            '''
+            # Create a new cloud when trying to add two clouds,
+            # because...erm...math! No, wait. Because this is an entirely
+            # contrived example for testing purposes and neither intends nor
+            # offers any commentary about the subtle tensions between
+            # uniqueness, individualism, connectedness, and community. Such
+            # matters are left for quiet contemplation by the reader.
+            if isinstance(other, TheCloud):
+                return TheCloud()
+            # Apparently these clouds do not enjoy the company of non-clouds.
+            # While such isolationist tendencies may sadden us, we nonetheless
+            # respect each cloud's autonomy.
             return NotImplemented
 
 
@@ -93,8 +119,17 @@ def test_decor_mypy_notimplemented() -> None:
     assert not the_streams.is_equal(the_seas)
 
     # Assert the special case in @beartype-generated wrappers implicitly
-    # type-checking binary dunder methods annotated as returning "bool" to
+    # type-checking binary dunder methods annotated as, e.g., returning "bool" to
     # instead effectively return "Union[bool, type(NotImplemented)]" does *NOT*
     # apply to standard methods -- even those with the exact same method body.
     with raises_uncached(BeartypeCallHintPepReturnException):
         the_seas.is_equal('I bear light shade for the leaves when laid')
+
+    # Assert we can "__add__" two cloud instances...
+    assert isinstance(the_seas + the_streams, TheCloud)
+
+    # ...but not a cloud instance with an instance of another class *AND* that
+    # the attempt results in a "TypeError" (the intended side effect of
+    # returning "NotImplemented" from a binary dunder method).
+    with raises_uncached(TypeError):
+        the_seas + 'I bear light shade for the leaves when laid'
