@@ -146,7 +146,7 @@ def make_func(
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
-        # print(f'\n@beartyped {func_name} wrapper:\n\n{number_lines(func_code)}\n')
+        print(f'\n@beartyped {func_name} wrapper:\n\n{number_lines(func_code)}\n')
         exec(func_code, func_globals, func_locals)
 
         #FIXME: See above.

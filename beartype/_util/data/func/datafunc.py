@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-agnostic type hint globals** (i.e., global constants
-describing PEP-agnostic type hints).
+Project-wide **callable globals** (i.e., global constants describing various
+well-known functions and methods).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SETS                              }....................
+#FIXME: Rename to "METHOD_NAMES_DUNDER_BINARY" for clarity.
 METHOD_NAMES_BINARY_DUNDER = frozenset((
     '__add__',
     '__and__',

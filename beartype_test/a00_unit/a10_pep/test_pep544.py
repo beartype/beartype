@@ -119,7 +119,7 @@ def test_is_hint_pep544_protocol() -> None:
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype_test.a00_unit.data.data_type import CLASSES_BUILTIN
+    from beartype_test.a00_unit.data.data_type import TYPES_BUILTIN
     from typing import (
         SupportsAbs,
         SupportsBytes,
@@ -149,7 +149,7 @@ def test_is_hint_pep544_protocol() -> None:
     # Assert this tester rejects all builtin types. For unknown reasons, some
     # but *NOT* all builtin types (e.g., "int") erroneously present themselves
     # to be PEP 544-compliant protocols. *sigh*
-    for class_builtin in CLASSES_BUILTIN:
+    for class_builtin in TYPES_BUILTIN:
         assert is_hint_pep544_protocol(class_builtin) is False
 
     # Assert this tester rejects standard type hints in either case.

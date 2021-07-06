@@ -261,7 +261,7 @@ def label_class(cls: type) -> str:
     assert isinstance(cls, type), f'{repr(cls)} not class.'
 
     # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import is_classname_builtin
+    from beartype._util.cls.utilclstest import is_type_builtin
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         is_hint_pep544_protocol)
 
@@ -277,7 +277,7 @@ def label_class(cls: type) -> str:
     # If this name is that of a builtin type uselessly prefixed by the name of
     # the module declaring all builtin types (e.g., "builtins.list"), reduce
     # this name to the unqualified basename of this type (e.g., "list").
-    elif is_classname_builtin(classname):
+    elif is_type_builtin(cls):
         classname = cls.__name__
     # Else, this is a non-builtin class. Non-builtin classes are *NOT*
     # well-known and thus benefit from additional labelling.

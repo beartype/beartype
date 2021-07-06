@@ -15,24 +15,9 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintPep3119Exception,
     _BeartypeUtilTypeException,
 )
+from beartype._util.data.cls.datacls import TYPES_BUILTIN_FAKE
+from beartype._util.data.mod.datamod import MODULE_NAME_BUILTINS
 from typing import Type
-
-# ....................{ CONSTANTS                          }....................
-_MODULE_NAME_BUILTINS = 'builtins'
-'''
-Fully-qualified name of the module declaring all **builtins** (i.e., objects
-defined by the standard :mod:`builtins` module and thus globally available by
-default *without* requiring explicit importation).
-'''
-
-
-_MODULE_NAME_BUILTINS_DOTTED = f'{_MODULE_NAME_BUILTINS}.'
-'''
-Fully-qualified name of the module declaring all builtins followed by a ``.``,
-defined purely as a trivial optimization for the frequently accessed
-:class:`beartype._decor._cache.cachetype.Beartypistry.__setitem__` dunder
-method.
-'''
 
 # ....................{ VALIDATORS                        }....................
 def die_unless_type(
@@ -237,70 +222,25 @@ def is_type_builtin(cls: type) -> bool:
     from beartype._util.py.utilpymodule import (
         get_object_type_module_name_or_none)
 
-    # If this object is *NOT* a class, raise an exception.
+    # If this object is *NOT* a type, raise an exception.
     die_unless_type(cls)
-    # Else, this object is a class.
+    # Else, this object is a type.
 
-    # If the unqualified basename of this class is "NoneType", this is the
-    # class of the "None" singleton. In this case, return false. Unlike all
-    # other builtin classes, this class is globally inaccessible despite being
-    # declared to be builtin:
-    #     >>> import builtins
-    #     >>> type(None).__name__
-    #     'NoneType'
-    #     >>> type(None).__module__
-    #     'builtins'
-    #     >>> NoneType
-    #     NameError: name 'NoneType' is not defined   <---- this is balls
-    #
-    # This inconsistency almost certainly constitutes a bug in the CPython
-    # interpreter, but it seems doubtful anyone else would see it that way and
-    # almost certain everyone else would defend this edge case.
-    #
-    # We're *NOT* dying on that lonely hill. We obey the Law of Guido.
-    if cls.__name__ == 'NoneType':
+    # If this type is a fake builtin (i.e., type that is *NOT* builtin but
+    # which erroneously masquerades as being builtin), this type is *NOT* a
+    # builtin. In this case, silently reject this type.
+    if cls in TYPES_BUILTIN_FAKE:
         return False
-    # Else, this is *NOT* the class of the "None" singleton.
+    # Else, this type is *NOT* a fake builtin.
 
-    # Fully-qualified name of the module defining this class if this class is
-    # defined by a module *OR* "None" otherwise (i.e., if this class is
+    # Fully-qualified name of the module defining this type if this type is
+    # defined by a module *OR* "None" otherwise (i.e., if this type is
     # dynamically defined in-memory).
     cls_module_name = get_object_type_module_name_or_none(cls)
 
     # This return true only if this name is that of the "builtins" module
-    # declaring all builtin classes.
-    return cls_module_name == _MODULE_NAME_BUILTINS
-
-
-def is_classname_builtin(classname: str) -> bool:
-    '''
-    ``True`` only if the passed fully-qualified classname is that of a
-    **builtin type** (i.e., globally accessible C-based type requiring *no*
-    explicit importation).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    classname: str
-        Classname to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this classname is that of a builtin type.
-    '''
-
-    # Return true only if...
-    return (
-        # This classname is prefixed by "builtins." *AND*...
-        classname.startswith(_MODULE_NAME_BUILTINS_DOTTED) and
-        # This classname is *NOT* that of the type of the "None" singleton. See
-        # is_type_builtin() for further commentary.
-        classname != 'builtins.NoneType'
-    )
+    # declaring all builtin types.
+    return cls_module_name == MODULE_NAME_BUILTINS
 
 # ....................{ TESTERS ~ isinstanceable          }....................
 def is_type_isinstanceable(cls: object) -> bool:

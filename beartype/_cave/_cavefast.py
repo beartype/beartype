@@ -162,6 +162,12 @@ either as C extensions or in pure Python).
 '''
 
 # ....................{ TYPES ~ core : singleton          }....................
+EllipsisType: Any = type(Ellipsis)
+'''
+Type of the ``Ellipsis`` singleton.
+'''
+
+
 NoneType: Any = type(None)
 '''
 Type of the ``None`` singleton.
@@ -225,8 +231,8 @@ standard functions,** including:
 * **Unbound instance methods** (i.e., instance methods accessed on their
   declaring classes rather than bound instances).
 * **Static methods** (i.e., methods decorated with the builtin
-  :func:`staticmethod` decorator regardless of whether accessed on their
-  declaring classes or associated instances).
+  :func:`staticmethod` decorator, regardless of those methods are accessed on
+  their declaring classes or associated instances).
 
 **This type matches no callables whatsoever under some non-CPython
 interpreters,** including:

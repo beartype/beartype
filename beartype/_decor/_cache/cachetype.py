@@ -21,7 +21,7 @@ from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
-    is_classname_builtin,
+    is_type_builtin,
 )
 from beartype._util.py.utilpymodule import (
     die_unless_module_attr_name,
@@ -259,13 +259,14 @@ class Beartypistry(dict):
             if (
                 # The passed name is not this classname *AND*...
                 hint_name != hint_clsname and
-                # This classname does not imply this type to be a builtin...
+                # This type is *NOT* builtin (and thus requires importation
+                # into the body of the current wrapper function)...
                 #
                 # Note that builtin types are registered under their
                 # unqualified basenames (e.g., "list" rather than
                 # "builtins.list") for runtime efficiency, a core optimization
                 # requiring manual whitelisting here.
-                not is_classname_builtin(hint_clsname)
+                not is_type_builtin(hint)
             # Then raise an exception.
             ):
                 raise _BeartypeDecorBeartypistryException(

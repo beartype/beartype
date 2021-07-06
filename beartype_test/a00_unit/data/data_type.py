@@ -4,13 +4,15 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype generic types data submodule.**
+Project-wide **generic types data** submodule.
 
 This submodule predefines low-level class constants exercising known edge
 cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                           }....................
+import builtins
+from beartype._util.data.mod.datamod import MODULE_NAME_BUILTINS
 from sys import exc_info, implementation
 from typing import Callable
 
@@ -153,7 +155,7 @@ MODULE_FILENAME = __file__
 Absolute filename of the current submodule, declared purely for convenience.
 '''
 
-# ....................{ CONSTANTS ~ sets : callable       }....................
+# ....................{ SETS ~ callable                   }....................
 CALLABLES_PYTHON = frozenset((function, Class, Class.instance_method))
 '''
 Frozen set of pure-Python callables exercising edge cases.
@@ -197,8 +199,8 @@ intentionally defined as a tuple rather than frozen set due to the
 unhashability of one or more members (e.g., ``TRACEBACK``).
 '''
 
-# ....................{ CONSTANTS ~ sets : class          }....................
-CLASSES_BUILTIN = frozenset((
+# ....................{ SETS ~ type : builtin             }....................
+TYPES_BUILTIN = frozenset((
     bool,
     complex,
     dict,
@@ -215,16 +217,43 @@ Frozen set of all **builtin types** i.e., globally accessible C-based type
 requiring *no* explicit importation)(.
 '''
 
+# ....................{ SETS ~ type : non-builtin         }....................
+TYPES_BUILTIN_FAKE = frozenset((
+    # Type of this builtin.
+    builtin.__class__
+    # For each builtin (i.e., globally accessible object implicitly imported by
+    # the active Python interpreter into *EVERY* lexical context)...
+    for builtin in builtins.__dict__.values()
+    # If...
+    if (
+        # The type of this builtin also insists itself to be defined by the
+        # "builtins" module and thus also be a builtin *AND*...
+        builtin.__class__.__module__ == MODULE_NAME_BUILTINS and
+        # The "builtins" module contains *NO* globally-scoped attribute whose
+        # name is that of this type...
+        builtin.__class__.__name__ not in builtins.__dict__
+    # Then add this cheatin', lyin', no-good type to this set.
+    )
+))
+'''
+Frozen set of all **fake builtin types** (i.e., types that are *not* builtin
+but which nonetheless erroneously masquerade as being builtin).
 
-CLASSES_NON_BUILTIN = frozenset((
+See Also
+----------
+:data:`beartype._util.data.cls.datacls.TYPES_BUILTIN_FAKE`
+    Related runtime set. Whereas that runtime-specific set is efficiently
+    defined explicitly by listing all non-builtin builtin mimic types, this
+    test-specific set is inefficiently defined implicitly by introspecting the
+    :mod:`builtins` module. While less efficient, this test-specific set serves
+    as an essential sanity check on that runtime-specific set.
+'''
+
+
+TYPES_NONBUILTIN = frozenset((
     # Arbitrary non-builtin type.
     Class,
-
-    # Type of the "None" singleton, which constitutes an edge case due to being
-    # globally inaccessible and thus effectively *NOT* builtin despite being
-    # declared by the "builtins" module.
-    type(None),
-))
+)) | TYPES_BUILTIN_FAKE
 '''
 Frozen set of arbitrary non-builtin types.
 '''
