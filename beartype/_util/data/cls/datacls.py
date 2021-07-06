@@ -16,6 +16,7 @@ from beartype._cave._cavefast import (
     FunctionType,
     FunctionOrMethodCType,
     MethodBoundInstanceOrClassType,
+    ModuleType,
     NoneType,
     NotImplementedType,
 )
@@ -29,6 +30,7 @@ TYPES_BUILTIN_FAKE = frozenset((
     FunctionType,
     FunctionOrMethodCType,
     MethodBoundInstanceOrClassType,
+    ModuleType,
     NoneType,
     NotImplementedType,
 ))
