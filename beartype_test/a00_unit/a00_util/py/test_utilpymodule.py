@@ -7,7 +7,7 @@
 Project-wide **module** utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.py.utilpymodule` submodule.
+:mod:`beartype._util.mod.utilmodule` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,11 +20,11 @@ from pytest import raises
 # ....................{ TESTS ~ tester                    }....................
 def test_is_module() -> None:
     '''
-    Test the :func:`beartype._util.py.utilpymodule.is_module` tester.
+    Test the :func:`beartype._util.mod.utilmodule.is_module` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpymodule import is_module
+    from beartype._util.mod.utilmodule import is_module
 
     # Assert this tester accepts the name of a (possibly unimported) existing
     # importable module.
@@ -50,11 +50,11 @@ def test_is_module() -> None:
 def test_import_module_attr_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._util.py.utilpymodule.import_module_attr` function.
+    :func:`beartype._util.mod.utilmodule.import_module_attr` function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpymodule import import_module_attr
+    from beartype._util.mod.utilmodule import import_module_attr
 
     # Attribute dynamically imported from a module.
     module_attr = import_module_attr(
@@ -68,12 +68,12 @@ def test_import_module_attr_pass() -> None:
 def test_import_module_attr_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._util.py.utilpymodule.import_module_attr` function.
+    :func:`beartype._util.mod.utilmodule.import_module_attr` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.py.utilpymodule import import_module_attr
+    from beartype._util.mod.utilmodule import import_module_attr
 
     # Assert this function raises the expected exception when passed a
     # non-string.

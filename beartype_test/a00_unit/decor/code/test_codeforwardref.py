@@ -36,19 +36,37 @@ def test_hint_forwardref_data_pass() -> None:
         of_easy_wind,
         stopping_by_woods_on,
         the_woods_are_lovely,
+        # between_the_woods_and_frozen_lake,
     )
 
+    # ..................{ UNNESTED                          }..................
     # Objects passed below to exercise forward references.
     MILES_TO_GO = TheDarkestEveningOfTheYear('And miles to go before I sleep')
     WOODS = TheDarkestEveningOfTheYear('The woods are lovely, dark and deep,')
     LAKE = TheDarkestEveningOfTheYear('Between the woods and frozen lake')
     KNOW = TheDarkestEveningOfTheYear('Whose woods these are I think I know.')
 
-    # Assert these forward referenced callables return the expected values.
+    # Assert these forward-referencing callables return the expected values.
     assert but_i_have_promises(MILES_TO_GO) == MILES_TO_GO
     assert of_easy_wind(WOODS) == WOODS
     assert stopping_by_woods_on(LAKE) == LAKE
     assert the_woods_are_lovely(KNOW) == KNOW
+
+    #FIXME: Disabled until we decide whether we want to bother trying to
+    #resolve nested forward references or not.
+    # # ..................{ NESTED                            }..................
+    # # 3-tuple of closures and classes nested in this callable.
+    # (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
+    #     between_the_woods_and_frozen_lake())
+    #
+    # # Objects passed below to exercise nested forward references.
+    # MY_LITTLE_HORSE = WhoseWoodsTheseAreIThinkIKnow(
+    #     'My little horse must think it queer')
+    # STOP = WhoseWoodsTheseAreIThinkIKnow('To stop without a farmhouse near')
+    #
+    # # Assert these forward-referencing closures return the expected values.
+    # assert to_stop_without(MY_LITTLE_HORSE) == MY_LITTLE_HORSE
+    # assert to_watch_his_woods(STOP) == STOP
 
 
 def test_hint_forwardref_param_pass() -> None:

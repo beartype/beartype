@@ -12,17 +12,30 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpymodule import get_module_attr_name_relative_to_obj
+from beartype._util.mod.utilmodule import get_object_module_name
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ forwardref              }....................
+#FIXME: Unit test against nested classes.
 def get_hint_forwardref_classname(hint: object) -> str:
     '''
     Possibly unqualified classname referred to by the passed **forward
     reference type hint** (i.e., object indirectly referring to a user-defined
     class that typically has yet to be defined).
+
+    Specifically, this function returns:
+
+    * If this hint is a :pep:`484`-compliant forward reference (i.e., instance
+      of the :class:`typing.ForwardRef` class), the typically unqualified
+      classname referred to by that reference. Although :pep:`484` only
+      explicitly supports unqualified classnames as forward references, the
+      :class:`typing.ForwardRef` class imposes *no* runtime constraints and
+      thus implicitly supports both qualified and unqualified classnames.
+    * If this hint is a string, the possibly unqualified classname.
+      :mod:`beartype` itself intentionally imposes *no* runtime constraints and
+      thus explicitly supports both qualified and unqualified classnames.
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -45,14 +58,14 @@ def get_hint_forwardref_classname(hint: object) -> str:
 
     See Also
     ----------
-    :func:`get_hint_forwardref_classname_qualified`
+    :func:`get_hint_forwardref_classname_relative_to_object`
         Getter returning fully-qualified forward reference classnames.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import die_unless_hint_forwardref
     from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        get_hint_pep484_forwardref_class_basename,
+        get_hint_pep484_forwardref_type_basename,
         is_hint_pep484_forwardref,
     )
 
@@ -61,23 +74,23 @@ def get_hint_forwardref_classname(hint: object) -> str:
 
     # Return either...
     return (
-        # If this hint is a PEP 484-compliant forward reference, the
+        # If this hint is a PEP 484-compliant forward reference, the typically
         # unqualified classname referred to by this reference.
-        get_hint_pep484_forwardref_class_basename(hint)
+        get_hint_pep484_forwardref_type_basename(hint)
         if is_hint_pep484_forwardref(hint) else
-        # Else, this hint is a string. In this case, return this string as is.
+        # Else, this hint is a string. In this case, this string as is.
         hint
     )
 
 
-def get_hint_forwardref_classname_relative_to_obj(
-    obj: object, hint: object) -> str:
+#FIXME: Unit test against nested classes.
+def get_hint_forwardref_classname_relative_to_object(
+    hint: object, obj: object) -> str:
     '''
-    Fully-unqualified classname referred to by the passed **forward
-    reference type hint** (i.e., object indirectly referring to a user-defined
-    class that typically has yet to be defined) canonicalized if this hint is
-    unqualified relative to the module declaring the passed object (e.g.,
-    callable, class).
+    Fully-qualified classname referred to by the passed **forward reference
+    type hint** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined) canonicalized if this hint is unqualified
+    relative to the module declaring the passed object (e.g., callable, class).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -85,11 +98,11 @@ def get_hint_forwardref_classname_relative_to_obj(
 
     Parameters
     ----------
+    hint : object
+        Forward reference to be canonicalized.
     obj : object
         Object to canonicalize the classname referred to by this forward
         reference if that classname is unqualified (i.e., relative).
-    hint : object
-        Forward reference to be canonicalized.
 
     Returns
     ----------
@@ -107,13 +120,20 @@ def get_hint_forwardref_classname_relative_to_obj(
 
     See Also
     ----------
-    :func:`get_hint_forwardref_classname_qualified`
-        Getter returning fully-qualified forward reference classnames.
+    :func:`get_hint_forwardref_classname`
+        Getter returning possibly unqualified forward reference classnames.
     '''
 
-    # Return the fully-unqualified classname referred to by this forward
-    # reference canonicalized relative to the module declaring this object.
-    return get_module_attr_name_relative_to_obj(
-        obj=obj,
-        module_attr_name=get_hint_forwardref_classname(hint),
+    # Possibly unqualified classname referred to by this forward reference.
+    forwardref_classname = get_hint_forwardref_classname(hint)
+
+    # Return either...
+    return (
+        # If this classname contains one or more "." characters and is thus
+        # already hopefully fully-qualified, this classname as is;
+        forwardref_classname
+        if '.' in forwardref_classname else
+        # Else, the "."-delimited concatenation of the fully-qualified name of
+        # the module declaring this class with this unqualified classname.
+        f'{get_object_module_name(obj)}.{forwardref_classname}'
     )

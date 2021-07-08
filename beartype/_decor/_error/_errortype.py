@@ -20,8 +20,8 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
 from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_stdlib_type_or_none)
 from beartype._util.hint.utilhintget import (
-    get_hint_forwardref_classname_relative_to_obj)
-from beartype._util.py.utilpymodule import import_module_attr
+    get_hint_forwardref_classname_relative_to_object)
+from beartype._util.mod.utilmodule import import_module_attr
 from beartype._util.text.utiltextcause import (
     get_cause_object_not_type,
     get_cause_object_not_types,
@@ -47,12 +47,12 @@ def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> Optional[str]:
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignForwardRef, (
-        f'PEP type hint sign {repr(sleuth.hint_sign)} not forward reference.')
+        f'Sign {repr(sleuth.hint_sign)} not forward reference.')
 
     # Fully-qualified classname referred to by this forward reference relative
     # to the decorated callable.
-    hint_forwardref_classname = get_hint_forwardref_classname_relative_to_obj(
-        obj=sleuth.func, hint=sleuth.hint)
+    hint_forwardref_classname = get_hint_forwardref_classname_relative_to_object(
+        hint=sleuth.hint, obj=sleuth.func)
 
     # User-defined class dynamically imported from this classname.
     hint_forwardref_class = import_module_attr(

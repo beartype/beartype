@@ -3452,6 +3452,12 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
      * `Caching data structures <beartype Heliotrop3 QA caching_>`__.
      * `String munging utilities <beartype Heliotrop3 QA munging_>`__.
 
+#. `@posita <posita_>`__, the superpositive code luminary of superpositional
+   genius status singularly responsible for:
+
+   * `Generalizing "NotImplemented" support to non-boolean binary dunder
+     methods <beartype posita NotImplemented_>`__.
+
 See Also
 ========
 
@@ -3660,6 +3666,8 @@ rather than Python runtime) include:
    https://github.com/harens
 .. _leycec:
    https://github.com/leycec
+.. _posita:
+   https://github.com/posita
 
 .. # ------------------( LINKS ~ beartype : user : PRs      )------------------
 .. _beartype Heliotrop3 QA caching:
@@ -3675,6 +3683,8 @@ rather than Python runtime) include:
 .. _beartype felix-hilden docs RTD confs:
    https://github.com/beartype/beartype/pull/9
 .. _beartype harens mypy:
+   https://github.com/beartype/beartype/pull/26
+.. _beartype posita NotImplemented:
    https://github.com/beartype/beartype/pull/26
 
 .. # ------------------( LINKS ~ github                     )------------------

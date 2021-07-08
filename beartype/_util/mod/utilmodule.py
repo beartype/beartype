@@ -198,8 +198,8 @@ def get_object_module_name(obj: object) -> str:
 def get_object_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring package) of the module declaring the passed object if this
-    object defines the ``__module__`` dunder instance variable *or* ``None``
+    declaring package) of the module declaring the passed object if this object
+    defines the ``__module__`` dunder instance variable *or* ``None``
     otherwise.
 
     Parameters
@@ -249,64 +249,6 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
 
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))
-
-# ....................{ GETTERS ~ module : attr           }....................
-def get_module_attr_name_relative_to_obj(
-    obj: object, module_attr_name: str) -> str:
-    '''
-    **Fully-qualified module attribute name** (i.e., ``.``-delimited name
-    prefixed by the declaring module) canonicalized by concatenating the
-    fully-qualified name of the module declaring the passed object with the
-    passed unqualified basename if this basename is unqualified (i.e., contains
-    *no* ``.`` characters) *or* this basename as is otherwise (i.e., if this
-    basename is already fully qualified).
-
-    Specifically, this function:
-
-    * If the passed ``module_attr_name`` is already fully-qualified (i.e.,
-      contains one or more ``.`` characters), returns this string as is.
-    * Else if the passed ``module_obj`` does *not* define the ``__module__``
-      dunder attribute whose value is the fully-qualified name of the module
-      declaring this object, raise an exception. Note that most objects do
-      *not* define this attribute. Those that do include:
-
-      * Classes.
-      * Callables (e.g., functions, methods).
-
-    * Else, returns ``f'{module_obj.__module__}.{module_attr_name}``.
-
-    Parameters
-    ----------
-    obj : object
-        Object to canonicalize the passed unqualified basename relative to.
-    module_attr_name : str
-        Unqualified basename to be canonicalized relative to the module
-        declaring this object.
-
-    Returns
-    ----------
-    str
-        Fully-qualified name of this module attribute.
-
-    Raises
-    ----------
-    _BeartypeUtilModuleException
-        If ``module_obj`` does *not* define the ``__module__`` dunder instance
-        variable.
-    '''
-    assert isinstance(module_attr_name, str), (
-        f'{repr(module_attr_name)} not string.')
-
-    # Return either...
-    return (
-        # If this name contains one or more "." characters and is thus already
-        # fully-qualified, this name as is.
-        module_attr_name
-        if '.' in module_attr_name else
-        # Else, the "."-delimited concatenation of the fully-qualified name of
-        # the module declaring this object with this unqualified basename.
-        f'{get_object_module_name(obj)}.{module_attr_name}'
-    )
 
 # ....................{ GETTERS ~ module : file           }....................
 #FIXME: Unit test us up.
@@ -478,21 +420,11 @@ def import_module_attr(
     # unqualified name of this attribute relative to this module, efficiently
     # split from the passed name. By the prior validation, this split is
     # guaranteed to be safe.
-    #
-    # Note that, in general, the str.rsplit() method is *NOT* necessarily safe.
-    # Specifically, that method silently returns a 1-list containing the
-    # subject string when that string fails to contain the passed substring
-    # rather than raising a fatal exception or emitting a non-fatal warning:
-    #     >>> 'wtfguido'.rsplit('.', maxsplit=1)
-    #     ['wtfguido']     # <------ this is balls, folks.
-    module_name, module_attr_basename = module_attr_name.rsplit(
-        '.', maxsplit=1)
+    module_name, _, module_attr_basename = module_attr_name.rpartition('.')
 
     # Dynamically import this module.
     module = import_module(
-        module_name=module_name,
-        exception_cls=exception_cls,
-    )
+        module_name=module_name, exception_cls=exception_cls)
 
     # Module attribute with this name if this module declares this attribute
     # *OR* "None" otherwise.

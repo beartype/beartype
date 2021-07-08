@@ -38,7 +38,7 @@ def test_pep561_pytyped() -> None:
 
     # Defer heavyweight imports.
     import beartype
-    from beartype._util.py.utilpymodule import get_module_filename
+    from beartype._util.mod.utilmodule import get_module_filename
     from pathlib import Path
 
     # Concrete platform-agnostic path encapsulating the absolute filename of

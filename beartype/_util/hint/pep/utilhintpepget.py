@@ -41,7 +41,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin,
     is_hint_pep585_generic,
 )
-from beartype._util.py.utilpymodule import import_module
+from beartype._util.mod.utilmodule import import_module
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,

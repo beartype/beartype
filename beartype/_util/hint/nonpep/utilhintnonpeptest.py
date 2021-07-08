@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #scoped compiled regular expression. Raising early exceptions at decoration
 #time is preferable to raising late exceptions at call time.
 #FIXME: Indeed, we now provide such a callable:
-#    from beartype._util.py.utilpymodule import die_unless_module_attr_name
+#    from beartype._util.mod.utilmodule import die_unless_module_attr_name
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException

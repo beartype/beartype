@@ -219,7 +219,7 @@ def is_type_builtin(cls: type) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.py.utilpymodule import (
+    from beartype._util.mod.utilmodule import (
         get_object_type_module_name_or_none)
 
     # If this object is *NOT* a type, raise an exception.

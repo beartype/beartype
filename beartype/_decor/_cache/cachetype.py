@@ -6,7 +6,7 @@
 '''
 **Beartypistry** (i.e., singleton dictionary mapping from the fully-qualified
 classnames of all type hints annotating callables decorated by the
-:func:`beartype.beartype` decorator to those types).**
+:func:`beartype.beartype` decorator to those types).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -23,7 +23,7 @@ from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
     is_type_builtin,
 )
-from beartype._util.py.utilpymodule import (
+from beartype._util.mod.utilmodule import (
     die_unless_module_attr_name,
     import_module_attr,
 )
@@ -44,7 +44,7 @@ values are types from pairs whose values are tuples.
 '''
 
 # ....................{ CONSTANTS ~ code                  }....................
-_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = ARG_NAME_TYPISTRY + '['
+_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = f'{ARG_NAME_TYPISTRY}['
 '''
 Substring prefixing a Python expression mapping from the subsequent string to
 an arbitrary object cached by the beartypistry singleton via the private

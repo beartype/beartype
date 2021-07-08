@@ -44,7 +44,7 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.py.utilpymodule import get_object_module_name
+from beartype._util.mod.utilmodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
 from typing import NoReturn, Type, TypeVar

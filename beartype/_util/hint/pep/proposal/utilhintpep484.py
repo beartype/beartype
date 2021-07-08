@@ -430,11 +430,11 @@ def is_hint_pep484_newtype(hint: object) -> bool:
 
 # ....................{ GETTERS ~ forwardref              }....................
 @callable_cached
-def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
+def get_hint_pep484_forwardref_type_basename(hint: Any) -> str:
     '''
     **Unqualified classname** (i.e., name of a class *not* containing a ``.``
-    delimiter and thus relative to the fully-qualified name of the submodule
-    declaring that class) referred to by the passed :pep:`484`-compliant
+    delimiter and thus relative to the fully-qualified name of the lexical
+    scope declaring that class) referred to by the passed :pep:`484`-compliant
     **forward reference type hint** (i.e., instance of the
     :class:`typing.ForwardRef` class implicitly replacing all string arguments
     subscripting :mod:`typing` objects).
@@ -465,22 +465,21 @@ def get_hint_pep484_forwardref_class_basename(hint: Any) -> str:
         Further commentary.
     '''
 
-    # If this object is *NOT* a PEP 484-compliant forward reference type hint,
-    # raise an exception.
+    # If this object is *NOT* a PEP 484-compliant forward reference, raise an
+    # exception.
     if not is_hint_pep484_forwardref(hint):
         raise BeartypeDecorHintForwardRefException(
-            f'PEP-compliant type hint {repr(hint)} not forward reference.')
-    # Else, this object is a PEP 484-compliant forward reference type hint.
+            f'Type hint {repr(hint)} not forward reference.')
+    # Else, this object is a PEP 484-compliant forward reference.
 
     # Return the unqualified classname referred to by this reference. Note
     # that:
-    #
     # * This requires violating privacy encapsulation by accessing a dunder
     #   instance variable unique to the "typing.ForwardRef" class.
     # * This object defines a significant number of other "__forward_"-prefixed
     #   dunder instance variables, which exist *ONLY* to enable the blatantly
-    #   useless typing.get_type_hints() function to cache the results of
-    #   evaluating the same forward reference. *sigh*
+    #   useless typing.get_type_hints() function to avoid repeatedly (and thus
+    #   inefficiently) reevaluating the same forward reference. *sigh*
     return hint.__forward_arg__
 
 # ....................{ GETTERS ~ newtype                 }....................

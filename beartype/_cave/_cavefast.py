@@ -1219,6 +1219,12 @@ callable objects implemented in low-level C rather than high-level Python).
 '''
 
 
+CallableOrClassTypes = CallableTypes + (ClassType,)
+'''
+Tuple of all callable types as well as the type of all types.
+'''
+
+
 CallableOrStrTypes = CallableTypes + (StrType,)
 '''
 Tuple of all callable types as well as the string type.

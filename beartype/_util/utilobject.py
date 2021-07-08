@@ -137,7 +137,7 @@ def is_object_subclass(obj: object, cls: type) -> bool:
 def get_object_name(obj: Any) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited string unambiguously
-    identifying) the passed object if this object defines either the
+    identifying) of the passed object if this object defines either the
     ``__qualname__`` or ``__name__`` dunder attributes *or* raise an exception
     otherwise (i.e., if this object defines *no* such attributes).
 
@@ -148,7 +148,7 @@ def get_object_name(obj: Any) -> str:
     #. If this object is transitively declared by another object (e.g., class,
        callable) and thus nested in that object, the unqualified basenames of
        all parent objects transitively declaring this object in that module.
-    *. Unqualified basename of this object.
+    #. Unqualified basename of this object.
 
     Parameters
     ----------
@@ -168,18 +168,21 @@ def get_object_name(obj: Any) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._cave._cavefast import CallableTypes
-    from beartype._util.py.utilpymodule import (
+    from beartype._cave._cavefast import CallableOrClassTypes
+    from beartype._util.mod.utilmodule import (
         get_object_module_name_or_none,
         get_object_type_module_name_or_none,
     )
 
     # Fully-qualified name of the module declaring this object if this object
-    # is declared by a module *OR* "None" otherwise, constructed as follows:
-    # * If this object is callable
+    # is declared by a module *OR* "None" otherwise, specifically defined as:
+    # * If this object is either a callable or class, the fully-qualified name
+    #   of the module declaring this object.
+    # * Else, the fully-qualified name of the module declaring the class of
+    #   this object.
     object_module_name = (
         get_object_module_name_or_none(obj)
-        if isinstance(object, CallableTypes) else
+        if isinstance(object, CallableOrClassTypes) else
         get_object_type_module_name_or_none(obj)
     )
 
@@ -211,7 +214,20 @@ def get_object_scopes_name(obj: Any) -> str:
     #. If this object is transitively declared by another object (e.g., class,
        callable) and thus nested in that object, the unqualified basenames of
        all parent objects transitively declaring this object in that module.
-    *. Unqualified basename of this object.
+    #. Unqualified basename of this object.
+
+    Caveats
+    ----------
+    **The higher-level** :func:`get_object_name` **getter should typically be
+    called instead of this lower-level getter,** which omits the
+    fully-qualified name of the module transitively declaring this object and
+    thus fails to return fully-qualified names.
+
+    **This high-level getter should always be called in lieu of directly
+    accessing the low-level** ``__qualname__`` **dunder attribute on objects.**
+    That attribute contains one meaningless ``"<locals>"`` placeholder
+    substring conveying *no* meaningful semantics for each parent callable
+    lexically nesting this object.
 
     Parameters
     ----------
@@ -315,7 +331,7 @@ def get_object_type_name(obj: object) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.py.utilpymodule import (
+    from beartype._util.mod.utilmodule import (
         get_object_type_module_name_or_none)
 
     # Type of this object.

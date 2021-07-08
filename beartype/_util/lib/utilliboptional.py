@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpymodule import is_module
+from beartype._util.mod.utilmodule import is_module
 
 # ....................{ CONSTANTS                         }....................
 IS_LIB_TYPING_EXTENSIONS = is_module('typing_extensions')
