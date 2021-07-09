@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
-from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignAnnotated
+from beartype._vale._valesub import _SubscriptedIs
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -44,16 +44,16 @@ def die_unless_hint_pep593(hint: object) -> None:
             f'PEP 593 type hint {repr(hint)} not "typing.Annotated".')
 
 # ....................{ TESTERS                           }....................
-#FIXME: Note this returns false for the unsubscripted "Annotated" class. Do
-#we particularly care about this edge case? Probably not. *shrug*
+#FIXME: This tester is now trivially silly. Excise as follows:
+#* Replace all calls to this tester with tests resembling:
+#      get_hint_pep_sign_or_none(hint) is HintSignAnnotated
+#* Excise this tester.
 def is_hint_pep593(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This tester is memoized for efficiency.
 
     Parameters
     ----------
@@ -67,6 +67,10 @@ def is_hint_pep593(hint: object) -> bool:
         type metahint.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilhintpepget import (
+        get_hint_pep_sign_or_none)
+
     # Return true only if the machine-readable representation of this object
     # implies this object to be a PEP 593-compliant type hint hint.
     #
@@ -74,8 +78,8 @@ def is_hint_pep593(hint: object) -> bool:
     # arbitrary and hence possibly PEP-noncompliant type hints. Notably, this
     # approach avoids the following equally applicable but considerably less
     # efficient heuristic:
-    #    return is_hint_pep(hint) and get_hint_pep_sign(hint) is Annotated
-    return repr(hint).startswith('typing.Annotated[')
+    #    return is_hint_pep(hint) and get_hint_pep_sign(hint) is HintSignAnnotated
+    return get_hint_pep_sign_or_none(hint) is HintSignAnnotated
 
 
 def is_hint_pep593_ignorable_or_none(

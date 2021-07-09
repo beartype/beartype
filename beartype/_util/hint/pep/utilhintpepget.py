@@ -292,6 +292,57 @@ get_hint_pep_typevars.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ sign                    }....................
+def get_hint_pep_sign(hint: Any) -> HintSign:
+    '''
+    **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
+    PEP-compliant type hint if PEP-compliant *or* raise an exception otherwise
+    (i.e., if this hint is *not* PEP-compliant).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    ----------
+    dict
+        Sign uniquely identifying this hint.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this hint is *not* PEP-compliant.
+    BeartypeDecorHintPepSignException
+        If this object is a PEP-compliant type hint *not* uniquely identifiable
+        by a sign.
+
+    See Also
+    ----------
+    '''
+
+    # Sign uniquely identifying this hint if recognized *OR* "None" otherwise.
+    hint_sign = get_hint_pep_sign_or_none(hint)
+
+    # If this hint is unrecognized, raise an exception. By internal validation
+    # performed by the prior call, this hint is PEP-compliant and should thus
+    # have been recognized (and identifiable by some sign).
+    if hint_sign is None:
+        raise BeartypeDecorHintPepSignException(
+            f'Type hint {repr(hint)} currently unsupported by beartype. '
+            f'You suddenly feel encouraged to submit '
+            f'a feature request for this hint to our '
+            f'friendly issue tracker at:\n\t{URL_ISSUES}'
+        )
+    # Else, this hint is unrecognized.
+
+    # Return the sign uniquely identifying this hint.
+    return hint_sign
+
+
 #FIXME: Refactor all functions throughout the codebase that accept or return
 #signs to be annotated ideally by "HintSign" (or, if necessary, by
 #"HintSignOrType"). These include:
@@ -301,21 +352,22 @@ get_hint_pep_typevars.__doc__ = '''
 #FIXME: Validate that the value of the "pep_sign" parameter passed to the
 #PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
 #FIXME: Refactor as follows:
-#* Shift the majority of this function's body into a new
-#  get_hint_pep_sign_or_none() getter.
 #* Refactor the following functions to mostly defer to that new
 #  get_hint_pep_sign_or_none() function:
-#  * This function.
 #  * The is_hint_pep() function.
 #* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
 #  dramatically simpler approach, we no longer require the excessive glut of
 #  PEP-specific testers we previously required.
+#* Merge the contents of all now-minimal
+#  "beartype._util.data.hint.pep.proposal.*" submodules into their parent
+#  "beartype._util.hint.pep.proposal.*" submodules. There's no longer any
+#  demonstrable benefit to separating the two, so please cease doing so.
 @callable_cached
-def get_hint_pep_sign(hint: Any) -> HintSign:
+def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
-    PEP-compliant type hint if this hint is PEP-compliant *or* raise an
-    exception otherwise (i.e., if this hint is *not* PEP-compliant).
+    PEP-compliant type hint if PEP-compliant *or* ``None`` otherwise (i.e., if
+    this hint is *not* PEP-compliant).
 
     This getter function associates the passed hint with a public attribute of
     the :mod:`typing` module effectively acting as a superclass of this hint
@@ -367,7 +419,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        Type hint to be inspected.
 
     Returns
     ----------
@@ -376,17 +428,8 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 
     Raises
     ----------
-    AttributeError
-        If this object's representation is prefixed by the substring
-        ``"typing."``, but the remainder of that representation up to but *not*
-        including the first "[" character in that representation (e.g.,
-        ``"Dict"`` for the object ``typing.Dict[str, Tuple[int, ...]]``) is
-        *not* an attribute of the :mod:`typing` module.
     BeartypeDecorHintPepException
-        If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintPepSignException
-        If this object is a PEP-compliant type hint *not* uniquely identifiable
-        by a sign.
+        If this hint is *not* PEP-compliant.
 
     Examples
     ----------
@@ -507,7 +550,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    if is_hint_pep_generic(hint):
+    elif is_hint_pep_generic(hint):
         return HintSignGeneric
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
@@ -522,29 +565,10 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
     elif is_hint_pep484_newtype(hint):
         return HintSignNewType
-    #FIXME: Drop this like hot lead after dropping Python 3.6 support.
-    # If the active Python interpreter targets Python 3.6 *AND* this hint is a
-    # poorly designed Python 3.6-specific "type alias", this hint is a
-    # subscription of either the "typing.Match" or "typing.Pattern" objects. In
-    # this case, this hint declares a non-standard "name" instance variable
-    # whose value is either the literal string "Match" or "Pattern". Return the
-    # "typing" attribute with this name *OR* implicitly raise an
-    # "AttributeError" exception if something goes horribly awry.
-    #
-    # Gods... this is horrible. Thanks for nuthin', Python 3.6.
-    elif IS_PYTHON_3_6 and isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
-        return getattr(typing, hint.name)
 
     # ..................{ ERROR                             }..................
-    # Else, this hint is identifiable by *NO* sign. But (by the above
-    # validation) this hint is PEP-compliant and should thus be identifiable by
-    # some sign. Since this is paradoxically bad, raise an exception.
-    raise BeartypeDecorHintPepSignException(
-        f'Type hint {repr(hint)} currently unsupported by beartype. '
-        f'You suddenly feel encouraged to submit '
-        f'a feature request for this hint to our '
-        f'friendly issue tracker at:\n\t{URL_ISSUES}'
-    )
+    # Else, this hint is unrecognized. In this case, return "None".
+    return None
 
 # ....................{ GETTERS ~ type : generic          }....................
 @callable_cached

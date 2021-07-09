@@ -33,6 +33,10 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED)
+from beartype._util.data.mod.datamod import (
+    TYPING_MODULE_NAMES,
+    TYPING_MODULE_NAMES_DOTTED,
+)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
@@ -46,7 +50,10 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 )
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.mod.utilmodule import get_object_module_name
+from beartype._util.mod.utilmodule import (
+    get_object_module_name,
+    get_object_module_name_or_none,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
 from typing import NoReturn, Type, TypeVar
@@ -778,23 +785,21 @@ def is_hint_pep_sign_supported(hint_sign: HintSign) -> bool:
     return hint_sign in HINT_SIGNS_SUPPORTED
 
 # ....................{ TESTERS ~ typing                  }....................
-#FIXME: This test returns false negatives for PEP 593-compliant
-#"typing.Annotated" parent type hints, whose "__module__" attribute is
-#inexplicably that of the first PEP-compliant child type hint subscripting that
-#parent. Since the existing test suffices in all other cases *AND* since we
-#consider this behaviour aberrant rather than desirable, we are inclined to
-#preserve the existing test. If we ever *DO* want to properly support PEP
-#593-compliant type hints here, the correct solution will be to generalize this
-#tester as follows:
-#* Memoize this tester with @callable_cached.
-#* Generalize the body of this tester to:
+#FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
+#access of "TYPING_MODULE_NAMES" instead. We only see two remaining in:
+#* beartype/_util/hint/pep/proposal/utilhintpep544.py
+#* beartype/_util/hint/pep/proposal/utilhintpep484.py
+#Thankfully, nobody really cares about generalizing these two edge cases to
+#"testing_extensions", so they're mostly fine for various definitions of fine.
+@callable_cached
 def is_hint_pep_typing(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is defined by the :mod:`typing` module.
+    ``True`` only if the passed object is an attribute of a **typing module**
+    (i.e., modules officially declaring attributes usable for creating
+    PEP-compliant type hints accepted by both static and runtime type
+    checkers).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This tester is memoized for efficiency.
 
     Parameters
     ----------
@@ -804,28 +809,33 @@ def is_hint_pep_typing(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is defined by the :mod:`typing` module.
+        ``True`` only if this object is an attribute of a typing module.
     '''
     # print(f'is_hint_pep_typing({repr(hint)}')
 
     # Return true if either...
     return (
-        # This is any PEP-compliant type hint defined by the "typing" module
-        # *OTHER* than a PEP 593-compliant type hint, in which case the
-        # fully-qualified name of the module defining this hint is "typing".
-        getattr(hint, '__module__', None) == 'typing' or
-        # This is a PEP 593-compliant type hint. For inexplicable (and
-        # presumably indefensible) reasons, PEP 593-compliant type hints badly
-        # masquerade as their first subscripted PEP-compliant type hint (e.g.,
+        # This is any PEP-compliant type hint defined by a typing module
+        # (except PEP 593-compliant type hints) *OR*...
+        get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES or
+        # The machine-readable representation of this hint is prefixed by a
+        # string indicative of a typing module.
+        #
+        # This is specifically required for PEP 593-compliant type hints. For
+        # inexplicable (and presumably indefensible) reasons, these hints badly
+        # masquerade as their first subscripted PEP-compliant type hints (e.g.,
         # the "int" in "typing.Annotated[int, 63]"). Ergo, the value of the
         # "__module__" attribute of this hint is that of its first subscripted
         # PEP-compliant type hint rather than its own. Nonetheless, its
         # machine-readable representation remains prefixed by "typing.",
-        # enabling an efficient test that also generalizes to all other
-        # outlier edge cases that are probably lurking about.
+        # enabling an efficient test that also generalizes to all other outlier
+        # edge cases that are probably lurking about.
         #
         # I have no code and I must scream.
-        repr(hint).startswith('typing.')
+        any(
+            repr(hint).startswith(typing_module_name_dotted)
+            for typing_module_name_dotted in TYPING_MODULE_NAMES_DOTTED
+        )
     )
 
 
@@ -838,15 +848,15 @@ if IS_PYTHON_AT_LEAST_3_7:
         hint_type = get_object_type_unless_type(hint)
         # print(f'pep_type_typing({repr(hint)}): {get_object_module_name(hint_type)}')
 
-        # Return true only if this type is defined by the "typing" module.
+        # Return true only if this type is defined by a typing module.
         #
         # Note that this implementation could probably be reduced to the
-        # trailing portion of the body of the get_hint_pep_sign()
-        # function testing this object's representation. While certainly more
-        # compact and convenient than the current approach, that refactored
-        # approach would also be considerably more fragile, failure-prone, and
-        # subject to whimsical "improvements" in the already overly hostile
-        # "typing" API. Why? Because the get_hint_pep_sign() function:
+        # leading portion of the body of the get_hint_pep_sign() function
+        # testing this object's representation. While certainly more compact
+        # and convenient than the current approach, that refactored approach
+        # would also be considerably more fragile, failure-prone, and subject
+        # to whimsical "improvements" in the already overly hostile "typing"
+        # API. Why? Because the get_hint_pep_sign() function:
         #
         # * Parses the machine-readable string returned by the __repr__()
         #   dunder method of "typing" types. Since that string is *NOT*
@@ -861,11 +871,11 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   further introspection, which would clearly complicate implementing
         #   this tester function in terms of that getter function.
         #
-        # In contrast, the current approach only tests the standardized
-        # "__name__" and "__module__" dunder attributes and is thus
-        # significantly more robust against whimsical destruction by "typing"
-        # authors. Note that there might exist an alternate means of deciding
-        # this boolean, documented here merely for completeness:
+        # In contrast, the current approach only tests the standard
+        # "__module__" dunder attribute and is thus significantly more robust
+        # against whimsical destruction by "typing" authors. Note that there
+        # might exist an alternate means of deciding this boolean, documented
+        # here merely for completeness:
         #
         #     try:
         #         isinstance(obj, object)
@@ -886,7 +896,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         #   exceptions with reliable messages across *ALL* Python versions.
         #
         # In short, there is no general-purpose clever solution. *sigh*
-        return hint_type.__module__ == 'typing'
+        return hint_type.__module__ in TYPING_MODULE_NAMES
 # Else, the active Python interpreter targets exactly Python 3.6. In this case,
 # define this tester to circumvent Python 3.6-specific issues. Notably, the
 # implementation of the "typing" module under this major version harmfully
@@ -906,8 +916,8 @@ else:
 
         # Return true only if...
         return (
-            # This type pretends to be defined by the "typing" module *AND*...
-            get_object_module_name(hint_type) == 'typing' and
+            # This type pretends to be defined by a typing module *AND*...
+            get_object_module_name(hint_type) in TYPING_MODULE_NAMES and
             # This type is *NOT* actually a superclass defined by the
             # "collections.abc" submodule. Ideally, we would simply uncomment
             # the following test:

@@ -254,8 +254,7 @@ def _init() -> None:
 
     # ..................{ EXTERNALS                         }..................
     # Defer initialization-specific imports.
-    from beartype._util.data.hint.pep.datapepmodule import (
-        HINT_PEP_MODULE_NAMES)
+    from beartype._util.data.mod.datamod import TYPING_MODULE_NAMES
 
     # Permit redefinition of these globals below.
     global \
@@ -372,11 +371,23 @@ def _init() -> None:
         'Union',
     }
 
-    # If the active Python interpreter targets Python 3.6, shallowly ignore the
-    # unsubscripted "Generic" superclass whose idiosyncratic representation
-    # under Python 3.6 is "typing.Generic" rather than "<class 'Generic'>"".
-    # Note that logic above already handles the latter case.
+    # If the active Python interpreter targets Python 3.6...
+    #
+    # Gods... these are horrible. Thanks for nuthin', Python 3.6.
     if IS_PYTHON_3_6:
+        # Map from the idiosyncratic machine-readable bare representations of
+        # the "typing.Match" and "typing.Pattern" objects, which unlike all
+        # other "typing"-based type hints are *NOT* prefixed by "typing"
+        # (e.g., "Pattern[~AnyStr]" rather than "typing.Pattern").
+        HINT_BARE_REPR_TO_SIGN.update({
+            'Match': HintSignMatch,
+            'Pattern': HintSignPattern,
+        })
+
+        # Shallowly ignore the unsubscripted "Generic" superclass whose
+        # idiosyncratic representation under Python 3.6 is "typing.Generic"
+        # rather than "<class 'Generic'>"". Note that logic above already
+        # handles the latter case.
         _HINT_TYPING_ATTR_NAMES_IGNORABLE.add('Generic')
 
     # ..................{ HINTS ~ types                     }..................
@@ -404,7 +415,7 @@ def _init() -> None:
 
     # ..................{ CONSTRUCTION                      }..................
     # For the name of each top-level hinting module...
-    for typing_module_name in HINT_PEP_MODULE_NAMES:
+    for typing_module_name in TYPING_MODULE_NAMES:
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
             # Add that attribute relative to this module to this set.

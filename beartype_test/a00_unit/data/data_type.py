@@ -12,7 +12,7 @@ cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import builtins
-from beartype._util.data.mod.datamod import MODULE_NAME_BUILTINS
+from beartype._util.data.mod.datamod import BUILTINS_MODULE_NAME
 from sys import exc_info, implementation
 from typing import Callable
 
@@ -228,7 +228,7 @@ TYPES_BUILTIN_FAKE = frozenset((
     if (
         # The type of this builtin also insists itself to be defined by the
         # "builtins" module and thus also be a builtin *AND*...
-        builtin.__class__.__module__ == MODULE_NAME_BUILTINS and
+        builtin.__class__.__module__ == BUILTINS_MODULE_NAME and
         # The "builtins" module contains *NO* globally-scoped attribute whose
         # name is that of this type...
         builtin.__class__.__name__ not in builtins.__dict__

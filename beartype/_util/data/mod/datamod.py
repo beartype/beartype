@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ NAMES                              }....................
-MODULE_NAME_BUILTINS = 'builtins'
+BUILTINS_MODULE_NAME = 'builtins'
 '''
 Fully-qualified name of the **builtins module** (i.e., objects defined by the
 standard :mod:`builtins` module and thus globally available by default
@@ -23,9 +23,7 @@ standard :mod:`builtins` module and thus globally available by default
 '''
 
 # ....................{ SETS                              }....................
-#FIXME: Replace all usage of "HINT_PEP_MODULE_NAMES" with usage of this set;
-#then excise the former, please.
-MODULE_NAMES_HINT = frozenset((
+TYPING_MODULE_NAMES = frozenset((
     # Name of the official typing module bundled with the Python stdlib.
     'typing',
     # Name of the third-party "typing_extensions" module, backporting "typing"
@@ -33,7 +31,23 @@ MODULE_NAMES_HINT = frozenset((
     'typing_extensions',
 ))
 '''
-Frozen set of the fully-qualified names of all **hinting modules** (i.e.,
+Frozen set of the fully-qualified names of all **typing modules** (i.e.,
 modules officially declaring attributes usable for creating PEP-compliant type
 hints accepted by both static and runtime type checkers).
+'''
+
+
+TYPING_MODULE_NAMES_DOTTED = frozenset(
+    f'{typing_module_name}.' for typing_module_name in TYPING_MODULE_NAMES)
+'''
+Frozen set of the fully-qualified ``.``-suffixed names of all typing modules.
+
+This set is a negligible optimization enabling callers to perform slightly more
+efficient testing of string prefixes against items of this specialized set than
+those of the more general-purpose :data:`TYPING_MODULE_NAMES` set.
+
+See Also
+----------
+:data:`TYPING_MODULE_NAMES`
+    Further details.
 '''

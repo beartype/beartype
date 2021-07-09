@@ -16,7 +16,7 @@ from beartype.roar._roarexc import (
     _BeartypeUtilTypeException,
 )
 from beartype._util.data.cls.datacls import TYPES_BUILTIN_FAKE
-from beartype._util.data.mod.datamod import MODULE_NAME_BUILTINS
+from beartype._util.data.mod.datamod import BUILTINS_MODULE_NAME
 from typing import Type
 
 # ....................{ VALIDATORS                        }....................
@@ -240,7 +240,7 @@ def is_type_builtin(cls: type) -> bool:
 
     # This return true only if this name is that of the "builtins" module
     # declaring all builtin types.
-    return cls_module_name == MODULE_NAME_BUILTINS
+    return cls_module_name == BUILTINS_MODULE_NAME
 
 # ....................{ TESTERS ~ isinstanceable          }....................
 def is_type_isinstanceable(cls: object) -> bool:
