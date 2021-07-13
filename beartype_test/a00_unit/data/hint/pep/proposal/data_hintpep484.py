@@ -28,7 +28,6 @@ Note that:
 # ....................{ IMPORTS                           }....................
 import contextlib, re
 from beartype._cave._cavefast import (
-    NoneType,
     RegexMatchType,
     RegexCompiledType,
 )
@@ -40,6 +39,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignCallable,
     HintSignContextManager,
     HintSignDict,
+    HintSignForwardRef,
     HintSignGenerator,
     HintSignGeneric,
     HintSignHashable,
@@ -47,6 +47,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignMatch,
     HintSignMutableSequence,
     HintSignNewType,
+    HintSignNone,
     HintSignOptional,
     HintSignPattern,
     HintSignSequence,
@@ -68,6 +69,7 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
 )
 from collections import abc as collections_abc
 from contextlib import contextmanager
+from profile import Profile   # <-- class hopefully guaranteed to exist! *gulp*
 from typing import (
     Any,
     AnyStr,
@@ -364,6 +366,66 @@ def add_data(data_module: 'ModuleType') -> None:
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'At that atom-nestled canticle'),
+            ),
+        ),
+
+        # Unsubscripted "None" singleton, which transparently reduces to
+        # "types.NoneType". While not explicitly defined by the "typing"
+        # module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        PepHintMetadata(
+            hint=None,
+            pep_sign=HintSignNone,
+            is_type_typing=False,
+            piths_satisfied_meta=(
+                # "None" singleton.
+                HintPithSatisfiedMetadata(None),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
+            ),
+        ),
+
+        # ................{ UNSUBSCRIPTED ~ forwardref        }................
+        # Forward references defined below are *ONLY* intended to shallowly
+        # exercise support for types of forward references across the codebase;
+        # they are *NOT* intended to deeply exercise resolution of forward
+        # references to undeclared classes, which requires more finesse.
+        #
+        # See the "data_hintref" submodule for the latter.
+
+        # Unsubscripted forward reference defined as a simple string.
+        PepHintMetadata(
+            hint='profile.Profile',
+            pep_sign=HintSignForwardRef,
+            is_subscripted=False,
+            is_type_typing=False,
+            piths_satisfied_meta=(
+                # Profile object.
+                HintPithSatisfiedMetadata(Profile()),
+            ),
+            piths_unsatisfied_meta=(
+                # String object.
+                HintPithUnsatisfiedMetadata(
+                    'Empirical Ṗath after‐mathematically harvesting agro‐'),
+            ),
+        ),
+
+        # Unsubscripted forward reference defined as a typing object.
+        PepHintMetadata(
+            hint=HINT_PEP484_TYPE_FORWARDREF('profile.Profile'),
+            pep_sign=HintSignForwardRef,
+            is_subscripted=False,
+            is_type_typing=False,
+            piths_satisfied_meta=(
+                # Profile object.
+                HintPithSatisfiedMetadata(Profile()),
+            ),
+            piths_unsatisfied_meta=(
+                # String object.
+                HintPithUnsatisfiedMetadata('Silvicultures of'),
             ),
         ),
 

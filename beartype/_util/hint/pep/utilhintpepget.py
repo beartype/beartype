@@ -327,10 +327,21 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     # Sign uniquely identifying this hint if recognized *OR* "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
 
-    # If this hint is unrecognized, raise an exception. By internal validation
-    # performed by the prior call, this hint is PEP-compliant and should thus
-    # have been recognized (and identifiable by some sign).
+    # If this hint is unrecognized...
     if hint_sign is None:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
+
+        # If this hint is *NOT* PEP-compliant, raise an exception.
+        die_unless_hint_pep(hint)
+        # Else, this hint is PEP-compliant. Since this hint is unrecognized,
+        # this hint *MUST* be currently unsupported by the @beartype decorator.
+
+        # Raise an exception indicating this.
+        #
+        # Note that we intentionally avoid calling the
+        # die_if_hint_pep_unsupported() function here, which calls the
+        # is_hint_pep_supported() function, which calls this function.
         raise BeartypeDecorHintPepSignException(
             f'Type hint {repr(hint)} currently unsupported by beartype. '
             f'You suddenly feel encouraged to submit '
@@ -452,19 +463,16 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import (
-        die_unless_hint_pep, is_hint_pep_generic)
-
-    # If this hint is *NOT* PEP-compliant, raise an exception.
-    #
-    # Note that we intentionally avoid calling the
-    # die_if_hint_pep_unsupported() function here, which calls the
-    # is_hint_pep_supported() function, which calls this function.
-    die_unless_hint_pep(hint)
-    # Else, this hint is PEP-compliant.
+    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
 
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
+    #
+    # Note that we intentionally avoid validating this type hint to be
+    # PEP-compliant (e.g., by calling the die_unless_hint_pep() validator).
+    # Why? Because this getter is the lowest-level hint validation function
+    # underlying all higher-level hint validation functions! Calling the latter
+    # here would thus induce infinite recursion, which would be very bad.
 
     # ..................{ PHASE ~ repr                      }..................
     # This phase attempts to map from the unsubscripted machine-readable

@@ -870,8 +870,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=tuple[S, T],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
-            is_typevared=True,
             is_pep585_builtin=True,
+            is_typevared=True,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -929,8 +929,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=tuple[T, ...],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
-            is_typevared=True,
             is_pep585_builtin=True,
+            is_typevared=True,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
@@ -988,6 +988,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=list[Union[int, str,]],
             pep_sign=HintSignList,
             stdlib_type=list,
+            is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List containing a mixture of integer and string constants.
                 HintPithSatisfiedMetadata([
@@ -1038,6 +1039,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Sequence[Union[str, ByteString]],
             pep_sign=HintSignSequence,
             stdlib_type=Sequence,
+            is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata((
@@ -1086,6 +1088,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=HintSignMutableSequence,
             stdlib_type=MutableSequence,
+            is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Mutable sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata([

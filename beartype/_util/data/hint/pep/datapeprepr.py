@@ -56,6 +56,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignMutableSet,
     # HintSignNamedTuple,
     # HintSignNewType,
+    HintSignNone,
     # HintSignOptional,
     HintSignOrderedDict,
     # HintSignParamSpec,
@@ -89,6 +90,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # here are those *NOT* amenable to such inspection.
 HINT_BARE_REPR_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 484                           }..................
+    'None': HintSignNone,
+
     #FIXME: This is a bit odd. If an unsubscripted "typing.Protocol" is
     #ignorable, why wouldn't an unsubscripted "typing.Generic" be ignorable as
     #well? Consider excising this, please.

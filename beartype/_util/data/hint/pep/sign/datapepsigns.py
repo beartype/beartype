@@ -20,7 +20,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 
-# ....................{ SIGNS                             }....................
+# ....................{ SIGNS ~ explicit                  }....................
+# Signs with explicit analogues in the stdlib "typing" module.
+#
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Signs defined by this module are synchronized with the "__all__"
 # list global of the "typing" module bundled with the most recent CPython
@@ -49,19 +51,6 @@ from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 # * Preserve attributes here that have since been removed from the "typing"
 #   module in that CPython release to ensure their continued usability when
 #   running beartype against older CPython releases.
-#
-# Lastly, note that:
-# * "NoReturn" is contextually valid *ONLY* as a top-level return hint. Since
-#   this use case is extremely limited, we explicitly generate code for this
-#   use case outside of the general-purpose code generation pathway for
-#   standard type hints. Since "NoReturn" is an unsubscriptable singleton, we
-#   explicitly detect this type hint with an identity test and thus require
-#   *NO* sign to uniquely identify this type hint. Indeed, explicitly defining
-#   a sign uniquely identifying this type hint would erroneously encourage us
-#   to use that sign elsewhere. We should *NOT* do that, because "NoReturn" is
-#   invalid in almost all possible contexts. Of course, we actually previously
-#   did define a "NoReturn" sign and erroneously use that sign elsewhere, which
-#   is exactly why we do *NOT* do so now. In short, "NoReturn" is insane.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
@@ -143,7 +132,24 @@ HintSignGenerator = HintSign(name='Generator')
 HintSignNewType = HintSign(name='NewType')
 # no_type_check   <-- unusable as a type hint
 # no_type_check_decorator   <-- unusable as a type hint
-# NoReturn   <-- generally unusable as a type hint (see above for commentary)
+
+# Note that "NoReturn" is contextually valid *ONLY* as a top-level return hint.
+# Since this use case is extremely limited, we explicitly generate code for
+# this use case outside of the general-purpose code generation pathway for
+# standard type hints. Since "NoReturn" is an unsubscriptable singleton, we
+# explicitly detect this type hint with an identity test and thus require *NO*
+# sign to uniquely identify this type hint.
+#
+# Theoretically, explicitly defining a sign uniquely identifying this type hint
+# could erroneously encourage us to use that sign elsewhere, which we should
+# avoid, because "NoReturn" is invalid in almost all possible contexts.
+# Pragmatically, doing so nonetheless improves orthogonality when detecting and
+# validating PEP-compliant type hints, which ultimately matters more than our
+# subjective feels about the matter. Wisely, we choose the practical approach.
+#
+# In short, "NoReturn" is insane.
+HintSignNoReturn = HintSign(name='NoReturn')
+
 # overload   <-- unusable as a type hint
 HintSignParamSpecArgs = HintSign(name='ParamSpecArgs')
 HintSignParamSpecKwargs = HintSign(name='ParamSpecKwargs')
@@ -159,6 +165,15 @@ HintSignTypeGuard = HintSign(name='TypeGuard')
 # attributes, which it oddly considers to comprise another namespace. *shrug*
 HintSignMatch = HintSign(name='Match')
 HintSignPattern = HintSign(name='Pattern')
+
+# ....................{ SIGNS ~ implicit                  }....................
+# Signs with *NO* explicit analogues in the stdlib "typing" module but
+# nonetheless standardized by one or more PEPs.
+
+# PEP 484 explicitly supports the "None" singleton, albeit implicitly:
+#     When used in a type hint, the expression None is considered equivalent to
+#     type(None).
+HintSignNone = HintSign(name='None')
 
 # ....................{ CLEANUP                           }....................
 # Prevent all attributes imported above from polluting this namespace. Why?

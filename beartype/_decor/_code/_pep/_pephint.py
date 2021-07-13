@@ -93,8 +93,10 @@ from beartype._util.data.hint.pep.datapepattr import (
 from beartype._util.data.hint.pep.datapeprepr import (
     HINT_REPRS_IGNORABLE_SHALLOW)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignAnnotated,
     HintSignForwardRef,
     HintSignGeneric,
+    HintSignLiteral,
     HintSignTuple,
 )
 from beartype._util.data.hint.pep.sign.datapepsignset import (
@@ -734,6 +736,19 @@ def pep_code_check_hint(
         )
 
         # ................{ REDUCTION                         }................
+        #FIXME: Inefficient. Calling the get_hint_pep_sign_or_none() getter
+        #once here to obtain the sign of this hint and then simply testing that
+        #sign is likely to be substantially faster and simpler than the current
+        #approach performed below. Make it so, please -- especially because
+        #doing so should enable us to remove most of these PEP-specific testers
+        #from the codebase.
+        #
+        #Note, of course, that we'll need to call that same getter a second
+        #time *IF AND ONLY IF* the current hint is actually reduced by this
+        #reduction logic. Yup; that's lookin' pretty darn efficient there.
+        #FIXME: Perform a similar refactoring to the
+        #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method.
+
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the
         # beartype._decor._error._errorsleuth.CauseSleuth.__init__()
@@ -1146,15 +1161,18 @@ def pep_code_check_hint(
 
                 # For each subscripted argument of this union...
                 for hint_child in hint_childs:
+                    #FIXME: Uncomment as desired for debugging. This test is
+                    #currently a bit too costly to warrant uncommenting.
                     # Assert that this child hint is *NOT* shallowly ignorable.
                     # Why? Because any union containing one or more shallowly
                     # ignorable child hints is deeply ignorable and should thus
                     # have already been ignored after a call to the
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
-                    assert repr(hint) not in HINT_REPRS_IGNORABLE_SHALLOW, (
-                        f'{hint_curr_label} {repr(hint_curr)} child '
-                        f'{repr(hint_child)} ignorable but not ignored.')
+                    # assert (
+                    #     repr(hint_curr) not in HINT_REPRS_IGNORABLE_SHALLOW), (
+                    #     f'{hint_curr_label} {repr(hint_curr)} child '
+                    #     f'{repr(hint_child)} ignorable but not ignored.')
 
                     # If this child hint is PEP-compliant...
                     if is_hint_pep(hint_child):
@@ -1302,11 +1320,7 @@ def pep_code_check_hint(
             elif (
                 # Originates from an origin type and may thus be shallowly
                 # type-checked against that type *AND is either...
-                (
-                    hint_curr_sign in HINT_SIGNS_TYPE_STDLIB or
-                    #FIXME: Remove this shuddering horror after refactoring!
-                    hint_curr_sign in HINT_SIGNS_TYPE_STDLIB
-                ) and (
+                hint_curr_sign in HINT_SIGNS_TYPE_STDLIB and (
                     #FIXME: Ideally, this line should just resemble:
                     #    not is_hint_pep_subscripted(hint_curr)
                     #Unfortunately, unsubscripted type hints under Python 3.6
@@ -1534,7 +1548,7 @@ def pep_code_check_hint(
             # beartype-specific (i.e., metahint whose second argument is an
             # instance of the "beartype._vale._valesub._SubscriptedIs" class
             # produced by subscripting the "Is" class). In this case...
-            elif hint_curr_sign is HINT_PEP593_ATTR_ANNOTATED:
+            elif hint_curr_sign is HintSignAnnotated:
                 # PEP-compliant type hint annotated by this metahint, localized
                 # to the "hint_child" local variable to satisfy the public API
                 # of the _enqueue_hint_child() closure called below.
@@ -1857,7 +1871,7 @@ def pep_code_check_hint(
             # objects that are instances of only *SIX* possible types, which is
             # sufficiently limiting as to render this singleton patently absurd
             # and a farce that we weep to even implement. In this case...
-            elif hint_curr_sign is HINT_PEP586_ATTR_LITERAL:
+            elif hint_curr_sign is HintSignLiteral:
                 # If this hint does *NOT* comply with PEP 586 despite being a
                 # "typing.Literal" subscription, raise an exception. *sigh*
                 die_unless_hint_pep586(hint_curr)

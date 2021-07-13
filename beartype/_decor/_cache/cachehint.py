@@ -173,19 +173,9 @@ def coerce_hint_pep(
     # Original instance of this hint *PRIOR* to being subsequently coerced.
     hint_old = hint
 
-    # ..................{ PEP 484                           }..................
-    # If this hint is the PEP 484-compliant "None" singleton, coerce this hint
-    # into the type of that singleton. This is explicitly required by PEP 484
-    # *and* implicitly required by Python convention, where the bodies of
-    # callables annotated as returning "None" are understood to contain *no*
-    # explicit "return" statements and thus implicitly return "None".
-    if hint is None:
-        hint = NoneType
-    # Else, this hint is *NOT* the PEP 484-compliant "None" singleton.
-    #
     # ..................{ MYPY                              }..................
     # If...
-    elif (
+    if (
         # This hint annotates the return for the decorated callable *AND*...
         pith_name == 'return' and
         # The decorated callable is a binary dunder method (e.g., __eq__())...

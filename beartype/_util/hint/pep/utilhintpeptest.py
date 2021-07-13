@@ -174,7 +174,8 @@ def die_unless_hint_pep(
             f'{hint_label} {repr(hint)} not PEP type hint.')
 
 # ....................{ EXCEPTIONS ~ supported            }....................
-#FIXME: Refactor all or most calls to this and the
+#FIXME: *DANGER.* This and the die_if_hint_pep_sign_unsupported() function make
+#beartype more fragile. Instead, refactor all or most calls to this and the
 #die_if_hint_pep_sign_unsupported() functions into calls to the
 #warn_if_hint_pep_unsupported() function; then, consider excising these as well
 #as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
@@ -747,6 +748,10 @@ def is_hint_pep_supported(hint: object) -> bool:
     return is_hint_pep_sign_supported(hint_pep_sign)
 
 
+#FIXME: Silly overkill, silly. Refactor as follows:
+#* Replace all calls to this tester with simply:
+#      hint_sign in HINT_SIGNS_SUPPORTED
+#* Remove this tester.
 def is_hint_pep_sign_supported(hint_sign: HintSign) -> bool:
     '''
     ``True`` only if the passed object is a **supported sign** (i.e., arbitrary

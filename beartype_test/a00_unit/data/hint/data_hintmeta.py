@@ -121,14 +121,14 @@ class PepHintMetadata(NonPepHintMetadata):
     ----------
     is_pep585_builtin : bool
         ``True`` only if this hint is a `PEP 585`-compliant builtin. If
-        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to the
-        negation of ``is_pep585_generic`` if non-``None`` *or* ``False``
-        otherwise (i.e., if ``is_pep585_generic`` is ``None``).
+        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
+        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
+        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
     is_pep585_generic : bool
         ``True`` only if this hint is a `PEP 585`-compliant generic. If
-        ``True``, then ``is_type_typing`` *must* be ``False``. Defaults to the
-        negation of ``is_pep585_generic`` if non-``None`` *or* ``False``
-        otherwise (i.e., if ``is_pep585_generic`` is ``None``).
+        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
+        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
+        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
     is_subscripted : Optional[bool]
         ``True`` only if this hint is subscripted by one or more **arguments**
         (i.e., PEP-compliant type hints that are *not* type variables) and/or
@@ -143,15 +143,16 @@ class PepHintMetadata(NonPepHintMetadata):
         Defaults to ``False``.
     is_type_typing : Optional[bool]
         ``True`` only if this hint's class is defined by the :mod:`typing`
-        module. If ``True``, then ``is_pep585_builtin`` and
-        ``is_pep585_generic`` *must* both be ``False``. Defaults to either:
+        module. If ``True``, then :attr:`is_pep585_builtin` and
+        :attr:`is_pep585_generic` *must* both be ``False``. Defaults to
+        either:
 
-        * If either ``is_pep585_builtin`` *or* ``is_pep585_generic`` are
-          ``True``, ``False``.
+        * If either :attr:`is_pep585_builtin` *or* :attr:`is_pep585_generic`
+          are ``True``, ``False``.
         * Else, ``True``.
     is_typing : Optional[bool]
         ``True`` only if this hint itself is defined by the :mod:`typing`
-        module. Defaults to ``is_type_typing``.
+        module. Defaults to :attr:`is_type_typing`.
     pep_sign : HintSign
         **Sign** (i.e., arbitrary object uniquely identifying this
         PEP-compliant type hint) if this hint is uniquely identified by such a
@@ -166,7 +167,7 @@ class PepHintMetadata(NonPepHintMetadata):
         otherwise (i.e., if this hint is associated with *no* such type).
         Defaults to either:
 
-        * If this hint is subscripted, ``stdlib_type``.
+        * If this hint is subscripted, :attr:`stdlib_type`.
         * Else, ``None``.
     stdlib_type : Optional[type]
         **Origin type** (i.e., non-:mod:`typing` class such that *all* objects

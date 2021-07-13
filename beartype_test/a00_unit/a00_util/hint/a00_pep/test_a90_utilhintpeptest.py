@@ -260,7 +260,7 @@ def test_is_hint_pep_supported() -> None:
         assert is_hint_pep_supported(non_hint_unhashable) is False
 
 
-def test_die_unless_hint_pep_supported() -> None:
+def test_die_if_hint_pep_unsupported() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilhintpeptest.die_if_hint_pep_unsupported`
@@ -279,7 +279,7 @@ def test_die_unless_hint_pep_supported() -> None:
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
 
-    # Assert this tester...
+    # Assert this validator...
     for hint_pep_meta in HINTS_PEP_META:
         # Accepts supported PEP-compliant type hints.
         if hint_pep_meta.is_supported:
@@ -289,18 +289,18 @@ def test_die_unless_hint_pep_supported() -> None:
             with raises(BeartypeDecorHintPepUnsupportedException):
                 die_if_hint_pep_unsupported(hint_pep_meta.hint)
 
-    # Assert this tester rejects objects that are *NOT* PEP-noncompliant.
+    # Assert this validator rejects objects that are *NOT* PEP-noncompliant.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
             die_if_hint_pep_unsupported(not_hint_pep)
 
-    # Assert this tester rejects unhashable objects.
+    # Assert this validator rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(BeartypeDecorHintPepException):
             die_if_hint_pep_unsupported(non_hint_unhashable)
 
 
-def test_die_unless_hint_pep_sign_supported() -> None:
+def test_die_if_hint_pep_sign_unsupported() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilhintpeptest.die_if_hint_pep_sign_unsupported`
@@ -316,26 +316,23 @@ def test_die_unless_hint_pep_sign_supported() -> None:
         HINT_SIGNS_SUPPORTED)
     from beartype._util.hint.pep.utilhintpeptest import (
         die_if_hint_pep_sign_unsupported)
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_HASHABLE)
+        HINTS_PEP_META)
 
-    # Assert this tester accepts all supported signs.
-    for pep_signs_supported in HINT_SIGNS_SUPPORTED:
-        die_if_hint_pep_sign_unsupported(pep_signs_supported)
+    # Assert this validator accepts all supported signs.
+    for hint_sign_supported in HINT_SIGNS_SUPPORTED:
+        die_if_hint_pep_sign_unsupported(hint_sign_supported)
 
-    # Assert this tester rejects PEP-compliant type hints that are *NOT*
-    # supported signs.
-    for hint_pep in HINTS_PEP_HASHABLE:
-        if hint_pep not in HINT_SIGNS_SUPPORTED:
+    # For each PEP-compliant type hint, assert this validator...
+    for hint_pep_meta in HINTS_PEP_META:
+        # Accepts the signs of all supported PEP-compliant type hints.
+        if hint_pep_meta.is_supported:
+            die_if_hint_pep_sign_unsupported(hint_pep_meta.pep_sign)
+        # Rejects the signs of all unsupported PEP-compliant type hints.
+        else:
             with raises(BeartypeDecorHintPepUnsupportedException):
-                die_if_hint_pep_sign_unsupported(hint_pep)
+                die_if_hint_pep_sign_unsupported(hint_pep_meta.pep_sign)
 
-    # Assert this tester rejects objects that are neither PEP-noncompliant
-    # *NOR* supported signs. Examples of objects that are PEP-noncompliant but
-    # also supported signs include *ALL* PEP 585-compliant type origins under
-    # Python >= 3.9 (e.g., "dict", "list", "collections.abc.Sequence").
-    for not_hint_pep in NOT_HINTS_PEP:
-        if not_hint_pep not in HINT_SIGNS_SUPPORTED:
-            with raises(BeartypeDecorHintPepException):
-                die_if_hint_pep_sign_unsupported(not_hint_pep)
+    # # Assert this validator rejects non-signs.
+    # with raises(BeartypeDecorHintPepException):
+    #     die_if_hint_pep_sign_unsupported(object())

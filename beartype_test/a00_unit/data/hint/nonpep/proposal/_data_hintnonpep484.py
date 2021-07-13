@@ -50,25 +50,6 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
     # global.
     data_module.HINTS_NONPEP_META.extend((
-        # ................{ UNSUBSCRIPTED                     }................
-        # "None" singleton, which transparently reduces to "types.NoneType" and
-        # *MUST* thus be handled as a non-"typing" type hint. While not
-        # explicitly defined by the "typing" module, PEP 484 explicitly
-        # supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        NonPepHintMetadata(
-            hint=None,
-            piths_satisfied_meta=(
-                # "None" singleton.
-                HintPithSatisfiedMetadata(None),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
-            ),
-        ),
-
         # ................{ NAMEDTUPLE                        }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.

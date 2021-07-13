@@ -46,11 +46,15 @@ def test_raise_pep_call_exception() -> None:
         to_bid_you_farewell: str,
         amaranth_symbol: 42,
     ) -> Union[int, HINT_PEP_ATTR_TUPLE[str, ...]]:
+        '''
+        Arbitrary callable exercised below.
+        '''
+
         return achromatic_voice
 
     # Assert this function raises the expected exception when passed a
-    # parameter annotated by a PEP-compliant type hint failing to satisfy this
-    # type hint.
+    # parameter annotated by a PEP-compliant type hint failing to shallowly
+    # satisfy the type of that type hint.
     with raises(BeartypeCallHintPepParamException):
         raise_pep_call_exception(
             func=forest_unknown,
@@ -62,8 +66,21 @@ def test_raise_pep_call_exception() -> None:
         )
 
     # Assert this function raises the expected exception when passed a
-    # parameter annotated by a PEP-noncompliant type hint failing to satisfy
-    # this type hint.
+    # parameter annotated by a PEP-compliant type hint failing to deeply
+    # satisfy the type of that type hint.
+    with raises(BeartypeCallHintPepParamException):
+        raise_pep_call_exception(
+            func=forest_unknown,
+            pith_name='secret_orchard',
+            pith_value=[
+                b'I am awaiting the sunrise',
+                b'Gazing modestly through the coldest morning',
+            ],
+        )
+
+    # Assert this function raises the expected exception when passed another
+    # parameter annotated by a PEP-noncompliant type hint failing to shallowly
+    # satisfy the type of that type hint.
     with raises(BeartypeCallHintPepParamException):
         raise_pep_call_exception(
             func=forest_unknown,
@@ -76,7 +93,7 @@ def test_raise_pep_call_exception() -> None:
 
     # Assert this function raises the expected exception when returning a
     # return value annotated by a PEP-compliant type hint failing to satisfy
-    # this type hint.
+    # that type hint.
     with raises(BeartypeCallHintPepReturnException):
         raise_pep_call_exception(
             func=forest_unknown,

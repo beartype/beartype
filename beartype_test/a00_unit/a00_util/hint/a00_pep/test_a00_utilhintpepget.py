@@ -19,27 +19,9 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS ~ sign                      }....................
-def test_get_hint_pep_sign_pass() -> None:
+def test_get_hint_pep_sign() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_sign` getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_META)
-
-    # Assert this getter returns the expected unsubscripted "typing" attribute
-    # for all PEP-compliant type hints associated with such an attribute.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert get_hint_pep_sign(hint_pep_meta.hint) == (
-            hint_pep_meta.pep_sign)
-
-
-def test_get_hint_pep_sign_fail() -> None:
-    '''
-    Test unsuccessful usage of the
     :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_sign` getter.
     '''
 
@@ -51,6 +33,14 @@ def test_get_hint_pep_sign_fail() -> None:
     from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_PEP, NonPepCustomFakeTyping)
+    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+        HINTS_PEP_META)
+
+    # Assert this getter returns the expected unsubscripted "typing" attribute
+    # for all PEP-compliant type hints associated with such an attribute.
+    for hint_pep_meta in HINTS_PEP_META:
+        assert get_hint_pep_sign(hint_pep_meta.hint) == (
+            hint_pep_meta.pep_sign)
 
     # Assert this getter raises the expected exception for an instance of a
     # class erroneously masquerading as a "typing" class.
