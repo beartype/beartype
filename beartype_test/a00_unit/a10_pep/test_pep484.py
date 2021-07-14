@@ -173,25 +173,37 @@ def test_pep484_hint_sequence_standard_cached() -> None:
         'And as I was green and carefree, famous among the barns')
 
 # ....................{ TESTS ~ hint : invalid            }....................
-def test_pep484_hint_invalid_types_nongeneric() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator against **invalid non-generic
-    classes** (i.e., classes declared by the :mod:`typing` module used to
-    instantiate PEP-compliant type hints but themselves invalid as
-    PEP-compliant type hints).
-    '''
+#FIXME: Excise us up. We're unconvinced that arbitrarily prohibiting *ANY*
+#isinstanceable classes from being used as type hints is a useful approach --
+#even if those classes are "typing" attributes typically intended to be
+#instantiated when used as type hints. Nobody's here to tell anybody they can't
+#do something that otherwise appears sensible.
+#
+#When we next read this comment, refactor our test suite as follows:
+#* Remove this test.
+#* Remove the
+#  "beartype_test.a00_unit.data.hint.pep.data_hintpep.HINTS_PEP_INVALID_TYPE_NONGENERIC"
+#  frozen set entirely.
 
-    # Defer heavyweight imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPepSignException
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
-        HINTS_PEP_INVALID_CLASS_NONGENERIC)
-
-    # Assert that decorating a callable annotated by a non-generic class raises
-    # the expected exception.
-    for type_nongeneric in HINTS_PEP_INVALID_CLASS_NONGENERIC:
-        with raises_uncached(BeartypeDecorHintPepSignException):
-            @beartype
-            def childe_roland(to_the_dark_tower_came: type_nongeneric) -> (
-                type_nongeneric):
-                raise to_the_dark_tower_came
+# def test_pep484_hint_invalid_types_nongeneric() -> None:
+#     '''
+#     Test the :func:`beartype.beartype` decorator against **invalid non-generic
+#     classes** (i.e., classes declared by the :mod:`typing` module used to
+#     instantiate PEP-compliant type hints but themselves invalid as
+#     PEP-compliant type hints).
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype import beartype
+#     from beartype.roar import BeartypeDecorHintPepSignException
+#     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+#         HINTS_PEP_INVALID_TYPE_NONGENERIC)
+#
+#     # Assert that decorating a callable annotated by a non-generic class raises
+#     # the expected exception.
+#     for type_nongeneric in HINTS_PEP_INVALID_TYPE_NONGENERIC:
+#         with raises_uncached(BeartypeDecorHintPepSignException):
+#             @beartype
+#             def childe_roland(to_the_dark_tower_came: type_nongeneric) -> (
+#                 type_nongeneric):
+#                 raise to_the_dark_tower_came

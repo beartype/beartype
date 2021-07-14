@@ -16,6 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavefast import NoneType
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._util.data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SUPPORTED_DEEP,
+    HINT_SIGNS_TYPE_STDLIB,
+)
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_newtype_class,
     is_hint_pep484_newtype,
@@ -33,7 +37,6 @@ from beartype._util.hint.pep.utilhintpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
-    get_hint_pep_type_stdlib_or_none,
 )
 from beartype._util.hint.pep.utilhintpeptest import (
     is_hint_pep,
@@ -43,7 +46,8 @@ from beartype._util.hint.pep.utilhintpeptest import (
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
 )
-from typing import Any, Callable, NoReturn, Optional, Tuple
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from typing import Any, Callable, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -82,7 +86,7 @@ class CauseSleuth(object):
             as superclasses prior to their implicit type erasure by the
             :mod:`typing` module) subclassed by this generic.
           * Else, the possibly empty tuple of all arguments subscripting this
-            hint if this
+            hint.
 
         * Else, ``None``.
     pith : Any
@@ -325,16 +329,6 @@ class CauseSleuth(object):
             return None
         # Else, this hint is unignorable.
         #
-        # If this is the PEP 484-compliant "typing.NoReturn" type hint
-        # contextually permitted *ONLY* as a return annotation and thus
-        # identified by *NO* general-purpose sign...
-        elif self.hint is NoReturn:
-            # Avoid circular import dependencies.
-            from beartype._decor._error._proposal._errorpep484noreturn import (
-                get_cause_or_none_noreturn)
-
-            # Defer to the getter function specific to this hint.
-            get_cause_or_none = get_cause_or_none_noreturn
         # If *NO* sign uniquely identifies this hint, this hint is either
         # PEP-noncompliant *OR* only contextually PEP-compliant in certain
         # specific use cases. In either case...
@@ -360,11 +354,29 @@ class CauseSleuth(object):
         # Else, this hint is PEP-compliant.
         #
         # If this hint is neither...
-        elif not (
-            # Subscripted *NOR*...
-            is_hint_pep_subscripted(self.hint) or
-            # Originating from a standard type origin...
-            get_hint_pep_type_stdlib_or_none(self.hint) is None
+        elif (
+            # Originates from an origin type and may thus be shallowly
+            # type-checked against that type *AND is either...
+            self.hint_sign in HINT_SIGNS_TYPE_STDLIB and (
+                #FIXME: Ideally, this line should just resemble:
+                #    not is_hint_pep_subscripted(hint_curr)
+                #Unfortunately, unsubscripted type hints under Python 3.6
+                #like "typing.List" are technically subscripted due to
+                #subclassing subscripted superclasses, which is insane. Due
+                #to this insanity, we currently ignore type variables for
+                #purposes of detecting subscription. Since this is awful,
+                #drop this as soon as we drop Python 3.6 support.
+                # Unsubscripted *OR*...
+                not (
+                    is_hint_pep_subscripted(self.hint)
+                    if IS_PYTHON_AT_LEAST_3_7 else
+                    len(self.hint_childs)
+                ) or
+                #FIXME: Remove this branch *AFTER* deeply supporting all
+                #hints.
+                # Currently unsupported with deep type-checking...
+                self.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
+            )
         # Then this hint is both unsubscripted and originating from a standard
         # type origin. In this case, this hint was type-checked shallowly.
         ):
@@ -392,7 +404,7 @@ class CauseSleuth(object):
             # yet, raise an exception.
             if get_cause_or_none is None:
                 raise _BeartypeCallHintPepRaiseException(
-                    f'{self.exception_label} PEP type hint '
+                    f'{self.exception_label} type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
                     f'"get_cause_or_none_"-prefixed getter function defined '
                     f'for this category of hint).'

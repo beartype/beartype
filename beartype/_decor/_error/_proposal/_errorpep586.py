@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`586`-compliant :attr:`typing.Literal` **type hint exception
+Project-wide :pep:`586`-compliant :attr:`typing.Literal` **type hint exception
 raisers** (i.e., functions raising human-readable exceptions called by
 :mod:`beartype`-decorated callables on the first invalid parameter or return
 value failing a type-check against the :pep:`586`-compliant
@@ -15,9 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
-from beartype._util.data.hint.pep.datapepattr import (
-    HINT_PEP586_ATTR_LITERAL)
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
@@ -40,8 +38,8 @@ def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HINT_PEP586_ATTR_LITERAL, (
-        f'{repr(sleuth.hint_sign)} not literal.')
+    assert sleuth.hint_sign is HintSignLiteral, (
+        f'{repr(sleuth.hint_sign)} not HintSignLiteral.')
 
     # If this pith is equal to any literal object subscripting this hint, this
     # pith satisfies this hint. Specifically, if there exists at least one...

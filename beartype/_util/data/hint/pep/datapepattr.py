@@ -35,41 +35,15 @@ HINT_PEP_ATTR_TUPLE: Any = SENTINEL
 type hints) importable under the active Python interpreter.
 '''
 
-
-# Initialized below.
-HINT_PEP586_ATTR_LITERAL: Any = SENTINEL
-'''
-**Literal sign** (i.e., arbitrary object uniquely identifying
-:pep:`586`-compliant type hints) importable under the active Python
-interpreter.
-'''
-
-
-# Initialized below.
-HINT_PEP593_ATTR_ANNOTATED: Any = SENTINEL
-'''
-**Annotated sign** (i.e., arbitrary object uniquely identifying
-:pep:`593`-compliant type metahints) importable under the active Python
-interpreter.
-'''
-
 # ....................{ ATTRS ~ define                    }....................
 # Signs conditionally dependent on the major version of Python targeted by
 # the active Python interpreter.
 
 # If the active Python interpreter targets at least Python >= 3.9...
 if IS_PYTHON_AT_LEAST_3_9:
-    from typing import Annotated, Literal  # type: ignore[attr-defined]
-
     # Initialize PEP 585-compliant types.
     HINT_PEP_ATTR_LIST = list
     HINT_PEP_ATTR_TUPLE = tuple
-
-    # Initialize PEP 586-compliant types.
-    HINT_PEP586_ATTR_LITERAL = Literal
-
-    # Initialize PEP 593-compliant types.
-    HINT_PEP593_ATTR_ANNOTATED = Annotated
 # Else...
 else:
     from typing import List, Tuple

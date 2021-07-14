@@ -1561,6 +1561,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | contextlib.AbstractContextManager_      | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
+| numpy.typing_      | numpy.typing.NDArray_                   | **0.8.0**\ —\ *current*       | **0.8.0**\ —\ *current*   |
++--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | re_                | re.Match_                               | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | re.Pattern_                             | **0.5.0**\ —\ *current*       | *none*                    |
@@ -1715,7 +1717,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | `@typing.no_type_check`_                | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| typing_extensions_ | *all attributes*                        | **0.7.2**\ —\ *current*       | **0.7.2**\ —\ *current*   |
+| typing_extensions_ | *all attributes*                        | **0.8.0**\ —\ *current*       | **0.8.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | PEP                | `484 <PEP 484_>`__                      | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -3843,6 +3845,10 @@ rather than Python runtime) include:
    https://numpy.org
 .. _numpy.empty_like:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
+.. _numpy.typing:
+   https://numpy.org/devdocs/reference/typing.html
+.. _numpy.typing.NDArray:
+   https://numpy.org/devdocs/reference/typing.html#ndarray
 
 .. # ------------------( LINKS ~ py : package : test        )------------------
 .. _Codecov:

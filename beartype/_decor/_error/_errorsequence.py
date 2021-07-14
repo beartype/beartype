@@ -44,13 +44,13 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1, (
-        f'{repr(sleuth.hint)} not standard sequence hint.')
+        f'{repr(sleuth.hint)} not 1-argument sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
     # the "typing" module should have already guaranteed this on our behalf.
     assert len(sleuth.hint_childs) == 1, (
-        f'Standard sequence hint {repr(sleuth.hint)} subscripted by '
-        f'multiple arguments.')
+        f'1-argument sequence hint {repr(sleuth.hint)} subscripted by '
+        f'{len(sleuth.hint_childs)} != 1.')
 
     # Human-readable string describing the failure of this pith to be an
     # instance of the type originating this hint (e.g., "list" for "list[str]")

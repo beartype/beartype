@@ -4,9 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utilities** (i.e., callables
-operating on PEP-compliant type hints intended to be called by dynamically
-generated wrapper functions wrapping decorated callables).
+Project-wide :pep:`484`-compliant **union type hint exception raisers** (i.e.,
+functions raising human-readable exceptions called by :mod:`beartype`-decorated
+callables on the first invalid parameter or return value failing a type-check
+against the :pep:`484`-compliant union type hint annotating that parameter or
+return).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -43,7 +45,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_SIGNS_UNION, (
-        f'{repr(sleuth.hint)} not union.')
+        f'{repr(sleuth.hint)} not union sign.')
 
     # Subset of all classes shallowly associated with these child hints (i.e.,
     # by being either these child hints in the case of non-"typing" classes
@@ -114,9 +116,9 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
             # subscripted arguments of unions are either PEP-compliant type
             # hints or non-"typing" classes.
             assert isinstance(hint_child, type), (
-                f'{sleuth.exception_label} PEP union type hint '
+                f'{sleuth.exception_label} union type hint '
                 f'{repr(sleuth.hint)} child hint {repr(hint_child)} invalid '
-                f'(i.e., neither PEP type hint nor non-"typing" class).')
+                f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
             # If this pith is an instance of this class, this pith satisfies

@@ -133,9 +133,16 @@ NOT_HINTS_NONPEP = frozenset((
     # PEP-noncompliant type hints supported by @beartype, tuples containing
     # PEP-compliant type hints are invalid and thus unsupported.
     {
-        # Tuple containing a PEP-compliant type hint.
+        # Tuple containing this PEP-compliant type hint...
         (int, hint_pep_hashable, NoneType,)
+        # For each PEP-compliant type hint...
         for hint_pep_hashable in HINTS_PEP_HASHABLE
+        # That is *NOT* a string-based forward reference, which are a unique
+        # edge case supported as both PEP 484-compliant outside tuples *AND*
+        # beartype-specific inside tuples. Including such references here would
+        # erroneously cause tests to treat tuples containing string-based
+        # forward references as *NOT* beartype-specific type hints.
+        if not isinstance(hint_pep_hashable, str)
     } |
     # Set comprehension of hashable PEP-compliant non-class type hints.
     HINTS_PEP_HASHABLE |

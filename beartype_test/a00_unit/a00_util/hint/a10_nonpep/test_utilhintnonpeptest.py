@@ -33,18 +33,18 @@ def test_die_unless_hint_nonpep() -> None:
         NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
 
     # Assert this function accepts PEP-noncompliant type hints.
-    for nonhint_pep in HINTS_NONPEP:
-        die_unless_hint_nonpep(nonhint_pep)
+    for hint_nonpep in HINTS_NONPEP:
+        die_unless_hint_nonpep(hint_nonpep)
 
     # Assert this function rejects objects excepted to be rejected.
-    for non_nonhint_pep in NOT_HINTS_NONPEP:
+    for not_hint_nonpep in NOT_HINTS_NONPEP:
         with raises(BeartypeDecorHintNonPepException):
-            die_unless_hint_nonpep(non_nonhint_pep)
+            die_unless_hint_nonpep(not_hint_nonpep)
 
     # Assert this function rejects unhashable objects.
-    for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
+    for not_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(BeartypeDecorHintNonPepException):
-            die_unless_hint_nonpep(non_hint_unhashable)
+            die_unless_hint_nonpep(not_hint_unhashable)
 
 # ....................{ TESTS ~ tester                    }....................
 def test_is_hint_nonpep() -> None:

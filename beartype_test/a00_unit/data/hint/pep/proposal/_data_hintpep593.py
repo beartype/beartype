@@ -117,11 +117,12 @@ def add_data(data_module: 'ModuleType') -> None:
         Union[str, list[int], NewType('MetaType', Annotated[object, 53])],
     ))
 
-    # Add PEP 593-specific invalid non-generic types to that set global.
-    data_module.HINTS_PEP_INVALID_CLASS_NONGENERIC.update((
-        # The "Annotated" class as is does *NOT* constitute a valid type hint.
-        Annotated,
-    ))
+    #FIXME: Excise us up.
+    # # Add PEP 593-specific invalid non-generic types to that set global.
+    # data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+    #     # The "Annotated" class as is does *NOT* constitute a valid type hint.
+    #     Annotated,
+    # ))
 
     # ..................{ TUPLES                            }..................
     # Add PEP 593-specific test type hints to this tuple global.

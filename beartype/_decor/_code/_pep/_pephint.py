@@ -86,12 +86,6 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.data.hint.pep.datapepattr import (
-    HINT_PEP586_ATTR_LITERAL,
-    HINT_PEP593_ATTR_ANNOTATED,
-)
-from beartype._util.data.hint.pep.datapeprepr import (
-    HINT_REPRS_IGNORABLE_SHALLOW)
 from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
@@ -748,6 +742,10 @@ def pep_code_check_hint(
         #reduction logic. Yup; that's lookin' pretty darn efficient there.
         #FIXME: Perform a similar refactoring to the
         #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method.
+        #FIXME: Synchronizing this block with that of the
+        #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method is
+        #becoming unmaintainable. Let's centralize the two into a new
+        #get_hint_reduced() getter function please.
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the

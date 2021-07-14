@@ -4,15 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utilities** (i.e., callables
-operating on PEP-compliant type hints intended to be called by dynamically
-generated wrapper functions wrapping decorated callables).
+Project-wide :pep:`484`-compliant :attr:`typing.NoReturn` **type hint exception
+raisers** (i.e., functions raising human-readable exceptions called by
+:mod:`beartype`-decorated callables on the first invalid parameter or return
+value failing a type-check against the :pep:`484`-compliant
+:attr:`typing.NoReturn` type hint annotating that parameter or return).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._util.text.utiltextlabel import label_callable
 
 # See the "beartype.cave" submodule for further commentary.
@@ -31,6 +34,8 @@ def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert sleuth.hint_sign is HintSignNoReturn, (
+        f'{repr(sleuth.hint)} not HintSignNoReturn.')
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.

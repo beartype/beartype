@@ -800,7 +800,7 @@ def is_hint_pep_sign_supported(hint_sign: HintSign) -> bool:
 def is_hint_pep_typing(hint: object) -> bool:
     '''
     ``True`` only if the passed object is an attribute of a **typing module**
-    (i.e., modules officially declaring attributes usable for creating
+    (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type
     checkers).
 
@@ -947,10 +947,11 @@ else:
 
 
 is_hint_pep_type_typing.__doc__ = '''
-    ``True`` only if either the passed object is defined by the :mod:`typing`
-    module if this object is a class *or* the class of this object is defined
-    by the :mod:`typing` module otherwise (i.e., if this object is *not* a
-    class).
+    ``True`` only if either the passed object is defined by a **typing module**
+    (i.e., module officially declaring attributes usable for creating
+    PEP-compliant type hints accepted by both static and runtime type checkers)
+    if this object is a class *or* the class of this object is defined by a
+    typing module otherwise (i.e., if this object is *not* a class).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -966,10 +967,8 @@ is_hint_pep_type_typing.__doc__ = '''
     bool
         ``True`` only if either:
 
-        * If this object is a class, this class is defined by the :mod:`typing`
-          module.
-        * Else, the class of this object is defined by the :mod:`typing`
-          module.
+        * If this object is a class, this class is defined by a typing module.
+        * Else, the class of this object is defined by a typing module.
     '''
 
 # ....................{ TESTERS ~ subscript               }....................

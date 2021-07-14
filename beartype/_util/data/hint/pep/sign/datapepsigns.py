@@ -38,7 +38,7 @@ from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 #   "HintSignAsyncContextManager" sign identifying the
 #   "typing.AsyncContextManager" attribute that only exists under Python >=
 #   3.7 could be conditionally isolated to that range of Python versions.
-#   Technically, there exsits *NO* impediment to doing so; pragmatically, doing
+#   Technically, there exists *NO* impediment to doing so; pragmatically, doing
 #   so would be ineffectual. Why? Because attributes *NOT* defined by the
 #   "typing" module of the active Python interpreter cannot (by definition) be
 #   used to annotate callables decorated by the @beartype decorator.

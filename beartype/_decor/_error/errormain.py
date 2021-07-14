@@ -85,15 +85,21 @@ from beartype._decor._error._errortype import (
     get_cause_or_none_forwardref,
     get_cause_or_none_type_stdlib,
 )
+from beartype._decor._error._proposal._errorpep484noreturn import (
+    get_cause_or_none_noreturn)
 from beartype._decor._error._proposal._errorpep484union import (
     get_cause_or_none_union)
 from beartype._decor._error._proposal._errorpep586 import (
     get_cause_or_none_literal)
 from beartype._decor._error._proposal._errorpep593 import (
     get_cause_or_none_annotated)
+from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignAnnotated,
     HintSignForwardRef,
     HintSignGeneric,
+    HintSignLiteral,
+    HintSignNoReturn,
     HintSignTuple,
 )
 from beartype._util.data.hint.pep.sign.datapepsignset import (
@@ -102,22 +108,21 @@ from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_UNION,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
     label_callable_decorated_return_value,
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
-from collections.abc import Callable
-from typing import NoReturn, Optional, Type
+from typing import Callable, Dict, NoReturn, Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ MAPPINGS                          }....................
-# Initialized by the _init() method below.
-PEP_HINT_SIGN_TO_GET_CAUSE_FUNC = {}
+# Initialized with automated inspection below in the _init() function.
+PEP_HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
+    HintSign, Callable[[CauseSleuth], Optional[str]]] = {}
 '''
 Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
 PEP-compliant type) to a private getter function defined by this submodule
@@ -337,41 +342,34 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    # Map each originative "typing" attribute to the appropriate getter
-    # *BEFORE* mapping any other attributes. This is merely a generalized
-    # fallback subsequently replaced by attribute-specific getters.
+    # Map each originative sign to the appropriate getter *BEFORE* any other
+    # mappings. This is merely a generalized fallback subsequently replaced by
+    # sign-specific getters below.
     for pep_sign_type_origin in HINT_SIGNS_TYPE_STDLIB:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
             get_cause_or_none_type_stdlib)
 
-    # Map each standard sequence "typing" attribute to the appropriate getter.
+    # Map each 1-argument sequence sign to its corresponding getter.
     for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
             get_cause_or_none_sequence_args_1)
 
-    # Map each unifying "typing" attribute to the appropriate getter.
+    # Map each union-specific sign to its corresponding getter.
     for pep_sign_type_union in HINT_SIGNS_UNION:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
             get_cause_or_none_union)
 
-    # Map each "typing" attribute validated by a unique getter specific to that
-    # attribute to that getter.
+    # Map each sign validated by a unique getter to that getter *AFTER* all
+    # other mappings. These sign-specific getters are intended to replace all
+    # other automated mappings above.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
+        HintSignAnnotated: get_cause_or_none_annotated,
         HintSignForwardRef: get_cause_or_none_forwardref,
         HintSignGeneric: get_cause_or_none_generic,
+        HintSignLiteral: get_cause_or_none_literal,
+        HintSignNoReturn: get_cause_or_none_noreturn,
         HintSignTuple: get_cause_or_none_tuple,
     })
-
-    # If the active Python interpreter targets at least Python >= 3.9...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Defer imports conditionally dependent on this version.
-        from typing import Annotated, Literal  # type: ignore[attr-defined]
-
-        # Map each of the "typing" attributes imported above.
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
-            Annotated: get_cause_or_none_annotated,
-            Literal: get_cause_or_none_literal,
-        })
 
 
 # Initialize this submodule.

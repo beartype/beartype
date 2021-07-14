@@ -76,6 +76,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_MOST_3_8,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_3_6,
 )
@@ -157,8 +158,17 @@ uniquely identifiable by those representations to their identifying signs.
 '''
 
 # ....................{ MAPPINGS ~ type                   }....................
-# Initialized with automated inspection below in the _init() function.
-HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {}
+# The majority of this dictionary is initialized with automated inspection
+# below in the _init() function. The *ONLY* key-value pairs explicitly defined
+# here are those *NOT* amenable to such inspection.
+HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
+    # ..................{ PEP 484                           }..................
+    # PEP 484-compliant forward reference type hints may be annotated either:
+    # * Implicitly as strings, which this key-value pair here detects.
+    # * Explicitly as "typing.ForwardRef" instances, which automated inspection
+    #   below in the _init() function detects.
+    'builtins.str': HintSignForwardRef,
+}
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
 type hints uniquely identifiable by those classnames to their identifying
@@ -190,7 +200,7 @@ subscriptable classes).
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINT_REPRS_IGNORABLE_SHALLOW = {
+HINT_REPRS_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize changes to this set with the corresponding
     # testing-specific set
@@ -268,6 +278,61 @@ def _init() -> None:
     # ..................{ HINTS                             }..................
     # Length of the ignorable substring prefixing the name of each sign.
     _HINT_SIGN_PREFIX_LEN = len('HintSign')
+
+    # ..................{ HINTS ~ repr                      }..................
+    # Dictionary mapping from the unqualified names of typing attributes whose
+    # names are erroneously desynchronized from their bare machine-readable
+    # representations to the actual representations of those attributes.
+    #
+    # The unqualified names and representations of *MOST* typing attributes are
+    # rigorously synchronized. However, these two strings are desynchronized
+    # for a proper subset of Python versions and typing attributes:
+    #     $ ipython3.8
+    #     >>> import typing
+    #     >>> repr(typing.List[str])
+    #     typing.List[str]   # <-- this is good
+    #     >>> repr(typing.ContextManager[str])
+    #     typing.AbstractContextManager[str]   # <-- this is pants
+    #
+    # This dictionary enables subsequent logic to transparently resynchronize
+    # the unqualified names and representations of pants typing attributes.
+    _HINT_TYPING_ATTR_NAME_TO_BARE_REPR: Dict[str, str] = {}
+
+    # If the active Python interpreter targets Python >= 3.7.x <= 3.8.x (i.e.,
+    # either Python 3.7 or 3.8), resynchronize the unqualified names and
+    # representations of desynchronized typing attributes. Bizarrely:
+    # * Python 3.7.0 first desynchronized these attributes, despite the
+    #   otherwise insane Python 3.6.x series having actually gotten this right.
+    # * Python 3.8.x preserved this bad behaviour.
+    # * Python 3.9.0 rectified this issue finally. *sigh*
+    if IS_PYTHON_AT_LEAST_3_7 and IS_PYTHON_AT_MOST_3_8:
+        _HINT_TYPING_ATTR_NAME_TO_BARE_REPR.update({
+            'AsyncContextManager': 'AbstractAsyncContextManager',
+            'ContextManager': 'AbstractContextManager',
+        })
+
+    # ..................{ HINTS ~ types                     }..................
+    # Dictionary mapping from the unqualified names of all classes defined by
+    # typing modules used to instantiate PEP-compliant type hints to their
+    # corresponding signs.
+    _HINT_TYPE_BASENAMES_TO_SIGN = {
+        # ................{ PEP 484                           }................
+        # All PEP 484-compliant forward references are necessarily instances of
+        # the same class. Unfortunately, this class was only publicized under
+        # Python >= 3.7 after its initial privatization under Python <= 3.6.
+        ('ForwardRef' if IS_PYTHON_AT_LEAST_3_7 else '_ForwardRef'): (
+            HintSignForwardRef),
+
+        # All PEP 484-compliant type variables are necessarily instances of the
+        # same class.
+        'TypeVar': HintSignTypeVar,
+
+        #FIXME: "Generic" is ignorable when unsubscripted. Excise this up!
+        # The unsubscripted PEP 484-compliant "Generic" superclass is
+        # explicitly equivalent under PEP 484 to the "Generic[Any]"
+        # subscription and thus slightly conveys meaningful semantics.
+        # 'Generic': HintSignGeneric,
+    }
 
     # ..................{ HINTS ~ deprecated                }..................
     # Set of the unqualified names of all deprecated PEP 484-compliant typing
@@ -393,52 +458,30 @@ def _init() -> None:
         # handles the latter case.
         _HINT_TYPING_ATTR_NAMES_IGNORABLE.add('Generic')
 
-    # ..................{ HINTS ~ types                     }..................
-    # Dictionary mapping from the unqualified name of each classes defined by
-    # typing modules uniquely identifying PEP-compliant type hints to their
-    # corresponding signs.
-    _HINT_TYPE_BASENAMES_TO_SIGN = {
-        # ................{ PEP 484                           }................
-        # All PEP 484-compliant forward references are necessarily instances of
-        # the same class. Unfortunately, this class was only publicized under
-        # Python >= 3.7 after its initial privatization under Python <= 3.6.
-        ('ForwardRef' if IS_PYTHON_AT_LEAST_3_7 else '_ForwardRef'): (
-            HintSignForwardRef),
-
-        # All PEP 484-compliant type variables are necessarily instances of the
-        # same class.
-        'TypeVar': HintSignTypeVar,
-
-        #FIXME: "Generic" is ignorable when unsubscripted. Excise this up!
-        # The unsubscripted PEP 484-compliant "Generic" superclass is
-        # explicitly equivalent under PEP 484 to the "Generic[Any]"
-        # subscription and thus slightly conveys meaningful semantics.
-        # 'Generic': HintSignGeneric,
-    }
-
     # ..................{ CONSTRUCTION                      }..................
     # For the name of each top-level hinting module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # For each deprecated PEP 484-compliant typing attribute name...
-        for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
-            # Add that attribute relative to this module to this set.
-            HINT_PEP484_BARE_REPRS_DEPRECATED.add(
-                f'{typing_module_name}.{typing_attr_name}')
-
-        # For each shallowly ignorable typing attribute name...
-        for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
-            # Add that attribute relative to this module to this set.
-            HINT_REPRS_IGNORABLE_SHALLOW.add(
-                f'{typing_module_name}.{typing_attr_name}')
-
         # For the name of each sign and that sign...
         for hint_sign_name, hint_sign in datapepsigns.__dict__.items():
             # Unqualified name of the typing attribute identified by this sign.
             typing_attr_name = hint_sign_name[_HINT_SIGN_PREFIX_LEN:]
 
+            # Bare machine-readable representation of this attribute,
+            # conditionally defined as either:
+            # * If this name is erroneously desynchronized from this
+            #   representation under the active Python interpreter, the actual
+            #   representation of this attribute under this interpreter (e.g.,
+            #   "AbstractContextManager" for the "typing.ContextManager" hint).
+            # * Else, this name is correctly synchronized with this
+            #   representation under the active Python interpreter. In this
+            #   case, fallback to this name as is (e.g., "List" for the
+            #   "typing.List" hint).
+            hint_bare_repr = _HINT_TYPING_ATTR_NAME_TO_BARE_REPR.get(
+                typing_attr_name, typing_attr_name)
+
             # Map from that attribute in this module to this sign.
             HINT_BARE_REPR_TO_SIGN[
-                f'{typing_module_name}.{typing_attr_name}'] = hint_sign
+                f'{typing_module_name}.{hint_bare_repr}'] = hint_sign
 
         # For the unqualified classname identifying each sign to that sign...
         for hint_type_basename, hint_sign in (
@@ -447,12 +490,25 @@ def _init() -> None:
             HINT_TYPE_NAME_TO_SIGN[
                 f'{typing_module_name}.{hint_type_basename}'] = hint_sign
 
+        # For each shallowly ignorable typing attribute name...
+        for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
+            # Add that attribute relative to this module to this set.
+            HINT_REPRS_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
+                f'{typing_module_name}.{typing_attr_name}')
+
+        # For each deprecated PEP 484-compliant typing attribute name...
+        for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
+            # Add that attribute relative to this module to this set.
+            HINT_PEP484_BARE_REPRS_DEPRECATED.add(  # type: ignore[attr-defined]
+                f'{typing_module_name}.{typing_attr_name}')
+
     # ..................{ SYNTHESIS                         }..................
     # Freeze all relevant global sets for safety.
     HINT_PEP484_BARE_REPRS_DEPRECATED = frozenset(
         HINT_PEP484_BARE_REPRS_DEPRECATED)
     HINT_BARE_REPRS_DEPRECATED = HINT_PEP484_BARE_REPRS_DEPRECATED
     HINT_REPRS_IGNORABLE_SHALLOW = frozenset(HINT_REPRS_IGNORABLE_SHALLOW)
+
 
 # Initialize this submodule.
 _init()

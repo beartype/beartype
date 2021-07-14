@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`593`-compliant :class:`typing.Annotated` **type hint
+Project-wide :pep:`593`-compliant :class:`typing.Annotated` **type hint
 exception raisers** (i.e., functions raising human-readable exceptions called
 by :mod:`beartype`-decorated callables on the first invalid parameter or return
 value failing a type-check against the :pep:`593`-compliant
@@ -16,8 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.data.hint.pep.datapepattr import (
-    HINT_PEP593_ATTR_ANNOTATED)
+from beartype._util.data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -46,8 +45,8 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         Type-checking error cause sleuth.
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HINT_PEP593_ATTR_ANNOTATED, (
-        f'{repr(sleuth.hint_sign)} not annotated.')
+    assert sleuth.hint_sign is HintSignAnnotated, (
+        f'{repr(sleuth.hint_sign)} not HintSignAnnotated.')
 
     # PEP-compliant type hint annotated by this metahint.
     metahint = get_hint_pep593_metahint(sleuth.hint)

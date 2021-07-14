@@ -31,8 +31,6 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
-from re import Match, Pattern
-from typing import Any, TypeVar, Union
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -54,7 +52,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # thus supports PEP 585.
 
     # ..................{ IMPORTS                           }..................
-    # Defer Python >= 3.8-specific imports.
+    # Defer Python >= 3.9-specific imports.
     from collections.abc import (
         ByteString,
         Callable,
@@ -69,6 +67,8 @@ def add_data(data_module: 'ModuleType') -> None:
         AbstractContextManager,
         contextmanager,
     )
+    from re import Match, Pattern
+    from typing import Any, TypeVar, Union
 
     # ..................{ TYPEVARS                          }..................
     S = TypeVar('S')

@@ -320,14 +320,15 @@ def add_data(data_module: 'ModuleType') -> None:
         Union[complex, int, object,],
     ))
 
-    # Add PEP 484-specific invalid non-generic classes to that set global.
-    data_module.HINTS_PEP_INVALID_CLASS_NONGENERIC.update((
-        # The "TypeVar" class as is does *NOT* constitute a valid type hint.
-        TypeVar,
-
-        # The "ForwardRef" class as is does *NOT* constitute a valid type hint.
-        HINT_PEP484_TYPE_FORWARDREF,
-    ))
+    #FIXME: Excise us up.
+    # # Add PEP 484-specific invalid non-generic classes to that set global.
+    # data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
+    #     # The "TypeVar" class as is does *NOT* constitute a valid type hint.
+    #     TypeVar,
+    #
+    #     # The "ForwardRef" class as is does *NOT* constitute a valid type hint.
+    #     HINT_PEP484_TYPE_FORWARDREF,
+    # ))
 
     # ..................{ TUPLES                            }..................
     # Add PEP 484-specific test type hints to this dictionary global.
@@ -418,7 +419,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=HINT_PEP484_TYPE_FORWARDREF('profile.Profile'),
             pep_sign=HintSignForwardRef,
             is_subscripted=False,
-            is_type_typing=False,
             piths_satisfied_meta=(
                 # Profile object.
                 HintPithSatisfiedMetadata(Profile()),

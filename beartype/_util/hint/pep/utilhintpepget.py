@@ -354,14 +354,8 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     return hint_sign
 
 
-#FIXME: Refactor all functions throughout the codebase that accept or return
-#signs to be annotated ideally by "HintSign" (or, if necessary, by
-#"HintSignOrType"). These include:
-#* is_hint_pep_sign_supported().
 #FIXME: Test that our "testing_extensions.Annotated" support actually works.
 #FIXME: Revise us up the docstring, most of which is now obsolete.
-#FIXME: Validate that the value of the "pep_sign" parameter passed to the
-#PepHintMetadata.__init__() constructor satisfies "HintSignOrType".
 #FIXME: Refactor as follows:
 #* Refactor the following functions to mostly defer to that new
 #  get_hint_pep_sign_or_none() function:
@@ -369,7 +363,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 #* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
 #  dramatically simpler approach, we no longer require the excessive glut of
 #  PEP-specific testers we previously required.
-#* Merge the contents of all now-minimal
+#* Merge the contents of all now minimal
 #  "beartype._util.data.hint.pep.proposal.*" submodules into their parent
 #  "beartype._util.hint.pep.proposal.*" submodules. There's no longer any
 #  demonstrable benefit to separating the two, so please cease doing so.
@@ -473,7 +467,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Why? Because this getter is the lowest-level hint validation function
     # underlying all higher-level hint validation functions! Calling the latter
     # here would thus induce infinite recursion, which would be very bad.
-
+    #
     # ..................{ PHASE ~ repr                      }..................
     # This phase attempts to map from the unsubscripted machine-readable
     # representation of this hint to a sign identifying *ALL* hints of that
@@ -482,14 +476,14 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Since doing so requires both calling the repr() builtin on this hint
     # *AND* munging the string returned by that builtin, this phase is
     # significantly slower than the prior phase and thus *NOT* performed first.
-    # Although slower, this phase identifies a large subset of possible hints.
+    # Although slow, this phase identifies the largest subset of hints.
 
     # Substring of the machine-readable representation of this hint preceding
     # the first "[" delimiter if this representation contains that delimiter
     # *OR* this representation as is otherwise.
     #
     # Note that the str.partition() method has been profiled to be the
-    # optimally efficient means of parsing trivial prefixes.
+    # optimally efficient means of parsing trivial prefixes like these.
     hint_repr_prefix, _, _ = repr(hint).partition('[')
 
     # Sign identifying this hint if this hint is identifiable by its
@@ -508,7 +502,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Since the "object.__class__.__qualname__" attribute is both guaranteed to
     # exist and efficiently accessible for all hints, this phase is the fastest
     # and thus performed first. Although this phase identifies only a small
-    # subset of possible hints, those hints are extremely common.
+    # subset of hints, those hints are extremely common.
 
     # Class of this hint.
     hint_type = hint.__class__
