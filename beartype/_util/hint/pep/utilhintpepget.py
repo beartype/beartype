@@ -20,7 +20,8 @@ from beartype.roar import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapeprepr import (
-    HINT_BARE_REPR_TO_SIGN,
+    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
+    HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
 from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
@@ -43,35 +44,11 @@ from beartype._util.hint.pep.proposal.utilhintpep585 import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,
-    IS_PYTHON_3_6,
 )
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ MAPPINGS                          }....................
-_HINT_PEP_TYPING_NAME_BAD_TO_GOOD = {
-    'AbstractContextManager': 'ContextManager',
-    'AbstractAsyncContextManager': 'AsyncContextManager',
-}
-'''
-Dictionary mapping from **bad typing names** (i.e., substrings following the
-``typing.`` prefix of strings returned by the ``__repr__()`` dunder methods of
-:mod:`typing` attributes that erroneously refer to non-existing :mod:`typing`
-attributes) to **good typing names** (i.e., the corresponding substrings that
-correctly refer to non-existing :mod:`typing` attributes).
-
-For example, under at least Python <= 3.9 (and possibly newer Python versions),
-the ``__repr__()`` dunder method of the :attr:`typing.ContextManager` attribute
-erroneously returns the string ``typing.AbstractContextManager`` referring to a
-non-existing ``typing.AbstractContextManager`` attribute; instead, that method
-should ideally return the string ``typing.ContextManager`` referring to the
-existing :attr:`typing.ContextManager` attribute. Ergo, this dictionary
-contains a key-value pair mapping from the non-existing :mod:`typing` attribute
-``AbstractContextManager`` to the existing :mod:`typing` attribute
-``ContextManager``.
-'''
 
 # ....................{ GETTERS ~ args                    }....................
 # If the active Python interpreter targets at least Python >= 3.7, implement
@@ -478,22 +455,44 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # significantly slower than the prior phase and thus *NOT* performed first.
     # Although slow, this phase identifies the largest subset of hints.
 
-    # Substring of the machine-readable representation of this hint preceding
-    # the first "[" delimiter if this representation contains that delimiter
-    # *OR* this representation as is otherwise.
+    # Parse the machine-readable representation of this hint into:
+    # * "hint_repr_prefix", the substring of this representation preceding the
+    #   first "[" delimiter if this representation contains that delimiter *OR*
+    #   this representation as is otherwise.
+    # * "hint_repr_subscripted", the "[" delimiter if this representation
+    #   contains that delimiter *OR* the empty string otherwise.
     #
     # Note that the str.partition() method has been profiled to be the
     # optimally efficient means of parsing trivial prefixes like these.
-    hint_repr_prefix, _, _ = repr(hint).partition('[')
+    hint_repr_prefix, hint_repr_subscripted, _ = repr(hint).partition('[')
 
-    # Sign identifying this hint if this hint is identifiable by its
-    # representation *OR* "None" otherwise.
-    hint_sign = HINT_BARE_REPR_TO_SIGN.get(hint_repr_prefix)
+    # Sign identifying this possibly unsubscripted hint if this hint is
+    # identifiable by its possibly unsubscripted representation *OR* "None"
+    # otherwise.
+    hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
 
-    # If this hint is identifiable by its representation, return this sign.
+    # If this hint is identifiable by its possibly unsubscripted
+    # representation, return this sign.
     if hint_sign is not None:
         return hint_sign
-    # Else, this hint is *NOT* identifiable by its representation.
+    # Else, this hint is *NOT* identifiable by its possibly unsubscripted
+    # representation.
+    #
+    # If this representation (and thus this hint) is subscripted...
+    elif hint_repr_subscripted:
+        # Sign identifying this necessarily subscripted hint if this hint is
+        # identifiable by its necessarily subscripted representation *OR*
+        # "None" otherwise.
+        hint_sign = HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN.get(
+            hint_repr_prefix)
+
+        # If this hint is identifiable by its necessarily subscripted
+        # representation, return this sign.
+        if hint_sign is not None:
+            return hint_sign
+        # Else, this hint is *NOT* identifiable by its necessarily subscripted
+        # representation.
+    # Else, this representation (and thus this hint) is unsubscripted.
 
     # ..................{ PHASE ~ classname                 }..................
     # This phase attempts to map from the fully-qualified classname of this

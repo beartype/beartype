@@ -57,6 +57,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     # HintSignNamedTuple,
     # HintSignNewType,
     HintSignNone,
+    HintSignNumpyArray,
     # HintSignOptional,
     HintSignOrderedDict,
     # HintSignParamSpec,
@@ -89,28 +90,42 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINT_BARE_REPR_TO_SIGN: Dict[str, HintSign] = {
+HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 484                           }..................
+    # All other PEP 484-compliant representation prefixes are defined by
+    # automated inspection below.
     'None': HintSignNone,
+}
+'''
+Dictionary mapping from the **possibly unsubscripted PEP-compliant type hint
+representation prefixes** (i.e., unsubscripted prefix of the machine-readable
+strings returned by the :func:`repr` builtin for PEP-compliant type hints
+permissible in both subscripted and unsubscripted forms) of all hints uniquely
+identifiable by those representations to their identifying signs.
 
-    #FIXME: This is a bit odd. If an unsubscripted "typing.Protocol" is
-    #ignorable, why wouldn't an unsubscripted "typing.Generic" be ignorable as
-    #well? Consider excising this, please.
+Notably, this dictionary maps from the representation prefixes of:
 
-    # Identify the unsubscripted PEP 484-compliant "Generic" ABC (explicitly
-    # equivalent under PEP 484 to the "Generic[Any]" subscription and thus
-    # possibly conveying meaningful semantics) by this sign.
-    # Under ...
-    #
-    # Note this *ONLY* applies to Python >= 3.7. Under Python 3.6,
-    # "repr(typing.Generic) == 'typing.Generic'", which is thus already handled
-    # by automated inspection below.
-    # "<class 'typing.Generic'>":            HintSignGeneric,
-    # "<class 'typing_extensions.Generic'>": HintSignGeneric,
+* All :pep:`484`-compliant type hints. Whereas all :pep:`585`-compliant type
+  hints (e.g., ``list[str]``) are necessarily subscripted, all
+  :pep:`484`-compliant type hints support at least unsubscripted form and most
+  :pep:`484`-compliant type hints support subscription as well. Moreover, the
+  unsubscripted form of all :pep:`484`-compliant type hints conveys deep
+  semantics and thus require detection as PEP-compliant (e.g., ``typing.List``,
+  requiring detection and reduction to ``list``).
+'''
 
+
+# The majority of this dictionary is defined by explicit key-value pairs here.
+HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 585                           }..................
-    # For synchronicity, these key-value pairs are intentionally defined in the
-    # same order as the official list in PEP 585 itself.
+    # PEP 585-compliant type hints *MUST* by definition be subscripted (e.g.,
+    # "list[str]" rather than "list"). While the stdlib types underlying those
+    # hints are isinstanceable classes and thus also permissible as type hints
+    # when unsubscripted (e.g., simply "list"), unsubscripted classes convey no
+    # deep semantics and thus need *NOT* be detected as PEP-compliant.
+    #
+    # For maintainability, these key-value pairs are intentionally listed in
+    # the same order as the official list in PEP 585 itself.
     'tuple': HintSignTuple,
     'list': HintSignList,
     'dict': HintSignDict,
@@ -149,12 +164,40 @@ HINT_BARE_REPR_TO_SIGN: Dict[str, HintSign] = {
     'contextlib.AbstractAsyncContextManager': HintSignAsyncContextManager,
     're.Pattern': HintSignPattern,
     're.Match': HintSignMatch,
+
+    # ..................{ NON-PEP ~ lib : numpy             }..................
+    # The PEP-noncompliant "numpy.typing.NDArray" type hint is permissible in
+    # both subscripted and unsubscripted forms. In the latter case, this hint
+    # is implicitly subscripted by generic type variables. In both cases, this
+    # hint presents a uniformly reliable representation -- dramatically
+    # simplifying detection via a common prefix of that representation here:
+    #     >>> import numpy as np
+    #     >>> import numpy.typing as npt
+    #     >>> repr(npt.NDArray)
+    #     numpy.ndarray[typing.Any, numpy.dtype[+ScalarType]]
+    #     >>> repr(npt.NDArray[np.float64])
+    #     repr: numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+    # Ergo, unsubscripted "numpy.typing.NDArray" type hints present themselves
+    # as implicitly subscripted through their representation.
+    'numpy.ndarray': HintSignNumpyArray,
 }
 '''
-Dictionary mapping from the **bare PEP-compliant type hint representations**
-(i.e., machine-readable strings returned by the :func:`repr` builtin suffixed
-by *no* "["- and "]"-delimited subscription representations) of all hints
-uniquely identifiable by those representations to their identifying signs.
+Dictionary mapping from the **necessarily subscripted PEP-compliant type hint
+representation prefixes** (i.e., unsubscripted prefix of the machine-readable
+strings returned by the :func:`repr` builtin for subscripted PEP-compliant type
+hints) of all hints uniquely identifiable by those representations to
+their identifying signs.
+
+Notably, this dictionary maps from the representation prefixes of:
+
+* All :pep:`585`-compliant type hints. Whereas all :pep:`484`-compliant type
+  hints support both subscripted and unsubscripted forms (e.g.,
+  ``typing.List``, ``typing.List[str]``), all :pep:`585`-compliant type hints
+  necessarily require subscription. While the stdlib types underlying
+  :pep:`585`-compliant type hints are isinstanceable classes and thus also
+  permissible as type hints when unsubscripted (e.g., simply :class:`list`),
+  isinstanceable classes convey *no* deep semantics and thus need *not* be
+  detected as PEP-compliant.
 '''
 
 # ....................{ MAPPINGS ~ type                   }....................
@@ -177,7 +220,7 @@ signs.
 
 # ....................{ SETS ~ deprecated                 }....................
 # Initialized with automated inspection below in the _init() function.
-HINT_BARE_REPRS_DEPRECATED: FrozenSet[str] = None  # type: ignore[assignment]
+HINTS_REPR_PREFIX_DEPRECATED: FrozenSet[str] = None  # type: ignore[assignment]
 '''
 Frozen set of all **bare deprecated PEP-compliant type hint representations**
 (i.e., machine-readable strings returned by the :func:`repr` builtin suffixed
@@ -187,7 +230,7 @@ hints, often by equivalent hints standardized under more recent PEPs).
 
 
 # Initialized with automated inspection below in the _init() function.
-HINT_PEP484_BARE_REPRS_DEPRECATED: FrozenSet[str] = set()  # type: ignore[assignment]
+HINTS_PEP484_REPR_PREFIX_DEPRECATED: FrozenSet[str] = set()  # type: ignore[assignment]
 '''
 Frozen set of all **bare deprecated** :pep:`484`-compliant **type hint
 representations** (i.e., machine-readable strings returned by the :func:`repr`
@@ -200,7 +243,7 @@ subscriptable classes).
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINT_REPRS_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
+HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize changes to this set with the corresponding
     # testing-specific set
@@ -271,9 +314,9 @@ def _init() -> None:
 
     # Permit redefinition of these globals below.
     global \
-        HINT_BARE_REPRS_DEPRECATED, \
-        HINT_PEP484_BARE_REPRS_DEPRECATED, \
-        HINT_REPRS_IGNORABLE_SHALLOW
+        HINTS_REPR_PREFIX_DEPRECATED, \
+        HINTS_PEP484_REPR_PREFIX_DEPRECATED, \
+        HINTS_REPR_IGNORABLE_SHALLOW
 
     # ..................{ HINTS                             }..................
     # Length of the ignorable substring prefixing the name of each sign.
@@ -296,7 +339,7 @@ def _init() -> None:
     #
     # This dictionary enables subsequent logic to transparently resynchronize
     # the unqualified names and representations of pants typing attributes.
-    _HINT_TYPING_ATTR_NAME_TO_BARE_REPR: Dict[str, str] = {}
+    _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
 
     # If the active Python interpreter targets Python >= 3.7.x <= 3.8.x (i.e.,
     # either Python 3.7 or 3.8), resynchronize the unqualified names and
@@ -306,7 +349,7 @@ def _init() -> None:
     # * Python 3.8.x preserved this bad behaviour.
     # * Python 3.9.0 rectified this issue finally. *sigh*
     if IS_PYTHON_AT_LEAST_3_7 and IS_PYTHON_AT_MOST_3_8:
-        _HINT_TYPING_ATTR_NAME_TO_BARE_REPR.update({
+        _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.update({
             'AsyncContextManager': 'AbstractAsyncContextManager',
             'ContextManager': 'AbstractContextManager',
         })
@@ -447,7 +490,7 @@ def _init() -> None:
         # the "typing.Match" and "typing.Pattern" objects, which unlike all
         # other "typing"-based type hints are *NOT* prefixed by "typing"
         # (e.g., "Pattern[~AnyStr]" rather than "typing.Pattern").
-        HINT_BARE_REPR_TO_SIGN.update({
+        HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.update({
             'Match': HintSignMatch,
             'Pattern': HintSignPattern,
         })
@@ -466,7 +509,7 @@ def _init() -> None:
             # Unqualified name of the typing attribute identified by this sign.
             typing_attr_name = hint_sign_name[_HINT_SIGN_PREFIX_LEN:]
 
-            # Bare machine-readable representation of this attribute,
+            # Machine-readable representation prefix of this attribute,
             # conditionally defined as either:
             # * If this name is erroneously desynchronized from this
             #   representation under the active Python interpreter, the actual
@@ -476,12 +519,12 @@ def _init() -> None:
             #   representation under the active Python interpreter. In this
             #   case, fallback to this name as is (e.g., "List" for the
             #   "typing.List" hint).
-            hint_bare_repr = _HINT_TYPING_ATTR_NAME_TO_BARE_REPR.get(
+            hint_repr_prefix = _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.get(
                 typing_attr_name, typing_attr_name)
 
             # Map from that attribute in this module to this sign.
-            HINT_BARE_REPR_TO_SIGN[
-                f'{typing_module_name}.{hint_bare_repr}'] = hint_sign
+            HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
+                f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign
 
         # For the unqualified classname identifying each sign to that sign...
         for hint_type_basename, hint_sign in (
@@ -493,21 +536,21 @@ def _init() -> None:
         # For each shallowly ignorable typing attribute name...
         for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
             # Add that attribute relative to this module to this set.
-            HINT_REPRS_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
+            HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_name}')
 
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
             # Add that attribute relative to this module to this set.
-            HINT_PEP484_BARE_REPRS_DEPRECATED.add(  # type: ignore[attr-defined]
+            HINTS_PEP484_REPR_PREFIX_DEPRECATED.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_name}')
 
     # ..................{ SYNTHESIS                         }..................
     # Freeze all relevant global sets for safety.
-    HINT_PEP484_BARE_REPRS_DEPRECATED = frozenset(
-        HINT_PEP484_BARE_REPRS_DEPRECATED)
-    HINT_BARE_REPRS_DEPRECATED = HINT_PEP484_BARE_REPRS_DEPRECATED
-    HINT_REPRS_IGNORABLE_SHALLOW = frozenset(HINT_REPRS_IGNORABLE_SHALLOW)
+    HINTS_PEP484_REPR_PREFIX_DEPRECATED = frozenset(
+        HINTS_PEP484_REPR_PREFIX_DEPRECATED)
+    HINTS_REPR_PREFIX_DEPRECATED = HINTS_PEP484_REPR_PREFIX_DEPRECATED
+    HINTS_REPR_IGNORABLE_SHALLOW = frozenset(HINTS_REPR_IGNORABLE_SHALLOW)
 
 
 # Initialize this submodule.

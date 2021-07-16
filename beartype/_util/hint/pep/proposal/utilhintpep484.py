@@ -82,7 +82,7 @@ def is_hint_pep484_ignorable_or_none(
       semantics. Since there exist a countably infinite number of possible
       :data:`Union` subscriptions by one or more ignorable type hints, these
       subscriptions *cannot* be explicitly listed in the
-      :data:`HINT_REPRS_IGNORABLE_SHALLOW` frozenset. Instead, these
+      :data:`HINTS_REPR_IGNORABLE_SHALLOW` frozenset. Instead, these
       subscriptions are dynamically detected by this tester at runtime and thus
       referred to as **deeply ignorable type hints.**
 

@@ -175,6 +175,13 @@ HintSignPattern = HintSign(name='Pattern')
 #     type(None).
 HintSignNone = HintSign(name='None')
 
+# ....................{ SIGNS ~ implicit : lib            }....................
+# Signs identifying PEP-noncompliant third-party type hints published by...
+#
+# ....................{ SIGNS ~ implicit : lib : numpy    }....................
+# ...the "numpy.typing" subpackage.
+HintSignNumpyArray = HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
+
 # ....................{ CLEANUP                           }....................
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the

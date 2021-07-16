@@ -20,8 +20,8 @@ from beartype.roar import (
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.datapeprepr import (
-    HINT_BARE_REPRS_DEPRECATED,
-    HINT_PEP484_BARE_REPRS_DEPRECATED,
+    HINTS_REPR_PREFIX_DEPRECATED,
+    HINTS_PEP484_REPR_PREFIX_DEPRECATED,
 )
 from beartype._util.data.hint.pep.proposal.datapep484 import (
     HINT_PEP484_TUPLE_EMPTY)
@@ -359,7 +359,7 @@ def warn_if_hint_pep_deprecated(
     hint_bare_repr, _, _ = repr(hint).partition('[')
 
     # If this representation is deprecated...
-    if hint_bare_repr in HINT_BARE_REPRS_DEPRECATED:
+    if hint_bare_repr in HINTS_REPR_PREFIX_DEPRECATED:
         #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
         #FIXME: Unit test that this string contains *NO* non-human-readable
         #placeholder substrings. Note that the existing
@@ -380,7 +380,7 @@ def warn_if_hint_pep_deprecated(
         # has been deprecated by the equivalent PEP 585-compliant sign (e.g.,
         # "list[int]"). In this case, suffix this warning message with
         # pragmatic suggestions for resolving this deprecation.
-        if hint_bare_repr in HINT_PEP484_BARE_REPRS_DEPRECATED:
+        if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
             warning_message += (
                 ' by PEP 585. To resolve this, globally replace this hint by '
                 'the equivalent PEP 585 type hint '

@@ -1124,7 +1124,7 @@ def pep_code_check_hint(
                 # Assert this union to be subscripted by one or more child
                 # hints. Note this should *ALWAYS* be the case, as:
                 # * The unsubscripted "typing.Union" object is explicitly
-                #   listed in the "HINT_REPRS_IGNORABLE_SHALLOW" set and should
+                #   listed in the "HINTS_REPR_IGNORABLE_SHALLOW" set and should
                 #   thus have already been ignored when present.
                 # * The "typing" module explicitly prohibits empty union
                 #   subscription: e.g.,
@@ -1168,7 +1168,7 @@ def pep_code_check_hint(
                     # is_hint_ignorable() tester passed this union on handling
                     # the parent hint of this union.
                     # assert (
-                    #     repr(hint_curr) not in HINT_REPRS_IGNORABLE_SHALLOW), (
+                    #     repr(hint_curr) not in HINTS_REPR_IGNORABLE_SHALLOW), (
                     #     f'{hint_curr_label} {repr(hint_curr)} child '
                     #     f'{repr(hint_child)} ignorable but not ignored.')
 

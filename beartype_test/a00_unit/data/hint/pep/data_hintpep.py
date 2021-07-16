@@ -52,7 +52,7 @@ HINTS_PEP_IGNORABLE_SHALLOW = {
 Frozen set of **shallowly ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are shallowly ignorable and whose
 machine-readable representations are in the low-level
-:attr:`beartype._util.data.hint.pep.datapeprepr.HINT_REPRS_IGNORABLE_SHALLOW`
+:attr:`beartype._util.data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
 set, but which are typically *not* safely instantiable from those
 representations and thus require explicit instantiation here).
 '''
