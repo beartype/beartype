@@ -113,7 +113,7 @@ def is_hint_pep484_ignorable_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     # print(f'Testing PEP 484 hint {repr(hint)} [{repr(hint_sign)}] deep ignorability...')
 
     # If this hint is a PEP 484-compliant generic...
@@ -206,7 +206,7 @@ if IS_PYTHON_AT_LEAST_3_7:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpepget import (
+        from beartype._util.hint.pep.utilpepget import (
             get_hint_pep_generic_type_or_none)
 
         # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
@@ -267,9 +267,9 @@ else:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpepget import (
+        from beartype._util.hint.pep.utilpepget import (
             get_hint_pep_generic_type_or_none)
-        from beartype._util.hint.pep.utilhintpeptest import (
+        from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_type_typing)
 
         # If this hint is *NOT* a class, reduce this hint to the object
@@ -750,7 +750,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #    duplicate superclasses.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating

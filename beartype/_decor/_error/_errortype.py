@@ -17,7 +17,7 @@ from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.pep.utilhintpepget import (
+from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_stdlib_or_none)
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_object)

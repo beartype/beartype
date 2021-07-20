@@ -68,7 +68,7 @@ def is_hint_pep593(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_sign_or_none)
 
     # Return true only if the machine-readable representation of this object

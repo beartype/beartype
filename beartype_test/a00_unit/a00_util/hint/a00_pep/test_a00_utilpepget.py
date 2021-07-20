@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint getter utility unit tests.**
+Project-wide **PEP-compliant type hint getter** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.utilhintpepget` submodule.
+:mod:`beartype._util.hint.pep.utilpepget` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,7 +22,7 @@ from pytest import raises
 def test_get_hint_pep_sign() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_sign` getter.
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter.
     '''
 
     # Defer heavyweight imports.
@@ -30,7 +30,7 @@ def test_get_hint_pep_sign() -> None:
         BeartypeDecorHintPepException,
         BeartypeDecorHintPepSignException,
     )
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_PEP, NonPepCustomFakeTyping)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -58,13 +58,13 @@ def test_get_hint_pep_sign() -> None:
 def test_get_hint_pep_generic_type_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_generic_type_or_none`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_generic_type_or_none`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_type_or_none)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -98,13 +98,13 @@ def test_get_hint_pep_generic_type_or_none() -> None:
 def test_get_hint_pep_type_origin_stdlib() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_type_stdlib`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_type_stdlib`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_type_stdlib)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -132,13 +132,13 @@ def test_get_hint_pep_type_origin_stdlib() -> None:
 def test_get_hint_pep_type_origin_stdlib_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_type_stdlib_or_none`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_type_stdlib_or_none`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_type_stdlib_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -160,16 +160,16 @@ def test_get_hint_pep_type_origin_stdlib_or_none() -> None:
 def test_get_hint_pep_generic_bases_unerased() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_generic_bases_unerased`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_bases_unerased)
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_type_typing
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 
@@ -206,12 +206,12 @@ def test_get_hint_pep_generic_bases_unerased() -> None:
 def test_get_hint_pep_typevars() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpepget.get_hint_pep_typevars`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
     getter.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
 

@@ -17,7 +17,7 @@ from beartype._util.hint.nonpep.utilhintnonpeptest import (
     die_unless_hint_nonpep,
     is_hint_nonpep,
 )
-from beartype._util.hint.pep.utilhintpeptest import (
+from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
     is_hint_pep_supported,
@@ -198,7 +198,7 @@ def is_hint_ignorable(hint: object) -> bool:
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpeptest import (
+        from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_ignorable)
 
         # Defer to the function testing whether this hint is an ignorable

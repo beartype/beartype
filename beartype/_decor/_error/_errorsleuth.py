@@ -33,12 +33,12 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593,
     is_hint_pep593_beartype,
 )
-from beartype._util.hint.pep.utilhintpepget import (
+from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
 )
-from beartype._util.hint.pep.utilhintpeptest import (
+from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_generic,
     is_hint_pep_subscripted,

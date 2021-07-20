@@ -17,7 +17,7 @@ from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_tuple_empty
+from beartype._util.hint.pep.utilpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional

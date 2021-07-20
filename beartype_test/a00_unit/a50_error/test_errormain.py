@@ -7,7 +7,7 @@
 **Beartype PEP-compliant type hint call-time utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.errormain` submodule.
+:mod:`beartype._decor._error.errormain` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -34,18 +34,18 @@ def test_raise_pep_call_exception() -> None:
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._decor._error.errormain import (
         raise_pep_call_exception)
-    from beartype._util.data.hint.pep.datapepattr import (
-        HINT_PEP_ATTR_LIST,
-        HINT_PEP_ATTR_TUPLE,
+    from beartype._util.hint.pep.utilpepattr import (
+        HINT_ATTR_LIST,
+        HINT_ATTR_TUPLE,
     )
     from typing import Union
 
     def forest_unknown(
-        secret_orchard: HINT_PEP_ATTR_LIST[str],
+        secret_orchard: HINT_ATTR_LIST[str],
         achromatic_voice,
         to_bid_you_farewell: str,
         amaranth_symbol: 42,
-    ) -> Union[int, HINT_PEP_ATTR_TUPLE[str, ...]]:
+    ) -> Union[int, HINT_ATTR_TUPLE[str, ...]]:
         '''
         Arbitrary callable exercised below.
         '''

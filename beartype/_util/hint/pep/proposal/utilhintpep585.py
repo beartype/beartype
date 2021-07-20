@@ -49,7 +49,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_builtin(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+        from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
 
         # Return true only if this hint...
         return (
@@ -65,7 +65,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpepget import (
+        from beartype._util.hint.pep.utilpepget import (
             get_hint_pep_generic_type_or_none)
 
         # If this hint is *NOT* a class, reduce this hint to the object
@@ -144,7 +144,7 @@ is_hint_pep585_builtin.__doc__ = '''
     either:
 
     * The high-level PEP-agnostic
-      :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic`
+      :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_generic`
       tester.
     * The low-level :pep:`585`:-specific :func:`is_hint_pep585_generic` tester.
 
@@ -214,7 +214,7 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
@@ -272,7 +272,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
 
     # Tuple of all pseudo-superclasses of this PEP 585-compliant generic.
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)

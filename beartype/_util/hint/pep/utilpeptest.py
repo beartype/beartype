@@ -647,7 +647,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     # print(f'Testing PEP hint {repr(hint)} deep ignorability...')
 
     # Sign uniquely identifying this hint.
@@ -739,7 +739,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Else, this hint is PEP-compliant.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
 
     # Sign uniquely identifying this hint.
     hint_pep_sign = get_hint_pep_sign(hint)
@@ -1006,7 +1006,7 @@ def is_hint_pep_subscripted(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import (
+    from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_args,
         get_hint_pep_typevars,
     )
@@ -1135,7 +1135,7 @@ def is_hint_pep_typevared(hint: object) -> bool:
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpeptest import (
+        >>> from beartype._util.hint.pep.utilpeptest import (
         ...     is_hint_pep_typevared)
         >>> T = typing.TypeVar('T')
         >>> class UserList(typing.List[T]): pass
@@ -1151,7 +1151,7 @@ def is_hint_pep_typevared(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
 
     # Return true only if this hint is parametrized by one or more type
     # variables, trivially detected by testing whether the tuple of all type

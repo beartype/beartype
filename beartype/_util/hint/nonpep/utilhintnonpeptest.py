@@ -187,7 +187,7 @@ def die_unless_hint_nonpep_type(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import die_if_hint_pep
+    from beartype._util.hint.pep.utilpeptest import die_if_hint_pep
 
     # If this object is a PEP-compliant type hint, raise an exception.
     die_if_hint_pep(
@@ -492,7 +492,7 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep
 
     # Return true only if this object is isinstanceable and *NOT* a
     # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant

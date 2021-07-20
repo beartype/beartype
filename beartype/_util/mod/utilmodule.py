@@ -358,19 +358,19 @@ def import_module(
         raise exception_cls(
             f'Module "{module_name}" not found.') from exception
 
-
+# ....................{ IMPORTERS ~ attr                  }....................
 def import_module_attr(
     # Mandatory parameters.
     module_attr_name: str,
 
     # Optional parameters.
-    module_attr_label: str = 'Module attribute name',
-    exception_cls:  type = _BeartypeUtilModuleException,
+    module_attr_label: str = 'Module attribute',
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
 ) -> Any:
     '''
-    Dynamically import and return the **module attribute** (i.e., object
-    declared at module scope by a module) with the passed fully-qualified name
-    if importable *or* raise an exception otherwise.
+    Dynamically import and return either the **module attribute** (i.e., object
+    declared at module scope) with the passed fully-qualified name if
+    importable *or* raise an exception otherwise.
 
     Parameters
     ----------
@@ -378,8 +378,8 @@ def import_module_attr(
         Fully-qualified name of the module attribute to be imported.
     module_attr_label : str
         Human-readable label prefixing this name in the exception message
-        raised by this function. Defaults to ``"Module attribute name"``.
-    exception_cls : type
+        raised by this function. Defaults to ``"Module attribute"``.
+    exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
 
@@ -396,13 +396,78 @@ def import_module_attr(
         * This name is *not* a syntactically valid fully-qualified module
           attribute name.
         * *No* module prefixed this name exists.
-        * An importable module prefixed by this name exists *but* this module
+        * An importable module prefixed by this name exists *but* that module
           declares no attribute by this name.
     Exception
-        If a module prefixed this name exists but this module is unimportable
-        due to module-scoped side effects at importation time. Since modules
-        may perform arbitrary Turing-complete logic from module scope, callers
-        should be prepared to handle *any* possible exception that might arise.
+        If a module prefixed by this name exists but that module is
+        unimportable due to module-scoped side effects at importation time.
+        Modules may perform arbitrary Turing-complete logic from module scope;
+        callers should be prepared to handle *any* possible exception.
+    :func:`import_module_attr_or_none`
+        Further commentary.
+    '''
+
+    # Module attribute with this name if that module declares this attribute
+    # *OR* "None" otherwise.
+    module_attr = import_module_attr_or_none(
+        module_attr_name=module_attr_name,
+        module_attr_label=module_attr_label,
+        exception_cls=exception_cls,
+    )
+
+    # If this module declares *NO* such attribute, raise an exception.
+    if module_attr is None:
+        raise exception_cls(
+            f'{module_attr_label} "{module_attr_name}" not found.')
+
+    # Else, return this attribute.
+    return module_attr
+
+
+def import_module_attr_or_none(
+    # Mandatory parameters.
+    module_attr_name: str,
+
+    # Optional parameters.
+    module_attr_label: str = 'Module attribute',
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    Dynamically import and return either the **module attribute** (i.e., object
+    declared at module scope) with the passed fully-qualified name if
+    importable *or* return ``none`` otherwise.
+
+    Parameters
+    ----------
+    module_attr_name : str
+        Fully-qualified name of the module attribute to be imported.
+    module_attr_label : str
+        Human-readable label prefixing this name in the exception message
+        raised by this function. Defaults to ``"Module attribute"``.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`_BeartypeUtilModuleException`.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If *no* module prefixed this name exists, ``None``.
+        * Else if an importable module prefixed by this name exists *but* that
+          module declares no attribute by this name, ``None``.
+        * Else, the module attribute with this fully-qualified name.
+
+    Raises
+    ----------
+    exception_cls
+        If this name is *not* a syntactically valid fully-qualified module
+        attribute name.
+    Exception
+        If a module prefixed by this name exists but that module is
+        unimportable due to module-scoped side effects at importation time.
+        Modules may perform arbitrary Turing-complete logic from module scope;
+        callers should be prepared to handle *any* possible exception.
     '''
 
     # If this object is *NOT* the fully-qualified syntactically valid name of a
@@ -422,20 +487,10 @@ def import_module_attr(
     # guaranteed to be safe.
     module_name, _, module_attr_basename = module_attr_name.rpartition('.')
 
-    # Dynamically import this module.
+    # Dynamically import that module.
     module = import_module(
         module_name=module_name, exception_cls=exception_cls)
 
-    # Module attribute with this name if this module declares this attribute
-    # *OR* "None" otherwise.
-    module_attr = getattr(module, module_attr_basename, None)
-
-    # If this module declares *NO* such attribute, raise an exception.
-    if module_attr is None:
-        raise exception_cls(
-            f'{module_attr_label} '
-            f'"{module_name}.{module_attr_name}" not found.'
-        )
-
-    # Else, return this attribute.
-    return module_attr
+    # Return the module attribute with this name if that module declares this
+    # attribute *OR* "None" otherwise.
+    return getattr(module, module_attr_basename, None)

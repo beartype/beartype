@@ -124,14 +124,14 @@ from beartype._util.hint.pep.proposal.utilhintpep593 import (
     is_hint_pep593,
     is_hint_pep593_beartype,
 )
-from beartype._util.hint.pep.utilhintpepget import (
+from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
     get_hint_pep_type_stdlib,
     get_hint_pep_generic_type_or_none,
 )
-from beartype._util.hint.pep.utilhintpeptest import (
+from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,

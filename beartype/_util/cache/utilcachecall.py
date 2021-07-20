@@ -162,7 +162,7 @@ def callable_cached(func: Callable) -> Callable:
     this package are sufficiently small in size to render bounding irrelevant.
 
     Consider the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_type_typing`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_type_typing`
     function, for example. Each call to that function only accepts a single
     class and returns a boolean. Under conservative assumptions of 4 bytes of
     storage per class reference and 4 byte of storage per boolean reference,

@@ -21,9 +21,9 @@ from beartype._util.hint.pep.proposal.utilhintpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin)
-from beartype._util.hint.pep.utilhintpepget import (
+from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_generic_type_or_none)
-from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typing
+from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from typing import Optional
 

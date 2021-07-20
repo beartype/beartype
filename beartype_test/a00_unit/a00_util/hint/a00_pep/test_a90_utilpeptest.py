@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint tester utility unit tests.**
+Project-wide **PEP-compliant type hint tester** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.utilhintpeptest` submodule.
+:mod:`beartype._util.hint.pep.utilpeptest` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,12 +25,12 @@ from pytest import raises
 def test_is_hint_pep_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_generic` tester.
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_generic` tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -50,12 +50,12 @@ def test_is_hint_pep_generic() -> None:
 def test_is_hint_pep_typevar() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevar`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevar`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
     from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import T
     from typing import Optional
 
@@ -70,12 +70,12 @@ def test_is_hint_pep_typevar() -> None:
 def test_is_hint_pep_typevared() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typevared`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevared`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevared
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevared
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -93,11 +93,11 @@ def test_is_hint_pep_typevared() -> None:
 def test_is_hint_pep_typing() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_typing` tester.
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typing` tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import (
+    from beartype._util.hint.pep.utilpeptest import (
         is_hint_pep_typing)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -117,12 +117,12 @@ def test_is_hint_pep_typing() -> None:
 def test_is_hint_pep_type_typing() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_type_typing`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_type_typing`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import (
+    from beartype._util.hint.pep.utilpeptest import (
         is_hint_pep_type_typing)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -141,12 +141,12 @@ def test_is_hint_pep_type_typing() -> None:
 # ....................{ TESTS                             }....................
 def test_is_hint_pep() -> None:
     '''
-    Test the :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep`
+    Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.nonpep.data_hintnonpep import (
         HINTS_NONPEP_META)
@@ -170,12 +170,12 @@ def test_is_hint_pep() -> None:
 def test_is_hint_pep_subscripted() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_subscripted`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_subscripted`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_subscripted
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -194,12 +194,12 @@ def test_is_hint_pep_subscripted() -> None:
 # def test_is_hint_pep_uncached() -> None:
 #     '''
 #     Test the
-#     :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_uncached`
+#     :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_uncached`
 #     tester.
 #     '''
 #
 #     # Defer heavyweight imports.
-#     from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_uncached
+#     from beartype._util.hint.pep.utilpeptest import is_hint_pep_uncached
 #     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 #     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 #     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -233,12 +233,12 @@ def test_is_hint_pep_subscripted() -> None:
 def test_is_hint_pep_supported() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.is_hint_pep_supported`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_supported`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_supported
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_supported
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -263,7 +263,7 @@ def test_is_hint_pep_supported() -> None:
 def test_die_if_hint_pep_unsupported() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.die_if_hint_pep_unsupported`
+    :func:`beartype._util.hint.pep.utilpeptest.die_if_hint_pep_unsupported`
     validator.
     '''
 
@@ -272,7 +272,7 @@ def test_die_if_hint_pep_unsupported() -> None:
         BeartypeDecorHintPepException,
         BeartypeDecorHintPepUnsupportedException,
     )
-    from beartype._util.hint.pep.utilhintpeptest import (
+    from beartype._util.hint.pep.utilpeptest import (
         die_if_hint_pep_unsupported)
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
@@ -303,7 +303,7 @@ def test_die_if_hint_pep_unsupported() -> None:
 def test_die_if_hint_pep_sign_unsupported() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilhintpeptest.die_if_hint_pep_sign_unsupported`
+    :func:`beartype._util.hint.pep.utilpeptest.die_if_hint_pep_sign_unsupported`
     validator.
     '''
 
@@ -314,7 +314,7 @@ def test_die_if_hint_pep_sign_unsupported() -> None:
     )
     from beartype._util.data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_SUPPORTED)
-    from beartype._util.hint.pep.utilhintpeptest import (
+    from beartype._util.hint.pep.utilpeptest import (
         die_if_hint_pep_sign_unsupported)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)

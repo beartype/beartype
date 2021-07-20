@@ -67,7 +67,7 @@ else:
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+        from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
 
         # If this hint is a poorly designed Python 3.6-specific "type alias",
         # this hint is a subscription of either the "typing.Match" or
@@ -132,7 +132,7 @@ get_hint_pep_args.__doc__ = '''
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
+        >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_args)
         >>> get_hint_pep_args(typing.Any)
         ()
@@ -190,7 +190,7 @@ else:
     def get_hint_pep_typevars(hint: object) -> Tuple[type, ...]:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_typevar
+        from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
 
         # If this hint is a poorly designed Python 3.6-specific "type alias",
         # this hint is a subscription of either the "typing.Match" or
@@ -258,7 +258,7 @@ get_hint_pep_typevars.__doc__ = '''
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
+        >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_typevars)
         >>> S = typing.TypeVar('S')
         >>> T = typing.TypeVar('T')
@@ -307,7 +307,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     # If this hint is unrecognized...
     if hint_sign is None:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilhintpeptest import die_unless_hint_pep
+        from beartype._util.hint.pep.utilpeptest import die_unless_hint_pep
 
         # If this hint is *NOT* PEP-compliant, raise an exception.
         die_unless_hint_pep(hint)
@@ -416,7 +416,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
+        >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_sign)
         >>> get_hint_pep_sign(typing.Any)
         typing.Any
@@ -434,7 +434,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilhintpeptest import is_hint_pep_generic
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
 
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
@@ -886,7 +886,7 @@ def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
+        >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_generic_bases_unerased)
         >>> get_hint_pep_generic_bases_unerased(
         ...     typing.Union[str, typing.List[int]])
@@ -1039,7 +1039,7 @@ _get_hint_pep_origin_object_or_none.__doc__ = '''
     Examples
     ----------
         >>> import typing
-        >>> from beartype._util.hint.pep.utilhintpepget import (
+        >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_origin_type_unsafe_or_none)
         # This is sane.
         >>> get_hint_pep_origin_type_unsafe_or_none(typing.List)
