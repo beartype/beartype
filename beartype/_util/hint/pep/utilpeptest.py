@@ -40,7 +40,6 @@ from beartype._util.data.mod.datamod import (
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
-    is_hint_pep484_newtype,
 )
 from beartype._util.hint.pep.proposal.utilhintpep544 import (
     is_hint_pep544_ignorable_or_none)
@@ -133,7 +132,7 @@ def die_if_hint_pep(
 
         # Raise an exception of this class.
         raise exception_cls(
-            f'{hint_label} {repr(hint)} is PEP type hint '
+            f'{hint_label} {repr(hint)} is PEP-compliant '
             f'(e.g., rather than non-"typing" type).'
         )
 
@@ -171,7 +170,7 @@ def die_unless_hint_pep(
     if not is_hint_pep(hint):
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepException(
-            f'{hint_label} {repr(hint)} not PEP type hint.')
+            f'{hint_label} {repr(hint)} not PEP-compliant.')
 
 # ....................{ EXCEPTIONS ~ supported            }....................
 #FIXME: *DANGER.* This and the die_if_hint_pep_sign_unsupported() function make
@@ -470,7 +469,6 @@ def warn_if_hint_pep_deprecated(
 #     return is_hint_pep_supported_test
 
 # ....................{ TESTERS                           }....................
-@callable_cached
 def is_hint_pep(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-compliant type hint** (i.e.,
@@ -478,7 +476,9 @@ def is_hint_pep(hint: object) -> bool:
     subclasses one or more classes directly defined by the :mod:`typing`
     module).
 
-    This tester is memoized for efficiency.
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Motivation
     ----------
@@ -509,43 +509,12 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_forwardref
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_sign_or_none)
 
-    # Either the passed object if this object is a class *OR* the class of this
-    # object otherwise (i.e., if this object is *NOT* a class).
-    hint_type = get_object_type_unless_type(hint)
-
-    # Return true only if either...
-    #
-    # Note that these tests are intentionally ordered in descending likelihood
-    # of a match with the least common type hints tested last and the most
-    # common type hints tested first.
-    return (
-        # This hint is the PEP 484-compliant "None" singleton.
-        hint is None or
-        # This hint's type is directly declared by the "typing" module and thus
-        # PEP-compliant by definition *OR*...
-        is_hint_pep_type_typing(hint_type) or
-        # This hint is a PEP 585-compliant type hint.
-        is_hint_pep585_builtin(hint) or
-        # This hint is a PEP-compliant generic. Although a small subset of
-        # generics are directly defined by the "typing" module (e.g.,
-        # "typing.SupportsInt"), most generics are user-defined subclasses
-        # defined by user-defined modules residing elsewhere.
-        is_hint_pep_generic(hint) or
-        # This hint is a forward reference type hint.
-        #
-        # Note this unconditionally matches *ALL* forward references, including
-        # absolute forward references (i.e., fully-qualified classnames)
-        # technically non-compliant with PEP 484 but seemingly compliant with
-        # PEP 585. Since the distinction between PEP-compliant and
-        # -noncompliant forward references is murky at best and since
-        # unconditionally matching *ALL* forward references as PEP-compliant
-        # substantially simplifies logic throughout the codebase, we do so.
-        is_hint_forwardref(hint) or
-        # This hint is a PEP 484-compliant new type hint.
-        is_hint_pep484_newtype(hint)
-    )
+    # Return true only if this object is uniquely identified by a sign and thus
+    # a PEP-compliant type hint.
+    return get_hint_pep_sign_or_none(hint) is not None
 
 
 #FIXME: Unit test us up.
@@ -818,13 +787,30 @@ def is_hint_pep_typing(hint: object) -> bool:
     '''
     # print(f'is_hint_pep_typing({repr(hint)}')
 
-    # Return true if either...
-    return (
-        # This is any PEP-compliant type hint defined by a typing module
-        # (except PEP 593-compliant type hints) *OR*...
-        get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES or
-        # The machine-readable representation of this hint is prefixed by a
-        # string indicative of a typing module.
+    # If this is any PEP-compliant type hint defined by a typing module (except
+    # PEP 593-compliant type hints), return true.
+    if get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES:
+        # print(f'typing hint: {repr(hint)}')
+        return True
+    # Else, this is either a PEP 593-compliant type hint (e.g.,
+    # "typing.Annotated[str, int]") *OR* not a PEP-compliant hint at all.
+
+    # Parse the machine-readable representation of this hint into:
+    # * "hint_repr_prefix", the substring of this representation preceding the
+    #   first "[" delimiter if this representation contains that delimiter *OR*
+    #   this representation as is otherwise.
+    # * "hint_repr_subscripted", the "[" delimiter if this representation
+    #   contains that delimiter *OR* the empty string otherwise.
+    #
+    # Note that the str.partition() method has been profiled to be the
+    # optimally efficient means of parsing trivial prefixes like these.
+    hint_repr_prefix, hint_repr_subscripted, _ = repr(hint).partition('[')
+
+    # If this hint is subscripted...
+    if hint_repr_subscripted:
+        # print(f'hint repr: {repr(hint)}')
+        # Return true only if the machine-readable representation of this hint
+        # is prefixed by a string indicative of a typing module.
         #
         # This is specifically required for PEP 593-compliant type hints. For
         # inexplicable (and presumably indefensible) reasons, these hints badly
@@ -837,11 +823,15 @@ def is_hint_pep_typing(hint: object) -> bool:
         # edge cases that are probably lurking about.
         #
         # I have no code and I must scream.
-        any(
-            repr(hint).startswith(typing_module_name_dotted)
+        return any(
+            hint_repr_prefix.startswith(typing_module_name_dotted)
             for typing_module_name_dotted in TYPING_MODULE_NAMES_DOTTED
         )
-    )
+    # Else, this hint is unsubscripted, in which case this hint *CANNOT* by
+    # definition be a PEP 593-compliant type hint. By the above syllogism, this
+    # hint *MUST* thus be PEP-noncompliant. In this case, return false.
+
+    return False
 
 
 # If the active Python interpreter targets at least Python 3.7 and is thus

@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignForwardRef
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
+from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_stdlib_or_none)

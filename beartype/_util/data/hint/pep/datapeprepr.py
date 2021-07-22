@@ -207,9 +207,18 @@ Notably, this dictionary maps from the representation prefixes of:
 HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 484                           }..................
     # PEP 484-compliant forward reference type hints may be annotated either:
-    # * Implicitly as strings, which this key-value pair here detects.
     # * Explicitly as "typing.ForwardRef" instances, which automated inspection
     #   below in the _init() function detects.
+    # * Implicitly as strings, which this key-value pair here detects. Note
+    #   this unconditionally matches *ALL* strings, including both:
+    #   * Invalid Python identifiers (e.g., "0d@yw@r3z").
+    #   * Absolute forward references (i.e., fully-qualified classnames)
+    #     technically non-compliant with PEP 484 but seemingly compliant with
+    #     PEP 585.
+    #   Since the distinction between PEP-compliant and -noncompliant forward
+    #   references is murky at best and since unconditionally matching *ALL*
+    #   string as PEP-compliant substantially simplifies logic throughout the
+    #   codebase, we (currently) opt to do so.
     'builtins.str': HintSignForwardRef,
 }
 '''

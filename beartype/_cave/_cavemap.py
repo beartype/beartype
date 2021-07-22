@@ -30,7 +30,7 @@ from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
 )
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
+from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep)
 from typing import Any, Tuple, Union
 

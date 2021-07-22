@@ -95,6 +95,10 @@ class NonPepCustomFakeTyping(object):
 NonPepCustomFakeTyping.__module__ = 'typing'
 
 # ....................{ NON-PEP ~ sets                    }....................
+# Note that we intentionally omit the "NonPepCustomFakeTyping" class here, as
+# that class masquerades too well as a "typing" class -- so well, in fact, that
+# "beartype._util.hint.pep.utilpeptest" functions are incapable of reasonably
+# distinguishing instances of that class from actual "typing" type hints.
 HINTS_NONPEP = frozenset((
     # Builtin container type.
     list,

@@ -45,6 +45,8 @@ def test_import_typing_attr() -> None:
     with raises(BeartypeDecorHintPepException):
         import_typing_attr('FromMyWingsAreShakenTheDewsThatWaken')
 
+    #FIXME: On retiring Python 3.8, refactor everything below to import a newer
+    #"typing" attribute introduced with a bleeding-edge Python version.
     # If the active Python interpreter targets Python >= 3.9, the
     # "typing.Annotated" attribute is guaranteed to exist. In this case...
     if IS_PYTHON_AT_LEAST_3_9:

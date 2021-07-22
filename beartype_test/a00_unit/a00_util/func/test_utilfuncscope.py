@@ -386,15 +386,12 @@ def test_add_func_scope_types_pass() -> None:
 
 def test_add_func_scope_types_fail() -> None:
     '''
-    Test successful usage of the
+    Test unsuccessful usage of the
     :func:`beartype._util.func.utilfuncscope.add_func_scope_types` function.
     '''
 
     # Defer heavyweight imports
-    from beartype.roar import (
-        BeartypeDecorHintNonPepException,
-        BeartypeDecorHintPep3119Exception,
-    )
+    from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.func.utilfuncscope import add_func_scope_types
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (

@@ -291,11 +291,12 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 
     Raises
     ----------
-    BeartypeDecorHintPepException
-        If this hint is *not* PEP-compliant.
     BeartypeDecorHintPepSignException
-        If this object is a PEP-compliant type hint *not* uniquely identifiable
-        by a sign.
+        If this hint is either:
+
+        * PEP-compliant but *not* uniquely identifiable by a sign.
+        * PEP-noncompliant.
+        * *Not* a hint (i.e., neither PEP-compliant nor -noncompliant).
 
     See Also
     ----------
@@ -307,12 +308,15 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     # If this hint is unrecognized...
     if hint_sign is None:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import die_unless_hint_pep
+        from beartype._util.hint.nonpep.utilnonpeptest import (
+            die_if_hint_nonpep)
 
-        # If this hint is *NOT* PEP-compliant, raise an exception.
-        die_unless_hint_pep(hint)
-        # Else, this hint is PEP-compliant. Since this hint is unrecognized,
-        # this hint *MUST* be currently unsupported by the @beartype decorator.
+        # If this hint is PEP-noncompliant, raise an exception.
+        die_if_hint_nonpep(
+            hint=hint, exception_cls=BeartypeDecorHintPepSignException)
+        # Else, this hint is *NOT* PEP-noncompliant. Since this hint was
+        # unrecognized, this hint *MUST* necessarily be a PEP-compliant type
+        # hint currently unsupported by the @beartype decorator.
 
         # Raise an exception indicating this.
         #
@@ -325,7 +329,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
             f'a feature request for this hint to our '
             f'friendly issue tracker at:\n\t{URL_ISSUES}'
         )
-    # Else, this hint is unrecognized.
+    # Else, this hint is recognized.
 
     # Return the sign uniquely identifying this hint.
     return hint_sign
@@ -334,9 +338,6 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 #FIXME: Test that our "testing_extensions.Annotated" support actually works.
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Refactor as follows:
-#* Refactor the following functions to mostly defer to that new
-#  get_hint_pep_sign_or_none() function:
-#  * The is_hint_pep() function.
 #* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
 #  dramatically simpler approach, we no longer require the excessive glut of
 #  PEP-specific testers we previously required.

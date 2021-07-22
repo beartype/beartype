@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-noncompliant type hint utilities.**
+Project-wide **PEP-noncompliant type hint** utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -29,6 +29,82 @@ from typing import Type
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ VALIDATORS                        }....................
+#FIXME: Unit test us up, please.
+def die_if_hint_nonpep(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Type hint',
+    is_str_valid: bool = True,
+    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
+) -> None:
+    '''
+    Raise an exception if the passed object is a **PEP-noncompliant type hint**
+    (i.e., :mod:`beartype`-specific annotation *not* compliant with
+    annotation-centric PEPs).
+
+    This validator is effectively (but technically *not*) memoized. See the
+    :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``Type hint``.
+    is_str_valid : Optional[bool]
+        ``True`` only if this function permits this object to either be a
+        string or contain strings. Defaults to ``True``. If this boolean is:
+
+        * ``True``, this object is valid only if this object is either a class
+          or tuple of classes and/or classnames.
+        * ``False``, this object is valid only if this object is either a class
+          or tuple of classes.
+    exception_cls : Optional[type]
+        Type of the exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintNonPepException`.
+
+    Raises
+    ----------
+    exception_cls
+        If this object is either:
+
+        * An **isinstanceable type** (i.e., standard class passable as the
+          second parameter to the :func:`isinstance` builtin and thus typically
+          *not* compliant with annotation-centric PEPs).
+        * A **non-empty tuple** (i.e., semantic union of types) containing one
+          or more:
+
+          * Non-:mod:`typing` types.
+          * If ``is_str_valid``, **strings** (i.e., forward references
+            specified as either fully-qualified or unqualified classnames).
+    '''
+
+    # If this object is a PEP-noncompliant type hint, raise an exception.
+    #
+    # Note that this memoized call is intentionally passed positional rather
+    # than keyword parameters to maximize efficiency.
+    if is_hint_nonpep(hint, is_str_valid):
+        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+
+        raise exception_cls(
+            f'{hint_label} {repr(hint)} is PEP-noncompliant (e.g., ' +
+            (
+                (
+                    'isinstanceable class, forward reference, or tuple of '
+                    'isinstanceable classes and/or forward references).'
+                )
+                if is_str_valid else
+                'isinstanceable class or tuple of isinstanceable classes).'
+            )
+        )
+    # Else, this object is *NOT* a PEP-noncompliant type hint.
+
+
 #FIXME: Unit test this function with respect to non-isinstanceable classes.
 def die_unless_hint_nonpep(
     # Mandatory parameters.
@@ -55,8 +131,8 @@ def die_unless_hint_nonpep(
         Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : Optional[bool]
-        ``True`` only if this function permits this object to be a string.
-        Defaults to ``True``. If this boolean is:
+        ``True`` only if this function permits this object to either be a
+        string or contain strings. Defaults to ``True``. If this boolean is:
 
         * ``True``, this object is valid only if this object is either a class
           or tuple of classes and/or classnames.
@@ -68,18 +144,12 @@ def die_unless_hint_nonpep(
 
     Raises
     ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
     exception_cls
         If this object is neither:
 
-        * A non-:mod:`typing` type (i.e., class *not* defined by the
-          :mod:`typing` module, whose public classes are used to instantiate
-          PEP-compliant type hints or objects satisfying such hints that
-          typically violate standard class semantics and thus require
-          PEP-specific handling).
+        * An **isinstanceable type** (i.e., standard class passable as the
+          second parameter to the :func:`isinstance` builtin and thus typically
+          *not* compliant with annotation-centric PEPs).
         * A **non-empty tuple** (i.e., semantic union of types) containing one
           or more:
 
@@ -135,8 +205,8 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             f'{hint_label} {repr(hint)} '
             f'neither PEP-compliant nor -noncompliant '
-            f'(e.g., standard class, forward reference, or '
-            f'tuple of standard classes and forward references).'
+            f'(e.g., isinstanceable class, forward reference, or '
+            f'tuple of isinstanceable classes and forward references).'
         )
     # Else, forward references are unsupported. In this case, raise an
     # exception noting that.
@@ -144,10 +214,10 @@ def die_unless_hint_nonpep(
         raise exception_cls(
             f'{hint_label} {repr(hint)} '
             f'neither PEP-compliant nor -noncompliant '
-            f'(e.g., standard class or tuple of standard classes).'
+            f'(e.g., isinstanceable class or tuple of isinstanceable classes).'
         )
 
-
+# ....................{ VALIDATORS ~ kind                 }....................
 #FIXME: Unit test us up.
 def die_unless_hint_nonpep_type(
     # Mandatory parameters.
@@ -208,13 +278,14 @@ def die_unless_hint_nonpep_type(
 #internally raise a stop iteration exception, whereas EAFP only raises an
 #exception if this tuple is invalid, in which case efficiency is no longer a
 #concern. So, what do we do instead? Simple. We internally refactor:
-#
 #* If "is_str_valid" is True, we continue to perform the existing
 #  implementation of both functions. *shrug*
 #* Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
 #    performed by die_unless_type_isinstanceable().
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
+#Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
+#real-world use cases) that this mild inefficiency probably no longer matters.
 #FIXME: Unit test this function with respect to tuples containing
 #non-isinstanceable classes.
 def die_unless_hint_nonpep_tuple(
@@ -242,24 +313,18 @@ def die_unless_hint_nonpep_tuple(
         Human-readable label prefixing this object's representation in the
         exception message raised by this function. Defaults to ``Type hint``.
     is_str_valid : bool, optional
-        ``True`` only if this function permits this object to be a string. If:
+        ``True`` only if this function permits this tuple to contain strings.
+        Defaults to ``False``. If:
 
-        * ``True``, this object is valid only if this object is either a class
-          or tuple of classes and/or classnames.
-        * ``False``, this object is valid only if this object is either a class
-          or tuple of classes.
-
-        Defaults to ``False``.
+        * ``True``, this tuple is valid only when containing classes and/or
+          classnames.
+        * ``False``, this tuple is valid only when containing classes.
     exception_cls : type, optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
 
     Raises
     ----------
-    TypeError
-        If this object is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All supported type hints are hashable.
     exception_cls
         If this object is neither:
 
@@ -428,13 +493,12 @@ def _is_hint_nonpep_tuple(
     hint : object
         Object to be inspected.
     is_str_valid : Optional[bool]
-        ``True`` only if this function permits this object to be a string.
+        ``True`` only if this function permits this tuple to contain strings.
         Defaults to ``True``. If this boolean is:
 
-        * ``True``, this object is valid only if this object is a tuple of
-          classes and/or classnames.
-        * ``False``, this object is valid only if this object is a tuple of
-          classes.
+        * ``True``, this tuple is valid only when containing classes and/or
+          classnames.
+        * ``False``, this object is valid only when containing classes.
 
     Returns
     ----------

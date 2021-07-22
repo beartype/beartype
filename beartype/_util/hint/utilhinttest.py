@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.nonpep.utilhintnonpeptest import (
+from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
     is_hint_nonpep,
 )

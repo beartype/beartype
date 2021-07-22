@@ -21,18 +21,15 @@ from pytest import raises
 # ....................{ TESTS ~ sign                      }....................
 def test_get_hint_pep_sign() -> None:
     '''
-    Test successful usage of the
+    Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter.
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import (
-        BeartypeDecorHintPepException,
-        BeartypeDecorHintPepSignException,
-    )
+    from beartype.roar import BeartypeDecorHintPepSignException
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_PEP, NonPepCustomFakeTyping)
+        HINTS_NONPEP, NonPepCustomFakeTyping)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
 
@@ -46,13 +43,13 @@ def test_get_hint_pep_sign() -> None:
     # class erroneously masquerading as a "typing" class.
     with raises(BeartypeDecorHintPepSignException):
         # Localize this return value to simplify debugging.
-        hint_pep_sign = get_hint_pep_sign(NonPepCustomFakeTyping())
+        hint_nonpep_sign = get_hint_pep_sign(NonPepCustomFakeTyping())
 
     # Assert this getter raises the expected exception for non-"typing" hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        with raises(BeartypeDecorHintPepException):
+    for hint_nonpep in HINTS_NONPEP:
+        with raises(BeartypeDecorHintPepSignException):
             # Localize this return value to simplify debugging.
-            hint_pep_sign = get_hint_pep_sign(not_hint_pep)
+            hint_nonpep_sign = get_hint_pep_sign(hint_nonpep)
 
 # ....................{ TESTS ~ origin : generic          }....................
 def test_get_hint_pep_generic_type_or_none() -> None:

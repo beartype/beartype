@@ -7,7 +7,7 @@
 **Beartype PEP-noncompliant type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.nonpep.utilhintnonpeptest` submodule.
+:mod:`beartype._util.hint.nonpep.utilnonpeptest` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,13 +21,13 @@ from pytest import raises
 def test_die_unless_hint_nonpep() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.nonpep.utilhintnonpeptest.die_unless_hint_nonpep`
+    :func:`beartype._util.hint.nonpep.utilnonpeptest.die_unless_hint_nonpep`
     validator.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintNonPepException
-    from beartype._util.hint.nonpep.utilhintnonpeptest import (
+    from beartype._util.hint.nonpep.utilnonpeptest import (
         die_unless_hint_nonpep)
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
@@ -50,12 +50,12 @@ def test_die_unless_hint_nonpep() -> None:
 def test_is_hint_nonpep() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.nonpep.utilhintnonpeptest.is_hint_nonpep`
+    :func:`beartype._util.hint.nonpep.utilnonpeptest.is_hint_nonpep`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.nonpep.utilhintnonpeptest import is_hint_nonpep
+    from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
 
@@ -75,12 +75,12 @@ def test_is_hint_nonpep() -> None:
 def test_is_hint_nonpep_tuple() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.nonpep.utilhintnonpeptest._is_hint_nonpep_tuple`
+    :func:`beartype._util.hint.nonpep.utilnonpeptest._is_hint_nonpep_tuple`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.nonpep.utilhintnonpeptest import (
+    from beartype._util.hint.nonpep.utilnonpeptest import (
         _is_hint_nonpep_tuple)
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
