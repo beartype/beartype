@@ -38,11 +38,14 @@ from beartype.vale._valeisobj import IsAttr
 from beartype.vale._valeisoper import IsEqual
 
 # ....................{ TODO                              }....................
-#FIXME: Document this throughout "README.rst", including:
-#* In our "Cheatsheet" section.
-#* In our "Features" matrix.
-#* In a new "Usage" subsection.
-#* In our FAQ.
+#FIXME: Mypy completely fails to support the __class_getitem__() dunder method,
+#which almost certainly constitutes a bug -- although they will, of course,
+#argue otherwise, because they are mypy. Nonetheless, let's at least try
+#reporting this. *ANY* attempt to subscript a type defining __class_getitem__()
+#causes mypy to emit a false positive resembling:
+#    error: The type "Type[IsAttr]" is not generic and not indexable  [misc]
+#When submitting this report, we should also note that Django developers have
+#hit similar issues in a recent PR. Ergo, this is a meaningful issue.
 
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:

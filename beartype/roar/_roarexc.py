@@ -169,29 +169,27 @@ class BeartypeDecorHintException(BeartypeDecorException):
     pass
 
 
-class BeartypeDecorHintTypeException(BeartypeDecorHintException):
-    '''
-    **Beartype decorator class type hint exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **invalid class type hints** (i.e., type hints that are invalid
-    classes, typically due to failing to support runtime :func:`isinstance`
-    calls).
-    '''
-
-    pass
-
-
 class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
     '''
     **Beartype decorator forward reference type hint exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **invalid forward reference type hints** (i.e., strings
-    whose values are the names of user-defined classes that have yet to be
-    defined).
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid forward reference type hint** (i.e., string whose value is the
+    name of a user-defined class that has yet to be declared).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintTypeException(BeartypeDecorHintException):
+    '''
+    **Beartype decorator class type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid class type hint** (i.e., class invalid for use as a type hint,
+    typically due to failing to support runtime :func:`isinstance` calls).
     '''
 
     pass
@@ -199,11 +197,31 @@ class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
 # ....................{ DECORATOR ~ hint : nonpep         }....................
 class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     '''
-    **Beartype decorator PEP-noncompliant type hint value exception.**
+    **Beartype decorator PEP-noncompliant type hint exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable type-hinted
-    with one or more **PEP-noncompliant annotations** (i.e., annotations that
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid PEP-noncompliant type hint** (i.e., type hint failing to comply
+    with :mod:`beartype`-specific semantics, including tuple unions and
+    fully-qualified forward references).
+
+    Tuple unions, for example, are required to contain *only* PEP-noncompliant
+    annotations. This exception is thus raised for callables type-hinted with
+    tuples containing one or more PEP-compliant items (e.g., instances or
+    classes declared by the stdlib :mod:`typing` module) *or* arbitrary objects
+    (e.g., dictionaries, lists, numbers, sets).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintNonPepNumPyException(BeartypeDecorHintNonPepException):
+    '''
+    **Beartype decorator PEP-noncompliant NumPy type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by a
+    **PEP-noncompliant annotations** (i.e., annotations that
     fail to comply with :mod:`beartype`-specific semantics, including tuple
     unions and fully-qualified forward references) in a semantic context
     expecting PEP-noncompliant annotations.
@@ -216,7 +234,6 @@ class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     '''
 
     pass
-
 # ....................{ DECORATOR ~ hint : pep            }....................
 class BeartypeDecorHintPepException(BeartypeDecorHintException):
     '''

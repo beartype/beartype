@@ -745,7 +745,7 @@ def pep_code_check_hint(
         #FIXME: Synchronizing this block with that of the
         #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method is
         #becoming unmaintainable. Let's centralize the two into a new
-        #get_hint_reduced() getter function please.
+        #reduce_hint() getter function please.
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAVEATS: Synchronize changes here with the corresponding block of the

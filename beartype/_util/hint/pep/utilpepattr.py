@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.mod.utilmodule import (
     import_module_attr_or_none,
     is_module,
@@ -41,6 +42,7 @@ type hints) importable under the active Python interpreter.
 '''
 
 # ....................{ IMPORTERS                         }....................
+@callable_cached
 def import_typing_attr(
     # Mandatory parameters.
     typing_attr_basename: str,
@@ -66,6 +68,8 @@ def import_typing_attr(
        that attribute from that module.
     #. Else, raises a human-readable exception.
 
+    This function is memoized for efficiency.
+
     Parameters
     ----------
     typing_attr_basename : str
@@ -83,6 +87,7 @@ def import_typing_attr(
     ----------
     exception_cls
         If either:
+
         * This name is *not* a syntactically valid attribute name.
         * Neither the :mod:`typing` nor :mod:`typing_extensions` modules
           declare an attribute with this name.
