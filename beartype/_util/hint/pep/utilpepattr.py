@@ -14,10 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.mod.utilmodule import (
-    import_module_attr_or_none,
-    is_module,
-)
+from beartype._util.mod.utilmodule import import_module_attr_or_none
+from beartype._util.mod.utilmodtest import is_module
 from beartype._util.utilobject import SENTINEL
 from typing import Any, Type
 

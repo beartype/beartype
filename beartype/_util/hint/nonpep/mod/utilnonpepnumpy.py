@@ -19,30 +19,42 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonPepNumPyException
+from beartype.vale import IsAttr, IsEqual
+# from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignNumpyArray
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepattr import import_typing_attr
+from beartype._util.hint.pep.utilpepget import (
+    get_hint_pep_args,
+    get_hint_pep_sign_or_none,
+)
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ VALIDATORS                        }....................
-#FIXME: Implement us up, please. Note that doing so will require
-#differentiating between:
-#* "numpy.dtype.type" objects like "np.float64", which actually isn't a dtype
-#  even though NumPy externally pretends it is. Gracias, NumPy.
-#* "numpy.dtype" objects like "np.dtype('>i4')", which actually is a dtype even
-#  though nobody has ever seen one of those in real life.
-#FIXME: Unit test us up, please.
+# ....................{ REDUCERS                          }....................
+#FIXME: Ideally, this reducer would be memoized. Sadly, the
+#"numpy.typing.NDArray" attribute itself fails to memoize. Memoization here
+#would just consume all available memory. *sigh*
 
-# Note this getter's return annotation is intentionally deferred as a forward
-# reference to avoid
-def get_hint_numpy_ndarray_dtype(hint: Any) -> 'numpy.dtype':  # type: ignore[name-defined]
+# @callable_cached
+def reduce_hint_numpy_ndarray(hint: Any) -> Any:
     '''
-    **NumPy array data type** (i.e., :class:`numpy.dtype` instance)
-    subscripting the passed PEP-noncompliant typed NumPy array (e.g.,
+    Beartype validator validating arbitrary objects to be NumPy arrays whose
+    **NumPy array data type** (i.e., :class:`numpy.dtype` instance) is equal to
+    that subscripting the passed PEP-noncompliant typed NumPy array (e.g.,
     ``numpy.dtype(numpy.float64)`` when passed
     ``numpy.typing.NDArray[numpy.float64]``).
+
+    This getter effectively reduces any PEP-noncompliant third-party typed
+    NumPy array to a semantically equivalent PEP-noncompliant first-party
+    beartype validator -- which has the substantial merits of already being
+    well-supported, well-tested, and well-known to generate optimally efficient
+    type-checking by the :func:`beartype.beartype` decorator.
+
+    Technically, beartype could instead explicitly handle typed NumPy arrays
+    throughout the codebase. Of course, doing so would yield *no* tangible
+    benefits while imposing a considerable maintenance burden.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -58,8 +70,42 @@ def get_hint_numpy_ndarray_dtype(hint: Any) -> 'numpy.dtype':  # type: ignore[na
     :exc:`BeartypeDecorHintNonPepNumPyException`
         If either:
 
+        * The active Python interpreter targets Python < 3.9 and either:
+
+          * The third-party :mod:`typing_extensions` module is unimportable.
+          * The third-party :mod:`typing_extensions` module is importable but
+            sufficiently old that it fails to declare the
+            :attr:`typing_extensions.Annotated` attribute.
+
         * This hint is *not* a typed NumPy array.
+        * This hint is a typed NumPy array but either:
+
+          * *Not* subscripted by exactly two arguments.
+          * Subscripted by exactly two arguments but whose second argument is
+            neither:
+
+            * A **NumPy data type** (i.e., :class:`numpy.dtype` instance).
+            * An object coercible into a NumPy data type by passing to the
+              :meth:`numpy.dtype.__init__` method.
     '''
+
+    # Defer heavyweight imports.
+    #
+    # Note that third-party packages should typically *ONLY* be imported
+    # via utility functions raising human-readable exceptions when those
+    # packages are either uninstalled or unimportable. In this case,
+    # however, NumPy will almost *ALWAYS* be importable. Why? Because this
+    # hint was externally instantiated by the user by first importing the
+    # "numpy.typing.NDArray" attribute passed to this getter.
+    from numpy import dtype, ndarray
+
+    # "typing.Annotated" attribute safely imported from whichever of the
+    # "typing" or "typing_extensions" modules declares this attribute if one or
+    # more do *OR* raise an exception otherwise.
+    typing_annotated = import_typing_attr(
+        typing_attr_basename='Annotated',
+        exception_cls=BeartypeDecorHintNonPepNumPyException,
+    )
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
@@ -71,9 +117,50 @@ def get_hint_numpy_ndarray_dtype(hint: Any) -> 'numpy.dtype':  # type: ignore[na
             f'Type hint {repr(hint)} not typed NumPy array.')
     # Else, this hint is a typed NumPy array.
 
-    #FIXME: Clearly, even this is unsafe. Ensure this hint is actually
-    #subscripted and of length > 2, please. Assume *NOTHING* here, because this
-    #is a third-party API that could change at anyone's whim.
+    # Objects subscripting this hint if any *OR* the empty tuple otherwise.
+    hint_args = get_hint_pep_args(hint)
 
-    # Data type *OR* data type type subscripting this hint.
-    hint_dtype_or_dtype_type = hint.__args__[1]
+    # If this hint was *NOT* subscripted by exactly two arguments, this hint is
+    # malformed as a typed NumPy array. In this case, raise an exception.
+    if len(hint_args) != 2:
+        raise BeartypeDecorHintNonPepNumPyException(
+            f'Typed NumPy array {repr(hint)} not subscripted by '
+            f'exactly two arguments.'
+        )
+    # Else, this hint was subscripted by exactly two arguments.
+
+    # Data type-like object subscripting this hint.
+    hint_dtype_like = hint.__args__[1]
+
+    # Attempt to coerce this possibly non-data type into a proper data type.
+    # Note that the dtype.__init__() constructor efficiently maps non-dtype
+    # scalar types (e.g., "numpy.float64") to corresponding cached dtypes:
+    #     >>> import numpy
+    #     >>> i4_dtype = numpy.dtype('>i4')
+    #     >>> numpy.dtype(i4_dtype) is numpy.dtype(i4_dtype)
+    #     True
+    #     >>> numpy.dtype(numpy.float64) is numpy.dtype(numpy.float64)
+    #     True
+    # Ergo, the call to this constructor here is guaranteed to already
+    # effectively be memoized.
+    try:
+        hint_dtype = dtype(hint_dtype_like)
+    # If this object is *NOT* coercible into a data type, raise an exception.
+    # This is essential. As of NumPy 1.21.0, "numpy.typing.NDArray" fails to
+    # validate its subscripted argument to actually be a data type: e.g.,
+    #     >>> from numpy.typing import NDArray
+    #     >>> NDArray['wut']
+    #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
+    except Exception as exception:
+        raise BeartypeDecorHintNonPepNumPyException(
+            f'Typed NumPy array {repr(hint)} '
+            f'dtype argument {repr(hint_dtype_like)} invalid '
+            f'(i.e., neither dtype nor coercible to dtype).'
+        ) from exception
+    # Else, this object is now a proper data type.
+
+    # Reduce this hint to the equivalent nested beartype validator.
+    return typing_annotated[
+        ndarray, IsAttr[   # type: ignore[misc]
+            'dtype', IsAttr[   # type: ignore[misc]
+                'type', IsEqual[hint_dtype]]]]   # type: ignore[misc]

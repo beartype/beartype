@@ -25,7 +25,6 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep593Exception,
 )
-from beartype._cave._cavefast import NoneType
 from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
@@ -105,15 +104,9 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_type,
     add_func_scope_types,
 )
+from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_generic_base_erased_from_unerased,
-    get_hint_pep484_newtype_class,
-    is_hint_pep484_newtype,
-)
-from beartype._util.hint.pep.proposal.utilhintpep544 import (
-    get_hint_pep544_io_protocol_from_generic,
-    is_hint_pep544_io_generic,
-)
+    get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilhintpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilhintpep586 import (
@@ -121,15 +114,13 @@ from beartype._util.hint.pep.proposal.utilhintpep586 import (
 from beartype._util.hint.pep.proposal.utilhintpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
-    is_hint_pep593,
-    is_hint_pep593_beartype,
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
+    get_hint_pep_generic_type_or_none,
     get_hint_pep_sign,
     get_hint_pep_type_stdlib,
-    get_hint_pep_generic_type_or_none,
 )
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
@@ -729,88 +720,14 @@ def pep_code_check_hint(
             HINT_CHILD_LABEL
         )
 
-        # ................{ REDUCTION                         }................
-        #FIXME: Inefficient. Calling the get_hint_pep_sign_or_none() getter
-        #once here to obtain the sign of this hint and then simply testing that
-        #sign is likely to be substantially faster and simpler than the current
-        #approach performed below. Make it so, please -- especially because
-        #doing so should enable us to remove most of these PEP-specific testers
-        #from the codebase.
-        #
-        #Note, of course, that we'll need to call that same getter a second
-        #time *IF AND ONLY IF* the current hint is actually reduced by this
-        #reduction logic. Yup; that's lookin' pretty darn efficient there.
-        #FIXME: Perform a similar refactoring to the
-        #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method.
-        #FIXME: Synchronizing this block with that of the
-        #beartype._decor._error._errorsleuth.CauseSleuth.__init__() method is
-        #becoming unmaintainable. Let's centralize the two into a new
-        #reduce_hint() getter function please.
-
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAVEATS: Synchronize changes here with the corresponding block of the
-        # beartype._decor._error._errorsleuth.CauseSleuth.__init__()
-        # method.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Reduce the currently visited hint to a lower-level hint-like object
-        # associated with this hint if this hint satisfies a condition.
-        #
-        # This decision is intentionally implemented as a linear series of
-        # tests ordered in descending likelihood for efficiency. While
-        # alternative implementations (that are more readily readable and
-        # maintainable) do exist, these alternatives all appear to be
-        # substantially less efficient.
-        #
-        # ................{ REDUCTION ~ pep 484 ~ none        }................
-        # If this is the PEP 484-compliant "None" singleton, reduce this hint
-        # to the type of that singleton. While not explicitly defined by the
-        # "typing" module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        # The "None" singleton is used to type callables lacking an explicit
-        # "return" statement and thus absurdly common. Ergo, detect this first.
-        if hint_curr is None:
-            hint_curr = NoneType
-        # ................{ REDUCTION ~ pep 593               }................
-        # If this is a PEP 593-compliant type metahint...
-        #
-        # Metahints form the core backbone of our beartype-specific data
-        # validation API and are thus also extremely common. Ergo, detect these
-        # next-to-first.
-        elif is_hint_pep593(hint_curr):
-            # If this metahint is beartype-specific (i.e., its second argument
-            # is an instance of the "beartype._vale._valesub._SubscriptedIs"
-            # class produced by subscripting the "Is" class), ignore all
-            # annotations on this hint by reducing this hint to its origin
-            # (e.g., "str" in "Annotated[str, 50, False]").
-            if not is_hint_pep593_beartype(hint_curr):
-                hint_curr = get_hint_pep593_metahint(hint_curr)
-            # Else, that argument is beartype-specific. In this case, preserve
-            # this hint as is for subsequent handling below.
-        # ................{ REDUCTION ~ pep 544               }................
-        # If this is a PEP 484-compliant IO generic base class *AND* the active
-        # Python interpreter targets at least Python >= 3.8 and thus supports
-        # PEP 544-compliant protocols, reduce this functionally useless hint to
-        # the corresponding functionally useful beartype-specific PEP
-        # 544-compliant protocol implementing this hint.
-        #
-        # Note that PEP 484-compliant IO generic base classes are technically
-        # usable under Python < 3.8 (e.g., by explicitly subclassing those
-        # classes from third-party classes). Ergo, we can neither safely emit
-        # warnings nor raise exceptions on visiting these classes under *ANY*
-        # Python version.
-        elif is_hint_pep544_io_generic(hint_curr):
-            hint_curr = get_hint_pep544_io_protocol_from_generic(hint_curr)
-        # ................{ REDUCTION ~ pep 484 ~ new type    }................
-        # If this is a PEP 484-compliant new type hint, reduce this hint to the
-        # user-defined class aliased by this hint. Although this logic could
-        # also be performed below, doing so here simplifies matters.
-        #
-        # New type hints are functionally useless for any meaningful purpose
-        # and thus reasonably rare in the wild. Ergo, detect these last.
-        elif is_hint_pep484_newtype(hint_curr):
-            hint_curr = get_hint_pep484_newtype_class(hint_curr)
-        # ................{ REDUCTION ~ end                   }................
+        # associated with this hint if this hint satisfies a condition,
+        # simplifying type-checking generation logic below by transparently
+        # converting hints we'd rather *NOT* explicitly support (e.g.,
+        # third-party "numpy.typing.NDArray" hints) into semantically
+        # equivalent hints we would (e.g., first-party beartype validators).
+        hint_curr = get_hint_reduced(hint_curr)
+
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
         #requires a linear search over the entire code and is thus costly.

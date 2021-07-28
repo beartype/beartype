@@ -23,10 +23,8 @@ from beartype._util.cls.utilclstest import (
     die_unless_type_isinstanceable,
     is_type_builtin,
 )
-from beartype._util.mod.utilmodule import (
-    die_unless_module_attr_name,
-    import_module_attr,
-)
+from beartype._util.mod.utilmodule import import_module_attr
+from beartype._util.mod.utilmodtest import die_unless_module_attr_name
 from beartype._util.utilobject import get_object_type_name
 
 # See the "beartype.cave" submodule for further commentary.

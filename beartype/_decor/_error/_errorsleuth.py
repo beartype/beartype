@@ -14,25 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._cave._cavefast import NoneType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._util.data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_TYPE_STDLIB,
 )
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
-    get_hint_pep484_newtype_class,
-    is_hint_pep484_newtype,
-)
-from beartype._util.hint.pep.proposal.utilhintpep544 import (
-    get_hint_pep544_io_protocol_from_generic,
-    is_hint_pep544_io_generic,
-)
-from beartype._util.hint.pep.proposal.utilhintpep593 import (
-    get_hint_pep593_metahint,
-    is_hint_pep593,
-    is_hint_pep593_beartype,
-)
+from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_generic_bases_unerased,
@@ -43,9 +30,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_generic,
     is_hint_pep_subscripted,
 )
-from beartype._util.hint.utilhinttest import (
-    is_hint_ignorable,
-)
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Any, Callable, Optional, Tuple
 
@@ -191,59 +176,9 @@ class CauseSleuth(object):
         Set the type hint to validate this object against.
         '''
 
-        # ................{ REDUCTION                         }................
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAVEATS: Synchronize changes here with the corresponding block of the
-        # beartype._decor._code._pep._pephint.pep_code_check_hint() function.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #
-        # This logic reduces the currently visited hint to an arbitrary object
-        # associated with this hint when this hint conditionally satisfies any
-        # of various conditions.
-        #
-        # ................{ REDUCTION ~ pep 484 ~ none        }................
-        # If this is the PEP 484-compliant "None" singleton, reduce this hint
-        # to the type of that singleton. While not explicitly defined by the
-        # "typing" module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        if hint is None:
-            hint = NoneType
-        # ................{ REDUCTION ~ pep 593               }................
-        # If this is a PEP 593-compliant type metahint, ignore all annotations
-        # on this hint (i.e., "hint_curr.__metadata__" tuple) by reducing this
-        # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
-        elif is_hint_pep593(hint):
-            # If the first argument subscripting this metahint is
-            # beartype-agnostic (e.g., *NOT* an instance of the
-            # "beartype.vale._SubscriptedIs" class produced by subscripting the
-            # "Is" class), ignore all annotations on this hint by reducing this
-            # hint to its origin (e.g., "str" in "Annotated[str, 50, False]").
-            if not is_hint_pep593_beartype(hint):
-                hint = get_hint_pep593_metahint(hint)
-            # Else, that argument is beartype-specific. In this case, preserve
-            # this hint as is for subsequent handling below.
-        # ................{ REDUCTION ~ pep 544               }................
-        # If this is a PEP 484-compliant IO generic base class *AND* the active
-        # Python interpreter targets at least Python >= 3.8 and thus supports
-        # PEP 544-compliant protocols, reduce this functionally useless hint to
-        # the corresponding functionally useful beartype-specific PEP
-        # 544-compliant protocol implementing this hint.
-        #
-        # Note that PEP 484-compliant IO generic base classes are technically
-        # usable under Python < 3.8 (e.g., by explicitly subclassing those
-        # classes from third-party classes). Ergo, we can neither safely emit
-        # warnings nor raise exceptions on visiting these classes under *ANY*
-        # Python version.
-        elif is_hint_pep544_io_generic(hint):
-            hint = get_hint_pep544_io_protocol_from_generic(hint)
-        # ................{ REDUCTION ~ pep 484 ~ new type    }................
-        # If this is a PEP 484-compliant new type hint, reduce this hint to the
-        # user-defined class aliased by this hint. Although this logic could
-        # also be performed below, doing so here simplifies matters.
-        elif is_hint_pep484_newtype(hint):
-            hint = get_hint_pep484_newtype_class(hint)
-        # ................{ REDUCTION ~ end                   }................
+        # Reduce the currently visited hint to a lower-level hint-like object
+        # associated with this hint if this hint satisfies a condition.
+        hint = get_hint_reduced(hint)
 
         # If this hint is PEP-compliant...
         if is_hint_pep(hint):

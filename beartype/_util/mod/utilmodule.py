@@ -12,146 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import importlib
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from sys import modules as sys_modules
 from types import ModuleType
 from typing import Any, Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ VALIDATORS                        }....................
-def die_unless_module_attr_name(
-    # Mandatory parameters.
-    module_attr_name: str,
-
-    # Optional parameters.
-    module_attr_label: str = 'Module attribute name',
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
-) -> None:
-    '''
-    Raise an exception unless the passed string is the fully-qualified
-    syntactically valid name of a **module attribute** (i.e., object declared
-    at module scope by a module) that may or may not actually exist.
-
-    This validator does *not* validate this attribute to actually exist -- only
-    that the name of this attribute is syntactically valid.
-
-    Parameters
-    ----------
-    module_attr_name : str
-        Fully-qualified name of the module attribute to be validated.
-    module_attr_label : str
-        Human-readable label prefixing this name in the exception message
-        raised by this function. Defaults to ``"Module attribute name"``.
-    exception_cls : type
-        Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
-
-    Raises
-    ----------
-    exception_cls
-        If either:
-
-        * This name is *not* a string.
-        * This name is a string containing either:
-
-          * *No* ``.`` characters and thus either:
-
-            * Is relative to the calling subpackage and thus *not*
-              fully-qualified (e.g., ``muh_submodule``).
-            * Refers to a builtin object (e.g., ``str``). While technically
-              fully-qualified, the names of builtin objects are *not*
-              explicitly importable as is. Since these builtin objects are
-              implicitly imported everywhere, there exists *no* demonstrable
-              reason to even attempt to import them anywhere.
-
-          * One or more ``.`` characters but syntactically invalid as a
-            classname (e.g., ``0h!muh?G0d.``).
-    '''
-    assert isinstance(module_attr_label, str), (
-        f'{repr(module_attr_label)} not string.')
-    assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not type.')
-
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextidentifier import is_identifier
-
-    # If this object is *NOT* a string, raise an exception.
-    if not isinstance(module_attr_name, str):
-        raise exception_cls(
-            f'{module_attr_label} {repr(module_attr_name)} not string.')
-    # Else, this object is a string.
-    #
-    # If this string contains *NO* "." characters and thus either is relative
-    # to the calling subpackage or refers to a builtin object, raise an
-    # exception.
-    elif '.' not in module_attr_name:
-        raise exception_cls(
-            f'{module_attr_label} "{module_attr_name}" '
-            f'relative or refers to builtin object '
-            f'(i.e., due to containing no "." characters).'
-        )
-    # Else, this string contains one or more "." characters and is thus the
-    # fully-qualified name of a non-builtin type.
-    #
-    # If this string is syntactically invalid as a fully-qualified module
-    # attribute name, raise an exception.
-    elif not is_identifier(module_attr_name):
-        raise exception_cls(
-            f'{module_attr_label} "{module_attr_name}" '
-            f'syntactically invalid as module attribute name.'
-        )
-    # Else, this string is syntactically valid as a fully-qualified module
-    # attribute name.
-
-# ....................{ TESTERS                           }....................
-def is_module(module_name: str) -> bool:
-    '''
-    ``True`` only if the module, package, or C extension with the passed
-    fully-qualified name is importable under the active Python interpreter.
-
-    Caveats
-    ----------
-    **This tester dynamically imports this module as an unavoidable side effect
-    of performing this test.**
-
-    Parameters
-    ----------
-    module_name : str
-        Fully-qualified name of the module to be imported.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this module is importable.
-
-    Raises
-    ----------
-    Exception
-        If a module with this name exists *but* this module is unimportable
-        due to module-scoped side effects at importation time. Since modules
-        may perform arbitrary Turing-complete logic from module scope, callers
-        should be prepared to handle *any* possible exception that might arise.
-    '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
-
-    # If this module has already been imported, return true.
-    if module_name in sys_modules:
-        return True
-    # Else, this module has yet to be imported.
-
-    # Attempt to...
-    try:
-        # Dynamically import this module.
-        importlib.import_module(module_name)
-
-        # Return true, since this importation succeeded.
-        return True
-    # If no module this this name exists, return false.
-    except ModuleNotFoundError:
-        return False
-    # If any other exception was raised, silently permit that exception to
-    # unwind the call stack.
 
 # ....................{ GETTERS ~ object : name           }....................
 def get_object_module_name(obj: object) -> str:
@@ -469,6 +334,9 @@ def import_module_attr_or_none(
         Modules may perform arbitrary Turing-complete logic from module scope;
         callers should be prepared to handle *any* possible exception.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodtest import die_unless_module_attr_name
 
     # If this object is *NOT* the fully-qualified syntactically valid name of a
     # module attribute that may or may not actually exist, raise an exception.

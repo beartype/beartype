@@ -13,6 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._cave._cavefast import NoneType
+from beartype._util.data.hint.pep.sign.datapepsigns import (
+    HintSignAnnotated,
+    HintSignNewType,
+    HintSignNumpyArray,
+)
 from beartype._util.mod.utilmodule import get_object_module_name
 from typing import Any
 
@@ -20,9 +25,6 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-#FIXME: Refactor all existing reductions throughout the codebase to call this
-#reducer instead.
-#FIXME: Unit test us up.
 def get_hint_reduced(hint: Any) -> Any:
     '''
     Lower-level type hint reduced (i.e., converted, extracted) from the passed
@@ -56,35 +58,17 @@ def get_hint_reduced(hint: Any) -> Any:
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintTypingException`
-        If the passed hint is either:
-
-        * A PEP-noncompliant typed NumPy array (e.g.,
-          ``numpy.typing.NDArray[np.float64]``), the active Python interpreter
-          targets Python < 3.9, *and* the third-party :mod:`typing_extensions`
-          module is either uninstalled or is installed but fails to declare the
-          :attr:`typing_extensions.Annotated` attribute (e.g., due to being too
-          old).
+    :exc:`BeartypeDecorHintNonPepNumPyException`
+        See the
+        :func:`beartype._util.hint.nonpep.mod.utilnonpepnumpy.reduce_hint_numpy_ndarray`
+        function for details.
     '''
 
     # Avoid circular import dependencies.
-    from beartype.vale import IsAttr, IsEqual
-    from beartype._util.data.hint.pep.sign.datapepsigns import (
-        HintSignAnnotated,
-        HintSignNewType,
-        HintSignNumpyArray,
-    )
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
-        get_hint_pep484_newtype_class,
-    )
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
         get_hint_pep544_io_protocol_from_generic,
         is_hint_pep544_io_generic,
-    )
-    from beartype._util.hint.pep.proposal.utilhintpep593 import (
-        get_hint_pep593_metahint,
-        is_hint_pep593_beartype,
     )
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
@@ -93,9 +77,8 @@ def get_hint_reduced(hint: Any) -> Any:
 
     # This reduction is intentionally implemented as a linear series of tests,
     # ordered in descending likelihood of a match for efficiency. While
-    # alternative implementations (that are more readily readable and
-    # maintainable) do exist, these alternatives all appear to be substantially
-    # less efficient.
+    # alternatives (that are more readily readable and maintainable) do exist,
+    # these alternatives all appear to be substantially less efficient.
     #
     # ..................{ NON-PEP                           }..................
     # If this hint is unidentifiable, return this hint as is unmodified.
@@ -117,9 +100,15 @@ def get_hint_reduced(hint: Any) -> Any:
     # Since metahints form the core backbone of our beartype-specific data
     # validation API, metahints are extremely common and thus detected next.
     elif hint_sign is HintSignAnnotated:
-        # If this metahint is beartype-agnostic and thus irrelevant to our
-        # purposes, ignore all annotations on this hint by reducing this hint
-        # to the lower-level hint it annotates.
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.utilhintpep593 import (
+            get_hint_pep593_metahint,
+            is_hint_pep593_beartype,
+        )
+
+        # If this metahint is beartype-agnostic and thus irrelevant to us,
+        # ignore all annotations on this hint by reducing this hint to the
+        # lower-level hint it annotates.
         if not is_hint_pep593_beartype(hint):
             hint = get_hint_pep593_metahint(hint)
         # Else, this metahint is beartype-specific. In this case, preserve
@@ -128,64 +117,28 @@ def get_hint_reduced(hint: Any) -> Any:
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
     # "numpy.typing.NDArray[np.float64]")...
     #
-    # Typed NumPy arrays are extremely common across numerous industries and
-    # thus detected next.
+    # Typed NumPy arrays are increasingly common and thus detected next.
     #FIXME: Unit test us up.
     elif hint_sign is HintSignNumpyArray:
-        #FIXME: Shift all of this into the "utilnonpepnumpy" module as a new
-        #get_hint_numpy_reduced() getter, please. This is *FAR* too
-        #NumPy-specific to have here.
-
         # Defer heavyweight imports.
-        #
-        # Note that third-party packages should typically *ONLY* be imported
-        # via utility functions raising human-readable exceptions when those
-        # packages are either uninstalled or unimportable. In this case,
-        # however, NumPy will almost *ALWAYS* be importable. Why? Because this
-        # hint was externally instantiated by the user by first importing the
-        # "numpy.typing.NDArray" attribute.
-        from beartype.roar import BeartypeDecorHintNonPepNumPyException
         from beartype._util.hint.nonpep.mod.utilnonpepnumpy import (
-            get_hint_numpy_ndarray_dtype)
-        from beartype._util.hint.pep.utilpepattr import import_typing_attr
-        from numpy import ndarray
+            reduce_hint_numpy_ndarray)
 
-        # "typing.Annotated" attribute safely imported from whichever of the
-        # "typing" or "typing_extensions" modules declares this attribute if
-        # one or more do *OR* raise an exception otherwise.
-        typing_annotated = import_typing_attr(
-            typing_attr_basename='Annotated',
-            exception_cls=BeartypeDecorHintNonPepNumPyException,
-        )
-
-        #FIXME: Consider privatizing this getter.
-        # Data type subscripting this hint (e.g., "numpy.dtype(numpy.float64)"
-        # for the hint "numpy.typing.NDArray[numpy.float64]").
-        hint_dtype = get_hint_numpy_ndarray_dtype(hint)
-
-        # Reduce this hint to the equivalent nested beartype validator, which
-        # has the substantial merits of already being well-supported,
-        # well-tested, and well-known to generate optimally efficient
-        # type-checking.
-        #
-        # Note that beartype *COULD* instead explicitly handle typed NumPy
-        # arrays throughout the codebase but that doing so would provide *NO*
-        # tangible benefits while imposing a considerable maintenance burden.
-        # We thus prefer isolating support for third-party PEP-noncompliant
-        # type hints like this to this getter by reducing these hints to
-        # beartype validators wherever feasible.
-        hint = typing_annotated[
-            ndarray, IsAttr[   # type: ignore[misc]
-                'dtype', IsAttr[   # type: ignore[misc]
-                    'type', IsEqual[hint_dtype]]]]   # type: ignore[misc]
+        # Reduce this unsupported PEP-noncompliant hint to the equivalent
+        # well-supported PEP-noncompliant beartype validator.
+        hint = reduce_hint_numpy_ndarray(hint)
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
     # be performed elsewhere, doing so here simplifies matters.
     #
-    # New type hints are functionally useless for any meaningful purpose and
+    # New type hints are functionally useless for most meaningful purposes and
     # thus fairly rare in the wild. Ergo, detect these late.
     elif hint_sign is HintSignNewType:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.utilhintpep484 import (
+            get_hint_pep484_newtype_class)
+
         hint = get_hint_pep484_newtype_class(hint)
     # ..................{ PEP 484 ~ io                      }..................
     # If this hint is a PEP 484-compliant IO generic base class *AND* the
