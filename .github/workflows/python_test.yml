@@ -40,6 +40,17 @@
 # * https://hynek.me/articles/python-github-actions
 #   Well-authored blog post strongly inspiring this configuration.
 
+# ....................{ TODO                              }....................
+#FIXME: Add support for caching "pip" downloads across runs. Currently,
+#unresolved issues in GitHub Actions prevents sane caching of "pip" downloads.
+#Naturally, horrifying hacks circumventing these issues do exist but are
+#presumably worse than these issues. See also this pertinent comment:
+#    https://github.com/actions/cache/issues/342#issuecomment-673371329
+
+#FIXME: Consider adding support for Bandit, a security linter. Bandit's
+#probably useless here, as we're thoroughly unrelated to web apps. Still, it
+#probably can't hurt and might even help us somewhen. *shrug*
+
 # ....................{ METADATA                          }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
@@ -60,6 +71,26 @@ on:
     #FIXME: Is this actually right?
     branches:
       - '**'
+
+# ....................{ VARIABLES                         }....................
+# List of private environment variables specific to this configuration and
+# globally set for *ALL* jobs declared below. To avoid conflict with
+# third-party processes, prefix the name of each variable by "_".
+env:
+  # Whitespace-delimited list of the names of all Python packages to be
+  # installed by "pip" below. Although this package has *NO* mandatory runtime
+  # dependencies, fully exercising all tests necessitates these test-time
+  # dependencies. These include:
+  # * mypy, enabling tests for mypy-based PEP 561 compliance.
+  # * NumPy, enabling tests for "numpy.typing.NDArray" type hints.
+  # * "tox", the only mandatory test-time dependency.
+  # * "typing_extensions", enabling tests for "typing" attributes unavailable
+  #   under the active Python interpreter.
+  _PIP_PACKAGE_NAMES: |
+    mypy
+    numpy
+    tox
+    typing_extensions
 
 # ....................{ MAIN                              }....................
 jobs:
@@ -173,9 +204,8 @@ jobs:
           python -m site
           python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
-        run: python -m pip --quiet install --upgrade tox  #virtualenv 
+        run: python -m pip --quiet install --upgrade ${_PIP_PACKAGE_NAMES}
       # Note that:
-      #
       # * "--skip-missing-interpreters=false" disables the corresponding
       #   "skip_missing_interpreters = true" setting globally enabled by our
       #   top-level "tox.ini" configuration, forcing CI failures for

@@ -24,17 +24,6 @@ name: release
 # Confine deployment to only new tags satisfying a release-specific format.
 on:
   push:
-    #FIXME: Uncomment after determining why this induces critical failures on
-    #"git push --tags" attempts with remote error messages resembling:
-    #    error: dst refspec refs/heads/master matches more than one
-    #    error: failed to push some refs to 'git@github.com:beartype/beartype.git'
-    #See also: https://github.com/actions/create-release/issues/13
-    # branches: [ master ]
-    #FIXME: *URGH!* "create-release" is now officially dead, so we need to
-    #refactor this as quickly as feasible to leverage an alternate action. See
-    #also this useful @Heliotrop3 issue:
-    #    https://github.com/beartype/beartype/issues/22
-
     # Sequence of glob expressions matched against "refs/tags" pushed to the
     # branches above.
     tags:
