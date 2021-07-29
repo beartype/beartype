@@ -87,10 +87,21 @@ env:
   # * "typing_extensions", enabling tests for "typing" attributes unavailable
   #   under the active Python interpreter.
   _PIP_PACKAGE_NAMES: |
-    mypy
     numpy
     tox
     typing_extensions
+
+    #FIXME: We temporarily omit mypy due to CI installation failures: e.g.,
+    #    gcc -pthread -DNDEBUG -O2 -fPIC -Iast27/Include
+    #    -I/opt/hostedtoolcache/PyPy/3.6.12/x64/include -c
+    #    ast27/Parser/tokenizer.c -o
+    #    build/temp.linux-x86_64-3.6/ast27/Parser/tokenizer.o
+    #    ast27/Parser/tokenizer.c:17:10: fatal error: codecs.h: No such file or directory
+    #       17 | #include "codecs.h"
+    #          |          ^~~~~~~~~~
+    #    compilation terminated.
+    #    error: command 'gcc' failed with exit status 1
+    # mypy
 
 # ....................{ MAIN                              }....................
 jobs:
