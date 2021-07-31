@@ -67,21 +67,29 @@ def test_pep561_mypy() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.path.pytpathproject import get_project_package_dir
+    from beartype_test.util.path.pytpathproject import (
+        get_project_mypy_config_file,
+        get_project_package_dir,
+    )
     from mypy import api
 
     # List of all command-line options (i.e., "-"-prefixed strings) to be
     # effectively passed to the external "mypy" command.
     #
-    # Note this iterable *MUST* be defined as a list rather than type. If *NOT*
-    # the case, the function called below raises an exception. Hot garbage!
-    MYPY_OPTIONS = []
+    # Note this iterable *MUST* be defined as a list rather than tuple. If a
+    # tuple, the function called below raises an exception. Hot garbage!
+    MYPY_OPTIONS = [
+        # Absolute dirname of this project's top-level mypy configuration.
+        # Since our "tox" configuration isolates testing to a temporary
+        # directory, mypy is unable to find its configuration without help.
+        '--config-file', str(get_project_mypy_config_file()),
+    ]
 
     # List of all command-line arguments (i.e., non-options) to be effectively
     # passed to the external "mypy" command.
     #
-    # Note this iterable *MUST* be defined as a list rather than type. If *NOT*
-    # the case, the function called below raises an exception. Hot garbage!
+    # Note this iterable *MUST* be defined as a list rather than tuple. If a
+    # tuple, the function called below raises an exception. Steaming trash!
     MYPY_ARGUMENTS = [
         # Absolute dirname of this project's top-level package.
         str(get_project_package_dir()),

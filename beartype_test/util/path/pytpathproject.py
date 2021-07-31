@@ -184,12 +184,56 @@ def get_project_test_package_dir() -> Path:
 
 # ....................{ GETTERS ~ file                    }....................
 @callable_cached
+def get_project_mypy_config_file() -> Path:
+    '''
+    Concrete platform-agnostic :mod:`Path` object encapsulating the absolute
+    filename of this project's **mypy configuration file** (i.e., top-level
+    ``.mypy.ini`` file) if found *or* raise an exception otherwise.
+
+    Returns
+    ----------
+    Path
+        Concrete platform-agnostic object encapsulating the absolute filename
+        of this project's mypy configuration file.
+
+    Raises
+    ----------
+    BeartypeTestPathException
+        If this path exists but is *NOT* a file.
+    FileNotFoundError
+        If this path does *not* exist.
+    RuntimeError
+        If this path exists but whose resolution to a physical path requires
+        resolving one or more cyclic symbolic links inducing an infinite loop.
+    '''
+
+    # Concrete platform-agnostic path encapsulating this project's
+    # project directory.
+    PROJECT_DIR = get_project_dir()
+
+    # Concrete platform-agnostic path encapsulating the absolute filename of
+    # this project's mypy configuration file.
+    PROJECT_MYPY_CONFIG_FILE = PROJECT_DIR.joinpath('.mypy.ini')
+
+    # If this file either does *NOT* exist or is *NOT* a file, raise an
+    # exception.
+    if not PROJECT_MYPY_CONFIG_FILE.is_file():
+        raise BeartypeTestPathException(
+            f'Project mypy configuration file '
+            f'{PROJECT_MYPY_CONFIG_FILE} not found.'
+        )
+    # Else, this file exists.
+
+    # Return this path.
+    return PROJECT_MYPY_CONFIG_FILE
+
+
+@callable_cached
 def get_project_readme_file() -> Path:
     '''
     Concrete platform-agnostic :mod:`Path` object encapsulating the absolute
-    filename of this project's **readme file** (i.e., this project's
-    front-facing ``README.rst`` file) if found *or* raise an exception
-    otherwise.
+    filename of this project's **readme file** (i.e., front-facing
+    ``README.rst`` file) if found *or* raise an exception otherwise.
 
     Note that the :meth:`Path.read_text` method of this object trivially yields
     the decoded plaintext contents of this file as a string.

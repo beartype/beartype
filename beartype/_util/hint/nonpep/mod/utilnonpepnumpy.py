@@ -102,10 +102,11 @@ def reduce_hint_numpy_ndarray(hint: Any) -> Any:
     # "typing.Annotated" attribute safely imported from whichever of the
     # "typing" or "typing_extensions" modules declares this attribute if one or
     # more do *OR* raise an exception otherwise.
+    #
+    # Note that the memoized import_typing_attr() function is intentionally
+    # passed positional rather than keyword arguments (for minor efficiency).
     typing_annotated = import_typing_attr(
-        typing_attr_basename='Annotated',
-        exception_cls=BeartypeDecorHintNonPepNumPyException,
-    )
+        'Annotated', BeartypeDecorHintNonPepNumPyException)
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
@@ -124,13 +125,32 @@ def reduce_hint_numpy_ndarray(hint: Any) -> Any:
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
         raise BeartypeDecorHintNonPepNumPyException(
-            f'Typed NumPy array {repr(hint)} not subscripted by '
-            f'exactly two arguments.'
+            f'Typed NumPy array {repr(hint)} '
+            f'not subscripted by exactly two arguments.'
         )
     # Else, this hint was subscripted by exactly two arguments.
 
-    # Data type-like object subscripting this hint.
-    hint_dtype_like = hint.__args__[1]
+    # Data type subhint subscripting this hint. Yes, the "numpy.typing.NDArray"
+    # type hint bizarrely encapsulates its data type argument into a private
+    # "numpy._DTypeMeta" type subhint. Why? We have absolutely no idea, but we
+    # have no say in the matter. NumPy, you're on notice for stupidity.
+    hint_dtype_subhint = hint_args[1]
+
+    # Objects subscripting this subhint if any *OR* the empty tuple otherwise.
+    hint_dtype_subhint_args = get_hint_pep_args(hint_dtype_subhint)
+
+    # If this hint was *NOT* subscripted by exactly one argument, this subhint
+    # is malformed as a data type subhint. In this case, raise an exception.
+    if len(hint_dtype_subhint_args) != 1:
+        raise BeartypeDecorHintNonPepNumPyException(
+            f'Typed NumPy array {repr(hint)} '
+            f'data type subhint {repr(hint_dtype_subhint)} '
+            f'not subscripted by exactly one argument.'
+        )
+    # Else, this subhint was subscripted by exactly one argument.
+
+    # Data type-like object subscripting this subhint. Look, just do it.
+    hint_dtype_like = hint_dtype_subhint_args[0]
 
     # Attempt to coerce this possibly non-data type into a proper data type.
     # Note that the dtype.__init__() constructor efficiently maps non-dtype
@@ -154,8 +174,8 @@ def reduce_hint_numpy_ndarray(hint: Any) -> Any:
     except Exception as exception:
         raise BeartypeDecorHintNonPepNumPyException(
             f'Typed NumPy array {repr(hint)} '
-            f'dtype argument {repr(hint_dtype_like)} invalid '
-            f'(i.e., neither dtype nor coercible to dtype).'
+            f'data type {repr(hint_dtype_like)} invalid '
+            f'(i.e., neither data type nor coercible to data type).'
         ) from exception
     # Else, this object is now a proper data type.
 

@@ -77,31 +77,21 @@ on:
 # globally set for *ALL* jobs declared below. To avoid conflict with
 # third-party processes, prefix the name of each variable by "_".
 env:
+  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  # CAUTION: Optional in-flight test-time dependencies (e.g., NumPy, mypy) are
+  # intentionally listed in the "beartype.meta.LIBS_TESTTIME_OPTIONAL" global
+  # rather than below. "tox" isolates both the package being tested and its
+  # dependency tree to virtual environments. Listing in-flight dependencies
+  # here would install those dependencies outside those virtual environments,
+  # thus reducing to a pointless, expensive, and failure-prone noop.
+  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # Whitespace-delimited list of the names of all Python packages to be
   # installed by "pip" below. Although this package has *NO* mandatory runtime
-  # dependencies, fully exercising all tests necessitates these test-time
-  # dependencies. These include:
-  # * mypy, enabling tests for mypy-based PEP 561 compliance.
-  # * NumPy, enabling tests for "numpy.typing.NDArray" type hints.
+  # dependencies, fully exercising all tests necessitates these pre-flight
+  # test-time dependencies. These include:
   # * "tox", the only mandatory test-time dependency.
-  # * "typing_extensions", enabling tests for "typing" attributes unavailable
-  #   under the active Python interpreter.
   _PIP_PACKAGE_NAMES: |
-    numpy
     tox
-    typing_extensions
-
-    #FIXME: We temporarily omit mypy due to CI installation failures: e.g.,
-    #    gcc -pthread -DNDEBUG -O2 -fPIC -Iast27/Include
-    #    -I/opt/hostedtoolcache/PyPy/3.6.12/x64/include -c
-    #    ast27/Parser/tokenizer.c -o
-    #    build/temp.linux-x86_64-3.6/ast27/Parser/tokenizer.o
-    #    ast27/Parser/tokenizer.c:17:10: fatal error: codecs.h: No such file or directory
-    #       17 | #include "codecs.h"
-    #          |          ^~~~~~~~~~
-    #    compilation terminated.
-    #    error: command 'gcc' failed with exit status 1
-    # mypy
 
 # ....................{ MAIN                              }....................
 jobs:

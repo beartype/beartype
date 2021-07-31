@@ -292,27 +292,43 @@ requirements strings of the format ``{project_name}
 '''
 
 # ....................{ METADATA ~ libs : test            }....................
-_LIBS_TESTTIME_MANDATORY_MYPY = (
-    # A *VERY* modern version of mypy is recommended. Even fairly recent older
-    # versions of mypy are significantly deficient with respect to error
-    # reporting to the point of uselessness.
-    'mypy >=0.800' ,
-) if not _IS_PYPY else ()
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize changes to this tuple with:
+# * Testers defined by the "beartype_test.util.mod.utilmodoptional" subpackage.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+LIBS_TESTTIME_OPTIONAL = (
+    # NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
+    # "numpy.typing.NDArray" type hint supported by beartype 0.8.0.
+    # _PIP_PACKAGE_NAMES: |
+    'numpy >=1.21.0',
+
+    # "typing_extensions" >= 3.10.0.0 backports all "typing" attributes
+    # supported by beartype unavailable under older Python interpreters.
+    'typing_extensions >=3.10.0.0',
+) + (
+    # If the active Python interpreter is *NOT* PyPy and thus supports mypy...
+    (
+        # mypy >= 0.800, a reasonably recent version known to behave well. Even
+        # less reasonably recent versions of mypy are significantly deficient
+        # with respect to error reporting and *MUST* thus be blacklisted.
+        'mypy >=0.800' ,
+    ) if not _IS_PYPY else
+    # Else, the active Python interpreter is PyPy and thus fails to support
+    # mypy. In this case, avoid requiring mypy. See also this official
+    # documentation discussing mypy's current incompatibility with PyPy:
+    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    ()
+)
 '''
-**Mandatory mypy test-time package dependency** (i.e., dependencies required
-to test this package under :mod:`tox`) as a tuple of :mod:`setuptools`-specific
-requirements strings of the format ``{project_name}
-{comparison1}{version1},...,{comparisonN}{versionN}`` if the active Python
-interpreter is not PyPy *or* the empty tuple otherwise (i.e., if this
-interpreter is PyPy).
+**Optional developer test-time package dependencies** (i.e., dependencies
+recommended to test this package with :mod:`tox` as a developer at the command
+line) as a tuple of :mod:`setuptools`-specific requirements strings of the
+format ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
 
 See Also
 ----------
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
-https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-    Official documentation discussing mypy's current incompatibility with PyPy
-    to presumably be fixed at some future point.
 '''
 
 
@@ -332,7 +348,12 @@ See Also
 '''
 
 
-LIBS_TESTTIME_MANDATORY_TOX = _LIBS_TESTTIME_MANDATORY_MYPY + (
+# For completeness, install *ALL* optional test-time dependencies into *ALL*
+# isolated virtual environments managed by "tox". Failure to list *ALL*
+# optional test-time dependencies here commonly results in errors from mypy,
+# which raises false positives on parsing "import" statements for currently
+# uninstalled third-party packages (e.g., "import numpy as np").
+LIBS_TESTTIME_MANDATORY_TOX = LIBS_TESTTIME_OPTIONAL + (
     'pytest >=4.0.0',
 )
 '''
@@ -348,24 +369,9 @@ See Also
 '''
 
 
-LIBS_TESTTIME_OPTIONAL = ()
-'''
-**Optional developer test-time package dependencies** (i.e., dependencies
-recommended to test this package with :mod:`tox` as a developer at the command
-line) as a tuple of :mod:`setuptools`-specific requirements strings of the
-format ``{project_name} {comparison1}{version1},...,{comparisonN}{versionN}``.
-
-See Also
-----------
-:data:`LIBS_RUNTIME_OPTIONAL`
-    Further details.
-'''
-
-
 LIBS_TESTTIME_MANDATORY = (
     LIBS_TESTTIME_MANDATORY_COVERAGE +
-    LIBS_TESTTIME_MANDATORY_TOX +
-    LIBS_TESTTIME_OPTIONAL + (
+    LIBS_TESTTIME_MANDATORY_TOX + (
         # A relatively modern version of tox is required.
         'tox >=3.20.1',
     )

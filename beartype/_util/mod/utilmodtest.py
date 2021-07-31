@@ -193,26 +193,25 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         should be prepared to handle *any* possible exception that might arise.
     '''
 
-    # If neither...
+    # If it is *NOT* the case that...
     if not (
         # This module is importable *AND*...
         is_module(module_name) and
-        # If the active Python interpreter targets Python >= 3.8 and thus
-        # provides the "importlib.metadata" API required to portably inspect
-        # module versions *WITHOUT* requiring obsolete third-party APIs (e.g.,
+        # The active Python interpreter targets Python >= 3.8 and thus provides
+        # the "importlib.metadata" API required to portably inspect module
+        # versions *WITHOUT* requiring obsolete third-party APIs (e.g.,
         # "pkg_resources")...
         IS_PYTHON_AT_LEAST_3_8
-    # Then this module is either unimportable *OR* the active Python
-    # interpreter targets Python < 3.8 and thus fails to provide the
-    # "importlib.metadata" API. In both cases, reluctantly return false to
-    # avoid returning false positives.
     ):
+    # Then this module is either unimportable *OR* the active Python
+    # interpreter targets Python < 3.8 and thus fails to provide that API.
+    # In either case, return false to avoid returning false positives.
         return False
     assert isinstance(version_minimum, str), (
         f'{repr(version_minimum)} not string.')
 
     # Defer version-specific imports.
-    from importlib.metadata import version as get_module_version
+    from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
     # Current version of this module installed under the active Python
     # interpreter if any *OR* raise an exception otherwise (which should
