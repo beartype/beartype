@@ -24,10 +24,15 @@ def is_package_typing_extensions() -> bool:
     '''
 
     # Defer heavyweight imports.
+    from beartype.meta import (
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
     from beartype._util.mod.utilmodtest import is_module_version_at_least
 
     # Return true only if this version of this package is importable.
-    return is_module_version_at_least('typing_extensions', '3.10.0.0')
+    return is_module_version_at_least(
+        'typing_extensions',
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
+    )
 
 # ....................{ TESTERS ~ numpy                   }....................
 @callable_cached
@@ -38,10 +43,12 @@ def is_package_numpy() -> bool:
     '''
 
     # Defer heavyweight imports.
+    from beartype.meta import _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY
     from beartype._util.mod.utilmodtest import is_module_version_at_least
 
     # Return true only if this version of this package is importable.
-    return is_module_version_at_least('numpy', '1.21.0')
+    return is_module_version_at_least(
+        'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
 
 
 @callable_cached

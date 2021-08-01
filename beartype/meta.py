@@ -114,6 +114,13 @@ tuple of integers.
 '''
 
 
+_PYTHON_VERSION_PARTS = _sys.version_info[:3]
+'''
+Machine-readable current version of the active Python interpreter as a
+tuple of integers.
+'''
+
+
 # Validate the version of the active Python interpreter *BEFORE* subsequent
 # code possibly depending on this version. Since this version should be
 # validated both at setuptools-based install time and post-install runtime
@@ -149,7 +156,7 @@ tuple of integers.
 # call to setup() in "setup.py" (e.g., "requires_python = ['>=2.2.1'],"), that
 # field has yet to be integrated into either disutils or setuputils. Hence,
 # that field is validated manually in the typical way.
-if _sys.version_info[:3] < PYTHON_VERSION_MIN_PARTS:
+if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
     # Human-readable current version of Python. Ideally, "sys.version" would be
     # leveraged here instead; sadly, that string embeds significantly more than
     # merely a version and hence is inapplicable for real-world usage: e.g.,
@@ -271,7 +278,32 @@ URL of this package's release list.
 '''
 
 # ....................{ METADATA ~ libs : runtime         }....................
-LIBS_RUNTIME_OPTIONAL = ()
+_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '1.21.0'
+'''
+Minimum optional version of NumPy recommended for use with mod:`beartype`.
+
+NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
+:attr:`numpy.typing.NDArray` type hint supported by the
+:func:`beartype.beartype` decorator.
+'''
+
+
+_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS = '3.10.0.0'
+'''
+Minimum optional version of the third-party :mod:`typing_extensions` package
+recommended for use with mod:`beartype`.
+
+:mod:`typing_extensions` >= 3.10.0.0 backports all :mod:`typing` attributes
+unavailable under older Python interpreters supported by the
+:func:`beartype.beartype` decorator .
+'''
+
+
+# Note that we intentionally omit NumPy here. If you want it, you're already
+# using it; likewise, if you don't want it, you're *NOT* already using it.
+LIBS_RUNTIME_OPTIONAL = (
+    f'typing_extensions >={_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}',
+)
 '''
 Optional runtime package dependencies as a tuple of :mod:`setuptools`-specific
 requirements strings of the format ``{project_name}
@@ -293,18 +325,14 @@ requirements strings of the format ``{project_name}
 
 # ....................{ METADATA ~ libs : test            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize changes to this tuple with:
-# * Testers defined by the "beartype_test.util.mod.utilmodoptional" subpackage.
+# CAUTION: Avoid constraining optional test-time dependencies to version
+# ranges, which commonly fail for edge-case test environments -- including:
+# * The oldest Python version still supported by @beartype, which typically is
+#   *NOT* supported by newer versions of these dependencies.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 LIBS_TESTTIME_OPTIONAL = (
-    # NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
-    # "numpy.typing.NDArray" type hint supported by beartype 0.8.0.
-    # _PIP_PACKAGE_NAMES: |
-    'numpy >=1.21.0',
-
-    # "typing_extensions" >= 3.10.0.0 backports all "typing" attributes
-    # supported by beartype unavailable under older Python interpreters.
-    'typing_extensions >=3.10.0.0',
+    'numpy',
+    'typing_extensions',
 ) + (
     # If the active Python interpreter is *NOT* PyPy and thus supports mypy...
     (
