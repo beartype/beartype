@@ -166,6 +166,42 @@ Let's install ``beartype`` with Anaconda_, because corporate standards are
    conda config --add channels conda-forge
    conda install beartype
 
+If you're feeling the love and wanting to celebrate, consider signaling that you're bear-ified:
+
+  YummySoft is now |bear-ified|!
+
+.. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
+   :align: top
+   :target: https://beartype.rtfd.io
+   :alt: bear-ified
+
+HTML example:
+
+.. code-block:: html
+
+   YummySoft is now <a href="https://beartype.rtfd.io"><img
+     src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
+     alt="bear-ified"
+     style="vertical-align: middle;"></a>!
+
+Markdown example:
+
+.. code-block:: md
+
+   YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.rtfd.io)!
+
+reStructuredText example:
+
+.. code-block:: rst
+
+   YummySoft is now |bear-ified|!
+
+   .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
+   .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
+      :align: top
+      :target: https://beartype.rtfd.io
+      :alt: bear-ified
+
 macOS
 -----
 
@@ -1798,7 +1834,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    decoration + calls [none     ]: 100 loops, best of 3: 14.8 usec per loop
    decoration + calls [beartype ]: 100 loops, best of 3: 514 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 6.34 msec per loop
-   
+
    =============================== Union[int, str] ===============================
    profiling regime:
       number of meta-loops:      3
@@ -1810,7 +1846,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    decoration + calls [none     ]: 100 loops, best of 3: 17.7 usec per loop
    decoration + calls [beartype ]: 100 loops, best of 3: 572 usec per loop
    decoration + calls [typeguard]: 100 loops, best of 3: 10 msec per loop
-   
+
    =========================== List[int] of 1000 items ===========================
    profiling regime:
       number of meta-loops:      1
@@ -1822,7 +1858,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    decoration + calls [none     ]: 1 loop, best of 1: 1.24 msec per loop
    decoration + calls [beartype ]: 1 loop, best of 1: 18.3 msec per loop
    decoration + calls [typeguard]: 1 loop, best of 1: 104 sec per loop
-   
+
    ============ List[Sequence[MutableSequence[int]]] of 10 items each ============
    profiling regime:
       number of meta-loops:      1
@@ -3217,11 +3253,11 @@ Let's take this from the top.
    .. code-block:: bash
 
       ./tox
-   
+
    The resulting output should ideally be suffixed by a synopsis resembling:
 
-   :: 
-   
+   ::
+
        ________________________________ summary _______________________________
        py36: commands succeeded
        py37: commands succeeded
@@ -3452,7 +3488,7 @@ of enthusiasts, including (*in chronological order of issue or pull request*):
    * `Introspecting human-readable labels from arbitrary callables <beartype
      Heliotrop3 callable labelling_>`__.
    * Improving quality assurance across internal:
-     
+
      * `Caching data structures <beartype Heliotrop3 QA caching_>`__.
      * `String munging utilities <beartype Heliotrop3 QA munging_>`__.
 
