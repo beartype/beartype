@@ -726,7 +726,8 @@ def pep_code_check_hint(
         # converting hints we'd rather *NOT* explicitly support (e.g.,
         # third-party "numpy.typing.NDArray" hints) into semantically
         # equivalent hints we would (e.g., first-party beartype validators).
-        hint_curr = get_hint_reduced(hint_curr)
+        hint_curr = get_hint_reduced(
+            hint=hint_curr, hint_label=hint_curr_label)
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check

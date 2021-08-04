@@ -178,7 +178,7 @@ class CauseSleuth(object):
 
         # Reduce the currently visited hint to a lower-level hint-like object
         # associated with this hint if this hint satisfies a condition.
-        hint = get_hint_reduced(hint)
+        hint = get_hint_reduced(hint=hint, hint_label=self.exception_label)
 
         # If this hint is PEP-compliant...
         if is_hint_pep(hint):

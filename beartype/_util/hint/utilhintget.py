@@ -25,7 +25,15 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_hint_reduced(hint: Any) -> Any:
+#FIXME: Add "hint_label" parameter.
+#FIXME: Refactor codebase to pass "hint_label" parameter.
+def get_hint_reduced(
+    # Mandatory parameters.
+    hint: Any,
+
+    # Optional parameters.
+    hint_label: str = 'Annotated',
+) -> Any:
     '''
     Lower-level type hint reduced (i.e., converted, extracted) from the passed
     higher-level type hint if this hint is reducible *or* this hint as is
@@ -46,6 +54,9 @@ def get_hint_reduced(hint: Any) -> Any:
     ----------
     hint : Any
         Type hint to be possibly reduced.
+    hint_label : Optional[str]
+        Human-readable label prefixing this object's representation in the
+        exception message raised by this function. Defaults to ``"Annotated"``.
 
     Returns
     ----------
@@ -67,8 +78,8 @@ def get_hint_reduced(hint: Any) -> Any:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
-        get_hint_pep544_io_protocol_from_generic,
-        is_hint_pep544_io_generic,
+        reduce_hint_pep484_generic_io_to_pep544_protocol,
+        is_hint_pep484_generic_io,
     )
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
@@ -126,7 +137,7 @@ def get_hint_reduced(hint: Any) -> Any:
 
         # Reduce this unsupported PEP-noncompliant hint to the equivalent
         # well-supported PEP-noncompliant beartype validator.
-        hint = reduce_hint_numpy_ndarray(hint)
+        hint = reduce_hint_numpy_ndarray(hint=hint, hint_label=hint_label)
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
@@ -138,7 +149,6 @@ def get_hint_reduced(hint: Any) -> Any:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.utilhintpep484 import (
             get_hint_pep484_newtype_class)
-
         hint = get_hint_pep484_newtype_class(hint)
     # ..................{ PEP 484 ~ io                      }..................
     # If this hint is a PEP 484-compliant IO generic base class *AND* the
@@ -153,8 +163,8 @@ def get_hint_reduced(hint: Any) -> Any:
     # usable under Python < 3.8 (e.g., by explicitly subclassing those classes
     # from third-party classes). Ergo, we can neither safely emit warnings nor
     # raise exceptions on visiting these classes under *ANY* Python version.
-    elif is_hint_pep544_io_generic(hint):
-        hint = get_hint_pep544_io_protocol_from_generic(hint)
+    elif is_hint_pep484_generic_io(hint):
+        hint = reduce_hint_pep484_generic_io_to_pep544_protocol(hint)
 
     # Return this possibly reduced hint.
     return hint

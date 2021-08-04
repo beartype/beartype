@@ -90,8 +90,9 @@ env:
   # dependencies, fully exercising all tests necessitates these pre-flight
   # test-time dependencies. These include:
   # * "tox", the only mandatory test-time dependency.
-  _PIP_PACKAGE_NAMES: |
-    tox
+  _PIP_PACKAGE_NAMES: tox
+  # _PIP_PACKAGE_NAMES: |
+  #   tox
 
 # ....................{ MAIN                              }....................
 jobs:

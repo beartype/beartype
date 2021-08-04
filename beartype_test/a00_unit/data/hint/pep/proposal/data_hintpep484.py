@@ -73,6 +73,7 @@ from profile import Profile   # <-- class hopefully guaranteed to exist! *gulp*
 from typing import (
     Any,
     AnyStr,
+    BinaryIO,
     ByteString,
     Callable,
     Container,
@@ -81,6 +82,7 @@ from typing import (
     Generator,
     Generic,
     Hashable,
+    IO,
     Iterable,
     List,
     Match,
@@ -89,6 +91,7 @@ from typing import (
     Pattern,
     Sequence,
     Sized,
+    TextIO,
     Tuple,
     Type,
     TypeVar,
@@ -106,6 +109,12 @@ User-defined generic :mod:`typing` type variable.
 T = TypeVar('T')
 '''
 User-defined generic :mod:`typing` type variable.
+'''
+
+# ....................{ GENERICS ~ io                     }....................
+PEP484_GENERICS_IO = frozenset((BinaryIO, IO, TextIO,))
+'''
+Frozen set of all :pep:`484`-compliant :mod:`typing` IO generic base classes.
 '''
 
 # ....................{ GENERICS ~ single                 }....................
@@ -233,7 +242,7 @@ class Pep484GenericTypevaredDeepMultiple(
     def __len__(self) -> bool:
         return len(self._iterable)
 
-# ....................{ CALLABLES                         }....................
+# ....................{ PRIVATE ~ callables               }....................
 @contextmanager
 def _make_context_manager(obj: object) -> ContextManager[object]:
     '''

@@ -4,13 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 544`_ **unit tests.**
+**Beartype** :pep:`544` **unit tests.**
 
-This submodule unit tests `PEP 544`_ support implemented in the
+This submodule unit tests :pep:`544` support implemented in the
 :func:`beartype.beartype` decorator.
-
-.. _PEP 544:
-   https://www.python.org/dev/peps/pep-0544
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,13 +22,10 @@ from pytest import raises
 @skip_if_python_version_less_than('3.8.0')
 def test_pep544_pass() -> None:
     '''
-    Test successful usage of `PEP 544`_ support implemented in the
+    Test successful usage of :pep:`544` support implemented in the
     :func:`beartype.beartype` decorator if the active Python interpreter
     targets at least Python 3.8.0 (i.e., the first major Python version to
-    support `PEP 544`_) *or* skip otherwise.
-
-    .. _PEP 544:
-       https://www.python.org/dev/peps/pep-0544
+    support :pep:`544`) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
@@ -76,13 +70,10 @@ def test_pep544_pass() -> None:
 @skip_if_python_version_less_than('3.8.0')
 def test_pep544_fail() -> None:
     '''
-    Test unsuccessful usage of `PEP 544`_ support implemented in the
+    Test unsuccessful usage of :pep:`544` support implemented in the
     :func:`beartype.beartype` decorator if the active Python interpreter
     targets at least Python 3.8.0 (i.e., the first major Python version to
-    support `PEP 544`_) *or* skip otherwise.
-
-    .. _PEP 544:
-       https://www.python.org/dev/peps/pep-0544
+    support :pep:`544`) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
@@ -159,40 +150,39 @@ def test_is_hint_pep544_protocol() -> None:
 def test_is_hint_pep544_io_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep544_io_generic`
+    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep484_generic_io`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
-        is_hint_pep544_io_generic)
+        is_hint_pep484_generic_io)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from typing import BinaryIO, IO, TextIO, Union
-
-    # Set of all PEP 484-compliant "typing" IO generic base classes.
-    TYPING_IO_GENERICS = {BinaryIO, IO, TextIO}
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
+        PEP484_GENERICS_IO)
+    from typing import Union
 
     # Assert this tester accepts these classes *ONLY* if the active Python
     # interpreter targets at least Python >= 3.8 and thus supports PEP 544.
-    for typing_io_generic in TYPING_IO_GENERICS:
-        assert is_hint_pep544_io_generic(typing_io_generic) is (
+    for pep484_generic_io in PEP484_GENERICS_IO:
+        assert is_hint_pep484_generic_io(pep484_generic_io) is (
             IS_PYTHON_AT_LEAST_3_8)
 
     # Assert this tester rejects standard type hints in either case.
-    assert is_hint_pep544_io_generic(Union[int, str]) is False
+    assert is_hint_pep484_generic_io(Union[int, str]) is False
 
 
 def test_get_hint_pep544_io_protocol_from_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.get_hint_pep544_io_protocol_from_generic`
+    :func:`beartype._util.hint.pep.proposal.utilhintpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype._util.hint.pep.proposal.utilhintpep544 import (
-        get_hint_pep544_io_protocol_from_generic)
+        reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype._util.utilobject import is_object_subclass
     from typing import BinaryIO, IO, TextIO, Union
@@ -209,7 +199,7 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
 
             # Beartype-specific PEP 544-compliant protocol implementing this
             # PEP 484-compliant "typing" IO generic base class.
-            io_protocol = get_hint_pep544_io_protocol_from_generic(
+            io_protocol = reduce_hint_pep484_generic_io_to_pep544_protocol(
                 typing_io_generic)
 
             # Assert this function returns a protocol.
@@ -217,8 +207,8 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
         # Else, assert this function raises an exception.
         else:
             with raises(BeartypeDecorHintPep544Exception):
-                get_hint_pep544_io_protocol_from_generic(typing_io_generic)
+                reduce_hint_pep484_generic_io_to_pep544_protocol(typing_io_generic)
 
     # Assert this function rejects standard type hints in either case.
     with raises(BeartypeDecorHintPep544Exception):
-        get_hint_pep544_io_protocol_from_generic(Union[int, str])
+        reduce_hint_pep484_generic_io_to_pep544_protocol(Union[int, str])
