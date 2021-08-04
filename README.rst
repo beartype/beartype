@@ -166,42 +166,6 @@ Let's install ``beartype`` with Anaconda_, because corporate standards are
    conda config --add channels conda-forge
    conda install beartype
 
-If you're feeling the love and wanting to celebrate, consider signaling that you're bear-ified:
-
-  YummySoft is now |bear-ified|!
-
-.. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
-   :align: top
-   :target: https://beartype.rtfd.io
-   :alt: bear-ified
-
-HTML example:
-
-.. code-block:: html
-
-   YummySoft is now <a href="https://beartype.rtfd.io"><img
-     src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
-     alt="bear-ified"
-     style="vertical-align: middle;"></a>!
-
-Markdown example:
-
-.. code-block:: md
-
-   YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.rtfd.io)!
-
-reStructuredText example:
-
-.. code-block:: rst
-
-   YummySoft is now |bear-ified|!
-
-   .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
-   .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
-      :align: top
-      :target: https://beartype.rtfd.io
-      :alt: bear-ified
-
 macOS
 -----
 
@@ -236,6 +200,45 @@ CPU-bound nuclear option:
    eselect repository enable raiagent
    emerge --sync raiagent
    emerge beartype
+
+Badge
+-----
+
+If you're feeling the quality assurance and want to celebrate, consider
+signaling that you're now publicly bear-ified:
+
+  YummySoft is now |bear-ified|!
+
+This magic and more can be yours with:
+
+* **Markdown**:
+
+  .. code-block:: md
+
+     YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.rtfd.io)!
+
+* **reStructuredText**:
+
+  .. code-block:: rst
+
+     YummySoft is now |bear-ified|!
+
+     .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
+     .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
+        :align: top
+        :target: https://beartype.rtfd.io
+        :alt: bear-ified
+
+* **Raw HTML**:
+
+  .. code-block:: html
+  
+     YummySoft is now <a href="https://beartype.rtfd.io"><img
+       src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
+       alt="bear-ified"
+       style="vertical-align: middle;"></a>!
+
+Let a soothing pastel bear give your userbase the *OK* sign.
 
 Overview
 ========
@@ -3617,6 +3620,10 @@ rather than Python runtime) include:
    :alt: beartype —[ the bare-metal type checker ]—
 
 .. # ------------------( IMAGES ~ badge                     )------------------
+.. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
+   :align: top
+   :target: https://beartype.rtfd.io
+   :alt: bear-ified
 .. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=test
    :alt: beartype continuous integration (CI) status
