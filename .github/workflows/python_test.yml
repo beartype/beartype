@@ -206,7 +206,11 @@ jobs:
           python -m site
           python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
-        run: python -m pip --quiet install --upgrade ${_PIP_PACKAGE_NAMES}
+        #FIXME: This doesn't actually work. GitHub Actions just substitutes the
+        #empty string for "${env._PIP_PACKAGE_NAMES}", which means we clearly
+        #have no idea what we are doing here. 
+        run: python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES}}
+        # run: python -m pip --quiet install --upgrade tox
       # Note that:
       # * "--skip-missing-interpreters=false" disables the corresponding
       #   "skip_missing_interpreters = true" setting globally enabled by our
