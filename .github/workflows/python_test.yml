@@ -209,34 +209,47 @@ jobs:
       - name: 'Installing package dependencies...'
         run: |
           python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
-      # If the current platform is macOS, circumvent "pip" installation issues
-      # by instructing "tox" to reinstall already installed Python packages. By
-      # default, "tox" avoids doing so for efficiency. This is required to
-      # specifically circumvent installation of NumPy under macOS. As
-      # discussed at numpy/numpy#15947, macOS bundles a patently broken BLAS
-      # replacement called "Accelerate" causing NumPy to raise exceptions on
-      # importation resembling:
-      #     RuntimeError: Polyfit sanity test emitted a warning, most likely
-      #     due to using a buggy Accelerate backend. If you compiled yourself,
-      #     more information is available at
-      #     https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
-      #     Otherwise report this to the vendor that provided NumPy.
-      #     RankWarning: Polyfit may be poorly conditioned
-      # The kludge leveraged here is the canonical solution. See also:
-      #     https://github.com/numpy/numpy/issues/15947#issuecomment-745428684
-      - if: ${{ matrix.platform }} == 'macos-latest'
-        env:
-          _TOX_PIP_INSTALL_OPTIONS: '--force-reinstall'
-        run: |
-          echo "Forcing macOS-specific \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\" command..."
-      # Note that:
-      # * "--skip-missing-interpreters=false" disables the corresponding
-      #   "skip_missing_interpreters = true" setting globally enabled by our
-      #   top-level "tox.ini" configuration, forcing CI failures for
-      #   unavailable Python environments. See also:
-      #       https://github.com/tox-dev/tox/issues/903
       - name: 'Testing package with "tox"...'
-        run: python -m tox --skip-missing-interpreters=false
+        # Run the subsequent script as a Bash script. Although POSIX-compliant
+        # platforms (e.g., Linux, macOS) sensibly default to Bash, Windows
+        # insanely defaults to a Windows-specific shell (e.g., PowerShell).
+        shell: bash
+        run: |
+          # If the current platform is macOS, export a "tox"-specific
+          # environment variable circumventing "pip" installation issues by
+          # instructing "tox" to reinstall already installed Python packages.
+          # By default, "tox" avoids doing so for efficiency. This is required
+          # to specifically circumvent installation of NumPy under macOS. As
+          # discussed at numpy/numpy#15947, macOS bundles a patently broken
+          # BLAS replacement called "Accelerate" causing NumPy to raise
+          # exceptions on importation resembling:
+          #     RuntimeError: Polyfit sanity test emitted a warning, most
+          #     likely due to using a buggy Accelerate backend. If you compiled
+          #     yourself, more information is available at
+          #     https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+          #     Otherwise report this to the vendor that provided NumPy.
+          #     RankWarning: Polyfit may be poorly conditioned
+          #
+          # The kludge leveraged here is the canonical solution. See also:
+          #     https://github.com/numpy/numpy/issues/15947#issuecomment-745428684
+          #
+          # Ideally, we would instead isolate setting this environment variable
+          # in a prior step with sane GitHub Actions syntax: e.g.,
+          #     if: ${{ matrix.platform }} == 'macos-latest'
+          #     env:
+          #       _TOX_PIP_INSTALL_OPTIONS: '--force-reinstall'
+          #
+          # Sadly, the "env:" map only locally exports the environment
+          # variables it declares to the current step. Thanks, GitHub Actions.
+          [[ ${{ matrix.platform }} == 'macos-latest' ]] &&
+              export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
+          # Dismantled, this is:
+          # * "--skip-missing-interpreters=false" disables the corresponding
+          #   "skip_missing_interpreters = true" setting globally enabled by
+          #   our top-level "tox.ini" configuration, forcing CI failures for
+          #   unavailable Python environments. See also:
+          #       https://github.com/tox-dev/tox/issues/903
+          python -m tox --skip-missing-interpreters=false
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v1'
         with:

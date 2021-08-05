@@ -165,8 +165,8 @@ Let's install ``beartype`` with Anaconda_:
    conda config --add channels conda-forge
    conda install beartype
 
-Commemorate this deep moment with |bear-ified|, `our gratuitous project shield
-<Badge_>`__. Nothing says quality like a bear on a badge.
+Commemorate this special moment with |bear-ified|, `our overbearing project
+shield <Badge_>`__. What says quality like `a bear on a badge <Badge_>`__?
 
 Platform
 --------
@@ -208,6 +208,8 @@ CPU-bound nuclear option:
    eselect repository enable raiagent
    emerge --sync raiagent
    emerge beartype
+
+*What could be simpler?* O_o
 
 Badge
 -----
