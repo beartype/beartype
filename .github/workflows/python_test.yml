@@ -90,9 +90,8 @@ env:
   # dependencies, fully exercising all tests necessitates these pre-flight
   # test-time dependencies. These include:
   # * "tox", the only mandatory test-time dependency.
-  _PIP_PACKAGE_NAMES: tox
-  # _PIP_PACKAGE_NAMES: |
-  #   tox
+  _PIP_PACKAGE_NAMES: |
+    tox
 
 # ....................{ MAIN                              }....................
 jobs:
@@ -192,6 +191,10 @@ jobs:
         uses: 'actions/setup-python@v2'
         with:
           python-version: "${{ matrix.python-version }}"
+      - name: 'Displaying Python metadata...'
+        run: |
+          python -VV
+          python -m site
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
@@ -202,15 +205,30 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
-          python -VV
-          python -m site
           python -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
-        #FIXME: This doesn't actually work. GitHub Actions just substitutes the
-        #empty string for "${env._PIP_PACKAGE_NAMES}", which means we clearly
-        #have no idea what we are doing here. 
-        run: python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES}}
-        # run: python -m pip --quiet install --upgrade tox
+        run: |
+          python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
+      # If the current platform is macOS, circumvent "pip" installation issues
+      # by instructing "tox" to reinstall already installed Python packages. By
+      # default, "tox" avoids doing so for efficiency. This is required to
+      # specifically circumvent installation of NumPy under macOS. As
+      # discussed at numpy/numpy#15947, macOS bundles a patently broken BLAS
+      # replacement called "Accelerate" causing NumPy to raise exceptions on
+      # importation resembling:
+      #     RuntimeError: Polyfit sanity test emitted a warning, most likely
+      #     due to using a buggy Accelerate backend. If you compiled yourself,
+      #     more information is available at
+      #     https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+      #     Otherwise report this to the vendor that provided NumPy.
+      #     RankWarning: Polyfit may be poorly conditioned
+      # The kludge leveraged here is the canonical solution. See also:
+      #     https://github.com/numpy/numpy/issues/15947#issuecomment-745428684
+      - if: ${{ matrix.platform }} == 'macos-latest'
+        env:
+          _TOX_PIP_INSTALL_OPTIONS: '--force-reinstall'
+        run: |
+          echo "Forcing macOS-specific \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\" command..."
       # Note that:
       # * "--skip-missing-interpreters=false" disables the corresponding
       #   "skip_missing_interpreters = true" setting globally enabled by our

@@ -152,22 +152,30 @@ the spicy runtime type-checker that `goes up to eleven`_.
 Install
 =======
 
-Let's install ``beartype`` with pip_, because community standards are good:
+Let's install ``beartype`` with pip_:
 
 .. code-block:: bash
 
    pip3 install beartype
 
-Let's install ``beartype`` with Anaconda_, because corporate standards are
-(occasionally) good too:
+Let's install ``beartype`` with Anaconda_:
 
 .. code-block:: bash
 
    conda config --add channels conda-forge
    conda install beartype
 
+Commemorate this deep moment with |bear-ified|, `our gratuitous project shield
+<Badge_>`__. Nothing says quality like a bear on a badge.
+
+Platform
+--------
+
+Beartype is also installable with platform-specific package managers, because
+sometimes you just need this thing to work.
+
 macOS
------
+~~~~~
 
 Let's install ``beartype`` with Homebrew_ on macOS_ courtesy `our third-party
 tap <beartype Homebrew_>`__:
@@ -187,7 +195,7 @@ for `packaging beartype for our Apple-appreciating audience <beartype
 MacPorts_>`__.
 
 Linux
------
+~~~~~
 
 Let's install ``beartype`` with ``emerge`` on Gentoo_ courtesy `a third-party
 overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
@@ -209,7 +217,7 @@ signaling that you're now publicly bear-ified:
 
   YummySoft is now |bear-ified|!
 
-This magic and more can be yours with:
+This magic and more can be all yours with:
 
 * **Markdown**:
 
@@ -232,13 +240,13 @@ This magic and more can be yours with:
 * **Raw HTML**:
 
   .. code-block:: html
-  
+
      YummySoft is now <a href="https://beartype.rtfd.io"><img
        src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
        alt="bear-ified"
        style="vertical-align: middle;"></a>!
 
-Let a soothing pastel bear give your userbase the *OK* sign.
+Let a soothing pastel bear give your users the reassuring *OK* sign.
 
 Overview
 ========
