@@ -37,7 +37,8 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from beartype._util.py.utilpyinterpreter import IS_PYPY as _IS_PYPY
+from beartype._util.os.utilostest import is_os_macos as _is_os_macos
+from beartype._util.py.utilpyinterpreter import is_py_pypy as _is_py_pypy
 from typing import Tuple as _Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -331,16 +332,45 @@ requirements strings of the format ``{project_name}
 #   *NOT* supported by newer versions of these dependencies.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 LIBS_TESTTIME_OPTIONAL = (
-    'numpy',
     'typing_extensions',
 ) + (
-    # If the active Python interpreter is *NOT* PyPy and thus supports mypy...
+    # If the active Python interpreter is *NOT* PyPy...
     (
         # mypy >= 0.800, a reasonably recent version known to behave well. Even
         # less reasonably recent versions of mypy are significantly deficient
         # with respect to error reporting and *MUST* thus be blacklisted.
         'mypy >=0.800' ,
-    ) if not _IS_PYPY else
+        # If the current platform is *NOT* macOS...
+        (
+            # NumPy. NumPy has become *EXTREMELY* non-trivial to install under
+            # macOS with "pip", due to the conjunction of multiple issues:
+            # * NumPy > 1.18.0, whose initial importation now implicitly
+            #   detects whether the BLAS implementation NumPy was linked
+            #   against is sane and raises a "RuntimeError" exception if that
+            #   implementation is insane resembling:
+            #       RuntimeError: Polyfit sanity test emitted a warning, most
+            #       likely due to using a buggy Accelerate backend. If you
+            #       compiled yourself, more information is available at
+            #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+            #       Otherwise report this to the vendor that provided NumPy.
+            #       RankWarning: Polyfit may be poorly conditioned
+            # * Apple's blatantly broken multithreaded implementation of their
+            #   "Accelerate" BLAS replacement, which neither NumPy nor "pip"
+            #   have *ANY* semblance of control over.
+            # * "pip" under PyPy, which for unknown reasons fails to properly
+            #   install NumPy even when the "--force-reinstall" option is
+            #   explicitly passed to "pip". Oddly, passing that option to "pip"
+            #   under CPython resolves this issue -- which is why we only
+            #   selectively disable NumPy installation under macOS + PyPy.
+            #
+            # See also this upstream NumPy issue:
+            #     https://github.com/numpy/numpy/issues/15947
+            'numpy',
+        ) if not _is_os_macos() else
+        # Else, the active Python interpreter is PyPy under macOS and thus
+        # fails to support NumPy. In this case, avoid requiring NumPy.
+        ()
+    ) if not _is_py_pypy() else
     # Else, the active Python interpreter is PyPy and thus fails to support
     # mypy. In this case, avoid requiring mypy. See also this official
     # documentation discussing mypy's current incompatibility with PyPy:

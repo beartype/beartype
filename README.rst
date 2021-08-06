@@ -166,7 +166,7 @@ Let's install ``beartype`` with Anaconda_:
    conda install beartype
 
 Commemorate this special moment with |bear-ified|, `our overbearing project
-shield <Badge_>`__. What says quality like `a bear on a badge <Badge_>`__?
+shield <Badge_>`__. Nothing shouts quality like `a bear on a badge <Badge_>`__.
 
 Platform
 --------

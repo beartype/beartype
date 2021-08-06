@@ -119,10 +119,10 @@ def skip_if_pypy():
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpyinterpreter import IS_PYPY
+    from beartype._util.py.utilpyinterpreter import is_py_pypy
 
     # Skip this test if the active Python interpreter is PyPy.
-    return skip_if(IS_PYPY, reason='Incompatible with PyPy.')
+    return skip_if(is_py_pypy(), reason='Incompatible with PyPy.')
 
 
 def skip_if_python_version_greater_than_or_equal_to(version: str):
