@@ -447,10 +447,15 @@ See Also
 '''
 
 # ....................{ METADATA ~ libs : doc             }....................
-_LIB_VERSION_MIN_SPHINX = '3.4.3'
+_LIB_VERSION_MIN_SPHINX = '4.1.0'
 '''
 Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
 required to build package documentation.
+
+Specifically, this project requires:
+
+* :mod:sphinx` >= 4.1.0, which first supported the
+  ``autodoc_typehints = 'both'`` option.
 '''
 
 

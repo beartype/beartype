@@ -70,7 +70,7 @@ class IsEqual(_IsABC):
     ``{obj}`) validates that parameter or return value to equal that object
     under the standard ``==`` equality comparison.
 
-    This class is a generalization of the `PEP 586`_-compliant
+    This class is a generalization of the :pep:`586`-compliant
     :attr:`typing.Literal` type hint, because this class does everything
     :attr:`typing.Literal` does and substantially more. Superficially,
     :attr:`typing.Literal` also validates that callable parameters and returns
@@ -105,7 +105,7 @@ class IsEqual(_IsABC):
     class, this class preserves support for tuples of two or more objects at a
     cost of non-intuitive results when subscripted by multiple objects.
 
-    Don't blame us. We didn't vote for `PEP 560`_.
+    Don't blame us. We didn't vote for :pep:`560`.
 
     Examples
     ----------
@@ -159,18 +159,15 @@ class IsEqual(_IsABC):
     ----------
     :class:`beartype.vale.Is`
         Further commentary.
-
-    .. _PEP 560:
-       https://www.python.org/dev/peps/pep-0560
     '''
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
     def __class_getitem__(cls, obj: Any) -> _SubscriptedIs:
         '''
-        `PEP 560`_-compliant dunder method creating and returning a new
+        :pep:`560`-compliant dunder method creating and returning a new
         :class:`_SubscriptedIs` object validating equality against the passed
-        arbitrary object suitable for subscripting `PEP 593`_-compliant
+        arbitrary object suitable for subscripting :pep:`593`-compliant
         :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
@@ -194,11 +191,6 @@ class IsEqual(_IsABC):
         ----------
         :class:`IsEqual`
             Usage instructions.
-
-        .. _PEP 560:
-           https://www.python.org/dev/peps/pep-0560
-        .. _PEP 593:
-           https://www.python.org/dev/peps/pep-0593
         '''
 
         # If...

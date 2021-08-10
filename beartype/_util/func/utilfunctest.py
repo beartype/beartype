@@ -15,8 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-from collections.abc import Callable
+from beartype._util.func.utilfunccodeobj import (
+    CallableOrFrameOrCodeType,
+    get_func_codeobj_or_none,
+)
 from typing import Any, Type
 
 # See the "beartype.cave" submodule for further commentary.
@@ -86,9 +88,10 @@ edge cases, and false positives. If you must pick your poison, pick this one.
 
 def die_unless_func_python(
     # Mandatory parameters.
-    func: Any,
+    func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
+    func_label: str = 'Callable',
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> None:
     '''
@@ -102,11 +105,13 @@ def die_unless_func_python(
 
     Parameters
     ----------
-    func : Callable
+    func : CallableOrFrameOrCodeType
         Callable to be inspected.
+    func_label : str, optional
+        Human-readable label describing this callable in exception messages
+        raised by this validator. Defaults to ``'Callable'``.
     exception_cls : type, optional
-        Type of exception to be raised if this callable is neither a
-        pure-Python function nor method. Defaults to
+        Type of exception to be raised in the event of fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
 
     Raises
@@ -122,16 +127,25 @@ def die_unless_func_python(
 
     # If this callable is *NOT* pure-Python, raise an exception.
     if not is_func_python(func):
+        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
+
+        # If this callable is uncallable, raise an appropriate exception.
+        if not callable(func):
+            raise exception_cls(f'{func_label} {repr(func)} not callable.')
+        # Else, this callable is callable.
+
+        # This callable *MUST* be C-based By process of elimination. In this
+        # case, raise an appropriate exception.
         raise exception_cls(
-            f'Callable {repr(func)} code object not found '
-            f'(e.g., due to being either C-based or a class or object '
-            f'defining the ``__call__()`` dunder method).'
+            f'{func_label} {repr(func)} not pure-Python (i.e., code object '
+            f'not found due to being either C[++]-based or object defining '
+            f'the __call__() dunder method).'
         )
 
 # ....................{ TESTERS                           }....................
-def is_func_lambda(func: Callable) -> bool:
+def is_func_lambda(func: CallableOrFrameOrCodeType) -> bool:
     '''
     ``True`` only if the passed callable is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
@@ -139,7 +153,7 @@ def is_func_lambda(func: Callable) -> bool:
 
     Parameters
     ----------
-    func : Callable
+    func : CallableOrFrameOrCodeType
         Callable to be inspected.
 
     Returns
@@ -167,7 +181,7 @@ def is_func_lambda(func: Callable) -> bool:
     )
 
 
-def is_func_python(func: Any) -> bool:
+def is_func_python(func: CallableOrFrameOrCodeType) -> bool:
     '''
     ``True`` only if the passed callable is **C-based** (i.e., implemented in
     Python as either a function or method rather than in C as either a builtin
@@ -176,7 +190,7 @@ def is_func_python(func: Any) -> bool:
 
     Parameters
     ----------
-    func : Callable
+    func : CallableOrFrameOrCodeType
         Callable to be inspected.
 
     Returns

@@ -35,6 +35,7 @@ def get_func_unwrapped_codeobj(
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
+    func_label: str = 'Callable',
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
@@ -61,6 +62,9 @@ def get_func_unwrapped_codeobj(
     ----------
     func : Union[Callable, CodeType, FrameType]
         Callable or frame or code object to be inspected.
+    func_label : str, optional
+        Human-readable label describing this callable in exception messages
+        raised by this validator. Defaults to ``'Callable'``.
     exception_cls : type, optional
         Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -96,7 +100,8 @@ def get_func_unwrapped_codeobj(
         from beartype._util.func.utilfunctest import die_unless_func_python
 
         # Raise an exception.
-        die_unless_func_python(func=func, exception_cls=exception_cls)
+        die_unless_func_python(
+            func=func, func_label=func_label, exception_cls=exception_cls)
     # Else, this unwrapped callable is pure-Python and this code object exists.
 
     # Return this code object.

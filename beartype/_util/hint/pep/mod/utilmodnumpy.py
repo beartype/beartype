@@ -34,8 +34,14 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ REDUCERS                          }....................
 #FIXME: Ideally, this reducer would be memoized. Sadly, the
-#"numpy.typing.NDArray" attribute itself fails to memoize. Memoization here
+#"numpy.typing.NDArray" type hint itself fails to memoize. Memoization here
 #would just consume all available memory. *sigh*
+#The solution is the exact same as for PEP 585 type hints, which similarly fail
+#to memoize: forcefully coerce "numpy.typing.NDArray" type hints that have the
+#same repr() into the same previously cached "numpy.typing.NDArray" type hint.
+#This is particularly vital here, as the process of manually reducing each
+#identical "numpy.typing.NDArray" type hint to the same underlying beartype
+#validator consumes dramatically more *TIME* than a caching solution.
 
 # @callable_cached
 def reduce_hint_numpy_ndarray(
@@ -190,8 +196,12 @@ def reduce_hint_numpy_ndarray(
         ) from exception
     # Else, this object is now a proper data type.
 
-    # Reduce this hint to the equivalent nested beartype validator.
-    return typing_annotated[
-        ndarray, IsAttr[   # type: ignore[misc]
-            'dtype', IsAttr[   # type: ignore[misc]
-                'type', IsEqual[hint_dtype]]]]   # type: ignore[misc]
+    # Equivalent nested beartype validator reduced from this hint.
+    hint_validator = IsAttr['dtype', IsEqual[hint_dtype]]   # type: ignore[type-arg,valid-type]
+
+    # Render the machine-readable representation of this validator more
+    # succinctly human-readable.
+    hint_validator.get_repr = repr(hint)
+
+    # Return this validator annotating the NumPy array type.
+    return typing_annotated[ndarray, hint_validator]

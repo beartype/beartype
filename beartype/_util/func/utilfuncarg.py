@@ -29,16 +29,134 @@ from typing import Any, Generator, Tuple, Type
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ TESTERS ~ kind                    }....................
-def is_func_argless(func: CallableOrFrameOrCodeType) -> bool:
+# ....................{ VALIDATORS                        }....................
+#FIXME: Uncomment as needed.
+# def die_unless_func_argless(
+#     # Mandatory parameters.
+#     func: CallableOrFrameOrCodeType,
+#
+#     # Optional parameters.
+#     func_label: str = 'Callable',
+#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+# ) -> None:
+#     '''
+#     Raise an exception unless the passed pure-Python callable is
+#     **argument-less** (i.e., accepts *no* arguments).
+#
+#     Parameters
+#     ----------
+#     func : CallableOrFrameOrCodeType
+#         Pure-Python callable, frame, or code object to be inspected.
+#     func_label : str, optional
+#         Human-readable label describing this callable in exception messages
+#         raised by this validator. Defaults to ``'Callable'``.
+#     exception_cls : type, optional
+#         Type of exception to be raised if this callable is neither a
+#         pure-Python function nor method. Defaults to
+#         :class:`_BeartypeUtilCallableException`.
+#
+#     Raises
+#     ----------
+#     exception_cls
+#         If this callable either:
+#
+#         * Is *not* callable.
+#         * Is callable but is *not* pure-Python.
+#         * Is a pure-Python callable accepting one or more parameters.
+#     '''
+#
+#     # If this callable accepts one or more arguments, raise an exception.
+#     if is_func_argless(
+#         func=func, func_label=func_label, exception_cls=exception_cls):
+#         assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+#         assert isinstance(exception_cls, type), (
+#             f'{repr(exception_cls)} not class.')
+#
+#         raise exception_cls(
+#             f'{func_label} {repr(func)} not argument-less '
+#             f'(i.e., accepts one or more arguments).'
+#         )
+
+
+def die_unless_func_args_len_flexible_equal(
+    # Mandatory parameters.
+    func: CallableOrFrameOrCodeType,
+    func_args_len_flexible: int,
+
+    # Optional parameters.
+    func_label: str = 'Callable',
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+) -> None:
     '''
-    ``True`` only if the passed pure-Python callable is **argument-less**
-    (i.e., accepts *no* arguments.)
+    Raise an exception unless the passed pure-Python callable accepts the
+    passed number of **flexible parameters** (i.e., parameters passable as
+    either positional or keyword arguments).
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
+    func : CallableOrFrameOrCodeType
         Pure-Python callable, frame, or code object to be inspected.
+    func_args_len_flexible : int
+        Number of flexible parameters to validate this callable as accepting.
+    func_label : str, optional
+        Human-readable label describing this callable in exception messages
+        raised by this validator. Defaults to ``'Callable'``.
+    exception_cls : type, optional
+        Type of exception to be raised if this callable is neither a
+        pure-Python function nor method. Defaults to
+        :class:`_BeartypeUtilCallableException`.
+
+    Raises
+    ----------
+    exception_cls
+        If this callable either:
+
+        * Is *not* callable.
+        * Is callable but is *not* pure-Python.
+        * Is a pure-Python callable accepting either more or less than this
+          Number of flexible parameters.
+    '''
+    assert isinstance(func_args_len_flexible, int)
+
+    # Number of flexible parameters accepted by this callable.
+    func_args_len_flexible_actual = get_func_args_len_flexible(
+        func=func, func_label=func_label, exception_cls=exception_cls)
+
+    # If this callable accepts more or less than this number of flexible
+    # parameters, raise an exception.
+    if func_args_len_flexible_actual != func_args_len_flexible:
+        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+
+        raise exception_cls(
+            f'{func_label} {repr(func)} flexible argument count '
+            f'{func_args_len_flexible_actual} != {func_args_len_flexible}.'
+        )
+
+# ....................{ TESTERS ~ kind                    }....................
+def is_func_argless(
+    # Mandatory parameters.
+    func: CallableOrFrameOrCodeType,
+
+    # Optional parameters.
+    func_label: str = 'Callable',
+    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+) -> bool:
+    '''
+    ``True`` only if the passed pure-Python callable is **argument-less**
+    (i.e., accepts *no* arguments).
+
+    Parameters
+    ----------
+    func : CallableOrFrameOrCodeType
+        Pure-Python callable, frame, or code object to be inspected.
+    func_label : str, optional
+        Human-readable label describing this callable in exception messages
+        raised by this tester. Defaults to ``'Callable'``.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of fatal error. Defaults to
+        :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -47,12 +165,13 @@ def is_func_argless(func: CallableOrFrameOrCodeType) -> bool:
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(func)
+    func_codeobj = get_func_unwrapped_codeobj(
+        func=func, func_label=func_label, exception_cls=exception_cls)
 
     # Return true only if this callable accepts neither...
     return not (
@@ -207,21 +326,26 @@ def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
     return False
 
 # ....................{ GETTERS                           }....................
-def get_func_args_len_standard(
+def get_func_args_len_flexible(
     # Mandatory parameters.
     func: CallableOrFrameOrCodeType,
 
     # Optional parameters.
+    func_label: str = 'Callable',
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> int:
     '''
-    Number of **standard parameters** (i.e., positional or keyword) accepted by
-    the passed pure-Python callable.
+    Number of **flexible parameters** (i.e., parameters passable as either
+    positional or keyword arguments) accepted by the passed pure-Python
+    callable.
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
+    func : CallableOrFrameOrCodeType
         Pure-Python callable, frame, or code object to be inspected.
+    func_label : str, optional
+        Human-readable label describing this callable in exception messages
+        raised by this validator. Defaults to ``'Callable'``.
     exception_cls : type, optional
         Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -229,8 +353,7 @@ def get_func_args_len_standard(
     Returns
     ----------
     int
-        Number of standard parameters accepted by the passed pure-Python
-        callable.
+        Number of flexible parameters accepted by this callable.
 
     Raises
     ----------
@@ -240,9 +363,9 @@ def get_func_args_len_standard(
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_unwrapped_codeobj(
-        func=func, exception_cls=exception_cls)
+        func=func, func_label=func_label, exception_cls=exception_cls)
 
-    # Return the number of standard parameters accepted by this callable.
+    # Return the number of flexible parameters accepted by this callable.
     return func_codeobj.co_argcount
 
 # ....................{ GENERATORS                        }....................

@@ -144,10 +144,10 @@ class IsAttr(_IsABC):
     def __class_getitem__(
         cls, args: Tuple[str, _SubscriptedIs]) -> _SubscriptedIs:
         '''
-        `PEP 560`_-compliant dunder method creating and returning a new
+        :pep:`560`-compliant dunder method creating and returning a new
         :class:`_SubscriptedIs` object validating object attributes with the
         passed name satisfying the passed validator, suitable for subscripting
-        `PEP 593`_-compliant :attr:`typing.Annotated` type hints.
+        :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
 
@@ -180,11 +180,6 @@ class IsAttr(_IsABC):
         ----------
         :class:`IsAttr`
             Usage instructions.
-
-        .. _PEP 560:
-           https://www.python.org/dev/peps/pep-0560
-        .. _PEP 593:
-           https://www.python.org/dev/peps/pep-0593
         '''
 
         # If this class was subscripted by one non-tuple argument, raise an

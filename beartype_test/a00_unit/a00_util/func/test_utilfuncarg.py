@@ -128,12 +128,12 @@ def test_is_func_arg_name() -> None:
 def test_get_func_arg_len_standard() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncarg.get_func_args_len_standard` function.
+    :func:`beartype._util.func.utilfuncarg.get_func_args_len_flexible` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfuncarg import get_func_args_len_standard
+    from beartype._util.func.utilfuncarg import get_func_args_len_flexible
 
     # Arbitrary callable accepting no arguments.
     def the_coming_of_arthur() -> str:
@@ -153,12 +153,12 @@ def test_get_func_arg_len_standard() -> None:
         return 'For here between the man and beast we die.'
 
     # Assert this tester returns the expected lengths of these callables.
-    assert get_func_args_len_standard(the_coming_of_arthur) == 0
-    assert get_func_args_len_standard(guinevere) == 0
-    assert get_func_args_len_standard(leodogran_the_king_of_cameliard) == 1
-    assert get_func_args_len_standard(the_land_of_cameliard_was_waste) == 2
+    assert get_func_args_len_flexible(the_coming_of_arthur) == 0
+    assert get_func_args_len_flexible(guinevere) == 0
+    assert get_func_args_len_flexible(leodogran_the_king_of_cameliard) == 1
+    assert get_func_args_len_flexible(the_land_of_cameliard_was_waste) == 2
 
     # Assert this tester raises the expected exception when passed a C-based
     # callable.
     with raises(_BeartypeUtilCallableException):
-        get_func_args_len_standard(iter)
+        get_func_args_len_flexible(iter)

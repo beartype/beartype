@@ -39,7 +39,7 @@ def label_callable(func: Callable) -> str:
     assert callable(func), f'{repr(func)} uncallable.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncarg import get_func_args_len_standard
+    from beartype._util.func.utilfuncarg import get_func_args_len_flexible
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda
@@ -54,7 +54,7 @@ def label_callable(func: Callable) -> str:
         # Human-readable label describing this lambda.
         func_label = (
             f'Lambda function of '
-            f'{get_func_args_len_standard(func_codeobj)} argument(s)'
+            f'{get_func_args_len_flexible(func_codeobj)} argument(s)'
         )
 
         # Absolute filename of the file defining this lambda if this lambda was

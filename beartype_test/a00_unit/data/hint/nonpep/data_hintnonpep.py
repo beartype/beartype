@@ -11,14 +11,6 @@ PEP-compliant type hints, exercising known edge cases on behalf of higher-level
 unit test submodules.
 '''
 
-# ....................{ IMPORTS                           }....................
-import sys
-from beartype_test.a00_unit.data.hint.data_hintmeta import NonPepHintMetadata
-from beartype_test.a00_unit.data.hint.nonpep.proposal import (
-    _data_hintnonpepbeartype,
-    _data_hintnonpep484,
-)
-
 # ....................{ TUPLES                            }....................
 # Initialized by the _init() function below.
 HINTS_NONPEP_META = []
@@ -34,6 +26,13 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    # Defer function-specific imports.
+    import sys
+    from beartype_test.a00_unit.data.hint.data_hintmeta import (
+        NonPepHintMetadata)
+    from beartype_test.a00_unit.data.hint.nonpep.proposal import (
+        _data_hintnonpep484)
+
     # Submodule globals to be redefined below.
     global HINTS_NONPEP_META
 
@@ -43,7 +42,6 @@ def _init() -> None:
 
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_NONPEP_SUBMODULES = (
-        _data_hintnonpepbeartype,
         _data_hintnonpep484,
     )
 

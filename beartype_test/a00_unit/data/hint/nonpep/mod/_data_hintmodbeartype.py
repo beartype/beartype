@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype-specific PEP-noncompliant type hint** (i.e., type hint supported
-*only* by the :mod:`beartype.beartype` decorator) test data.
+**Beartype-specific PEP-noncompliant type hints** (i.e., unofficial type hints
+supported *only* by the :mod:`beartype.beartype` decorator) test data.
 
-Beartype-specific PEP-noncompliant type hints include:
+These hints include:
 
 * **Tuple unions** (i.e., tuples containing *only* standard classes and
   forward references to standard classes).
@@ -23,8 +23,8 @@ from beartype_test.a00_unit.data.hint.data_hintmeta import (
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add beartype-specific PEP-noncompliant type hint test data to various
-    global containers declared by the passed module.
+    Add :mod:`beartype`-specific PEP-noncompliant type hint test data to
+    various global containers declared by the passed module.
 
     Parameters
     ----------

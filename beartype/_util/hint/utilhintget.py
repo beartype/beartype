@@ -71,8 +71,8 @@ def get_hint_reduced(
     ----------
     :exc:`BeartypeDecorHintNonPepNumPyException`
         See the
-        :func:`beartype._util.hint.nonpep.mod.utilnonpepnumpy.reduce_hint_numpy_ndarray`
-        function for details.
+        :func:`beartype._util.hint.pep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
+        function for further details.
     '''
 
     # Avoid circular import dependencies.
@@ -129,10 +129,9 @@ def get_hint_reduced(
     # "numpy.typing.NDArray[np.float64]")...
     #
     # Typed NumPy arrays are increasingly common and thus detected next.
-    #FIXME: Unit test us up.
     elif hint_sign is HintSignNumpyArray:
         # Defer heavyweight imports.
-        from beartype._util.hint.nonpep.mod.utilnonpepnumpy import (
+        from beartype._util.hint.pep.mod.utilmodnumpy import (
             reduce_hint_numpy_ndarray)
 
         # Reduce this unsupported PEP-noncompliant hint to the equivalent

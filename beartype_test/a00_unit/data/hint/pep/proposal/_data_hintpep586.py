@@ -81,7 +81,6 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        #
         # Literal arbitrary boolean. (Not that there are many of those...)
         PepHintMetadata(
             hint=Literal[True],

@@ -52,6 +52,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignMutableSequence,
     HintSignMutableSet,
     HintSignNewType,
+    HintSignNumpyArray,
     HintSignNone,
     HintSignOptional,
     HintSignOrderedDict,
@@ -272,6 +273,9 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
 
     # ..................{ PEP 593                           }..................
     HintSignAnnotated,
+
+    # ..................{ NON-PEP ~ package : numpy         }..................
+    HintSignNumpyArray,
 ))
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely

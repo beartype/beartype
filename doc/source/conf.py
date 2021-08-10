@@ -119,16 +119,24 @@ try:
 except ImportError:
     warn(
         (
-            'Optional Sphinx extension "sphinx_rtd_theme" unimportable; '
+            'Optional Sphinx extension "sphinx_rtd_theme" not found; '
             'falling back to default Sphinx HTML theme.'
         ),
         BeartypeDependencyOptionalMissingWarning
     )
 
+# ....................{ EXTENSIONS ~ conf : autodoc       }....................
+# 'sphinx.ext.autodoc'-specific settings. See also:
+#     https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+
+# Instruct "autodoc" to globally append type hints annotating callable
+# signatures to the parameters and returns they annotate in the content (i.e.,
+# descriptions) of those callables. Note this requires Sphinx >= 4.1.
+autodoc_typehints = 'both'
+
 # ....................{ EXTENSIONS ~ conf : napoleon      }....................
 # 'sphinx.ext.napoleon'-specific settings. See also:
-# * https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
-#   Official documentation.
+#     https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
 # Force Napolean to *ONLY* parse docstrings in the NumPy format used by this
 # project. By default, Napolean attempts and often fails to permissively parse

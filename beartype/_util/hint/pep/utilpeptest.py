@@ -304,7 +304,7 @@ def die_if_hint_pep_sign_unsupported(
     '''
 
     # If this hint is *NOT* a supported sign, raise an exception.
-    if not is_hint_pep_sign_supported(hint_sign):
+    if hint_sign not in HINT_SIGNS_SUPPORTED:
         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         raise BeartypeDecorHintPepUnsupportedException(
             f'{hint_label} sign {repr(hint_sign)} '
@@ -711,49 +711,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
 
     # Sign uniquely identifying this hint.
-    hint_pep_sign = get_hint_pep_sign(hint)
-
-    # Return true only if this sign is supported.
-    return is_hint_pep_sign_supported(hint_pep_sign)
-
-
-#FIXME: Silly overkill, silly. Refactor as follows:
-#* Replace all calls to this tester with simply:
-#      hint_sign in HINT_SIGNS_SUPPORTED
-#* Remove this tester.
-def is_hint_pep_sign_supported(hint_sign: HintSign) -> bool:
-    '''
-    ``True`` only if the passed object is a **supported sign** (i.e., arbitrary
-    object uniquely identifying a category of PEP-compliant type hints
-    currently supported by the :func:`beartype.beartype` decorator).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    sign : HintSign
-        Sign to be tested.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a supported sign.
-
-    Raises
-    ----------
-    TypeError
-        If this sign is **unhashable** (i.e., *not* hashable by the builtin
-        :func:`hash` function and thus unusable in hash-based containers like
-        dictionaries and sets). All signs are hashable by definition.
-    '''
-    assert isinstance(hint_sign, HintSign), f'{repr(hint_sign)} not sign.'
-
-    # from beartype._util.data.hint.pep.sign.datapepsignset import (
-    #     HINT_SIGNS_SUPPORTED_DEEP)
-    # print(f'HINT_SIGNS_SUPPORTED: {HINT_SIGNS_SUPPORTED}')
-    # print(f'HINT_SIGNS_SUPPORTED_DEEP: {HINT_SIGNS_SUPPORTED_DEEP}')
+    hint_sign = get_hint_pep_sign(hint)
 
     # Return true only if this sign is supported.
     return hint_sign in HINT_SIGNS_SUPPORTED

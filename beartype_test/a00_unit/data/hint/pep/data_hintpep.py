@@ -11,18 +11,6 @@ PEP-compliant type hints, exercising known edge cases on behalf of higher-level
 unit test submodules.
 '''
 
-# ....................{ IMPORTS                           }....................
-import sys
-from beartype._util.utilobject import is_object_hashable
-from beartype_test.a00_unit.data.hint.data_hintmeta import PepHintMetadata
-from beartype_test.a00_unit.data.hint.pep.proposal import (
-    data_hintpep484,
-    _data_hintpep544,
-    _data_hintpep585,
-    _data_hintpep586,
-    _data_hintpep593,
-)
-
 # ....................{ SETS                              }....................
 # Initialized by the _init() function below.
 HINTS_PEP_HASHABLE = None
@@ -69,16 +57,6 @@ nonetheless ignorable and thus require dynamic testing by the high-level
 demonstrate this fact).
 '''
 
-
-#FIXME: Excise us up both here and below.
-# # Initialized by the _init() function below.
-# HINTS_PEP_INVALID_TYPE_NONGENERIC = set()
-# '''
-# Frozen set of **invalid non-generic classes** (i.e., classes declared by the
-# :mod:`typing` module used to instantiate PEP-compliant type hints but
-# themselves invalid as PEP-compliant type hints).
-# '''
-
 # ....................{ TUPLES                            }....................
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
@@ -102,13 +80,27 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    # Defer function-specific imports.
+    import sys
+    from beartype._util.utilobject import is_object_hashable
+    from beartype_test.a00_unit.data.hint.data_hintmeta import PepHintMetadata
+    from beartype_test.a00_unit.data.hint.pep.mod import (
+        _data_hintmodnumpy,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal import (
+        data_hintpep484,
+        _data_hintpep544,
+        _data_hintpep585,
+        _data_hintpep586,
+        _data_hintpep593,
+    )
+
     # Submodule globals to be redefined below.
     global \
         HINTS_PEP_HASHABLE, \
         HINTS_PEP_IGNORABLE_DEEP, \
         HINTS_PEP_IGNORABLE_SHALLOW, \
         HINTS_PEP_META
-        # HINTS_PEP_INVALID_TYPE_NONGENERIC, \
 
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
@@ -116,6 +108,7 @@ def _init() -> None:
 
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_PEP_SUBMODULES = (
+        _data_hintmodnumpy,
         data_hintpep484,
         _data_hintpep544,
         _data_hintpep585,
@@ -132,8 +125,6 @@ def _init() -> None:
         'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
     assert HINTS_PEP_IGNORABLE_SHALLOW, (
         'Set global "HINTS_PEP_IGNORABLE_SHALLOW" empty.')
-    # assert HINTS_PEP_INVALID_TYPE_NONGENERIC, (
-    #     'Set global "HINTS_PEP_INVALID_TYPE_NONGENERIC" empty.')
     assert HINTS_PEP_META, 'Tuple global "HINTS_PEP_META" empty.'
 
     # Assert this global to contain only instances of its expected dataclass.
@@ -151,8 +142,6 @@ def _init() -> None:
     )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_IGNORABLE_SHALLOW = frozenset(HINTS_PEP_IGNORABLE_SHALLOW)
-    # HINTS_PEP_INVALID_TYPE_NONGENERIC = frozenset(
-    #     HINTS_PEP_INVALID_TYPE_NONGENERIC)
     HINTS_PEP_META = tuple(HINTS_PEP_META)
 
 

@@ -93,8 +93,8 @@ class Is(_IsABC):
 
     Specifically, callers are expected to (in order):
 
-    #. Annotate a callable parameter or return to be validated with a `PEP
-       593`_-compliant :attr:`typing.Annotated` type hint.
+    #. Annotate a callable parameter or return to be validated with a
+       :pep:`593`-compliant :attr:`typing.Annotated` type hint.
     #. Subscript that hint with (in order):
 
        #. The type expected by that parameter or return.
@@ -262,21 +262,18 @@ class Is(_IsABC):
        < 2 and text.count("'") < 2]], as value '"Everybody relax, I\'m here."'
        violates data constraint Is[lambda text: text.count('"') < 2 and
        text.count("'") < 2].
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
 
     # ..................{ DUNDERS                           }..................
     def __class_getitem__(
         cls, is_valid: SubscriptedIsValidator) -> _SubscriptedIs:
         '''
-        `PEP 560`_-compliant dunder method creating and returning a new
+        :pep:`560`-compliant dunder method creating and returning a new
         :class:`_SubscriptedIs` object from the passed **validator callable**
         (i.e., caller-defined callable accepting a single arbitrary object and
         returning either ``True`` if that object satisfies an arbitrary
-        constraint *or* ``False`` otherwise), suitable for subscripting `PEP
-        593`_-compliant :attr:`typing.Annotated` type hints.
+        constraint *or* ``False`` otherwise), suitable for subscripting
+        :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 
         This method is intentionally *not* memoized, as this method is usually
         subscripted only by subscription-specific lambda functions uniquely
@@ -308,11 +305,6 @@ class Is(_IsABC):
         ----------
         :class:`IsAttr`
             Usage instructions.
-
-        .. _PEP 560:
-           https://www.python.org/dev/peps/pep-0560
-        .. _PEP 593:
-           https://www.python.org/dev/peps/pep-0593
         '''
 
         # If this class was subscripted by either no arguments *OR* two or more

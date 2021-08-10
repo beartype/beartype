@@ -18,13 +18,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import merge_mappings_two
-from beartype._util.func.utilfuncarg import get_func_args_len_standard
+from beartype._util.func.utilfuncarg import (
+    die_unless_func_args_len_flexible_equal,
+    is_func_argless,
+)
 from beartype._util.func.utilfuncscope import CallableScope
-from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -36,7 +37,31 @@ PEP-compliant type hint matching a **validator** (i.e., caller-defined callable
 accepting a single arbitrary object and returning either ``True`` if that
 object satisfies an arbitrary constraint *or* ``False`` otherwise).
 
-Data validators are suitable for subscripting the :class:`Is` class.
+Validators are suitable for subscripting the :class:`Is` class.
+'''
+
+
+SubscriptedIsRepresenter = Union[str, Callable[[], str]]
+'''
+**Representer** (i.e., either a string *or* caller-defined callable accepting
+no arguments returning a machine-readable representation of this validator).
+
+Technically, this representation *could* be passed by the caller rather than
+this callable dynamically generating that representation. Pragmatically,
+generating this representation is sufficiently slow for numerous types of
+validators that deferring their generation until required by a call to the
+:meth:`__repr__` dunder method externally called by a call to the :func:`repr`
+builtin` on this validator is effectively mandatory. Data validators whose
+representations are particularly slow to generate include:
+
+* The :class:`Is` class subscripted by a lambda rather than non-lambda
+  function. Generating the representation of that class subscripted by a
+  non-lambda function only requires introspecting the name of that function and
+  is thus trivially fast. However, lambda functions have no names and are thus
+  *only* distinguishable by their source code; generating the representation of
+  that class subscripted by a lambda function requires parsing the source code
+  of the file declaring that lambda for the exact substring of that code
+  declaring that lambda.
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
@@ -45,20 +70,20 @@ class _SubscriptedIs(object):
     **Beartype validator** (i.e., object encapsulating a caller-defined
     validation callable returning ``True`` when an arbitrary object passed to
     that callable satisfies an arbitrary constraint, suitable for subscripting
-    (indexing) `PEP 593`_-compliant :attr:`typing.Annotated` type hints
+    (indexing) :pep:`593`-compliant :attr:`typing.Annotated` type hints
     enforcing that validation on :mod:`beartype`-decorated callable parameters
     and returns annotated by those hints).
 
     Caveats
     ----------
-    **This low-level class is not intended to be externally instantiated**
-    (e.g., by calling the :meth:`__init__` constructor). This class is *only*
-    intended to be internally instantiated by subscripting (indexing) the
-    higher-level :class:`Is` class factory.
+    **This private class is not intended to be externally instantiated** (e.g.,
+    by calling the :meth:`__init__` constructor). This class is *only* intended
+    to be internally instantiated by subscripting (indexing) various public
+    type hint factories (e.g., :class:`beartype.vale.Is`).
 
     Attributes
     ----------
-    is_valid : Callable[[Any,], bool]
+    _is_valid : SubscriptedIsValidator
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
         an arbitrary constraint *or* ``False`` otherwise).
@@ -77,35 +102,16 @@ class _SubscriptedIs(object):
         **Validator code local scope** (i.e., dictionary mapping from the name
         to value of each local attribute referenced in :attr:`code`) required
         to dynamically compile this validator code into byte code at runtime.
-    _get_repr : Callable[[], str]
-        **Representer** (i.e., caller-defined callable accepting *no* arguments
-        returning a machine-readable representation of this validator).
-        Technically, that representation *could* be passed by the caller rather
-        than this callable dynamically generating that representation.
-        Pragmatically, generating that representation is sufficiently slow for
-        numerous types of validators that deferring their generation until
-        required by a call to the :meth:`__repr__` dunder method externally
-        called by a call to the :func:`repr` builtin` on this validator is
-        effectively mandatory. Data validators whose representations are
-        particularly slow to generate include:
-
-        * The :class:`Is` class subscripted by a lambda rather than non-lambda
-          function. Generating the representation of that class subscripted by
-          a non-lambda function only requires introspecting the name of that
-          function and is thus trivially fast. However, lambda functions have
-          no names and are thus *only* distinguishable by their source code;
-          ergo, generating the representation of that class subscripted by a
-          lambda function requires parsing the source code of the file
-          declaring that lambda for the exact substring of that code declaring
-          that lambda and is thus non-trivially slow.
+    _get_repr : SubscriptedIsRepresenter
+        **Representer** (i.e., either a string *or* caller-defined callable
+        accepting no arguments returning a machine-readable representation of
+        this validator). See the :data:`SubscriptedIsRepresenter` type hint for
+        further details.
 
     See Also
     ----------
     :class:`Is`
         Class docstring for further details.
-
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
@@ -114,7 +120,7 @@ class _SubscriptedIs(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'is_valid',
+        '_is_valid',
         '_is_valid_code',
         '_is_valid_code_locals',
         '_get_repr',
@@ -126,7 +132,7 @@ class _SubscriptedIs(object):
         is_valid: SubscriptedIsValidator,
         is_valid_code: str,
         is_valid_code_locals: CallableScope,
-        get_repr: Callable[[], str],
+        get_repr: SubscriptedIsRepresenter,
     ) -> None:
         '''
         Initialize this object with the passed validation callable, code, and
@@ -136,8 +142,8 @@ class _SubscriptedIs(object):
 
         Parameters
         ----------
-        is_valid : Callable[[Any,], bool]
-            **Data is_valid** (i.e., caller-defined callable accepting a single
+        is_valid : SubscriptedIsValidator
+            **Validator** (i.e., caller-defined callable accepting a single
             arbitrary object and returning either ``True`` if that object
             satisfies an arbitrary constraint *or* ``False`` otherwise).
         is_valid_code : str
@@ -153,7 +159,7 @@ class _SubscriptedIs(object):
               code generators will globally replace at evaluation time with the
               line-oriented indentation required to generate a
               valid Python statement embedding this code. For consistency with
-              `PEP 8`_-compliant and well-established Python style guides, any
+              :pep:`8`-compliant and well-established Python style guides, any
               additional indentation hard-coded into this code should be
               aligned to **four-space indentation.**
         is_valid_code_locals : Optional[CallableScope]
@@ -161,28 +167,11 @@ class _SubscriptedIs(object):
             name to value of each local attribute referenced in
             :attr:`is_valid_code` code) required to dynamically compile this
             validator code into byte code at runtime.
-        get_repr : Callable[[], str]
-            **Representer** (i.e., caller-defined callable accepting *no*
-            arguments returning a machine-readable representation of this
-            validator). Technically, that representation rather than this
-            callable dynamically generating that representation could be passed
-            by the caller. Pragmatically, generating that representation is
-            sufficiently slow for various types of validators that deferring
-            their generation until required by a call to the :meth:`__repr__`
-            dunder method externally called by a call to the :func:`repr`
-            builtin` passed this validator is effectively mandatory. Data
-            validators whose representations are slow to generate include:
-
-            * The :class:`Is` class subscripted by a lambda rather than
-              non-lambda function. Generating the representation of that class
-              subscripted by a non-lambda function only requires introspecting
-              the name of that function and is thus trivially fast. However,
-              lambda functions have no names and are thus *only*
-              distinguishable by their source code; ergo, generating the
-              representation of that class subscripted by a lambda function
-              requires parsing the source code of the file declaring that
-              lambda for the exact substring of that code declaring that lambda
-              and is thus non-trivially slow.
+        get_repr : SubscriptedIsRepresenter
+            **Representer** (i.e., either a string *or* caller-defined callable
+            accepting no arguments returning a machine-readable representation
+            of this validator). See the :data:`SubscriptedIsRepresenter` type
+            hint for further details.
 
         Raises
         ----------
@@ -210,41 +199,24 @@ class _SubscriptedIs(object):
               * *Not* callable.
               * A C-based rather than pure-Python callable.
               * A pure-Python callable accepting one or more arguments.
-
-        .. _PEP 8:
-           https://www.python.org/dev/peps/pep-0008
         '''
 
-        # If this validator is uncallable, raise an exception.
-        if not callable(is_valid):
-            raise BeartypeValeSubscriptionException(
-                f'Class "beartype.vale.Is" subscripted argument '
-                f'{represent_object(is_valid)} not callable.'
-            )
-        # Else, this validator is callable.
-        #
-        # If this validator is C-based, raise an exception.
-        elif not is_func_python(is_valid):
-            raise BeartypeValeSubscriptionException(
-                f'Class "beartype.vale.Is" subscripted callable '
-                f'{repr(is_valid)} not pure-Python (e.g., C-based).'
-            )
-        # Else, this validator is pure-Python.
-        #
-        # If this validator does *NOT* accept exactly one argument, raise an
-        # exception.
-        elif get_func_args_len_standard(
+        # If this validator is either uncallable, a C-based callable, *OR* a
+        # pure-Python callable accepting more or less than one parameter, raise
+        # an exception.
+        die_unless_func_args_len_flexible_equal(
             func=is_valid,
+            func_args_len_flexible=1,
+            func_label=(
+                f'Class "beartype.vale.Is" subscripted argument '
+                f'{repr(is_valid)}'
+            ),
             exception_cls=BeartypeValeSubscriptionException,
-        ) != 1:
-            raise BeartypeValeSubscriptionException(
-                f'Class "beartype.vale.Is" subscripted callable '
-                f'{repr(is_valid)} positional or keyword argument count '
-                f'{get_func_args_len_standard(is_valid)} != 1.'
-            )
-        # Else, this validator accepts exactly one argument. Since no further
-        # validation can be performed on this callable without unsafely calling
-        # that callable, we accept this callable as is for now.
+        )
+        # Else, this validator is a pure-Python callable accepting exactly one
+        # argument. Since no further validation can be performed on this
+        # callable without unsafely calling that callable, we accept this
+        # callable as is for now.
         #
         # Note that we *COULD* technically inspect annotations if defined on
         # this callable as well. Since this callable is typically defined as a
@@ -293,25 +265,88 @@ class _SubscriptedIs(object):
             )
         # Else, this dictionary of code locals is a dictionary.
 
-        # If this representer is either uncallable, a C-based callable, *OR* a
-        # pure-Python callable accepting one or more arguments, raise an
-        # exception.
-        if get_func_args_len_standard(
-            func=get_repr,
-            exception_cls=BeartypeValeSubscriptionException,
-        ) != 0:
-            raise BeartypeValeSubscriptionException(
-                f'Representer {repr(get_repr)} positional or keyword argument '
-                f'count {get_func_args_len_standard(get_repr)} != 0.'
-            )
-        # Else, this representer is a pure-Python callable accepting *NO*
-        # arguments.
+        # Classify this validator, effectively binding this callable to this
+        # object as an object-specific static method.
+        self._is_valid = is_valid
 
-        # Classify this validation function, effectively binding this callable
-        # to this object as an object-specific static method.
-        self.is_valid = is_valid
+        # Classify this representer via a writeable property internally
+        # validating this representer.
+        self.get_repr = get_repr
+
+        # Classify all remaining parameters.
         self._is_valid_code = is_valid_code
         self._is_valid_code_locals = is_valid_code_locals
+
+    # ..................{ PROPERTIES ~ read-only            }..................
+    # Properties with no corresponding setter and thus read-only.
+
+    @property
+    def is_valid(self) -> SubscriptedIsValidator:
+        '''
+        **Validator** (i.e., caller-defined callable accepting a single
+        arbitrary object and returning either ``True`` if that object satisfies
+        an arbitrary constraint *or* ``False`` otherwise).
+        '''
+
+        return self._is_valid
+
+    # ..................{ PROPERTIES ~ writeable            }..................
+    # Properties with a corresponding setter and thus writeable.
+
+    @property
+    def get_repr(self) -> SubscriptedIsRepresenter:
+        '''
+        **Representer** (i.e., either a string *or* caller-defined callable
+        accepting no arguments returning a machine-readable representation of
+        this validator). See the :data:`SubscriptedIsRepresenter` type hint for
+        further details.
+        '''
+
+        return self._get_repr
+
+
+    @get_repr.setter
+    def get_repr(self, get_repr: SubscriptedIsRepresenter) -> None:
+        '''
+        Override the initial representer for this validator.
+
+        Parameters
+        ----------
+        get_repr : SubscriptedIsRepresenter
+            **Representer** (i.e., either a string *or* caller-defined callable
+            accepting no arguments returning a machine-readable representation
+            of this validator). See the :data:`SubscriptedIsRepresenter` type
+            hint for further details.
+
+        Raises
+        ----------
+        :exc:`BeartypeValeSubscriptionException`
+            This representer is either:
+
+            * *Not* callable.
+            * A C-based rather than pure-Python callable.
+            * A pure-Python callable accepting one or more arguments.
+        '''
+
+        # If this representer is neither...
+        if not (
+            # A string *NOR*...
+            isinstance(get_repr, str) or
+            # A pure-Python callable accepting one argument...
+            is_func_argless(
+                func=get_repr,
+                func_label='Representer',
+                exception_cls=BeartypeValeSubscriptionException,
+            )
+        # Then raise an exception.
+        ):
+            raise BeartypeValeSubscriptionException(
+                f'Representer {repr(get_repr)} neither string nor '
+                f'argument-less pure-Python callable.'
+            )
+        # Else, this representer is an argument-less pure-Python callable.
+
+        # Set this representer.
         self._get_repr = get_repr
 
     # ..................{ DUNDERS ~ operator                }..................
@@ -440,7 +475,6 @@ class _SubscriptedIs(object):
         )
 
     # ..................{ DUNDERS ~ str                     }..................
-    @callable_cached
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this validator.
@@ -455,5 +489,13 @@ class _SubscriptedIs(object):
             defining that lambda.
         '''
 
-        # Fight the dark power with... power.
-        return self._get_repr()
+        # If the instance variable underlying this dunder method is a callable,
+        # reduce this variable to the string returned by this callable.
+        if callable(self._get_repr):
+            self._get_repr = self._get_repr()
+
+        # In either case, this variable is now a string. Guarantee this.
+        assert isinstance(self._get_repr, str), f'{self._get_repr} not string.'
+
+        # Return this string as is.
+        return self._get_repr

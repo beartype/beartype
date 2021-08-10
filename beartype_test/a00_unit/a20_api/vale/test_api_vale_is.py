@@ -179,12 +179,18 @@ def test_api_vale_subscriptedis_pass() -> None:
     # Arbitrary valid data validator.
     not_though_the_soldier_knew = lambda text: bool('Someone had blundered.')
 
-    # Keyword arguments passing arguments describing this validator.
-    kwargs = dict(
+    # Keyword arguments passing arguments describing this validator excluding
+    # the "get_repr" argument.
+    kwargs_sans_get_repr = dict(
         is_valid=not_though_the_soldier_knew,
         is_valid_code_locals={'yum': not_though_the_soldier_knew},
-        get_repr=lambda: "Is[lambda text: bool('Someone had blundered.')]",
     )
+
+    # Keyword arguments passing arguments describing this validator including
+    # the "get_repr" argument.
+    kwargs = kwargs_sans_get_repr.copy()
+    kwargs['get_repr'] = lambda: (
+        "Is[lambda text: bool('Someone had blundered.')]")
 
     # Code already prefixed by "(" and suffixed by ")".
     is_valid_code_delimited = "({obj} == 'Was there a man dismayed?')"
@@ -204,6 +210,18 @@ def test_api_vale_subscriptedis_pass() -> None:
         subscriptedis_undelimited._is_valid_code ==
         f'({is_valid_code_undelimited})'
     )
+
+    # Assert that the "_SubscriptedIs" class also accepts a string representer.
+    subscriptedis_repr_str = _SubscriptedIs(
+        is_valid_code=is_valid_code_delimited,
+        get_repr='All that was left of them,',
+        **kwargs_sans_get_repr
+    )
+
+    # Assert these objects have the expected representations.
+    assert 'Someone had blundered.' in repr(subscriptedis_delimited)
+    assert repr(subscriptedis_repr_str) == 'All that was left of them,'
+
 
 
 @skip_if_python_version_less_than('3.7.0')
@@ -270,10 +288,10 @@ def test_api_vale_subscriptedis_fail() -> None:
     )
 
     # Assert that attempting to instantiate the "_SubscriptedIs" class with
-    # valid code and code locals but an uncallable representer raises the
+    # valid code and code locals but an invalid representer raises the
     # expected exception.
     with raises(BeartypeValeSubscriptionException):
-        _SubscriptedIs(get_repr='All that was left of them,', **kwargs_good)
+        _SubscriptedIs(get_repr=b'All that was left of them,', **kwargs_good)
 
     # Assert that attempting to instantiate the "_SubscriptedIs" class with
     # valid code and code locals but a C-based representer raises the expected

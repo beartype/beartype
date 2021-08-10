@@ -19,7 +19,6 @@ from re import (
     sub as re_sub
 )
 from string import punctuation
-from typing import Any
 
 # ....................{ REPRESENTERS                      }....................
 def represent_object(
@@ -167,7 +166,6 @@ def represent_object(
         # truncate this string to this length *WITHOUT* ellipses.
         else:
             obj_repr = obj_repr[:max_len]
-
         # print(f'obj repr truncated: {obj_repr}')
 
     # Return this representation.
