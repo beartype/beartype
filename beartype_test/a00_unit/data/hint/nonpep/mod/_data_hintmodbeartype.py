@@ -14,7 +14,7 @@ These hints include:
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.a00_unit.data.hint.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     NonPepHintMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,

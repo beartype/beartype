@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint metadata data-driven testing submodule.**
-
-This submodule declares lower-level metadata classes instantiated by the
-higher-level :mod:`beartype_test.a00_unit.data.hint.pep.data_hintpep` submodule.
+Project-wide **type hint metadata class hierarchy** (i.e., hierarchy of
+classes encapsulating sample type hints instantiated by the
+:mod:`beartype_test.a00_unit.data.hint` submodules).
 '''
 
 # ....................{ IMPORTS                           }....................

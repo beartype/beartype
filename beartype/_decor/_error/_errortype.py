@@ -21,7 +21,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_stdlib_or_none)
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_object)
-from beartype._util.mod.utilmodule import import_module_attr
+from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.text.utiltextcause import (
     get_cause_object_not_type,
     get_cause_object_not_types,

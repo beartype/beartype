@@ -83,7 +83,7 @@ def _init() -> None:
     # Defer function-specific imports.
     import sys
     from beartype._util.utilobject import is_object_hashable
-    from beartype_test.a00_unit.data.hint.data_hintmeta import PepHintMetadata
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import PepHintMetadata
     from beartype_test.a00_unit.data.hint.pep.mod import (
         _data_hintmodnumpy,
     )

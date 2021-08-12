@@ -17,7 +17,7 @@ import pathlib
 from abc import abstractmethod
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype_test.a00_unit.data.hint.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     PepHintMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,

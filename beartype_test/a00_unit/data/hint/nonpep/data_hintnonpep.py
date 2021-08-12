@@ -28,7 +28,7 @@ def _init() -> None:
 
     # Defer function-specific imports.
     import sys
-    from beartype_test.a00_unit.data.hint.data_hintmeta import (
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         NonPepHintMetadata)
     from beartype_test.a00_unit.data.hint.nonpep.proposal import (
         _data_hintnonpep484)

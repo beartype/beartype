@@ -13,7 +13,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignList,
 )
-from beartype_test.a00_unit.data.hint.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     PepHintMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,

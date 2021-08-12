@@ -7,35 +7,6 @@
 # GitHub-specific continuous integration (CI) configuration, enabling the usual
 # GitHub Actions workflow for pure-Python packages exercised by "tox".
 #
-# --------------------( CAVEATS                           )--------------------
-# *THIS CONFIGURATION SHOULD PERFORM ONLY THE BARE MINIMUM NUMBER OF TESTS.*
-# Regrettably, tests *NOT* safeguarding the quality of the core Python package
-# installed by this project should *NOT* be run. This includes:
-#
-# * Tests conditionally dependent on third-party packages such as:
-#    * The scientific stack (e.g., NumPy, SciPy, matplotlib). Scientific
-#      packages tend to be large and thus expensive to install, costing scarce
-#      CI minutes while contributing little of note.
-#    * The documentation stack (e.g., RTD, Sphinx, docutils). Documentation
-#      packages also tend to be large. Unlike the scientific stack, these
-#      packages are miserably slow at runtime -- presumably due to
-#      inefficiencies in the docutils reStructuredText (reST) parser. Moreover,
-#      since Read The Docs (RTD) already builds documentation and thus pays
-#      these costs on our behalf, we have little incentive to do so ourselves.
-#
-# GitHub currently only allots public repositories 2,000 GitHub Actions minutes
-# per month for an average of 66.66 minutes per day. While this test suite is
-# fast, it's also run under multiple CPython and PyPy versions. That is still
-# fast locally. Unfortunately, Azure (i.e., Microsoft's cloud computing
-# platform that unsurprisingly also hosts GitHub Actions) is slow.
-#
-# Each CI run triggered by this workflow currently costs this project ~5 free
-# GitHub Actions minutes on average despite running substantially faster on a
-# dual-core AMD Athlon(tm) II X2 240 manufactured before the auspicious birth
-# of Linus Torvalds. Since this project *MUST* support multiple CI runs per day
-# (e.g., to test pull requests), we are rapidly bumping up against real-world
-# business constraints.
-#
 # --------------------( SEE ALSO                          )--------------------
 # * https://hynek.me/articles/python-github-actions
 #   Well-authored blog post strongly inspiring this configuration.
@@ -54,23 +25,29 @@
 # ....................{ METADATA                          }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
-# * The "|GitHub Actions badge|" image URL in the top-level "README.rst".
+# * The "|GitHub Actions badge|" image URL in our top-level "README.rst".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
 name: test
 
 # ....................{ TRIGGER                           }....................
-# Confine testing to only pushes and pull requests against the main branch,
-# reducing consumption of scarce CI minutes for incidental feature branches.
+# Confine testing to only...
+#
+# Note that "**" matches all (possibly deeply "/"-nested) branches. See also:
+# * https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+#   GitHub-specific glob syntax for matching branches and tags below.
 on:
+  # Pushes to the main branch. Pushes to other branches are assumed to be
+  # developer-specific and thus already tested locally by that developer.
   push:
     branches:
       - main
+  # Pull requests against the main branch. Pull requests against other branches
+  # should, ideally, *NEVER* occur; if and when they do, we ignore them.
   pull_request:
-    #FIXME: Is this actually right?
     branches:
-      - '**'
+      - main  # '**'
 
 # ....................{ VARIABLES                         }....................
 # List of private environment variables specific to this configuration and

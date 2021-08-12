@@ -13,7 +13,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignLiteral,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype_test.a00_unit.data.hint.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     PepHintMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,

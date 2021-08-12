@@ -22,7 +22,7 @@ from beartype.roar import BeartypeDecorHintNonPepNumPyException
 from beartype.vale import IsAttr, IsEqual
 # from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.data.hint.pep.sign.datapepsigns import HintSignNumpyArray
-from beartype._util.hint.pep.utilpepattr import import_typing_attr
+from beartype._util.mod.utilmodimport import import_module_typing_any_attr
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
@@ -118,9 +118,9 @@ def reduce_hint_numpy_ndarray(
     # "typing" or "typing_extensions" modules declares this attribute if one or
     # more do *OR* raise an exception otherwise.
     #
-    # Note that the memoized import_typing_attr() function is intentionally
-    # passed positional rather than keyword arguments (for minor efficiency).
-    typing_annotated = import_typing_attr(
+    # Note that this memoized function is intentionally passed positional
+    # rather than keyword arguments for minor efficiency gains.
+    typing_annotated = import_module_typing_any_attr(
         'Annotated', BeartypeDecorHintNonPepNumPyException)
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*

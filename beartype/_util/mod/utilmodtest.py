@@ -10,10 +10,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import importlib
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from importlib import import_module as importlib_import_module
 from sys import modules as sys_modules
 from typing import Type
 
@@ -144,7 +144,7 @@ def is_module(module_name: str) -> bool:
     # Attempt to...
     try:
         # Dynamically import this module.
-        importlib.import_module(module_name)
+        importlib_import_module(module_name)
 
         # Return true, since this importation succeeded.
         return True

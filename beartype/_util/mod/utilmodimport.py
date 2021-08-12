@@ -1,0 +1,412 @@
+#!/usr/bin/env python3
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2021 Beartype authors.
+# See "LICENSE" for further details.
+
+'''
+Project-wide **Python module importation** utilities (i.e., functions
+dynamically importing modules and/or attributes from modules).
+
+This private submodule is *not* intended for importation by downstream callers.
+'''
+
+# ....................{ IMPORTS                           }....................
+from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype._util.cache.utilcachecall import callable_cached
+from importlib import import_module as importlib_import_module
+from types import ModuleType
+from typing import Any, Type
+
+# See the "beartype.cave" submodule for further commentary.
+__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ IMPORTERS                         }....................
+#FIXME: Unit test us up.
+def import_module(
+    # Mandatory parameters.
+    module_name: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> ModuleType:
+    '''
+    Dynamically import and return the module, package, or C extension with the
+    passed fully-qualified name if importable *or* raise an exception
+    otherwise.
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the module to be imported.
+    exception_cls : type
+        Type of exception to be raised by this function. Defaults to
+        :class:`_BeartypeUtilModuleException`.
+
+    Raises
+    ----------
+    exception_cls
+        If no module with this name exists.
+    Exception
+        If a module with this name exists *but* this module is unimportable
+        due to module-scoped side effects at importation time. Since modules
+        may perform arbitrary Turing-complete logic from module scope, callers
+        should be prepared to handle *any* possible exception that might arise.
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not type.')
+
+    # Attempt to dynamically import and return this module.
+    try:
+        return importlib_import_module(module_name)
+    # If no module this this name exists, raise a beartype-specific exception
+    # wrapping this beartype-agnostic exception to sanitize our public API,
+    # particularly from the higher-level import_module_attr() function calling
+    # this lower-level function and raising the same exception class under a
+    # wider variety of fatal edge cases.
+    except ModuleNotFoundError as exception:
+        raise exception_cls(
+            f'Module "{module_name}" not found.') from exception
+
+# ....................{ IMPORTERS ~ attr                  }....................
+def import_module_attr(
+    # Mandatory parameters.
+    module_attr_name: str,
+
+    # Optional parameters.
+    module_attr_label: str = 'Module attribute',
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    Dynamically import and return either the **module attribute** (i.e., object
+    declared at module scope) with the passed fully-qualified name if
+    importable *or* raise an exception otherwise.
+
+    Parameters
+    ----------
+    module_attr_name : str
+        Fully-qualified name of the module attribute to be imported.
+    module_attr_label : str
+        Human-readable label prefixing this name in the exception message
+        raised by this function. Defaults to ``"Module attribute"``.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`_BeartypeUtilModuleException`.
+
+    Returns
+    ----------
+    object
+        The module attribute with this fully-qualified name.
+
+    Raises
+    ----------
+    exception_cls
+        If either:
+
+        * This name is *not* a syntactically valid fully-qualified module
+          attribute name.
+        * *No* module prefixed this name exists.
+        * An importable module prefixed by this name exists *but* that module
+          declares no attribute by this name.
+    Exception
+        If a module prefixed by this name exists but that module is
+        unimportable due to module-scoped side effects at importation time.
+        Modules may perform arbitrary Turing-complete logic from module scope;
+        callers should be prepared to handle *any* possible exception.
+    :func:`import_module_attr_or_none`
+        Further commentary.
+    '''
+
+    # Module attribute with this name if that module declares this attribute
+    # *OR* "None" otherwise.
+    module_attr = import_module_attr_or_none(
+        module_attr_name=module_attr_name,
+        module_attr_label=module_attr_label,
+        exception_cls=exception_cls,
+    )
+
+    # If this module declares *NO* such attribute, raise an exception.
+    if module_attr is None:
+        raise exception_cls(
+            f'{module_attr_label} "{module_attr_name}" not found.')
+
+    # Else, return this attribute.
+    return module_attr
+
+
+def import_module_attr_or_none(
+    # Mandatory parameters.
+    module_attr_name: str,
+
+    # Optional parameters.
+    module_attr_label: str = 'Module attribute',
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    Dynamically import and return either the **module attribute** (i.e., object
+    declared at module scope) with the passed fully-qualified name if
+    importable *or* return ``none`` otherwise.
+
+    Parameters
+    ----------
+    module_attr_name : str
+        Fully-qualified name of the module attribute to be imported.
+    module_attr_label : str
+        Human-readable label prefixing this name in the exception message
+        raised by this function. Defaults to ``"Module attribute"``.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`_BeartypeUtilModuleException`.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If *no* module prefixed this name exists, ``None``.
+        * Else if an importable module prefixed by this name exists *but* that
+          module declares no attribute by this name, ``None``.
+        * Else, the module attribute with this fully-qualified name.
+
+    Raises
+    ----------
+    exception_cls
+        If this name is *not* a syntactically valid fully-qualified module
+        attribute name.
+    Exception
+        If a module prefixed by this name exists but that module is
+        unimportable due to module-scoped side effects at importation time.
+        Modules may perform arbitrary Turing-complete logic from module scope;
+        callers should be prepared to handle *any* possible exception.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodtest import die_unless_module_attr_name
+
+    # If this object is *NOT* the fully-qualified syntactically valid name of a
+    # module attribute that may or may not actually exist, raise an exception.
+    die_unless_module_attr_name(
+        module_attr_name=module_attr_name,
+        module_attr_label=module_attr_label,
+        exception_cls=exception_cls,
+    )
+    # Else, this object is the fully-qualified syntactically valid name of a
+    # module attribute. In particular, this implies this name to contain one or
+    # more "." delimiters.
+
+    # Fully-qualified name of the module declaring this attribute *AND* the
+    # unqualified name of this attribute relative to this module, efficiently
+    # split from the passed name. By the prior validation, this split is
+    # guaranteed to be safe.
+    module_name, _, module_attr_basename = module_attr_name.rpartition('.')
+
+    # Dynamically import that module.
+    module = import_module(
+        module_name=module_name, exception_cls=exception_cls)
+
+    # Return the module attribute with this name if that module declares this
+    # attribute *OR* "None" otherwise.
+    return getattr(module, module_attr_basename, None)
+
+# ....................{ IMPORTERS ~ attr : typing         }....................
+@callable_cached
+def import_module_typing_any_attr(
+    # Mandatory parameters.
+    typing_attr_basename: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    Dynamically import and return the **typing attribute** (i.e., object
+    declared at module scope by either the :mod:`typing` or
+    :mod:`typing_extensions` modules) with the passed unqualified name if
+    importable from one or more of those modules *or* raise an exception
+    otherwise.
+
+    Specifically, this function (in order):
+
+    #. If the official :mod:`typing` module bundled with the active Python
+       interpreter declares that attribute, dynamically imports and returns
+       that attribute from that module.
+    #. Else if the third-party (albeit quasi-official) :mod:`typing_extensions`
+       module requiring external installation under the active Python
+       interpreter declares that attribute, dynamically imports and returns
+       that attribute from that module.
+    #. Else, raises a human-readable exception.
+
+    This function is memoized for efficiency.
+
+    Parameters
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be imported from a typing module.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+
+    Returns
+    ----------
+    object
+        Attribute with this name dynamically imported from a typing module.
+
+    Raises
+    ----------
+    exception_cls
+        If either:
+
+        * This name is *not* a syntactically valid attribute name.
+        * Neither the :mod:`typing` nor :mod:`typing_extensions` modules
+          declare an attribute with this name.
+    Exception
+        If a module prefixed by this name exists but that module is
+        unimportable due to module-scoped side effects at importation time.
+        Modules may perform arbitrary Turing-complete logic from module scope;
+        callers should be prepared to handle *any* possible exception. That
+        said, the :mod:`typing` and :mod:`typing_extensions` modules are
+        scrupulously tested and thus unlikely to raise exceptions on initial
+        importation.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodtest import is_module
+
+    # Attribute with this name imported from the "typing" module if that module
+    # declares this attribute *OR* "None" otherwise.
+    typing_attr = import_module_typing_attr_or_none(
+        typing_attr_basename=typing_attr_basename, exception_cls=exception_cls)
+
+    # If the "typing" module does *NOT* declare this attribute...
+    if typing_attr is None:
+        # Attribute with this name imported from the "typing_extensions" module
+        # if that module declares this attribute *OR* "None" otherwise.
+        typing_attr = import_module_typingextensions_attr_or_none(
+            typing_attr_basename=typing_attr_basename,
+            exception_cls=exception_cls,
+        )
+
+        # If the "typing_extensions" module also does *NOT* declare this
+        # attribute...
+        if typing_attr is None:
+            # If the "typing_extensions" module is importable, raise an
+            # appropriate exception.
+            if is_module('typing_extensions'):
+                raise exception_cls(
+                    f'Typing attributes "typing.{typing_attr_basename}" and '
+                    f'"typing_extensions.{typing_attr_basename}" not found. '
+                    f'Please either '
+                    f'(A) update the "typing_extensions" package or '
+                    f'(B) update to a newer Python version. '
+                    f'We apologize for the inconvenience and hope you had a '
+                    f'great dev cycle flying with Air Beartype, '
+                    f'"Your Grizzled Pal in the Friendly Skies."'
+                )
+            # Else, the "typing_extensions" module is unimportable. In this
+            # case, raise an appropriate exception.
+            else:
+                raise exception_cls(
+                    f'Typing attributes "typing.{typing_attr_basename}" and '
+                    f'"typing_extensions.{typing_attr_basename}" not found. '
+                    f'Please either '
+                    f'(A) install the "typing_extensions" package or '
+                    f'(B) update to a newer Python version. '
+                    f'We apologize for the inconvenience and hope you had a '
+                    f'great dev cycle flying with Air Beartype, '
+                    f'"Your Grizzled Pal in the Friendly Skies."'
+                )
+        # Else, the "typing_extensions" module declares this attribute.
+    # Else, the "typing" module declares this attribute.
+
+    # Return this attribute.
+    return typing_attr
+
+
+def import_module_typing_attr_or_none(
+    # Mandatory parameters.
+    typing_attr_basename: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    The **typing attribute** (i.e., object declared at module scope by the
+    :mod:`typing` module) with the passed unqualified name if importable from
+    that module *or* ``None`` otherwise.
+
+    Parameters
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be imported from that module.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+
+    Returns
+    ----------
+    Any
+        Either:
+
+        * If the :mod:`typing` module declares an attribute with this name,
+          that attribute.
+        * Else, ``None``.
+
+    Raises
+    ----------
+    exception_cls
+        If this name is syntactically invalid.
+    '''
+    assert isinstance(typing_attr_basename, str), (
+        f'{repr(typing_attr_basename)} not string.')
+
+    # By the power of Greyskull!
+    return import_module_attr_or_none(
+        module_attr_name=f'typing.{typing_attr_basename}',
+        module_attr_label='Typing attribute',
+        exception_cls=exception_cls,
+    )
+
+
+def import_module_typingextensions_attr_or_none(
+    # Mandatory parameters.
+    typing_attr_basename: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    The **typing attribute** (i.e., object declared at module scope by the
+    :mod:`typing_extensions` module) with the passed unqualified name if
+    importable from that module *or* ``None`` otherwise.
+
+    Parameters
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be imported from that module.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+
+    Returns
+    ----------
+    Any
+        Either:
+
+        * If the :mod:`typing_extension` module is both importable under the
+          active Python interpreter *and* declares an attribute with this name,
+          that attribute.
+        * Else, ``None``.
+
+    Raises
+    ----------
+    exception_cls
+        If this name is syntactically invalid.
+    '''
+    assert isinstance(typing_attr_basename, str), (
+        f'{repr(typing_attr_basename)} not string.')
+
+    # When our powers combine!
+    return import_module_attr_or_none(
+        module_attr_name=f'typing_extensions.{typing_attr_basename}',
+        module_attr_label='Typing attribute',
+        exception_cls=exception_cls,
+    )

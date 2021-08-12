@@ -62,11 +62,13 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_9,
 )
-from beartype_test.a00_unit.data.hint.data_hintmeta import (
+from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     PepHintMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
+from beartype_test.a00_unit.data.hint.util.data_hintmetatyping import (
+    make_hints_metadata_typing)
 from collections import abc as collections_abc
 from contextlib import contextmanager
 from profile import Profile   # <-- class hopefully guaranteed to exist! *gulp*
@@ -329,31 +331,22 @@ def add_data(data_module: 'ModuleType') -> None:
         Union[complex, int, object,],
     ))
 
-    #FIXME: Excise us up.
-    # # Add PEP 484-specific invalid non-generic classes to that set global.
-    # data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
-    #     # The "TypeVar" class as is does *NOT* constitute a valid type hint.
-    #     TypeVar,
-    #
-    #     # The "ForwardRef" class as is does *NOT* constitute a valid type hint.
-    #     HINT_PEP484_TYPE_FORWARDREF,
-    # ))
-
     # ..................{ TUPLES                            }..................
     # Add PEP 484-specific test type hints to this dictionary global.
-    data_module.HINTS_PEP_META.extend((
+    data_module.HINTS_PEP_META.extend(
         # ................{ UNSUBSCRIPTED                     }................
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
         # exercised independently with special-purposed unit tests.
 
         # Unsubscripted "Any" singleton.
-        PepHintMetadata(
-            hint=Any,
-            pep_sign=HintSignAny,
-            is_ignorable=True,
-        ),
-
+        make_hints_metadata_typing(
+            typing_attr_basename='Any',
+            hint_metadata=dict(
+                pep_sign=HintSignAny,
+                is_ignorable=True,
+            ),
+        ) + (
         # Unsubscripted "ByteString" singleton. Bizarrely, note that:
         # * "collections.abc.ByteString" is subscriptable under PEP 585.
         # * "typing.ByteString" is *NOT* subscriptable under PEP 484.

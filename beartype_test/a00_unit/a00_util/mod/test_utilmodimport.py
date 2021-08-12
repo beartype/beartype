@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python module utility** unit tests.
+Project-wide **Python module importer** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.utilmodule` submodule.
+:mod:`beartype._util.mod.utilmodimport` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS ~ importer                  }....................
+# ....................{ TESTS ~ attr                      }....................
 def test_import_module_attr() -> None:
     '''
     Test the
@@ -26,7 +26,7 @@ def test_import_module_attr() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodule import import_module_attr
+    from beartype._util.mod.utilmodimport import import_module_attr
 
     # Attribute dynamically imported from a module.
     module_attr = import_module_attr(
@@ -52,7 +52,7 @@ def test_import_module_attr_or_none() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodule import import_module_attr_or_none
+    from beartype._util.mod.utilmodimport import import_module_attr_or_none
 
     # Attribute declared by an importable module.
     module_attr_good = import_module_attr_or_none(
@@ -102,3 +102,62 @@ def test_import_module_attr_or_none() -> None:
     with raises(ValueError):
         import_module_attr_or_none(
             'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad.attrbad')
+
+# ....................{ TESTS ~ attr : typing             }....................
+def test_import_module_typing_any_attr() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilpepattr.import_module_typing_any_attr`
+    tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
+    from beartype._util.mod.utilmodimport import (
+        import_module_attr_or_none,
+        import_module_typing_any_attr,
+    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from typing import Union
+
+    # Assert that dynamically importing "typing.Union" attribute (guaranteed to
+    # be importable under all supported Python versions) is that attribute.
+    assert import_module_typing_any_attr('Union') is Union
+
+    # Assert that attempting to dynamically import a ridiculous attribute
+    # (guaranteed to be unimportable under all supported Python versions, we
+    # swear) raises the expected exception.
+    with raises(_BeartypeUtilModuleException):
+        import_module_typing_any_attr('FromMyWingsAreShakenTheDewsThatWaken')
+
+    #FIXME: On retiring Python 3.8, refactor everything below to import a newer
+    #"typing" attribute introduced with a bleeding-edge Python version.
+    # If the active Python interpreter targets Python >= 3.9, the
+    # "typing.Annotated" attribute is guaranteed to exist. In this case...
+    if IS_PYTHON_AT_LEAST_3_9:
+        # Defer Python version-specific imports.
+        from typing import Annotated
+
+        # Assert that dynamically importing the "typing.Annotated" attribute
+        # (guaranteed to be importable under this Python version) is that
+        # attribute.
+        assert import_module_typing_any_attr('Annotated') is Annotated
+    # Else, the active Python interpreter targets Python < 3.9 and the
+    # "typing.Annotated" attribute is guaranteed to *NOT* exist. In this
+    # case...
+    else:
+        # The "typing_extensions.Annotated" attribute if the third-party
+        # "typing_extensions" module is both installed and declares that
+        # attribute *OR* "None" otherwise.
+        typing_extensions_annotated = import_module_attr_or_none(
+            'typing_extensions.Annotated')
+
+        # If that attribute exists...
+        if typing_extensions_annotated is not None:
+            # Assert that dynamically importing the
+            # "typing_extensions.Annotated" attribute (guaranteed to be
+            # importable by this condition) is that attribute.
+            assert import_module_typing_any_attr('Annotated') is (
+                typing_extensions_annotated)
+        # Else, safely reduce to a noop. This should typically *NEVER* happen,
+        # as all sane versions of that module declare that attribute. *shrug*
