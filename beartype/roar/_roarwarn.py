@@ -61,19 +61,6 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
         # warning. See the docstring for justification.
         self.__class__.__module__ = 'beartype.roar'
 
-# ....................{ DEPENDENCY                        }....................
-class BeartypeDependencyOptionalMissingWarning(BeartypeWarning):
-    '''
-    **Beartype missing optional dependency warning.**
-
-    This warning is emitted at various times to inform the user of a **missing
-    recommended optional dependency** (i.e., third-party Python package *not*
-    installed under the active Python interpreter whose installation is
-    technically optional but recommended).
-    '''
-
-    pass
-
 # ....................{ DECORATOR ~ hint : pep            }....................
 class BeartypeDecorHintPepWarning(BeartypeWarning):
     '''
@@ -141,6 +128,46 @@ class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
 #     '''
 #
 #     pass
+
+# ....................{ MODULE                            }....................
+class BeartypeModuleWarning(BeartypeWarning):
+    '''
+    Abstract base class of all **beartype module warnings.**
+
+    Instances of subclasses of this warning are emitted at various times
+    (including at decoration time from the :func:`beartype.beartype` decorator)
+    on failing to import optional third-party modules, packages, or C
+    extensions warranting non-fatal warnings *without* raising fatal
+    exceptions.
+    '''
+
+    pass
+
+
+class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
+    '''
+    **Beartype missing optional dependency warning.**
+
+    This warning is emitted at various times to inform the user of a **missing
+    recommended optional dependency** (i.e., third-party Python package *not*
+    installed under the active Python interpreter whose installation is
+    technically optional but recommended).
+    '''
+
+    pass
+
+
+class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
+    '''
+    **Beartype unimportable optional dependency warning.**
+
+    This warning is emitted at various times to inform the user of an
+    **unimportable optional dependency** (i.e., third-party Python package
+    installed under the active Python interpreter but which raises unexpected
+    exceptions from module scope when imported).
+    '''
+
+    pass
 
 # ....................{ SPHINX                            }....................
 #FIXME: Consider removal.

@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+from pytest import raises, warns
 
 # ....................{ TESTS ~ attr                      }....................
 def test_import_module_attr() -> None:
@@ -51,6 +51,7 @@ def test_import_module_attr_or_none() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_attr_or_none
 
@@ -70,6 +71,14 @@ def test_import_module_attr_or_none() -> None:
     # Assert this function returns "None" when passed the syntactically valid
     # fully-qualified name of a non-existent attribute of an importable module.
     assert module_attr_bad is None
+
+    # Assert this function emits the expected warning when passed the
+    # syntactically valid fully-qualified name of a non-existent attribute of
+    # an unimportable module.
+    with warns(BeartypeModuleUnimportableWarning):
+        bad_module_attr = import_module_attr_or_none(
+            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad.attrbad')
+        assert bad_module_attr is None
 
     # Assert this function raises the expected exception when passed a
     # non-string.
@@ -95,13 +104,6 @@ def test_import_module_attr_or_none() -> None:
             'They have gone hungry like you, suffered like you. And they have '
             'found a quicker way of changing masters.'
         )
-
-    # Assert this function raises the expected exception when passed the
-    # syntactically valid fully-qualified name of a non-existent attribute of
-    # an unimportable module.
-    with raises(ValueError):
-        import_module_attr_or_none(
-            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad.attrbad')
 
 # ....................{ TESTS ~ attr : typing             }....................
 def test_import_module_typing_any_attr() -> None:

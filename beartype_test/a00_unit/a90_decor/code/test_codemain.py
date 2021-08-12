@@ -96,6 +96,12 @@ def test_codemain() -> None:
             #Python filters deprecation warnings by default. This is almost
             #certainly a pytest issue. Since this has become fairly
             #unctuous, we should probably submit a pytest issue report.
+            #FIXME: Actually, pytest now appears to have explicit support for
+            #testing that a code block emits a deprecation warning:
+            #    with pytest.deprecated_call():
+            #        myfunction(17)
+            #See also: https://docs.pytest.org/en/6.2.x/warnings.html#ensuring-code-triggers-a-deprecation-warning
+
             # # If this is a deprecated PEP-compliant type hint, declare this
             # # decorated callable under a context manager asserting this
             # # declaration to emit non-fatal deprecation warnings.

@@ -73,7 +73,8 @@ from beartype.roar._roarwarn import (
     BeartypeWarning,
     BeartypeDecorHintPepWarning,
     BeartypeDecorHintPepDeprecatedWarning,
-    BeartypeDependencyOptionalMissingWarning,
+    BeartypeModuleNotFoundWarning,
+    BeartypeModuleUnimportableWarning,
     BeartypeValeWarning,
     BeartypeValeLambdaWarning,
 )

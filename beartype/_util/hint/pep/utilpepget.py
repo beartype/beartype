@@ -588,7 +588,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #  Python version guard resembling:
     #      elif IS_PYTHON_AT_LEAST_3_9 and is_hint_pep484_newtype_obsolete(hint):
     #* Add new "HINT_TYPE_NAME_TO_SIGN" entries for both "typing.NewType" and
-    #  "typing_extensions.NewType" under Python >= 3.10.
+    #  "typing_extensions.NewType" under Python >= 3.10. Actually... maybe only
+    #  "typing.NewType". How does "typing_extensions" implement that? *sigh*
     #
     #That should do it. Still. Super-super annoying, guys.
     elif is_hint_pep484_newtype(hint):
