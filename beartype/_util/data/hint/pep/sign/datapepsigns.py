@@ -17,8 +17,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._util.data.hint.pep.sign.datapepsigncls import (
+    HintSign as _HintSign)
 
 # ....................{ SIGNS ~ explicit                  }....................
 # Signs with explicit analogues in the stdlib "typing" module.
@@ -54,51 +54,51 @@ from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
-HintSignAnnotated = HintSign(name='Annotated')
-HintSignAny = HintSign(name='Any')
-HintSignCallable = HintSign(name='Callable')
-HintSignClassVar = HintSign(name='ClassVar')
-HintSignConcatenate = HintSign(name='Concatenate')
-HintSignFinal = HintSign(name='Final')
-HintSignForwardRef = HintSign(name='ForwardRef')
-HintSignGeneric = HintSign(name='Generic')
-HintSignLiteral = HintSign(name='Literal')
-HintSignOptional = HintSign(name='Optional')
-HintSignParamSpec = HintSign(name='ParamSpec')
-HintSignProtocol = HintSign(name='Protocol')
-HintSignTuple = HintSign(name='Tuple')
-HintSignType = HintSign(name='Type')
-HintSignTypeVar = HintSign(name='TypeVar')
-HintSignUnion = HintSign(name='Union')
+HintSignAnnotated = _HintSign(name='Annotated')
+HintSignAny = _HintSign(name='Any')
+HintSignCallable = _HintSign(name='Callable')
+HintSignClassVar = _HintSign(name='ClassVar')
+HintSignConcatenate = _HintSign(name='Concatenate')
+HintSignFinal = _HintSign(name='Final')
+HintSignForwardRef = _HintSign(name='ForwardRef')
+HintSignGeneric = _HintSign(name='Generic')
+HintSignLiteral = _HintSign(name='Literal')
+HintSignOptional = _HintSign(name='Optional')
+HintSignParamSpec = _HintSign(name='ParamSpec')
+HintSignProtocol = _HintSign(name='Protocol')
+HintSignTuple = _HintSign(name='Tuple')
+HintSignType = _HintSign(name='Type')
+HintSignTypeVar = _HintSign(name='TypeVar')
+HintSignUnion = _HintSign(name='Union')
 
 # ABCs (from collections.abc).
-HintSignAbstractSet = HintSign(name='AbstractSet')
-HintSignByteString = HintSign(name='ByteString')
-HintSignContainer = HintSign(name='Container')
-HintSignContextManager = HintSign(name='ContextManager')
-HintSignHashable = HintSign(name='Hashable')
-HintSignItemsView = HintSign(name='ItemsView')
-HintSignIterable = HintSign(name='Iterable')
-HintSignIterator = HintSign(name='Iterator')
-HintSignKeysView = HintSign(name='KeysView')
-HintSignMapping = HintSign(name='Mapping')
-HintSignMappingView = HintSign(name='MappingView')
-HintSignMutableMapping = HintSign(name='MutableMapping')
-HintSignMutableSequence = HintSign(name='MutableSequence')
-HintSignMutableSet = HintSign(name='MutableSet')
-HintSignSequence = HintSign(name='Sequence')
-HintSignSized = HintSign(name='Sized')
-HintSignValuesView = HintSign(name='ValuesView')
-HintSignAwaitable = HintSign(name='Awaitable')
-HintSignAsyncIterator = HintSign(name='Iterator')
-HintSignAsyncIterable = HintSign(name='Iterable')
-HintSignCoroutine = HintSign(name='Coroutine')
-HintSignCollection = HintSign(name='Collection')
-HintSignAsyncGenerator = HintSign(name='Generator')
-HintSignAsyncContextManager = HintSign(name='ContextManager')
+HintSignAbstractSet = _HintSign(name='AbstractSet')
+HintSignByteString = _HintSign(name='ByteString')
+HintSignContainer = _HintSign(name='Container')
+HintSignContextManager = _HintSign(name='ContextManager')
+HintSignHashable = _HintSign(name='Hashable')
+HintSignItemsView = _HintSign(name='ItemsView')
+HintSignIterable = _HintSign(name='Iterable')
+HintSignIterator = _HintSign(name='Iterator')
+HintSignKeysView = _HintSign(name='KeysView')
+HintSignMapping = _HintSign(name='Mapping')
+HintSignMappingView = _HintSign(name='MappingView')
+HintSignMutableMapping = _HintSign(name='MutableMapping')
+HintSignMutableSequence = _HintSign(name='MutableSequence')
+HintSignMutableSet = _HintSign(name='MutableSet')
+HintSignSequence = _HintSign(name='Sequence')
+HintSignSized = _HintSign(name='Sized')
+HintSignValuesView = _HintSign(name='ValuesView')
+HintSignAwaitable = _HintSign(name='Awaitable')
+HintSignAsyncIterator = _HintSign(name='Iterator')
+HintSignAsyncIterable = _HintSign(name='Iterable')
+HintSignCoroutine = _HintSign(name='Coroutine')
+HintSignCollection = _HintSign(name='Collection')
+HintSignAsyncGenerator = _HintSign(name='Generator')
+HintSignAsyncContextManager = _HintSign(name='ContextManager')
 
 # Structural checks, a.k.a. protocols.
-HintSignReversible = HintSign(name='Reversible')
+HintSignReversible = _HintSign(name='Reversible')
 # SupportsAbs   <-- not a useful type hint (already an isinstanceable ABC)
 # SupportsBytes   <-- not a useful type hint (already an isinstanceable ABC)
 # SupportsComplex   <-- not a useful type hint (already an isinstanceable ABC)
@@ -108,18 +108,18 @@ HintSignReversible = HintSign(name='Reversible')
 # SupportsRound   <-- not a useful type hint (already an isinstanceable ABC)
 
 # Concrete collection types.
-HintSignChainMap = HintSign(name='ChainMap')
-HintSignCounter = HintSign(name='Counter')
-HintSignDeque = HintSign(name='Deque')
-HintSignDict = HintSign(name='Dict')
-HintSignDefaultDict = HintSign(name='DefaultDict')
-HintSignList = HintSign(name='List')
-HintSignOrderedDict = HintSign(name='OrderedDict')
-HintSignSet = HintSign(name='Set')
-HintSignFrozenSet = HintSign(name='FrozenSet')
-HintSignNamedTuple = HintSign(name='NamedTuple')
-HintSignTypedDict = HintSign(name='TypedDict')
-HintSignGenerator = HintSign(name='Generator')
+HintSignChainMap = _HintSign(name='ChainMap')
+HintSignCounter = _HintSign(name='Counter')
+HintSignDeque = _HintSign(name='Deque')
+HintSignDict = _HintSign(name='Dict')
+HintSignDefaultDict = _HintSign(name='DefaultDict')
+HintSignList = _HintSign(name='List')
+HintSignOrderedDict = _HintSign(name='OrderedDict')
+HintSignSet = _HintSign(name='Set')
+HintSignFrozenSet = _HintSign(name='FrozenSet')
+HintSignNamedTuple = _HintSign(name='NamedTuple')
+HintSignTypedDict = _HintSign(name='TypedDict')
+HintSignGenerator = _HintSign(name='Generator')
 
 # One-off things.
 # AnyStr   <-- not a unique type hint (just a constrained "TypeVar")
@@ -129,7 +129,7 @@ HintSignGenerator = HintSign(name='Generator')
 # get_origin   <-- unusable as a type hint
 # get_type_hints   <-- unusable as a type hint
 # is_typeddict   <-- unusable as a type hint
-HintSignNewType = HintSign(name='NewType')
+HintSignNewType = _HintSign(name='NewType')
 # no_type_check   <-- unusable as a type hint
 # no_type_check_decorator   <-- unusable as a type hint
 
@@ -148,23 +148,23 @@ HintSignNewType = HintSign(name='NewType')
 # subjective feels about the matter. Wisely, we choose the practical approach.
 #
 # In short, "NoReturn" is insane.
-HintSignNoReturn = HintSign(name='NoReturn')
+HintSignNoReturn = _HintSign(name='NoReturn')
 
 # overload   <-- unusable as a type hint
-HintSignParamSpecArgs = HintSign(name='ParamSpecArgs')
-HintSignParamSpecKwargs = HintSign(name='ParamSpecKwargs')
+HintSignParamSpecArgs = _HintSign(name='ParamSpecArgs')
+HintSignParamSpecKwargs = _HintSign(name='ParamSpecKwargs')
 # runtime_checkable   <-- unusable as a type hint
 # Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
-HintSignTypeAlias = HintSign(name='TypeAlias')
-HintSignTypeGuard = HintSign(name='TypeGuard')
+HintSignTypeAlias = _HintSign(name='TypeAlias')
+HintSignTypeGuard = _HintSign(name='TypeGuard')
 
 # Wrapper namespace for re type aliases.
 #
 # Note that "typing.__all__" intentionally omits the "Match" and "Pattern"
 # attributes, which it oddly considers to comprise another namespace. *shrug*
-HintSignMatch = HintSign(name='Match')
-HintSignPattern = HintSign(name='Pattern')
+HintSignMatch = _HintSign(name='Match')
+HintSignPattern = _HintSign(name='Pattern')
 
 # ....................{ SIGNS ~ implicit                  }....................
 # Signs with *NO* explicit analogues in the stdlib "typing" module but
@@ -173,17 +173,17 @@ HintSignPattern = HintSign(name='Pattern')
 # PEP 484 explicitly supports the "None" singleton, albeit implicitly:
 #     When used in a type hint, the expression None is considered equivalent to
 #     type(None).
-HintSignNone = HintSign(name='None')
+HintSignNone = _HintSign(name='None')
 
 # ....................{ SIGNS ~ implicit : lib            }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #
 # ....................{ SIGNS ~ implicit : lib : numpy    }....................
 # ...the "numpy.typing" subpackage.
-HintSignNumpyArray = HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
+HintSignNumpyArray = _HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
 
 # ....................{ CLEANUP                           }....................
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the
 # attributes of this namespace and signs.
-del HintSign
+del _HintSign

@@ -519,7 +519,7 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
     # exception.
     if not is_hint_pep484_newtype(hint):
         raise BeartypeDecorHintPep484Exception(
-            f'PEP-compliant type hint {repr(hint)} not "typing.NewType".')
+            f'Type hint {repr(hint)} not "typing.NewType".')
     # Else, this object is a PEP 484-compliant new type hint.
 
     # Return the unqualified classname referred to by this reference. Note

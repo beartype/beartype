@@ -513,10 +513,29 @@ def _init() -> None:
     # ..................{ CONSTRUCTION                      }..................
     # For the name of each top-level hinting module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # For the name of each sign and that sign...
-        for hint_sign_name, hint_sign in datapepsigns.__dict__.items():
+        # For the name of each sign...
+        #
+        # Note that:
+        # * The inspect.getmembers() getter could also be called here. However,
+        #   that getter internally defers to dir() and getattr() with a
+        #   considerable increase in runtime complexity.
+        # * The "__dict__" dunder attribute should *NEVER* be accessed directly
+        #   on a module, as this attribute commonly contains artificial entries
+        #   *NOT* explicitly declared by that module (e.g., "__", "e__",
+        #   "ns__").
+        for hint_sign_name in dir(datapepsigns):
+            # If this name is *NOT* prefixed by the substring prefixing the
+            # names of all signs, this name is *NOT* the name of a sign. In
+            # this case, continue to the next sign.
+            if not hint_sign_name.startswith('HintSign'):
+                continue
+
+            # Sign with this name.
+            hint_sign = getattr(datapepsigns, hint_sign_name)
+
             # Unqualified name of the typing attribute identified by this sign.
             typing_attr_name = hint_sign_name[_HINT_SIGN_PREFIX_LEN:]
+            assert typing_attr_name, f'{hint_sign_name} not sign name.'
 
             # Machine-readable representation prefix of this attribute,
             # conditionally defined as either:
@@ -561,6 +580,12 @@ def _init() -> None:
     HINTS_REPR_PREFIX_DEPRECATED = HINTS_PEP484_REPR_PREFIX_DEPRECATED
     HINTS_REPR_IGNORABLE_SHALLOW = frozenset(HINTS_REPR_IGNORABLE_SHALLOW)
 
+    # ..................{ DEBUGGING                         }..................
+    # Uncomment as needed to display the contents of these objects.
+    from pprint import pformat
+    print(f'HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN)}')
+    print(f'HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN)}')
+    print(f'HINT_TYPE_NAME_TO_SIGN: {pformat(HINT_TYPE_NAME_TO_SIGN)}')
 
 # Initialize this submodule.
 _init()

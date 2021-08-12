@@ -335,7 +335,6 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     return hint_sign
 
 
-#FIXME: Test that our "testing_extensions.Annotated" support actually works.
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 #FIXME: Refactor as follows:
 #* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
@@ -565,6 +564,33 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
+
+    #FIXME: *UGH.* Python 3.10 has yet again fundamentally broken the public
+    #API of a "typing" type. The "typing.NewType" attribute is now a class
+    #rather than a function. That's fine. What is *NOT* fine is that this class
+    #now attempts to masquerade as its underlying type, which makes detection
+    #extremely problematic:
+    #    >>> import typing as t
+    #    >>> nt = t.NewType('TotallyNotAStr', str)
+    #    >>> repr(nt)
+    #    '__main__.TotallyNotAStr'
+    #
+    #In a way, this is better, because the new "typing.NewType" implementation
+    #is easier to detect -- *MUCH* easier. Still, it's a huge pain, because we
+    #now need to two fundamentally divergent implementations as follows:
+    #* Rename the is_hint_pep484_newtype() function to
+    #  is_hint_pep484_newtype_obsolete().
+    #* In that function, raise an exception if IS_PYTHON_AT_LEAST_3_10.
+    #* Refactor the existing call to that function in "utilhintpep484" to
+    #  instead call this function and compare the resulting sign to
+    #  "HintSignNewType".
+    #* Guard the call to is_hint_pep484_newtype_obsolete() right here with a
+    #  Python version guard resembling:
+    #      elif IS_PYTHON_AT_LEAST_3_9 and is_hint_pep484_newtype_obsolete(hint):
+    #* Add new "HINT_TYPE_NAME_TO_SIGN" entries for both "typing.NewType" and
+    #  "typing_extensions.NewType" under Python >= 3.10.
+    #
+    #That should do it. Still. Super-super annoying, guys.
     elif is_hint_pep484_newtype(hint):
         return HintSignNewType
 

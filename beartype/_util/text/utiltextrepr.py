@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype._util.utilobject import get_object_scopes_name
 from collections.abc import Callable
+from pprint import saferepr
 from re import (
     DOTALL,
     sub as re_sub
@@ -88,13 +89,15 @@ def represent_object(
     """
     assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
 
-    # String describing the passed object. For debuggability, the verbose
-    # (albeit less human-readable) output of repr() is preferred to the terse
-    # (albeit more human-readable) output of str().
-    #
-    # Note that this representation quote-protects all newlines in this
-    # representation. Ergo, "\n" *MUST* be matched as r"\n" instead.
-    obj_repr = repr(obj)
+    # String describing the passed object. Note that:
+    # * This Representation quote-protects all newlines in this representation.
+    #   Ergo, "\n" *MUST* be matched as r"\n" instead below.
+    # * For debuggability, the verbose (albeit less readable) output of repr()
+    #   is preferred to the terse (albeit more readable) output of str().
+    # * For safety, the saferepr() function explicitly protected against
+    #   recursive data structures is preferred to the unsafe repr() builtin
+    #   *NOT* protected against such recursion.
+    obj_repr = saferepr(obj)
 
     # If this representation is empty, return empty double-quotes. Although
     # most objects (including outlier singletons like "None" and the empty

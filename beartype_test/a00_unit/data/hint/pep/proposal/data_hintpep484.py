@@ -923,8 +923,7 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typing=True,
             piths_satisfied_meta=(
                 # String constant.
-                HintPithSatisfiedMetadata(
-                    'Ishmælite‐ish, aberrant control'),
+                HintPithSatisfiedMetadata('Ishmælite‐ish, aberrant control'),
             ),
             piths_unsatisfied_meta=(
                 # Tuple of string constants.
