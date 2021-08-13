@@ -592,6 +592,17 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #  "typing.NewType". How does "typing_extensions" implement that? *sigh*
     #
     #That should do it. Still. Super-super annoying, guys.
+    #FIXME: While that *WOULD* technically work, maybe, we'll probably get
+    #issues with "typing_extensions.NewType". Basically, we instead just want
+    #to generalize this is_hint_pep484_newtype() tester to handle both types of
+    #"NewType" objects without reference to the current Python version, which
+    #isn't really a reliable way of distinguishing these types: e.g.,
+    #    isinstance(hint, type) and hint.__name__ == 'NewType'  # <-- trivial!
+    #Also, we still need to do this:
+    #* Add new "HINT_TYPE_NAME_TO_SIGN" entries for both "typing.NewType" and
+    #  "typing_extensions.NewType". Don't worry about the Python version here.
+    #FIXME; Likewise, we'll probably need to refactor the
+    #get_hint_pep484_newtype_class() getter, too.
     elif is_hint_pep484_newtype(hint):
         return HintSignNewType
 

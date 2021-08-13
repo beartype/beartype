@@ -16,7 +16,7 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.cache.utilcachecall import callable_cached
 from importlib import import_module as importlib_import_module
 from types import ModuleType
-from typing import Any, Type
+from typing import Any, Optional, Type
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -72,7 +72,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 
 #FIXME: Unit test us up.
-def import_module_or_none(module_name: str) -> ModuleType:
+def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     '''
     Dynamically import and return the module, package, or C extension with the
     passed fully-qualified name if importable *or* return ``None`` otherwise
