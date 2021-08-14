@@ -14,7 +14,7 @@ from beartype._util.mod.utilmodimport import (
     import_module_typingextensions_attr_or_none,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata)
+    HintPepMetadata)
 from typing import Any, Callable, Dict, Tuple
 
 # ....................{ CONSTANTS                         }....................
@@ -34,10 +34,10 @@ def make_hints_metadata_typing(
 
     # Optional parameters.
     hint_maker: Callable[[Any,], Any] = lambda hint: hint,
-) -> Tuple[PepHintMetadata]:
+) -> Tuple[HintPepMetadata]:
     '''
     Create and return a tuple of zero or more **typing type hint metadata
-    objects** (i.e., :class:`PepHintMetadata` instances describing type hints
+    objects** (i.e., :class:`HintPepMetadata` instances describing type hints
     originating from typing modules available under the active Python
     interpreter), depending on which typing modules are importable and which
     attributes importable from those typing modules.
@@ -45,8 +45,8 @@ def make_hints_metadata_typing(
     Specifically, this function returns a tuple containing:
 
     * If the :mod:`typing` module declares an attribute with the passed name,
-      a new :class:`PepHintMetadata` instance created by passing the
-      :meth:`PepHintMetadata.__init__` method:
+      a new :class:`HintPepMetadata` instance created by passing the
+      :meth:`HintPepMetadata.__init__` method:
 
       * A ``hint`` parameter whose value is that returned by calling the passed
         ``hint_maker`` callable passed that attribute imported from that
@@ -56,8 +56,8 @@ def make_hints_metadata_typing(
 
     * If the third-party :mod:`typing_extensions` module is both importable
       *and* declares an attribute with the passed name,
-      a new :class:`PepHintMetadata` instance created by passing the
-      :meth:`PepHintMetadata.__init__` method similar parameters.
+      a new :class:`HintPepMetadata` instance created by passing the
+      :meth:`HintPepMetadata.__init__` method similar parameters.
 
     Attributes
     ----------
@@ -65,8 +65,8 @@ def make_hints_metadata_typing(
         Unqualified name of the attribute to be imported from a typing module.
     hint_metadata: Dict[str, Any]
         Dictionary of additional keyword arguments to be passed to the
-        :meth:`PepHintMetadata.__init__` method for each
-        :class:`PepHintMetadata` instance created by this function.
+        :meth:`HintPepMetadata.__init__` method for each
+        :class:`HintPepMetadata` instance created by this function.
     hint_maker : Callable[[Any,], Any]
         **PEP-compliant type hint factory** (i.e., callable accepting this
         attribute imported from a typing module and returning a PEP-compliant
@@ -76,7 +76,7 @@ def make_hints_metadata_typing(
 
     Returns
     ----------
-    Tuple[PepHintMetadata]
+    Tuple[HintPepMetadata]
         Tuple of zero or more typing type hint metadata objects.
     '''
     assert isinstance(typing_attr_basename, str), (
@@ -93,7 +93,7 @@ def make_hints_metadata_typing(
         func=hint_maker, func_args_len_flexible=1)
     # Else, this hint factory accepts exactly one argument.
 
-    # List of all "PepHintMetadata" instances to be returned as a tuple.
+    # List of all "HintPepMetadata" instances to be returned as a tuple.
     hints_metadata_typing = []
 
     # For each function importing typing attributes from a given module...
@@ -107,8 +107,8 @@ def make_hints_metadata_typing(
             # Type hint synthesized from this attribute by this hint factory.
             hint = hint_maker(typing_attr)
 
-            # Append a new "PepHintMetadata" instance encapsulating this hint.
-            hint_metadata_typing = PepHintMetadata(hint=hint, **hint_metadata)
+            # Append a new "HintPepMetadata" instance encapsulating this hint.
+            hint_metadata_typing = HintPepMetadata(hint=hint, **hint_metadata)
 
             # Append this instance to this list.
             hints_metadata_typing.append(hint_metadata_typing)

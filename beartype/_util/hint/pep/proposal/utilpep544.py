@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from abc import abstractmethod
 from beartype.roar import BeartypeDecorHintPep544Exception
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.utilobject import is_object_subclass
@@ -226,7 +226,7 @@ is_hint_pep484_generic_io.__doc__ = '''
     the :mod:`typing` module effectively unusable at runtime due to botched
     implementation details) that is losslessly replaceable with a useful
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._util.data.hint.pep.proposal.datapep544._Pep544IO` itself
+    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO` itself
     *or* a subclass of that class defined by this submodule intentionally
     designed to be usable at runtime).
 
@@ -247,7 +247,7 @@ is_hint_pep484_generic_io.__doc__ = '''
 
     See Also
     ----------
-    :class:`beartype._util.data.hint.pep.proposal.datapep544._Pep544IO`
+    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
         Further commentary.
     '''
 
@@ -275,7 +275,7 @@ is_hint_pep544_protocol.__doc__ = '''
 def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
     '''
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._util.data.hint.pep.proposal.datapep544._Pep544IO`
+    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
     itself *or* a subclass of that class defined by this submodule
     intentionally designed to be usable at runtime) corresponding to the passed
     :pep:`484`-compliant :mod:`typing` **IO generic base class** (i.e., either
@@ -306,7 +306,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
 
     See Also
     ----------
-    :class:`beartype._util.data.hint.pep.proposal.datapep544._Pep544IO`
+    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
         Further commentary.
     '''
 

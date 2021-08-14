@@ -71,8 +71,7 @@ def die_unless_module_attr_name(
     '''
     assert isinstance(module_attr_label, str), (
         f'{repr(module_attr_label)} not string.')
-    assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not type.')
+    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
 
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextidentifier import is_identifier
@@ -126,33 +125,21 @@ def is_module(module_name: str) -> bool:
     bool
         ``True`` only if this module is importable.
 
-    Raises
+    Warns
     ----------
-    Exception
-        If a module with this name exists *but* this module is unimportable
-        due to module-scoped side effects at importation time. Since modules
-        may perform arbitrary Turing-complete logic from module scope, callers
-        should be prepared to handle *any* possible exception that might arise.
+    BeartypeModuleUnimportableWarning
+        If a module with this name exists *but* that module is unimportable
+        due to raising module-scoped exceptions at importation time.
     '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
 
-    # If this module has already been imported, return true.
-    if module_name in sys_modules:
-        return True
-    # Else, this module has yet to be imported.
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodimport import import_module_or_none
 
-    # Attempt to...
-    try:
-        # Dynamically import this module.
-        importlib_import_module(module_name)
+    # Module with this name if this module is importable *OR* "None" otherwise.
+    module = import_module_or_none(module_name)
 
-        # Return true, since this importation succeeded.
-        return True
-    # If no module this this name exists, return false.
-    except ModuleNotFoundError:
-        return False
-    # If any other exception was raised, silently permit that exception to
-    # unwind the call stack.
+    # Return true only if this module is importable.
+    return module is not None
 
 
 #FIXME: Unit test us up against "setuptools", the only third-party package
@@ -184,13 +171,11 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         * This module is importable.
         * This module's version is at least the passed version.
 
-    Raises
+    Warns
     ----------
-    Exception
-        If a module with this name exists *but* this module is unimportable
-        due to module-scoped side effects at importation time. Since modules
-        may perform arbitrary Turing-complete logic from module scope, callers
-        should be prepared to handle *any* possible exception that might arise.
+    BeartypeModuleUnimportableWarning
+        If a module with this name exists *but* that module is unimportable
+        due to raising module-scoped exceptions at importation time.
     '''
 
     # If it is *NOT* the case that...

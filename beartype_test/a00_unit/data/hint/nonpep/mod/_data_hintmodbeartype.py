@@ -15,7 +15,7 @@ These hints include:
 
 # ....................{ IMPORTS                           }....................
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    NonPepHintMetadata,
+    HintNonPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -38,7 +38,7 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module.HINTS_NONPEP_META.extend((
         # ................{ TUPLE UNION                       }................
         # Tuple union of one standard class.
-        NonPepHintMetadata(
+        HintNonPepMetadata(
             hint=(str,),
             piths_satisfied_meta=(
                 # String constant.
@@ -64,7 +64,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Tuple union of two or more standard classes.
-        NonPepHintMetadata(
+        HintNonPepMetadata(
             hint=(int, str),
             piths_satisfied_meta=(
                 # Integer constant.
@@ -94,7 +94,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ TYPE                              }................
         # Builtin type.
-        NonPepHintMetadata(
+        HintNonPepMetadata(
             hint=str,
             piths_satisfied_meta=(
                 # String constant.

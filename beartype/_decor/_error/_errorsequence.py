@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignTuple
-from beartype._util.data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
+from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_tuple_empty
 from beartype._util.hint.utilhinttest import is_hint_ignorable

@@ -10,7 +10,7 @@ Project-wide :pep:`585`-compliant **type hint test data.**
 # ....................{ IMPORTS                           }....................
 import re
 from beartype._cave._cavefast import IntType
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignByteString,
     HintSignCallable,
     HintSignContextManager,
@@ -27,7 +27,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata,
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -250,7 +250,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # the standard integer protocol raises a runtime error from @beartype.
         # Yes, this means that subscripting "collections.abc.ByteString"
         # conveys no information and is thus nonsensical. Welcome to PEP 585.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=ByteString[int],
             pep_sign=HintSignByteString,
             stdlib_type=ByteString,
@@ -267,7 +267,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Byte string of integer constants satisfying the stdlib
         # "numbers.Integral" protocol.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=ByteString[IntType],
             pep_sign=HintSignByteString,
             stdlib_type=ByteString,
@@ -285,7 +285,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ CALLABLE                          }................
         # Callable accepting no parameters and returning a string.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
             stdlib_type=Callable,
@@ -302,7 +302,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ CONTEXTMANAGER                    }................
         # Context manager yielding strings.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=AbstractContextManager[str],
             pep_sign=HintSignContextManager,
             stdlib_type=AbstractContextManager,
@@ -324,7 +324,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ DICT                              }................
         # Flat dictionary.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=dict[int, str],
             pep_sign=HintSignDict,
             stdlib_type=dict,
@@ -344,7 +344,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic dictionary.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=dict[S, T],
             pep_sign=HintSignDict,
             stdlib_type=dict,
@@ -365,7 +365,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ GENERATOR                         }................
         # Flat generator.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Generator[int, float, str],
             pep_sign=HintSignGenerator,
             stdlib_type=Generator,
@@ -389,7 +389,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # "is_pep585_builtin=True," below.
 
         # Generic subclassing a single unparametrized builtin container.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericUntypevaredSingle,
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredSingle,
@@ -415,7 +415,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic subclassing a single parametrized builtin containerr.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericTypevaredSingle,
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
@@ -442,7 +442,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same type variables in the same order.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericTypevaredSingle[S, T],
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
@@ -470,7 +470,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ GENERICS ~ multiple               }................
         # Generic subclassing multiple unparametrized "collection.abc" abstract
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericUntypevaredMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredMultiple,
@@ -496,7 +496,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Generic subclassing multiple parametrized "collections.abc" abstract
         # base classes (ABCs).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericTypevaredShallowMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredShallowMultiple,
@@ -520,7 +520,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple indirectly parametrized
         # "collections.abc" abstract base classes (ABCs) *AND* an
         # unparametrized "collections.abc" ABC.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pep585GenericTypevaredDeepMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredDeepMultiple,
@@ -550,7 +550,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Nested list of PEP 585-compliant generics.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[Pep585GenericUntypevaredMultiple],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -585,7 +585,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ LIST                              }................
         # List of ignorable objects.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[object],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -608,7 +608,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # List of non-"typing" objects.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[str],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -643,7 +643,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic list.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[T],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -667,7 +667,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ REGEX ~ match                     }................
         # Regular expression match of only strings.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Match[str],
             pep_sign=HintSignMatch,
             stdlib_type=Match,
@@ -687,7 +687,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ REGEX ~ pattern                   }................
         # Regular expression pattern of only strings.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Pattern[str],
             pep_sign=HintSignPattern,
             stdlib_type=Pattern,
@@ -712,7 +712,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #     TypeError: Too few parameters for List; actual 0, expected 1
         #     >>> List[[]]
         #     TypeError: Parameters to generic types must be types. Got [].
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[()],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -738,7 +738,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fixed-length tuple of only ignorable child hints.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[Any, object,],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -764,7 +764,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fixed-length tuple of at least one ignorable child hint.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[float, Any, str,],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -814,7 +814,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Nested fixed-length tuple of at least one ignorable child hint.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[tuple[float, Any, str,], ...],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -866,7 +866,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic fixed-length tuple.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[S, T],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -892,7 +892,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ TUPLE ~ variadic                  }................
         # Variadic tuple.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[str, ...],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -925,7 +925,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic variadic tuple.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=tuple[T, ...],
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
@@ -947,7 +947,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ TYPE                              }................
         # Builtin type.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=type[dict],
             pep_sign=HintSignType,
             stdlib_type=type,
@@ -963,7 +963,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Generic type.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=type[T],
             pep_sign=HintSignType,
             stdlib_type=type,
@@ -984,7 +984,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # optimizations leveraging PEP 572-style assignment expressions.
 
         # Nested union of multiple non-"typing" types.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[Union[int, str,]],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -1035,7 +1035,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Nested union of one non-"typing" type and one "typing" type.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Sequence[Union[str, ByteString]],
             pep_sign=HintSignSequence,
             stdlib_type=Sequence,
@@ -1084,7 +1084,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Nested union of no non-"typing" type and multiple "typing" types.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=HintSignMutableSequence,
             stdlib_type=MutableSequence,

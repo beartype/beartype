@@ -102,12 +102,12 @@ def test_pep544_fail() -> None:
 def test_is_hint_pep544_protocol() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep544_protocol`
+    :func:`beartype._util.hint.pep.proposal.utilpep544.is_hint_pep544_protocol`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.data_type import TYPES_BUILTIN
@@ -150,12 +150,12 @@ def test_is_hint_pep544_protocol() -> None:
 def test_is_hint_pep544_io_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.is_hint_pep484_generic_io`
+    :func:`beartype._util.hint.pep.proposal.utilpep544.is_hint_pep484_generic_io`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep484_generic_io)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
@@ -175,13 +175,13 @@ def test_is_hint_pep544_io_generic() -> None:
 def test_get_hint_pep544_io_protocol_from_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
+    :func:`beartype._util.hint.pep.proposal.utilpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype._util.utilobject import is_object_subclass

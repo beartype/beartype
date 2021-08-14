@@ -22,8 +22,8 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.data.hint.datahint import HINT_BASES_FORWARDREF
-from beartype._util.data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
+from beartype._data.hint.datahint import HINT_BASES_FORWARDREF
+from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

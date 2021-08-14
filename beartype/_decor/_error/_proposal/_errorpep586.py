@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignLiteral
+from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional

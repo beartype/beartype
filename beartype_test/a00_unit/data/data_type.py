@@ -12,7 +12,7 @@ cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import builtins
-from beartype._util.data.mod.datamod import BUILTINS_MODULE_NAME
+from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
 from sys import exc_info, implementation
 from typing import Callable
 
@@ -241,7 +241,7 @@ but which nonetheless erroneously masquerade as being builtin).
 
 See Also
 ----------
-:data:`beartype._util.data.cls.datacls.TYPES_BUILTIN_FAKE`
+:data:`beartype._data.cls.datacls.TYPES_BUILTIN_FAKE`
     Related runtime set. Whereas that runtime-specific set is efficiently
     defined explicitly by listing all non-builtin builtin mimic types, this
     test-specific set is inefficiently defined implicitly by introspecting the

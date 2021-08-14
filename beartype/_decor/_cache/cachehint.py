@@ -40,7 +40,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    strongly benefit from some form of memoization or caching. Since this edge
 #    case should be fairly rare, even a dictionary would probably be overkill.
 #    Just implementing something resembling the following memoized getter
-#    in the "utilhintpep544" submodule would probably suffice:
+#    in the "utilpep544" submodule would probably suffice:
 #        @callable_cached
 #        def get_pep544_protocol_checkable_from_protocol_uncheckable(
 #            protocol_uncheckable: object) -> Protocol:
@@ -51,7 +51,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._cave._cavefast import NotImplementedType, NoneType
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
+from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from collections.abc import Callable
 from typing import Any, Dict, Union
 

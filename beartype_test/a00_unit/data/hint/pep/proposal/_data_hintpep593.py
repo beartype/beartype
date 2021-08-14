@@ -9,12 +9,12 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignList,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata,
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -130,7 +130,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ ANNOTATED                         }................
         # Hashable annotated of a non-"typing" type annotated by an arbitrary
         # hashable object.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, int],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -147,7 +147,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unhashable annotated of a non-"typing" type annotated by an
         # unhashable mutable container.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, []],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -163,7 +163,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Annotated of a "typing" type.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[list[str], int],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -182,7 +182,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ ANNOTATED ~ beartype : is         }................
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # validator defined as a lambda function.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, IsLengthy],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -206,7 +206,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a listed of a nested non-"typing" type annotated by one
         # beartype-specific validator defined as a lambda function.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[Annotated[str, IsLengthy]],
             pep_sign=HintSignList,
             stdlib_type=list,
@@ -240,7 +240,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type annotated by two or more
         # beartype-specific data validators all defined as functions, specified
         # with comma-delimited list syntax.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -275,7 +275,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type annotated by two or more
         # beartype-specific data validators all defined as functions, specified
         # with "&"-delimited operator syntax.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -309,7 +309,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # validator synthesized from all possible operators.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[str, IsLengthyOrUnquotedSentence],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -344,7 +344,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ ANNOTATED ~ beartype : isequal    }................
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # equality validator.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[list[str], IsEqualAmplyImpish],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
@@ -375,7 +375,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ ANNOTATED ~ beartype : isattr     }................
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # attribute validator.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Annotated[
                 CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
             pep_sign=HintSignAnnotated,

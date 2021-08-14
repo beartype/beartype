@@ -12,9 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.data.hint.pep.sign import datapepsigns
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign import datapepsigns
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
     # HintSignAnnotated,
     # HintSignAny,
@@ -55,7 +55,7 @@ from beartype._util.data.hint.pep.sign.datapepsigns import (
     HintSignMutableSequence,
     HintSignMutableSet,
     # HintSignNamedTuple,
-    # HintSignNewType,
+    HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
     # HintSignOptional,
@@ -220,6 +220,14 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     #   string as PEP-compliant substantially simplifies logic throughout the
     #   codebase, we (currently) opt to do so.
     'builtins.str': HintSignForwardRef,
+
+    # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints
+    # as instances of that class. Regardless of the current Python version,
+    # "typing_extensions.NewType" type hints remain implemented in manner of
+    # Python < 3.10 -- which is to say, as closures of that function. Ergo, we
+    # intentionally omit "typing_extensions.NewType" here. See also:
+    #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
+    'typing.NewType': HintSignNewType,
 }
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
@@ -319,7 +327,7 @@ def _init() -> None:
 
     # ..................{ EXTERNALS                         }..................
     # Defer initialization-specific imports.
-    from beartype._util.data.mod.datamod import TYPING_MODULE_NAMES
+    from beartype._data.mod.datamod import TYPING_MODULE_NAMES
 
     # Permit redefinition of these globals below.
     global \

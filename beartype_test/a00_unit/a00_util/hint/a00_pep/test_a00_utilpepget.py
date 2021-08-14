@@ -60,7 +60,7 @@ def test_get_hint_pep_generic_type_or_none() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_type_or_none)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -163,7 +163,7 @@ def test_get_hint_pep_generic_bases_unerased() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing

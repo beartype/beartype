@@ -19,13 +19,13 @@ This submodule unit tests :pep:`593` support implemented in the
 # ....................{ TESTS                             }....................
 def test_is_hint_pep593() -> None:
     '''
-    Test the :beartype._util.hint.pep.proposal.utilhintpep593.is_hint_pep593`
+    Test the :beartype._util.hint.pep.proposal.utilpep593.is_hint_pep593`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    from beartype._util.hint.pep.proposal.utilpep593 import (
         is_hint_pep593)
     from typing import Optional
 

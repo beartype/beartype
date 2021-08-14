@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignNoReturn
+from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._util.text.utiltextlabel import label_callable
 
 # See the "beartype.cave" submodule for further commentary.

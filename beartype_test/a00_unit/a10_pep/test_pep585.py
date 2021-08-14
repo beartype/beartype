@@ -24,12 +24,12 @@ from pytest import raises
 def test_is_hint_pep585_builtin() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep585.is_hint_pep585_builtin`
+    :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin`
     function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -43,12 +43,12 @@ def test_is_hint_pep585_builtin() -> None:
 def test_is_hint_pep585_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep585.is_hint_pep585_generic`
+    :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`
     function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_generic)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)
@@ -62,13 +62,13 @@ def test_is_hint_pep585_generic() -> None:
 def test_get_hint_pep585_generic_typevars() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep585.get_hint_pep585_generic_typevars`
+    :func:`beartype._util.hint.pep.proposal.utilpep585.get_hint_pep585_generic_typevars`
     function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep585Exception
-    from beartype._util.hint.pep.proposal.utilhintpep585 import (
+    from beartype._util.hint.pep.proposal.utilpep585 import (
         get_hint_pep585_generic_typevars)
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
         HINTS_PEP_META)

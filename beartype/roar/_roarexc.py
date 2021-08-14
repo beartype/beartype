@@ -19,7 +19,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 from abc import ABCMeta as _ABCMeta
 
 # See the "beartype.cave" submodule for further commentary.

@@ -10,7 +10,7 @@ classes encapsulating sample type hints instantiated by the
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from typing import Optional
 
 # ....................{ HINTS                             }....................
@@ -20,7 +20,7 @@ _NoneTypeOrType = (type, type(None))
 '''
 
 # ....................{ CLASSES ~ hint : superclass       }....................
-class NonPepHintMetadata(object):
+class HintNonPepMetadata(object):
     '''
     **PEP-noncompliant type hint metadata** (i.e., dataclass whose instance
     variables describe a type hint that is either PEP-noncompliant or *mostly*
@@ -110,7 +110,7 @@ class NonPepHintMetadata(object):
         ))
 
 # ....................{ CLASSES ~ hint : subclass         }....................
-class PepHintMetadata(NonPepHintMetadata):
+class HintPepMetadata(HintNonPepMetadata):
     '''
     **PEP-compliant type hint metadata** (i.e., dataclass whose instance
     variables describe a PEP-compliant type hint with metadata applicable to
@@ -176,7 +176,7 @@ class PepHintMetadata(NonPepHintMetadata):
         Defaults to ``None``.
 
     All remaining keyword arguments are passed as is to the superclass
-    :meth:`NonPepHintMetadata.__init__` method.
+    :meth:`HintNonPepMetadata.__init__` method.
     '''
 
     # ..................{ INITIALIZERS                      }..................

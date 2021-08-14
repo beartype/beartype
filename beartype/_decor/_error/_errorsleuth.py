@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._util.data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_TYPE_STDLIB,
 )

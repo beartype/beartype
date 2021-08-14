@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonPepNumPyException
 from beartype.vale import IsAttr, IsEqual
 # from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignNumpyArray
+from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.mod.utilmodimport import import_module_typing_any_attr
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,

@@ -15,10 +15,10 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 # ....................{ IMPORTS                           }....................
 import pathlib
 from abc import abstractmethod
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
+from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata,
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -145,7 +145,7 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module.HINTS_PEP_META.extend((
         # ................{ GENERICS ~ io                     }................
         # Unsubscripted "IO" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=IO,
             pep_sign=HintSignGeneric,
             generic_type=IO,
@@ -165,7 +165,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "BinaryIO" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=BinaryIO,
             pep_sign=HintSignGeneric,
             generic_type=BinaryIO,
@@ -185,7 +185,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "TextIO" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=TextIO,
             pep_sign=HintSignGeneric,
             generic_type=TextIO,
@@ -206,7 +206,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ PROTOCOLS ~ supports              }................
         # Unsubscripted "SupportsAbs" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsAbs,
             pep_sign=HintSignGeneric,
             generic_type=SupportsAbs,
@@ -224,7 +224,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsBytes" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsBytes,
             pep_sign=HintSignGeneric,
             generic_type=SupportsBytes,
@@ -256,7 +256,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #define a new custom "ProtocolSupportsComplex" class as we do above for
         #the "ProtocolSupportsInt" class. *shrug*
         # # Unsubscripted "SupportsComplex" abstract base class (ABC).
-        # SupportsComplex: PepHintMetadata(
+        # SupportsComplex: HintPepMetadata(
         #     pep_sign=Generic,
         #     piths_satisfied_meta=(
         #         # Integer constant.
@@ -269,7 +269,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ),
 
         # Unsubscripted "SupportsFloat" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsFloat,
             pep_sign=HintSignGeneric,
             generic_type=SupportsFloat,
@@ -286,7 +286,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted "SupportsIndex" abstract base class (ABC) first
         # introduced by Python 3.8.0.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsIndex,
             pep_sign=HintSignGeneric,
             generic_type=SupportsIndex,
@@ -302,7 +302,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsInt" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsInt,
             pep_sign=HintSignGeneric,
             generic_type=SupportsInt,
@@ -321,7 +321,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Unsubscripted "SupportsRound" abstract base class (ABC).
-        PepHintMetadata(
+        HintPepMetadata(
             hint=SupportsRound,
             pep_sign=HintSignGeneric,
             generic_type=SupportsRound,
@@ -349,7 +349,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Python >= 3.4 or so.
 
         # User-defined protocol parametrized by *NO* type variables.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=ProtocolCustomUntypevared,
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomUntypevared,
@@ -365,7 +365,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # User-defined protocol parametrized by a type variable.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=ProtocolCustomTypevared,
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomTypevared,
@@ -382,7 +382,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # User-defined protocol parametrized by a type variable, itself
         # parametrized by the same type variables in the same order.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=ProtocolCustomTypevared[T],
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomTypevared,

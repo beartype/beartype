@@ -21,11 +21,11 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNumpyArray,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata,
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -61,7 +61,7 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module.HINTS_PEP_META.extend((
         # ................{ NUMPY ~ array                     }................
         # NumPy array subscripted by a true data type.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=NDArray[dtype(float64)],
             pep_sign=HintSignNumpyArray,
             # "NDArray" is implemented as:
@@ -96,7 +96,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # NumPy array subscripted by a scalar data type. Since scalar data
         # types are *NOT* true data types, this constitutes an edge case.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=NDArray[float64],
             pep_sign=HintSignNumpyArray,
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,

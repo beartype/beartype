@@ -29,7 +29,7 @@ def test_is_hint_pep_generic() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
@@ -312,7 +312,7 @@ def test_die_if_hint_pep_sign_unsupported() -> None:
         BeartypeDecorHintPepException,
         BeartypeDecorHintPepUnsupportedException,
     )
-    from beartype._util.data.hint.pep.sign.datapepsignset import (
+    from beartype._data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_SUPPORTED)
     from beartype._util.hint.pep.utilpeptest import (
         die_if_hint_pep_sign_unsupported)

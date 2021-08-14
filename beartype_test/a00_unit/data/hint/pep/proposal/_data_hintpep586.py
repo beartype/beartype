@@ -8,13 +8,13 @@ Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignList,
     HintSignLiteral,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    PepHintMetadata,
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -59,7 +59,7 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module.HINTS_PEP_META.extend((
         # ................{ LITERALS                          }................
         # Literal "None" singleton. Look, this is ridiculous. What can you do?
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[None],
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
@@ -82,7 +82,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Literal arbitrary boolean. (Not that there are many of those...)
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[True],
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
@@ -112,7 +112,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Literal arbitrary integer.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[0x2a],
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
@@ -142,7 +142,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Literal arbitrary byte string.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[
                 b"Worthy, 'vain truthiness of (very invective-elected)"],
             pep_sign=HintSignLiteral,
@@ -180,7 +180,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Literal arbitrary Unicode string.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal['Thanklessly classed, nominal'],
             pep_sign=HintSignLiteral,
             piths_satisfied_meta=(
@@ -213,7 +213,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Literal arbitrary enumeration member.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF],
             pep_sign=HintSignLiteral,
@@ -249,7 +249,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ LITERALS ~ nested                 }................
         # List of literal arbitrary Unicode strings.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=list[Literal[
                 'ç‐omically gnomical whitebellied burden’s empathy of']],
             pep_sign=HintSignList,
@@ -294,7 +294,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ LITERALS ~ union                  }................
         # Literal union of two or more arbitrary literal objects.
-        PepHintMetadata(
+        HintPepMetadata(
             hint=Literal[
                 None,
                 True,

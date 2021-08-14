@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._cave._cavefast import NoneType
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignNewType,
     HintSignNumpyArray,
@@ -77,7 +77,7 @@ def get_hint_reduced(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol,
         is_hint_pep484_generic_io,
     )
@@ -112,7 +112,7 @@ def get_hint_reduced(
     # validation API, metahints are extremely common and thus detected next.
     elif hint_sign is HintSignAnnotated:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilhintpep593 import (
+        from beartype._util.hint.pep.proposal.utilpep593 import (
             get_hint_pep593_metahint,
             is_hint_pep593_beartype,
         )
@@ -146,7 +146,7 @@ def get_hint_reduced(
     # thus fairly rare in the wild. Ergo, detect these late.
     elif hint_sign is HintSignNewType:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilhintpep484 import (
+        from beartype._util.hint.pep.proposal.utilpep484 import (
             get_hint_pep484_newtype_class)
         hint = get_hint_pep484_newtype_class(hint)
     # ..................{ PEP 484 ~ io                      }..................
@@ -215,7 +215,7 @@ def get_hint_forwardref_classname(hint: object) -> str:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import die_unless_hint_forwardref
-    from beartype._util.hint.pep.proposal.utilhintpep484 import (
+    from beartype._util.hint.pep.proposal.utilpep484 import (
         get_hint_pep484_forwardref_type_basename,
         is_hint_pep484_forwardref,
     )

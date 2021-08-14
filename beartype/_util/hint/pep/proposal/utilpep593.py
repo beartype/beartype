@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsigns import HintSignAnnotated
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._vale._valesub import _SubscriptedIs
 from typing import Any, Optional, Tuple
 

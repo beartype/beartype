@@ -2144,6 +2144,7 @@ Compliance
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
   <PEP 589_>`__.
 * `PEP 591 -- Adding a final qualifier to typing <PEP 591_>`__.
+* `PEP 612 -- Parameter Specification Variables <PEP 612_>`__.
 
 See also the **PEP** and **typing** categories of our `features matrix
 <Features_>`__ for further details.
@@ -3518,7 +3519,7 @@ External ``beartype`` resources include:
 
 * `This list of all open-source PyPI-hosted dependents of this package
   <beartype dependents_>`__ (i.e., third-party packages requiring ``beartype``
-  as a runtime dependency), kindly provided by the `Libraries.io package
+  as a runtime dependency), kindly furnished by the `Libraries.io package
   registry <Libraries.io_>`__.
 
 Related type-checking resources include:

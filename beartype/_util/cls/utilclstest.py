@@ -15,8 +15,8 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintPep3119Exception,
     _BeartypeUtilTypeException,
 )
-from beartype._util.data.cls.datacls import TYPES_BUILTIN_FAKE
-from beartype._util.data.mod.datamod import BUILTINS_MODULE_NAME
+from beartype._data.cls.datacls import TYPES_BUILTIN_FAKE
+from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
 from typing import Type
 
 # ....................{ VALIDATORS                        }....................

@@ -29,7 +29,7 @@ def test_get_hint_reduced() -> None:
     from beartype.roar import BeartypeDecorHintNonPepNumPyException
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
-    from beartype._util.data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
     )
     from beartype._util.hint.utilhintget import get_hint_reduced

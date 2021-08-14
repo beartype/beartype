@@ -14,10 +14,21 @@ from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobject import Iota
 from typing import Any, Set, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ HINTS                             }....................
+HINT_PEP585_TUPLE_EMPTY = (
+    tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota())  # type: ignore[misc]
+'''
+:pep:`585`-compliant empty fixed-length tuple type hint if the active Python
+interpreter supports at least Python 3.9 and thus :pep:`585` *or* a unique
+placeholder object otherwise to guarantee failure when comparing arbitrary
+objects against this object via equality tests.
+'''
 
 # ....................{ VALIDATORS                        }....................
 def die_unless_hint_pep585_generic(hint: object) -> None:

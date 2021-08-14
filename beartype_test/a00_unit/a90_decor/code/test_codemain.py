@@ -106,7 +106,7 @@ def test_codemain() -> None:
             # # decorated callable under a context manager asserting this
             # # declaration to emit non-fatal deprecation warnings.
             # if (
-            #     isinstance(hint_meta, PepHintMetadata) and
+            #     isinstance(hint_meta, HintPepMetadata) and
             #     hint_meta.pep_sign in HINT_PEP_ATTRS_DEPRECATED
             # ):
             #     with pytest.warns(BeartypeDecorHintPepDeprecatedWarning):

@@ -85,14 +85,14 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
     HintSignTuple,
 )
-from beartype._util.data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_TYPE_STDLIB,
@@ -105,13 +105,13 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_types,
 )
 from beartype._util.hint.utilhintget import get_hint_reduced
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
+from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilhintpep585 import (
+from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
-from beartype._util.hint.pep.proposal.utilhintpep586 import (
+from beartype._util.hint.pep.proposal.utilpep586 import (
     die_unless_hint_pep586)
-from beartype._util.hint.pep.proposal.utilhintpep593 import (
+from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
@@ -973,7 +973,7 @@ def pep_code_check_hint(
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._util.hint.pep.errormain" submodule, which
             #   raises exceptions on the current pith failing this check.
-            # * "beartype._util.data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
+            # * "beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all signs for which this function generates
             #   deeply type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1662,12 +1662,11 @@ def pep_code_check_hint(
                     #
                     # If this pseudo-superclass is neither a PEP 585-compliant
                     # type hint *NOR* a PEP-compliant type hint defined by the
-                    # "typing" module, this pseudo-superclass *MUST* be a PEP
-                    # 585-noncompliant user-defined pseudo-superclass. In this
-                    # case, reduce this pseudo-superclass to the corresponding
-                    # actual superclass originating this pseudo-superclass.
-                    #
-                    # Note that:
+                    # "typing" module, this pseudo-superclass *MUST* be a
+                    # user-defined pseudo-superclass *NOT* compliant with PEP
+                    # 585. In this case, reduce this pseudo-superclass to the
+                    # corresponding actual superclass originating this
+                    # pseudo-superclass. Note that:
                     # * This horrible, irrational, and unintuitive edge case
                     #   arises *ONLY* for user-defined PEP 484-compliant
                     #   generics and PEP 544-compliant protocols subclassing
@@ -1684,7 +1683,7 @@ def pep_code_check_hint(
                     #     >>> isinstance(UserProtocolUnerased, type)
                     #     False
                     # * PEP 585-compliant generics suffer no such issues:
-                    #     >>> from beartype._util.hint.pep.proposal.utilhintpep585 import is_hint_pep585_builtin
+                    #     >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
                     #     >>> class UserGeneric(list[int]): pass
                     #     >>> class UserSubgeneric(UserGeneric[int]): pass
                     #     >>> UserSubgeneric.__orig_bases__
@@ -1717,15 +1716,15 @@ def pep_code_check_hint(
                     # other means of recursing into the possibly relevant
                     # superclasses of this erased superclass.
                     #
-                    # Note that, in theory, we could deeply refactor this
+                    # Note that, in theory, we could deeply refactor this whole
                     # algorithm to support the notion of child hints that
                     # should be ignored for purposes of type-checking but
                     # nonetheless recursed into. In practice, the current
                     # approach only introduces mild runtime inefficiencies
                     # while preserving sanity throughout this algorithm.
                     #
-                    # Specifically, perform this awful reduction *ONLY* if
-                    # this child hint is a PEP 484- or 544-compliant
+                    # Specifically, perform this awful reduction *ONLY* if this
+                    # pseudo-superclass is a PEP 484- or 544-compliant
                     # user-defined pseudo-superclass that is neither...
                     elif not (
                         # A PEP 585-compliant pseudo-superclass *NOR*...

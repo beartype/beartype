@@ -7,7 +7,7 @@
 **Beartype** :pep:`593` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilhintpep593` submodule.
+:mod:`beartype._util.hint.pep.proposal.utilpep593` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,7 +21,7 @@ from pytest import raises, warns
 def test_is_hint_pep593_beartype() -> None:
     '''
     Test usage of the private
-    :mod:`beartype._util.hint.pep.proposal.utilhintpep593.is_hint_pep593_beartype`
+    :mod:`beartype._util.hint.pep.proposal.utilpep593.is_hint_pep593_beartype`
     tester.
     '''
 
@@ -31,7 +31,7 @@ def test_is_hint_pep593_beartype() -> None:
         BeartypeValeLambdaWarning,
     )
     from beartype.vale import Is
-    from beartype._util.hint.pep.proposal.utilhintpep593 import (
+    from beartype._util.hint.pep.proposal.utilpep593 import (
         is_hint_pep593_beartype)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 

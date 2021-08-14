@@ -5,7 +5,7 @@
 
 '''
 Project-wide **Python version-agnostic signs** (i.e., instances of the
-:class:`beartype._util.data.hint.pep.sign.datapepsigncls.HintSign` class
+:class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign` class
 uniquely identifying PEP-compliant type hints in a safe, non-deprecated manner
 regardless of the Python version targeted by the active Python interpreter).
 
@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._util.data.hint.pep.sign.datapepsigncls import (
+from beartype._data.hint.pep.sign.datapepsigncls import (
     HintSign as _HintSign)
 
 # ....................{ SIGNS ~ explicit                  }....................

@@ -10,27 +10,48 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+import typing
 from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     BeartypeDecorHintPep484Exception,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.proposal.datapep484 import (
-    HINT_PEP484_TYPE_FORWARDREF,
-)
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
 )
-from beartype._util.data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_7,
+)
 from beartype._util.utilobject import is_object_subclass
 from types import FunctionType
-from typing import Any, Generic, Optional
+from typing import Any, Generic, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ HINTS                             }....................
+HINT_PEP484_TUPLE_EMPTY = Tuple[()]
+'''
+:pep:`484`-compliant empty fixed-length tuple type hint.
+'''
+
+
+# Conditionally define the "typing.ForwardRef" superclass depending on the
+# current Python version. This superclass was thankfully publicized under
+# Python >= 3.7 after its initial privatization under Python <= 3.6.
+HINT_PEP484_TYPE_FORWARDREF = (
+    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else
+    typing._ForwardRef  # type: ignore [attr-defined]
+)
+'''
+**Forward reference sign** (i.e., arbitrary objects uniquely identifying a
+:pep:`484`-compliant type hint unifying one or more subscripted type hint
+arguments into a disjunctive set union of these arguments).
+'''
 
 # ....................{ TESTERS ~ ignorable               }....................
 def is_hint_pep484_ignorable_or_none(
@@ -117,9 +138,6 @@ def is_hint_pep484_ignorable_or_none(
     # print(f'Testing PEP 484 hint {repr(hint)} [{repr(hint_sign)}] deep ignorability...')
 
     # If this hint is a PEP 484-compliant generic...
-    #
-    # Note that the "beartype._util.data.hint.pep.proposal.datapep484"
-    # submodule already ignores the unsubscripted "typing.Generic" ABC itself.
     if hint_sign is HintSignGeneric:
         # print(f'Testing generic hint {repr(hint)} deep ignorability...')
         # If this generic is the "typing.Generic" superclass directly
@@ -361,8 +379,58 @@ is_hint_pep484_generic.__doc__ = '''
     '''
 
 # ....................{ TESTERS ~ newtype                 }....................
-def is_hint_pep484_newtype(hint: object) -> bool:
-    '''
+# If the active Python interpreter targets Python >= 3.10 and thus defines
+# "typing.NewType" type hints as instances of that class, implement this tester
+# unique to prior Python versions to raise an exception.
+if IS_PYTHON_AT_LEAST_3_10:
+    def is_hint_pep484_newtype_pre_python3_10(hint: object) -> bool:
+        raise BeartypeDecorHintPep484Exception(
+            'is_hint_pep484_newtype_pre_python3_10() assumes Python < 3.10, '
+            'but current Python interpreter targets Python >= 3.10.'
+        )
+# Else, the active Python interpreter targets Python < 3.10 and thus defines
+# "typing.NewType" type hints as closures returned by that function. Since
+# these closures are sufficiently dissimilar from all other type hints to
+# require unique detection, implement this tester unique to this obsolete
+# Python version to detect these closures.
+else:
+    def is_hint_pep484_newtype_pre_python3_10(hint: object) -> bool:
+
+        # Return true only if...
+        return (
+            # This hint is a pure-Python function *AND*...
+            #
+            # Note that we intentionally do *NOT* call the callable() builtin
+            # here, as that builtin erroneously returns false positives for
+            # non-standard classes defining the __call__() dunder method to
+            # unconditionally raise exceptions. Critically, this includes most
+            # PEP 484-compliant type hints, which naturally fail to define both
+            # the "__module__" *AND* "__qualname__" dunder instance variables
+            # accessed below. Shoot me now, fam.
+            isinstance(hint, FunctionType) and
+            # This callable is a closure created and returned by the
+            # typing.NewType() function. Note that:
+            #
+            # * The "__module__" and "__qualname__" dunder instance variables
+            #   are *NOT* generally defined for arbitrary objects but are
+            #   specifically defined for callables.
+            # * "__qualname__" is safely available under Python >= 3.3.
+            # * This test derives from the observation that the concatenation
+            #   of this callable's "__qualname__" and "__module" dunder
+            #   instance variables suffices to produce a string unambiguously
+            #   identifying whether this hint is a "NewType"-generated closure:
+            #       >>> from typing import NewType
+            #       >>> UserId = t.NewType('UserId', int)
+            #       >>> UserId.__qualname__
+            #       >>> 'NewType.<locals>.new_type'
+            #       >>> UserId.__module__
+            #       >>> 'typing'
+            f'{hint.__module__}.{hint.__qualname__}'.startswith(
+                'typing.NewType.')
+        )
+
+
+is_hint_pep484_newtype_pre_python3_10.__doc__ = '''
     ``True`` only if the passed object either is a :pep:`484`-compliant **new
     type** (i.e., closure created and returned by the :func:`typing.NewType`
     closure factory function).
@@ -395,39 +463,6 @@ def is_hint_pep484_newtype(hint: object) -> bool:
     bool
         ``True`` only if this object is a :pep:`484`-compliant new type.
     '''
-
-    # Return true only if...
-    return (
-        # This hint is a pure-Python function *AND*...
-        #
-        # Note that we intentionally do *NOT* call the callable() builtin here,
-        # as that builtin erroneously returns false positives for non-standard
-        # classes defining the __call__() dunder method to unconditionally
-        # raise exceptions. Critically, this includes most PEP 484-compliant
-        # type hints, which naturally fail to define both the "__module__"
-        # *AND* "__qualname__" dunder instance variables accessed below.
-        #
-        # Shoot me now, fam.
-        isinstance(hint, FunctionType) and
-        # This callable is a closure created and returned by the
-        # typing.NewType() function. Note that:
-        #
-        # * The "__module__" and "__qualname__" dunder instance variables are
-        #   *NOT* generally defined for arbitrary objects but are specifically
-        #   defined for callables.
-        # * "__qualname__" is safely available under Python >= 3.3.
-        # * This test derives from the observation that the concatenation of
-        #   this callable's "__qualname__" and "__module" dunder instance
-        #   variables suffices to produce a string unambiguously identifying
-        #   whether this hint is a "NewType"-generated closure: e.g.,
-        #       >>> from typing import NewType
-        #       >>> UserId = t.NewType('UserId', int)
-        #       >>> UserId.__qualname__
-        #       >>> 'NewType.<locals>.new_type'
-        #       >>> UserId.__module__
-        #       >>> 'typing'
-        f'{hint.__module__}.{hint.__qualname__}'.startswith('typing.NewType.')
-    )
 
 # ....................{ GETTERS ~ forwardref              }....................
 @callable_cached
@@ -515,12 +550,15 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
         Further commentary.
     '''
 
-    # If this object is *NOT* a PEP 484-compliant new type hint, raise an
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+    # If this object is *NOT* a PEP 484-compliant "NewType" hint, raise an
     # exception.
-    if not is_hint_pep484_newtype(hint):
+    if get_hint_pep_sign(hint) is not HintSignNewType:
         raise BeartypeDecorHintPep484Exception(
             f'Type hint {repr(hint)} not "typing.NewType".')
-    # Else, this object is a PEP 484-compliant new type hint.
+    # Else, this object is a PEP 484-compliant "NewType" hint.
 
     # Return the unqualified classname referred to by this reference. Note
     # that this requires violating privacy encapsulation by accessing a dunder

@@ -15,6 +15,7 @@ from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.cache.utilcachecall import callable_cached
 from importlib import import_module as importlib_import_module
+from sys import modules as sys_modules
 from types import ModuleType
 from typing import Any, Optional, Type
 from warnings import warn
@@ -51,27 +52,26 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #         If no module with this name exists.
 #     Exception
 #         If a module with this name exists *but* that module is unimportable
-#         due to module-scoped side effects at importation time. Since modules
-#         may perform arbitrary Turing-complete logic from module scope, callers
-#         should be prepared to handle *any* possible exception that might arise.
+#         due to raising module-scoped exceptions at importation time. Since
+#         modules may perform arbitrary Turing-complete logic at module scope,
+#         callers should be prepared to handle *any* possible exception.
 #     '''
-#     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
-#     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+#     assert isinstance(exception_cls, type), (
+#         f'{repr(exception_cls)} not type.')
 #
-#     # Attempt to dynamically import and return this module.
-#     try:
-#         return importlib_import_module(module_name)
-#     # If this module does *NOT* exist, raise a beartype-specific exception
-#     # wrapping this beartype-agnostic exception to sanitize our public API,
-#     # particularly from the higher-level import_module_attr() function calling
-#     # this lower-level function and raising the same exception class under a
-#     # wider variety of fatal edge cases.
-#     except ModuleNotFoundError as exception:
+#     # Module with this name if this module is importable *OR* "None" otherwise.
+#     module = import_module_or_none(module_name)
+#
+#     # If this module is unimportable, raise an exception.
+#     if module is None:
 #         raise exception_cls(
 #             f'Module "{module_name}" not found.') from exception
+#     # Else, this module is importable.
+#
+#     # Return this module.
+#     return module
 
 
-#FIXME: Unit test us up.
 def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     '''
     Dynamically import and return the module, package, or C extension with the
@@ -91,9 +91,18 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     ----------
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
-        due to module-scoped side effects at importation time.
+        due to raising module-scoped exceptions at importation time.
     '''
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+
+    # Module cached with "sys.modules" if this module has already been imported
+    # elsewhere under the active Python interpreter *OR* "None" otherwise.
+    module = sys_modules.get(module_name)
+
+    # If this module has already been imported, return this cached module.
+    if module is not None:
+        return module
+    # Else, this module has yet to be imported.
 
     # Attempt to dynamically import and return this module.
     try:
@@ -228,7 +237,7 @@ def import_module_attr_or_none(
     ----------
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
-        due to module-scoped side effects at importation time.
+        due to raising module-scoped exceptions at importation time.
     '''
 
     # Avoid circular import dependencies.
@@ -319,8 +328,8 @@ def import_module_typing_any_attr(
     ----------
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
-        due to module-scoped side effects at importation time. That said, the
-        :mod:`typing` and :mod:`typing_extensions` modules are scrupulously
+        due to raising module-scoped exceptions at importation time. That said,
+        the :mod:`typing` and :mod:`typing_extensions` modules are scrupulously
         tested and thus unlikely to raise exceptions on initial importation.
     '''
 

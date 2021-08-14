@@ -19,35 +19,35 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.datapeprepr import (
-    HINTS_REPR_PREFIX_DEPRECATED,
+from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED,
+    HINTS_REPR_PREFIX_DEPRECATED,
 )
-from beartype._util.data.hint.pep.proposal.datapep484 import (
-    HINT_PEP484_TUPLE_EMPTY)
-from beartype._util.data.hint.pep.proposal.datapep585 import (
-    HINT_PEP585_TUPLE_EMPTY)
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
 )
-from beartype._util.data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_SUPPORTED)
-from beartype._util.data.mod.datamod import (
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_SUPPORTED,
+    HINT_SIGNS_TYPE_MIMIC,
+)
+from beartype._data.mod.datamod import (
     TYPING_MODULE_NAMES,
     TYPING_MODULE_NAMES_DOTTED,
 )
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
+from beartype._util.hint.pep.proposal.utilpep484 import (
+    HINT_PEP484_TUPLE_EMPTY,
     is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
 )
-from beartype._util.hint.pep.proposal.utilhintpep544 import (
+from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilhintpep585 import (
+from beartype._util.hint.pep.proposal.utilpep585 import (
+    HINT_PEP585_TUPLE_EMPTY,
     is_hint_pep585_builtin,
     is_hint_pep585_generic,
 )
-from beartype._util.hint.pep.proposal.utilhintpep593 import (
+from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.mod.utilmodule import (
     get_object_module_name,
@@ -719,8 +719,8 @@ def is_hint_pep_supported(hint: object) -> bool:
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
 #access of "TYPING_MODULE_NAMES" instead. We only see two remaining in:
-#* beartype/_util/hint/pep/proposal/utilhintpep544.py
-#* beartype/_util/hint/pep/proposal/utilhintpep484.py
+#* beartype/_util/hint/pep/proposal/utilpep544.py
+#* beartype/_util/hint/pep/proposal/utilpep484.py
 #Thankfully, nobody really cares about generalizing these two edge cases to
 #"testing_extensions", so they're mostly fine for various definitions of fine.
 @callable_cached
@@ -745,51 +745,19 @@ def is_hint_pep_typing(hint: object) -> bool:
     '''
     # print(f'is_hint_pep_typing({repr(hint)}')
 
-    # If this is any PEP-compliant type hint defined by a typing module (except
-    # PEP 593-compliant type hints), return true.
-    if get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES:
-        # print(f'typing hint: {repr(hint)}')
-        return True
-    # Else, this is either a PEP 593-compliant type hint (e.g.,
-    # "typing.Annotated[str, int]") *OR* not a PEP-compliant hint at all.
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_sign_or_none)
 
-    # Parse the machine-readable representation of this hint into:
-    # * "hint_repr_prefix", the substring of this representation preceding the
-    #   first "[" delimiter if this representation contains that delimiter *OR*
-    #   this representation as is otherwise.
-    # * "hint_repr_subscripted", the "[" delimiter if this representation
-    #   contains that delimiter *OR* the empty string otherwise.
-    #
-    # Note that the str.partition() method has been profiled to be the
-    # optimally efficient means of parsing trivial prefixes like these.
-    hint_repr_prefix, hint_repr_subscripted, _ = repr(hint).partition('[')
-
-    # If this hint is subscripted...
-    if hint_repr_subscripted:
-        # print(f'hint repr: {repr(hint)}')
-        # Return true only if the machine-readable representation of this hint
-        # is prefixed by a string indicative of a typing module.
-        #
-        # This is specifically required for PEP 593-compliant type hints. For
-        # inexplicable (and presumably indefensible) reasons, these hints badly
-        # masquerade as their first subscripted PEP-compliant type hints (e.g.,
-        # the "int" in "typing.Annotated[int, 63]"). Ergo, the value of the
-        # "__module__" attribute of this hint is that of its first subscripted
-        # PEP-compliant type hint rather than its own. Nonetheless, its
-        # machine-readable representation remains prefixed by "typing.",
-        # enabling an efficient test that also generalizes to all other outlier
-        # edge cases that are probably lurking about.
-        #
-        # I have no code and I must scream.
-        return any(
-            hint_repr_prefix.startswith(typing_module_name_dotted)
-            for typing_module_name_dotted in TYPING_MODULE_NAMES_DOTTED
-        )
-    # Else, this hint is unsubscripted, in which case this hint *CANNOT* by
-    # definition be a PEP 593-compliant type hint. By the above syllogism, this
-    # hint *MUST* thus be PEP-noncompliant. In this case, return false.
-
-    return False
+    # Return true only if this hint is either...
+    return (
+        # Any PEP-compliant type hint defined by a typing module (except those
+        # maliciously masquerading as another type entirely) *OR*...
+        get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES or
+        # Any PEP-compliant type hint defined by a typing module maliciously
+        # masquerading as another type entirely.
+        get_hint_pep_sign_or_none(hint) in HINT_SIGNS_TYPE_MIMIC
+    )
 
 
 # If the active Python interpreter targets at least Python 3.7 and is thus
@@ -804,13 +772,12 @@ if IS_PYTHON_AT_LEAST_3_7:
         # Return true only if this type is defined by a typing module.
         #
         # Note that this implementation could probably be reduced to the
-        # leading portion of the body of the get_hint_pep_sign() function
-        # testing this object's representation. While certainly more compact
-        # and convenient than the current approach, that refactored approach
-        # would also be considerably more fragile, failure-prone, and subject
-        # to whimsical "improvements" in the already overly hostile "typing"
-        # API. Why? Because the get_hint_pep_sign() function:
-        #
+        # leading portion of the body of the get_hint_pep_sign_or_none()
+        # function testing this object's representation. While certainly more
+        # compact and convenient than the current approach, that refactored
+        # approach would also be considerably more fragile, failure-prone, and
+        # subject to whimsical "improvements" in the already overly hostile
+        # "typing" API. Why? Because the get_hint_pep_sign_or_none() function:
         # * Parses the machine-readable string returned by the __repr__()
         #   dunder method of "typing" types. Since that string is *NOT*
         #   standardized by PEP 484 or any other PEP, "typing" authors remain
@@ -829,7 +796,6 @@ if IS_PYTHON_AT_LEAST_3_7:
         # against whimsical destruction by "typing" authors. Note that there
         # might exist an alternate means of deciding this boolean, documented
         # here merely for completeness:
-        #
         #     try:
         #         isinstance(obj, object)
         #         return False
@@ -840,11 +806,10 @@ if IS_PYTHON_AT_LEAST_3_7:
         # The above effectively implements an Aikido throw by using the fact
         # that "typing" types prohibit isinstance() calls against those types.
         # While clever (and deliciously obnoxious), the above logic:
-        #
         # * Requires catching exceptions in the common case and is thus *MUCH*
         #   less efficient than the preferable approach implemented here.
         # * Assumes that *ALL* "typing" types prohibit such calls. Sadly, only
-        #   a proper subset of such types prohibit such calls.
+        #   a proper subset of these types prohibit such calls.
         # * Assumes that those "typing" types that do prohibit such calls raise
         #   exceptions with reliable messages across *ALL* Python versions.
         #

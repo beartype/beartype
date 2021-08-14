@@ -19,29 +19,30 @@ from beartype.roar import (
     BeartypeDecorHintPepSignException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.data.hint.pep.datapeprepr import (
+from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
-from beartype._util.data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
 )
-from beartype._util.data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_TYPE_STDLIB,
 )
-from beartype._util.hint.pep.proposal.utilhintpep484 import (
+from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_bases_unerased,
-    is_hint_pep484_newtype,
+    is_hint_pep484_newtype_pre_python3_10,
 )
-from beartype._util.hint.pep.proposal.utilhintpep585 import (
+from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     get_hint_pep585_generic_typevars,
     is_hint_pep585_generic,
 )
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,
 )
@@ -341,7 +342,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 #  dramatically simpler approach, we no longer require the excessive glut of
 #  PEP-specific testers we previously required.
 #* Merge the contents of all now minimal
-#  "beartype._util.data.hint.pep.proposal.*" submodules into their parent
+#  "beartype._data.hint.pep.proposal.*" submodules into their parent
 #  "beartype._util.hint.pep.proposal.*" submodules. There's no longer any
 #  demonstrable benefit to separating the two, so please cease doing so.
 @callable_cached
@@ -433,6 +434,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         typing.Iterable
     '''
 
+    # ..................{ IMPORTS                           }..................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
 
@@ -445,6 +447,42 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # underlying all higher-level hint validation functions! Calling the latter
     # here would thus induce infinite recursion, which would be very bad.
     #
+    # ..................{ PHASE ~ classname                 }..................
+    # This phase attempts to map from the fully-qualified classname of this
+    # hint to a sign identifying *ALL* hints that are instances of that class.
+    #
+    # Since the "object.__class__.__qualname__" attribute is both guaranteed to
+    # exist and be efficiently accessible for all hints, this phase is the
+    # fastest and thus performed first. Although this phase identifies only a
+    # small subset of hints, those hints are extremely common.
+    #
+    # More importantly, some of these classes are implemented as maliciously
+    # masquerading as other classes entirely -- including __repr__() methods
+    # synthesizing erroneous machine-readable representations. To avoid false
+    # positives, this phase *MUST* thus be performed before repr()-based tests
+    # regardless of efficiency concerns: e.g.,
+    #     # Under Python >= 3.10:
+    #     >>> import typing
+    #     >>> bad_guy_type_hint = typing.NewType('List', bool)
+    #     >>> bad_guy_type_hint.__module__ = 'typing'
+    #     >>> repr(bad_guy_type_hint)
+    #     typing.List   # <---- this is genuine bollocks
+
+    # Class of this hint.
+    hint_type = hint.__class__
+
+    # Fully-qualified name of this class.
+    hint_type_name = f'{hint_type.__module__}.{hint_type.__qualname__}'
+
+    # Sign identifying this hint if this hint is identifiable by its classname
+    # *OR* "None" otherwise.
+    hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
+
+    # If this hint is identifiable by its classname, return this sign.
+    if hint_sign is not None:
+        return hint_sign
+    # Else, this hint is *NOT* identifiable by its classname.
+
     # ..................{ PHASE ~ repr                      }..................
     # This phase attempts to map from the unsubscripted machine-readable
     # representation of this hint to a sign identifying *ALL* hints of that
@@ -494,30 +532,6 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # representation.
     # Else, this representation (and thus this hint) is unsubscripted.
 
-    # ..................{ PHASE ~ classname                 }..................
-    # This phase attempts to map from the fully-qualified classname of this
-    # hint to a sign identifying *ALL* hints that are instances of that class.
-    #
-    # Since the "object.__class__.__qualname__" attribute is both guaranteed to
-    # exist and efficiently accessible for all hints, this phase is the fastest
-    # and thus performed first. Although this phase identifies only a small
-    # subset of hints, those hints are extremely common.
-
-    # Class of this hint.
-    hint_type = hint.__class__
-
-    # Fully-qualified name of this class.
-    hint_type_name = f'{hint_type.__module__}.{hint_type.__qualname__}'
-
-    # Sign identifying this hint if this hint is identifiable by its classname
-    # *OR* "None" otherwise.
-    hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
-
-    # If this hint is identifiable by its classname, return this sign.
-    if hint_sign is not None:
-        return hint_sign
-    # Else, this hint is *NOT* identifiable by its classname.
-
     # ..................{ PHASE ~ manual                    }..................
     # This phase attempts to manually identify the signs of all hints *NOT*
     # efficiently identifiably by the prior phases.
@@ -551,59 +565,24 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    elif is_hint_pep_generic(hint):
+    if is_hint_pep_generic(hint):
         return HintSignGeneric
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
-    # If this hint is a PEP 484-compliant new type, return that sign.
+    # If the active Python interpreter targets Python < 3.10 (and thus defines
+    # PEP 484-compliant "NewType" type hints as closures returned by that
+    # function that are sufficiently dissimilar from all other type hints to
+    # require unique detection) *AND* this hint is such a hint, return the
+    # corresponding sign.
     #
-    # Note that these types *CANNOT* be detected by the general-purpose logic
+    # Note that these hints *CANNOT* be detected by the general-purpose logic
     # performed above, as the __repr__() dunder methods of the closures created
     # and returned by the NewType() closure factory function returns a standard
     # representation rather than string prefixed by "typing.": e.g.,
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
-
-    #FIXME: *UGH.* Python 3.10 has yet again fundamentally broken the public
-    #API of a "typing" type. The "typing.NewType" attribute is now a class
-    #rather than a function. That's fine. What is *NOT* fine is that this class
-    #now attempts to masquerade as its underlying type, which makes detection
-    #extremely problematic:
-    #    >>> import typing as t
-    #    >>> nt = t.NewType('TotallyNotAStr', str)
-    #    >>> repr(nt)
-    #    '__main__.TotallyNotAStr'
-    #
-    #In a way, this is better, because the new "typing.NewType" implementation
-    #is easier to detect -- *MUCH* easier. Still, it's a huge pain, because we
-    #now need to two fundamentally divergent implementations as follows:
-    #* Rename the is_hint_pep484_newtype() function to
-    #  is_hint_pep484_newtype_obsolete().
-    #* In that function, raise an exception if IS_PYTHON_AT_LEAST_3_10.
-    #* Refactor the existing call to that function in "utilhintpep484" to
-    #  instead call this function and compare the resulting sign to
-    #  "HintSignNewType".
-    #* Guard the call to is_hint_pep484_newtype_obsolete() right here with a
-    #  Python version guard resembling:
-    #      elif IS_PYTHON_AT_LEAST_3_9 and is_hint_pep484_newtype_obsolete(hint):
-    #* Add new "HINT_TYPE_NAME_TO_SIGN" entries for both "typing.NewType" and
-    #  "typing_extensions.NewType" under Python >= 3.10. Actually... maybe only
-    #  "typing.NewType". How does "typing_extensions" implement that? *sigh*
-    #
-    #That should do it. Still. Super-super annoying, guys.
-    #FIXME: While that *WOULD* technically work, maybe, we'll probably get
-    #issues with "typing_extensions.NewType". Basically, we instead just want
-    #to generalize this is_hint_pep484_newtype() tester to handle both types of
-    #"NewType" objects without reference to the current Python version, which
-    #isn't really a reliable way of distinguishing these types: e.g.,
-    #    isinstance(hint, type) and hint.__name__ == 'NewType'  # <-- trivial!
-    #Also, we still need to do this:
-    #* Add new "HINT_TYPE_NAME_TO_SIGN" entries for both "typing.NewType" and
-    #  "typing_extensions.NewType". Don't worry about the Python version here.
-    #FIXME; Likewise, we'll probably need to refactor the
-    #get_hint_pep484_newtype_class() getter, too.
-    elif is_hint_pep484_newtype(hint):
+    elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python3_10(hint):
         return HintSignNewType
 
     # ..................{ ERROR                             }..................

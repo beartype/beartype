@@ -17,6 +17,43 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises, warns
 
+# ....................{ TESTS                             }....................
+def test_import_module_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.mod.utilmodule.import_module_or_none` function.
+    '''
+
+    # Defer heavyweight imports.
+    import beartype
+    from beartype.roar import BeartypeModuleUnimportableWarning
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
+    from beartype._util.mod.utilmodimport import import_module_or_none
+
+    # Assert this function returns the expected module when passed the
+    # fully-qualified name of a previously imported module.
+    assert import_module_or_none('beartype') is beartype
+
+    # Assert this function returns the expected module when passed the
+    # fully-qualified name of a module effectively guaranteed to *NOT* have
+    # been previously imported by virtue of its complete and utter uselessness.
+    turtledemo_peace = import_module_or_none('turtledemo.peace')
+    from turtledemo import peace
+    assert turtledemo_peace is peace
+
+    # Assert this function returns "None" when passed the fully-qualified name
+    # of a module effectively guaranteed to *NEVER* exist by virtue of the
+    # excess inscrutability, stupidity, and verbosity of its name.
+    assert import_module_or_none(
+        'phnglui_mglwnafh_Cthulhu_Rlyeh_wgahnagl_fhtagn') is None
+
+    # Assert this function emits the expected warning when passed the
+    # fully-qualified name of an unimportable module.
+    with warns(BeartypeModuleUnimportableWarning):
+        assert import_module_or_none(
+            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad') is (
+                None)
+
 # ....................{ TESTS ~ attr                      }....................
 def test_import_module_attr() -> None:
     '''

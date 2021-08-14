@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+from pytest import raises, warns
 
 # ....................{ TESTS ~ tester                    }....................
 def test_is_module() -> None:
@@ -24,6 +24,7 @@ def test_is_module() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype._util.mod.utilmodtest import is_module
 
     # Assert this tester accepts the name of a (possibly unimported) existing
@@ -41,7 +42,9 @@ def test_is_module() -> None:
         'beartype_test.a00_unit.data.util.py.data_utilpymodule_nonexistent'
     ) is False
 
-    # Assert this function raises the expected exception when passed the name
-    # of an existing unimportable module.
-    with raises(ValueError):
-        is_module('beartype_test.a00_unit.data.util.py.data_utilpymodule_bad')
+    # Assert this function emits the expected warning when passed the name of
+    # an existing unimportable module.
+    with warns(BeartypeModuleUnimportableWarning):
+        assert is_module(
+            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad') is (
+                False)

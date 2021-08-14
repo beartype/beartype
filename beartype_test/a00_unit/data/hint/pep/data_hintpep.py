@@ -40,7 +40,7 @@ HINTS_PEP_IGNORABLE_SHALLOW = {
 Frozen set of **shallowly ignorable PEP-compliant type hints** (i.e.,
 PEP-compliant type hints that are shallowly ignorable and whose
 machine-readable representations are in the low-level
-:attr:`beartype._util.data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
+:attr:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
 set, but which are typically *not* safely instantiable from those
 representations and thus require explicit instantiation here).
 '''
@@ -61,14 +61,14 @@ demonstrate this fact).
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
 '''
-Tuple of **PEP-compliant type hint metadata** (i.e., :class:`PepHintMetadata`
+Tuple of **PEP-compliant type hint metadata** (i.e., :class:`HintPepMetadata`
 instances describing test-specific PEP-compliant type hints with metadata
 leveraged by various testing scenarios).
 
 Design
 ----------
 This tuple was initially designed as a dictionary mapping from PEP-compliant
-type hints to :class:`PepHintMetadata` instances describing those hints, until
+type hints to :class:`HintPepMetadata` instances describing those hints, until
 :mod:`beartype` added support for PEPs enabling unhashable PEP-compliant type
 hints (e.g., ``collections.abc.Callable[[], str]`` under :pep:`585`)
 impermissible for use as dictionary keys or set members.
@@ -83,7 +83,7 @@ def _init() -> None:
     # Defer function-specific imports.
     import sys
     from beartype._util.utilobject import is_object_hashable
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import PepHintMetadata
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import HintPepMetadata
     from beartype_test.a00_unit.data.hint.pep.mod import (
         _data_hintmodnumpy,
     )
@@ -129,9 +129,9 @@ def _init() -> None:
 
     # Assert this global to contain only instances of its expected dataclass.
     assert (
-        isinstance(hint_pep_meta, PepHintMetadata)
+        isinstance(hint_pep_meta, HintPepMetadata)
         for hint_pep_meta in HINTS_PEP_META
-    ), f'{repr(HINTS_PEP_META)} not iterable of "PepHintMetadata" instances.'
+    ), f'{repr(HINTS_PEP_META)} not iterable of "HintPepMetadata" instances.'
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.

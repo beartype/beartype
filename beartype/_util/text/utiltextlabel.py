@@ -262,7 +262,7 @@ def label_class(cls: type) -> str:
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin
-    from beartype._util.hint.pep.proposal.utilhintpep544 import (
+    from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
 
     # Label to be returned, initialized to this class' fully-qualified name.

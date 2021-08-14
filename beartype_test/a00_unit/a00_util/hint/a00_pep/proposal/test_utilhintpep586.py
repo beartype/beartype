@@ -7,7 +7,7 @@
 **Beartype** :pep:`586` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilhintpep586` submodule.
+:mod:`beartype._util.hint.pep.proposal.utilpep586` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -51,14 +51,14 @@ subsection.
 def test_is_hint_pep586() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilhintpep586.die_unless_hint_pep586`
+    :func:`beartype._util.hint.pep.proposal.utilpep586.die_unless_hint_pep586`
     validator.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep586Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype._util.hint.pep.proposal.utilhintpep586 import (
+    from beartype._util.hint.pep.proposal.utilpep586 import (
         die_unless_hint_pep586)
     from typing import Optional
 
