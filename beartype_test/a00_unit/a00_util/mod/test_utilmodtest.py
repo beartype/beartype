@@ -30,21 +30,21 @@ def test_is_module() -> None:
     # Assert this tester accepts the name of a (possibly unimported) existing
     # importable module.
     assert is_module(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good') is True
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good') is True
 
     # Assert this tester accepts the name of an already imported module.
     assert is_module(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good') is True
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good') is True
 
     # Assert this tester rejects the name of a module guaranteed *NOT* to
     # exist, because we fully control the "beartype_test" package.
     assert is_module(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_nonexistent'
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_nonexistent'
     ) is False
 
     # Assert this function emits the expected warning when passed the name of
     # an existing unimportable module.
     with warns(BeartypeModuleUnimportableWarning):
         assert is_module(
-            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad') is (
+            'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad') is (
                 False)

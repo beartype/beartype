@@ -8,16 +8,8 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAnnotated,
-    HintSignList,
-)
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
+from beartype_test.util.mod.pytmodimport import (
+    import_module_typing_any_attr_or_none_safe)
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -31,23 +23,125 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 593. In this case, reduce to a noop.
-    if not IS_PYTHON_AT_LEAST_3_9:
+    # "typing.Annotated" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise.
+    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+
+    # If this factory is unimportable, the active Python interpreter fails to
+    # support PEP 593. In this case, reduce to a noop.
+    if Annotated is None:
         return
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 593.
+    # Else, this interpreter supports PEP 593.
 
     # ..................{ IMPORTS                           }..................
-    # Defer Python >= 3.9-specific imports.
+    # Defer attribute-dependent imports.
     from beartype.vale import Is, IsAttr, IsEqual
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignAnnotated,
+        HintSignList,
+    )
+    from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_8,
+    )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
     from typing import (
-        Annotated,
         Any,
         NewType,
         Optional,
         Union,
     )
+
+    # ..................{ SETS                              }..................
+    # Add PEP 593-specific deeply ignorable test type hints to that set global.
+    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+        # Annotated of shallowly ignorable type hints.
+        Annotated[Any, int],
+        Annotated[object, int],
+
+        # Annotated of ignorable unions and optionals.
+        Annotated[Union[Any, float, str,], int],
+        Annotated[Optional[Any], int],
+
+        # Unions and optionals of ignorable annotateds.
+        Union[complex, int, Annotated[Any, int]],
+        Optional[Annotated[object, int]],
+
+        # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
+        # exercising numerous edge cases broken under prior releases.
+        Union[
+            str, HINT_ATTR_LIST[int], NewType(
+                'MetaType', Annotated[object, 53])],
+    ))
+
+    # ..................{ TUPLES                            }..................
+    # Add PEP 593-specific test type hints to this tuple global.
+    data_module.HINTS_PEP_META.extend((
+        # ................{ ANNOTATED                         }................
+        # Hashable annotated of a non-"typing" type annotated by an arbitrary
+        # hashable object.
+        HintPepMetadata(
+            hint=Annotated[str, int],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    'Towards a timely, wines‐enticing gate'),
+            ),
+            piths_unsatisfied_meta=(
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'Of languished anger’s sap‐spated rushings',]),
+            ),
+        ),
+
+        # Unhashable annotated of a non-"typing" type annotated by an
+        # unhashable mutable container.
+        HintPepMetadata(
+            hint=Annotated[str, []],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    'Papally Ľust‐besmirched Merchet laws'),
+            ),
+            piths_unsatisfied_meta=(
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
+            ),
+        ),
+
+        # Annotated of a "typing" type.
+        HintPepMetadata(
+            hint=Annotated[HINT_ATTR_LIST[str], int],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # List of string constants.
+                HintPithSatisfiedMetadata([
+                    'MINERVA‐unnerving, verve‐sapping enervations',
+                    'Of a magik-stoned Shinto rivery',
+                ]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Of a Spicily sated',),
+            ),
+        ),
+
+    ))
+
+    # ..................{ VALIDATORS                        }..................
+    # If the active Python interpreter does *NOT* support Python >= 3.8 and
+    # thus the __class_getitem__() dunder method required for beartype
+    # validators, immediately return.
+    if not IS_PYTHON_AT_LEAST_3_8:
+        return
+    # Else, this interpreter supports beartype validators.
 
     # ..................{ VALIDATORS ~ is                   }..................
     # Beartype-specific data validators defined as lambda functions.
@@ -97,88 +191,9 @@ def add_data(data_module: 'ModuleType') -> None:
     SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
         'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
-    # ..................{ SETS                              }..................
-    # Add PEP 593-specific deeply ignorable test type hints to that set global.
-    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-        # Annotated of shallowly ignorable type hints.
-        Annotated[Any, int],
-        Annotated[object, int],
-
-        # Annotated of ignorable unions and optionals.
-        Annotated[Union[Any, float, str,], int],
-        Annotated[Optional[Any], int],
-
-        # Unions and optionals of ignorable annotateds.
-        Union[complex, int, Annotated[Any, int]],
-        Optional[Annotated[object, int]],
-
-        # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
-        # exercising numerous edge cases broken under prior releases.
-        Union[str, list[int], NewType('MetaType', Annotated[object, 53])],
-    ))
-
-    #FIXME: Excise us up.
-    # # Add PEP 593-specific invalid non-generic types to that set global.
-    # data_module.HINTS_PEP_INVALID_TYPE_NONGENERIC.update((
-    #     # The "Annotated" class as is does *NOT* constitute a valid type hint.
-    #     Annotated,
-    # ))
-
-    # ..................{ TUPLES                            }..................
+    # ..................{ VALIDATORS ~ tuples               }..................
     # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ ANNOTATED                         }................
-        # Hashable annotated of a non-"typing" type annotated by an arbitrary
-        # hashable object.
-        HintPepMetadata(
-            hint=Annotated[str, int],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant.
-                HintPithSatisfiedMetadata(
-                    'Towards a timely, wines‐enticing gate'),
-            ),
-            piths_unsatisfied_meta=(
-                # List of string constants.
-                HintPithUnsatisfiedMetadata([
-                    'Of languished anger’s sap‐spated rushings',]),
-            ),
-        ),
-
-        # Unhashable annotated of a non-"typing" type annotated by an
-        # unhashable mutable container.
-        HintPepMetadata(
-            hint=Annotated[str, []],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant.
-                HintPithSatisfiedMetadata(
-                    'Papally Ľust‐besmirched Merchet laws'),
-            ),
-            piths_unsatisfied_meta=(
-                # List of string constants.
-                HintPithUnsatisfiedMetadata([
-                    "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
-            ),
-        ),
-
-        # Annotated of a "typing" type.
-        HintPepMetadata(
-            hint=Annotated[list[str], int],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # List of string constants.
-                HintPithSatisfiedMetadata([
-                    'MINERVA‐unnerving, verve‐sapping enervations',
-                    'Of a magik-stoned Shinto rivery',
-                ]),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                HintPithUnsatisfiedMetadata('Of a Spicily sated',),
-            ),
-        ),
-
         # ................{ ANNOTATED ~ beartype : is         }................
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # validator defined as a lambda function.
@@ -207,10 +222,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a listed of a nested non-"typing" type annotated by one
         # beartype-specific validator defined as a lambda function.
         HintPepMetadata(
-            hint=list[Annotated[str, IsLengthy]],
+            hint=HINT_ATTR_LIST[Annotated[str, IsLengthy]],
             pep_sign=HintSignList,
             stdlib_type=list,
-            is_pep585_builtin=True,
+            is_pep585_builtin=HINT_ATTR_LIST is list,
             piths_satisfied_meta=(
                 # List of string constants satisfying this validator.
                 HintPithSatisfiedMetadata([
@@ -345,7 +360,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of a non-"typing" type annotated by one beartype-specific
         # equality validator.
         HintPepMetadata(
-            hint=Annotated[list[str], IsEqualAmplyImpish],
+            hint=Annotated[HINT_ATTR_LIST[str], IsEqualAmplyImpish],
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # Exact object subscripting this validator.

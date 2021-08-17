@@ -29,7 +29,7 @@ from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
-from beartype_test.util.mod.pytmodoptional import (
+from beartype_test.util.mod.pytmodtest import (
     is_package_numpy_typing_ndarray_supported)
 
 # ....................{ ADDERS                            }....................

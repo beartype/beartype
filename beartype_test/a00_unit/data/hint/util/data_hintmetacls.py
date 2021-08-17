@@ -269,7 +269,7 @@ class HintPepMetadata(HintNonPepMetadata):
         assert not (
             (is_pep585_builtin or is_pep585_generic) and is_type_typing), (
             f'Mutually incompatible boolean parameters '
-            f'is_type_typing={repr(is_type_typing)} and either'
+            f'is_type_typing={repr(is_type_typing)} and either '
             f'is_pep585_builtin={repr(is_pep585_builtin)} or '
             f'is_pep585_generic={repr(is_pep585_generic)} enabled.'
         )

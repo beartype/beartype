@@ -27,7 +27,6 @@ def test_import_module_or_none() -> None:
     # Defer heavyweight imports.
     import beartype
     from beartype.roar import BeartypeModuleUnimportableWarning
-    from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_or_none
 
     # Assert this function returns the expected module when passed the
@@ -51,7 +50,7 @@ def test_import_module_or_none() -> None:
     # fully-qualified name of an unimportable module.
     with warns(BeartypeModuleUnimportableWarning):
         assert import_module_or_none(
-            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad') is (
+            'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad') is (
                 None)
 
 # ....................{ TESTS ~ attr                      }....................
@@ -67,7 +66,7 @@ def test_import_module_attr() -> None:
 
     # Attribute dynamically imported from a module.
     module_attr = import_module_attr(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrgood')
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrgood')
 
     # Assert this to be the expected attribute.
     assert isinstance(module_attr, str)
@@ -78,7 +77,7 @@ def test_import_module_attr() -> None:
     # an importable module.
     with raises(_BeartypeUtilModuleException):
         import_module_attr(
-            'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrbad')
+            'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
 
 
 def test_import_module_attr_or_none() -> None:
@@ -94,11 +93,11 @@ def test_import_module_attr_or_none() -> None:
 
     # Attribute declared by an importable module.
     module_attr_good = import_module_attr_or_none(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrgood')
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrgood')
 
     # Attribute *NOT* declared by an importable module.
     module_attr_bad = import_module_attr_or_none(
-        'beartype_test.a00_unit.data.util.py.data_utilpymodule_good.attrbad')
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
 
     # Assert this to be the expected attribute.
     assert isinstance(module_attr_good, str)
@@ -114,7 +113,7 @@ def test_import_module_attr_or_none() -> None:
     # an unimportable module.
     with warns(BeartypeModuleUnimportableWarning):
         bad_module_attr = import_module_attr_or_none(
-            'beartype_test.a00_unit.data.util.py.data_utilpymodule_bad.attrbad')
+            'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad.attrbad')
         assert bad_module_attr is None
 
     # Assert this function raises the expected exception when passed a

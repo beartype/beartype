@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype importable data submodule.**
+Project-wide **importable data submodule.**
 
 This submodule exercises dynamic importability by providing an importable
 submodule defining an arbitrary attribute. External unit tests are expected to

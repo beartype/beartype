@@ -209,3 +209,62 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 
     # Return true only if this module's current version satisfies this minimum.
     return version_actual_parts >= version_minimum_parts
+
+# ....................{ TESTERS ~ attr : typing           }....................
+def is_module_typing_any_attr(
+    # Mandatory parameters.
+    typing_attr_basename: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> bool:
+    '''
+    ``True`` only if a **typing attribute** (i.e., object declared at module
+    scope by either the :mod:`typing` or :mod:`typing_extensions` modules) with
+    the passed unqualified name is importable from one or more of these
+    modules.
+
+    This function is effectively memoized for efficiency.
+
+    Parameters
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be imported from a typing module.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if the :mod:`typing` or :mod:`typing_extensions` modules
+        declare an attribute with this name.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this name is syntactically invalid.
+
+    Warns
+    ----------
+    BeartypeModuleUnimportableWarning
+        If any of these modules raise module-scoped exceptions at importation
+        time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
+        are scrupulously tested and thus unlikely to raise such exceptions.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodimport import (
+        import_module_typing_any_attr_or_none)
+
+    # Attribute with this name imported from either the "typing" or
+    # "typing_extensions" modules if one or more of these modules declare this
+    # attribute *OR* "None" otherwise.
+    #
+    # Note that positional rather than keyword arguments are intentionally
+    # passed to optimize memoization efficiency.
+    typing_attr = import_module_typing_any_attr_or_none(
+        typing_attr_basename, exception_cls)
+
+    # Return true only if this attribute was importable.
+    return typing_attr is not None

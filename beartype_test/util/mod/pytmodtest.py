@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Test-specific **optional test-time dependency** utilities.
+Test-specific **Python module detection** utilities.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -13,26 +13,6 @@ Test-specific **optional test-time dependency** utilities.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.cache.utilcachecall import callable_cached
-
-# ....................{ TESTERS                           }....................
-@callable_cached
-def is_package_typing_extensions() -> bool:
-    '''
-    ``True`` only if a reasonably recent version of the third-party
-    :mod:`typing_extensions` package is importable under the active Python
-    interpreter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.meta import (
-        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
-    from beartype._util.mod.utilmodtest import is_module_version_at_least
-
-    # Return true only if this version of this package is importable.
-    return is_module_version_at_least(
-        'typing_extensions',
-        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
-    )
 
 # ....................{ TESTERS ~ numpy                   }....................
 @callable_cached
@@ -75,11 +55,27 @@ def is_package_numpy_typing_ndarray_supported() -> bool:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype._util.mod.utilmodtest import is_module_typing_any_attr
 
-    # Return true only if the "numpy.typing.NDArray" is supported
-    return (
-        is_package_numpy() and (
-            IS_PYTHON_AT_LEAST_3_9 or is_package_typing_extensions()
-        )
+    # Return true only if the "numpy.typing.NDArray" is supported.
+    return is_package_numpy() and is_module_typing_any_attr('Annotated')
+
+# ....................{ TESTERS ~ typing                  }....................
+@callable_cached
+def is_package_typing_extensions() -> bool:
+    '''
+    ``True`` only if a reasonably recent version of the third-party
+    :mod:`typing_extensions` package is importable under the active Python
+    interpreter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.meta import (
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
+    from beartype._util.mod.utilmodtest import is_module_version_at_least
+
+    # Return true only if this version of this package is importable.
+    return is_module_version_at_least(
+        'typing_extensions',
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
     )

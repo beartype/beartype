@@ -115,8 +115,7 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     except Exception as exception:
         warn(
             (
-                f'Ignoring module "{module_name}", '
-                f'whose importation unexpectedly raises '
+                f'Ignoring module "{module_name}" importation exception '
                 f'{exception.__class__.__name__}: {exception}'
             ),
             BeartypeModuleUnimportableWarning,
@@ -274,7 +273,6 @@ def import_module_attr_or_none(
     )
 
 # ....................{ IMPORTERS ~ attr : typing         }....................
-@callable_cached
 def import_module_typing_any_attr(
     # Mandatory parameters.
     typing_attr_basename: str,
@@ -286,8 +284,107 @@ def import_module_typing_any_attr(
     Dynamically import and return the **typing attribute** (i.e., object
     declared at module scope by either the :mod:`typing` or
     :mod:`typing_extensions` modules) with the passed unqualified name if
-    importable from one or more of those modules *or* raise an exception
-    otherwise.
+    importable from one or more of these modules *or* raise an exception
+    otherwise (i.e., if this attribute is *not* importable from these modules).
+
+    This function is effectively memoized for efficiency.
+
+    Parameters
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be imported from a typing module.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+
+    Returns
+    ----------
+    object
+        Attribute with this name dynamically imported from a typing module.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If either:
+
+        * This name is syntactically invalid.
+        * Neither the :mod:`typing` nor :mod:`typing_extensions` modules
+          declare an attribute with this name.
+
+    Warns
+    ----------
+    BeartypeModuleUnimportableWarning
+        If any of these modules raise module-scoped exceptions at importation
+        time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
+        are scrupulously tested and thus unlikely to raise such exceptions.
+
+    See Also
+    ----------
+    :func:`import_module_typing_any_attr_or_none`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodtest import is_module
+
+    # Attribute with this name imported from either the "typing" or
+    # "typing_extensions" modules if one or more of these modules declare this
+    # attribute *OR* "None" otherwise.
+    #
+    # Note that positional rather than keyword arguments are intentionally
+    # passed to optimize memoization efficiency.
+    typing_attr = import_module_typing_any_attr_or_none(
+        typing_attr_basename, exception_cls)
+
+    # If none of these modules declare this attribute...
+    if typing_attr is None:
+        # Substrings prefixing and suffixing exception messages raised below.
+        EXCEPTION_PREFIX = (
+            f'Typing attributes "typing.{typing_attr_basename}" and '
+            f'"typing_extensions.{typing_attr_basename}" not found. '
+        )
+        EXCEPTION_SUFFIX = (
+            'We apologize for the inconvenience and hope you had a '
+            'great dev cycle flying with Air Beartype, '
+            '"Your Grizzled Pal in the Friendly Skies."'
+        )
+
+        # If the "typing_extensions" module is importable, raise an
+        # appropriate exception.
+        if is_module('typing_extensions'):
+            raise exception_cls(
+                f'{EXCEPTION_PREFIX} Please either '
+                f'(A) update the "typing_extensions" package or '
+                f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
+            )
+        # Else, the "typing_extensions" module is unimportable. In this
+        # case, raise an appropriate exception.
+        else:
+            raise exception_cls(
+                f'{EXCEPTION_PREFIX} Please either '
+                f'(A) install the "typing_extensions" package or '
+                f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
+            )
+    # Else, one or more of these modules declare this attribute.
+
+    # Return this attribute.
+    return typing_attr
+
+
+@callable_cached
+def import_module_typing_any_attr_or_none(
+    # Mandatory parameters.
+    typing_attr_basename: str,
+
+    # Optional parameters.
+    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+) -> Any:
+    '''
+    Dynamically import and return the **typing attribute** (i.e., object
+    declared at module scope by either the :mod:`typing` or
+    :mod:`typing_extensions` modules) with the passed unqualified name if
+    importable from one or more of these modules *or* ``None`` otherwise
+    otherwise (i.e., if this attribute is *not* importable from these modules).
 
     Specifically, this function (in order):
 
@@ -298,7 +395,7 @@ def import_module_typing_any_attr(
        module requiring external installation under the active Python
        interpreter declares that attribute, dynamically imports and returns
        that attribute from that module.
-    #. Else, raises a human-readable exception.
+    #. Else, returns ``None``.
 
     This function is memoized for efficiency.
 
@@ -317,24 +414,16 @@ def import_module_typing_any_attr(
 
     Raises
     ----------
-    exception_cls
-        If either:
-
-        * This name is syntactically invalid.
-        * Neither the :mod:`typing` nor :mod:`typing_extensions` modules
-          declare an attribute with this name.
+    :exc:`exception_cls`
+        If this name is syntactically invalid.
 
     Warns
     ----------
     BeartypeModuleUnimportableWarning
-        If a module with this name exists *but* that module is unimportable
-        due to raising module-scoped exceptions at importation time. That said,
-        the :mod:`typing` and :mod:`typing_extensions` modules are scrupulously
-        tested and thus unlikely to raise exceptions on initial importation.
+        If any of these modules raise module-scoped exceptions at importation
+        time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
+        are scrupulously tested and thus unlikely to raise such exceptions.
     '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodtest import is_module
 
     # Attribute with this name imported from the "typing" module if that module
     # declares this attribute *OR* "None" otherwise.
@@ -349,43 +438,13 @@ def import_module_typing_any_attr(
             typing_attr_basename=typing_attr_basename,
             exception_cls=exception_cls,
         )
-
-        # If the "typing_extensions" module also does *NOT* declare this
-        # attribute...
-        if typing_attr is None:
-            # If the "typing_extensions" module is importable, raise an
-            # appropriate exception.
-            if is_module('typing_extensions'):
-                raise exception_cls(
-                    f'Typing attributes "typing.{typing_attr_basename}" and '
-                    f'"typing_extensions.{typing_attr_basename}" not found. '
-                    f'Please either '
-                    f'(A) update the "typing_extensions" package or '
-                    f'(B) update to a newer Python version. '
-                    f'We apologize for the inconvenience and hope you had a '
-                    f'great dev cycle flying with Air Beartype, '
-                    f'"Your Grizzled Pal in the Friendly Skies."'
-                )
-            # Else, the "typing_extensions" module is unimportable. In this
-            # case, raise an appropriate exception.
-            else:
-                raise exception_cls(
-                    f'Typing attributes "typing.{typing_attr_basename}" and '
-                    f'"typing_extensions.{typing_attr_basename}" not found. '
-                    f'Please either '
-                    f'(A) install the "typing_extensions" package or '
-                    f'(B) update to a newer Python version. '
-                    f'We apologize for the inconvenience and hope you had a '
-                    f'great dev cycle flying with Air Beartype, '
-                    f'"Your Grizzled Pal in the Friendly Skies."'
-                )
-        # Else, the "typing_extensions" module declares this attribute.
     # Else, the "typing" module declares this attribute.
 
-    # Return this attribute.
+    # Return either this attribute if one or more of these modules declare this
+    # attribute *OR* "None" otherwise.
     return typing_attr
 
-
+# ....................{ IMPORTERS ~ attr : typing : module}....................
 def import_module_typing_attr_or_none(
     # Mandatory parameters.
     typing_attr_basename: str,

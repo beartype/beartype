@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**:mod:`pytest` test-skipping decorators.**
+**Pytest test-skipping decorators.**
 
 This submodule provides decorators conditionally marking their decorated tests
 as skipped depending on whether the conditions signified by the passed
@@ -16,9 +16,7 @@ parameters are satisfied (e.g., the importability of the passed module name).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-import platform, pytest, sys
-from beartype_test.util.mark import pytmark
+import pytest, sys
 from collections.abc import Mapping, Sequence
 from types import FunctionType
 
@@ -314,6 +312,9 @@ def _skip_if_callable_raises_exception(
         *or* the identity decorator reducing to a noop otherwise.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype_test.util.mark.pytmark import noop
+
     # Default all unpassed arguments to sane values.
     if args is None:
         args = ()
@@ -337,4 +338,4 @@ def _skip_if_callable_raises_exception(
     # permitting this exception to unwind the current call stack.
 
     # Else, this callable raised no exception. Silently reduce to a noop.
-    return pytmark.noop
+    return noop
