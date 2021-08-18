@@ -31,7 +31,7 @@ def test_is_hint_pep585_builtin() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this tester accepts only PEP 585-compliant type hints.
@@ -50,7 +50,7 @@ def test_is_hint_pep585_generic() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_generic)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this tester accepts only PEP 585-compliant generics.
@@ -70,7 +70,7 @@ def test_get_hint_pep585_generic_typevars() -> None:
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._util.hint.pep.proposal.utilpep585 import (
         get_hint_pep585_generic_typevars)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this getter...

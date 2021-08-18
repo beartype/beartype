@@ -88,11 +88,11 @@ def _init() -> None:
         _data_hintmodnumpy,
     )
     from beartype_test.a00_unit.data.hint.pep.proposal import (
-        data_hintpep484,
-        _data_hintpep544,
-        _data_hintpep585,
-        _data_hintpep586,
-        _data_hintpep593,
+        data_pep484,
+        _data_pep544,
+        _data_pep585,
+        _data_pep586,
+        _data_pep593,
     )
 
     # Submodule globals to be redefined below.
@@ -109,11 +109,11 @@ def _init() -> None:
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_PEP_SUBMODULES = (
         _data_hintmodnumpy,
-        data_hintpep484,
-        _data_hintpep544,
-        _data_hintpep585,
-        _data_hintpep586,
-        _data_hintpep593,
+        data_pep484,
+        _data_pep544,
+        _data_pep585,
+        _data_pep586,
+        _data_pep593,
     )
 
     # Initialize all private submodules of this subpackage.

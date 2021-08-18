@@ -182,7 +182,7 @@ def test_pep484_hint_sequence_standard_cached() -> None:
 #When we next read this comment, refactor our test suite as follows:
 #* Remove this test.
 #* Remove the
-#  "beartype_test.a00_unit.data.hint.pep.data_hintpep.HINTS_PEP_INVALID_TYPE_NONGENERIC"
+#  "beartype_test.a00_unit.data.hint.pep.data_pep.HINTS_PEP_INVALID_TYPE_NONGENERIC"
 #  frozen set entirely.
 
 # def test_pep484_hint_invalid_types_nongeneric() -> None:
@@ -196,7 +196,7 @@ def test_pep484_hint_sequence_standard_cached() -> None:
 #     # Defer heavyweight imports.
 #     from beartype import beartype
 #     from beartype.roar import BeartypeDecorHintPepSignException
-#     from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+#     from beartype_test.a00_unit.data.hint.pep.data_pep import (
 #         HINTS_PEP_INVALID_TYPE_NONGENERIC)
 #
 #     # Assert that decorating a callable annotated by a non-generic class raises

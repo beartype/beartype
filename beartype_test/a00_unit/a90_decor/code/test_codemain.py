@@ -57,9 +57,9 @@ def test_codemain() -> None:
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
-    from beartype_test.a00_unit.data.hint.nonpep.data_hintnonpep import (
+    from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
         HINTS_NONPEP_META)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Tuple of all PEP-compliant type hint metadata to be tested -- regardless
     # of whether those hints are uniquely identifiable by a sign or not.

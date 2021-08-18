@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hints test data.**
+Project-wide **PEP-compliant type hints test data.**
 
 This submodule predefines low-level global constants whose values are
-PEP-compliant type hints, exercising known edge cases on behalf of higher-level
-unit test submodules.
+PEP-noncompliant type hints, exercising known edge cases on behalf of
+higher-level unit test submodules.
 '''
 
 # ....................{ TUPLES                            }....................
@@ -28,10 +28,14 @@ def _init() -> None:
 
     # Defer function-specific imports.
     import sys
+    from beartype_test.a00_unit.data.hint.nonpep.mod import (
+        _data_nonpepbeartype,
+    )
+    from beartype_test.a00_unit.data.hint.nonpep.proposal import (
+        _data_nonpep484,
+    )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonPepMetadata)
-    from beartype_test.a00_unit.data.hint.nonpep.proposal import (
-        _data_hintnonpep484)
 
     # Submodule globals to be redefined below.
     global HINTS_NONPEP_META
@@ -42,7 +46,8 @@ def _init() -> None:
 
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_NONPEP_SUBMODULES = (
-        _data_hintnonpep484,
+        _data_nonpep484,
+        _data_nonpepbeartype,
     )
 
     # Initialize all private submodules of this subpackage.

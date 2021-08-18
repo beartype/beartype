@@ -17,7 +17,7 @@ from beartype._cave._cavefast import (
     NoneType,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+from beartype_test.a00_unit.data.hint.pep.data_pep import (
     HINTS_PEP_HASHABLE,
     HINTS_PEP_IGNORABLE_SHALLOW,
     HINTS_PEP_IGNORABLE_DEEP,

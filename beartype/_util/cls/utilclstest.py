@@ -227,8 +227,8 @@ def is_type_builtin(cls: type) -> bool:
     # Else, this object is a type.
 
     # If this type is a fake builtin (i.e., type that is *NOT* builtin but
-    # which erroneously masquerades as being builtin), this type is *NOT* a
-    # builtin. In this case, silently reject this type.
+    # erroneously masquerading as being builtin), this type is *NOT* a builtin.
+    # In this case, silently reject this type.
     if cls in TYPES_BUILTIN_FAKE:
         return False
     # Else, this type is *NOT* a fake builtin.

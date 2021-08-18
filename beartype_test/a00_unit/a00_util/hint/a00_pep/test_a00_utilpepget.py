@@ -30,7 +30,7 @@ def test_get_hint_pep_sign() -> None:
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP, NonPepCustomFakeTyping)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this getter returns the expected unsubscripted "typing" attribute
@@ -63,7 +63,7 @@ def test_get_hint_pep_generic_type_or_none() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_generic_type_or_none)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this getter returns the expected type origin for all
@@ -104,7 +104,7 @@ def test_get_hint_pep_type_origin_stdlib() -> None:
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_type_stdlib)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this getter...
@@ -138,7 +138,7 @@ def test_get_hint_pep_type_origin_stdlib_or_none() -> None:
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_type_stdlib_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this getter returns the expected type origin for all PEP-compliant
@@ -168,7 +168,7 @@ def test_get_hint_pep_generic_bases_unerased() -> None:
         get_hint_pep_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this getter...
     for hint_pep_meta in HINTS_PEP_META:
@@ -210,7 +210,7 @@ def test_get_hint_pep_typevars() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this getter returns...
     for hint_pep_meta in HINTS_PEP_META:

@@ -394,7 +394,7 @@ def test_add_func_scope_types_fail() -> None:
     from beartype.roar import BeartypeDecorHintNonPepException
     from beartype._util.func.utilfuncscope import add_func_scope_types
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         Pep484GenericTypevaredSingle)
 
     # Arbitrary scope to be added to below.

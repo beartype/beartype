@@ -34,7 +34,7 @@ def test_die_unless_hint() -> None:
     from beartype._util.hint.utilhinttest import die_unless_hint
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS, HINTS_NONPEP)
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import (
+    from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this function accepts PEP-noncompliant type hints.
@@ -66,7 +66,7 @@ def test_is_hint() -> None:
     # Defer heavyweight imports.
     from beartype._util.hint.utilhinttest import is_hint
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS, HINTS_NONPEP
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
@@ -98,7 +98,7 @@ def test_is_hint_ignorable() -> None:
         HINTS_IGNORABLE,
         HINTS_NONPEP_UNIGNORABLE,
     )
-    from beartype_test.a00_unit.data.hint.pep.data_hintpep import HINTS_PEP_META
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this function accepts ignorable type hints.
     for hint_ignorable in HINTS_IGNORABLE:

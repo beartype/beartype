@@ -264,7 +264,7 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize changes to this set with the corresponding
     # testing-specific set
-    # "beartype_test.a00_unit.data.hint.pep.data_hintpep.HINTS_PEP_IGNORABLE_SHALLOW".
+    # "beartype_test.a00_unit.data.hint.pep.data_pep.HINTS_PEP_IGNORABLE_SHALLOW".
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # ..................{ NON-PEP                           }..................

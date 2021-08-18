@@ -158,7 +158,7 @@ def test_is_hint_pep544_io_generic() -> None:
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep484_generic_io)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
     from typing import Union
 

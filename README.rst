@@ -70,7 +70,8 @@ efficiency, portability, and thrilling puns.
    # Squash additional bugs by refining type hints with PEP-compliant beartype
    # validators. First, import the requisite machinery.
    >>> from beartype.vale import Is
-   >>> from typing import Annotated
+   >>> from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
    # Define validators from simple lambda functions. For example, this
    # validator matches any list containing one or more strings.
@@ -125,6 +126,21 @@ developed Python versions <Python status_>`__, `all Python package managers
 
 News
 ====
+
+2021-08-18: NumPy, Consider Yourself Checked
+--------------------------------------------
+
+**Beartype 0.8.0** (codename: *berry gud*) has been released to polite golf
+claps from cloud-hosted data scientists everywhere, expanding support for:
+
+* `NumPy ≥ 1.21.0 type hints (e.g., "numpy.typing.NDArray[numpy.float64]")
+  <NumPy Type Hints_>`__ under both Python ≥ 3.9.0 and Python < 3.9.0 via the
+  `third-party "typing_extensions" package <typing_extensions_>`__.
+* `Beartype validators <Beartype Validators_>`__ under Python < 3.9.0 via the
+  `third-party "typing_extensions" package <typing_extensions_>`__.
+
+What we're saying is: ``pip install typing-extensions``. Your data pipeline
+will thank us later.
 
 2021-05-25: Validating Data Day (VD-Day)
 ----------------------------------------
@@ -726,8 +742,6 @@ Beartype Validators
    Validate anything with two-line type hints
           designed by you ⇄ built by beartype
 
-.. # FIXME: Also please add our "`beartype`" discussion as a new FAQ entry.
-
 When official type hints fail to suffice, design your own PEP-compliant type
 hints with compact two-line **beartype validators:**
 
@@ -736,11 +750,12 @@ hints with compact two-line **beartype validators:**
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated
-   import numpy as np
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Type hint matching any two-dimensional NumPy array of floats of arbitrary
-   # precision. Yup. That's a beartype validator, folks!
+   # precision. Aye, typing matey. Beartype validators a-hoy!
+   import numpy as np
    Numpy2DFloatArray = Annotated[np.ndarray, Is[lambda array:
        array.ndim == 2 and np.issubdtype(array.dtype, np.floating)]]
 
@@ -803,7 +818,7 @@ calls the pure-Python functions and methods you specify when you subscript
 
 * The functional validator ``Annotated[np.ndarray, Is[lambda array:
   array.dtype.type == np.float64]]`` also detects the same arrays by generating
-  a slightly slower inline expression calling the lambda function you provide:
+  a slightly slower inline expression calling the lambda function you define:
 
   .. code-block:: python
 
@@ -824,9 +839,8 @@ Beartype validators thus come in two flavours – each with its tradeoffs:
   function costs, but is special-purpose and thus supports only a narrow band
   of validation scenarios.
 
-Wherever you can, prefer declarative validators.
-
-Everywhere else, default to functional validators.
+Wherever you can, prefer declarative validators for efficiency. Everywhere
+else, fallback to functional validators for generality.
 
 Validator API
 ~~~~~~~~~~~~~
@@ -844,7 +858,8 @@ Validator API
 
        # Import the requisite machinery.
        from beartype.vale import Is
-       from typing import Annotated
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
        # Type hint matching only strings with lengths ranging [4, 40].
        LengthyString = Annotated[str, Is[lambda text: 4 <= len(text) <= 40]]
@@ -869,12 +884,13 @@ Validator API
 
        # Import the requisite machinery.
        from beartype.vale import IsAttr, IsEqual
-       from typing import Annotated
-       import numpy as np
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
        # Type hint matching only two-dimensional NumPy arrays. Given this,
        # @beartype generates efficient validation code resembling:
        #     isinstance(array, np.ndarray) and array.ndim == 2
+       import numpy as np
        Numpy2DArray = Annotated[np.ndarray, IsAttr['ndim', IsEqual[2]]]
 
     The first argument subscripting this class *must* be a syntactically valid
@@ -917,10 +933,11 @@ Validator API
 
        # Import the requisite machinery.
        from beartype.vale import IsEqual
-       from typing import Annotated
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
        # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
-       Numpy2DArray = Annotated[list, IsEqual[list(range(42))]]
+       AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
 
     ``beartype.vale.IsEqual`` generalizes the comparable `PEP 586`_-compliant
     typing.Literal_ type hint. Both check equality against user-defined
@@ -965,8 +982,8 @@ Validator API
     See ``help(beartype.vale.IsEqual)`` for further details.
 
 .. [#enum_type]
-   You don't want to know the type of enum.Enum_ members. No. We're serious!
-   You don't. You do? Very well. It's enum.Enum_.
+   You don't want to know the type of enum.Enum_ members. No... seriously. You
+   don't. You do? Oh, very well. It's enum.Enum_. :superscript:`mic drop`
 
 Validator Syntax
 ~~~~~~~~~~~~~~~~
@@ -1054,33 +1071,20 @@ existing validators, fueling reuse and preserving DRY_:
 Validator Caveats
 ~~~~~~~~~~~~~~~~~
 
-**‼** **Validators require beartype.** Currently, all other static and runtime
-type checkers silently ignore beartype validators during type-checking. This
-includes mypy_ – which we could possibly solve by bundling a `mypy plugin`_
-with beartype that extends mypy_ to statically analyze declarative beartype
-validators (e.g., ``beartype.vale.IsAttr``, ``beartype.vale.IsEqual``). We
-leave this as an exercise to the idealistic doctoral thesis candidate.
-:superscript:`Please do this for us, someone who is not us.`
+**‼** **Validators require:**
 
-**‼** **Validators require Python ≥ 3.9.** Validators piggyback onto the
-typing.Annotated_ class introduced by Python 3.9.0. Since Python 3.9.0 also
-deprecated most `PEP 484`_-compliant type hints (e.g., ``typing.List[str]``)
-with equivalent `PEP 585`_-compliant type hints (e.g., ``list[str]``), this is
-a good thing. No, truly. We are about to convince you of something you do not
-want to be convinced of. *Watch this.*
-
-Regardless of whether you want validators or not, we advise everyone migrate
-from `PEP 484`_ to `PEP 585`_ and thus Python ≥ 3.9 as soon as feasible. There
-is *no* clean migration path from `PEP 484`_ to `PEP 585`_, because migrating
-means manually refactoring imports across your entire codebase without
-regex-based global search and replacement, because imports convey
-context-sensitive semantics unintelligible to regexes. Migrating today means
-mitigating the considerable pain of doing so tomorrow. In `PEP 585`_, CPython_
-developers have pledged to remove most of the typing_ module by 2026:
-
-    The deprecated functionality will be removed from the ``typing`` module
-    in **the first Python version released 5 years after the release of
-    Python 3.9.0** [\ *October 5th, 2025*\ ].
+* **Beartype.** Currently, all other static and runtime type checkers silently
+  ignore beartype validators during type-checking. This includes mypy_ – which
+  we could possibly solve by bundling a `mypy plugin`_ with beartype that
+  extends mypy_ to statically analyze declarative beartype validators (e.g.,
+  ``beartype.vale.IsAttr``, ``beartype.vale.IsEqual``). We leave this as an
+  exercise to the idealistic doctoral thesis candidate. :superscript:`Please do
+  this for us, someone who is not us.`
+* Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+  <typing_extensions_>`__. Validators piggyback onto the typing.Annotated_
+  class first introduced with Python 3.9.0 and since backported to older Python
+  versions by the `third-party "typing_extensions" package
+  <typing_extensions_>`__, which beartype also transparently supports.
 
 Validator Showcase
 ~~~~~~~~~~~~~~~~~~
@@ -1102,12 +1106,13 @@ the functional validator in that example:
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import IsAttr, IsEqual
-   from typing import Annotated
-   import numpy as np
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Type hint matching only two-dimensional NumPy arrays of floats of
    # arbitrary precision. This time, do it faster than anyone has ever
    # type-checked NumPy arrays before. (Cue sonic boom, Chuck Yeager.)
+   import numpy as np
    Numpy2DFloatArray = Annotated[np.ndarray,
        IsAttr['ndim', IsEqual[2]] &
        IsAttr['dtype',
@@ -1142,7 +1147,8 @@ suffixed by a period. Look, it doesn't matter. Just do it already,
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Validator matching only strings at least 80 characters in length.
    IsLengthy = Is[lambda text: len(text) >= 80]
@@ -1199,7 +1205,8 @@ validators mean you no longer have to accept the QA scraps we feed you:
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Type hint matching all integers in a list of integers in O(n) time. Please
    # never do this. You now want to, don't you? Why? You know the price! Why?!?
@@ -1230,6 +1237,81 @@ best, and (in any case) we can't stop you because we already let the unneutered
 tomcat out of his trash bin by publishing this API into `the badlands of PyPI
 <beartype PyPI_>`__.
 
+Validator Alternatives
+~~~~~~~~~~~~~~~~~~~~~~
+
+If the unbridled power of beartype validators leaves you variously queasy,
+uneasy, and suspicious of our core worldview, beartype also supports
+third-party type hints like `typed NumPy arrays <NumPy Type Hints_>`__.
+
+Whereas beartype validators are verbose, expressive, and general-purpose, the
+following hints are terse, inexpressive, and domain-specific. Since beartype
+internally converts these hints to corresponding validators, `similar caveats
+apply <Validator Caveats_>`__. Notably, these hints require:
+
+* Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+  <typing_extensions_>`__.
+
+NumPy Type Hints
+++++++++++++++++
+
+Beartype fully supports `typed NumPy arrays annotated as "numpy.typing.NDArray"
+type hints <numpy.typing_>`__. Unsurprisingly, these hints require:
+
+* NumPy_ ≥ 1.21.0.
+* beartype ≥ 0.8.0.
+* Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+  <typing_extensions_>`__.
+
+Let's validate NumPy arrays of arbitrary shape containing only 64-bit floats
+using `NumPy type hints <numpy.typing_>`__. Error-free is the way to be:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from numpy.typing import NDArray
+   import numpy as np
+
+   # NumPy type hint matching all NumPy arrays containing only 64-bit floats.
+   NumpyFloat64Array = NDArray[np.float64]
+
+   # Annotate @beartype-decorated callables with NumPy type hints.
+   @beartype
+   def get_array_len(array: NumpyFloat64Array) -> tuple[NumpyFloat64Array, int]:
+       return (array, len(array))
+
+`NumPy type hints <numpy.typing_>`__ are simply syntactic sugar for `beartype
+validators <Beartype Validators_>`__. Beartype internally converts the former
+into the latter at decoration time. The prior example is exactly identical to:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import IsAttr, IsEqual
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   import numpy as np
+
+   # Validator matching all NumPy arrays containing only 64-bit floats.
+   NumpyFloat64Array = Annotated[
+       np.ndarray, IsAttr['dtype', IsEqual[np.dtype(np.float64)]]]
+
+   # Annotate @beartype-decorated callables with beartype validators.
+   @beartype
+   def get_array_len(array: NumpyFloat64Array) -> tuple[NumpyFloat64Array, int]:
+       return (array, len(array))
+
+`NumPy type hints currently only validate array data types (dtypes) <NumPy Type
+Hints_>`__, a common but limited use case. `Beartype validators <Beartype
+Validators_>`__ validate *any* arbitrary combinations of array constraints –
+including dtypes, shapes, contents, and... well, *anything.* Which is alot.
+
+Wherever you can, prefer `NumPy type hints <numpy.typing_>`__ for portability.
+Everywhere else, default to `beartype validators <Beartype Validators_>`__ for
+generality.
+
 Coming up: *shocking revelation that cheaters prosper.*
 
 Cheatsheet
@@ -1239,7 +1321,7 @@ Let's type-check like `greased lightning`_:
 
 .. code-block:: python
 
-   # ..................{              BEARTYPE              }..................
+   # ..................{              IMPORTS               }..................
    # Import the core @beartype decorator.
    from beartype import beartype
 
@@ -1256,9 +1338,11 @@ Let's type-check like `greased lightning`_:
    # See also: https://docs.python.org/3/library/typing.html
    from typing import Any, List, Optional, Tuple, Union
 
+   # Import backported PEP-compliant type hints from "typing_extensions", too.
+   from typing_extensions import Literal
+
    # Import beartype-specific types to annotate callables with, too.
-   from beartype.cave import (
-       NoneType, NoneTypeOr, RegexTypes, ScalarTypes, VersionTypes)
+   from beartype.cave import NoneType, NoneTypeOr, RegexTypes, ScalarTypes
 
    # Import standard abstract base classes (ABCs) for use with @beartype, too.
    from numbers import Integral, Real
@@ -1267,8 +1351,8 @@ Let's type-check like `greased lightning`_:
    from my_package.my_module import MyClass
 
    # ..................{              TYPEVARS              }..................
-   # User-defined PEP 484-compliant type variable. Note that @beartype currently
-   # ignores type variables, but that @beartype 0.9.0 is expected to fully
+   # User-defined PEP 484-compliant type variable. Note @beartype currently
+   # ignores type variables, but that @beartype 1.0.0 is expected to fully
    # support type variables. See also: https://github.com/beartype/beartype/issues/7
    from typing import TypeVar
    T = TypeVar('T')
@@ -1298,9 +1382,13 @@ Let's type-check like `greased lightning`_:
        # matches all instances of both this class and subclasses of this class.
        param_must_satisfy_user_type: MyClass,
 
-       # Annotate PEP 593-compliant types, indexed by a type checked by
-       # @beartype followed by arbitrary objects ignored by @beartype.
+       # Annotate PEP 593-compliant types, indexed by a PEP-compliant type hint
+       # followed by zero or more arbitrary objects.
        param_must_satisfy_pep593: Annotated[dict[int, bool], range(5), True],
+
+       # Annotate PEP 586-compliant literals, indexed by either a boolean, byte
+       # string, integer, string, "enum.Enum" member, or "None".
+       param_must_satisfy_pep586: Literal['This parameter must equal this string.'],
 
        # Annotate PEP 585-compliant builtin container types, indexed by the
        # types of items these containers are required to contain.
@@ -1329,9 +1417,9 @@ Let's type-check like `greased lightning`_:
        # that beartype-specific absolute forward references are also supported.
        param_must_satisfy_pep484_relative_forward_ref: 'MyOtherClass',
 
-       # Annotate PEP-compliant types indexed by similar references. Note that
-       # forward references are supported everywhere standard types are.
-       param_must_satisfy_pep484_hint_relative_forward_ref: (
+       # Annotate PEP-compliant types indexed by relative forward references.
+       # Forward references are supported everywhere standard types are.
+       param_must_satisfy_pep484_indexed_relative_forward_ref: (
            Union['MyPep484Generic', set['MyPep585Generic']]),
 
        # Annotate beartype-specific types predefined by the beartype cave.
@@ -1370,7 +1458,7 @@ Let's type-check like `greased lightning`_:
        param_must_satisfy_beartype_tuple_optional: NoneTypeOr[float, int] = None,
 
        # Annotate variadic positional arguments as above, too.
-       *args: VersionTypes + (Real, 'my_package.my_module.MyVersionType'),
+       *args: ScalarTypes + (Real, 'my_package.my_module.MyScalarType'),
 
        # Annotate keyword-only arguments as above, too.
        param_must_be_passed_by_keyword_only: Sequence[Union[bool, list[str]]],
@@ -1438,9 +1526,12 @@ Let's type-check like `greased lightning`_:
 
    # ..................{             VALIDATORS             }..................
    # Import PEP 593-compliant beartype-specific type hints validating arbitrary
-   # caller constraints. Note this requires Python ≥ 3.9 and beartype ≥ 0.7.0.
+   # caller constraints. Note this requires beartype ≥ 0.7.0 and either:
+   # * Python ≥ 3.9.0.
+   # * typing_extensions ≥ 3.9.0.0.
    from beartype.vale import Is, IsAttr, IsEqual
-   from typing import Annotated
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Import third-party packages to validate.
    import numpy as np
@@ -1483,10 +1574,37 @@ Let's type-check like `greased lightning`_:
    def my_validated_function(
        # Annotate validators just like standard type hints.
        param_must_satisfy_validator: NumpyArrayEmptyOrNonemptyFloat1Or2D,
-
-   # Trivially combine validators with standard type hints, too.
+   # Combine validators with standard type hints, too.
    ) -> list[NumpyArrayEmptyNonFloatOrNonEmptyFloat1Or2D]:
-       return [np.array([i], np.dtype=np.float64) for i in range(0xFEEDFACE)]
+       return (
+           [param_must_satisfy_validator] * 0xFACEFEED
+           if bool(param_must_satisfy_validator) else
+           [np.array([i], np.dtype=np.float64) for i in range(0xFEEDFACE)]
+       )
+
+   # ..................{             NUMPY                  }..................
+   # Import NumPy-specific type hints validating NumPy array constraints. Note:
+   # * These hints currently only validate array dtypes. To validate additional
+   #   constraints like array shapes, prefer validators instead. See above.
+   # * This requires NumPy ≥ 1.21.0, beartype ≥ 0.8.0, and either:
+   #   * Python ≥ 3.9.0.
+   #   * typing_extensions ≥ 3.9.0.0.
+   from numpy.typing import NDArray
+
+   # NumPy type hint matching all NumPy arrays of 64-bit floats. Internally,
+   # beartype reduces this to the equivalent validator:
+   #     NumpyArrayFloat = Annotated[
+   #         np.ndarray, IsAttr['dtype', IsEqual[np.dtype(np.float64)]]]
+   NumpyArrayFloat = NDArray[np.float64]
+
+   # Decorate functions accepting NumPy type hints like usual and...
+   @beartype
+   def my_numerical_function(
+       # Annotate NumPy type hints just like standard type hints.
+       param_must_satisfy_numpy: NumpyArrayFloat,
+   # Combine NumPy type hints with standard type hints, too.
+   ) -> tuple[NumpyArrayFloat, int]:
+       return (param_must_satisfy_numpy, len(param_must_satisfy_numpy))
 
 Features
 ========
@@ -2120,7 +2238,7 @@ the logarithm of that size on average. For example, fully checking a **list of
 Compliance
 ==========
 
-``beartype`` is fully compliant with these `Python Enhancement Proposals (PEPs)
+Beartype is fully compliant with these `Python Enhancement Proposals (PEPs)
 <PEP 0_>`__:
 
 * `PEP 483 -- The Theory of Type Hints <PEP 483_>`__, subject to `caveats
@@ -2138,7 +2256,7 @@ Compliance
 * `PEP 593 -- Flexible function and variable annotations <PEP 593_>`__.
 * `PEP 604 -- Allow writing union types as X | Y <PEP 604_>`__.
 
-``beartype`` is currently *not* compliant whatsoever with these PEPs:
+Beartype is currently *not* compliant whatsoever with these PEPs:
 
 * `PEP 526 -- Syntax for Variable Annotations <PEP 526_>`__.
 * `PEP 589 -- TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
@@ -2152,7 +2270,7 @@ See also the **PEP** and **typing** categories of our `features matrix
 Full Compliance
 ---------------
 
-``beartype`` **deeply type-checks** (i.e., directly checks the types of *and*
+Beartype **deeply type-checks** (i.e., directly checks the types of *and*
 recursively checks the types of items contained in) parameters and return
 values annotated with these typing_ types:
 
@@ -2203,21 +2321,34 @@ values annotated with these typing_ types:
 * **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
   one or more `forward references <relative forward references_>`__).
 
-``beartype`` also fully supports callables decorated by these typing_
-decorators:
+Beartype also fully supports these third-party typing_-like types:
+
+* **Typed NumPy arrays,** including:
+
+  * `numpy.typing.NDArray <NumPy Type Hints_>`__.
+
+* **Typing backports** (i.e., public attributes of the third-party
+  typing_extensions_ package, enabling typing_ types introduced with newer
+  Python versions to be used with older Python versions). Beartype
+  transparently supports all typing_extensions_ equivalents of the prior
+  typing_ types, including:
+
+  * `typing_extensions.Annotated <typing_extensions_>`__, enabling `beartype
+    validators <Beartype Validators_>`__ to be used under Python < 3.9.0.
+
+Beartype also fully supports callables decorated by these typing_ decorators:
 
 * `@typing.no_type_check`_.
 
-Lastly, ``beartype`` fully supports these typing_ constants:
+Lastly, beartype also fully supports these typing_ constants:
 
 * typing.TYPE_CHECKING_.
 
 Partial Compliance
 ------------------
 
-``beartype`` currently only **shallowly type-checks** (i.e., only directly
-checks the types of) parameters and return values annotated with these typing_
-types:
+Beartype currently only **shallowly type-checks** (i.e., only directly checks
+the types of) parameters and return values annotated with these typing_ types:
 
 * frozenset_.
 * set_.
@@ -2294,14 +2425,14 @@ types:
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
 
-Subsequent ``beartype`` versions will deeply type-check these typing_ types
+Subsequent beartype versions will deeply type-check these typing_ types
 while preserving our `O(1) time complexity (with negligible constant factors)
 guarantee <Timings_>`__.
 
 No Compliance
 -------------
 
-``beartype`` currently silently ignores these typing_ types at decoration time:
+Beartype currently silently ignores these typing_ types at decoration time:
 
 * typing.ClassVar_.
 * typing.Final_.
@@ -3897,6 +4028,8 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : package : numpy       )------------------
 .. _NumPy:
    https://numpy.org
+.. _numpy.dtype:
+   https://numpy.org/doc/stable/reference/arrays.dtypes.html
 .. _numpy.empty_like:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
 .. _numpy.typing:

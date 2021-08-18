@@ -35,7 +35,7 @@ def test_get_hint_reduced() -> None:
     from beartype._util.hint.utilhintget import get_hint_reduced
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_hintpep484 import (
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
     from beartype_test.util.mod.pytmodimport import (
         import_module_typing_any_attr_or_none_safe)

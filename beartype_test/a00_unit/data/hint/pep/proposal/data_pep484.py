@@ -14,11 +14,11 @@ Note that:
   the :func:`typing.NamedTuple` and :func:`typing.TypedDict` factory functions
   are *mostly* indistinguishable from PEP-noncompliant types and thus
   intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544`
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep544`
   submodule rather than here despite being specified by :pep:`484`.
 * The ``typing.Supports*`` family of abstract base classes (ABCs) are
   intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_hintpep544`
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep544`
   submodule rather than here despite being specified by :pep:`484` and
   available under Python < 3.8. Why? Because the implementation of these ABCs
   under Python < 3.8 is unusable at runtime, which is nonsensical and awful,
