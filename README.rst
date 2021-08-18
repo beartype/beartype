@@ -130,12 +130,13 @@ News
 2021-08-18: NumPy, Consider Yourself Checked
 --------------------------------------------
 
-**Beartype 0.8.0** (codename: *berry gud*) has been released to polite golf
+**Beartype 0.8.0** (codename: *Bear-sama*) has been released to polite golf
 claps from cloud-hosted data scientists everywhere, expanding support for:
 
-* `NumPy ≥ 1.21.0 type hints (e.g., "numpy.typing.NDArray[numpy.float64]")
-  <NumPy Type Hints_>`__ under both Python ≥ 3.9.0 and Python < 3.9.0 via the
-  `third-party "typing_extensions" package <typing_extensions_>`__.
+* `NumPy ≥ 1.21.0 type hints <NumPy Type Hints_>`__ (e.g.,
+  ``numpy.typing.NDArray[numpy.float64]``) under both Python ≥ 3.9.0 natively
+  *and* Python < 3.9.0 via the `third-party "typing_extensions" package
+  <typing_extensions_>`__.
 * `Beartype validators <Beartype Validators_>`__ under Python < 3.9.0 via the
   `third-party "typing_extensions" package <typing_extensions_>`__.
 
@@ -181,8 +182,9 @@ Let's install ``beartype`` with Anaconda_:
    conda config --add channels conda-forge
    conda install beartype
 
-Commemorate this special moment with |bear-ified|, `our overbearing project
-shield <Badge_>`__. Nothing shouts quality like `a bear on a badge <Badge_>`__.
+`Commemorate this moment in time <Badge_>`__ with |bear-ified|, our
+over\ *bear*\ ing project shield. What says quality like `a bear on a badge
+<Badge_>`__, amirite?
 
 Platform
 --------
@@ -231,11 +233,11 @@ Badge
 -----
 
 If you're feeling the quality assurance and want to celebrate, consider
-signaling that you're now publicly bear-ified:
+signaling that you're now publicly *bear-*\ ified:
 
   YummySoft is now |bear-ified|!
 
-This magic and more can be all yours with:
+All this magic and possibly more can be yours with:
 
 * **Markdown**:
 
@@ -264,7 +266,7 @@ This magic and more can be all yours with:
        alt="bear-ified"
        style="vertical-align: middle;"></a>!
 
-Let a soothing pastel bear give your users the reassuring *OK* sign.
+Let a soothing pastel bear give your users the reassuring **OK** sign.
 
 Overview
 ========
@@ -788,7 +790,7 @@ Filling in the Titanic-sized gaps between `Python's patchwork quilt of PEPs
 <Compliance_>`__, validators accelerate your QA workflow with your greatest
 asset.
 
-:superscript:`Yup, it's your brain.`
+Yup, it's your brain.
 
 See `Validator Showcase`_ for comforting examples – or blithely continue for
 uncomfortable details you may regret reading.
@@ -797,7 +799,7 @@ Validator Overview
 ~~~~~~~~~~~~~~~~~~
 
 Beartype validators are **zero-cost code generators.** Like the rest of
-beartype but unlike other validation frameworks, beartype validators
+beartype (but unlike other validation frameworks), beartype validators
 dynamically generate optimally efficient pure-Python type-checking logic with
 *no* hidden function or method calls, undocumented costs, or runtime overhead.
 
@@ -824,7 +826,7 @@ calls the pure-Python functions and methods you specify when you subscript
 
      isinstance(array, np.ndarray) and your_lambda_function(array)
 
-Beartype validators thus come in two flavours – each with its tradeoffs:
+Beartype validators thus come in two flavours – each with its own tradeoffs:
 
 * **Functional validators,** created by subscripting the ``beartype.vale.Is``
   class with a function accepting a single parameter and returning ``True``
@@ -840,7 +842,7 @@ Beartype validators thus come in two flavours – each with its tradeoffs:
   of validation scenarios.
 
 Wherever you can, prefer declarative validators for efficiency. Everywhere
-else, fallback to functional validators for generality.
+else, default to functional validators for generality.
 
 Validator API
 ~~~~~~~~~~~~~
@@ -976,7 +978,7 @@ Validator API
 
     Wherever you can (which is mostly nowhere), prefer typing.Literal_. Sure,
     typing.Literal_ is mostly useless, but it's standardized across
-    type-checkers in a mostly useless way. Everywhere else, default to
+    type checkers in a mostly useless way. Everywhere else, default to
     ``beartype.vale.IsEqual``.
 
     See ``help(beartype.vale.IsEqual)`` for further details.
@@ -1228,13 +1230,13 @@ Welcome to **full-fat type-checking.** In `our disastrous roadmap to beartype
 1.0.0 <beartype 1.0.0_>`__, we reluctantly admit that we'd like to augment the
 ``@beartype`` decorator with a new parameter enabling full-fat type-checking.
 But don't wait on us. Force the issue now by just doing it yourself and then
-mocking us all over gitter! *Fight the bear, man.*
+mocking us all over Gitter! *Fight the bear, man.*
 
 There are good reasons to believe that `O(1) type-checking is preferable <What
 does beartype do?_>`__. Violating that core precept exposes your codebase to
 scalability and security concerns. But you're the Big Boss, you swear you know
 best, and (in any case) we can't stop you because we already let the unneutered
-tomcat out of his trash bin by publishing this API into `the badlands of PyPI
+tomcat out of his trash bin by `publishing this API into the badlands of PyPI
 <beartype PyPI_>`__.
 
 Validator Alternatives
@@ -1246,8 +1248,8 @@ third-party type hints like `typed NumPy arrays <NumPy Type Hints_>`__.
 
 Whereas beartype validators are verbose, expressive, and general-purpose, the
 following hints are terse, inexpressive, and domain-specific. Since beartype
-internally converts these hints to corresponding validators, `similar caveats
-apply <Validator Caveats_>`__. Notably, these hints require:
+internally converts these hints to their equivalent validators, `similar
+caveats apply <Validator Caveats_>`__. Notably, these hints require:
 
 * Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
   <typing_extensions_>`__.
@@ -1258,13 +1260,14 @@ NumPy Type Hints
 Beartype fully supports `typed NumPy arrays annotated as "numpy.typing.NDArray"
 type hints <numpy.typing_>`__. Unsurprisingly, these hints require:
 
-* NumPy_ ≥ 1.21.0.
+* `NumPy ≥ 1.21.0 <NumPy_>`__.
 * beartype ≥ 0.8.0.
 * Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
   <typing_extensions_>`__.
 
 Let's validate NumPy arrays of arbitrary shape containing only 64-bit floats
-using `NumPy type hints <numpy.typing_>`__. Error-free is the way to be:
+using `NumPy type hints <numpy.typing_>`__, because error-free is the way to
+be:
 
 .. code-block:: python
 
@@ -1281,9 +1284,10 @@ using `NumPy type hints <numpy.typing_>`__. Error-free is the way to be:
    def get_array_len(array: NumpyFloat64Array) -> tuple[NumpyFloat64Array, int]:
        return (array, len(array))
 
-`NumPy type hints <numpy.typing_>`__ are simply syntactic sugar for `beartype
-validators <Beartype Validators_>`__. Beartype internally converts the former
-into the latter at decoration time. The prior example is exactly identical to:
+`NumPy type hints <numpy.typing_>`__ are just syntactic sugar for `beartype
+validators <Beartype Validators_>`__. Since beartype internally converts the
+former into the latter at decoration time, the prior example is exactly
+identical to:
 
 .. code-block:: python
 
@@ -1338,16 +1342,17 @@ Let's type-check like `greased lightning`_:
    # See also: https://docs.python.org/3/library/typing.html
    from typing import Any, List, Optional, Tuple, Union
 
-   # Import backported PEP-compliant type hints from "typing_extensions", too.
+   # Import backported PEP-compliant type hints from "typing_extensions",
+   # improving portability of type hints across major Python versions.
    from typing_extensions import Literal
 
-   # Import beartype-specific types to annotate callables with, too.
+   # Import beartype-specific types to annotate callables with.
    from beartype.cave import NoneType, NoneTypeOr, RegexTypes, ScalarTypes
 
-   # Import standard abstract base classes (ABCs) for use with @beartype, too.
+   # Import official abstract base classes (ABCs), too.
    from numbers import Integral, Real
 
-   # Import user-defined classes for use with @beartype, too.
+   # Import user-defined classes, too.
    from my_package.my_module import MyClass
 
    # ..................{              TYPEVARS              }..................
@@ -1363,7 +1368,7 @@ Let's type-check like `greased lightning`_:
    # decorated by the @runtime_checkable decorator to be usable with @beartype.
    from typing import Protocol, runtime_checkable
 
-   @runtime_checkable   # <---- mandatory boilerplate line. (it is sad.)
+   @runtime_checkable   # <---- mandatory boilerplate line. it is sad.
    class MyProtocol(Protocol):
        def my_method(self) -> str:
            return (
@@ -1485,7 +1490,7 @@ Let's type-check like `greased lightning`_:
        # chaining decorators, "@beartype" should typically be specified last.
        @classmethod
        @beartype
-       def bare_classmethod(cls, regex: RegexTypes, wut: str) -> (
+       def my_classmethod(cls, regex: RegexTypes, wut: str) -> (
            Callable[(), str]):
            import re
            return lambda: re.sub(regex, 'unbearable', str(cls._scalar) + wut)
@@ -1493,20 +1498,26 @@ Let's type-check like `greased lightning`_:
        # Decorate static methods as above.
        @staticmethod
        @beartype
-       def bare_staticmethod(callable: Callable, *args: str) -> Any:
+       def my_staticmethod(callable: Callable, *args: str) -> Any:
            return callable(*args)
 
        # Decorate property getter methods as above.
        @property
        @beartype
-       def bare_gettermethod(self) -> Iterator[int]:
+       def my_gettermethod(self) -> Iterator[int]:
            return range(0x0B00B135 + int(self._scalar), 0xB16B00B5)
 
        # Decorate property setter methods as above.
-       @bare_gettermethod.setter
+       @my_gettermethod.setter
        @beartype
-       def bare_settermethod(self, bad: Integral = 0xBAAAAAAD) -> None:
+       def my_settermethod(self, bad: Integral = 0xBAAAAAAD) -> None:
            self._scalar = bad if bad else 0xBADDCAFE
+
+       # Decorate methods accepting or returning instances of the class
+       # currently being declared with relative forward references.
+       @beartype
+       def my_selfreferential_method(self) -> list['MyOtherClass']:
+           return [self] * 42
 
    # ..................{              GENERICS              }..................
    # User-defined PEP 585-compliant generic referenced above in type hints.
@@ -1654,7 +1665,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | builtins_          | None_                                   | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| builtins_          | NotImplemented_                         | **0.7.1**\ —\ *current*       | **0.7.1**\ —\ *current*   |
+|                    | NotImplemented_                         | **0.7.1**\ —\ *current*       | **0.7.1**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | dict_                                   | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2272,7 +2283,7 @@ Full Compliance
 
 Beartype **deeply type-checks** (i.e., directly checks the types of *and*
 recursively checks the types of items contained in) parameters and return
-values annotated with these typing_ types:
+values annotated by these typing_ types:
 
 * None_.
 * list_.
@@ -2316,8 +2327,8 @@ values annotated with these typing_ types:
   * typing.SupportsRound_.
 
 * `Forward references <relative forward references_>`__ (i.e., unqualified
-  relative classnames typically referring to user-defined classes that have yet
-  to be defined).
+  relative classnames referring to user-defined classes that either have yet to
+  be declared *or* are currently being declared).
 * **Forward reference-subscripted types** (i.e., typing_ objects subscripted by
   one or more `forward references <relative forward references_>`__).
 
@@ -2328,10 +2339,10 @@ Beartype also fully supports these third-party typing_-like types:
   * `numpy.typing.NDArray <NumPy Type Hints_>`__.
 
 * **Typing backports** (i.e., public attributes of the third-party
-  typing_extensions_ package, enabling typing_ types introduced with newer
-  Python versions to be used with older Python versions). Beartype
-  transparently supports all typing_extensions_ equivalents of the prior
-  typing_ types, including:
+  typing_extensions_ package, enabling typing_ types introduced by newer Python
+  versions to be used under older Python versions). Beartype transparently
+  supports all typing_extensions_ equivalents of the previously listed typing_
+  types, including:
 
   * `typing_extensions.Annotated <typing_extensions_>`__, enabling `beartype
     validators <Beartype Validators_>`__ to be used under Python < 3.9.0.
@@ -2348,7 +2359,7 @@ Partial Compliance
 ------------------
 
 Beartype currently only **shallowly type-checks** (i.e., only directly checks
-the types of) parameters and return values annotated with these typing_ types:
+the types of) parameters and return values annotated by these typing_ types:
 
 * frozenset_.
 * set_.
