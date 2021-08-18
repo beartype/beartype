@@ -790,7 +790,7 @@ Filling in the Titanic-sized gaps between `Python's patchwork quilt of PEPs
 <Compliance_>`__, validators accelerate your QA workflow with your greatest
 asset.
 
-Yup, it's your brain.
+Yup. It's your brain.
 
 See `Validator Showcase`_ for comforting examples – or blithely continue for
 uncomfortable details you may regret reading.
