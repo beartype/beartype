@@ -35,10 +35,10 @@ def test_import_module_or_none() -> None:
 
     # Assert this function returns the expected module when passed the
     # fully-qualified name of a module effectively guaranteed to *NOT* have
-    # been previously imported by virtue of its complete and utter uselessness.
-    turtledemo_peace = import_module_or_none('turtledemo.peace')
-    from turtledemo import peace
-    assert turtledemo_peace is peace
+    # been previously imported by virtue of its irrelevance.
+    xmlrpc_client_dynamic = import_module_or_none('xmlrpc.client')
+    from xmlrpc import client as xmlrpc_client_static
+    assert xmlrpc_client_dynamic is xmlrpc_client_static
 
     # Assert this function returns "None" when passed the fully-qualified name
     # of a module effectively guaranteed to *NEVER* exist by virtue of the
