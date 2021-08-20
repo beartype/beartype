@@ -135,6 +135,14 @@ against the currently visited hint).
 '''
 
 
+HINT_META_INDEX_PITH_VAR_NAME = next(__hint_meta_index_counter)
+'''
+0-based index into each tuple of hint metadata providing the **current pith
+variable name** (i.e., name of the unique local variable assigned the value of
+the current pith either by a prior assignment statement or expression).
+'''
+
+
 HINT_META_INDEX_INDENT = next(__hint_meta_index_counter)
 '''
 0-based index into each tuple of hint metadata providing **current

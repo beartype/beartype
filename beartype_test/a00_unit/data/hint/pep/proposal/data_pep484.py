@@ -1606,7 +1606,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Nested union of no non-"typing" type and multiple "typing" types.
+        # Nested union of *NO* isinstanceable type and multiple "typing" types.
         HintPepMetadata(
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=HintSignMutableSequence,

@@ -29,7 +29,8 @@ from beartype._decor._code.codesnip import (
 from inspect import Parameter
 
 # ....................{ PITH                              }....................
-PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_assigned_expr} := {pith_curr_expr}'''
+PEP_CODE_PITH_ASSIGN_EXPR = (
+    '''{pith_curr_var_name} := {pith_curr_expr}''')
 '''
 Python >= 3.8-specific assignment expression assigning the full Python
 expression yielding the value of the current pith to a unique local variable,
@@ -298,11 +299,11 @@ this parent type has been generated.
 
 # ....................{ HINT ~ type : sequence : standard }....................
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = '''(
-{indent_curr}    # True only if this pith shallowly satisfies this hint.
+{indent_curr}    # True only if this pith is of this sequence type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this pith is empty *OR* this pith is
-{indent_curr}    # both non-empty and deeply satisfies this hint.
-{indent_curr}    (not {pith_curr_assigned_expr} or {hint_child_placeholder})
+{indent_curr}    # both non-empty and a random item deeply satisfies this hint.
+{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
 {indent_curr})'''
 '''
 PEP-compliant code snippet type-checking the current pith against a parent
@@ -328,7 +329,7 @@ sequences with a seemingly reasonable ternary conditional:
 
    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD = \'\'\'(
    {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-   {indent_curr}    {hint_child_placeholder} if {pith_curr_assigned_expr} else True
+   {indent_curr}    {hint_child_placeholder} if {pith_curr_var_name} else True
    {indent_curr})\'\'\'
 
 That should behave as expected, but doesn't, presumably due to obscure scoping
@@ -341,7 +342,7 @@ based on ternary conditional (albeit slightly less intuitive).
 
 
 PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR = (
-    f'''{{pith_curr_assigned_expr}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_assigned_expr}})]''')
+    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
 '''
 PEP-compliant Python expression yielding the value of a randomly indexed item
 of the current pith (which, by definition, *must* be a standard sequence).
@@ -369,7 +370,7 @@ of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 
 PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY = '''
 {{indent_curr}}    # True only if this tuple is empty.
-{{indent_curr}}    not {pith_curr_assigned_expr} and'''
+{{indent_curr}}    not {pith_curr_var_name} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 to be empty against an itemized :class:`typing.Tuple` type of the non-standard
@@ -384,7 +385,7 @@ See Also
 
 PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN = '''
 {{indent_curr}}    # True only if this tuple is of the expected length.
-{{indent_curr}}    len({pith_curr_assigned_expr}) == {hint_childs_len} and'''
+{{indent_curr}}    len({pith_curr_var_name}) == {hint_childs_len} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 to be of the expected length against an itemized :class:`typing.Tuple` type of
@@ -421,7 +422,7 @@ this parent type has been generated.
 
 
 PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR = (
-    '''{pith_curr_assigned_expr}[{pith_child_index}]''')
+    '''{pith_curr_var_name}[{pith_child_index}]''')
 '''
 PEP-compliant Python expression yielding the value of the currently indexed
 item of the current pith (which, by definition, *must* be a tuple).
@@ -500,7 +501,7 @@ one or more literal objects.
 
 PEP586_CODE_CHECK_HINT_LITERAL = '''
 {{indent_curr}}        # True only if this pith is equal to this literal.
-{{indent_curr}}        {pith_curr_assigned_expr} == {hint_child_expr} or'''
+{{indent_curr}}        {pith_curr_var_name} == {hint_child_expr} or'''
 '''
 PEP-compliant code snippet type-checking the current pith against the current
 child literal object subscripting a :pep:`586`-compliant
@@ -520,7 +521,7 @@ this parent hint has been generated.
 '''
 
 # ....................{ HINT ~ type : pep 593             }....................
-PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_PREFIX = '''(
+PEP593_CODE_CHECK_HINT_VALIDATOR_PREFIX = '''(
 {indent_curr}    {hint_child_placeholder} and'''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
@@ -529,7 +530,7 @@ by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
-PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_SUFFIX = '''
+PEP593_CODE_CHECK_HINT_VALIDATOR_SUFFIX = '''
 {indent_curr})'''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
@@ -538,7 +539,7 @@ subscripted by one or more :class:`beartype.vale._SubscriptedIs` objects.
 '''
 
 
-PEP593_CODE_CHECK_HINT_SUBSCRIPTEDIS_CHILD = '''
+PEP593_CODE_CHECK_HINT_VALIDATOR_CHILD = '''
 {indent_curr}    # True only if this pith satisfies this caller-defined
 {indent_curr}    # validator of this annotated.
 {indent_curr}    {hint_child_expr} and'''

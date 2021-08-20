@@ -19,6 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._valeisabc import _IsABC
+from beartype._vale._valesnip import VALE_CODE_CHECK_ISATTR_format
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import update_mapping
@@ -308,6 +309,9 @@ class IsAttr(_IsABC):
             #      f'{{obj}}_isattr_'
             #      f'{next(_local_name_obj_attr_value_counter)}'
             #  )
+            #Of course, this assumes "Counter" objects are thread-safe. If
+            #they're not, we'll need to further obfuscate all this behind a
+            #[R]Lock of some sort. *sigh*
 
             # Name of a local variable in this code whose:
             # * Name is sufficiently obfuscated as to be hopefully unique to
@@ -333,8 +337,8 @@ class IsAttr(_IsABC):
             is_valid_code = VALE_CODE_CHECK_ISATTR_format(
                 attr_name_expr=repr(attr_name),
                 local_name_obj_attr_value=local_name_obj_attr_value,
-                obj_attr_value_is_valid_expr=obj_attr_value_is_valid_expr,
                 local_name_sentinel=local_name_sentinel,
+                obj_attr_value_is_valid_expr=obj_attr_value_is_valid_expr,
             )
         # Else, this attribute name is qualified (i.e., contains one or more
         # "." delimiters), fallback to a general solution performing iteration.
@@ -354,21 +358,3 @@ class IsAttr(_IsABC):
             is_valid_code_locals=is_valid_code_locals,
             get_repr=get_repr,
         )
-
-# ....................{ CONSTANTS                         }....................
-#FIXME: Shift into a new "_valesnip" submodule, please.
-VALE_CODE_CHECK_ISATTR = '''(
-{{indent}}    # True only if this pith defines an attribute with this name.
-{{indent}}    ({local_name_obj_attr_value} := getattr(
-{{indent}}        {{obj}}, {attr_name_expr}, {local_name_sentinel}))
-{{indent}}        is not {local_name_sentinel} and
-{{indent}}    {obj_attr_value_is_valid_expr}
-{{indent}})'''
-'''
-:mod:`beartype.vale.IsAttr`-specific code snippet validating an arbitrary
-object to define an attribute with an arbitrary name satisfying an arbitrary
-expression evaluating to a boolean.
-'''
-
-# Format methods of the code snippets declared above as a microoptimization.
-VALE_CODE_CHECK_ISATTR_format = VALE_CODE_CHECK_ISATTR.format

@@ -20,15 +20,6 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignNumpyArray,
-)
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
 from beartype_test.util.mod.pytmodtest import (
     is_package_numpy_typing_ndarray_supported)
 
@@ -52,6 +43,26 @@ def add_data(data_module: 'ModuleType') -> None:
     # active Python.
 
     # ..................{ IMPORTS                           }..................
+    # Defer attribute-dependent imports.
+    from beartype.vale import Is
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignNumpyArray,
+        HintSignTuple,
+    )
+    from beartype._util.hint.pep.utilpepattr import (
+        HINT_ATTR_TUPLE,
+    )
+    from beartype._util.mod.utilmodimport import import_module_typing_any_attr
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_8,
+        IS_PYTHON_AT_LEAST_3_9,
+    )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
+
     # Defer NumPy-specific imports.
     from numpy import asarray, dtype, float64
     from numpy.typing import NDArray
@@ -119,6 +130,69 @@ def add_data(data_module: 'ModuleType') -> None:
                 # NumPy array containing only 64-bit integers.
                 HintPithUnsatisfiedMetadata(
                     pith=((1, 1, 1, 1, 2, 3, 6, 11, 23, 47, 106, 235, 551,)),
+                    # Match that the exception message raised for this object
+                    # embeds the representation of the expected data type.
+                    exception_str_match_regexes=(r'\bfloat64\b',),
+                ),
+            ),
+        ),
+    ))
+
+    # ..................{ VALIDATORS                        }..................
+    # If the active Python interpreter does *NOT* support Python >= 3.8 and
+    # thus the __class_getitem__() dunder method required for beartype
+    # validators, immediately return.
+    if not IS_PYTHON_AT_LEAST_3_8:
+        return
+    # Else, this interpreter supports beartype validators.
+
+    # ..................{ VALIDATORS ~ hints                }..................
+    # "typing.Annotated" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise. By prior
+    # validation, this factory *MUST* be non-"None" here.
+    Annotated = import_module_typing_any_attr('Annotated')
+    assert Annotated is not None, 'Typing "Annotated" attribute not found.'
+
+    # Validator matching one-dimensional NumPy arrays of floats of 64-bit
+    # precision, combining both validator and NumPy type hinting syntax. This
+    # exercises an edge case previously generating syntactically invalid code.
+    Numpy1DFloat64Array = Annotated[
+        NDArray[float64], Is[lambda array: array.ndim == 1]]
+
+    # ..................{ VALIDATORS ~ tuples               }..................
+    # Add NumPy-specific test type hints to this tuple global.
+    data_module.HINTS_PEP_META.extend((
+        # ................{ NUMPY ~ array : nested            }................
+        # 2-tuple of one-dimensional NumPy arrays of 64-bit floats.
+        HintPepMetadata(
+            hint=HINT_ATTR_TUPLE[Numpy1DFloat64Array, Numpy1DFloat64Array],
+            pep_sign=HintSignTuple,
+            stdlib_type=tuple,
+            is_pep585_builtin=HINT_ATTR_TUPLE is tuple,
+            piths_satisfied_meta=(
+                # 2-tuple of NumPy arrays containing only 64-bit floats.
+                HintPithSatisfiedMetadata((
+                    asarray((0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375)),
+                    asarray((1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5)),
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=(
+                        "A Spherically clerical,"
+                        "cylindroid‐cindered cleft, and",
+                    ),
+                    # Match that the exception message raised for this object
+                    # embeds the representation of the expected class.
+                    exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
+                ),
+                # 2-tuple of NumPy arrays containing only integers.
+                HintPithUnsatisfiedMetadata(
+                    pith=(
+                        asarray((1, 1, 4, 6, 14, 23, 45, 72, 126, 195, 315,)),
+                        asarray((1, 0, 1, 1, 2, 2, 5, 4, 9, 10, 16, 19, 31,)),
+                    ),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected data type.
                     exception_str_match_regexes=(r'\bfloat64\b',),

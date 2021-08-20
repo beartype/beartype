@@ -19,6 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._valeisabc import _IsABC
+from beartype._vale._valesnip import VALE_CODE_CHECK_ISEQUAL_format
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
@@ -218,11 +219,12 @@ class IsEqual(_IsABC):
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this object, enabling this object to be tested in
         # those functions *WITHOUT* additional stack frames.
-        obj_name = add_func_scope_attr(
+        param_name_obj_value = add_func_scope_attr(
             attr=obj, attr_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this object.
-        is_valid_code=f'{{obj}} == {obj_name}'
+        is_valid_code = VALE_CODE_CHECK_ISEQUAL_format(
+            param_name_obj_value=param_name_obj_value)
 
         # Create and return this subscription.
         return _SubscriptedIs(

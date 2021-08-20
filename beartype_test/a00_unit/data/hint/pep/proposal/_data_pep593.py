@@ -40,10 +40,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignAnnotated,
         HintSignList,
     )
-    from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_8,
+    from beartype._util.hint.pep.utilpepattr import (
+        HINT_ATTR_LIST,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -82,7 +82,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ ANNOTATED                         }................
-        # Hashable annotated of a non-"typing" type annotated by an arbitrary
+        # Hashable annotated of a isinstanceable type annotated by an arbitrary
         # hashable object.
         HintPepMetadata(
             hint=Annotated[str, int],
@@ -99,7 +99,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Unhashable annotated of a non-"typing" type annotated by an
+        # Unhashable annotated of a isinstanceable type annotated by an
         # unhashable mutable container.
         HintPepMetadata(
             hint=Annotated[str, []],
@@ -144,11 +144,11 @@ def add_data(data_module: 'ModuleType') -> None:
     # Else, this interpreter supports beartype validators.
 
     # ..................{ VALIDATORS ~ is                   }..................
-    # Beartype-specific data validators defined as lambda functions.
+    # Beartype-specific validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
 
-    # Beartype-specific data validators defined as non-lambda functions.
+    # Beartype-specific validators defined as non-lambda functions.
     def _is_quoted(text): return '"' in text or "'" in text
     IsQuoted = Is[_is_quoted]
 
@@ -162,6 +162,11 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # Beartype-specific validator validating equality against that list.
     IsEqualAmplyImpish = IsEqual[AMPLY_IMPISH]
+
+    # ..................{ VALIDATORS ~ hints                }..................
+    # Annotated of a isinstanceable type annotated by one beartype-specific
+    # validator defined as a lambda function.
+    AnnotatedStrIsLength = Annotated[str, IsLengthy]
 
     # ..................{ VALIDATORS ~ isattr               }..................
     class CathecticallyEnsconceYouIn(object):
@@ -195,10 +200,10 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ ANNOTATED ~ beartype : is         }................
-        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # Annotated of a isinstanceable type annotated by one beartype-specific
         # validator defined as a lambda function.
         HintPepMetadata(
-            hint=Annotated[str, IsLengthy],
+            hint=AnnotatedStrIsLength,
             pep_sign=HintSignAnnotated,
             piths_satisfied_meta=(
                 # String constant satisfying this validator.
@@ -212,17 +217,142 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # embeds the code for this validator's lambda function.
                     exception_str_match_regexes=(
-                        r'Is\[.*\blen\(text\) > 30\b.*\]',),
+                        r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',),
                 ),
                 # String constant violating this validator.
                 HintPithUnsatisfiedMetadata('To prayer'),
             ),
         ),
 
-        # Annotated of a listed of a nested non-"typing" type annotated by one
+        # Annotated of a isinstanceable type annotated by two or more
+        # beartype-specific validators all defined as functions, specified
+        # with comma-delimited list syntax.
+        HintPepMetadata(
+            hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                HintPithSatisfiedMetadata(
+                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'Joy.',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\]\s*==\s*'\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating only the first of these validators.
+                HintPithUnsatisfiedMetadata(
+                    pith='"Conduct my friar’s wheel"...',
+                    # Match that the exception message raised documents the
+                    # exact validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\)\s*>\s*30\b.*\]',)
+                ),
+            ),
+        ),
+
+        # Annotated of a isinstanceable type annotated by two or more
+        # beartype-specific validators all defined as functions, specified
+        # with "&"-delimited operator syntax.
+        HintPepMetadata(
+            hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                HintPithSatisfiedMetadata(
+                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'Joy.',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\]\s*==\s*'\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating only the first of these validators.
+                HintPithUnsatisfiedMetadata(
+                    pith='"Conduct my friar’s wheel"...',
+                    # Match that the exception message raised documents the
+                    # exact validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\)\s*>\s*30\b.*\]',)
+                ),
+            ),
+        ),
+
+        # Annotated of a isinstanceable type annotated by one beartype-specific
+        # validator synthesized from all possible operators.
+        HintPepMetadata(
+            hint=Annotated[str, IsLengthyOrUnquotedSentence],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                HintPithSatisfiedMetadata(
+                    'Dialectical, eclectic mind‐toys'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'Of Cycladic impoverishment, cyclically unreeling',
+                    # Match that the exception message raised...
+                    exception_str_match_regexes=(
+                        # Embeds the code for this validator's lambdas.
+                        r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',
+                        r"Is\[.*\btext and text\[-1\]\s*==\s*'\.'.*\]",
+                        # Embeds the name of this validator's named function.
+                        r'Is\[.*\b_is_quoted\b.*\]',
+                    ),
+                ),
+                # String constant violating all of these validators.
+                HintPithUnsatisfiedMetadata(
+                    pith='Stay its course, and',
+                    # Match that the exception message raised documents the
+                    # first validator violated by this string.
+                    exception_str_match_regexes=(
+                        r'\bviolates\b.*\bIs\[.*\blen\(text\)\s*>\s*30\b.*\]',)
+                ),
+            ),
+        ),
+
+        # ................{ ANNOTATED ~ beartype : is : nest  }................
+        # Annotated of an annotated of an isinstanceable type, each annotated
+        # by a beartype-specific validator defined as a function.
+        HintPepMetadata(
+            hint=Annotated[Annotated[str, IsLengthy], IsSentence],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # String constant satisfying these validators.
+                HintPithSatisfiedMetadata(
+                    'Antisatellite‐dendroidal, Θṙbital Cemetery orbs — '
+                    'of Moab.'
+                ),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(pith=b'Then, and'),
+                # String constant violating only the first of these validators.
+                HintPithUnsatisfiedMetadata('Though a...'),
+            ),
+        ),
+
+        # List of annotateds of isinstanceable types annotated by one
         # beartype-specific validator defined as a lambda function.
         HintPepMetadata(
-            hint=HINT_ATTR_LIST[Annotated[str, IsLengthy]],
+            hint=HINT_ATTR_LIST[AnnotatedStrIsLength],
             pep_sign=HintSignList,
             stdlib_type=list,
             is_pep585_builtin=HINT_ATTR_LIST is list,
@@ -240,7 +370,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # embeds the code for this validator's lambda function.
                     exception_str_match_regexes=(
-                        r'Is\[.*\blen\(text\) > 30\b.*\]',),
+                        r'Is\[.*\blen\(text\)\s*>\s*30\b.*\]',),
                 ),
                 # List of string constants violating this validator.
                 HintPithUnsatisfiedMetadata([
@@ -251,113 +381,8 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-
-        # Annotated of a non-"typing" type annotated by two or more
-        # beartype-specific data validators all defined as functions, specified
-        # with comma-delimited list syntax.
-        HintPepMetadata(
-            hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant satisfying these validators.
-                HintPithSatisfiedMetadata(
-                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
-            ),
-            piths_unsatisfied_meta=(
-                # Byte-string constant *NOT* an instance of the expected type.
-                HintPithUnsatisfiedMetadata(
-                    pith=b'Joy.',
-                    # Match that the exception message raised...
-                    exception_str_match_regexes=(
-                        # Embeds the code for this validator's lambdas.
-                        r'Is\[.*\blen\(text\) > 30\b.*\]',
-                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
-                        # Embeds the name of this validator's named function.
-                        r'Is\[.*\b_is_quoted\b.*\]',
-                    ),
-                ),
-                # String constant violating only the first of these validators.
-                HintPithUnsatisfiedMetadata(
-                    pith='"Conduct my friar’s wheel"...',
-                    # Match that the exception message raised documents the
-                    # exact validator violated by this string.
-                    exception_str_match_regexes=(
-                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
-                ),
-            ),
-        ),
-
-        # Annotated of a non-"typing" type annotated by two or more
-        # beartype-specific data validators all defined as functions, specified
-        # with "&"-delimited operator syntax.
-        HintPepMetadata(
-            hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant satisfying these validators.
-                HintPithSatisfiedMetadata(
-                    '"Into piezo‐electrical, dun‐dappled lights" and...'),
-            ),
-            piths_unsatisfied_meta=(
-                # Byte-string constant *NOT* an instance of the expected type.
-                HintPithUnsatisfiedMetadata(
-                    pith=b'Joy.',
-                    # Match that the exception message raised...
-                    exception_str_match_regexes=(
-                        # Embeds the code for this validator's lambdas.
-                        r'Is\[.*\blen\(text\) > 30\b.*\]',
-                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
-                        # Embeds the name of this validator's named function.
-                        r'Is\[.*\b_is_quoted\b.*\]',
-                    ),
-                ),
-                # String constant violating only the first of these validators.
-                HintPithUnsatisfiedMetadata(
-                    pith='"Conduct my friar’s wheel"...',
-                    # Match that the exception message raised documents the
-                    # exact validator violated by this string.
-                    exception_str_match_regexes=(
-                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
-                ),
-            ),
-        ),
-
-        # Annotated of a non-"typing" type annotated by one beartype-specific
-        # validator synthesized from all possible operators.
-        HintPepMetadata(
-            hint=Annotated[str, IsLengthyOrUnquotedSentence],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant satisfying these validators.
-                HintPithSatisfiedMetadata(
-                    'Dialectical, eclectic mind‐toys'),
-            ),
-            piths_unsatisfied_meta=(
-                # Byte-string constant *NOT* an instance of the expected type.
-                HintPithUnsatisfiedMetadata(
-                    pith=b'Of Cycladic impoverishment, cyclically unreeling',
-                    # Match that the exception message raised...
-                    exception_str_match_regexes=(
-                        # Embeds the code for this validator's lambdas.
-                        r'Is\[.*\blen\(text\) > 30\b.*\]',
-                        r"Is\[.*\btext and text\[-1\] == '\.'.*\]",
-                        # Embeds the name of this validator's named function.
-                        r'Is\[.*\b_is_quoted\b.*\]',
-                    ),
-                ),
-                # String constant violating all of these validators.
-                HintPithUnsatisfiedMetadata(
-                    pith='Stay its course, and',
-                    # Match that the exception message raised documents the
-                    # first validator violated by this string.
-                    exception_str_match_regexes=(
-                        r'\bviolates\b.*\bIs\[.*\blen\(text\) > 30\b.*\]',)
-                ),
-            ),
-        ),
-
         # ................{ ANNOTATED ~ beartype : isequal    }................
-        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # Annotated of a isinstanceable type annotated by one beartype-specific
         # equality validator.
         HintPepMetadata(
             hint=Annotated[HINT_ATTR_LIST[str], IsEqualAmplyImpish],
@@ -388,7 +413,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ ANNOTATED ~ beartype : isattr     }................
-        # Annotated of a non-"typing" type annotated by one beartype-specific
+        # Annotated of a isinstanceable type annotated by one beartype-specific
         # attribute validator.
         HintPepMetadata(
             hint=Annotated[

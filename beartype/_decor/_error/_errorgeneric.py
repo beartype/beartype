@@ -50,27 +50,27 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign is HintSignGeneric, (
         f'{repr(sleuth.hint_sign)} not generic.')
 
-    # If this hint is *NOT* a class, reduce this hint to the object originating
-    # this hint if any. See the is_hint_pep484_generic() tester for details.
+    # If this hint is *NOT* a class, reduce this hint to the generic class
+    # originating this hint if any. See the is_hint_pep484_generic() tester.
     sleuth.hint = get_hint_pep_generic_type_or_none(sleuth.hint)
     assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
     # Human-readable string describing the failure of this pith to be an
-    # instance of this generic if this pith is not an instance of this generic
-    # *OR* "None" otherwise.
+    # instance of this class if this pith is not an instance of this class *OR*
+    # "None" otherwise.
     pith_cause = get_cause_or_none_type(sleuth)
 
-    # If this pith is *NOT* an instance of this generic, return this string.
+    # If this pith is *NOT* an instance of this class, return this string.
     if pith_cause is not None:
         return pith_cause
-    # Else, this pith is an instance of this generic.
+    # Else, this pith is an instance of this class.
 
-    # For each pseudo-superclass of this generic...
+    # For each pseudo-superclass of this class...
     for hint_base in sleuth.hint_childs:
         # If this pseudo-superclass is an actual superclass, this
         # pseudo-superclass is effectively ignorable. Why? Because the
         # isinstance() call above already type-checked this pith against the
-        # generic subclassing this superclass and thus this superclass as well.
+        # class subclassing this superclass and thus this superclass as well.
         # In this case, skip to the next pseudo-superclass.
         if isinstance(hint_base, type):
             continue

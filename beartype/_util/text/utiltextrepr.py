@@ -223,6 +223,7 @@ def represent_func(
         #   placeholder string.
         get_func_code_or_none(func=func, warning_cls=warning_cls) or '<lambda>'
         if is_func_lambda(func) else
-        # Else, the fully-qualified name of this non-lambda function.
+        # Else, this callable is *NOT* a pure-Python lambda function. In this
+        # case, the fully-qualified name of this non-lambda function.
         f'{get_object_scopes_name(func)}()'
     )
