@@ -72,15 +72,15 @@ def get_project_dir() -> Path:
             f'Project root {PROJECT_DIR} not directory.')
     # Else, this path is a directory.
 
-    # Concrete platform-agnostic path encapsulating the absolute dirname
-    # of the ".git/" subdirectory of this project's project directory.
-    PROJECT_GIT_DIR = PROJECT_DIR.joinpath('.git')
+    # Concrete platform-agnostic path encapsulating the absolute filename of
+    # this project's license.
+    PROJECT_LICENSE_FILE = PROJECT_DIR.joinpath('LICENSE')
 
-    # If this subdirectory either does *NOT* exist or is *NOT* a directory,
-    # raise an exception.
-    if not PROJECT_GIT_DIR.is_dir():
+    # If this subdirectory either does *NOT* exist or is *NOT* a file, raise an
+    # exception.
+    if not PROJECT_LICENSE_FILE.is_file():
         raise BeartypeTestPathException(
-            f'Project git subdirectory {PROJECT_GIT_DIR} not found.')
+            f'Project license {PROJECT_LICENSE_FILE} not found.')
     # Else, this subdirectory exists.
 
     # Return this path.
