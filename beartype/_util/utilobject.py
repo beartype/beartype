@@ -162,7 +162,7 @@ def get_object_name(obj: Any) -> str:
 
     Raises
     ----------
-    AttributeError
+    :exc:`AttributeError`
         If this object defines neither ``__qualname__`` *nor* ``__name__``
         dunder attributes.
     '''

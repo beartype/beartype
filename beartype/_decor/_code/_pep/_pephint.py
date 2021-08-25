@@ -1117,6 +1117,43 @@ def pep_code_check_hint(
                         # != 0" would generate false positives and thus
                         # unnecessarily inefficient code.
                         pith_curr_expr is not PITH_ROOT_VAR_NAME and
+
+                        #FIXME: Overly ambiguous, unfortunately. This suffices
+                        #for now but absolutely *WILL* fail with inscrutable
+                        #errors under some future release. The issue is that
+                        #this trivial test reports false negatives for
+                        #sufficiently complex "pith_curr_expr" strings.
+                        #
+                        #For example, if "pith_curr_expr ==
+                        #'(yam := yum[0])[1]'", the detection below would
+                        #incorrectly detect that as being an assignment
+                        #expression. It isn't. It *CONTAINS* an embedded
+                        #assignment expression, but it itself is *NOT* an
+                        #assignment expression. Ergo, that "pith_curr_expr"
+                        #should be assigned via an assignment expression here.
+                        #
+                        #To handle embedded assignment expressions like that,
+                        #we'll probably need to generalize this yet again:
+                        #* Define a new "HINT_META_INDEX_IS_PITH_EXPR_ASSIGN"
+                        #  global.
+                        #* Define a new "is_pith_curr_expr_assign" local,
+                        #  "True" only if "pith_curr_expr" itself is an
+                        #  assignment expression, defaulting to "False":
+                        #      is_pith_curr_expr_assign = False
+                        #* Assign above:
+                        #      is_pith_curr_expr_assign = hint_curr_meta[
+                        #          HINT_META_INDEX_IS_PITH_EXPR_ASSIGN]
+                        #* Assign below in the body of this "if" conditional:
+                        #      is_pith_curr_expr_assign = True
+                        #* Assign below in the body of this "else" branch:
+                        #      is_pith_curr_expr_assign = False
+                        #* Pass "is_pith_curr_expr_assign" in the
+                        #  _enqueue_hint_child() closure above.
+                        #* Replace this "':=' not in pith_curr_expr" test here
+                        #  with "not is_pith_curr_expr_assign" instead.
+                        #
+                        #Voila! What could be simpler? O_o
+
                         # The current pith expression does *NOT* already
                         # perform an assignment expression...
                         #

@@ -653,10 +653,9 @@ def add_func_scope_type(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import (
-        die_unless_type_isinstanceable,
-        is_type_builtin,
-    )
+    from beartype._util.cls.pep.utilpep3119 import (
+        die_unless_type_isinstanceable)
+    from beartype._util.cls.utilclstest import is_type_builtin
 
     # If this object is *NOT* an isinstanceable class, raise an exception.
     die_unless_type_isinstanceable(cls=cls, cls_label=cls_label)

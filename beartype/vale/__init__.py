@@ -34,6 +34,7 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._valeis import Is
+from beartype.vale._valeiscls import IsSubclass
 from beartype.vale._valeisobj import IsAttr
 from beartype.vale._valeisoper import IsEqual
 
@@ -46,6 +47,15 @@ from beartype.vale._valeisoper import IsEqual
 #    error: The type "Type[IsAttr]" is not generic and not indexable  [misc]
 #When submitting this report, we should also note that Django developers have
 #hit similar issues in a recent PR. Ergo, this is a meaningful issue.
+#FIXME: Actually, NumPy solves this somehow. The "numpy.typing.NDArray" type
+#hint factory supports subscription in a mypy-compliant manner -- whatever that
+#is. We suspect what's required here is some combination of (A) an actual mypy
+#plugin, which "numpy.typing" actually is and (B) "types.GenericAlias", which
+#"numpy.typing.NDArray" subclasses. Unfortunately, subclassing our validators
+#from "types.GenericAlias" isn't really an option, as doing so would both imply
+#that our validators are valid type hints (they're not), that they have origin
+#types (they don't), and that they're meaningfully subscriptable by generic
+#type variables (they're not). Oh, vey!
 
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:

@@ -19,10 +19,8 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
 from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import (
-    die_unless_type_isinstanceable,
-    is_type_builtin,
-)
+from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
+from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodtest import die_unless_module_attr_name
 from beartype._util.utilobject import get_object_type_name

@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonPepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import (
+from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )

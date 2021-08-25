@@ -32,11 +32,20 @@ expression evaluating to a boolean.
 
 
 VALE_CODE_CHECK_ISEQUAL = '''
-{{indent}}# True only if this pith equals this value.
+{{indent}}# True only if this pith equals this object.
 {{indent}}{{obj}} == {param_name_obj_value}'''
 '''
-:mod:`beartype.vale.IsEqual code snippet validating an arbitrary object to be
-equal to another arbitrary object.
+:mod:`beartype.vale.IsEqual`-specific code snippet validating an arbitrary
+object to be equal to another arbitrary object.
+'''
+
+
+VALE_CODE_CHECK_ISSUBCLASS = '''
+{{indent}}# True only if this pith subclasses this type.
+{{indent}}issubclass({{obj}}, {param_name_base_cls})'''
+'''
+:mod:`beartype.vale.IsSubclass`-specific code snippet validating an arbitrary
+type to subclass another arbitrary type.
 '''
 
 # ....................{ METHODS                           }....................
@@ -44,3 +53,4 @@ equal to another arbitrary object.
 
 VALE_CODE_CHECK_ISATTR_format  = VALE_CODE_CHECK_ISATTR.format
 VALE_CODE_CHECK_ISEQUAL_format = VALE_CODE_CHECK_ISEQUAL.format
+VALE_CODE_CHECK_ISSUBCLASS_format = VALE_CODE_CHECK_ISSUBCLASS.format

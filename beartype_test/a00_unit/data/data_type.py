@@ -50,6 +50,29 @@ class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
 
     pass
 
+# ....................{ CLASSES ~ issubclass              }....................
+class NonIssubclassableMetaclass(type):
+    '''
+    Metaclass overriding the ``__subclasscheck__()`` dunder method to
+    unconditionally raise an exception, preventing classes with this metaclass
+    from being passed as the second parameter to the :func:`issubclass`
+    builtin.
+    '''
+
+    def __subclasscheck__(self, obj: object) -> bool:
+        raise TypeError(
+            f'{self} not passable as second parameter to issubclass().')
+
+
+class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
+    '''
+    Class whose metaclass overrides the ``__subclasscheck__()`` dunder method
+    to unconditionally raise an exception, preventing this class from being
+    passed as the second parameter to the :func:`issubclass` builtin.
+    '''
+
+    pass
+
 # ....................{ CALLABLES                         }....................
 def function():
     '''

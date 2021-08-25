@@ -27,10 +27,7 @@ from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-from beartype._util.text.utiltextmagic import (
-    CODE_INDENT_1,
-    # LINE_RSTRIP_INDEX_AND,
-)
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
 from typing import Any, Tuple
@@ -38,36 +35,34 @@ from typing import Any, Tuple
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CLASSES ~ subscriptable           }....................
+# ....................{ CLASSES ~ attr                    }....................
 class IsAttr(_IsABC):
     '''
-    **Beartype object attribute validator factory** (i.e., class that, when
-    subscripted (indexed) by both the name of any object attribute *and* any
-    :class:`_SubscriptedIs` object created by subscripting any
-    :mod:`beartype.vale` class for validating that attribute, creates another
-    :class:`_SubscriptedIs` object suitable for subscripting (indexing)
-    :attr:`typing.Annotated` type hints, which validates that
-    :mod:`beartype`-decorated callable parameters and returns annotated by
-    those hints define an attribute with that name satisfying that attribute
+    **Beartype object attribute validator factory** (i.e., object creating and
+    returning a new beartype validator when subscripted (indexed) by both the
+    name of any object attribute *and* any **attribute validator** (i.e., other
+    beartype validator created by subscripting any :mod:`beartype.vale` class),
+    validating that :mod:`beartype`-decorated callable parameters and returns
+    annotated by :attr:`typing.Annotated` type hints subscripted by the former
+    validator define an attribute with that name satisfying that attribute
     validator).
 
     This class efficiently validates that callable parameters and returns
     define arbitrary object attributes satisfying arbitrary validators
-    subscripting (indexing) this class. Any :mod:`beartype`-decorated callable
-    parameter or return annotated by a :attr:`typing.Annotated` type hint
-    subscripted (indexed) by this class subscripted (indexed) by any object
-    attribute name and validator (e.g., ``typing.Annotated[{cls},
-    beartype.vale.IsAttr[{attr_name}, {attr_validator}]]`` for any class
-    ``{cls}``, object attribute name ``{attr_name}`, and object attribute
-    validator ``{attr_validator}``) validates that parameter or return value to
-    be an instance of that class defining an attribute with that name
-    satisfying that attribute validator.
+    subscripting this factory. Any :mod:`beartype`-decorated callable parameter
+    or return annotated by a :attr:`typing.Annotated` type hint subscripted by
+    this factory subscripted by any object attribute name and validator (e.g.,
+    ``typing.Annotated[{cls}, beartype.vale.IsAttr[{attr_name},
+    {attr_validator}]]`` for any class ``{cls}``, object attribute name
+    ``{attr_name}`, and object attribute validator ``{attr_validator}``)
+    validates that parameter or return value to be an instance of that class
+    defining an attribute with that name satisfying that attribute validator.
 
-    **This class incurs no time performance penalties at call time.** Whereas
-    the general-purpose :class:`beartype.vale.Is` class necessarily calls the
-    caller-defined callable subscripting that class at call time and thus
-    incurs a minor time performance penalty, this class efficiently reduces to
-    one-line tests in :mod:`beartype`-generated wrapper functions *without*
+    **This factory incurs no time performance penalties at call time.** Whereas
+    the general-purpose :class:`beartype.vale.Is` factory necessarily calls
+    the caller-defined callable subscripting that factory at call time and thus
+    incurs a minor time performance penalty, this factory efficiently reduces
+    to one-line tests in :mod:`beartype`-generated wrapper functions *without*
     calling any callables and thus incurs *no* time performance penalties.
 
     Examples
@@ -75,17 +70,17 @@ class IsAttr(_IsABC):
     .. code-block:: python
 
        # Import the requisite machinery.
-       >>> import numpy as np
        >>> from beartype import beartype
        >>> from beartype.vale import IsAttr, IsEqual
        >>> from typing import Annotated
+       >>> import numpy as np
 
        # Type hint matching only two-dimensional NumPy arrays of 64-bit floats,
        # generating code resembling:
        #    (isinstance(array, np.ndarray) and
        #     array.ndim == 2 and
        #     array.dtype == np.dtype(np.float64))
-       >>> Numpy2DArrayOfFloats = Annotated[
+       >>> Numpy2dFloat64Array = Annotated[
        ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
        ...     IsAttr['dtype', IsEqual[np.dtype(np.float64)]],
@@ -96,7 +91,7 @@ class IsAttr(_IsABC):
        #    (isinstance(array, np.ndarray) and
        #     array.ndim == 2 and
        #     array.dtype.type == np.float64)
-       >>> Numpy1DArrayOfFloats = Annotated[
+       >>> Numpy1dFloat64Array = Annotated[
        ...     np.ndarray,
        ...     IsAttr['ndim', IsEqual[2]],
        ...     # Nested attribute validators test equality against a "."-delimited
@@ -105,15 +100,15 @@ class IsAttr(_IsABC):
        ... ]
 
        # NumPy arrays of well-known real number series.
-       >>> FAREY_2D_ARRAY_OF_FLOATS = np.array(
+       >>> FAREY_2D_FLOAT64_ARRAY = np.array(
        ...     [[0/1, 1/8,], [1/7, 1/6,], [1/5, 1/4], [2/7, 1/3], [3/8, 2/5]])
-       >>> FAREY_1D_ARRAY_OF_FLOATS = np.array(
+       >>> FAREY_1D_FLOAT64_ARRAY = np.array(
        ...     [3/7, 1/2, 4/7, 3/5, 5/8, 2/3, 5/7, 3/4, 4/5, 5/6, 6/7, 7/8])
 
        # Annotate callables by those type hints.
        >>> @beartype
        ... def sqrt_sum_2d(
-       ...     array: Numpy2DArrayOfFloats) -> Numpy1DArrayOfFloats:
+       ...     array: Numpy2dFloat64Array) -> Numpy1dFloat64Array:
        ...     """
        ...     One-dimensional NumPy array of 64-bit floats produced by first
        ...     summing the passed two-dimensional NumPy array of 64-bit floats
@@ -122,12 +117,12 @@ class IsAttr(_IsABC):
        ...     return np.sqrt(array.sum(axis=1))
 
        # Call those callables with parameters satisfying those hints.
-       >>> sqrt_sum_2d(FAREY_2D_ARRAY_OF_FLOATS)
+       >>> sqrt_sum_2d(FAREY_2D_FLOAT64_ARRAY)
        [0.35355339 0.55634864 0.67082039 0.78679579 0.88034084]
 
-       # Call those callables with parameters not satisfying those hints.
-       >>> sqrt_sum_2d(FAREY_1D_ARRAY_OF_FLOATS)
-       beartype.roar._roarexc.BeartypeCallHintPepParamException: @beartyped
+       # Call those callables with parameters violating those hints.
+       >>> sqrt_sum_2d(FAREY_1D_FLOAT64_ARRAY)
+       beartype.roar.BeartypeCallHintPepParamException: @beartyped
        sqrt_sum_2d() parameter array="array([0.42857143, 0.5, 0.57142857, 0.6,
        0.625, ...])" violates type hint typing.Annotated[numpy.ndarray,
        IsAttr['ndim', IsEqual[2]], IsAttr['dtype', IsEqual[dtype('float64')]]],
@@ -146,8 +141,8 @@ class IsAttr(_IsABC):
         cls, args: Tuple[str, _SubscriptedIs]) -> _SubscriptedIs:
         '''
         :pep:`560`-compliant dunder method creating and returning a new
-        :class:`_SubscriptedIs` object validating object attributes with the
-        passed name satisfying the passed validator, suitable for subscripting
+        beartype validator validating object attributes with the passed name
+        satisfying the passed validator, suitable for subscripting
         :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
@@ -166,12 +161,12 @@ class IsAttr(_IsABC):
         Returns
         ----------
         _SubscriptedIs
-            New object encapsulating this validation.
+            Beartype validator encapsulating this validation.
 
         Raises
         ----------
         BeartypeValeSubscriptionException
-            If this class was subscripted by either:
+            If this factory was subscripted by either:
 
             * *No* arguments.
             * One argument.
