@@ -22,22 +22,19 @@ from beartype.vale._valeisabc import _IsABC
 from beartype._vale._valesnip import VALE_CODE_CHECK_ISSUBCLASS_format
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
 from beartype._util.utilobject import get_object_name
-from typing import Any, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ type                    }....................
-#FIXME: Test us up, please.
 #FIXME: Document us up in "README.rst", please.
-#FIXME: Fix up the example below. Everything's great except for the raised
-#exception message, which we'll probably need to actually generate. *sigh*
 class IsSubclass(_IsABC):
     '''
     **Beartype type inheritance validator factory** (i.e., object creating and
@@ -90,14 +87,14 @@ class IsSubclass(_IsABC):
        #    (isinstance(array, np.ndarray) and
        #     np.issubdtype(array.dtype, np.floating))
        >>> NumpyFloatArray = Annotated[
-       ...     np.ndarray, IsAttr['dtype', IsSubclass[np.floating]]]
+       ...     np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[np.floating]]]]
 
        # Type hint matching only NumPy arrays of integers of arbitrary
        # precision, generating code resembling:
        #    (isinstance(array, np.ndarray) and
        #     np.issubdtype(array.dtype, np.integer))
        >>> NumpyIntArray = Annotated[
-       ...     np.ndarray, IsAttr['dtype', IsSubclass[np.integer]]]
+       ...     np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[np.integer]]]]
 
        # NumPy arrays of well-known real number series.
        >>> E_APPROXIMATIONS = np.array(
@@ -120,11 +117,11 @@ class IsSubclass(_IsABC):
        # Call those callables with parameters violating those hints.
        >>> round_int(FACTORIALS)
        beartype.roar.BeartypeCallHintPepParamException: @beartyped round_int()
-       parameter array="array([0.42857143, 0.5, 0.57142857, 0.6,
-       0.625, ...])" violates type hint typing.Annotated[numpy.ndarray,
-       IsAttr['ndim', IsEqual[2]], IsAttr['dtype', IsEqual[dtype('float64')]]],
-       as value "array([0.42857143, 0.5, 0.57142857, 0.6, 0.625, ...])"
-       violates data constraint IsAttr['ndim', IsEqual[2]].
+       parameter array="array([ 1, 2, 6, 24, 120, 720, 5040, 40320, ...])"
+       violates type hint typing.Annotated[numpy.ndarray, IsAttr['dtype',
+       IsAttr['type', IsSubclass[numpy.floating]]]], as "array([ 1, 2, 6, 24,
+       120, 720, 5040, 40320, ...])" violates validator IsAttr['dtype',
+       IsAttr['type', IsSubclass[numpy.floating]]]
 
     See Also
     ----------
@@ -175,7 +172,7 @@ class IsSubclass(_IsABC):
         # Else, this factory was subscripted by an issubclassable type.
 
         # Callable inefficiently validating against this type.
-        is_valid = lambda pith: issubclass(pith, base_cls)
+        is_valid = lambda pith: is_type_subclass(pith, base_cls)
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.

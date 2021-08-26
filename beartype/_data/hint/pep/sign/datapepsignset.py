@@ -150,7 +150,8 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 '''
 
 # ....................{ SIGNS ~ type                      }....................
-HINT_SIGNS_TYPE_STDLIB = frozenset((
+#FIXME: Rename to "HINT_SIGNS_TYPE_ISINSTANCEABLE".
+HINT_SIGNS_TYPE_ISINSTANCEABLE = frozenset((
     # ..................{ PEP (484|585)                     }..................
     HintSignAbstractSet,
     HintSignAsyncContextManager,
@@ -214,8 +215,8 @@ HINT_SIGNS_TYPE_STDLIB = frozenset((
 ))
 '''
 Frozen set of all signs uniquely identifying PEP-compliant type hints
-originating from a **standard origin type** (i.e., isinstanceable class such
-that *all* objects satisfying this hint are instances of this class).
+originating from an **isinstanceable origin type** (i.e., isinstanceable class
+such that *all* objects satisfying this hint are instances of this class).
 
 All hints identified by signs in this set are guaranteed to define
 ``__origin__`` dunder instance variables whose values are the standard origin
@@ -335,7 +336,7 @@ HINT_SIGNS_SUPPORTED = frozenset((
     # Set of all shallowly supported signs *NOT* originating from a class.
     _HINT_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a class.
-    HINT_SIGNS_TYPE_STDLIB
+    HINT_SIGNS_TYPE_ISINSTANCEABLE
 ))
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely

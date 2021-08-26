@@ -127,7 +127,7 @@ class IsAttr(_IsABC):
        0.625, ...])" violates type hint typing.Annotated[numpy.ndarray,
        IsAttr['ndim', IsEqual[2]], IsAttr['dtype', IsEqual[dtype('float64')]]],
        as value "array([0.42857143, 0.5, 0.57142857, 0.6, 0.625, ...])"
-       violates data constraint IsAttr['ndim', IsEqual[2]].
+       violates validator IsAttr['ndim', IsEqual[2]].
 
     See Also
     ----------

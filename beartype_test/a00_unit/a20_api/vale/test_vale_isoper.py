@@ -17,7 +17,6 @@ This submodule unit tests the subset of the public API of the
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
-from pytest import raises
 
 # ....................{ TESTS ~ class : isequal           }....................
 @skip_if_python_version_less_than('3.7.0')
@@ -81,12 +80,12 @@ def test_api_vale_isequal_pass() -> None:
     # language (DSL) supported by these validators.
     IsUnbodiedJoyOrKeenArrows = IsUnbodiedJoy | IsKeenArrows
 
-    # Assert this object performs the expected validation.
+    # Assert this validator performs the expected validation.
     assert IsUnbodiedJoyOrKeenArrows.is_valid(UNBODIED_JOY[:]) is True
     assert IsUnbodiedJoyOrKeenArrows.is_valid(KEEN_ARROWS.copy()) is True
     assert IsUnbodiedJoyOrKeenArrows.is_valid(HARDLY_SEE) is False
 
-    # Assert this object provides the expected representation.
+    # Assert this validator provides the expected representation.
     assert '|' in repr(IsUnbodiedJoyOrKeenArrows)
 
 
@@ -101,6 +100,7 @@ def test_api_vale_isequal_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsEqual
+    from pytest import raises
 
     # Assert that instantiating the "IsEqual" class raises the expected
     # exception.

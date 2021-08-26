@@ -17,7 +17,7 @@ from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_TYPE_ISINSTANCEABLE,
 )
 from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.utilpepget import (
@@ -292,7 +292,7 @@ class CauseSleuth(object):
         elif (
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
-            self.hint_sign in HINT_SIGNS_TYPE_STDLIB and (
+            self.hint_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE and (
                 #FIXME: Ideally, this line should just resemble:
                 #    not is_hint_pep_subscripted(hint_curr)
                 #Unfortunately, unsubscripted type hints under Python 3.6

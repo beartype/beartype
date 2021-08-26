@@ -48,6 +48,42 @@ def die_unless_type(
         raise exception_cls(f'{repr(cls)} not class.')
 
 # ....................{ TESTERS ~ builtin                 }....................
+def is_type_subclass(cls: object, base_cls: type) -> bool:
+    '''
+    ``True`` only if the passed object is a subclass of the passed class.
+
+    Caveats
+    ----------
+    **This higher-level tester should always be called in lieu of the
+    lower-level** :func:`issubclass` **builtin,** which raises an undescriptive
+    exception when the first passed parameter is *not* a class: e.g.,
+
+    .. code-block:: python
+
+       >>> issubclass(object(), type)
+       TypeError: issubclass() arg 1 must be a class
+
+    This tester suffers no such deficits, instead safely returning ``False``
+    when the first passed parameter is *not* a class.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+    cls : type
+        Class to test whether this object is a subclass of.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a subclass of this class.
+    '''
+    assert isinstance(base_cls, type), f'{repr(base_cls)} not class.'
+
+    # One-liners for tremendous bravery.
+    return isinstance(cls, type) and issubclass(cls, base_cls)
+
+# ....................{ TESTERS ~ builtin                 }....................
 def is_type_builtin(cls: type) -> bool:
     '''
     ``True`` only if the passed class is **builtin** (i.e., globally accessible

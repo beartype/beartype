@@ -260,7 +260,7 @@ class Is(_IsABC):
        doublequote_text() parameter text='"Everybody relax, I\'m here."'
        violates type hint typing.Annotated[str, Is[lambda text: text.count('"')
        < 2 and text.count("'") < 2]], as value '"Everybody relax, I\'m here."'
-       violates data constraint Is[lambda text: text.count('"') < 2 and
+       violates validator Is[lambda text: text.count('"') < 2 and
        text.count("'") < 2].
     '''
 

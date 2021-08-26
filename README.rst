@@ -67,15 +67,15 @@ efficiency, portability, and thrilling puns.
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # Squash additional bugs by refining type hints with PEP-compliant beartype
-   # validators. First, import the requisite machinery.
+   # Squash bugs by refining type hints with PEP-compliant beartype validators.
+   # Import the requisite machinery.
    >>> from beartype.vale import Is
    >>> from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
-   # Define validators from simple lambda functions. For example, this
-   # validator matches any list containing one or more strings.
-   >>> ListOfSomeStrings = Annotated[list[str], Is[lambda lst: len(lst) > 0]]
+   # Define validators by combining PEP-compliant type hints with lambda
+   # functions. This validator accepts any non-empty list of strings.
+   >>> ListOfSomeStrings = Annotated[list[str], Is[lambda lst: bool(lst)]]
 
    # Annotate @beartype-decorated callables with validators.
    >>> @beartype
@@ -86,8 +86,8 @@ efficiency, portability, and thrilling puns.
    >>> quote_wiggum_safer([])
    boartype.roar.BeartypeCallHintPepParamException: @beartyped
    quote_wiggum_safer() parameter lines=[] violates type hint
-   typing.Annotated[list[str], Is[lambda lst: len(lst) > 0]], as value []
-   violates validator Is[lambda lst: len(lst) > 0].
+   typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
+   violates validator Is[lambda lst: bool(lst)].
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
@@ -826,7 +826,8 @@ calls the pure-Python functions and methods you specify when you subscript
 
      isinstance(array, np.ndarray) and your_lambda_function(array)
 
-Beartype validators thus come in two flavours – each with its own tradeoffs:
+Beartype validators thus come in two flavours – each with its attendant
+tradeoffs:
 
 * **Functional validators,** created by subscripting the ``beartype.vale.Is``
   class with a function accepting a single parameter and returning ``True``
@@ -926,6 +927,64 @@ Validator API
     See ``help(beartype.vale.IsAttr)`` for further details.
 
 *class* beartype.vale.\ **IsEqual**\ [typing.Any]
+
+    **Declarative equality validator.** A PEP-compliant type hint enforcing
+    equality against any object, created by subscripting (indexing) the
+    ``IsEqual`` class with that object:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype.vale import IsEqual
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+       # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
+       AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
+
+    ``beartype.vale.IsEqual`` generalizes the comparable `PEP 586`_-compliant
+    typing.Literal_ type hint. Both check equality against user-defined
+    objects. Despite the differing syntax, these two type hints enforce the
+    same semantics:
+
+    .. code-block:: python
+
+       # This beartype validator enforces the same semantics as...
+       IsStringEqualsWithBeartype = Annotated[str,
+           IsEqual['Don’t you envy our pranceful bands?'] |
+           IsEqual['Don’t you wish you had extra hands?']
+       ]
+
+       # This PEP 586-compliant type hint.
+       IsStringEqualsWithPep586 = Literal[
+           'Don’t you envy our pranceful bands?',
+           'Don’t you wish you had extra hands?',
+       ]
+
+    The similarities end there, of course:
+
+    * ``beartype.vale.IsEqual`` permissively validates equality against objects
+      that are instances of **any arbitrary type.** ``IsEqual`` doesn't care
+      what the types of your objects are. ``IsEqual`` will test equality
+      against everything you tell it to, because you know best.
+    * typing.Literal_ rigidly validates equality against objects that are
+      instances of **only six predefined types:**
+
+      * Booleans (i.e., ``bool`` objects).
+      * Byte strings (i.e., ``bytes`` objects).
+      * Integers (i.e., ``int`` objects).
+      * Unicode strings (i.e., ``str`` objects).
+      * enum.Enum_ members. [#enum_type]_
+      * The ``None`` singleton.
+
+    Wherever you can (which is mostly nowhere), prefer typing.Literal_. Sure,
+    typing.Literal_ is mostly useless, but it's standardized across
+    type checkers in a mostly useless way. Everywhere else, default to
+    ``beartype.vale.IsEqual``.
+
+    See ``help(beartype.vale.IsEqual)`` for further details.
+
+*class* beartype.vale.\ **IsSubclass**\ [typing.Any]
 
     **Declarative equality validator.** A PEP-compliant type hint enforcing
     equality against any object, created by subscripting (indexing) the

@@ -56,6 +56,21 @@ from beartype.vale._valeisoper import IsEqual
 #that our validators are valid type hints (they're not), that they have origin
 #types (they don't), and that they're meaningfully subscriptable by generic
 #type variables (they're not). Oh, vey!
+#We originally thought the solution was ".pyi"-suffixed stub files and that
+#beartype would need to ship a top-level "__init__.pyi" file. Stub files appear
+#to literally be Python, which is great, except that the bodies of all
+#callables are required to be "...", which is also great. Unfortunately,
+#NumPy's top-level "__init__.pyi" file has nothing to say about
+#"numpy.typing.NDArray" -- so that clearly can't be it. It probably is as silly
+#as inheriting from "types.GenericAlias", which is asinine beyond redemption.
+#That said, how does mypy know to properly interpret "NDArray[np.floating]"
+#versus "NDArray[np.float64]" type hints? The former requires a subclass test;
+#the latter, an equality test. The two are fundamentally different, which means
+#that *SOMEWHERE* in the NumPy codebase lies the answer to this insanity.
+#Oh, *VERY WELL.* We ~~wasted~~ "invested" several hours in trying to decipher
+#the answer and came up with absolutely nothing. At this point, it frankly
+#doesn't matter how NumPy notifies mypy; we simply need to figure out how to
+#prevent mypy from complaining about our stuff. *shrug*
 
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:

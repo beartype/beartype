@@ -17,7 +17,6 @@ This submodule unit tests the subset of the public API of the
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
-from pytest import raises
 
 # ....................{ CONSTANTS                         }....................
 AS_WHEN_NIGHT_IS_BARE = (
@@ -207,6 +206,7 @@ def test_api_vale_isattr_fail() -> None:
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsAttr, IsEqual
+    from pytest import raises
 
     # Assert that instantiating the "IsAttr" class raises the expected
     # exception.

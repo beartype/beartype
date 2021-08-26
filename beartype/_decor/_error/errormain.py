@@ -104,7 +104,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
-    HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_TYPE_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
@@ -345,7 +345,7 @@ def _init() -> None:
     # Map each originative sign to the appropriate getter *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by
     # sign-specific getters below.
-    for pep_sign_type_origin in HINT_SIGNS_TYPE_STDLIB:
+    for pep_sign_type_origin in HINT_SIGNS_TYPE_ISINSTANCEABLE:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
             get_cause_or_none_type_stdlib)
 

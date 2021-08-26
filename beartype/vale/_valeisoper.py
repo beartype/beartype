@@ -175,7 +175,7 @@ class IsEqual(_IsABC):
        typing.Annotated[list[int], IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8,
        9]] | IsEqual[[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]] | IsEqual[[1, 3, 5,
        7, 9, 11, 13, 15, 17, 19]]], as value [1, 2, 3, 6, 7, 14, 21, 42]
-       violates data constraint IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]] |
+       violates validator IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]] |
        IsEqual[[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]] | IsEqual[[1, 3, 5, 7, 9,
        11, 13, 15, 17, 19]].
 

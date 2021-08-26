@@ -35,7 +35,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer attribute-dependent imports.
-    from beartype.vale import Is, IsAttr, IsEqual
+    from beartype.vale import Is, IsAttr, IsEqual, IsSubclass
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
         HintSignList,
@@ -44,6 +44,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HINT_ATTR_LIST,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+    from beartype_test.a00_unit.data.data_type import Class, Subclass
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -73,16 +74,15 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
         # exercising numerous edge cases broken under prior releases.
-        Union[
-            str, HINT_ATTR_LIST[int], NewType(
-                'MetaType', Annotated[object, 53])],
+        Union[str, HINT_ATTR_LIST[int], NewType(
+            'MetaType', Annotated[object, 53])],
     ))
 
     # ..................{ TUPLES                            }..................
     # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ ANNOTATED                         }................
-        # Hashable annotated of a isinstanceable type annotated by an arbitrary
+        # Hashable annotated of an isinstanceable type annotated by an arbitrary
         # hashable object.
         HintPepMetadata(
             hint=Annotated[str, int],
@@ -99,7 +99,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Unhashable annotated of a isinstanceable type annotated by an
+        # Unhashable annotated of an isinstanceable type annotated by an
         # unhashable mutable container.
         HintPepMetadata(
             hint=Annotated[str, []],
@@ -156,19 +156,14 @@ def add_data(data_module: 'ModuleType') -> None:
     # via the domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
-    # ..................{ VALIDATORS ~ isequal              }..................
-    # Arbitrary list to validate equality against.
-    AMPLY_IMPISH = ['Amply imp‐ish', 'blandishments to']
-
-    # Beartype-specific validator validating equality against that list.
-    IsEqualAmplyImpish = IsEqual[AMPLY_IMPISH]
-
-    # ..................{ VALIDATORS ~ hints                }..................
-    # Annotated of a isinstanceable type annotated by one beartype-specific
+    # Annotated of an isinstanceable type annotated by one beartype-specific
     # validator defined as a lambda function.
     AnnotatedStrIsLength = Annotated[str, IsLengthy]
 
     # ..................{ VALIDATORS ~ isattr               }..................
+    # Arbitrary list to validate equality against below.
+    AMPLY_IMPISH = ['Amply imp-ish', 'blandishments to']
+
     class CathecticallyEnsconceYouIn(object):
         '''
         Arbitrary class defining an arbitrary attribute whose value has *no*
@@ -200,7 +195,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add PEP 593-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ ANNOTATED ~ beartype : is         }................
-        # Annotated of a isinstanceable type annotated by one beartype-specific
+        # Annotated of an isinstanceable type annotated by one beartype-specific
         # validator defined as a lambda function.
         HintPepMetadata(
             hint=AnnotatedStrIsLength,
@@ -224,7 +219,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Annotated of a isinstanceable type annotated by two or more
+        # Annotated of an isinstanceable type annotated by two or more
         # beartype-specific validators all defined as functions, specified
         # with comma-delimited list syntax.
         HintPepMetadata(
@@ -259,7 +254,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Annotated of a isinstanceable type annotated by two or more
+        # Annotated of an isinstanceable type annotated by two or more
         # beartype-specific validators all defined as functions, specified
         # with "&"-delimited operator syntax.
         HintPepMetadata(
@@ -294,7 +289,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Annotated of a isinstanceable type annotated by one beartype-specific
+        # Annotated of an isinstanceable type annotated by one beartype-specific
         # validator synthesized from all possible operators.
         HintPepMetadata(
             hint=Annotated[str, IsLengthyOrUnquotedSentence],
@@ -381,40 +376,9 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ ANNOTATED ~ beartype : isequal    }................
-        # Annotated of a isinstanceable type annotated by one beartype-specific
-        # equality validator.
-        HintPepMetadata(
-            hint=Annotated[HINT_ATTR_LIST[str], IsEqualAmplyImpish],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # Exact object subscripting this validator.
-                HintPithSatisfiedMetadata(AMPLY_IMPISH),
-                # Object *NOT* subscripting this validator but equal to this
-                # object.
-                HintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant *NOT* an instance of the expected type.
-                HintPithUnsatisfiedMetadata(
-                    pith='May Your coarsest, Incessantly cast‐off jobs of a',
-                    # Match that the exception message raised for this object
-                    # embeds a string in the expected list.
-                    exception_str_match_regexes=(
-                        r"IsEqual\[.*'Amply imp‐ish',.*\]",),
-                ),
-                # List of integer constants *NOT* instances of the expected
-                # subtype.
-                HintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
-                # List of string constants violating this validator.
-                HintPithUnsatisfiedMetadata(
-                    ['Hectic,', 'receptacle‐hybernacling caste so',]),
-            ),
-        ),
-
         # ................{ ANNOTATED ~ beartype : isattr     }................
-        # Annotated of a isinstanceable type annotated by one beartype-specific
-        # attribute validator.
+        # Annotated of an isinstanceable type annotated by one
+        # beartype-specific attribute validator.
         HintPepMetadata(
             hint=Annotated[
                 CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
@@ -434,6 +398,62 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # Instance of this class *NOT* satisfying this validator.
                 HintPithUnsatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
+            ),
+        ),
+
+        # ................{ ANNOTATED ~ beartype : isequal    }................
+        # Annotated of an isinstanceable type annotated by one
+        # beartype-specific equality validator.
+        HintPepMetadata(
+            hint=Annotated[HINT_ATTR_LIST[str], IsEqual[AMPLY_IMPISH]],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # Exact object subscripting this validator.
+                HintPithSatisfiedMetadata(AMPLY_IMPISH),
+                # Object *NOT* subscripting this validator but equal to this
+                # object.
+                HintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith='May Your coarsest, Incessantly cast‐off jobs of a',
+                    # Match that the exception message raised for this object
+                    # embeds a string in the expected list.
+                    exception_str_match_regexes=(r"'Amply imp-ish'",),
+                ),
+                # List of integer constants *NOT* instances of the expected
+                # subtype.
+                HintPithUnsatisfiedMetadata([1, 2, 3, 6, 7, 14, 21, 42,]),
+                # List of string constants violating this validator.
+                HintPithUnsatisfiedMetadata(
+                    ['Hectic,', 'receptacle‐hybernacling caste so',]),
+            ),
+        ),
+
+        # ................{ ANNOTATED ~ beartype : issubclass }................
+        # Annotated of an isinstanceable type annotated by one
+        # beartype-specific equality validator.
+        HintPepMetadata(
+            hint=Annotated[type, IsSubclass[Class]],
+            pep_sign=HintSignAnnotated,
+            piths_satisfied_meta=(
+                # Class subscripting this validator.
+                HintPithSatisfiedMetadata(Class),
+                # Class subclassing the class subscripting this validator.
+                HintPithSatisfiedMetadata(Subclass),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith='May Your coarsest, Incessantly cast‐off jobs of a',
+                    # Match that the exception message raised for this object
+                    # embeds a classname in the expected list.
+                    exception_str_match_regexes=(r'\bClass\b',),
+                ),
+                # Class *NOT* subclassing the class subscripting this
+                # validator.
+                HintPithUnsatisfiedMetadata(str),
             ),
         ),
     ))

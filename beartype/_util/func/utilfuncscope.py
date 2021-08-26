@@ -18,7 +18,7 @@ from beartype.roar._roarexc import (
     _BeartypeUtilCallableException,
 )
 from beartype._util.utilobject import (
-    get_object_scopes_name,
+    get_object_basename_scoped,
     get_object_type_basename,
 )
 from collections.abc import Callable, Set
@@ -485,7 +485,7 @@ def get_func_locals(
             # raise an exception.
             if func_frame_name == '<module>':
                 raise exception_cls(
-                    f'{get_object_scopes_name(func)}() parent lexical scope '
+                    f'{get_object_basename_scoped(func)}() parent lexical scope '
                     f'{func_scope_name}() not found on call stack.'
                 )
             # Else, that scope is *NOT* a module.

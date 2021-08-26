@@ -27,6 +27,23 @@ class Class(object):
 
         pass
 
+
+class Subclass(Class):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
+    '''
+    
+    pass
+
+
+class SubclassSubclass(Subclass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
+    arbitrary pure-Python superclass.
+    '''
+    
+    pass
+
 # ....................{ CLASSES ~ isinstance              }....................
 class NonIsinstanceableMetaclass(type):
     '''
@@ -82,25 +99,6 @@ def function():
     pass
 
 
-def closure_cell_factory():
-    '''
-    Arbitrary pure-Python closure cell factory function.
-    '''
-
-    # Arbitrary non-local variable.
-    outer_variable = 1
-
-    def closure():
-        '''
-        Arbitrary pure-Python closure.
-        '''
-
-        nonlocal outer_variable
-
-    # Return this closure's first and only cell variable.
-    return closure.__closure__[0]
-
-
 def decorator(func: Callable) -> Callable:
     '''
     **Identity decorator** (i.e., decorator returning the passed callable
@@ -153,6 +151,44 @@ Arbitrary pure-Python coroutine.
 # Prevent Python from emitting "ResourceWarning" warnings.
 coroutine.close()
 
+# ....................{ CALLABLES ~ closure               }....................
+def closure_factory():
+    '''
+    Arbitrary pure-Python closure factory function.
+    '''
+
+    # Arbitrary non-local variable.
+    outer_variable = 42
+
+    def closure():
+        '''
+        Arbitrary pure-Python closure.
+        '''
+
+        nonlocal outer_variable
+
+    # Return this closure.
+    return closure
+
+
+def closure_cell_factory():
+    '''
+    Arbitrary pure-Python closure cell factory function.
+    '''
+
+    # Arbitrary non-local variable.
+    outer_variable = 1337
+
+    def closure():
+        '''
+        Arbitrary pure-Python closure.
+        '''
+
+        nonlocal outer_variable
+
+    # Return this closure's first and only cell variable.
+    return closure.__closure__[0]
+
 # ....................{ CONSTANTS                         }....................
 CALLABLE_CODE_OBJECT = function.__code__
 '''
@@ -202,6 +238,12 @@ CALLABLES_C = frozenset((
 ))
 '''
 Frozen set of C-based callables exercising edge cases.
+'''
+
+
+CALLABLES = CALLABLES_PYTHON | CALLABLES_C
+'''
+Frozen set of both pure-Python *and* C-based callables exercising edge cases.
 '''
 
 

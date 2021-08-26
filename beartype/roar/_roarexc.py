@@ -54,7 +54,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
                beartype.roar._roarexc.BeartypeCallHintPepParamException:
                @beartyped quote_wiggum_safer() parameter lines=[] violates type
                hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as
-               value [] violates data constraint Is[lambda lst: bool(lst)].
+               value [] violates validator Is[lambda lst: bool(lst)].
         '''
 
         # Defer to the superclass constructor.
@@ -799,3 +799,33 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
     '''
 
     pass
+
+# ....................{ PRIVATE ~ util : object             }..................
+class _BeartypeUtilObjectException(_BeartypeUtilException):
+    '''
+    Abstract base class of all **beartype object utility exceptions.**
+
+    Instances of subclasses of this exception are raised by private submodules
+    of the private :mod:`beartype._util.utilobject` submodule. These exceptions
+    denote critical internal issues and should thus *never* be raised -- let
+    alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
+    '''
+    **Beartype object name exception.**
+
+    This exception is raised by the
+    :func:`beartype._util.utilobject.get_object_basename_scoped` getter when the
+    passed object is **unnamed** (i.e., fails to declare either the
+    ``__name__`` or ``__qualname__`` dunder attributes).
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+

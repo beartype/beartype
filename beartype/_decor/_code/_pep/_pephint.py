@@ -96,7 +96,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_TYPE_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
 from beartype._util.func.utilfuncscope import (
@@ -884,7 +884,7 @@ def pep_code_check_hint(
             if (
                 # Originates from an origin type and may thus be shallowly
                 # type-checked against that type *AND is either...
-                hint_curr_sign in HINT_SIGNS_TYPE_STDLIB and (
+                hint_curr_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE and (
                     #FIXME: Ideally, this line should just resemble:
                     #    not is_hint_pep_subscripted(hint_curr)
                     #Unfortunately, unsubscripted type hints under Python 3.6

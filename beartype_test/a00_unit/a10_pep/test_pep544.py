@@ -184,7 +184,7 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
     from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype._util.utilobject import is_object_subclass
+    from beartype._util.cls.utilclstest import is_type_subclass
     from typing import BinaryIO, IO, TextIO, Union
 
     # Set of all PEP 484-compliant "typing" IO generic base classes.
@@ -203,7 +203,7 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
                 typing_io_generic)
 
             # Assert this function returns a protocol.
-            assert is_object_subclass(io_protocol, Protocol)
+            assert is_type_subclass(io_protocol, Protocol)
         # Else, assert this function raises an exception.
         else:
             with raises(BeartypeDecorHintPep544Exception):

@@ -15,7 +15,6 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -26,7 +25,8 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_7,
 )
-from beartype._util.utilobject import is_object_subclass
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.utilclstest import is_type_subclass
 from types import FunctionType
 from typing import Any, Generic, Optional, Tuple
 
@@ -275,7 +275,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         # "__orig_bases__" dunder attribute formalized by PEP 560, testing
         # whether that tuple is non-empty or not in no way guarantees this
         # object to be a PEP-compliant generic.
-        return is_object_subclass(hint, Generic)  # type: ignore[arg-type]
+        return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
 # Else, the active Python interpreter targets Python 3.6.x. In this case,
 # implement this function specific to this Python version.
 else:

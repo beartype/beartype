@@ -13,9 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import abstractmethod
 from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._util.cls.utilclstest import is_type_builtin
+from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype._util.utilobject import is_object_subclass
 from typing import Any, Dict, Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -138,7 +137,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         # Return true only if this hint is...
         return (
             # A PEP 544-compliant protocol *AND*...
-            is_object_subclass(hint, Protocol) and  # type: ignore[arg-type]
+            is_type_subclass(hint, Protocol) and  # type: ignore[arg-type]
             # *NOT* a builtin type. For unknown reasons, some but *NOT* all
             # builtin types erroneously present themselves to be PEP
             # 544-compliant protocols under Python >= 3.8: e.g.,

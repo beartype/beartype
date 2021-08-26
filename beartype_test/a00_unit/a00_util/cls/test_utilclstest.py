@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-def test_is_class_builtin() -> None:
+def test_is_type_builtin() -> None:
     '''
     Test the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester.
     '''
@@ -34,3 +34,29 @@ def test_is_class_builtin() -> None:
     # Assert this tester rejects non-builtin types.
     for type_nonbuiltin in TYPES_NONBUILTIN:
         assert is_type_builtin(type_nonbuiltin) is False
+
+
+def test_is_type_subclass() -> None:
+    '''
+    Test the :func:`beartype._util.cls.utilclstest.is_type_subclass` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.cls.utilclstest import is_type_subclass
+    from beartype_test.a00_unit.data.data_type import Class, Subclass
+
+    # Assert this tester accepts objects that are subclasses of superclasses.
+    assert is_type_subclass(Subclass, Class) is True
+    assert is_type_subclass(Class, object) is True
+
+    # Assert this tester rejects objects that are superclasses of subclasses.
+    assert is_type_subclass(object, Class) is False
+    assert is_type_subclass(Class, Subclass) is False
+
+    # Assert this tester rejects objects that are unrelated classes.
+    assert is_type_subclass(str, bool) is False
+
+    # Assert this tester rejects objects that are non-classes *WITHOUT* raising
+    # an exception.
+    assert is_type_subclass(
+        "Thou many-colour'd, many-voiced vale,", str) is False

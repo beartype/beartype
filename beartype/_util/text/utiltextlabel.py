@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.utilobject import (
-    get_object_scopes_name,
+    get_object_basename_scoped,
     get_object_type_name,
 )
 from collections.abc import Callable
@@ -75,7 +75,7 @@ def label_callable(func: Callable) -> str:
     # Else, the passed callable is *NOT* a pure-Python lambda function and thus
     # has a unique fully-qualified name. In this case, simply return that name.
     else:
-        return f'{get_object_scopes_name(func)}()'
+        return f'{get_object_basename_scoped(func)}()'
 
 
 def label_callable_decorated(func: Callable) -> str:

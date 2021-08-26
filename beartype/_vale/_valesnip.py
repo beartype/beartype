@@ -41,8 +41,8 @@ object to be equal to another arbitrary object.
 
 
 VALE_CODE_CHECK_ISSUBCLASS = '''
-{{indent}}# True only if this pith subclasses this type.
-{{indent}}issubclass({{obj}}, {param_name_base_cls})'''
+{{indent}}# True only if this pith is a class subclassing this superclass.
+{{indent}}isinstance({{obj}}, type) and issubclass({{obj}}, {param_name_base_cls})'''
 '''
 :mod:`beartype.vale.IsSubclass`-specific code snippet validating an arbitrary
 type to subclass another arbitrary type.

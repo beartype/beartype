@@ -30,7 +30,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_TYPE_STDLIB,
+    HINT_SIGNS_TYPE_ISINSTANCEABLE,
 )
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_bases_unerased,
@@ -386,7 +386,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
       representation** (i.e., the non-human-readable string returned by the
       :func:`repr` builtin).
 
-    This getter function is memoized for efficiency.
+    This getter is memoized for efficiency.
 
     Motivation
     ----------
@@ -748,7 +748,7 @@ def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
     return (
         # If this sign originates from an origin type, that type.
         _get_hint_pep_origin_object_or_none(hint)
-        if hint_sign in HINT_SIGNS_TYPE_STDLIB else
+        if hint_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE else
         # Else, "None".
         None
     )

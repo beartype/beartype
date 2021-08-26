@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar._roarexc import _BeartypeUtilObjectNameException
 from contextlib import AbstractContextManager
 from typing import Any
 
@@ -102,36 +103,6 @@ def is_object_hashable(obj: object) -> bool:
     # Else, this object is hashable. Return true.
     return True
 
-
-def is_object_subclass(obj: object, cls: type) -> bool:
-    '''
-    ``True`` only if the passed object is a subclass of the passed class.
-
-    Caveats
-    ----------
-    **This higher-level tester should always be called in lieu of the
-    lower-level** :func:`issubclass` **builtin,** which raises an exception
-    when the first passed parameter is *not* a class. This tester suffers no
-    such deficits, instead safely returning ``False`` when the first passed
-    parameter is *not* a class.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-    cls : type
-        Class to test whether this object is a subclass of.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a subclass of this class.
-    '''
-    assert isinstance(cls, type), f'{repr(cls)} not class.'
-
-    # One-liners for tremendous bravery.
-    return isinstance(obj, type) and issubclass(obj, cls)
-
 # ....................{ GETTERS ~ name                    }....................
 #FIXME: Unit test us up, please.
 def get_object_name(obj: Any) -> str:
@@ -162,7 +133,7 @@ def get_object_name(obj: Any) -> str:
 
     Raises
     ----------
-    :exc:`AttributeError`
+    :exc:`_BeartypeUtilObjectNameException`
         If this object defines neither ``__qualname__`` *nor* ``__name__``
         dunder attributes.
     '''
@@ -173,6 +144,10 @@ def get_object_name(obj: Any) -> str:
         get_object_module_name_or_none,
         get_object_type_module_name_or_none,
     )
+
+    # Lexically scoped name of this object excluding this module name if this
+    # object is named *OR* raise an exception otherwise.
+    object_scopes_name = get_object_basename_scoped(obj)
 
     # Fully-qualified name of the module declaring this object if this object
     # is declared by a module *OR* "None" otherwise, specifically defined as:
@@ -186,9 +161,6 @@ def get_object_name(obj: Any) -> str:
         get_object_type_module_name_or_none(obj)
     )
 
-    # Lexically scoped name of this object excluding this module name.
-    object_scopes_name = get_object_scopes_name(obj)
-
     # Return either...
     return (
         # If this module name exists, "."-delimited concatenation of this
@@ -200,8 +172,7 @@ def get_object_name(obj: Any) -> str:
     )
 
 
-#FIXME: Unit test us up, please.
-def get_object_scopes_name(obj: Any) -> str:
+def get_object_basename_scoped(obj: Any) -> str:
     '''
     **Lexically scoped name** (i.e., ``.``-delimited string unambiguously
     identifying all lexical scopes encapsulating) the passed object if this
@@ -219,9 +190,12 @@ def get_object_scopes_name(obj: Any) -> str:
     Caveats
     ----------
     **The higher-level** :func:`get_object_name` **getter should typically be
-    called instead of this lower-level getter,** which omits the
-    fully-qualified name of the module transitively declaring this object and
-    thus fails to return fully-qualified names.
+    called instead of this lower-level getter.** This getter unsafely:
+
+    * Requires the passed object to declare dunder attributes *not* generally
+      declared by arbitrary instances of user-defined classes.
+    * Omits the fully-qualified name of the module transitively declaring this
+      object and thus fails to return fully-qualified names.
 
     **This high-level getter should always be called in lieu of directly
     accessing the low-level** ``__qualname__`` **dunder attribute on objects.**
@@ -241,12 +215,12 @@ def get_object_scopes_name(obj: Any) -> str:
 
     Raises
     ----------
-    AttributeError
+    :exc:`_BeartypeUtilObjectNameException`
         If this object defines neither ``__qualname__`` *nor* ``__name__``
         dunder attributes.
     '''
 
-    # Return the fully-qualified name of this object excluding th name,
+    # Return the fully-qualified name of this object excluding its name,
     # constructed as follows:
     # * If this object defines the "__qualname__" dunder attribute whose value
     #   is the "."-delimited concatenation of the unqualified basenames of all
@@ -258,9 +232,22 @@ def get_object_scopes_name(obj: Any) -> str:
     #   placeholders convey no meaningful semantics, placeholders are removed.
     # * Else if this object defines the "__name__" dunder attribute whose value
     #   is the unqualified basename of this ojbect, that value.
-    # * Else, an "AttributeError" exception implicitly raised by the attempting
-    #   to access a non-existent "__name__" dunder attribute.
-    object_scoped_name = getattr(obj, '__qualname__', obj.__name__)
+    # * Else, "None".
+    object_scoped_name = getattr(
+        obj, '__qualname__', getattr(
+            obj, '.__name__', None))
+
+    # If this object is unnamed, raise a human-readable exception. The default
+    # "AttributeError" exception raised by attempting to directly access either
+    # the "obj.__name__" or "obj.__qualname__" attributes is sufficiently
+    # non-explanatory to warrant replacement by our explanatory exception.
+    if object_scoped_name is None:
+        raise _BeartypeUtilObjectNameException(
+            f'{repr(obj)} unnamed '
+            f'(i.e., declares neither "__name__" nor "__qualname__" '
+            f'dunder attributes).'
+        )
+    # Else, this object is named.
 
     # Remove all "<locals>" placeholder substrings as discussed above.
     return object_scoped_name.replace('<locals>.', '')
