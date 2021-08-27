@@ -64,13 +64,13 @@ def add_data(data_module: 'ModuleType') -> None:
     )
 
     # Defer NumPy-specific imports.
-    from numpy import asarray, dtype, float64
+    from numpy import asarray, dtype, float32, float64, floating
     from numpy.typing import NDArray
 
     # ..................{ TUPLES                            }..................
     # Add NumPy-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ NUMPY ~ array                     }................
+        # ................{ NUMPY ~ array : dtype : equals    }................
         # NumPy array subscripted by a true data type.
         HintPepMetadata(
             hint=NDArray[dtype(float64)],
@@ -97,7 +97,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # NumPy array containing only 64-bit integers.
                 HintPithUnsatisfiedMetadata(
-                    pith=((4, 36, 624, 3744, 5108, 10200, 54912, 123552,)),
+                    pith=asarray((4, 36, 624, 3744, 5108, 10200, 54912,)),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected data type.
                     exception_str_match_regexes=(r'\bfloat64\b',),
@@ -115,9 +115,8 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typing=False,
             piths_satisfied_meta=(
                 # NumPy array containing only 64-bit floats.
-                HintPithSatisfiedMetadata(
-                    asarray((2.0, 2.5, 2.6, 2.7083, 2.716, 2.71805,)),
-                ),
+                HintPithSatisfiedMetadata(asarray(
+                    (2.0, 2.5, 2.6, 2.7083, 2.716, 2.71805,))),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
@@ -129,11 +128,40 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
                 # NumPy array containing only 64-bit integers.
                 HintPithUnsatisfiedMetadata(
-                    pith=((1, 1, 1, 1, 2, 3, 6, 11, 23, 47, 106, 235, 551,)),
+                    pith=asarray((1, 1, 1, 1, 2, 3, 6, 11, 23, 47, 106, 235,)),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected data type.
                     exception_str_match_regexes=(r'\bfloat64\b',),
                 ),
+            ),
+        ),
+
+        # ................{ NUMPY ~ array : dtype : subclass  }................
+        # NumPy array subscripted by a data type superclass.
+        HintPepMetadata(
+            hint=NDArray[floating],
+            pep_sign=HintSignNumpyArray,
+            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_type_typing=False,
+            is_typing=False,
+            piths_satisfied_meta=(
+                # NumPy array containing only 32-bit floats.
+                HintPithSatisfiedMetadata(asarray(
+                    (1.2, 2.4, 3.0, 3.6, 4.0, 4.5, 4.8, 5.6, 6.0, 6.3, 7.0,),
+                    dtype=float32,
+                )),
+                # NumPy array containing only 64-bit floats.
+                HintPithSatisfiedMetadata(asarray(
+                    (3.2, 5, 1, 2, 1, 8, 2, 5, 1, 3, 1, 2.8, 1, 1.5, 1, 1, 4,),
+                    dtype=float64,
+                )),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Then, and'),
+                # NumPy array containing only 64-bit integers.
+                HintPithUnsatisfiedMetadata(asarray(
+                    (3, 6, 5, 12, 7, 18, 9, 12, 11, 30, 13, 16, 15, 18, 17,))),
             ),
         ),
     ))

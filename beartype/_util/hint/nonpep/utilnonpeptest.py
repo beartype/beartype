@@ -272,6 +272,8 @@ def die_unless_hint_nonpep_type(
     # If this object is an isinstanceable class.
 
 
+#FIXME: Unit test this function with respect to tuples containing
+#non-isinstanceable classes.
 #FIXME: Optimize both this and the related _is_hint_nonpep_tuple() tester
 #defined below. The key realization here is that EAFP is *MUCH* faster in this
 #specific case than iteration. Why? Because iteration is guaranteed to
@@ -286,8 +288,6 @@ def die_unless_hint_nonpep_type(
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
 #Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
 #real-world use cases) that this mild inefficiency probably no longer matters.
-#FIXME: Unit test this function with respect to tuples containing
-#non-isinstanceable classes.
 def die_unless_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,

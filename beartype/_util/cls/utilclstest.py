@@ -12,9 +12,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
+from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
 from beartype._data.cls.datacls import TYPES_BUILTIN_FAKE
 from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
-from typing import Type
+from typing import Tuple, Type, Union
+
+# ....................{ HINTS                             }....................
+TestableTypes = Union[type, Tuple[type, ...]]
+'''
+PEP-compliant type hint matching all **testable types** (i.e., types suitable
+for use as the second parameter passed to the :func:`isinstance` and
+:func:`issubclass` builtins).
+'''
 
 # ....................{ VALIDATORS                        }....................
 def die_unless_type(
@@ -47,10 +56,12 @@ def die_unless_type(
             'f{repr(exception_cls)} not exception class.')
         raise exception_cls(f'{repr(cls)} not class.')
 
-# ....................{ TESTERS ~ builtin                 }....................
-def is_type_subclass(cls: object, base_cls: type) -> bool:
+# ....................{ TESTERS                           }....................
+def is_type_subclass(cls: object, base_classes: TestableTypes) -> bool:
     '''
-    ``True`` only if the passed object is a subclass of the passed class.
+    ``True`` only if the passed object is a subclass of either the passed class
+    if passed one class *or* at least one of the passed classes if passed a
+    tuple of classes.
 
     Caveats
     ----------
@@ -70,20 +81,25 @@ def is_type_subclass(cls: object, base_cls: type) -> bool:
     ----------
     obj : object
         Object to be inspected.
-    cls : type
-        Class to test whether this object is a subclass of.
+    base_classes : TestableTypes
+        Class(es) to test whether this object is a subclass of defined as
+        either:
+
+        * A single class.
+        * A tuple of one or more classes.
 
     Returns
     ----------
     bool
-        ``True`` only if this object is a subclass of this class.
+        ``True`` only if this object is a subclass of these class(es).
     '''
-    assert isinstance(base_cls, type), f'{repr(base_cls)} not class.'
+    assert isinstance(base_classes, TestableTypesTuple), (
+        f'{repr(base_classes)} neither class nor tuple of classes.')
 
     # One-liners for tremendous bravery.
-    return isinstance(cls, type) and issubclass(cls, base_cls)
+    return isinstance(cls, type) and issubclass(cls, base_classes)
 
-# ....................{ TESTERS ~ builtin                 }....................
+
 def is_type_builtin(cls: type) -> bool:
     '''
     ``True`` only if the passed class is **builtin** (i.e., globally accessible

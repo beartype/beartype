@@ -22,7 +22,10 @@ from beartype.vale._valeisabc import _IsABC
 from beartype._vale._valesnip import VALE_CODE_CHECK_ISSUBCLASS_format
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.cls.utilclstest import (
+    TestableTypes,
+    is_type_subclass,
+)
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
 from beartype._util.func.utilfuncscope import (
     CallableScope,
@@ -34,7 +37,6 @@ from beartype._util.utilobject import get_object_name
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ type                    }....................
-#FIXME: Document us up in "README.rst", please.
 class IsSubclass(_IsABC):
     '''
     **Beartype type inheritance validator factory** (i.e., object creating and
@@ -131,19 +133,20 @@ class IsSubclass(_IsABC):
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
-    def __class_getitem__(cls, base_cls: type) -> _SubscriptedIs:
+    def __class_getitem__(
+        cls, base_classes: TestableTypes) -> _SubscriptedIs:
         '''
         :pep:`560`-compliant dunder method creating and returning a new
-        beartype validator validating type inheritance against the passed
-        class, suitable for subscripting :pep:`593`-compliant
+        beartype validator validating type inheritance against at least one of
+        the passed classes, suitable for subscripting :pep:`593`-compliant
         :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
 
         Parameters
         ----------
-        base_cls : type
-            Arbitrary class to validate inheritance against.
+        base_classes : TestableTypes
+            One or more arbitrary classes to validate inheritance against.
 
         Returns
         ----------
@@ -164,25 +167,59 @@ class IsSubclass(_IsABC):
             Usage instructions.
         '''
 
-        # If this factory was subscripted by either no arguments, two or
-        # more arguments, *OR* one argument that is not an issubclassable type,
-        # raise an exception.
-        die_unless_type_issubclassable(
-            cls=base_cls, exception_cls=BeartypeValeSubscriptionException)
-        # Else, this factory was subscripted by an issubclassable type.
+        # Machine-readable string representing this type or tuple of types.
+        base_classes_repr = ''
+
+        # If this factory was subscripted by either no arguments *OR* two or
+        # more arguments...
+        if isinstance(base_classes, tuple):
+            # If this factory was subscripted by *NO* arguments, raise an
+            # exception.
+            if not base_classes:
+                raise BeartypeValeSubscriptionException(
+                    f'{repr(cls)} subscripted by empty tuple.')
+            # Else, this factory was subscripted by two or more arguments.
+
+            # If any such argument is *NOT* an issubclassable type, raise an
+            # exception.
+            for base_class in base_classes:
+                die_unless_type_issubclassable(
+                    cls=base_class,
+                    exception_cls=BeartypeValeSubscriptionException,
+                )
+
+                # Append the fully-qualified name of this type to this string.
+                base_classes_repr += f'{get_object_name(base_class)}, '
+            # Else, all such arguments are issubclassable types.
+
+            # Strip the suffixing ", " from this string for readability.
+            base_classes_repr = base_classes_repr[:-2]
+        # Else, this factory was subscripted by one argument. In this case...
+        else:
+            # If this argument is *NOT* an issubclassable type, raise an
+            # exception.
+            die_unless_type_issubclassable(
+                cls=base_classes,
+                exception_cls=BeartypeValeSubscriptionException,
+            )
+            # Else, this argument is an issubclassable type.
+
+            # Fully-qualified name of this type.
+            base_classes_repr = get_object_name(base_classes)
 
         # Callable inefficiently validating against this type.
-        is_valid = lambda pith: is_type_subclass(pith, base_cls)
+        is_valid = lambda pith: is_type_subclass(pith, base_classes)
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
         is_valid_code_locals: CallableScope = {}
 
         # Name of a new parameter added to the signature of wrapper functions
-        # whose value is this type, enabling this type to be tested in those
-        # functions *WITHOUT* additional stack frames.
+        # whose value is this type or tuple of types, enabling this type or
+        # tuple of types to be tested in those functions *WITHOUT* additional
+        # stack frames.
         param_name_base_cls = add_func_scope_attr(
-            attr=base_cls, attr_scope=is_valid_code_locals)
+            attr=base_classes, attr_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this type.
         is_valid_code = VALE_CODE_CHECK_ISSUBCLASS_format(
@@ -197,6 +234,6 @@ class IsSubclass(_IsABC):
             # Intentionally pass this subscription's machine-readable
             # representation as a string rather than lambda function returning
             # a string, as this string is safely, immediately, and efficiently
-            # constructable from the fully-qualified name of this type.
-            get_repr=f'{cls.__name__}[{get_object_name(base_cls)}]',
+            # constructable from these arguments' representation.
+            get_repr=f'{cls.__name__}[{base_classes_repr}]',
         )

@@ -48,10 +48,12 @@ def test_is_type_subclass() -> None:
     # Assert this tester accepts objects that are subclasses of superclasses.
     assert is_type_subclass(Subclass, Class) is True
     assert is_type_subclass(Class, object) is True
+    assert is_type_subclass(Class, (Class, str)) is True
 
     # Assert this tester rejects objects that are superclasses of subclasses.
     assert is_type_subclass(object, Class) is False
     assert is_type_subclass(Class, Subclass) is False
+    assert is_type_subclass(Class, (Subclass, str)) is False
 
     # Assert this tester rejects objects that are unrelated classes.
     assert is_type_subclass(str, bool) is False

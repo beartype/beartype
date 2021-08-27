@@ -984,11 +984,11 @@ Validator API
 
     See ``help(beartype.vale.IsEqual)`` for further details.
 
-*class* beartype.vale.\ **IsSubclass**\ [typing.Any]
+*class* beartype.vale.\ **IsSubclass**\ [type, ...]
 
-    **Declarative equality validator.** A PEP-compliant type hint enforcing
-    equality against any object, created by subscripting (indexing) the
-    ``IsEqual`` class with that object:
+    **Declarative inheritance validator.** A PEP-compliant type hint enforcing
+    subclassing of one or more superclasses (base classes), created by
+    subscripting (indexing) the ``IsSubclass`` class with those superclasses:
 
     .. code-block:: python
 
@@ -997,50 +997,53 @@ Validator API
        from typing import Annotated   # <--------------- if Python ≥ 3.9.0
        #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
-       # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
-       AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
+       # Type hint matching only string and byte string subclasses.
+       StrOrBytesSubclass = Annotated[type, IsSubclass[str, bytes]]
 
-    ``beartype.vale.IsEqual`` generalizes the comparable `PEP 586`_-compliant
-    typing.Literal_ type hint. Both check equality against user-defined
-    objects. Despite the differing syntax, these two type hints enforce the
-    same semantics:
+    ``beartype.vale.IsSubclass`` generalizes the comparable `PEP
+    484`_-compliant typing.Type_ and `PEP 585`_-compliant type_ type hints. All
+    three check subclassing of arbitrary superclasses. Despite the differing
+    syntax, these type hints enforce the same semantics:
 
     .. code-block:: python
 
        # This beartype validator enforces the same semantics as...
-       IsStringEqualsWithBeartype = Annotated[str,
-           IsEqual['Don’t you envy our pranceful bands?'] |
-           IsEqual['Don’t you wish you had extra hands?']
-       ]
+       IsStringSubclassWithBeartype = Annotated[type, IsSubclass[str]]
 
-       # This PEP 586-compliant type hint.
-       IsStringEqualsWithPep586 = Literal[
-           'Don’t you envy our pranceful bands?',
-           'Don’t you wish you had extra hands?',
-       ]
+       # This PEP 484-compliant type hint.
+       IsStringSubclassWithPep484 = Type[str]
+
+       # This PEP 585-compliant type hint.
+       IsStringSubclassWithPep585 = type[str]
 
     The similarities end there, of course:
 
-    * ``beartype.vale.IsEqual`` permissively validates equality against objects
-      that are instances of **any arbitrary type.** ``IsEqual`` doesn't care
-      what the types of your objects are. ``IsEqual`` will test equality
-      against everything you tell it to, because you know best.
-    * typing.Literal_ rigidly validates equality against objects that are
-      instances of **only six predefined types:**
+    * ``beartype.vale.IsSubclass`` permissively validates type inheritance of
+      **arbitrary classes** (including possibly nested attributes of parameters
+      and returns when combined with ``beartype.vale.IsAttr``) against **one or
+      more superclasses.**
+    * typing.Type_ and type_ rigidly validates type inheritance of only
+      **parameters and returns** against only **one superclass.**
 
-      * Booleans (i.e., ``bool`` objects).
-      * Byte strings (i.e., ``bytes`` objects).
-      * Integers (i.e., ``int`` objects).
-      * Unicode strings (i.e., ``str`` objects).
-      * enum.Enum_ members. [#enum_type]_
-      * The ``None`` singleton.
+    Consider this subclass validator, which validates type inheritance of a
+    deeply nested attribute and thus *cannot* be expressed with typing.Type_ or
+    type_:
 
-    Wherever you can (which is mostly nowhere), prefer typing.Literal_. Sure,
-    typing.Literal_ is mostly useless, but it's standardized across
-    type checkers in a mostly useless way. Everywhere else, default to
-    ``beartype.vale.IsEqual``.
+    .. code-block:: python
 
-    See ``help(beartype.vale.IsEqual)`` for further details.
+       # Type hint matching only NumPy arrays of reals (i.e., either integers
+       # or floats) of arbitrary precision, generating code resembling:
+       #    (isinstance(array, np.ndarray) and
+       #     issubclass(array.dtype.type, (np.floating, np.integer)))
+       >>> NumpyRealArray = Annotated[
+       ...     np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[
+       ...         np.floating, np.integer]]]]
+
+    Wherever you can, prefer type_ and typing.Type_. Sure, they're
+    inflexible, but they're inflexibly standardized across type checkers.
+    Everywhere else, default to ``beartype.vale.IsSubclass``.
+
+    See ``help(beartype.vale.IsSubclass)`` for further details.
 
 .. [#enum_type]
    You don't want to know the type of enum.Enum_ members. No... seriously. You

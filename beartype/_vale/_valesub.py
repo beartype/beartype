@@ -199,6 +199,7 @@ class _SubscriptedIs(object):
               * *Not* callable.
               * A C-based rather than pure-Python callable.
               * A pure-Python callable accepting one or more arguments.
+              * The empty string.
         '''
 
         # If this validator is either uncallable, a C-based callable, *OR* a
@@ -270,7 +271,7 @@ class _SubscriptedIs(object):
         self._is_valid = is_valid
 
         # Classify this representer via a writeable property internally
-        # validating this representer.
+        # validating this representer. (This is magical, people.)
         self.get_repr = get_repr
 
         # Classify all remaining parameters.
@@ -328,17 +329,20 @@ class _SubscriptedIs(object):
             * A pure-Python callable accepting one or more arguments.
         '''
 
-        # If this representer is neither...
-        if not (
-            # A string *NOR*...
-            isinstance(get_repr, str) or
-            # A pure-Python callable accepting one argument...
-            is_func_argless(
-                func=get_repr,
-                func_label='Representer',
-                exception_cls=BeartypeValeSubscriptionException,
-            )
-        # Then raise an exception.
+        # If this representer is a string...
+        if isinstance(get_repr, str):
+            # If this string is empty, raise an exception.
+            if not get_repr:
+                raise BeartypeValeSubscriptionException(
+                    'Representer string empty.')
+        # Else, this representer is *NOT* a string.
+        #
+        # If this representer is *NOT* a pure-Python callable accepting one
+        # argument, raise an exception.
+        elif not is_func_argless(
+            func=get_repr,
+            func_label='Representer',
+            exception_cls=BeartypeValeSubscriptionException,
         ):
             raise BeartypeValeSubscriptionException(
                 f'Representer {repr(get_repr)} neither string nor '
