@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**:mod:`pytest` test-marking decorators.**
+:mod:`pytest` **test-marking decorators.**
 
 This submodule provides decorators *not* conditionally marking their decorated
 tests as either failed, parametrized, or skipped.

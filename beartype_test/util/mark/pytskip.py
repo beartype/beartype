@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Pytest test-skipping decorators.**
+:mod:`pytest` **test-skipping decorators.**
 
 This submodule provides decorators conditionally marking their decorated tests
 as skipped depending on whether the conditions signified by the passed
@@ -19,6 +19,7 @@ parameters are satisfied (e.g., the importability of the passed module name).
 import pytest, sys
 from collections.abc import Mapping, Sequence
 from types import FunctionType
+from typing import Optional
 
 # Sadly, the following imports require private modules and packages.
 from _pytest.runner import Skipped
@@ -198,7 +199,7 @@ def skip_if_python_version_less_than(version: str):
 
 # ....................{ SKIP ~ py : module                }....................
 def skip_unless_package(
-    package_name: str, minimum_version: 'Optional[str]' = None):
+    package_name: str, minimum_version: Optional[str] = None):
     '''
     Skip the decorated test or fixture if the package with the passed name is
     **unsatisfied** (i.e., either dynamically unimportable *or* importable but
@@ -231,7 +232,7 @@ def skip_unless_package(
 
 
 def skip_unless_module(
-    module_name: str, minimum_version: 'Optional[str]' = None):
+    module_name: str, minimum_version: Optional[str] = None):
     '''
     Skip the decorated test or fixture if the module with the passed name is
     **unsatisfied** (i.e., either dynamically unimportable *or* importable but

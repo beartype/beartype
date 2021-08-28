@@ -708,11 +708,10 @@ Would You Like to Know More?
 
 If you know `type hints <PEP 484_>`__, you know ``beartype``. Since
 ``beartype`` is driven entirely by `tool-agnostic community standards <PEP
-0_>`__, the public API for ``beartype`` is just the summation of those
-standards. As the user, all you need to know is that decorated callables
-magically begin raising human-readable exceptions when you pass parameters or
-return values that violate the PEP-compliant type hints annotating those
-parameters or return values.
+0_>`__, the public API for ``beartype`` is exactly the sum of those standards.
+As the user, all you need to know is that decorated callables magically raise
+human-readable exceptions when you pass parameters or return values violating
+the PEP-compliant type hints annotating those parameters or returns.
 
 If you don't know `type hints <PEP 484_>`__, this is your moment to go deep on
 the hardest hammer in Python's SQA_ toolbox. Here are a few friendly primers to
@@ -1035,9 +1034,9 @@ Validator API
        # or floats) of arbitrary precision, generating code resembling:
        #    (isinstance(array, np.ndarray) and
        #     issubclass(array.dtype.type, (np.floating, np.integer)))
-       >>> NumpyRealArray = Annotated[
-       ...     np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[
-       ...         np.floating, np.integer]]]]
+       NumpyRealArray = Annotated[
+           np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[
+               np.floating, np.integer]]]]
 
     Wherever you can, prefer type_ and typing.Type_. Sure, they're
     inflexible, but they're inflexibly standardized across type checkers.
@@ -1134,6 +1133,8 @@ existing validators, fueling reuse and preserving DRY_:
 
 Validator Caveats
 ~~~~~~~~~~~~~~~~~
+
+.. # FIXME: Coerce this into a proper reST note box when Sphinxifying this.
 
 **‼** **Validators require:**
 
@@ -1319,64 +1320,137 @@ caveats apply <Validator Caveats_>`__. Notably, these hints require:
 NumPy Type Hints
 ++++++++++++++++
 
-Beartype fully supports `typed NumPy arrays annotated as "numpy.typing.NDArray"
-type hints <numpy.typing_>`__. Unsurprisingly, these hints require:
+Beartype conditionally supports `NumPy type hints (i.e., annotations created by
+subscripting (indexing) various attributes of the "numpy.typing" subpackage)
+<numpy.typing_>`__ when these optional runtime dependencies are *all*
+satisfied:
 
-* `NumPy ≥ 1.21.0 <NumPy_>`__.
+* Python ≥ 3.8.0.
 * beartype ≥ 0.8.0.
+* `NumPy ≥ 1.21.0 <NumPy_>`__.
 * Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
   <typing_extensions_>`__.
 
-Let's validate NumPy arrays of arbitrary shape containing only 64-bit floats
-using `NumPy type hints <numpy.typing_>`__, because error-free is the way to
-be:
+Beartype internally converts `NumPy type hints <numpy.typing_>`__ into
+`equivalent beartype validators <Beartype Validators_>`__ at decoration time.
+`NumPy type hints currently only validate dtypes <numpy.typing_>`__, a common
+but limited use case. `Beartype validators <Beartype Validators_>`__ validate
+*any* arbitrary combinations of array constraints – including dtypes, shapes,
+contents, and... well, *anything.* Which is alot. `NumPy type hints
+<numpy.typing.NDArray_>`__ are thus just syntactic sugar for `beartype
+validators <Beartype Validators_>`__ – albeit quasi-portable syntactic sugar
+also supported by mypy_.
 
-.. code-block:: python
-
-   # Import the requisite machinery.
-   from beartype import beartype
-   from numpy.typing import NDArray
-   import numpy as np
-
-   # NumPy type hint matching all NumPy arrays containing only 64-bit floats.
-   NumpyFloat64Array = NDArray[np.float64]
-
-   # Annotate @beartype-decorated callables with NumPy type hints.
-   @beartype
-   def get_array_len(array: NumpyFloat64Array) -> tuple[NumpyFloat64Array, int]:
-       return (array, len(array))
-
-`NumPy type hints <numpy.typing_>`__ are just syntactic sugar for `beartype
-validators <Beartype Validators_>`__. Since beartype internally converts the
-former into the latter at decoration time, the prior example is exactly
-identical to:
+Wherever you can, prefer `NumPy type hints <numpy.typing_>`__ for portability.
+Everywhere else, default to `beartype validators <Beartype Validators_>`__ for
+generality. Combine them for the best of all possible worlds:
 
 .. code-block:: python
 
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import IsAttr, IsEqual
+   from numpy import floating
+   from numpy.typing import NDArray
    from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    #from typing_extensions import Annotated   # <--- if Python < 3.9.0
-   import numpy as np
 
-   # Validator matching all NumPy arrays containing only 64-bit floats.
-   NumpyFloat64Array = Annotated[
-       np.ndarray, IsAttr['dtype', IsEqual[np.dtype(np.float64)]]]
+   # Beartype validator + NumPy type hint matching all two-dimensional NumPy
+   # arrays of floating-point numbers of any arbitrary precision.
+   NumpyFloat64Array = Annotated[NDArray[floating], IsAttr['ndim', IsEqual[2]]]
 
-   # Annotate @beartype-decorated callables with beartype validators.
-   @beartype
-   def get_array_len(array: NumpyFloat64Array) -> tuple[NumpyFloat64Array, int]:
-       return (array, len(array))
+Rejoice! A one-liner solves everything yet again.
 
-`NumPy type hints currently only validate array data types (dtypes) <NumPy Type
-Hints_>`__, a common but limited use case. `Beartype validators <Beartype
-Validators_>`__ validate *any* arbitrary combinations of array constraints –
-including dtypes, shapes, contents, and... well, *anything.* Which is alot.
+Typed NumPy Arrays
+^^^^^^^^^^^^^^^^^^
 
-Wherever you can, prefer `NumPy type hints <numpy.typing_>`__ for portability.
-Everywhere else, default to `beartype validators <Beartype Validators_>`__ for
-generality.
+Type NumPy arrays by subscripting (indexing) the numpy.typing.NDArray_ class
+with one of three possible types of objects:
+
+* An **array dtype** (i.e., instance of the numpy.dtype_ class).
+* A **scalar dtype** (i.e., concrete subclass of the numpy.generic_ abstract
+  base class (ABC)).
+* A **scalar dtype ABC** (i.e., abstract subclass of the numpy.generic_ ABC).
+
+Beartype generates fundamentally different type-checking code for these types,
+complying with both mypy_ semantics (which behaves similarly) and our userbase
+(which demands this behaviour). May there be hope for our future…
+
+*class* numpy.typing.\ **NDArray**\ [numpy.dtype]
+
+    **NumPy array typed by array dtype.** A PEP-noncompliant type hint
+    enforcing object equality against any **array dtype** (i.e., numpy.dtype_
+    instance), created by subscripting (indexing) the numpy.typing.NDArray_
+    class with that array dtype:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import dtype
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of 32-bit big-endian integers,
+       # semantically equivalent to this beartype validator:
+       #     NumpyInt32BigEndianArray = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsEqual[dtype('>i4')]]]
+       NumpyInt32BigEndianArray = NDArray[dtype('>i4')]
+
+*class* numpy.typing.\ **NDArray**\ [numpy.dtype.type]
+
+    **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint
+    enforcing object equality against any **scalar dtype** (i.e., concrete
+    subclass of the numpy.generic_ ABC), created by subscripting (indexing) the
+    numpy.typing.NDArray_ class with that scalar dtype. Prefer this variant
+    whenever you know *a priori* the dtype precision of an array:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import float64
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of 64-bit floats, semantically
+       # equivalent to this beartype validator:
+       #     NumpyFloat64Array = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsAttr['type', IsEqual[float64]]]]
+       NumpyFloat64Array = NDArray[float64]
+
+    Common scalar dtypes include:
+
+    * All **fixed-precision integer scalar dtypes** (e.g., ``numpy.int32``,
+      ``numpy.int64``).
+    * All **fixed-precision floating-point scalar dtypes** (e.g.,
+      ``numpy.float32``, ``numpy.float64``).
+
+*class* numpy.typing.\ **NDArray**\ [type[numpy.dtype.type]]
+
+    **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint
+    enforcing type inheritance against any **scalar dtype ABC** (i.e.,
+    numpy.dtype_ subclass), created by subscripting (indexing) the
+    numpy.typing.NDArray_ class with that scalar dtype. Prefer this variant
+    whenever you know *a priori* the category of dtype (without reference to
+    precision) of an array:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import floating
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of floats of arbitrary
+       # precision, equivalent to this beartype validator:
+       #     NumpyFloatArray = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[floating]]]]
+       NumpyFloatArray = NDArray[floating]
+
+    Common scalar dtype ABCs include:
+
+    * numpy.integer_, the ABC of all fixed-precision integer scalar dtypes.
+    * numpy.floating_, the ABC of all fixed-precision floating-point scalar
+      dtypes.
 
 Coming up: *shocking revelation that cheaters prosper.*
 
@@ -1724,6 +1798,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 |                    | IsAttr                                  | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | IsEqual                                 | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
++--------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                    | IsSubclass                              | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | builtins_          | None_                                   | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -4105,6 +4181,12 @@ rather than Python runtime) include:
    https://numpy.org/doc/stable/reference/arrays.dtypes.html
 .. _numpy.empty_like:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
+.. _numpy.floating:
+   https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.floating
+.. _numpy.generic:
+   https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.generic
+.. _numpy.integer:
+   https://numpy.org/doc/stable/reference/arrays.scalars.html?highlight=numpy%20generic#numpy.integer
 .. _numpy.typing:
    https://numpy.org/devdocs/reference/typing.html
 .. _numpy.typing.NDArray:
