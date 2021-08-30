@@ -45,36 +45,37 @@ from beartype._decor._code._pep._pepmagic import (
     HINT_META_INDEX_INDENT,
 )
 from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_CHECK_HINT_GENERIC_CHILD,
-    PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
-    PEP_CODE_CHECK_HINT_GENERIC_SUFFIX,
-    PEP_CODE_CHECK_HINT_NONPEP_TYPE,
-    PEP_CODE_CHECK_HINT_ROOT_SUFFIX,
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD,
-    PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX,
-    PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX,
-    PEP_CODE_CHECK_HINT_ROOT_PREFIX,
-    PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT,
+    PEP_CODE_HINT_ROOT_PREFIX,
+    PEP_CODE_HINT_ROOT_SUFFIX,
+    PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
-    PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP,
-    PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP,
-    PEP484_CODE_CHECK_HINT_UNION_PREFIX,
-    PEP484_CODE_CHECK_HINT_UNION_SUFFIX,
-    PEP586_CODE_CHECK_HINT_LITERAL,
-    PEP586_CODE_CHECK_HINT_PREFIX,
-    PEP586_CODE_CHECK_HINT_SUFFIX,
-    PEP593_CODE_CHECK_HINT_VALIDATOR_CHILD,
-    PEP593_CODE_CHECK_HINT_VALIDATOR_PREFIX,
-    PEP593_CODE_CHECK_HINT_VALIDATOR_SUFFIX,
+    PEP484585_CODE_HINT_GENERIC_CHILD,
+    PEP484585_CODE_HINT_GENERIC_PREFIX,
+    PEP484585_CODE_HINT_GENERIC_SUFFIX,
+    PEP484585_CODE_HINT_SEQUENCE_ARGS_1,
+    PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR,
+    PEP484585_CODE_HINT_SUBCLASS,
+    PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY,
+    PEP484585_CODE_HINT_TUPLE_FIXED_LEN,
+    PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD,
+    PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR,
+    PEP484585_CODE_HINT_TUPLE_FIXED_PREFIX,
+    PEP484585_CODE_HINT_TUPLE_FIXED_SUFFIX,
+    PEP484_CODE_HINT_INSTANCE,
+    PEP484_CODE_HINT_UNION_CHILD_PEP,
+    PEP484_CODE_HINT_UNION_CHILD_NONPEP,
+    PEP484_CODE_HINT_UNION_PREFIX,
+    PEP484_CODE_HINT_UNION_SUFFIX,
+    PEP586_CODE_HINT_LITERAL,
+    PEP586_CODE_HINT_PREFIX,
+    PEP586_CODE_HINT_SUFFIX,
+    PEP593_CODE_HINT_VALIDATOR_CHILD,
+    PEP593_CODE_HINT_VALIDATOR_PREFIX,
+    PEP593_CODE_HINT_VALIDATOR_SUFFIX,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -92,6 +93,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignLiteral,
     HintSignTuple,
+    HintSignType, 
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
@@ -188,49 +190,44 @@ def pep_code_check_hint(
     _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
     _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 
-    # "beartype._decor._code._pep._pepsnip" globals.
-    _PEP_CODE_CHECK_HINT_GENERIC_PREFIX=PEP_CODE_CHECK_HINT_GENERIC_PREFIX,
-    _PEP_CODE_CHECK_HINT_GENERIC_SUFFIX=PEP_CODE_CHECK_HINT_GENERIC_SUFFIX,
-    _PEP_CODE_CHECK_HINT_ROOT_PREFIX=PEP_CODE_CHECK_HINT_ROOT_PREFIX,
-    _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT=(
-        PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT),
-
     # "beartype._decor._code._pep._pepsnip" string globals required only for
     # their bound "str.format" methods.
-    _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format: Callable = (
-        PEP_CODE_CHECK_HINT_NONPEP_TYPE.format),
-    _PEP_CODE_CHECK_HINT_GENERIC_CHILD_format: Callable = (
-        PEP_CODE_CHECK_HINT_GENERIC_CHILD.format),
-    _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format: Callable = (
-        PEP_CODE_CHECK_HINT_ROOT_SUFFIX.format),
-    _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format: Callable = (
-        PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD.format),
-    _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format: Callable = (
-        PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR.format),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format: Callable = (
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY.format),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format: Callable = (
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN.format),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format: Callable = (
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD.format),
-    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
-        PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format),
-    _PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
+    PEP_CODE_HINT_ROOT_SUFFIX_format: Callable = (
+        PEP_CODE_HINT_ROOT_SUFFIX.format),
+    PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
-    _PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format: Callable = (
-        PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP.format),
-    _PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format: Callable = (
-        PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP.format),
-    _PEP586_CODE_CHECK_HINT_LITERAL_format: Callable = (
-        PEP586_CODE_CHECK_HINT_LITERAL.format),
-    _PEP586_CODE_CHECK_HINT_PREFIX_format: Callable = (
-        PEP586_CODE_CHECK_HINT_PREFIX.format),
-    _PEP593_CODE_CHECK_HINT_VALIDATOR_PREFIX_format: Callable = (
-        PEP593_CODE_CHECK_HINT_VALIDATOR_PREFIX.format),
-    _PEP593_CODE_CHECK_HINT_VALIDATOR_SUFFIX_format: Callable = (
-        PEP593_CODE_CHECK_HINT_VALIDATOR_SUFFIX.format),
-    _PEP593_CODE_CHECK_HINT_VALIDATOR_CHILD_format: Callable = (
-        PEP593_CODE_CHECK_HINT_VALIDATOR_CHILD.format),
+    PEP484_CODE_HINT_INSTANCE_format: Callable = (
+        PEP484_CODE_HINT_INSTANCE.format),
+    PEP484585_CODE_HINT_GENERIC_CHILD_format: Callable = (
+        PEP484585_CODE_HINT_GENERIC_CHILD.format),
+    PEP484585_CODE_HINT_SEQUENCE_ARGS_1_format: Callable = (
+        PEP484585_CODE_HINT_SEQUENCE_ARGS_1.format),
+    PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
+        PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format),
+    PEP484585_CODE_HINT_SUBCLASS_format: Callable = (
+        PEP484585_CODE_HINT_SUBCLASS.format),
+    PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY_format: Callable = (
+        PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY.format),
+    PEP484585_CODE_HINT_TUPLE_FIXED_LEN_format: Callable = (
+        PEP484585_CODE_HINT_TUPLE_FIXED_LEN.format),
+    PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format: Callable = (
+        PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD.format),
+    PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
+        PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format),
+    PEP484_CODE_HINT_UNION_CHILD_PEP_format: Callable = (
+        PEP484_CODE_HINT_UNION_CHILD_PEP.format),
+    PEP484_CODE_HINT_UNION_CHILD_NONPEP_format: Callable = (
+        PEP484_CODE_HINT_UNION_CHILD_NONPEP.format),
+    PEP586_CODE_HINT_LITERAL_format: Callable = (
+        PEP586_CODE_HINT_LITERAL.format),
+    PEP586_CODE_HINT_PREFIX_format: Callable = (
+        PEP586_CODE_HINT_PREFIX.format),
+    PEP593_CODE_HINT_VALIDATOR_PREFIX_format: Callable = (
+        PEP593_CODE_HINT_VALIDATOR_PREFIX.format),
+    PEP593_CODE_HINT_VALIDATOR_SUFFIX_format: Callable = (
+        PEP593_CODE_HINT_VALIDATOR_SUFFIX.format),
+    PEP593_CODE_HINT_VALIDATOR_CHILD_format: Callable = (
+        PEP593_CODE_HINT_VALIDATOR_CHILD.format),
 ) -> Tuple[str, CallableScope, Tuple[str, ...]]:
     '''
     Python code snippet type-checking the previously localized parameter or
@@ -305,9 +302,9 @@ def pep_code_check_hint(
         * One or more further arguments subscripting that class are *not*
           instances of the :class:`beartype.vale.Is` class.
 
-    .. _PEP 484:
+    .. PEP 484:
        https://www.python.org/dev/peps/pep-0484
-    .. _PEP 593:
+    .. PEP 593:
        https://www.python.org/dev/peps/pep-0593
     '''
 
@@ -677,7 +674,7 @@ def pep_code_check_hint(
     # localized separately from the "func_wrapper_code" snippet to enable this
     # function to validate this code to be valid *BEFORE* returning this code.
     func_root_code = (
-        f'{_PEP_CODE_CHECK_HINT_ROOT_PREFIX}{hint_child_placeholder}')
+        f'{PEP_CODE_HINT_ROOT_PREFIX}{hint_child_placeholder}')
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
@@ -909,7 +906,7 @@ def pep_code_check_hint(
             # pith as an instance of the origin type originating this sign
             # (e.g., "list" for the hint "typing.List[int]").
                 # Code type-checking the current pith against this origin type.
-                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                func_curr_code = PEP484_CODE_HINT_INSTANCE_format(
                     pith_curr_expr=pith_curr_expr,
                     # Python expression evaluating to this origin type.
                     hint_curr_expr=add_func_scope_type(
@@ -967,7 +964,7 @@ def pep_code_check_hint(
                     )
 
                 # Code type-checking the current pith against this class.
-                func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                func_curr_code = PEP484_CODE_HINT_INSTANCE_format(
                     pith_curr_expr=pith_curr_expr,
                     hint_curr_expr=hint_curr_expr,
                 )
@@ -1190,7 +1187,7 @@ def pep_code_check_hint(
                         # Python >= 3.8-specific assignment expression
                         # assigning this full expression to this variable.
                         pith_curr_assign_expr = (
-                            _PEP_CODE_PITH_ASSIGN_EXPR_format(
+                            PEP_CODE_PITH_ASSIGN_EXPR_format(
                                 pith_curr_var_name=pith_curr_var_name,
                                 pith_curr_expr=pith_curr_expr,
                             ))
@@ -1295,7 +1292,7 @@ def pep_code_check_hint(
                     # Initialize the code type-checking the current pith
                     # against these arguments to the substring prefixing all
                     # such code.
-                    func_curr_code = PEP484_CODE_CHECK_HINT_UNION_PREFIX
+                    func_curr_code = PEP484_CODE_HINT_UNION_PREFIX
 
                     # If this union is subscripted by one or more
                     # PEP-noncompliant child hints, generate and append
@@ -1304,7 +1301,7 @@ def pep_code_check_hint(
                     # hints subscripting this union.
                     if hint_childs_nonpep:
                         func_curr_code += (
-                            _PEP484_CODE_CHECK_HINT_UNION_CHILD_NONPEP_format(
+                            PEP484_CODE_HINT_UNION_CHILD_NONPEP_format(
                                 # Python expression yielding the value of the
                                 # current pith. Specifically...
                                 pith_curr_expr=(
@@ -1359,7 +1356,7 @@ def pep_code_check_hint(
                     for hint_child_index, hint_child in enumerate(
                         hint_childs_pep):
                         func_curr_code += (
-                            _PEP484_CODE_CHECK_HINT_UNION_CHILD_PEP_format(
+                            PEP484_CODE_HINT_UNION_CHILD_PEP_format(
                                 # Python expression yielding the value of the
                                 # current pith.
                                 hint_child_placeholder=_enqueue_hint_child(
@@ -1403,7 +1400,7 @@ def pep_code_check_hint(
                     # the above logic generated code type-checking these child
                     # hints. In this case...
                     if func_curr_code is not (
-                        PEP484_CODE_CHECK_HINT_UNION_PREFIX):
+                        PEP484_CODE_HINT_UNION_PREFIX):
                         # Munge this code to...
                         func_curr_code = (
                             # Strip the erroneous " or" suffix appended by the
@@ -1411,7 +1408,7 @@ def pep_code_check_hint(
                             f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
                             # Suffix this code by the substring suffixing all
                             # such code.
-                            f'{PEP484_CODE_CHECK_HINT_UNION_SUFFIX}'
+                            f'{PEP484_CODE_HINT_UNION_SUFFIX}'
                         # Format the "indent_curr" prefix into this code
                             # deferred above for efficiency.
                         ).format(indent_curr=indent_curr)
@@ -1470,6 +1467,7 @@ def pep_code_check_hint(
                         hint_childs_len == 1 or
                         hint_curr_sign is HintSignTuple
                     ), (f'{hint_curr_label} {repr(hint_curr)} sequence '
+                        f'expected to subscripted by 1 argument instead '
                         f'subscripted by {hint_childs_len} arguments.')
 
                     # Lone child hint of this parent hint.
@@ -1484,7 +1482,7 @@ def pep_code_check_hint(
 
                         # Code type-checking this pith against this type.
                         func_curr_code = (
-                            _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_format(
+                            PEP484585_CODE_HINT_SEQUENCE_ARGS_1_format(
                                 indent_curr=indent_curr,
                                 pith_curr_assign_expr=pith_curr_assign_expr,
                                 pith_curr_var_name=(
@@ -1495,7 +1493,7 @@ def pep_code_check_hint(
                                     # randomly indexed item of the current pith
                                     # (i.e., standard sequence) to be
                                     # type-checked against this child hint.
-                                    _PEP_CODE_CHECK_HINT_SEQUENCE_STANDARD_PITH_CHILD_EXPR_format(
+                                    PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format(
                                         pith_curr_var_name=(
                                             pith_curr_var_name))),
                             ))
@@ -1505,7 +1503,7 @@ def pep_code_check_hint(
                     # origin type.
                     else:
                         func_curr_code = (
-                            _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+                            PEP484_CODE_HINT_INSTANCE_format(
                                 pith_curr_expr=pith_curr_expr,
                                 hint_curr_expr=hint_curr_expr,
                             ))
@@ -1558,14 +1556,14 @@ def pep_code_check_hint(
                     # Initialize the code type-checking the current pith
                     # against this tuple to the substring prefixing all such
                     # code.
-                    func_curr_code = PEP_CODE_CHECK_HINT_TUPLE_FIXED_PREFIX
+                    func_curr_code = PEP484585_CODE_HINT_TUPLE_FIXED_PREFIX
 
                     # If this hint is the empty fixed-length tuple, generate
                     # and append code type-checking the current pith to be the
                     # empty tuple. This edge case constitutes a code smell.
                     if is_hint_pep_tuple_empty(hint_curr):
                         func_curr_code += (
-                            _PEP_CODE_CHECK_HINT_TUPLE_FIXED_EMPTY_format(
+                            PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY_format(
                                 pith_curr_var_name=(
                                     pith_curr_var_name),
                             ))
@@ -1574,7 +1572,7 @@ def pep_code_check_hint(
                     else:
                         # Append code type-checking the length of this pith.
                         func_curr_code += (
-                            _PEP_CODE_CHECK_HINT_TUPLE_FIXED_LEN_format(
+                            PEP484585_CODE_HINT_TUPLE_FIXED_LEN_format(
                                 pith_curr_var_name=(
                                     pith_curr_var_name),
                                 hint_childs_len=hint_childs_len,
@@ -1590,13 +1588,13 @@ def pep_code_check_hint(
                             # Else, this child hint is unignorable.
 
                             # Append code type-checking this child pith.
-                            func_curr_code += _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                            func_curr_code += PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD_format(
                                 hint_child_placeholder=_enqueue_hint_child(
                                     # Python expression yielding the value of
                                     # the currently indexed item of this tuple
                                     # to be type-checked against this child
                                     # hint.
-                                    _PEP_CODE_CHECK_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                    PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
                                         pith_curr_var_name=(
                                             pith_curr_var_name),
                                         pith_child_index=hint_child_index,
@@ -1611,7 +1609,7 @@ def pep_code_check_hint(
                         f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
-                        f'{PEP_CODE_CHECK_HINT_TUPLE_FIXED_SUFFIX}'
+                        f'{PEP484585_CODE_HINT_TUPLE_FIXED_SUFFIX}'
                     # Format...
                     ).format(
                         # Indentation deferred above for efficiency.
@@ -1644,7 +1642,7 @@ def pep_code_check_hint(
                     # inefficiently) format these variables into the exact
                     # strings known to embed them.
                     func_curr_code = (
-                        _PEP593_CODE_CHECK_HINT_VALIDATOR_PREFIX_format(
+                        PEP593_CODE_HINT_VALIDATOR_PREFIX_format(
                             indent_curr=indent_curr,
                             hint_child_placeholder=_enqueue_hint_child(
                                 # Python expression yielding the value of the
@@ -1684,7 +1682,7 @@ def pep_code_check_hint(
                         # Generate and append efficient code type-checking this
                         # validator by embedding this code as is.
                         func_curr_code += (
-                            _PEP593_CODE_CHECK_HINT_VALIDATOR_CHILD_format(
+                            PEP593_CODE_HINT_VALIDATOR_CHILD_format(
                                 indent_curr=indent_curr,
                                 # Python expression formatting the current pith
                                 # into the "{obj}" variable already embedded by
@@ -1711,23 +1709,49 @@ def pep_code_check_hint(
                         f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
-                        f'{_PEP593_CODE_CHECK_HINT_VALIDATOR_SUFFIX_format(indent_curr=indent_curr)}'
+                        f'{PEP593_CODE_HINT_VALIDATOR_SUFFIX_format(indent_curr=indent_curr)}'
                     )
                 # Else, this hint is *NOT* a metahint.
+                #
+                # ............{ SUBCLASS                          }............
+                # If this hint is either a PEP 484- or 585-compliant subclass
+                # type hint...
+                elif hint_curr_sign is HintSignType:
+                    # Assert this hint is subscripted by exactly one argument.
+                    assert hint_childs_len == 1, (
+                        f'{hint_curr_label} {repr(hint_curr)} type '
+                        f'expected to subscripted by 1 argument instead '
+                        f'subscripted by {hint_childs_len} arguments.')
+
+                    # Superclass this pith is expected to be a subclass of.
+                    hint_child = hint_childs[0]
+
+                    # Code type-checking this pith against this superclass.
+                    func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
+                        pith_curr_expr=pith_curr_expr,
+                        # Python expression evaluating to this superclass.
+                        hint_child_expr=add_func_scope_type(
+                            cls=hint_child,  # type: ignore[arg-type]
+                            cls_scope=func_wrapper_locals,
+                            cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                        ),
+                    )
+                # Else, this hint is neither a PEP 484- nor 585-compliant
+                # subclass type hint.
                 #
                 # ............{ GENERIC or PROTOCOL               }............
                 # If this hint is either a:
                 # * PEP 484-compliant generic (i.e., user-defined class
                 #   subclassing a combination of one or more of the
                 #   "typing.Generic" superclass and other "typing" non-class
-                #   pseudo-superclasses).
+                #   pseudo-superclasses) *OR*...
                 # * PEP 544-compliant protocol (i.e., class subclassing a
                 #   combination of one or more of the "typing.Protocol"
                 #   superclass and other "typing" non-class
-                #   pseudo-superclasses).
+                #   pseudo-superclasses) *OR*...
                 # * PEP 585-compliant generic (i.e., user-defined class
                 #   subclassing at least one non-class PEP 585-compliant
-                #   pseudo-superclasses).
+                #   pseudo-superclasses) *OR*...
                 # Then this hint is a PEP-compliant generic. In this case...
                 elif hint_curr_sign is HintSignGeneric:
                     #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate *ALL*
@@ -1766,7 +1790,7 @@ def pep_code_check_hint(
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.
-                    func_curr_code = _PEP_CODE_CHECK_HINT_GENERIC_PREFIX
+                    func_curr_code = PEP484585_CODE_HINT_GENERIC_PREFIX
 
                     # For each pseudo-superclass subclassed by this generic...
                     for hint_child in hint_childs:
@@ -1774,7 +1798,7 @@ def pep_code_check_hint(
 
                         # If this pseudo-superclass is an actual class, this
                         # class is effectively ignorable. Why? Because the
-                        # "_PEP_CODE_CHECK_HINT_GENERIC_PREFIX" snippet
+                        # "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet
                         # leveraged above already type-checks this pith against
                         # the generic subclassing this superclass and thus this
                         # superclass as well with a trivial isinstance() call.
@@ -1874,7 +1898,7 @@ def pep_code_check_hint(
                         # Generate and append code type-checking this pith
                         # against this superclass.
                         func_curr_code += (
-                            _PEP_CODE_CHECK_HINT_GENERIC_CHILD_format(
+                            PEP484585_CODE_HINT_GENERIC_CHILD_format(
                                 hint_child_placeholder=_enqueue_hint_child(
                                     # Python expression efficiently reusing the
                                     # value of this pith previously assigned to
@@ -1889,7 +1913,7 @@ def pep_code_check_hint(
                         f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
-                        f'{_PEP_CODE_CHECK_HINT_GENERIC_SUFFIX}'
+                        f'{PEP484585_CODE_HINT_GENERIC_SUFFIX}'
                     # Format...
                     ).format(
                         # Indentation deferred above for efficiency.
@@ -1923,7 +1947,7 @@ def pep_code_check_hint(
 
                     # Initialize the code type-checking this pith against this
                     # hint to the substring prefixing all such code.
-                    func_curr_code = _PEP586_CODE_CHECK_HINT_PREFIX_format(
+                    func_curr_code = PEP586_CODE_HINT_PREFIX_format(
                         pith_curr_assign_expr=pith_curr_assign_expr,
 
                         #FIXME: If "typing.Literal" is ever extended to support
@@ -1948,7 +1972,7 @@ def pep_code_check_hint(
                         # Generate and append efficient code type-checking
                         # this data validator by embedding this code as is.
                         func_curr_code += (
-                            _PEP586_CODE_CHECK_HINT_LITERAL_format(
+                            PEP586_CODE_HINT_LITERAL_format(
                                 pith_curr_var_name=(
                                     pith_curr_var_name),
                                 # Python expression evaluating to this literal
@@ -1966,7 +1990,7 @@ def pep_code_check_hint(
                         # child hint from this code.
                         f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
                         # Suffix this code by the appropriate substring.
-                        f'{PEP586_CODE_CHECK_HINT_SUFFIX}'
+                        f'{PEP586_CODE_HINT_SUFFIX}'
                     ).format(indent_curr=indent_curr)
                 # Else, this hint is *NOT* a PEP 586-compliant type hint.
 
@@ -1984,11 +2008,10 @@ def pep_code_check_hint(
         # ................{ NON-PEP                           }................
         # Else, this hint is *NOT* PEP-compliant.
         #
-        # ................{ CLASSES                           }................
+        # ................{ INSTANCES                         }................
         # If this hint is a non-"typing" class...
         #
         # Note that:
-        #
         # * This test is intentionally performed *AFTER* that testing whether
         #   this hint is PEP-compliant, thus guaranteeing this hint to be a
         #   PEP-noncompliant non-"typing" class rather than a PEP-compliant
@@ -2005,12 +2028,8 @@ def pep_code_check_hint(
         #   were the root type hint, it would have already been passed into a
         #   faster submodule generating PEP-noncompliant code instead.
         elif isinstance(hint_curr, type):
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAVEATS: Synchronize changes here with similar logic above.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
             # Code type-checking the current pith against this type.
-            func_curr_code = _PEP_CODE_CHECK_HINT_NONPEP_TYPE_format(
+            func_curr_code = PEP484_CODE_HINT_INSTANCE_format(
                 pith_curr_expr=pith_curr_expr,
                 # Python expression evaluating to this type.
                 hint_curr_expr=add_func_scope_type(
@@ -2076,7 +2095,7 @@ def pep_code_check_hint(
     # ..................{ CODE ~ locals                     }..................
     # PEP-compliant code snippet passing the value of the random integer
     # previously generated for the current call to the exception-handling
-    # function call embedded in the "_PEP_CODE_CHECK_HINT_ROOT_SUFFIX" snippet,
+    # function call embedded in the "PEP_CODE_HINT_ROOT_SUFFIX" snippet,
     # defaulting to passing *NO* such integer.
     func_wrapper_code_random_int_if_any = ''
 
@@ -2084,7 +2103,7 @@ def pep_code_check_hint(
     if is_var_random_int_needed:
         # Pass this integer to the function raising exceptions.
         func_wrapper_code_random_int_if_any = (
-            _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_RANDOM_INT)
+            PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT)
 
         # Pass the random.getrandbits() function required to generate this
         # integer to this wrapper function as an optional hidden parameter.
@@ -2093,7 +2112,7 @@ def pep_code_check_hint(
     # ..................{ CODE ~ suffix                     }..................
     # Suffix this code by a Python code snippet raising a human-readable
     # exception when the root pith violates the root type hint.
-    func_wrapper_code += _PEP_CODE_CHECK_HINT_ROOT_SUFFIX_format(
+    func_wrapper_code += PEP_CODE_HINT_ROOT_SUFFIX_format(
         random_int_if_any=func_wrapper_code_random_int_if_any)
 
     # Return all metadata required by higher-level callers.

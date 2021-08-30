@@ -1381,7 +1381,9 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
     **NumPy array typed by array dtype.** A PEP-noncompliant type hint
     enforcing object equality against any **array dtype** (i.e., numpy.dtype_
     instance), created by subscripting (indexing) the numpy.typing.NDArray_
-    class with that array dtype:
+    class with that array dtype.
+
+    Prefer this variant when validating the exact data type of an array:
 
     .. code-block:: python
 
@@ -1401,8 +1403,9 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
     **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint
     enforcing object equality against any **scalar dtype** (i.e., concrete
     subclass of the numpy.generic_ ABC), created by subscripting (indexing) the
-    numpy.typing.NDArray_ class with that scalar dtype. Prefer this variant
-    whenever you know *a priori* the dtype precision of an array:
+    numpy.typing.NDArray_ class with that scalar dtype.
+
+    Prefer this variant when validating the exact scalar precision of an array:
 
     .. code-block:: python
 
@@ -1419,19 +1422,20 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
 
     Common scalar dtypes include:
 
-    * All **fixed-precision integer scalar dtypes** (e.g., ``numpy.int32``,
+    * **Fixed-precision integer dtypes** (e.g., ``numpy.int32``,
       ``numpy.int64``).
-    * All **fixed-precision floating-point scalar dtypes** (e.g.,
+    * **Fixed-precision floating-point dtypes** (e.g.,
       ``numpy.float32``, ``numpy.float64``).
 
 *class* numpy.typing.\ **NDArray**\ [type[numpy.dtype.type]]
 
     **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint
     enforcing type inheritance against any **scalar dtype ABC** (i.e.,
-    numpy.dtype_ subclass), created by subscripting (indexing) the
-    numpy.typing.NDArray_ class with that scalar dtype. Prefer this variant
-    whenever you know *a priori* the category of dtype (without reference to
-    precision) of an array:
+    abstract subclass of the numpy.generic_ ABC), created by subscripting
+    (indexing) the numpy.typing.NDArray_ class with that ABC.
+
+    Prefer this variant when validating only the *kind* of scalars (without
+    reference to exact precision) in an array:
 
     .. code-block:: python
 
@@ -1448,8 +1452,8 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
 
     Common scalar dtype ABCs include:
 
-    * numpy.integer_, the ABC of all fixed-precision integer scalar dtypes.
-    * numpy.floating_, the ABC of all fixed-precision floating-point scalar
+    * numpy.integer_, the superclass of all fixed-precision integer dtypes.
+    * numpy.floating_, the superclass of all fixed-precision floating-point
       dtypes.
 
 Coming up: *shocking revelation that cheaters prosper.*
@@ -1815,7 +1819,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | tuple_                                  | **0.5.0**\ —\ *current*       | **0.5.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | type_                                   | **0.5.0**\ —\ *current*       | *none*                    |
+|                    | type_                                   | **0.5.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | collections_       | collections.ChainMap_                   | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2015,7 +2019,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Tuple_                           | **0.2.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | typing.Type_                            | **0.2.0**\ —\ *current*       | *none*                    |
+|                    | typing.Type_                            | **0.2.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.TypeGuard_                       | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+

@@ -305,6 +305,10 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     HintSignSequence,
     HintSignTuple,
 
+    #FIXME: Uncomment after worky. We still need to add error-handling support
+    #for "HintSignType", in particular.
+    # HintSignType,
+
     # ..................{ PEP 544                           }..................
     HintSignProtocol,
 
