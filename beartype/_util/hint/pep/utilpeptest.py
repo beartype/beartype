@@ -31,21 +31,14 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
 )
-from beartype._data.mod.datamod import (
-    TYPING_MODULE_NAMES,
-    TYPING_MODULE_NAMES_DOTTED,
-)
+from beartype._data.mod.datamod import TYPING_MODULE_NAMES
 from beartype._util.hint.pep.proposal.utilpep484 import (
-    HINT_PEP484_TUPLE_EMPTY,
-    is_hint_pep484_generic,
     is_hint_pep484_ignorable_or_none,
 )
 from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep585 import (
-    HINT_PEP585_TUPLE_EMPTY,
     is_hint_pep585_builtin,
-    is_hint_pep585_generic,
 )
 from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
@@ -55,7 +48,7 @@ from beartype._util.mod.utilmodule import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import NoReturn, Type, TypeVar
+from typing import NoReturn, Type
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -950,49 +943,6 @@ def is_hint_pep_subscripted(hint: object) -> bool:
     )
 
 # ....................{ TESTERS ~ subscript : typevar     }....................
-def is_hint_pep_typevar(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object either is a PEP-compliant **type
-    variable** (i.e., instance of the :class:`TypeVar` class).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Motivation
-    ----------
-    Since type variables are not themselves types but rather placeholders
-    dynamically replaced with types by type checkers according to various
-    arcane heuristics, both type variables and types parametrized by type
-    variables warrant special-purpose handling.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a type variable.
-    '''
-
-    # Return true only if the type of this hint is that of all type variables.
-    #
-    # Note that the "typing.TypeVar" class prohibits subclassing: e.g.,
-    #     >>> import typing as t
-    #     >>> class MutTypeVar(t.TypeVar): pass
-    #     TypeError: Cannot subclass special typing classes
-    #
-    # Ergo, the object identity test performed here both suffices and is more
-    # efficient than the equivalent general-purpose test, which requires an
-    # implicit breadth- or depth-first search over the method resolution order
-    # (MRO) of all superclasses of this object: e.g.,
-    #     # This is potentially *MUCH* slower. It's the little things in life.
-    #     return isinstance(hint, TypeVar)
-    return hint.__class__ is TypeVar
-
-
 def is_hint_pep_typevared(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a PEP-compliant type hint
@@ -1070,111 +1020,3 @@ def is_hint_pep_typevared(hint: object) -> bool:
     # variables, trivially detected by testing whether the tuple of all type
     # variables parametrizing this hint is non-empty.
     return bool(get_hint_pep_typevars(hint))
-
-# ....................{ TESTERS ~ kind : generic          }....................
-@callable_cached
-def is_hint_pep_generic(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a **generic** (i.e., class
-    superficially subclassing at least one PEP-compliant type hint that is
-    possibly *not* an actual class).
-
-    Specifically, this tester returns ``True`` only if this object is a class
-    that is either:
-
-    * A :pep:`585`-compliant generic as tested by the lower-level
-      :func:`is_hint_pep585_generic` function.
-    * A :pep:`484`-compliant generic as tested by the lower-level
-      :func:`is_hint_pep484_generic` function.
-
-    This tester is memoized for efficiency. Although the implementation
-    trivially reduces to a one-liner, constant factors associated with that
-    one-liner are non-negligible. Moreover, this tester is called frequently
-    enough to warrant its reduction to an efficient lookup.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a generic.
-
-    See Also
-    ----------
-    :func:`is_hint_pep_typevared`
-        Commentary on the relation between generics and parametrized hints.
-    '''
-
-    # Return true only if this hint is...
-    return (
-        # A PEP 484-compliant generic. Note this test trivially reduces to
-        # an O(1) operation and is thus tested first.
-        is_hint_pep484_generic(hint) or
-        # A PEP 585-compliant generic. Note this test is O(n) in n the
-        # number of pseudo-superclasses originally subclassed by this
-        # generic and is thus tested last.
-        is_hint_pep585_generic(hint)
-    )
-
-# ....................{ TESTERS ~ kind : tuple            }....................
-def is_hint_pep_tuple_empty(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a PEP-compliant **empty fixed-length
-    tuple hint** (i.e., PEP-compliant type hint constraining piths to be the
-    empty tuple).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as this tester is only called under
-    fairly uncommon edge cases.
-
-    Motivation
-    ----------
-    Since type variables are not themselves types but rather placeholders
-    dynamically replaced with types by type checkers according to various
-    arcane heuristics, both type variables and types parametrized by type
-    variables warrant special-purpose handling.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a type variable.
-    '''
-
-    # Return true only if this hint resembles either the PEP 484- or
-    # 585-compliant fixed-length empty tuple type hint. Since there only exist
-    # two such hints *AND* comparison against these hints is mostly fast, this
-    # test is efficient in the general case.
-    #
-    # Note that this test may also be inefficiently performed by explicitly
-    # obtaining this hint's sign and then subjecting this hint to specific
-    # tests conditionally depending on which sign and thus PEP this hint
-    # complies with: e.g.,
-    #     # Return true only if this hint is either...
-    #     return true (
-    #         # A PEP 585-compliant "tuple"-based hint subscripted by no
-    #         # child hints *OR*...
-    #         (
-    #             hint.__origin__ is tuple and
-    #             hint_childs_len == 0
-    #         ) or
-    #         # A PEP 484-compliant "typing.Tuple"-based hint subscripted
-    #         # by exactly one child hint *AND* this child hint is the
-    #         # empty tuple,..
-    #         (
-    #             hint.__origin__ is Tuple and
-    #             hint_childs_len == 1 and
-    #             hint_childs[0] == ()
-    #         )
-    #     )
-    return (
-        hint == HINT_PEP585_TUPLE_EMPTY or
-        hint == HINT_PEP484_TUPLE_EMPTY
-    )

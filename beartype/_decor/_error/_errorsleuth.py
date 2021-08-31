@@ -17,18 +17,20 @@ from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_TYPE_ISINSTANCEABLE,
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    get_hint_pep_generic_bases_unerased,
     get_hint_pep_sign,
 )
 from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
-    is_hint_pep_generic,
     is_hint_pep_subscripted,
+)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_generic_bases_unerased,
+    is_hint_pep484585_generic,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
@@ -189,8 +191,8 @@ class CauseSleuth(object):
             self.hint_childs = (
                 # If this hint is a generic, the one or more unerased
                 # pseudo-superclasses originally subclassed by this hint.
-                get_hint_pep_generic_bases_unerased(hint)
-                if is_hint_pep_generic(hint) else
+                get_hint_pep484585_generic_bases_unerased(hint)
+                if is_hint_pep484585_generic(hint) else
                 # Else, the zero or more arguments subscripting this hint.
                 get_hint_pep_args(hint)
             )
@@ -272,27 +274,27 @@ class CauseSleuth(object):
             if isinstance(self.hint, tuple):
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (
-                    get_cause_or_none_types)
+                    get_cause_or_none_instance_types_tuple)
 
                 # Defer to the getter function specific to tuple unions.
-                get_cause_or_none = get_cause_or_none_types
+                get_cause_or_none = get_cause_or_none_instance_types_tuple
             # Else, this hint *NOT* is a tuple union. In this case, assume this
             # hint to be an isinstanceable class. If this is *NOT* the case,
             # the getter deferred to below raises a human-readable exception.
             else:
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (
-                    get_cause_or_none_type)
+                    get_cause_or_none_instance_type)
 
                 # Defer to the getter function specific to classes.
-                get_cause_or_none = get_cause_or_none_type
+                get_cause_or_none = get_cause_or_none_instance_type
         # Else, this hint is PEP-compliant.
         #
         # If this hint is neither...
         elif (
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
-            self.hint_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE and (
+            self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 #FIXME: Ideally, this line should just resemble:
                 #    not is_hint_pep_subscripted(hint_curr)
                 #Unfortunately, unsubscripted type hints under Python 3.6
@@ -317,11 +319,11 @@ class CauseSleuth(object):
         ):
             # Avoid circular import dependencies.
             from beartype._decor._error._errortype import (
-                get_cause_or_none_type_stdlib)
+                get_cause_or_none_type_instance_origin)
 
             # Defer to the getter function supporting hints originating
             # from origin types.
-            get_cause_or_none = get_cause_or_none_type_stdlib
+            get_cause_or_none = get_cause_or_none_type_instance_origin
         # Else, this hint is either subscripted *OR* unsubscripted but not
         # originating from a standard type origin. In either case, this hint
         # was type-checked deeply.

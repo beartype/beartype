@@ -30,11 +30,11 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_TYPE_ISINSTANCEABLE,
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_bases_unerased,
-    is_hint_pep484_newtype_pre_python3_10,
+    is_hint_pep484_newtype_pre_python310,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
@@ -68,7 +68,7 @@ else:
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
+        from beartype._util.hint.pep.proposal.utilpep484 import is_hint_pep484_typevar
 
         # If this hint is a poorly designed Python 3.6-specific "type alias",
         # this hint is a subscription of either the "typing.Match" or
@@ -78,7 +78,7 @@ else:
         # actual type variable, however, we further test that condition.
         if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
             # If this value is a type variable, return the empty tuple.
-            if is_hint_pep_typevar(hint.type_var):
+            if is_hint_pep484_typevar(hint.type_var):
                 return ()
             # Else, this value is either the builtin "str" or "bytes" class. In
             # either case, return a new 1-tuple containing only this class.
@@ -191,7 +191,7 @@ else:
     def get_hint_pep_typevars(hint: object) -> Tuple[type, ...]:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
+        from beartype._util.hint.pep.proposal.utilpep484 import is_hint_pep484_typevar
 
         # If this hint is a poorly designed Python 3.6-specific "type alias",
         # this hint is a subscription of either the "typing.Match" or
@@ -202,7 +202,7 @@ else:
         if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
             # If this value is a type variable, return a new 1-tuple containing
             # only this type variable.
-            if is_hint_pep_typevar(hint.type_var):
+            if is_hint_pep484_typevar(hint.type_var):
                 return (hint.type_var,)
             # Else, this value is *NOT* a type variable. In this case, return
             # the empty tuple.
@@ -436,7 +436,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     # ..................{ IMPORTS                           }..................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
+    from beartype._util.hint.pep.proposal.utilpep484585 import is_hint_pep484585_generic
 
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
@@ -565,7 +565,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    if is_hint_pep_generic(hint):
+    if is_hint_pep484585_generic(hint):
         return HintSignGeneric
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
@@ -582,7 +582,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
-    elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python3_10(hint):
+    elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python310(hint):
         return HintSignNewType
 
     # ..................{ ERROR                             }..................
@@ -653,7 +653,7 @@ def get_hint_pep_generic_type_or_none(hint: Any) -> Optional[type]:
         return None
 
 # ....................{ GETTERS ~ type : stdlib           }....................
-def get_hint_pep_type_stdlib(hint: object) -> type:
+def get_hint_pep_type_origin_isinstanceable(hint: object) -> type:
     '''
     **Standard origin type** (i.e., isinstanceable class declared by Python's
     standard library such that *all* objects satisfying the passed
@@ -682,12 +682,12 @@ def get_hint_pep_type_stdlib(hint: object) -> type:
 
     See Also
     ----------
-    :func:`get_hint_pep_type_stdlib_or_none`
+    :func:`get_hint_pep_type_origin_isinstanceable_or_none`
         Related getter.
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_type_stdlib = get_hint_pep_type_stdlib_or_none(hint)
+    hint_type_stdlib = get_hint_pep_type_origin_isinstanceable_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
     if hint_type_stdlib is None:
@@ -702,7 +702,7 @@ def get_hint_pep_type_stdlib(hint: object) -> type:
     return hint_type_stdlib
 
 
-def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
+def get_hint_pep_type_origin_isinstanceable_or_none(hint: Any) -> Optional[type]:
     '''
     **Standard origin type** (i.e., isinstanceable class declared by Python's
     standard library such that *all* objects satisfying the passed
@@ -735,7 +735,7 @@ def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
 
     See Also
     ----------
-    :func:`get_hint_pep_type_stdlib`
+    :func:`get_hint_pep_type_origin_isinstanceable`
         Related getter.
     :func:`_get_hint_pep_origin_object_or_none`
         Further details.
@@ -748,206 +748,10 @@ def get_hint_pep_type_stdlib_or_none(hint: Any) -> Optional[type]:
     return (
         # If this sign originates from an origin type, that type.
         _get_hint_pep_origin_object_or_none(hint)
-        if hint_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE else
+        if hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE else
         # Else, "None".
         None
     )
-
-# ....................{ GETTERS ~ kind : generic          }....................
-def get_hint_pep_generic_bases_unerased(hint: object) -> Tuple[object, ...]:
-    '''
-    Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
-    originally listed as superclasses prior to their implicit type erasure
-    under :pep:`560`) of the passed PEP-compliant **generic** (i.e., class
-    superficially subclassing at least one non-class PEP-compliant object) if
-    this object is a generic *or* raise an exception otherwise (i.e., if this
-    object is either not a class *or* is a class subclassing no non-class
-    PEP-compliant objects).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Caveats
-    ----------
-    **This function should always be called in lieu of attempting to directly
-    access the low-level** ``__orig_bases__`` **dunder instance variable.**
-    Most PEP-compliant type hints fail to declare that variable, guaranteeing
-    :class:`AttributeError` exceptions from all general-purpose logic
-    attempting to directly access that variable. Thus this function, which
-    "fills in the gaps" by implementing this oversight.
-
-    **This function returns tuples possibly containing a mixture of actual
-    superclasses and pseudo-superclasses superficially masquerading as actual
-    superclasses subscripted by one or more PEP-compliant child hints,**
-    including type variables (e.g., ``(typing.Iterable[T], typing.Sized[T])``).
-    In particular, most public attributes of the :mod:`typing` module used as
-    superclasses are *not* actually types but singleton objects devilishly
-    masquerading as types. Most actual :mod:`typing` superclasses are private,
-    fragile, and prone to alteration or even removal between Python versions.
-
-    Motivation
-    ----------
-    :pep:`560` (i.e., "Core support for typing module and generic types)
-    formalizes the ``__orig_bases__`` dunder attribute first informally
-    introduced by the :mod:`typing` module's implementation of :pep:`484`.
-    Naturally, :pep:`560` remains as unusable as :pep:`484` itself. Ideally,
-    :pep:`560` would have generalized the core intention of preserving each
-    original user-specified subclass tuple of superclasses as a full-blown
-    ``__orig_mro__`` dunder attribute listing the original method resolution
-    order (MRO) of that subclass had that tuple *not* been modified.
-
-    Naturally, :pep:`560` did no such thing. The original MRO remains
-    obfuscated and effectively inaccessible. While computing that MRO would
-    technically be feasible, doing so would also be highly non-trivial,
-    expensive, and fragile. Instead, this function retrieves *only* the tuple
-    of :mod:`typing`-specific pseudo-superclasses that this object's class
-    originally attempted (but failed) to subclass.
-
-    You are probably now agitatedly cogitating to yourself in the darkness:
-    "But @leycec: what do you mean :pep:`560`? Wasn't :pep:`560` released
-    *after* :pep:`484`? Surely no public API defined by the Python stdlib would
-    be so malicious as to silently alter the tuple of base classes listed by a
-    user-defined subclass?"
-
-    As we've established both above and elsewhere throughout the codebase,
-    everything developed for `PEP 484` -- including :pep:`560`, which derives
-    its entire raison d'etre from :pep:`484` -- are fundamentally insane. In
-    this case, :pep:`484` is insane by subjecting parametrized :mod:`typing`
-    types employed as base classes to "type erasure," because:
-
-         ...it is common practice in languages with generics (e.g. Java,
-         TypeScript).
-
-    Since Java and TypeScript are both terrible languages, blindly
-    recapitulating bad mistakes baked into such languages is an equally bad
-    mistake. In this case, "type erasure" means that the :mod:`typing` module
-    *intentionally* destroys runtime type information for nebulous and largely
-    unjustifiable reasons (i.e., Big Daddy Java and TypeScript do it, so it
-    must be unquestionably good).
-
-    Specifically, the :mod:`typing` module intentionally munges :mod:`typing`
-    types listed as base classes in user-defined subclasses as follows:
-
-    * All base classes whose origin is a builtin container (e.g.,
-      ``typing.List[T]``) are reduced to that container (e.g.,
-      :class:`list`).
-    * All base classes derived from an abstract base class declared by the
-      :mod:`collections.abc` subpackage (e.g., ``typing.Iterable[T]``) are
-      reduced to that abstract base class (e.g.,
-      ``collections.abc.Iterable``).
-    * All surviving base classes that are parametrized (e.g.,
-      ``typing.Generic[S, T]``) are stripped of that parametrization (e.g.,
-      :class:`typing.Generic`).
-
-    Since there exists no counterpart to the :class:`typing.Generic`
-    superclass, the :mod:`typing` module preserves that superclass in
-    unparametrized form. Naturally, this is useless, as an unparametrized
-    :class:`typing.Generic` superclass conveys no meaningful type information.
-    All other superclasses are reduced to their non-:mod:`typing`
-    counterparts: e.g.,
-
-        .. code-block:: python
-
-        >>> from typing import TypeVar, Generic, Iterable, List
-        >>> T = TypeVar('T')
-        >>> class UserDefinedGeneric(List[T], Iterable[T], Generic[T]): pass
-        # This is type erasure.
-        >>> UserDefinedGeneric.__mro__
-        (list, collections.abc.Iterable, Generic)
-        # This is type preservation -- except the original MRO is discarded.
-        # So, it's not preservation; it's reduction! We take what we can get.
-        >>> UserDefinedGeneric.__orig_bases__
-        (typing.List[T], typing.Iterable[T], typing.Generic[T])
-        # Guess which we prefer?
-
-    So, we prefer the generally useful ``__orig_bases__`` dunder tuple over
-    the generally useless ``__mro__`` dunder tuple. Note, however, that the
-    latter *is* still occasionally useful and thus occasionally returned by
-    this getter. For inexplicable reasons, **single-inherited protocols**
-    (i.e., classes directly subclassing *only* the :pep:`544`-compliant
-    :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to
-    type erasure and thus constitute a notable exception to this heuristic:
-
-        .. code-block:: python
-
-        >>> from typing import Protocol
-        >>> class UserDefinedProtocol(Protocol): pass
-        >>> UserDefinedProtocol.__mro__
-        (__main__.UserDefinedProtocol, typing.Protocol, typing.Generic, object)
-        >>> UserDefinedProtocol.__orig_bases__
-        AttributeError: type object 'UserDefinedProtocol' has no attribute
-        '__orig_bases__'
-
-    Welcome to :mod:`typing` hell, where even :mod:`typing` types lie broken
-    and misshapen on the killing floor of overzealous theory-crafting purists.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Tuple[object]
-        Tuple of the one or more unerased pseudo-superclasses of this
-        PEP-compliant generic.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this hint is either:
-
-        * *Not* a PEP-compliant generic.
-        * Is a PEP-compliant generic subclassing *no* pseudo-superclasses.
-
-    Examples
-    ----------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_generic_bases_unerased)
-        >>> get_hint_pep_generic_bases_unerased(
-        ...     typing.Union[str, typing.List[int]])
-        ()
-        >>> T = typing.TypeVar('T')
-        >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
-        (typing.Iterable[~T], typing.Container[~T])
-        >>> MuhIterable.__mro__
-        (MuhIterable,
-         collections.abc.Iterable,
-         collections.abc.Container,
-         typing.Generic,
-         object)
-    '''
-
-    # Tuple of either...
-    #
-    # Note this implicitly raises a "BeartypeDecorHintPepException" if this
-    # object is *NOT* a PEP-compliant generic. Ergo, we need not explicitly
-    # validate that above.
-    hint_pep_generic_bases_unerased = (
-        # If this is a PEP 585-compliant generic, all unerased
-        # pseudo-superclasses of this PEP 585-compliant generic.
-        get_hint_pep585_generic_bases_unerased(hint)
-        if is_hint_pep585_generic(hint) else
-        # Else, this *MUST* be a PEP 484-compliant generic. In this case, all
-        # unerased pseudo-superclasses of this PEP 484-compliant generic.
-        get_hint_pep484_generic_bases_unerased(hint)
-    )
-
-    # If this generic subclasses *NO* pseudo-superclass, raise an exception.
-    #
-    # Note this should have already been guaranteed on our behalf by:
-    # * If this generic is PEP 484-compliant, the "typing" module.
-    # * If this generic is PEP 585-compliant, CPython or PyPy itself.
-    if not hint_pep_generic_bases_unerased:
-        raise BeartypeDecorHintPepException(
-            f'PEP generic {repr(hint)} subclasses no superclasses.')
-    # Else, this generic subclasses one or more pseudo-superclasses.
-
-    # Return this tuple of these pseudo-superclasses.
-    return hint_pep_generic_bases_unerased
 
 # ....................{ PRIVATE ~ getters : type          }....................
 # If the active Python interpreter targets at least Python >= 3.7, implement
@@ -1019,7 +823,7 @@ _get_hint_pep_origin_object_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_type_stdlib_or_none` function should
+    **The high-level** :func:`get_hint_pep_type_origin_isinstanceable_or_none` function should
     always be called in lieu of this low-level function.** Whereas the former
     is guaranteed to return either a class or ``None``, this function enjoys no
     such guarantees and instead returns what the caller can only safely assume

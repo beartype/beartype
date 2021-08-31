@@ -150,8 +150,7 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 '''
 
 # ....................{ SIGNS ~ type                      }....................
-#FIXME: Rename to "HINT_SIGNS_TYPE_ISINSTANCEABLE".
-HINT_SIGNS_TYPE_ISINSTANCEABLE = frozenset((
+HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     # ..................{ PEP (484|585)                     }..................
     HintSignAbstractSet,
     HintSignAsyncContextManager,
@@ -340,7 +339,7 @@ HINT_SIGNS_SUPPORTED = frozenset((
     # Set of all shallowly supported signs *NOT* originating from a class.
     _HINT_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a class.
-    HINT_SIGNS_TYPE_ISINSTANCEABLE
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE
 ))
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely

@@ -18,7 +18,7 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_type_stdlib_or_none)
+    get_hint_pep_type_origin_isinstanceable_or_none)
 from beartype._util.hint.utilhintget import (
     get_hint_forwardref_classname_relative_to_object)
 from beartype._util.mod.utilmodimport import import_module_attr
@@ -31,42 +31,8 @@ from typing import Optional
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS ~ forwardref              }....................
-def get_cause_or_none_forwardref(sleuth: CauseSleuth) -> Optional[str]:
-    '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **forward reference type hint** (i.e., string whose
-    value is the name of a user-defined class which has yet to be defined) if
-    this object actually fails to satisfy this hint *or* ``None`` otherwise
-    (i.e., if this object satisfies this hint).
-
-    Parameters
-    ----------
-    sleuth : CauseSleuth
-        Type-checking error cause sleuth.
-    '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignForwardRef, (
-        f'Sign {repr(sleuth.hint_sign)} not forward reference.')
-
-    # Fully-qualified classname referred to by this forward reference relative
-    # to the decorated callable.
-    hint_forwardref_classname = get_hint_forwardref_classname_relative_to_object(
-        hint=sleuth.hint, obj=sleuth.func)
-
-    # User-defined class dynamically imported from this classname.
-    hint_forwardref_class = import_module_attr(
-        module_attr_name=hint_forwardref_classname,
-        module_attr_label=(
-            f'{sleuth.exception_label} forward reference type hint'),
-        exception_cls=_BeartypeCallHintPepRaiseException,
-    )
-
-    # Defer to the getter function handling non-"typing" classes. Neato!
-    return get_cause_or_none_type(sleuth.permute(hint=hint_forwardref_class))
-
-# ....................{ GETTERS ~ type                    }....................
-def get_cause_or_none_type(sleuth: CauseSleuth) -> Optional[str]:
+# ....................{ GETTERS ~ instance : type         }....................
+def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to be an instance of the passed isinstanceable class if this object is
@@ -85,7 +51,7 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> Optional[str]:
         raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} non-PEP type hint '
             f'{repr(sleuth.hint)} unsupported '
-            f'(i.e., neither PEP-compliant nor standard class).'
+            f'(i.e., neither PEP-compliant nor isinstanceable class).'
         )
     # Else, this hint is a type.
     #
@@ -99,7 +65,45 @@ def get_cause_or_none_type(sleuth: CauseSleuth) -> Optional[str]:
     return get_cause_object_not_type(pith=sleuth.pith, hint=sleuth.hint)
 
 
-def get_cause_or_none_type_stdlib(sleuth: CauseSleuth) -> Optional[str]:
+def get_cause_or_none_instance_type_forwardref(
+    sleuth: CauseSleuth) -> Optional[str]:
+    '''
+    Human-readable string describing the failure of the passed arbitrary object
+    to satisfy the passed **forward reference type hint** (i.e., string whose
+    value is the name of a user-defined class which has yet to be defined) if
+    this object actually fails to satisfy this hint *or* ``None`` otherwise
+    (i.e., if this object satisfies this hint).
+
+    Parameters
+    ----------
+    sleuth : CauseSleuth
+        Type-checking error cause sleuth.
+    '''
+    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert sleuth.hint_sign is HintSignForwardRef, (
+        f'Sign {repr(sleuth.hint_sign)} not forward reference.')
+
+    # Fully-qualified classname referred to by this forward reference relative
+    # to the decorated callable.
+    hint_forwardref_classname = (
+        get_hint_forwardref_classname_relative_to_object(
+            hint=sleuth.hint, obj=sleuth.func))
+
+    # User-defined class dynamically imported from this classname.
+    hint_forwardref_class = import_module_attr(
+        module_attr_name=hint_forwardref_classname,
+        module_attr_label=(
+            f'{sleuth.exception_label} forward reference type hint'),
+        exception_cls=_BeartypeCallHintPepRaiseException,
+    )
+
+    # Defer to the getter function handling non-"typing" classes. Neato!
+    return get_cause_or_none_instance_type(
+        sleuth.permute(hint=hint_forwardref_class))
+
+
+def get_cause_or_none_type_instance_origin(
+    sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant originative type hint** (i.e.,
@@ -114,22 +118,27 @@ def get_cause_or_none_type_stdlib(sleuth: CauseSleuth) -> Optional[str]:
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
 
-    # Origin type originating this hint if any *OR* "None" otherwise.
-    hint_type_stdlib = get_hint_pep_type_stdlib_or_none(sleuth.hint)
+    # Isinstanceable origin type originating this hint if any *OR* "None"
+    # otherwise.
+    hint_type_origin_isinstanceable = (
+        get_hint_pep_type_origin_isinstanceable_or_none(sleuth.hint))
 
     # If this hint does *NOT* originate from such a type, raise an exception.
-    if hint_type_stdlib is None:
+    if hint_type_origin_isinstanceable is None:
         raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_label} type hint '
-            f'{repr(sleuth.hint)} not originated from an origin type.'
+            f'{repr(sleuth.hint)} not originated from '
+            f'isinstanceable origin type.'
         )
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
-    return get_cause_or_none_type(sleuth.permute(hint=hint_type_stdlib))
+    return get_cause_or_none_instance_type(
+        sleuth.permute(hint=hint_type_origin_isinstanceable))
 
-# ....................{ GETTERS ~ types                   }....................
-def get_cause_or_none_types(sleuth: CauseSleuth) -> Optional[str]:
+# ....................{ GETTERS ~ instance : types        }....................
+def get_cause_or_none_instance_types_tuple(
+    sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to be an instance of one or more isinstanceable classes in the passed tuple
@@ -160,3 +169,37 @@ def get_cause_or_none_types(sleuth: CauseSleuth) -> Optional[str]:
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return get_cause_object_not_types(pith=sleuth.pith, hint=sleuth.hint)
+
+# ....................{ GETTERS ~ subclass : type         }....................
+#FIXME: Implement us up, please.
+def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
+    '''
+    Human-readable string describing the failure of the passed arbitrary object
+    to subclass the passed issubclassable superclass if this object is
+    *not* a subclass of this superclass *or* ``None`` otherwise (i.e., if this
+    object is a subclass of this superclass).
+
+    Parameters
+    ----------
+    sleuth : CauseSleuth
+        Type-checking error cause sleuth.
+    '''
+    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+
+    # If this hint is *NOT* a type, raise an exception.
+    if not isinstance(sleuth.hint, type):
+        raise _BeartypeCallHintPepRaiseException(
+            f'{sleuth.exception_label} type hint '
+            f'{repr(sleuth.hint)} unsupported '
+            f'(i.e., neither PEP-compliant nor issubclassable class).'
+        )
+    # Else, this hint is a type.
+    #
+    # If this pith is an instance of this type, return "None".
+    elif isinstance(sleuth.pith, sleuth.hint):
+        return None
+    # Else, this pith is *NOT* an instance of this type.
+
+    # Return a substring describing this failure intended to be embedded in a
+    # longer string.
+    return get_cause_object_not_type(pith=sleuth.pith, hint=sleuth.hint)

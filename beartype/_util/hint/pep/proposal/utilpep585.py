@@ -60,7 +60,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_builtin(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
+        from beartype._util.hint.pep.proposal.utilpep484585 import is_hint_pep484585_generic
 
         # Return true only if this hint...
         return (
@@ -68,7 +68,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             # PEP 585-compliant builtin *AND*...
             isinstance(hint, HintGenericSubscriptedType) and
             # Is *NOT* a PEP 484- or -585-compliant subscripted generic.
-            not is_hint_pep_generic(hint)
+            not is_hint_pep484585_generic(hint)
         )
 
 
@@ -155,7 +155,7 @@ is_hint_pep585_builtin.__doc__ = '''
     either:
 
     * The high-level PEP-agnostic
-      :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_generic`
+      :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep484585_generic`
       tester.
     * The low-level :pep:`585`:-specific :func:`is_hint_pep585_generic` tester.
 
@@ -220,7 +220,7 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 
     See Also
     ----------
-    :func:`beartype._util.hint.pep.utilhintget.get_hint_pep_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.utilpep484585.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 

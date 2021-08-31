@@ -28,7 +28,7 @@ from beartype._util.py.utilpyversion import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from types import FunctionType
-from typing import Any, Generic, Optional, Tuple
+from typing import Any, Generic, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -145,7 +145,7 @@ def is_hint_pep484_ignorable_or_none(
         # "typing.Generic[T]"), return true.
         #
         # Note that we intentionally avoid calling the
-        # get_hint_pep_type_stdlib_or_none() function here, which has been
+        # get_hint_pep_type_origin_isinstanceable_or_none() function here, which has been
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if getattr(hint, '__origin__', None) is Generic:
@@ -180,7 +180,7 @@ def is_hint_pep484_ignorable_or_none(
     # Return "None", as this hint is unignorable only under PEP 484.
     return None
 
-# ....................{ TESTERS ~ forwardref              }....................
+# ....................{ TESTERS ~ kind                    }....................
 def is_hint_pep484_forwardref(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **forward
@@ -213,7 +213,50 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
     # forward reference superclass.
     return isinstance(hint, HINT_PEP484_TYPE_FORWARDREF)
 
-# ....................{ TESTERS ~ generic                 }....................
+
+def is_hint_pep484_typevar(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object either is a PEP-compliant **type
+    variable** (i.e., instance of the :class:`TypeVar` class).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Motivation
+    ----------
+    Since type variables are not themselves types but rather placeholders
+    dynamically replaced with types by type checkers according to various
+    arcane heuristics, both type variables and types parametrized by type
+    variables warrant special-purpose handling.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a type variable.
+    '''
+
+    # Return true only if the type of this hint is that of all type variables.
+    #
+    # Note that the "typing.TypeVar" class prohibits subclassing: e.g.,
+    #     >>> import typing as t
+    #     >>> class MutTypeVar(t.TypeVar): pass
+    #     TypeError: Cannot subclass special typing classes
+    #
+    # Ergo, the object identity test performed here both suffices and is more
+    # efficient than the equivalent general-purpose test, which requires an
+    # implicit breadth- or depth-first search over the method resolution order
+    # (MRO) of all superclasses of this object: e.g.,
+    #     # This is potentially *MUCH* slower. It's the little things in life.
+    #     return isinstance(hint, TypeVar)
+    return hint.__class__ is TypeVar
+
+# ....................{ TESTERS ~ kind : generic          }....................
 # If the active Python interpreter targets at least Python >= 3.7.0, implement
 # this function in the standard way.
 #
@@ -383,9 +426,9 @@ is_hint_pep484_generic.__doc__ = '''
 # "typing.NewType" type hints as instances of that class, implement this tester
 # unique to prior Python versions to raise an exception.
 if IS_PYTHON_AT_LEAST_3_10:
-    def is_hint_pep484_newtype_pre_python3_10(hint: object) -> bool:
+    def is_hint_pep484_newtype_pre_python310(hint: object) -> bool:
         raise BeartypeDecorHintPep484Exception(
-            'is_hint_pep484_newtype_pre_python3_10() assumes Python < 3.10, '
+            'is_hint_pep484_newtype_pre_python310() assumes Python < 3.10, '
             'but current Python interpreter targets Python >= 3.10.'
         )
 # Else, the active Python interpreter targets Python < 3.10 and thus defines
@@ -394,7 +437,7 @@ if IS_PYTHON_AT_LEAST_3_10:
 # require unique detection, implement this tester unique to this obsolete
 # Python version to detect these closures.
 else:
-    def is_hint_pep484_newtype_pre_python3_10(hint: object) -> bool:
+    def is_hint_pep484_newtype_pre_python310(hint: object) -> bool:
 
         # Return true only if...
         return (
@@ -430,7 +473,7 @@ else:
         )
 
 
-is_hint_pep484_newtype_pre_python3_10.__doc__ = '''
+is_hint_pep484_newtype_pre_python310.__doc__ = '''
     ``True`` only if the passed object either is a :pep:`484`-compliant **new
     type** (i.e., closure created and returned by the :func:`typing.NewType`
     closure factory function).
@@ -663,7 +706,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
     See Also
     ----------
-    :func:`beartype._util.hint.pep.utilhintget.get_hint_pep_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.utilpep484585.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 

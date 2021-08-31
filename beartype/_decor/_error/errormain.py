@@ -74,25 +74,6 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._decor._error._errorgeneric import (
-    get_cause_or_none_generic)
-from beartype._decor._error._errorsequence import (
-    get_cause_or_none_sequence_args_1,
-    get_cause_or_none_tuple,
-)
-from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortype import (
-    get_cause_or_none_forwardref,
-    get_cause_or_none_type_stdlib,
-)
-from beartype._decor._error._proposal._errorpep484noreturn import (
-    get_cause_or_none_noreturn)
-from beartype._decor._error._proposal._errorpep484union import (
-    get_cause_or_none_union)
-from beartype._decor._error._proposal._errorpep586 import (
-    get_cause_or_none_literal)
-from beartype._decor._error._proposal._errorpep593 import (
-    get_cause_or_none_annotated)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -101,12 +82,14 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignLiteral,
     HintSignNoReturn,
     HintSignTuple,
+    HintSignType,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
-    HINT_SIGNS_TYPE_ISINSTANCEABLE,
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
+from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param_value,
@@ -342,12 +325,33 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    # Defer heavyweight imports.
+    from beartype._decor._error._errorgeneric import (
+        get_cause_or_none_generic)
+    from beartype._decor._error._errorsequence import (
+        get_cause_or_none_sequence_args_1,
+        get_cause_or_none_tuple,
+    )
+    from beartype._decor._error._errortype import (
+        get_cause_or_none_instance_type_forwardref,
+        get_cause_or_none_subclass_type,
+        get_cause_or_none_type_instance_origin,
+    )
+    from beartype._decor._error._proposal._errorpep484noreturn import (
+        get_cause_or_none_noreturn)
+    from beartype._decor._error._proposal._errorpep484union import (
+        get_cause_or_none_union)
+    from beartype._decor._error._proposal._errorpep586 import (
+        get_cause_or_none_literal)
+    from beartype._decor._error._proposal._errorpep593 import (
+        get_cause_or_none_annotated)
+
     # Map each originative sign to the appropriate getter *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by
     # sign-specific getters below.
-    for pep_sign_type_origin in HINT_SIGNS_TYPE_ISINSTANCEABLE:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_origin] = (
-            get_cause_or_none_type_stdlib)
+    for pep_sign_origin_isinstanceable in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
+        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
+            get_cause_or_none_type_instance_origin)
 
     # Map each 1-argument sequence sign to its corresponding getter.
     for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
@@ -364,11 +368,12 @@ def _init() -> None:
     # other automated mappings above.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
         HintSignAnnotated: get_cause_or_none_annotated,
-        HintSignForwardRef: get_cause_or_none_forwardref,
+        HintSignForwardRef: get_cause_or_none_instance_type_forwardref,
         HintSignGeneric: get_cause_or_none_generic,
         HintSignLiteral: get_cause_or_none_literal,
         HintSignNoReturn: get_cause_or_none_noreturn,
         HintSignTuple: get_cause_or_none_tuple,
+        HintSignType: get_cause_or_none_subclass_type,
     })
 
 

@@ -21,52 +21,7 @@ from pytest import raises
 # Fine-grained tests are intentionally performed *BEFORE* coarse-grained tests,
 # dramatically improving readability of test failures.
 
-# ....................{ TESTS ~ kind : generic            }....................
-def test_is_hint_pep_generic() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_generic` tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_generic
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
-
-    # Assert this tester:
-    # * Accepts generic PEP 484-compliant generics.
-    # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_generic(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is HintSignGeneric)
-
-    # Assert this tester rejects non-PEP-compliant type hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_generic(not_hint_pep) is False
-
 # ....................{ TESTS ~ kind : typevar            }....................
-def test_is_hint_pep_typevar() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevar`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevar
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import T
-    from typing import Optional
-
-    # Assert that type variables are type variables.
-    assert is_hint_pep_typevar(T) is True
-
-    # Assert that "typing" types parametrized by type variables are *NOT* type
-    # variables.
-    assert is_hint_pep_typevar(Optional[T]) is False
-
-
 def test_is_hint_pep_typevared() -> None:
     '''
     Test the

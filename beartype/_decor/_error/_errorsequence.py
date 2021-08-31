@@ -13,11 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortype import get_cause_or_none_type_stdlib
+from beartype._decor._error._errortype import (
+    get_cause_or_none_type_instance_origin)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._util.hint.pep.utilpeptest import is_hint_pep_tuple_empty
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
@@ -55,7 +57,7 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to be an
     # instance of the type originating this hint (e.g., "list" for "list[str]")
     # if this pith is not an instance of this type *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_stdlib(sleuth)
+    pith_cause = get_cause_or_none_type_instance_origin(sleuth)
 
     # Return either...
     return (
@@ -90,7 +92,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
 
     # Human-readable string describing the failure of this pith to be a tuple
     # if this pith is not a tuple *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_stdlib(sleuth)
+    pith_cause = get_cause_or_none_type_instance_origin(sleuth)
 
     # If this pith is *NOT* a tuple, return this string.
     if pith_cause is not None:
@@ -115,7 +117,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     #
     # If this hint is the empty fixed-length tuple, validate this pith to be
     # the empty tuple.
-    elif is_hint_pep_tuple_empty(sleuth.hint):
+    elif is_hint_pep484585_tuple_empty(sleuth.hint):
         # If this pith is non-empty and thus fails to satisfy this hint...
         if sleuth.pith:
             # Truncated representation of this tuple.

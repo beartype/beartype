@@ -33,7 +33,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #sign "HintSignNumpyArray", it's unclear whether that would be of any benefit.
 #Well... yes, we suppose it would. It's probably best to keep everything
 #concise and orthogonal. In that case, simply add "HintSignNumpyArray" to the
-#existing "HINT_SIGNS_TYPE_ISINSTANCEABLE" set. In theory, that should do it.
+#existing "HINT_SIGNS_ORIGIN_ISINSTANCEABLE" set. In theory, that should do it.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

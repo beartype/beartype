@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errortype import (
-    get_cause_or_none_type)
+    get_cause_or_none_instance_type)
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.pep.proposal.utilpep484 import (
@@ -58,7 +58,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to be an
     # instance of this class if this pith is not an instance of this class *OR*
     # "None" otherwise.
-    pith_cause = get_cause_or_none_type(sleuth)
+    pith_cause = get_cause_or_none_instance_type(sleuth)
 
     # If this pith is *NOT* an instance of this class, return this string.
     if pith_cause is not None:

@@ -93,12 +93,12 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignLiteral,
     HintSignTuple,
-    HintSignType, 
+    HintSignType,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_TYPE_ISINSTANCEABLE,
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
 from beartype._util.func.utilfuncscope import (
@@ -110,6 +110,10 @@ from beartype._util.func.utilfuncscope import (
 from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_generic_bases_unerased,
+    is_hint_pep484585_tuple_empty,
+)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilpep586 import (
@@ -120,17 +124,15 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    get_hint_pep_generic_bases_unerased,
     get_hint_pep_generic_type_or_none,
     get_hint_pep_sign,
-    get_hint_pep_type_stdlib,
+    get_hint_pep_type_origin_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
     is_hint_pep_subscripted,
-    is_hint_pep_tuple_empty,
     is_hint_pep_typing,
     warn_if_hint_pep_deprecated,
 )
@@ -881,7 +883,7 @@ def pep_code_check_hint(
             if (
                 # Originates from an origin type and may thus be shallowly
                 # type-checked against that type *AND is either...
-                hint_curr_sign in HINT_SIGNS_TYPE_ISINSTANCEABLE and (
+                hint_curr_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                     #FIXME: Ideally, this line should just resemble:
                     #    not is_hint_pep_subscripted(hint_curr)
                     #Unfortunately, unsubscripted type hints under Python 3.6
@@ -913,7 +915,7 @@ def pep_code_check_hint(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        cls=get_hint_pep_type_stdlib(hint_curr),
+                        cls=get_hint_pep_type_origin_isinstanceable(hint_curr),
                         cls_scope=func_wrapper_locals,
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     ),
@@ -1446,10 +1448,8 @@ def pep_code_check_hint(
                 ):
                     # Python expression evaluating to this origin type.
                     hint_curr_expr = add_func_scope_type(
-                        # Origin type of this attribute if any *OR* raise an
-                        # exception -- which should *NEVER* happen, as all
-                        # standard sequences originate from an origin type.
-                        cls=get_hint_pep_type_stdlib(hint_curr),
+                        # Origin type of this sequence.
+                        cls=get_hint_pep_type_origin_isinstanceable(hint_curr),
                         cls_scope=func_wrapper_locals,
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     )
@@ -1561,7 +1561,7 @@ def pep_code_check_hint(
                     # If this hint is the empty fixed-length tuple, generate
                     # and append code type-checking the current pith to be the
                     # empty tuple. This edge case constitutes a code smell.
-                    if is_hint_pep_tuple_empty(hint_curr):
+                    if is_hint_pep484585_tuple_empty(hint_curr):
                         func_curr_code += (
                             PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY_format(
                                 pith_curr_var_name=(
@@ -1717,6 +1717,7 @@ def pep_code_check_hint(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
+                    #FIXME: Shift this logic elsewhere, please.
                     # Assert this hint is subscripted by exactly one argument.
                     assert hint_childs_len == 1, (
                         f'{hint_curr_label} {repr(hint_curr)} type '
@@ -1731,6 +1732,7 @@ def pep_code_check_hint(
                         pith_curr_expr=pith_curr_expr,
                         # Python expression evaluating to this superclass.
                         hint_child_expr=add_func_scope_type(
+                            # Superclass subscripting this hint.
                             cls=hint_child,  # type: ignore[arg-type]
                             cls_scope=func_wrapper_locals,
                             cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
@@ -1785,7 +1787,7 @@ def pep_code_check_hint(
                     # Tuple of the one or more unerased pseudo-superclasses
                     # originally listed as superclasses prior to their type
                     # erasure by this generic.
-                    hint_childs = get_hint_pep_generic_bases_unerased(
+                    hint_childs = get_hint_pep484585_generic_bases_unerased(
                         hint_curr)
 
                     # Initialize the code type-checking this pith against this
