@@ -88,7 +88,7 @@ def die_if_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     exception_cls: Type[Exception] = BeartypeDecorHintPepException,
 ) -> None:
     '''
@@ -103,11 +103,10 @@ def die_if_hint_pep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to
-        ``"Type hint"``.
-    exception_cls : Optional[type]
+    hint_label : str, optional
+        Human-readable label prefixing this object's representation in
+        exception messages. Defaults to ``"Annotated"``.
+    exception_cls : Type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintPepException`.
 
@@ -135,7 +134,7 @@ def die_unless_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant type
@@ -149,9 +148,9 @@ def die_unless_hint_pep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
+    hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Type hint"``.
+        exception message. Defaults to ``"Annotated"``.
 
     Raises
     ----------
@@ -210,9 +209,9 @@ def die_if_hint_pep_unsupported(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
+    hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
+        exception message. Defaults to ``"Annotated"``.
 
     Raises
     ----------

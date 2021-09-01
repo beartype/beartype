@@ -35,7 +35,7 @@ def die_if_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     is_str_valid: bool = True,
     exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
@@ -51,10 +51,10 @@ def die_if_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
+    hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
-    is_str_valid : Optional[bool]
+        exception message. Defaults to ``"Annotated"``.
+    is_str_valid : bool, optional
         ``True`` only if this function permits this object to either be a
         string or contain strings. Defaults to ``True``. If this boolean is:
 
@@ -62,7 +62,7 @@ def die_if_hint_nonpep(
           or tuple of classes and/or classnames.
         * ``False``, this object is valid only if this object is either a class
           or tuple of classes.
-    exception_cls : Optional[type]
+    exception_cls : type[Exception]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
 
@@ -111,7 +111,7 @@ def die_unless_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     is_str_valid: bool = True,
     exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
@@ -127,10 +127,10 @@ def die_unless_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
+    hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
-    is_str_valid : Optional[bool]
+        exception message. Defaults to ``"Annotated"``.
+    is_str_valid : bool, optional
         ``True`` only if this function permits this object to either be a
         string or contain strings. Defaults to ``True``. If this boolean is:
 
@@ -138,7 +138,7 @@ def die_unless_hint_nonpep(
           or tuple of classes and/or classnames.
         * ``False``, this object is valid only if this object is either a class
           or tuple of classes.
-    exception_cls : Optional[type]
+    exception_cls : type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
 
@@ -224,7 +224,7 @@ def die_unless_hint_nonpep_type(
     hint: type,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
     '''
@@ -240,9 +240,9 @@ def die_unless_hint_nonpep_type(
     ----------
     hint : type
         Object to be validated.
-    hint_label : Optional[str]
+    hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
+        exception message. Defaults to ``"Annotated"``.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
@@ -293,7 +293,7 @@ def die_unless_hint_nonpep_tuple(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Type hint',
+    hint_label: str = 'Annotated',
     is_str_valid: bool = False,
     exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
 ) -> None:
@@ -311,7 +311,7 @@ def die_unless_hint_nonpep_tuple(
         Object to be validated.
     hint_label : str, optional
         Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``Type hint``.
+        exception message. Defaults to ``"Annotated"``.
     is_str_valid : bool, optional
         ``True`` only if this function permits this tuple to contain strings.
         Defaults to ``False``. If:

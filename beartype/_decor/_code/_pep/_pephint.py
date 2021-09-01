@@ -111,7 +111,9 @@ from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_args_1,
     get_hint_pep484585_generic_bases_unerased,
+    get_hint_pep484585_generic_type_or_none,
     is_hint_pep484585_tuple_empty,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import (
@@ -124,9 +126,8 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    get_hint_pep_generic_type_or_none,
     get_hint_pep_sign,
-    get_hint_pep_type_origin_isinstanceable,
+    get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
@@ -915,7 +916,7 @@ def pep_code_check_hint(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
-                        cls=get_hint_pep_type_origin_isinstanceable(hint_curr),
+                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         cls_scope=func_wrapper_locals,
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     ),
@@ -1442,36 +1443,34 @@ def pep_code_check_hint(
                     # we transparently handle both here for maintainability.
                     #
                     # See below for logic handling fixed-length tuples.
-                # Then this hint is either a standard sequence *OR* a similar
-                    # hint semantically resembling a standard sequence,
-                    # subscripted by one or more child hints.
                 ):
+                # Then this hint is either a single-argument sequence *OR* a
+                # similar hint semantically resembling a single-argument
+                # sequence subscripted by one argument and one or more
+                # ignorable arguments.
+
                     # Python expression evaluating to this origin type.
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this sequence.
-                        cls=get_hint_pep_type_origin_isinstanceable(hint_curr),
+                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         cls_scope=func_wrapper_locals,
                         cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
-                    # Assert this sequence is either subscripted by exactly one
-                    # argument *OR* a non-standard sequence (e.g.,
-                    # "typing.Tuple"). Note that the "typing" module should
-                    # have already guaranteed this on our behalf. Still, we
-                    # trust nothing and no one:
-                    #     >>> import typing as t
-                    #     >>> t.List[int, str]
-                    #     TypeError: Too many parameters for typing.List; actual 2, expected 1
-                    assert (
-                        hint_childs_len == 1 or
-                        hint_curr_sign is HintSignTuple
-                    ), (f'{hint_curr_label} {repr(hint_curr)} sequence '
-                        f'expected to subscripted by 1 argument instead '
-                        f'subscripted by {hint_childs_len} arguments.')
-
-                    # Lone child hint of this parent hint.
-                    hint_child = hint_childs[0]
+                    # If this hint is a fixed-length tuple, the parent "if"
+                    # statement above has already validated the contents of
+                    # this tuple. In this case, efficiently get the lone child
+                    # hint of this parent hint *WITHOUT* validation.
+                    if hint_curr_sign is HintSignTuple:
+                        hint_child = hint_childs[0]
+                    # Else, this hint is a single-argument sequence, in which
+                    # case the contents of this sequence have yet to be
+                    # validated. In this case, inefficiently get the lone child
+                    # hint of this parent hint *WITH* validation.
+                    else:
+                        hint_child = get_hint_pep484585_args_1(
+                            hint=hint_curr, hint_label=hint_curr_label)
 
                     # If this child hint is *NOT* ignorable, deeply type-check
                     # both the type of the current pith *AND* a randomly
@@ -1717,7 +1716,21 @@ def pep_code_check_hint(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
-                    #FIXME: Shift this logic elsewhere, please.
+                    #FIXME: Call the
+                    #get_hint_pep484585_subclass_superclass() getter instead.
+                    #FIXME: Handle forward references. Doing so will probably
+                    #necessitate generalizing the "FORWARDREF" subsection above
+                    #into a proper closure of this function. Naturally,
+                    #*UNIT TEST THIS PLEASE.*
+                    #FIXME: Optimization: if the superclass is an ignorable
+                    #class (e.g., "object", "Protocol"), this type hint is
+                    #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
+                    #thus need to:
+                    #* Add that detection logic to one or more
+                    #  is_hint_*_ignorable() testers elsewhere.
+                    #* Call is_hint_ignorable() below.
+                    #* Unit test such type hints to indeed be ignorable.
+
                     # Assert this hint is subscripted by exactly one argument.
                     assert hint_childs_len == 1, (
                         f'{hint_curr_label} {repr(hint_curr)} type '
@@ -1777,7 +1790,7 @@ def pep_code_check_hint(
                     # generic, which would then imply this hint to be a
                     # subscripted generic. If this strikes you as insane,
                     # you're not alone.
-                    hint_curr = get_hint_pep_generic_type_or_none(hint_curr)
+                    hint_curr = get_hint_pep484585_generic_type_or_none(hint_curr)
 
                     # Assert this hint to be a class.
                     assert isinstance(hint_curr, type), (
@@ -1788,7 +1801,9 @@ def pep_code_check_hint(
                     # originally listed as superclasses prior to their type
                     # erasure by this generic.
                     hint_childs = get_hint_pep484585_generic_bases_unerased(
-                        hint_curr)
+                        hint=hint_curr,
+                        hint_label=hint_curr_label,
+                    )
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.

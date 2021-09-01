@@ -33,11 +33,9 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.hint.pep.proposal.utilpep484 import (
-    get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_newtype_pre_python310,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import (
-    get_hint_pep585_generic_bases_unerased,
     get_hint_pep585_generic_typevars,
     is_hint_pep585_generic,
 )
@@ -589,176 +587,12 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Else, this hint is unrecognized. In this case, return "None".
     return None
 
-# ....................{ GETTERS ~ type : generic          }....................
-@callable_cached
-def get_hint_pep_generic_type_or_none(hint: Any) -> Optional[type]:
-    '''
-    Either the passed **generic** (i.e., class superficially subclassing at
-    least one PEP-compliant type hint that is possibly *not* an actual class)
-    if **unsubscripted** (i.e., indexed by *no* arguments or type variables),
-    the unsubscripted generic underlying this generic if **subscripted** (i.e.,
-    indexed by one or more arguments and/or type variables), *or* ``None``
-    otherwise (i.e., if this hint is *not* a generic).
-
-    Specifically, this getter returns:
-
-    * If this hint both originates from an **origin type** (i.e.,
-      non-:mod:`typing` class such that *all* objects satisfying this hint are
-      instances of that class), that origin type.
-    * Else if this hint is already a class, this hint as is.
-    * Else, ``None``.
-
-    This getter is memoized for efficiency.
-
-    Caveats
-    ----------
-    **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics. Callers
-    *must* perform subsequent tests to distinguish these two cases.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Optional[type]
-        Either:
-
-        * If this hint is a generic, the class originating this generic.
-        * Else, ``None``.
-
-    See Also
-    ----------
-    :func:`_get_hint_pep_origin_object_or_none`
-        Further details.
-    '''
-
-    # Arbitrary object originating this hint if any *OR* "None" otherwise.
-    hint_origin = _get_hint_pep_origin_object_or_none(hint)
-    # print(f'{repr(hint)} hint_origin: {repr(hint_origin)}')
-
-    # If this object is a class, this object is the origin type originating
-    # this hint. In this case, return this object.
-    if isinstance(hint_origin, type):
-        return hint_origin
-    # Else if this hint is already a class, this class is effectively already
-    # its origin type. In this case, return this class as is.
-    elif isinstance(hint, type):
-        return hint
-    # Else, this hint is *NOT* a class. In this case, this hint originates from
-    # *NO* origin type.
-    else:
-        return None
-
-# ....................{ GETTERS ~ type : stdlib           }....................
-def get_hint_pep_type_origin_isinstanceable(hint: object) -> type:
-    '''
-    **Standard origin type** (i.e., isinstanceable class declared by Python's
-    standard library such that *all* objects satisfying the passed
-    PEP-compliant type hint are instances of this class) originating this hint
-    if this hint originates from such a type *or* raise an exception otherwise
-    (i.e., if this hint does *not* originate from such a type).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    type
-        Standard origin type originating this hint.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this hint does *not* originate from a standard origin type.
-
-    See Also
-    ----------
-    :func:`get_hint_pep_type_origin_isinstanceable_or_none`
-        Related getter.
-    '''
-
-    # Origin type originating this object if any *OR* "None" otherwise.
-    hint_type_stdlib = get_hint_pep_type_origin_isinstanceable_or_none(hint)
-
-    # If this type does *NOT* exist, raise an exception.
-    if hint_type_stdlib is None:
-        raise BeartypeDecorHintPepException(
-            f'Type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from isinstanceable class declared by '
-            f"Python's standard library)."
-        )
-    # Else, this type exists.
-
-    # Return this type.
-    return hint_type_stdlib
-
-
-def get_hint_pep_type_origin_isinstanceable_or_none(hint: Any) -> Optional[type]:
-    '''
-    **Standard origin type** (i.e., isinstanceable class declared by Python's
-    standard library such that *all* objects satisfying the passed
-    PEP-compliant type hint are instances of this class) originating this hint
-    if this hint originates from such a type *or* ``None`` otherwise (i.e., if
-    this hint does *not* originate from such a type).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Caveats
-    ----------
-    **This high-level getter should always be called in lieu of the low-level**
-    :func:`_get_hint_pep_origin_object_or_none` **getter or attempting to
-    directly access the low-level** ``__origin__`` **dunder attribute.**
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Optional[type]
-        Either:
-
-        * If this hint originates from a standard origin type, that type.
-        * Else, ``None``.
-
-    See Also
-    ----------
-    :func:`get_hint_pep_type_origin_isinstanceable`
-        Related getter.
-    :func:`_get_hint_pep_origin_object_or_none`
-        Further details.
-    '''
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
-
-    # Return either...
-    return (
-        # If this sign originates from an origin type, that type.
-        _get_hint_pep_origin_object_or_none(hint)
-        if hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE else
-        # Else, "None".
-        None
-    )
-
-# ....................{ PRIVATE ~ getters : type          }....................
+# ....................{ GETTERS ~ origin                  }....................
 # If the active Python interpreter targets at least Python >= 3.7, implement
 # this function to access the standard "__origin__" dunder instance variable
 # whose value is the origin type originating this hint.
 if IS_PYTHON_AT_LEAST_3_7:
-    def _get_hint_pep_origin_object_or_none(hint: Any) -> Optional[Any]:
+    def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
         # Return this hint's origin object if any *OR* "None" otherwise.
         return getattr(hint, '__origin__', None)
@@ -770,7 +604,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 else:
     from beartype._util.utilobject import SENTINEL
 
-    def _get_hint_pep_origin_object_or_none(hint: Any) -> Optional[Any]:
+    def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
         # If this hint is a poorly designed Python 3.6-specific "type
         # alias", this hint is a subscription of either the "typing.Match"
@@ -810,7 +644,7 @@ else:
         )
 
 # Document this function regardless of implementation details above.
-_get_hint_pep_origin_object_or_none.__doc__ = '''
+get_hint_pep_origin_or_none.__doc__ = '''
     **Unsafe origin object** (i.e., arbitrary object possibly related to the
     passed PEP-compliant type hint but *not* necessarily a non-:mod:`typing`
     class such that *all* objects satisfying this hint are instances of this
@@ -885,3 +719,105 @@ _get_hint_pep_origin_object_or_none.__doc__ = '''
         >>> typing.Union[int, str].__origin__
         typing.Union
     '''
+
+# ....................{ GETTERS ~ origin : type           }....................
+def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
+    '''
+    **Standard origin type** (i.e., isinstanceable class declared by Python's
+    standard library such that *all* objects satisfying the passed
+    PEP-compliant type hint are instances of this class) originating this hint
+    if this hint originates from such a type *or* raise an exception otherwise
+    (i.e., if this hint does *not* originate from such a type).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    type
+        Standard origin type originating this hint.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this hint does *not* originate from a standard origin type.
+
+    See Also
+    ----------
+    :func:`get_hint_pep_type_origin_isinstanceable_or_none`
+        Related getter.
+    '''
+
+    # Origin type originating this object if any *OR* "None" otherwise.
+    hint_origin_type = get_hint_pep_type_origin_isinstanceable_or_none(hint)
+
+    # If this type does *NOT* exist, raise an exception.
+    if hint_origin_type is None:
+        raise BeartypeDecorHintPepException(
+            f'Type hint {repr(hint)} not originative '
+            f'(i.e., does not originate from isinstanceable class declared by '
+            f"Python's standard library)."
+        )
+    # Else, this type exists.
+
+    # Return this type.
+    return hint_origin_type
+
+
+def get_hint_pep_type_origin_isinstanceable_or_none(
+    hint: Any) -> Optional[type]:
+    '''
+    **Standard origin type** (i.e., isinstanceable class declared by Python's
+    standard library such that *all* objects satisfying the passed
+    PEP-compliant type hint are instances of this class) originating this hint
+    if this hint originates from such a type *or* ``None`` otherwise (i.e., if
+    this hint does *not* originate from such a type).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Caveats
+    ----------
+    **This high-level getter should always be called in lieu of the low-level**
+    :func:`get_hint_pep_origin_or_none` **getter or attempting to
+    directly access the low-level** ``__origin__`` **dunder attribute.**
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[type]
+        Either:
+
+        * If this hint originates from a standard origin type, that type.
+        * Else, ``None``.
+
+    See Also
+    ----------
+    :func:`get_hint_pep_origin_type_isinstanceable`
+        Related getter.
+    :func:`get_hint_pep_origin_or_none`
+        Further details.
+    '''
+
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign(hint)
+
+    # Return either...
+    return (
+        # If this sign originates from an origin type, that type;
+        get_hint_pep_origin_or_none(hint)
+        if hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE else
+        # Else, "None".
+        None
+    )

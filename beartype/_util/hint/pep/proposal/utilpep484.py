@@ -43,7 +43,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 # Conditionally define the "typing.ForwardRef" superclass depending on the
 # current Python version. This superclass was thankfully publicized under
 # Python >= 3.7 after its initial privatization under Python <= 3.6.
-HINT_PEP484_TYPE_FORWARDREF = (
+HINT_PEP484_FORWARDREF_TYPE: Any = (
     typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else
     typing._ForwardRef  # type: ignore [attr-defined]
 )
@@ -211,7 +211,7 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
 
     # Return true only if this hint is an instance of the PEP 484-compliant
     # forward reference superclass.
-    return isinstance(hint, HINT_PEP484_TYPE_FORWARDREF)
+    return isinstance(hint, HINT_PEP484_FORWARDREF_TYPE)
 
 
 def is_hint_pep484_typevar(hint: object) -> bool:
@@ -267,8 +267,8 @@ if IS_PYTHON_AT_LEAST_3_7:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import (
-            get_hint_pep_generic_type_or_none)
+        from beartype._util.hint.pep.proposal.utilpep484585 import (
+            get_hint_pep484585_generic_type_or_none)
 
         # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
         # generic but could still be a subscripted generic (i.e., generic
@@ -277,7 +277,7 @@ if IS_PYTHON_AT_LEAST_3_7:
         # enabling the subsequent test to test whether this origin object is an
         # unsubscripted generic, which would then imply this hint to be a
         # subscripted generic. If this strikes you as insane, you're not alone.
-        hint = get_hint_pep_generic_type_or_none(hint)
+        hint = get_hint_pep484585_generic_type_or_none(hint)
 
         # Return true only if this hint is a subclass of the "typing.Generic"
         # abstract base class (ABC), in which case this hint is a user-defined
@@ -328,14 +328,14 @@ else:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import (
-            get_hint_pep_generic_type_or_none)
+        from beartype._util.hint.pep.proposal.utilpep484585 import (
+            get_hint_pep484585_generic_type_or_none)
         from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_type_typing)
 
         # If this hint is *NOT* a class, reduce this hint to the object
         # originating this hint if any. See the above tester for details.
-        hint_type = get_hint_pep_generic_type_or_none(hint)
+        hint_type = get_hint_pep484585_generic_type_or_none(hint)
 
         # Return true only if...
         #
@@ -831,12 +831,12 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #    duplicate superclasses.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_generic_type_or_none)
+    from beartype._util.hint.pep.proposal.utilpep484585 import (
+        get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See is_hint_pep484_generic() tester for details.
-    hint = get_hint_pep_generic_type_or_none(hint)
+    hint = get_hint_pep484585_generic_type_or_none(hint)
 
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
     if not is_hint_pep484_generic(hint):

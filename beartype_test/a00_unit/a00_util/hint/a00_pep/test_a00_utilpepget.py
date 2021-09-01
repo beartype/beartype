@@ -51,58 +51,18 @@ def test_get_hint_pep_sign() -> None:
             # Localize this return value to simplify debugging.
             hint_nonpep_sign = get_hint_pep_sign(hint_nonpep)
 
-# ....................{ TESTS ~ origin : generic          }....................
-def test_get_hint_pep_generic_type_or_none() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_generic_type_or_none`
-    getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_generic_type_or_none)
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
-
-    # Assert this getter returns the expected type origin for all
-    # PEP-compliant type hint generics. While we could support non-generics as
-    # well, there's little benefit and significant costs to doing so. Instead,
-    # we assert this getter only returns the expected type origin for a small
-    # subset of type hints.
-    for hint_pep_meta in HINTS_PEP_META:
-        if hint_pep_meta.pep_sign is HintSignGeneric:
-            assert get_hint_pep_generic_type_or_none(
-                hint_pep_meta.hint) is hint_pep_meta.generic_type
-
-    #FIXME: Uncomment if we ever want to exercise extreme edge cases. *shrug*
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-    # from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    #
-    # # Assert this getter returns the expected type origin for all
-    # # PEP-compliant type hints.
-    # for hint_pep_meta in HINTS_PEP_META:
-    #     assert get_hint_pep_generic_type_or_none(
-    #         hint_pep_meta.hint) is hint_pep_meta.generic_type
-    #
-    # # Assert this getter raises the expected exception for non-PEP-compliant
-    # # type hints.
-    # for not_hint_pep in NOT_HINTS_PEP:
-    #     assert get_hint_pep_generic_type_or_none(not_hint_pep) is None
-
-# ....................{ TESTS ~ origin : isinstanceable   }....................
+# ....................{ TESTS ~ origin : type             }....................
 def test_get_hint_pep_type_origin_isinstanceable() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_type_origin_isinstanceable`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_origin_type_isinstanceable`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_type_origin_isinstanceable)
+        get_hint_pep_origin_type_isinstanceable)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
@@ -113,18 +73,18 @@ def test_get_hint_pep_type_origin_isinstanceable() -> None:
         # Returns the expected type origin for all PEP-compliant type hints
         # originating from an origin type.
         if hint_pep_meta.stdlib_type is not None:
-            assert get_hint_pep_type_origin_isinstanceable(hint_pep_meta.hint) is (
+            assert get_hint_pep_origin_type_isinstanceable(hint_pep_meta.hint) is (
                 hint_pep_meta.stdlib_type)
         # Raises the expected exception for all other hints.
         else:
             with raises(BeartypeDecorHintPepException):
-                get_hint_pep_type_origin_isinstanceable(hint_pep_meta.hint)
+                get_hint_pep_origin_type_isinstanceable(hint_pep_meta.hint)
 
     # Assert this getter raises the expected exception for non-PEP-compliant
     # type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            get_hint_pep_type_origin_isinstanceable(not_hint_pep)
+            get_hint_pep_origin_type_isinstanceable(not_hint_pep)
 
 
 def test_get_hint_pep_type_origin_stdlib_or_none() -> None:

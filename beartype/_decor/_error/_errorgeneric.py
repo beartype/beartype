@@ -21,8 +21,8 @@ from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_generic_type_or_none)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_generic_type_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from typing import Optional
@@ -34,12 +34,12 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed `PEP 484`_-compliant **generic** (i.e., type hint
-    subclassing a combination of one or more of the :mod:`typing.Generic`
-    superclass, the :mod:`typing.Protocol` superclass, and/or other
-    :mod:`typing` non-class pseudo-superclasses) if this object actually fails
-    to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    to satisfy the passed :pep:`484`- or :pep:`585`-compliant **generic**
+    (i.e., type hint subclassing a combination of one or more of the
+    :mod:`typing.Generic` superclass, the :mod:`typing.Protocol` superclass,
+    and/or other :mod:`typing` non-class pseudo-superclasses) if this object
+    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
+    object satisfies this hint).
 
     Parameters
     ----------
@@ -52,7 +52,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
 
     # If this hint is *NOT* a class, reduce this hint to the generic class
     # originating this hint if any. See the is_hint_pep484_generic() tester.
-    sleuth.hint = get_hint_pep_generic_type_or_none(sleuth.hint)
+    sleuth.hint = get_hint_pep484585_generic_type_or_none(sleuth.hint)
     assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
 
     # Human-readable string describing the failure of this pith to be an

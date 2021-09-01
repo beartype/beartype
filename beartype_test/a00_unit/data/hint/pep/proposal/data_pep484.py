@@ -56,7 +56,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnion,
 )
 from beartype._util.hint.pep.proposal.utilpep484 import (
-    HINT_PEP484_TYPE_FORWARDREF)
+    HINT_PEP484_FORWARDREF_TYPE)
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9,
@@ -419,7 +419,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Unsubscripted forward reference defined as a typing object.
         HintPepMetadata(
-            hint=HINT_PEP484_TYPE_FORWARDREF('profile.Profile'),
+            hint=HINT_PEP484_FORWARDREF_TYPE('profile.Profile'),
             pep_sign=HintSignForwardRef,
             is_subscripted=False,
             piths_satisfied_meta=(

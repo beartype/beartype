@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.hint.pep.proposal.utilpep484 import (
-    HINT_PEP484_TYPE_FORWARDREF)
+    HINT_PEP484_FORWARDREF_TYPE)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -32,7 +32,7 @@ HINT_BASES_FORWARDREF = (
     str,
 
     # PEP 484-compliant forward reference superclass.
-    HINT_PEP484_TYPE_FORWARDREF,
+    HINT_PEP484_FORWARDREF_TYPE,
 )
 '''
 Tuple of all **forward reference type hint superclasses** (i.e., superclasses

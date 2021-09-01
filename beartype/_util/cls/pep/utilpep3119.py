@@ -21,7 +21,7 @@ def die_unless_type_isinstanceable(
     cls: type,
 
     # Optional parameters.
-    cls_label: str = 'Type hint',
+    cls_label: str = 'Annotated',
     exception_cls: Type[Exception] = BeartypeDecorHintPep3119Exception,
 ) -> None:
     '''
@@ -84,10 +84,10 @@ def die_unless_type_isinstanceable(
     ----------
     cls : type
         Class to be validated.
-    cls_label : str
+    cls_label : str, optional
         Human-readable label prefixing the representation of this class in the
-        exception message raised by this function. Defaults to ``"Type hint"``.
-    exception_cls : Type[Exception]
+        exception message. Defaults to ``"Annotated"``.
+    exception_cls : Type[Exception], optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
 
@@ -128,6 +128,10 @@ def die_unless_type_isinstanceable(
         except Exception as exception:
             #FIXME: Uncomment after we uncover why doing so triggers an
             #infinite circular exception chain when "hint" is a "GenericAlias".
+            #It's clearly the is_hint_pep544_protocol() call, but why? In any
+            #case, the simplest workaround would just be to inline the logic of
+            #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
+
             # # Human-readable exception message to be raised as either...
             # exception_message = (
             #     # If this class is a PEP 544-compliant protocol, a message
@@ -166,7 +170,7 @@ def die_unless_type_issubclassable(
     cls: type,
 
     # Optional parameters.
-    cls_label: str = 'Type hint',
+    cls_label: str = 'Annotated',
     exception_cls: Type[Exception] = BeartypeDecorHintPep3119Exception,
 ) -> None:
     '''
@@ -229,10 +233,10 @@ def die_unless_type_issubclassable(
     ----------
     cls : type
         Class to be validated.
-    cls_label : str
+    cls_label : str, optional
         Human-readable label prefixing the representation of this class in the
-        exception message raised by this function. Defaults to ``"Type hint"``.
-    exception_cls : Type[Exception]
+        exception message. Defaults to ``"Annotated"``.
+    exception_cls : Type[Exception], optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
 
