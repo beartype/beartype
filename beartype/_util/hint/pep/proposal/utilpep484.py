@@ -48,9 +48,9 @@ HINT_PEP484_FORWARDREF_TYPE: Any = (
     typing._ForwardRef  # type: ignore [attr-defined]
 )
 '''
-**Forward reference sign** (i.e., arbitrary objects uniquely identifying a
-:pep:`484`-compliant type hint unifying one or more subscripted type hint
-arguments into a disjunctive set union of these arguments).
+:pep:`484`-compliant **forward reference type** (i.e., class of all forward
+reference objects implicitly created by all :mod:`typing` type hint factories
+when subscripted by a string).
 '''
 
 # ....................{ TESTERS ~ ignorable               }....................

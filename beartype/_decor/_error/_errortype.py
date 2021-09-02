@@ -17,10 +17,10 @@ from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_origin_isinstanceable_or_none)
-from beartype._util.hint.utilhintget import (
-    get_hint_forwardref_classname_relative_to_object)
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.text.utiltextcause import (
     get_cause_object_not_type,
@@ -86,7 +86,7 @@ def get_cause_or_none_instance_type_forwardref(
     # Fully-qualified classname referred to by this forward reference relative
     # to the decorated callable.
     hint_forwardref_classname = (
-        get_hint_forwardref_classname_relative_to_object(
+        get_hint_pep484585_forwardref_classname_relative_to_object(
             hint=sleuth.hint, obj=sleuth.func))
 
     # User-defined class dynamically imported from this classname.

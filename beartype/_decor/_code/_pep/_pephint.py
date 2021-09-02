@@ -112,8 +112,10 @@ from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilpep484585 import (
     get_hint_pep484585_args_1,
+    get_hint_pep484585_forwardref_classname,
     get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type_or_none,
+    get_hint_pep484585_subclass_superclass,
     is_hint_pep484585_tuple_empty,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import (
@@ -137,7 +139,6 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_typing,
     warn_if_hint_pep_deprecated,
 )
-from beartype._util.hint.utilhintget import get_hint_forwardref_classname
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import (
@@ -379,16 +380,6 @@ def pep_code_check_hint(
     # "Union" if "hint_child == Union[int, str]").
     # hint_child_sign = None
 
-    # Integer identifying the currently iterated child PEP-compliant type
-    # hint of the currently visited parent PEP-compliant type hint.
-    #
-    # Note this ID is intentionally initialized to -1 rather than 0. Since
-    # the get_next_pep_hint_child_str() method increments *BEFORE*
-    # stringifying this ID, initializing this ID to -1 ensures that method
-    # returns a string containing only non-negative substrings starting at
-    # 0 rather than both negative and positive substrings starting at -1.
-    hint_child_placeholder_id = -1
-
     #FIXME: Excise us up.
     # Python expression evaluating to the value of the currently iterated child
     # hint of the currently visited parent hint.
@@ -553,6 +544,10 @@ def pep_code_check_hint(
     # "hints_meta" list, initialized to "-1" to ensure that the initial
     # incrementation of this index by the _enqueue_hint_child() directly called
     # below initializes index 0 of the "hints_meta" fixed list.
+    #
+    # For efficiency, this integer also uniquely identifies the currently
+    # iterated child PEP-compliant type hint of the currently visited parent
+    # PEP-compliant type hint.
     hints_meta_index_last = -1
 
     # ..................{ FUNC ~ code                       }..................
@@ -573,9 +568,8 @@ def pep_code_check_hint(
     is_var_random_int_needed = False
 
     # ..................{ CLOSURES                          }..................
-    # Closures centralizing frequently repeated logic and thus addressing any
-    # Don't Repeat Yourself (DRY) concerns during the breadth-first search
-    # (BFS) performed below.
+    # Closures centralizing frequently repeated logic, addressing Don't Repeat
+    # Yourself (DRY) concerns during the breadth-first search (BFS) below.
 
     def _enqueue_hint_child(pith_child_expr: str) -> str:
         '''
@@ -605,25 +599,16 @@ def pep_code_check_hint(
         '''
 
         # Allow these local variables of the outer scope to be modified below.
-        nonlocal hint_child_placeholder_id, hints_meta_index_last
+        nonlocal hints_meta_index_last
 
-        #FIXME: Hmm; this kinda implies there to exist a one-to-one relation
-        #between "hints_meta_index_last" and "hint_child_placeholder_id".
-        #Indeed, those two integers might very well be equal or at least off by
-        #only 1 or 2. This further implies that we should be able to remove
-        #"hint_child_placeholder_id" by simply replacing all instances of
-        #"hint_child_placeholder_id" with "hints_meta_index_last". (Maybe.)
-
-        # Increment the 0-based index of metadata describing the last visitable
-        # hint in the "hints_meta" list *BEFORE* overwriting the existing
+        # Increment both the 0-based index of metadata describing the last
+        # visitable hint in the "hints_meta" list and the unique identifier of
+        # the currently iterated child hint *BEFORE* overwriting the existing
         # metadata at this index.
         #
         # Note this index is guaranteed to *NOT* exceed the fixed length of
         # this list, by prior validation.
         hints_meta_index_last += 1
-
-        # Increment the unique identifier of the currently iterated child hint.
-        hint_child_placeholder_id += 1
 
         # Placeholder string to be globally replaced by code type-checking the
         # child pith against this child hint, intentionally prefixed and
@@ -642,7 +627,7 @@ def pep_code_check_hint(
         #   and non-trivial to debug Python code.
         hint_child_placeholder = (
             f'{PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX}'
-            f'{str(hint_child_placeholder_id)}'
+            f'{str(hints_meta_index_last)}'
             f'{PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX}'
         )
 
@@ -927,9 +912,18 @@ def pep_code_check_hint(
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
             elif hint_curr_sign is HintSignForwardRef:
-                # Possibly unqualified classname referred to by this hint.
-                hint_curr_forwardref_classname = get_hint_forwardref_classname(
-                    hint_curr)
+                #FIXME: Consider encapsulating this logic up until the next
+                #"!!!!" string to a new add_func_scope_type_forwardref()
+                #function of the "utilfuncscope" submodule. Or maybe not? That
+                #does rather seem like overkill. Moreover, we would need to
+                #pass (and thus document and test) *QUITE* alot of metadata.
+                #Initially, let's just define _add_func_scope_type_forwardref()
+                #as a closure above for sanity.
+
+                # Possibly unqualified classname referred to by this forward
+                # reference.
+                hint_curr_forwardref_classname = (
+                    get_hint_pep484585_forwardref_classname(hint_curr))
 
                 # If this classname contains one or more "." characters, this
                 # classname is fully-qualified. In this case...
@@ -965,6 +959,7 @@ def pep_code_check_hint(
                         f'{hint_curr_forwardref_classname}'
                         f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
                     )
+                #FIXME: "!!!!" Stop here, please. See above.
 
                 # Code type-checking the current pith against this class.
                 func_curr_code = PEP484_CODE_HINT_INSTANCE_format(
@@ -1716,12 +1711,6 @@ def pep_code_check_hint(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
-                    #FIXME: Call the
-                    #get_hint_pep484585_subclass_superclass() getter instead.
-                    #FIXME: Handle forward references. Doing so will probably
-                    #necessitate generalizing the "FORWARDREF" subsection above
-                    #into a proper closure of this function. Naturally,
-                    #*UNIT TEST THIS PLEASE.*
                     #FIXME: Optimization: if the superclass is an ignorable
                     #class (e.g., "object", "Protocol"), this type hint is
                     #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
@@ -1731,26 +1720,35 @@ def pep_code_check_hint(
                     #* Call is_hint_ignorable() below.
                     #* Unit test such type hints to indeed be ignorable.
 
-                    # Assert this hint is subscripted by exactly one argument.
-                    assert hint_childs_len == 1, (
-                        f'{hint_curr_label} {repr(hint_curr)} type '
-                        f'expected to subscripted by 1 argument instead '
-                        f'subscripted by {hint_childs_len} arguments.')
+                    # Superclass this pith is required to be a subclass of.
+                    hint_child = get_hint_pep484585_subclass_superclass(
+                        hint=hint_curr, hint_label=hint_curr_label)
 
-                    # Superclass this pith is expected to be a subclass of.
-                    hint_child = hint_childs[0]
+                    #FIXME: Unit test us up, please.
 
-                    # Code type-checking this pith against this superclass.
-                    func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
-                        pith_curr_expr=pith_curr_expr,
-                        # Python expression evaluating to this superclass.
-                        hint_child_expr=add_func_scope_type(
-                            # Superclass subscripting this hint.
-                            cls=hint_child,  # type: ignore[arg-type]
-                            cls_scope=func_wrapper_locals,
-                            cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
-                        ),
-                    )
+                    # If this superclass is actually a class...
+                    if isinstance(hint_child, type):
+                        # Code type-checking this pith against this superclass.
+                        func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
+                            pith_curr_expr=pith_curr_expr,
+                            # Python expression evaluating to this superclass.
+                            hint_child_expr=add_func_scope_type(
+                                # Superclass subscripting this hint.
+                                cls=hint_child,  # type: ignore[arg-type]
+                                cls_scope=func_wrapper_locals,
+                                cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                            ),
+                        )
+                    # Else, this superclass is *NOT* actually a class. By
+                    # process of elimination and the validation already
+                    # performed above by the
+                    # get_hint_pep484585_subclass_superclass() getter, this
+                    # superclass *MUST* be a forward reference to a class.
+                    else:
+                        #FIXME: Implement us up by calling the forward
+                        #reference closure defined above, please. Naturally,
+                        #*UNIT TEST THIS PLEASE.*
+                        pass
                 # Else, this hint is neither a PEP 484- nor 585-compliant
                 # subclass type hint.
                 #

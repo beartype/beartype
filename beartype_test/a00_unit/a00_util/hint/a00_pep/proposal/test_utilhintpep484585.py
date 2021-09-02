@@ -144,11 +144,13 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         BeartypeDecorHintPep484585Exception,
         BeartypeDecorHintPep585Exception,
     )
+    from beartype._util.hint.pep.proposal.utilpep484 import (
+        HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.hint.pep.proposal.utilpep484585 import (
         get_hint_pep484585_subclass_superclass)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pytest import raises
-    from typing import ForwardRef, Type
+    from typing import Type
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a class.
@@ -158,7 +160,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     # 484-compliant subclass type hint subscripted by a forward reference to a
     # class.
     assert get_hint_pep484585_subclass_superclass(Type['bytes']) == (
-        ForwardRef('bytes'))
+        HINT_PEP484_FORWARDREF_TYPE('bytes'))
 
     # Assert this getter raises the expected exception when passed an arbitrary
     # object that is neither a PEP 484- nor 585-compliant subclass type hint.

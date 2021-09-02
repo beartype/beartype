@@ -38,8 +38,8 @@ from beartype._decor._cache.cachetype import (
 )
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
 from beartype._util.kind.utilkinddict import update_mapping
-from beartype._util.hint.utilhintget import (
-    get_hint_forwardref_classname_relative_to_object)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,
@@ -322,7 +322,7 @@ def _unmemoize_pep_code(
                 new=register_typistry_forwardref(
                     # Fully-qualified classname referred to by this forward
                     # reference relative to the decorated callable.
-                    get_hint_forwardref_classname_relative_to_object(
+                    get_hint_pep484585_forwardref_classname_relative_to_object(
                         hint=hint_forwardref_class_basename, obj=data.func)
                 ),
             )

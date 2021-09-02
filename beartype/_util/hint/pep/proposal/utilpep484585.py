@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
     BeartypeDecorHintPep484585Exception,
     BeartypeDecorHintPep585Exception,
 )
@@ -21,9 +22,11 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.utilpep484 import (
-    HINT_PEP484_TUPLE_EMPTY,
     HINT_PEP484_FORWARDREF_TYPE,
+    HINT_PEP484_TUPLE_EMPTY,
+    get_hint_pep484_forwardref_type_basename,
     get_hint_pep484_generic_bases_unerased,
+    is_hint_pep484_forwardref,
     is_hint_pep484_generic,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import (
@@ -31,13 +34,47 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
+from beartype._util.mod.utilmodule import get_object_module_name
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Any, Optional, Tuple, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ PRIVATE ~ constants               }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1 = Union[type, str, HINT_PEP484_FORWARDREF_TYPE]
+# ....................{ HINTS                             }....................
+HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
+'''
+Tuple union of all PEP-compliant **forward reference types** (i.e.,
+classes of all forward reference objects).
+
+Specifically, this union contains:
+
+* :class:`str`, the class of all :pep:`585`-compliant forward reference objects
+  implicitly preserved by all :pep:`585`-compliant type hint factories when
+  subscripted by a string.
+* :class:`HINT_PEP484_FORWARDREF_TYPE`, the class of all :pep:`484`-compliant
+  forward reference objects implicitly created by all :mod:`typing` type hint
+  factories when subscripted by a string.
+
+While :pep:`585`-compliant type hint factories preserve string-based forward
+references as is, :mod:`typing` type hint factories coerce string-based forward
+references into higher-level objects encapsulating those strings. The latter
+approach is the demonstrably wrong approach, because encapsulating strings only
+harms space and time complexity at runtime with *no* concomitant benefits.
+'''
+
+# ....................{ HINTS ~ private                   }....................
+_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = (
+    # If the active Python interpreter targets Python >= 3.7, include the sane
+    # "typing.ForwardRef" type in this union;
+    Union[type, str, HINT_PEP484_FORWARDREF_TYPE]
+    if IS_PYTHON_AT_LEAST_3_7 else
+    # Else, the active Python interpreter targets Python 3.6. In this case,
+    # exclude the insane "typing._ForwardRef" type from this union. Naively
+    # including that type here induces fatal runtime exceptions resembling:
+    #     AttributeError: type object '_ForwardRef' has no attribute '_gorg'
+    Union[type, str,]
+)
 '''
 Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints
@@ -45,12 +82,72 @@ subscripting (indexing) a subclass type hint).
 '''
 
 
-_PEP484585_SUBCLASS_ARGS_1_TYPES = (type, str, HINT_PEP484_FORWARDREF_TYPE)
+_HINT_PEP484585_SUBCLASS_ARGS_1_TYPES = (
+    (type,) + HINT_PEP484585_FORWARDREF_TYPES)
 '''
 Tuple union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints
 subscripting (indexing) a subclass type hint).
 '''
+
+# ....................{ VALIDATORS ~ kind : forwardref    }....................
+def die_unless_hint_pep484585_forwardref(hint: object) -> None:
+    '''
+    Raise an exception unless the passed object is either a :pep:`484`- or
+    :pep:`585`-compliant **forward reference type hint** (i.e., object
+    referring to a user-defined class that typically has yet to be defined).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this object is *not* a forward reference type hint.
+    '''
+
+    # If this is *NOT* a forward reference type hint, raise an exception.
+    if not is_hint_pep484585_forwardref(hint):
+        raise BeartypeDecorHintForwardRefException(
+            f'Type hint {repr(hint)} not forward reference.')
+
+# ....................{ TESTERS ~ kind : forwardref       }....................
+def is_hint_pep484585_forwardref(hint: object) -> bool:
+    '''
+    ``True`` only if the passed object is either a :pep:`484`- or
+    :pep:`585`-compliant **forward reference type hint** (i.e., object
+    referring to a user-defined class that typically has yet to be defined).
+
+    Specifically, this tester returns ``True`` only if this object is either:
+
+    * A string whose value is the syntactically valid name of a class.
+    * An instance of the :class:`typing.ForwardRef` class. The :mod:`typing`
+      module implicitly replaces all strings subscripting :mod:`typing` objects
+      (e.g., the ``MuhType`` in ``List['MuhType']``) with
+      :class:`typing.ForwardRef` instances containing those strings as instance
+      variables, for nebulous reasons that make little justifiable sense but
+      what you gonna do 'cause this is 2020. *Fight me.*
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a forward reference type hint.
+    '''
+
+    # Return true only if this hint is an instance of a PEP-compliant forward
+    # reference superclass.
+    return isinstance(hint, HINT_PEP484585_FORWARDREF_TYPES)
 
 # ....................{ TESTERS ~ kind : generic          }....................
 @callable_cached
@@ -229,6 +326,123 @@ def get_hint_pep484585_args_1(
 
     # Return this argument as is.
     return hint_args[0]
+
+# ....................{ GETTERS ~ kind : forwardref       }....................
+#FIXME: Unit test against nested classes.
+#FIXME: Validate that this forward reference string is *NOT* the empty string.
+def get_hint_pep484585_forwardref_classname(hint: object) -> str:
+    '''
+    Possibly unqualified classname referred to by the passed :pep:`484`- or
+    :pep:`585`-compliant **forward reference type hint** (i.e., object
+    indirectly referring to a user-defined class that typically has yet to be
+    defined).
+
+    Specifically, this function returns:
+
+    * If this hint is a :pep:`484`-compliant forward reference (i.e., instance
+      of the :class:`typing.ForwardRef` class), the typically unqualified
+      classname referred to by that reference. Although :pep:`484` only
+      explicitly supports unqualified classnames as forward references, the
+      :class:`typing.ForwardRef` class imposes *no* runtime constraints and
+      thus implicitly supports both qualified and unqualified classnames.
+    * If this hint is a :pep:`585`-compliant forward reference (i.e., string),
+      this string as is referring to a possibly unqualified classname. Both
+      :pep:`585` and :mod:`beartype` itself impose *no* runtime constraints and
+      thus explicitly support both qualified and unqualified classnames.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Forward reference to be inspected.
+
+    Returns
+    ----------
+    str
+        Possibly unqualified classname referred to by this forward reference.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this forward reference is *not* actually a forward reference.
+
+    See Also
+    ----------
+    :func:`get_hint_pep484585_forwardref_classname_relative_to_object`
+        Getter returning fully-qualified forward reference classnames.
+    '''
+
+    # If this is *NOT* a forward reference type hint, raise an exception.
+    die_unless_hint_pep484585_forwardref(hint)
+
+    # Return either...
+    return (
+        # If this hint is a PEP 484-compliant forward reference, the typically
+        # unqualified classname referred to by this reference.
+        get_hint_pep484_forwardref_type_basename(hint)
+        if is_hint_pep484_forwardref(hint) else
+        # Else, this hint is a string. In this case, this string as is.
+        hint
+    )
+
+
+#FIXME: Unit test against nested classes.
+def get_hint_pep484585_forwardref_classname_relative_to_object(
+    hint: object, obj: object) -> str:
+    '''
+    Fully-qualified classname referred to by the passed **forward reference
+    type hint** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined) canonicalized if this hint is unqualified
+    relative to the module declaring the passed object (e.g., callable, class).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Forward reference to be canonicalized.
+    obj : object
+        Object to canonicalize the classname referred to by this forward
+        reference if that classname is unqualified (i.e., relative).
+
+    Returns
+    ----------
+    str
+        Fully-qualified classname referred to by this forward reference
+        relative to this callable.
+
+    Raises
+    ----------
+    BeartypeDecorHintForwardRefException
+        If this forward reference is *not* actually a forward reference.
+    _BeartypeUtilModuleException
+        If ``module_obj`` does *not* define the ``__module__`` dunder instance
+        variable.
+
+    See Also
+    ----------
+    :func:`get_hint_pep484585_forwardref_classname`
+        Getter returning possibly unqualified forward reference classnames.
+    '''
+
+    # Possibly unqualified classname referred to by this forward reference.
+    forwardref_classname = get_hint_pep484585_forwardref_classname(hint)
+
+    # Return either...
+    return (
+        # If this classname contains one or more "." characters and is thus
+        # already hopefully fully-qualified, this classname as is;
+        forwardref_classname
+        if '.' in forwardref_classname else
+        # Else, the "."-delimited concatenation of the fully-qualified name of
+        # the module declaring this class with this unqualified classname.
+        f'{get_object_module_name(obj)}.{forwardref_classname}'
+    )
 
 # ....................{ GETTERS ~ kind : generic          }....................
 @callable_cached
@@ -521,7 +735,7 @@ def get_hint_pep484585_subclass_superclass(
 
     # Optional parameters.
     hint_label: str = 'Annotated',
-) -> _HINT_PEP484585_SUBCLASS_ARGS_1:
+) -> _HINT_PEP484585_SUBCLASS_ARGS_1_UNION:
     '''
     Superclass subscripting the passed :pep:`484`- or :pep:`585`-compliant
     **subclass type hint** (i.e., hint constraining objects to subclass some
@@ -541,7 +755,7 @@ def get_hint_pep484585_subclass_superclass(
 
     Returns
     ----------
-    _HINT_PEP484585_SUBCLASS_ARGS_1
+    _HINT_PEP484585_SUBCLASS_ARGS_1_UNION
         Argument subscripting this subclass type hint, guaranteed to be either:
 
         * A class.
@@ -584,7 +798,7 @@ def get_hint_pep484585_subclass_superclass(
 
     # If this superclass is neither a class nor forward reference to a class,
     # raise an exception.
-    if not isinstance(hint_superclass, _PEP484585_SUBCLASS_ARGS_1_TYPES):
+    if not isinstance(hint_superclass, _HINT_PEP484585_SUBCLASS_ARGS_1_TYPES):
         raise BeartypeDecorHintPep585Exception(
             f'{hint_label} PEP 585 subclass type hint {repr(hint)} '
             f'argument {repr(hint_superclass)} neither '
