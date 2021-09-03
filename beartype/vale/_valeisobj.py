@@ -286,7 +286,7 @@ class IsAttr(_IsABC):
             # *WITHOUT* additional stack frames whose values are:
             # * The sentinel placeholder.
             local_name_sentinel = add_func_scope_attr(
-                attr=SENTINEL, attr_scope=is_valid_code_locals)
+                attr=SENTINEL, func_scope=is_valid_code_locals)
 
             # Generate locals safely merging the locals required by both the
             # code generated below *AND* the code validating this attribute.

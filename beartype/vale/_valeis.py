@@ -321,7 +321,7 @@ class Is(_IsABC):
         # enabling this validator to be called directly in the body of those
         # functions *WITHOUT* imposing additional stack frames.
         is_valid_attr_name = add_func_scope_attr(
-            attr=is_valid, attr_scope=is_valid_code_locals)
+            attr=is_valid, func_scope=is_valid_code_locals)
 
         # One one-liner to rule them all and in "pdb" bind them.
         return _SubscriptedIs(

@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #embed the values of builtins when comparing against builtins (e.g., integers,
 #strings). Specifically, we should only conditionally perform this line below:
 #       param_name_obj_value = add_func_scope_attr(
-#           attr=obj, attr_scope=is_valid_code_locals)
+#           attr=obj, func_scope=is_valid_code_locals)
 #...when we absolutely must. So when mustn't we? We see two simple approaches
 #to detecting builtin objects:
 #* Detect the types of those objects. While obvious, this presents several
@@ -246,7 +246,7 @@ class IsEqual(_IsABC):
         # whose value is this object, enabling this object to be tested in
         # those functions *WITHOUT* additional stack frames.
         param_name_obj_value = add_func_scope_attr(
-            attr=obj, attr_scope=is_valid_code_locals)
+            attr=obj, func_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this object.
         is_valid_code = VALE_CODE_CHECK_ISEQUAL_format(

@@ -133,7 +133,7 @@ def pep_code_check_param(
         (
             func_wrapper_code,
             func_wrapper_locals,
-            hints_forwardref_class_basename,
+            hint_forwardrefs_class_basename,
         ) = pep_code_check_hint(hint)
 
         # Merge the local scope required to type-check this parameter into the
@@ -145,7 +145,7 @@ def pep_code_check_param(
             data=data,
             func_wrapper_code=func_wrapper_code,
             pith_repr=repr(param.name),
-            hints_forwardref_class_basename=hints_forwardref_class_basename,
+            hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
         )
     # If the prior call to the memoized pep_code_check_hint() function raised a
     # cached exception, reraise this cached exception's memoized
@@ -189,7 +189,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
     func_wrapper_code: str = None  # type: ignore[assignment]
 
     # Empty tuple, passed below to satisfy the _unmemoize_pep_code() API.
-    hints_forwardref_class_basename = ()
+    hint_forwardrefs_class_basename = ()
 
     # Attempt to...
     try:
@@ -198,7 +198,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
         (
             func_wrapper_code,
             func_wrapper_locals,
-            hints_forwardref_class_basename,
+            hint_forwardrefs_class_basename,
         ) = pep_code_check_hint(hint)
 
         # Merge the local scope required to type-check this return into the
@@ -227,7 +227,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
         data=data,
         func_wrapper_code=func_wrapper_code,
         pith_repr=_RETURN_REPR,
-        hints_forwardref_class_basename=hints_forwardref_class_basename,
+        hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
     )
 
     # Return this code.
@@ -238,7 +238,7 @@ def _unmemoize_pep_code(
     data: BeartypeData,
     func_wrapper_code: str,
     pith_repr: str,
-    hints_forwardref_class_basename: tuple,
+    hint_forwardrefs_class_basename: tuple,
 ) -> str:
     '''
     Convert the passed memoized code snippet type-checking any parameter or
@@ -266,7 +266,7 @@ def _unmemoize_pep_code(
     pith_repr : str
         Machine-readable representation of the name of this parameter or
         return.
-    hints_forwardref_class_basename : tuple
+    hint_forwardrefs_class_basename : tuple
         Tuple of the unqualified classnames referred to by all relative forward
         reference type hints visitable from the current root type hint.
 
@@ -281,8 +281,8 @@ def _unmemoize_pep_code(
     assert isinstance(func_wrapper_code, str), (
         f'{repr(func_wrapper_code)} not string.')
     assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
-    assert isinstance(hints_forwardref_class_basename, Iterable), (
-        f'{repr(hints_forwardref_class_basename)} not iterable.')
+    assert isinstance(hint_forwardrefs_class_basename, Iterable), (
+        f'{repr(hint_forwardrefs_class_basename)} not iterable.')
 
     # Generate an unmemoized parameter-specific code snippet type-checking
     # this parameter by globally replacing in this parameter-agnostic
@@ -298,14 +298,14 @@ def _unmemoize_pep_code(
     # If this code contains one or more relative forward reference placeholder
     # substrings memoized into this code, unmemoize this code by globally
     # resolving these placeholders relative to the decorated callable.
-    if hints_forwardref_class_basename:
+    if hint_forwardrefs_class_basename:
         # Pass the beartypistry singleton as a private "__beartypistry"
         # parameter to this wrapper function.
         data.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
-        for hint_forwardref_class_basename in hints_forwardref_class_basename:
+        for hint_forwardref_class_basename in hint_forwardrefs_class_basename:
             # Generate an unmemoized callable-specific code snippet
             # type-checking this class by globally replacing in this
             # callable-agnostic code...

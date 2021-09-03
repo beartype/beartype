@@ -28,7 +28,7 @@ from beartype._util.py.utilpyversion import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from types import FunctionType
-from typing import Any, Generic, Optional, Tuple, TypeVar
+from typing import Any, Generic, Optional, Tuple, TypeVar, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

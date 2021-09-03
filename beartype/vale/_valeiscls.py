@@ -219,7 +219,7 @@ class IsSubclass(_IsABC):
         # tuple of types to be tested in those functions *WITHOUT* additional
         # stack frames.
         param_name_base_cls = add_func_scope_attr(
-            attr=base_classes, attr_scope=is_valid_code_locals)
+            attr=base_classes, func_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this type.
         is_valid_code = VALE_CODE_CHECK_ISSUBCLASS_format(

@@ -44,8 +44,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ HINTS                             }....................
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
 '''
-Tuple union of all PEP-compliant **forward reference types** (i.e.,
-classes of all forward reference objects).
+Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
+types** (i.e., classes of all forward reference objects).
 
 Specifically, this union contains:
 
@@ -63,25 +63,31 @@ approach is the demonstrably wrong approach, because encapsulating strings only
 harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
-# ....................{ HINTS ~ private                   }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = (
+
+HINT_PEP484585_FORWARDREF_UNION: Any = (
     # If the active Python interpreter targets Python >= 3.7, include the sane
     # "typing.ForwardRef" type in this union;
-    Union[type, str, HINT_PEP484_FORWARDREF_TYPE]
+    Union[str, HINT_PEP484_FORWARDREF_TYPE]
     if IS_PYTHON_AT_LEAST_3_7 else
     # Else, the active Python interpreter targets Python 3.6. In this case,
     # exclude the insane "typing._ForwardRef" type from this union. Naively
     # including that type here induces fatal runtime exceptions resembling:
     #     AttributeError: type object '_ForwardRef' has no attribute '_gorg'
-    Union[type, str,]
+    # Since "Union[str]" literally reduces to simply "str", we prefer the
+    # latter here for clarity.
+    str
 )
 '''
-Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
-**subclass type hint arguments** (i.e., PEP-compliant child type hints
-subscripting (indexing) a subclass type hint).
+Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
+(i.e., classes of all forward reference objects).
+
+See Also
+----------
+:data`HINT_PEP484585_FORWARDREF_TYPES`
+    Further details.
 '''
 
-
+# ....................{ HINTS ~ private                   }....................
 _HINT_PEP484585_SUBCLASS_ARGS_1_TYPES = (
     (type,) + HINT_PEP484585_FORWARDREF_TYPES)
 '''
@@ -90,17 +96,38 @@ Tuple union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 subscripting (indexing) a subclass type hint).
 '''
 
+
+_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = Union[
+    type, HINT_PEP484585_FORWARDREF_UNION]
+'''
+Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
+**subclass type hint arguments** (i.e., PEP-compliant child type hints
+subscripting (indexing) a subclass type hint).
+'''
+
 # ....................{ VALIDATORS ~ kind : forwardref    }....................
-def die_unless_hint_pep484585_forwardref(hint: object) -> None:
+def die_unless_hint_pep484585_forwardref(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    hint_label: str = 'Annotated',
+) -> None:
     '''
     Raise an exception unless the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **forward reference type hint** (i.e., object
     referring to a user-defined class that typically has yet to be defined).
 
+    Equivalently, this function raises an exception if the passed object is
+    neither a :pep:`484`- nor :pep:`585`-compliant forward reference type hint.
+
     Parameters
     ----------
     hint : object
         Object to be validated.
+    hint_label : str, optional
+        Human-readable substring describing this object in exception messages.
+        Defaults to a reasonably sane string.
 
     Raises
     ----------
@@ -111,7 +138,7 @@ def die_unless_hint_pep484585_forwardref(hint: object) -> None:
     # If this is *NOT* a forward reference type hint, raise an exception.
     if not is_hint_pep484585_forwardref(hint):
         raise BeartypeDecorHintForwardRefException(
-            f'Type hint {repr(hint)} not forward reference.')
+            f'{hint_label} {repr(hint)} not forward reference.')
 
 # ....................{ TESTERS ~ kind : forwardref       }....................
 def is_hint_pep484585_forwardref(hint: object) -> bool:

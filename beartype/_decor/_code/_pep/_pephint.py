@@ -270,14 +270,14 @@ def pep_code_check_hint(
     ----------
     Tuple[str, CallableScope, Tuple[str, ...]]
         3-tuple ``(func_wrapper_code, func_wrapper_locals,
-        hints_forwardref_class_basename)``, where:
+        hint_forwardrefs_class_basename)``, where:
 
         * ``func_wrapper_code`` is a Python code snippet type-checking the
           previously localized parameter or return value against this hint.
         * ``func_wrapper_locals`` is the **local scope** (i.e., dictionary
           mapping from the name to value of each attribute referenced in the
           signature) of this wrapper function needed for this type-checking.
-        * ``hints_forwardref_class_basename`` is a tuple of the unqualified
+        * ``hint_forwardrefs_class_basename`` is a tuple of the unqualified
           classnames of `PEP 484`_-compliant relative forward references
           visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
           given the root hint ``Union['MuhClass', List['YoClass']]``).
@@ -425,7 +425,7 @@ def pep_code_check_hint(
     # Set of the unqualified classnames referred to by all relative forward
     # references visitable from this root hint if any *OR* "None" otherwise
     # (i.e., if no such forward references are visitable).
-    hints_forwardref_class_basename: set = None  # type: ignore[assignment]
+    hint_forwardrefs_class_basename: set = None  # type: ignore[assignment]
 
     # Possibly unqualified classname referred to by the currently visited
     # forward reference type hint.
@@ -902,8 +902,8 @@ def pep_code_check_hint(
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        cls_scope=func_wrapper_locals,
-                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                        func_scope=func_wrapper_locals,
+                        attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -919,6 +919,8 @@ def pep_code_check_hint(
                 #pass (and thus document and test) *QUITE* alot of metadata.
                 #Initially, let's just define _add_func_scope_type_forwardref()
                 #as a closure above for sanity.
+                #FIXME: Done! Call express_func_scope_type_forwardref() below
+                #and excise everything up to "!!!!", please.
 
                 # Possibly unqualified classname referred to by this forward
                 # reference.
@@ -941,12 +943,12 @@ def pep_code_check_hint(
                     # If the set of unqualified classnames referred to by all
                     # relative forward references has yet to be instantiated,
                     # do so.
-                    if hints_forwardref_class_basename is None:
-                        hints_forwardref_class_basename = set()
+                    if hint_forwardrefs_class_basename is None:
+                        hint_forwardrefs_class_basename = set()
                     # In any case, this set now exists.
 
                     # Add this unqualified classname to this set.
-                    hints_forwardref_class_basename.add(
+                    hint_forwardrefs_class_basename.add(
                         hint_curr_forwardref_classname)
 
                     # Placeholder substring to be replaced by the caller with a
@@ -1344,8 +1346,8 @@ def pep_code_check_hint(
                                 #       https://stackoverflow.com/a/40054478/2809027
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
-                                    types_scope=func_wrapper_locals,
-                                    types_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                                    func_scope=func_wrapper_locals,
+                                    attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                                 ),
                             ))
 
@@ -1448,8 +1450,8 @@ def pep_code_check_hint(
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        cls_scope=func_wrapper_locals,
-                        cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                        func_scope=func_wrapper_locals,
+                        attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
@@ -1711,6 +1713,8 @@ def pep_code_check_hint(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
+                    #FIXME: Implement error-handling support (including forward
+                    #references) for this as well, please.
                     #FIXME: Optimization: if the superclass is an ignorable
                     #class (e.g., "object", "Protocol"), this type hint is
                     #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
@@ -1735,8 +1739,8 @@ def pep_code_check_hint(
                             hint_child_expr=add_func_scope_type(
                                 # Superclass subscripting this hint.
                                 cls=hint_child,  # type: ignore[arg-type]
-                                cls_scope=func_wrapper_locals,
-                                cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                                func_scope=func_wrapper_locals,
+                                attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                             ),
                         )
                     # Else, this superclass is *NOT* actually a class. By
@@ -1937,8 +1941,8 @@ def pep_code_check_hint(
                         # Python expression evaluating to this generic type.
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
-                            cls_scope=func_wrapper_locals,
-                            cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                            func_scope=func_wrapper_locals,
+                            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                         ),
                     )
                     # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
@@ -1976,9 +1980,11 @@ def pep_code_check_hint(
                         # types of all literal objects subscripting this hint.
                         hint_child_types_expr=add_func_scope_types(
                             types=set(
-                                type(hint_child) for hint_child in hint_childs),
-                            types_scope=func_wrapper_locals,
-                            types_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                                type(hint_child)
+                                for hint_child in hint_childs
+                            ),
+                            func_scope=func_wrapper_locals,
+                            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                         ),
                     )
 
@@ -1994,7 +2000,7 @@ def pep_code_check_hint(
                                 # object.
                                 hint_child_expr=add_func_scope_attr(
                                     attr=hint_child,
-                                    attr_scope=func_wrapper_locals,
+                                    func_scope=func_wrapper_locals,
                                     attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                                 ),
                             ))
@@ -2049,8 +2055,8 @@ def pep_code_check_hint(
                 # Python expression evaluating to this type.
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
-                    cls_scope=func_wrapper_locals,
-                    cls_label=_FUNC_WRAPPER_LOCAL_LABEL,
+                    func_scope=func_wrapper_locals,
+                    attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                 ),
             )
 
@@ -2142,8 +2148,8 @@ def pep_code_check_hint(
             # If *NO* relative forward references are visitable from this root
             # hint, the empty tuple;
             ()
-            if hints_forwardref_class_basename is None else
+            if hint_forwardrefs_class_basename is None else
             # Else, that set converted into a tuple.
-            tuple(hints_forwardref_class_basename)
+            tuple(hint_forwardrefs_class_basename)
         ),
     )

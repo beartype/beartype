@@ -57,7 +57,6 @@ beartypistry parameter.
 
 # ....................{ REGISTRARS ~ forwardref           }....................
 #FIXME: Unit test us up.
-
 # Note this function intentionally does *NOT* accept an optional "hint_labal"
 # parameter as doing so would conflict with memoization.
 @callable_cached

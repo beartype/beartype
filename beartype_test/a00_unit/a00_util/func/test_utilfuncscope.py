@@ -214,23 +214,23 @@ def test_add_func_scope_attr() -> None:
     from beartype._util.func.utilfuncscope import add_func_scope_attr
 
     # Arbitrary scope to add attributes to.
-    attr_scope = {}
+    func_scope = {}
 
     # Arbitrary object to be added to this scope.
     attr = 'Pestilence-stricken multitudes: O thou,'
 
     # Named of this attribute in this scope.
-    attr_name = add_func_scope_attr(attr=attr, attr_scope=attr_scope)
+    attr_name = add_func_scope_attr(attr=attr, func_scope=func_scope)
 
     # Assert the prior call added this attribute to this scope as expected.
     assert isinstance(attr_name, str)
     assert str(id(attr)) in attr_name
-    assert attr_scope[attr_name] is attr
+    assert func_scope[attr_name] is attr
 
     # Assert this getter returns the same name when repassed an attribute
     # previously added to this scope.
-    assert add_func_scope_attr(attr=attr, attr_scope=attr_scope) == attr_name
-    assert attr_scope[attr_name] is attr
+    assert add_func_scope_attr(attr=attr, func_scope=func_scope) == attr_name
+    assert func_scope[attr_name] is attr
 
     # Note that testing this getter's error condition is effectively
     # infeasible, as doing so would require deterministically creating a
@@ -250,7 +250,7 @@ def test_add_func_scope_type_pass() -> None:
     from beartype._util.utilobject import get_object_type_basename
 
     # Arbitrary scope to be added to below.
-    cls_scope = {}
+    func_scope = {}
 
     # Assert this function supports...
     classes_nonbuiltin = (
@@ -265,16 +265,16 @@ def test_add_func_scope_type_pass() -> None:
         NoneType,
     )
     for cls in classes_nonbuiltin:
-        cls_scope_name = add_func_scope_type(cls=cls, cls_scope=cls_scope)
+        cls_scope_name = add_func_scope_type(cls=cls, func_scope=func_scope)
         assert cls_scope_name != get_object_type_basename(cls)
-        assert cls_scope[cls_scope_name] is cls
+        assert func_scope[cls_scope_name] is cls
 
     # Assert this function does *NOT* add builtin types but instead simply
     # returns the unqualified basenames of those types.
     cls = list
-    cls_scope_name = add_func_scope_type(cls=cls, cls_scope=cls_scope)
+    cls_scope_name = add_func_scope_type(cls=cls, func_scope=func_scope)
     assert cls_scope_name == get_object_type_basename(cls)
-    assert cls_scope_name not in cls_scope
+    assert cls_scope_name not in func_scope
 
 
 def test_add_func_scope_type_fail() -> None:
@@ -289,7 +289,7 @@ def test_add_func_scope_type_fail() -> None:
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
 
     # Arbitrary scope to be added to below.
-    cls_scope = {}
+    func_scope = {}
 
     # Assert this function raises the expected exception for non-types.
     with raises(BeartypeDecorHintPep3119Exception):
@@ -298,14 +298,14 @@ def test_add_func_scope_type_fail() -> None:
                 'The best lack all conviction, while the worst',
                 'Are full of passionate intensity',
             ),
-            cls_scope=cls_scope,
+            func_scope=func_scope,
         )
 
     # Assert this function raises the expected exception for PEP 560-compliant
     # classes whose metaclasses define an __instancecheck__() dunder method to
     # unconditionally raise exceptions.
     with raises(BeartypeDecorHintPep3119Exception):
-        add_func_scope_type(cls=NonIsinstanceableClass, cls_scope=cls_scope)
+        add_func_scope_type(cls=NonIsinstanceableClass, func_scope=func_scope)
 
 # ....................{ TESTS ~ adder : tuple             }....................
 def test_add_func_scope_types_pass() -> None:
@@ -322,7 +322,7 @@ def test_add_func_scope_types_pass() -> None:
     from beartype._util.utilobject import get_object_type_basename
 
     # Arbitrary scope to be added to below.
-    types_scope = {}
+    func_scope = {}
 
     # Assert this function adds a tuple of one or more standard types.
     #
@@ -331,47 +331,47 @@ def test_add_func_scope_types_pass() -> None:
     # ordering) and *MUST* thus be tested by conversion to sets.
     types = CallableTypes
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope)
-    assert set(types) == set(types_scope[types_scope_name])
+        types=types, func_scope=func_scope)
+    assert set(types) == set(func_scope[types_scope_name])
 
     # Assert this function readds the same tuple as well.
     types_scope_name_again = add_func_scope_types(
-        types=types, types_scope=types_scope)
+        types=types, func_scope=func_scope)
     assert types_scope_name == types_scope_name_again
 
     # Assert this function adds a frozenset of one or more standard types.
     types = frozenset(ModuleOrStrTypes)
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope)
-    assert set(types) == set(types_scope[types_scope_name])
+        types=types, func_scope=func_scope)
+    assert set(types) == set(func_scope[types_scope_name])
 
     # Assert this function does *NOT* add tuples of one non-builtin types but
     # instead simply returns the unqualified basenames of those types.
     types = (int,)
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope)
+        types=types, func_scope=func_scope)
     assert types_scope_name == get_object_type_basename(types[0])
-    assert types_scope_name not in types_scope
+    assert types_scope_name not in func_scope
 
     # Assert this function adds tuples of one non-builtin type as merely that
     # type rather than that tuple.
     types = (WhenOwlsCallTheBreathlessMoon,)
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope)
-    assert types_scope[types_scope_name] is WhenOwlsCallTheBreathlessMoon
+        types=types, func_scope=func_scope)
+    assert func_scope[types_scope_name] is WhenOwlsCallTheBreathlessMoon
 
     # Assert this function adds tuples containing duplicate types as tuples
     # containing only the proper subset of non-duplicate types.
     types = (TheShadowsOfTheTreesAppear,)*3
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope)
-    assert types_scope[types_scope_name] == (TheShadowsOfTheTreesAppear,)
+        types=types, func_scope=func_scope)
+    assert func_scope[types_scope_name] == (TheShadowsOfTheTreesAppear,)
 
     # Assert this function registers tuples containing *NO* duplicate types.
     types = NoneTypeOr[CallableTypes]
     types_scope_name = add_func_scope_types(
-        types=types, types_scope=types_scope, is_unique=True)
-    assert types_scope[types_scope_name] == types
+        types=types, func_scope=func_scope, is_unique=True)
+    assert func_scope[types_scope_name] == types
 
     #FIXME: Disable this until we drop Python 3.6 support. While Python >= 3.7
     #preserves insertion order for sets, Python < 3.7 does *NOT*.
@@ -398,7 +398,7 @@ def test_add_func_scope_types_fail() -> None:
         Pep484GenericTypevaredSingle)
 
     # Arbitrary scope to be added to below.
-    types_scope = {}
+    func_scope = {}
 
     # Assert this function raises the expected exception for unhashable tuples.
     with raises(BeartypeDecorHintNonPepException):
@@ -415,7 +415,7 @@ def test_add_func_scope_types_fail() -> None:
                     'Tread': 'softly because you tread on my dreams.',
                 },
             ),
-            types_scope=types_scope,
+            func_scope=func_scope,
         )
 
     # Assert this function raises the expected exception for non-tuples.
@@ -427,19 +427,19 @@ def test_add_func_scope_types_fail() -> None:
                 'Nine bean-rows will I have there, a hive for the honey-bee,',
                 'And live alone in the bee-loud glade.',
             )),
-            types_scope=types_scope,
+            func_scope=func_scope,
         )
 
     # Assert this function raises the expected exception for empty tuples.
     with raises(BeartypeDecorHintNonPepException):
-        add_func_scope_types(types=(), types_scope=types_scope)
+        add_func_scope_types(types=(), func_scope=func_scope)
 
     # Assert this function raises the expected exception for tuples containing
     # one or more PEP-compliant types.
     with raises(BeartypeDecorHintNonPepException):
         add_func_scope_types(
             types=(int, Pep484GenericTypevaredSingle, str,),
-            types_scope=types_scope,
+            func_scope=func_scope,
         )
 
     # Assert this function raises the expected exception for tuples containing
@@ -448,5 +448,5 @@ def test_add_func_scope_types_fail() -> None:
     with raises(BeartypeDecorHintNonPepException):
         add_func_scope_types(
             types=(bool, NonIsinstanceableClass, float,),
-            types_scope=types_scope,
+            func_scope=func_scope,
         )
