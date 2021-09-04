@@ -25,13 +25,8 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep593Exception,
 )
-from beartype._decor._cache.cachetype import (
-    bear_typistry,
-    register_typistry_forwardref,
-)
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
-    ARG_NAME_TYPISTRY,
     VAR_NAME_PREFIX_PITH,
     VAR_NAME_PITH_ROOT as PITH_ROOT_VAR_NAME,
 )
@@ -44,14 +39,17 @@ from beartype._decor._code._pep._pepmagic import (
     HINT_META_INDEX_PITH_VAR_NAME,
     HINT_META_INDEX_INDENT,
 )
+from beartype._decor._code._pep._pepscope import (
+    add_func_scope_type,
+    add_func_scope_types,
+    express_func_scope_type_forwardref,
+)
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_HINT_ROOT_PREFIX,
     PEP_CODE_HINT_ROOT_SUFFIX,
     PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
     PEP484585_CODE_HINT_GENERIC_CHILD,
     PEP484585_CODE_HINT_GENERIC_PREFIX,
@@ -104,15 +102,12 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
-    add_func_scope_type,
-    add_func_scope_types,
 )
 from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilpep484585 import (
     get_hint_pep484585_args_1,
-    get_hint_pep484585_forwardref_classname,
     get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type_or_none,
     get_hint_pep484585_subclass_superclass,
@@ -156,7 +151,7 @@ from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
-from typing import Tuple
+from typing import Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -425,11 +420,7 @@ def pep_code_check_hint(
     # Set of the unqualified classnames referred to by all relative forward
     # references visitable from this root hint if any *OR* "None" otherwise
     # (i.e., if no such forward references are visitable).
-    hint_forwardrefs_class_basename: set = None  # type: ignore[assignment]
-
-    # Possibly unqualified classname referred to by the currently visited
-    # forward reference type hint.
-    hint_curr_forwardref_classname: str = None  # type: ignore[assignment]
+    hint_forwardrefs_class_basename: Optional[set] = None
 
     # ..................{ HINT ~ pep 572                    }..................
     # The following local variables isolated to this subsection are only
@@ -912,56 +903,25 @@ def pep_code_check_hint(
             # ..............{ FORWARDREF                        }..............
             # If this hint is a forward reference...
             elif hint_curr_sign is HintSignForwardRef:
-                #FIXME: Consider encapsulating this logic up until the next
-                #"!!!!" string to a new add_func_scope_type_forwardref()
-                #function of the "utilfuncscope" submodule. Or maybe not? That
-                #does rather seem like overkill. Moreover, we would need to
-                #pass (and thus document and test) *QUITE* alot of metadata.
-                #Initially, let's just define _add_func_scope_type_forwardref()
-                #as a closure above for sanity.
-                #FIXME: Done! Call express_func_scope_type_forwardref() below
-                #and excise everything up to "!!!!", please.
-
-                # Possibly unqualified classname referred to by this forward
-                # reference.
-                hint_curr_forwardref_classname = (
-                    get_hint_pep484585_forwardref_classname(hint_curr))
-
-                # If this classname contains one or more "." characters, this
-                # classname is fully-qualified. In this case...
-                if '.' in hint_curr_forwardref_classname:
-                    # Pass the beartypistry singleton as a private
-                    # "__beartypistry" parameter to this wrapper function.
-                    func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
-
-                    # Python expression evaluating to this class when accessed
-                    # via the private "__beartypistry" parameter.
-                    hint_curr_expr = register_typistry_forwardref(
-                        hint_curr_forwardref_classname)
-                # Else, this classname is unqualified. In this case...
-                else:
-                    # If the set of unqualified classnames referred to by all
-                    # relative forward references has yet to be instantiated,
-                    # do so.
-                    if hint_forwardrefs_class_basename is None:
-                        hint_forwardrefs_class_basename = set()
-                    # In any case, this set now exists.
-
-                    # Add this unqualified classname to this set.
-                    hint_forwardrefs_class_basename.add(
-                        hint_curr_forwardref_classname)
-
-                    # Placeholder substring to be replaced by the caller with a
-                    # Python expression evaluating to this unqualified
-                    # classname canonicalized relative to the module declaring
-                    # the currently decorated callable when accessed via the
-                    # private "__beartypistry" parameter.
-                    hint_curr_expr = (
-                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
-                        f'{hint_curr_forwardref_classname}'
-                        f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
-                    )
-                #FIXME: "!!!!" Stop here, please. See above.
+                # Render this forward reference accessible to the body of this
+                # wrapper function by populating:
+                # * Python expression evaluating to the class referred to by
+                #   this forward reference when accessed via the private
+                #   "__beartypistry" parameter.
+                # * Set of the unqualified classnames referred to by all
+                #   relative forward references, including this reference if
+                #   relative. If this set was previously uninstantiated (i.e.,
+                #   "None"), this assignment initializes this local to the new
+                #   set instantiated by this call; else, this assignment
+                #   preserves this local set as is.
+                hint_curr_expr, hint_forwardrefs_class_basename = (
+                    express_func_scope_type_forwardref(
+                        forwardref=hint_curr,
+                        forwardrefs_class_basename=(
+                            hint_forwardrefs_class_basename),
+                        func_scope=func_wrapper_locals,
+                        attr_label=hint_curr_label,
+                    ))
 
                 # Code type-checking the current pith against this class.
                 func_curr_code = PEP484_CODE_HINT_INSTANCE_format(
@@ -1713,8 +1673,6 @@ def pep_code_check_hint(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
-                    #FIXME: Implement error-handling support (including forward
-                    #references) for this as well, please.
                     #FIXME: Optimization: if the superclass is an ignorable
                     #class (e.g., "object", "Protocol"), this type hint is
                     #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
@@ -1732,27 +1690,37 @@ def pep_code_check_hint(
 
                     # If this superclass is actually a class...
                     if isinstance(hint_child, type):
-                        # Code type-checking this pith against this superclass.
-                        func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
-                            pith_curr_expr=pith_curr_expr,
-                            # Python expression evaluating to this superclass.
-                            hint_child_expr=add_func_scope_type(
-                                # Superclass subscripting this hint.
-                                cls=hint_child,  # type: ignore[arg-type]
-                                func_scope=func_wrapper_locals,
-                                attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
-                            ),
+                        # Python expression evaluating to this superclass.
+                        hint_curr_expr = add_func_scope_type(
+                            # Superclass subscripting this hint.
+                            cls=hint_child,  # type: ignore[arg-type]
+                            func_scope=func_wrapper_locals,
+                            attr_label=_FUNC_WRAPPER_LOCAL_LABEL,
                         )
+
+                    #FIXME: *UNIT TEST THIS PLEASE.*
+
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
                     # performed above by the
                     # get_hint_pep484585_subclass_superclass() getter, this
                     # superclass *MUST* be a forward reference to a class.
                     else:
-                        #FIXME: Implement us up by calling the forward
-                        #reference closure defined above, please. Naturally,
-                        #*UNIT TEST THIS PLEASE.*
-                        pass
+                        # Render this forward reference accessible to the body
+                        # of this wrapper function. See above for commentary.
+                        hint_curr_expr, hint_forwardrefs_class_basename = (
+                            express_func_scope_type_forwardref(
+                                forwardref=hint_child,
+                                forwardrefs_class_basename=(
+                                    hint_forwardrefs_class_basename),
+                                func_scope=func_wrapper_locals,
+                            ))
+
+                    # Code type-checking this pith against this superclass.
+                    func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
+                        pith_curr_expr=pith_curr_expr,
+                        hint_curr_expr=hint_curr_expr,
+                    )
                 # Else, this hint is neither a PEP 484- nor 585-compliant
                 # subclass type hint.
                 #

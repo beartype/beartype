@@ -86,7 +86,7 @@ def die_unless_type_isinstanceable(
         Class to be validated.
     cls_label : str, optional
         Human-readable label prefixing the representation of this class in the
-        exception message. Defaults to ``"Annotated"``.
+        exception message. Defaults to something reasonably sane.
     exception_cls : Type[Exception], optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
@@ -235,7 +235,7 @@ def die_unless_type_issubclassable(
         Class to be validated.
     cls_label : str, optional
         Human-readable label prefixing the representation of this class in the
-        exception message. Defaults to ``"Annotated"``.
+        exception message. Defaults to something reasonably sane.
     exception_cls : Type[Exception], optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.

@@ -7,6 +7,10 @@
 Test-specific **path** (e.g., directory, file) utilities.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: *YIKES.* Fundamentally refactor this to leverage our new "pytpathlib"
+#formalism, which dramatically reduces DRY everywhere below.
+
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from

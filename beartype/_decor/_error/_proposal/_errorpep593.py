@@ -46,7 +46,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     '''
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignAnnotated, (
-        f'{repr(sleuth.hint_sign)} not HintSignAnnotated.')
+        f'{sleuth.hint_sign} not HintSignAnnotated.')
 
     # PEP-compliant type hint annotated by this metahint.
     metahint = get_hint_pep593_metahint(sleuth.hint)
@@ -69,7 +69,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         # @beartype decorator enforces this constraint at decoration time.
         if not isinstance(hint_metadatum, _SubscriptedIs):
             raise _BeartypeCallHintPepRaiseException(
-                f'{sleuth.exception_label} PEP 593 type hint '
+                f'{sleuth.hint_label} PEP 593 type hint '
                 f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} not '
                 f'not subscription of "beartype.vale.Is*" class.'
             )

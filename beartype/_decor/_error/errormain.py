@@ -285,7 +285,7 @@ def raise_pep_call_exception(
         pith=pith_value,
         hint=hint,
         cause_indent='',
-        exception_label=pith_label,
+        hint_label=pith_label,
         random_int=random_int,
     ).get_cause_or_none()
 

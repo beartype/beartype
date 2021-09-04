@@ -54,7 +54,7 @@ class CauseSleuth(object):
         line of the string returned by this getter if this string spans
         multiple lines *or* ignored otherwise (i.e., if this string is instead
         embedded in the current line).
-    exception_label : str
+    hint_label : str
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
@@ -100,7 +100,7 @@ class CauseSleuth(object):
     # * Minimize space and time complexity.
     __slots__ = (
         'cause_indent',
-        'exception_label',
+        'hint_label',
         'func',
         'hint_sign',
         'hint_childs',
@@ -112,7 +112,7 @@ class CauseSleuth(object):
 
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
-        'exception_label',
+        'hint_label',
         'func',
         'hint',
         'pith',
@@ -134,7 +134,7 @@ class CauseSleuth(object):
         pith: Any,
         hint: Any,
         cause_indent: str,
-        exception_label: str,
+        hint_label: str,
         random_int: int,
     ) -> None:
         '''
@@ -143,8 +143,8 @@ class CauseSleuth(object):
         assert callable(func), f'{repr(func)} not callable.'
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
-        assert isinstance(exception_label, str), (
-            f'{repr(exception_label)} not string.')
+        assert isinstance(hint_label, str), (
+            f'{repr(hint_label)} not string.')
         assert isinstance(random_int, NoneTypeOr[int]), (
             f'{repr(random_int)} not integer or "None".')
 
@@ -152,7 +152,7 @@ class CauseSleuth(object):
         self.func = func
         self.pith = pith
         self.cause_indent = cause_indent
-        self.exception_label = exception_label
+        self.hint_label = hint_label
         self.random_int = random_int
 
         # Nullify all remaining parameters for safety.
@@ -180,7 +180,7 @@ class CauseSleuth(object):
 
         # Reduce the currently visited hint to a lower-level hint-like object
         # associated with this hint if this hint satisfies a condition.
-        hint = get_hint_reduced(hint=hint, hint_label=self.exception_label)
+        hint = get_hint_reduced(hint=hint, hint_label=self.hint_label)
 
         # If this hint is PEP-compliant...
         if is_hint_pep(hint):
@@ -341,7 +341,7 @@ class CauseSleuth(object):
             # yet, raise an exception.
             if get_cause_or_none is None:
                 raise _BeartypeCallHintPepRaiseException(
-                    f'{self.exception_label} type hint '
+                    f'{self.hint_label} type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
                     f'"get_cause_or_none_"-prefixed getter function defined '
                     f'for this category of hint).'
@@ -382,7 +382,7 @@ class CauseSleuth(object):
             ...     pith=[42,]
             ...     hint=typing.List[int],
             ...     cause_indent='',
-            ...     exception_label='List of integers',
+            ...     hint_label='List of integers',
             ... )
             >>> sleuth_copy = sleuth.permute(pith=[24,])
             >>> sleuth_copy.pith

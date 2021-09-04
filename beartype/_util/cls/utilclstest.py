@@ -46,7 +46,7 @@ def die_unless_type(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this object is *not* a class.
     '''
 

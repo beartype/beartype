@@ -12,6 +12,11 @@ error messages describing the failure of an arbitrary object referred to as the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Honestly, this submodule strikes us as egregious overkill. Shift the
+#entirety of this into the "beartype._decor._error._errortype" submodule, which
+#appears to be the only submodule requiring this functionality.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintRaiseException
 from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -24,9 +29,9 @@ from typing import Tuple
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS ~ type                    }....................
+# ....................{ GETTERS ~ instance : type         }....................
 #FIXME: Unit test us up.
-def get_cause_object_not_type(pith: object, hint: type) -> str:
+def get_cause_object_not_instance_type(pith: object, hint: type) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary
     object to satisfy (i.e., be an instance of) the passed class.
@@ -72,7 +77,7 @@ def get_cause_object_not_type(pith: object, hint: type) -> str:
 
 
 #FIXME: Unit test us up.
-def get_cause_object_not_types(
+def get_cause_object_not_instance_types(
     pith: object, hint: Tuple[type, ...]) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary

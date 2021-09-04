@@ -4,12 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-compliant code snippets.**
-
-This private submodule *only* defines **PEP-compliant code snippets** (i.e.,
-triple-quoted pure-Python code constants formatted and concatenated together
-into wrapper functions implementing type-checking for decorated callables
-annotated by PEP-compliant type hints).
+**Beartype decorator PEP-compliant code snippets** (i.e., triple-quoted
+pure-Python code constants formatted and concatenated together into wrapper
+functions implementing type-checking for decorated callables annotated by
+PEP-compliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -424,7 +422,7 @@ PEP484585_CODE_HINT_SUBCLASS = '''(
 {indent_curr}    # True only if this pith is a class *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, type) and
 {indent_curr}    # True only if this class subclasses this superclass.
-{indent_curr}    isinstance({pith_curr_var_name}, {hint_child_expr})
+{indent_curr}    issubclass({pith_curr_var_name}, {hint_curr_expr})
 {indent_curr})'''
 '''
 PEP-compliant code snippet type-checking the current pith to be a subclass of

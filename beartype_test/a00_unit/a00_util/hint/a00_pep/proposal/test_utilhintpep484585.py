@@ -141,6 +141,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import (
+        BeartypeDecorHintPep3119Exception,
         BeartypeDecorHintPep484585Exception,
         BeartypeDecorHintPep585Exception,
     )
@@ -149,6 +150,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     from beartype._util.hint.pep.proposal.utilpep484585 import (
         get_hint_pep484585_subclass_superclass)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype_test.a00_unit.data.data_type import NonIssubclassableClass
     from pytest import raises
     from typing import Type
 
@@ -161,6 +163,12 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     # class.
     assert get_hint_pep484585_subclass_superclass(Type['bytes']) == (
         HINT_PEP484_FORWARDREF_TYPE('bytes'))
+
+    # Assert this getter raises the expected exception when passed a PEP
+    # 484-compliant subclass type hint subscripted by a non-issubclassable
+    # class.
+    with raises(BeartypeDecorHintPep3119Exception):
+        get_hint_pep484585_subclass_superclass(Type[NonIssubclassableClass])
 
     # Assert this getter raises the expected exception when passed an arbitrary
     # object that is neither a PEP 484- nor 585-compliant subclass type hint.
@@ -179,6 +187,13 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         # to a class.
         assert get_hint_pep484585_subclass_superclass(type['complex']) == (
             'complex')
+
+        # Assert this getter raises the expected exception when passed a PEP
+        # 585-compliant subclass type hint subscripted by a non-issubclassable
+        # class.
+        with raises(BeartypeDecorHintPep3119Exception):
+            get_hint_pep484585_subclass_superclass(
+                type[NonIssubclassableClass])
 
         # Assert this getter raises the expected exception when passed a PEP
         # 585-compliant subclass type hint subscripted by *NO* classes.

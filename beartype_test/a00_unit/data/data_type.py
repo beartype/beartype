@@ -23,7 +23,9 @@ class Class(object):
     '''
 
     def instance_method(self):
-        '''Arbitrary pure-Python instance method.'''
+        '''
+        Arbitrary pure-Python instance method.
+        '''
 
         pass
 

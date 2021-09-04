@@ -194,21 +194,19 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     #FIXME: This likely requires special handling under Python 3.6. Perhaps
     #simply detect for Python 3.6 and remove them or avoid adding them here?
 
-    # Although the Python 3.6-specific implementation of the "typing"
-    # module *DOES* technically supply these attributes, it does so
-    # only non-deterministically. For unknown reasons (whose underlying
-    # cause appears to be unwise abuse of private fields of the
-    # critical stdlib "abc.ABCMeta" metaclass), the "typing.Hashable"
-    # and "typing.Sized" abstract base classes (ABCs) spontaneously
-    # interchange themselves with the corresponding
-    # "collections.abc.Hashable" and "collections.abc.Sized" ABCs after
-    # indeterminate importations and/or reference to these ABCs.
+    # Although the Python 3.6-specific implementation of the "typing" module
+    # *DOES* technically supply these attributes, it does so only
+    # non-deterministically. For unknown reasons (whose underlying cause
+    # appears to be unwise abuse of private fields of the critical stdlib
+    # "abc.ABCMeta" metaclass), the "typing.Hashable" and "typing.Sized"
+    # abstract base classes (ABCs) spontaneously interchange themselves with
+    # the corresponding "collections.abc.Hashable" and "collections.abc.Sized"
+    # ABCs after indeterminate importations and/or reference to these ABCs.
     #
-    # This issue is significantly concerning that we would ideally
-    # simply drop Python 3.6 support. Unfortunately, that would also
-    # mean dropping PyPy3 support, which has yet to stabilize Python
-    # 3.7 support. Ergo, we reluctantly preserve Python 3.6 and thus
-    # PyPy3 support for the interim.
+    # This is sufficiently concerning that we would ideally drop Python 3.6.
+    # Unfortunately, that would also mean dropping PyPy3 support, which has yet
+    # to stabilize Python 3.7 support. Ergo, we reluctantly preserve Python 3.6
+    # and thus PyPy3 support for the interim.
     HintSignHashable,
     HintSignSized,
 ))
@@ -304,8 +302,10 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     HintSignSequence,
     HintSignTuple,
 
-    #FIXME: Uncomment after worky. We still need to add error-handling support
-    #for "HintSignType", in particular.
+    #FIXME: Uncomment after worky. As difficult as this is to believe, this is
+    #still non-working despite a week's worth of volunteerism. There appears to
+    #be something edge casey about the unsubscripted "typing.Type" attribute
+    #under Python <= 3.8, which is no surprise whatsoever. *sigh*
     # HintSignType,
 
     # ..................{ PEP 544                           }..................

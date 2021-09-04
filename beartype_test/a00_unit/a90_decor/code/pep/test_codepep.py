@@ -9,14 +9,6 @@
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
 to **PEP-compliant type hints** (i.e., :mod:`beartype`-agnostic annotations
 generically compliant with annotation-centric PEPs).
-
-See Also
-----------
-:mod:`beartype_test.a00_unit.pep.p484`
-    Subpackage specifically unit testing `PEP 484`_-compliant type hints.
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -24,17 +16,13 @@ See Also
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pyterror import raises_uncached
 
 # ....................{ TESTS ~ pass : param : kind       }....................
 def test_pep_param_kind_positional_or_keyword_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     function call passed non-variadic positional and/or keyword parameters
-    annotated with `PEP 484`_-compliant type hints.
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
+    annotated with PEP-compliant type hints.
     '''
 
     # Defer heavyweight imports.
@@ -116,6 +104,7 @@ def test_pep_param_kind_variadic_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintPepException
+    from beartype_test.util.pyterror import raises_uncached
     from typing import Union
 
     # Decorated callable to be exercised.
