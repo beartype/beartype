@@ -326,21 +326,21 @@ def _init() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._decor._error._errorgeneric import (
-        get_cause_or_none_generic)
-    from beartype._decor._error._errorsequence import (
-        get_cause_or_none_sequence_args_1,
-        get_cause_or_none_tuple,
-    )
     from beartype._decor._error._errortype import (
         get_cause_or_none_instance_type_forwardref,
         get_cause_or_none_subclass_type,
         get_cause_or_none_type_instance_origin,
     )
-    from beartype._decor._error._proposal._errorpep484noreturn import (
+    from beartype._decor._error._proposal._pep484._errornoreturn import (
         get_cause_or_none_noreturn)
-    from beartype._decor._error._proposal._errorpep484union import (
+    from beartype._decor._error._proposal._pep484._errorunion import (
         get_cause_or_none_union)
+    from beartype._decor._error._proposal._pep484585._errorgeneric import (
+        get_cause_or_none_generic)
+    from beartype._decor._error._proposal._pep484585._errorsequence import (
+        get_cause_or_none_sequence_args_1,
+        get_cause_or_none_tuple,
+    )
     from beartype._decor._error._proposal._errorpep586 import (
         get_cause_or_none_literal)
     from beartype._decor._error._proposal._errorpep593 import (

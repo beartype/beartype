@@ -212,7 +212,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
 
     See Also
     ----------
-    :func:`is_hint_pep_typevared`
+    :func:`is_hint_pep_typevars`
         Commentary on the relation between generics and parametrized hints.
     '''
 

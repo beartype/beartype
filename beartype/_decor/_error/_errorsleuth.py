@@ -26,7 +26,7 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
-    is_hint_pep_subscripted,
+    is_hint_pep_args,
 )
 from beartype._util.hint.pep.proposal.utilpep484585 import (
     get_hint_pep484585_generic_bases_unerased,
@@ -187,15 +187,8 @@ class CauseSleuth(object):
             # Arbitrary object uniquely identifying this hint.
             self.hint_sign = get_hint_pep_sign(hint)
 
-            # Tuple of either...
-            self.hint_childs = (
-                # If this hint is a generic, the one or more unerased
-                # pseudo-superclasses originally subclassed by this hint.
-                get_hint_pep484585_generic_bases_unerased(hint)
-                if is_hint_pep484585_generic(hint) else
-                # Else, the zero or more arguments subscripting this hint.
-                get_hint_pep_args(hint)
-            )
+            # Tuple of the zero or more arguments subscripting this hint.
+            self.hint_childs = get_hint_pep_args(hint)
 
         # Classify this hint *AFTER* all other assignments above.
         self._hint = hint
@@ -296,7 +289,7 @@ class CauseSleuth(object):
             # type-checked against that type *AND is either...
             self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 #FIXME: Ideally, this line should just resemble:
-                #    not is_hint_pep_subscripted(hint_curr)
+                #    not is_hint_pep_args(hint_curr)
                 #Unfortunately, unsubscripted type hints under Python 3.6
                 #like "typing.List" are technically subscripted due to
                 #subclassing subscripted superclasses, which is insane. Due
@@ -305,7 +298,7 @@ class CauseSleuth(object):
                 #drop this as soon as we drop Python 3.6 support.
                 # Unsubscripted *OR*...
                 not (
-                    is_hint_pep_subscripted(self.hint)
+                    is_hint_pep_args(self.hint)
                     if IS_PYTHON_AT_LEAST_3_7 else
                     len(self.hint_childs)
                 ) or

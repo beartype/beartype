@@ -118,6 +118,12 @@ class HintPepMetadata(HintNonPepMetadata):
 
     Attributes
     ----------
+    is_args : Optional[bool]
+        ``True`` only if this hint is subscripted by one or more **arguments**
+        (i.e., PEP-compliant type hints that are *not* type variables) and/or
+        **type variables** (i.e., :class:`typing.TypeVar` instances). Defaults
+        to ``True`` only if the machine-readable representation of this hint
+        contains one or more ``"["`` delimiters.
     is_pep585_builtin : bool
         ``True`` only if this hint is a `PEP 585`-compliant builtin. If
         ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
@@ -128,18 +134,10 @@ class HintPepMetadata(HintNonPepMetadata):
         ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
         the negation of :attr:`is_pep585_generic` if non-``None`` *or*
         ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
-    is_subscripted : Optional[bool]
-        ``True`` only if this hint is subscripted by one or more **arguments**
-        (i.e., PEP-compliant type hints that are *not* type variables) and/or
-        **type variables** (i.e., :class:`typing.TypeVar` instances). Defaults
-        to ``True`` only if this hint is either:
-
-        * Parametrized by one or more type variables.
-        * *Not* its own sign (e.g., :attr:`typing.Any`, :attr:`typing.Sized`).
-    is_typevared : bool
-        ``True`` only if this hint is parametrized by one or more **type
-        variables** (i.e., :class:`typing.TypeVar` instances).
-        Defaults to ``False``.
+    is_typevars : bool
+        ``True`` only if this hint is subscripted by one or more **type
+        variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
+        ``False``.
     is_type_typing : Optional[bool]
         ``True`` only if this hint's class is defined by the :mod:`typing`
         module. If ``True``, then :attr:`is_pep585_builtin` and
@@ -187,18 +185,18 @@ class HintPepMetadata(HintNonPepMetadata):
         pep_sign: HintSign,
 
         # Optional parameters.
+        is_args: Optional[bool] = None,
         is_pep585_builtin: Optional[bool] = False,
         is_pep585_generic: Optional[bool] = False,
-        is_subscripted: Optional[bool] = None,
-        is_typevared: bool = False,
+        is_typevars: bool = False,
         is_type_typing: Optional[bool] = None,
         is_typing: Optional[bool] = None,
         stdlib_type: Optional[type] = None,
         generic_type: Optional[type] = None,
         **kwargs
     ) -> None:
-        assert isinstance(is_typevared, bool), (
-            f'{repr(is_typevared)} not bool.')
+        assert isinstance(is_typevars, bool), (
+            f'{repr(is_typevars)} not bool.')
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(stdlib_type, _NoneTypeOrType), (
             f'{repr(stdlib_type)} neither class nor "None".')
@@ -207,6 +205,10 @@ class HintPepMetadata(HintNonPepMetadata):
         super().__init__(**kwargs)
 
         # Conditionally default all unpassed parameters.
+        if is_args is None:
+            # Default this parameter to true only if the machine-readable
+            # representation of this hint contains "[" (e.g., "List[str]").
+            is_args = '[' in repr(self.hint)
         if is_pep585_builtin is None:
             # Default this parameter to either...
             is_pep585_builtin = (
@@ -225,15 +227,6 @@ class HintPepMetadata(HintNonPepMetadata):
                 # Else, false.
                 False
             )
-        if is_subscripted is None:
-            # Default this parameter to true only if either...
-            is_subscripted = (
-                # This hint is parametrized *OR*...
-                is_typevared or
-                # The machine-readable representation of this hint contains the
-                # "[" delimiter (e.g., "List[str]").
-                '[' in repr(self.hint)
-            )
         if is_type_typing is None:
             # Default this parameter to the negation of all PEP 585-compliant
             # boolean parameters. By definition, PEP 585-compliant type hints
@@ -246,16 +239,16 @@ class HintPepMetadata(HintNonPepMetadata):
         if generic_type is None:
             # Default this parameter to this hint's type origin only if this
             # hint is subscripted.
-            generic_type = stdlib_type if is_subscripted else None
+            generic_type = stdlib_type if is_args else None
 
         # Defer validating parameters defaulting to "None" until *AFTER*
         # initializing these parameters above.
+        assert isinstance(is_args, bool), (
+            f'{repr(is_args)} not bool.')
         assert isinstance(is_pep585_builtin, bool), (
             f'{repr(is_pep585_builtin)} not bool.')
         assert isinstance(is_pep585_generic, bool), (
             f'{repr(is_pep585_generic)} not bool.')
-        assert isinstance(is_subscripted, bool), (
-            f'{repr(is_subscripted)} not bool.')
         assert isinstance(is_type_typing, bool), (
             f'{repr(is_type_typing)} not bool.')
         assert isinstance(is_typing, bool), (
@@ -276,10 +269,10 @@ class HintPepMetadata(HintNonPepMetadata):
 
         # Classify all passed parameters.
         self.pep_sign = pep_sign
+        self.is_args = is_args
         self.is_pep585_builtin = is_pep585_builtin
         self.is_pep585_generic = is_pep585_generic
-        self.is_subscripted = is_subscripted
-        self.is_typevared = is_typevared
+        self.is_typevars = is_typevars
         self.is_type_typing = is_type_typing
         self.is_typing = is_typing
         self.generic_type = generic_type
@@ -293,12 +286,12 @@ class HintPepMetadata(HintNonPepMetadata):
             f'    pep_sign={repr(self.pep_sign)},',
             f'    generic_type={repr(self.generic_type)},',
             f'    stdlib_type={repr(self.stdlib_type)},',
+            f'    is_args={repr(self.is_args)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
-            f'    is_subscripted={repr(self.is_subscripted)},',
-            f'    is_supported={repr(self.is_supported)},',
-            f'    is_typevared={repr(self.is_typevared)},',
             f'    is_pep585_builtin={repr(self.is_pep585_builtin)},',
             f'    is_pep585_generic={repr(self.is_pep585_generic)},',
+            f'    is_supported={repr(self.is_supported)},',
+            f'    is_typevars={repr(self.is_typevars)},',
             f'    is_type_typing={repr(self.is_type_typing)},',
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_satisfied_meta={repr(self.piths_satisfied_meta)},',

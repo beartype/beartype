@@ -83,7 +83,7 @@ def test_get_hint_pep585_generic_typevars() -> None:
 
             # Returns one or more type variables for typevared PEP
             # 585-compliant generics.
-            if hint_pep_meta.is_typevared:
+            if hint_pep_meta.is_typevars:
                 assert isinstance(hint_pep_typevars, tuple)
                 assert hint_pep_typevars
             # *NO* type variables for untypevared PEP 585-compliant generics.

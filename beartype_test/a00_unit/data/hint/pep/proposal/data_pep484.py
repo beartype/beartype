@@ -289,16 +289,24 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
+    # ..................{ BOOLEANS                          }..................
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
     #
-    # This boolean is true for *ALL* Python interpreters targeting less than
-    # Python < 3.9. Prior to Python 3.9, the "typing" module parametrized most
-    # unsubscripted typing attributes by default. Python 3.9 halted that
-    # barbaric practice by leaving unsubscripted typing attributes
-    # unparametrized by default.
-    _IS_SIGN_TYPEVARED = not IS_PYTHON_AT_LEAST_3_9
+    # This boolean is true for Python interpreters targeting Python < 3.9.
+    # Prior to Python 3.9, the "typing" module parametrized most unsubscripted
+    # typing attributes by default. Python 3.9 halted that barbaric practice by
+    # leaving unsubscripted typing attributes unparametrized by default.
+    _IS_TYPEVARS_HIDDEN = not IS_PYTHON_AT_LEAST_3_9
+
+    # True only if unsubscripted typing attributes (i.e., public attributes of
+    # the "typing" module without arguments) are actually subscripted by one or
+    # more type variables under the active Python interpreter.
+    #
+    # This boolean is true for Python interpreters targeting 3.6 < Python <
+    # 3.9, oddly. (We don't make the rules. We simply complain about them.)
+    _IS_ARGS_HIDDEN = _IS_TYPEVARS_HIDDEN and not IS_PYTHON_3_6
 
     # ..................{ SETS                              }..................
     # Add PEP 484-specific shallowly ignorable test type hints to that set
@@ -404,7 +412,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint='profile.Profile',
             pep_sign=HintSignForwardRef,
-            is_subscripted=False,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Profile object.
@@ -421,7 +428,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=HINT_PEP484_FORWARDREF_TYPE('profile.Profile'),
             pep_sign=HintSignForwardRef,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Profile object.
                 HintPithSatisfiedMetadata(Profile()),
@@ -439,7 +445,6 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            is_subscripted=False,
             # Type variable instances are directly declared by the "typing"
             # module *ONLY* under Python 3.6.
             is_typing=IS_PYTHON_3_6,
@@ -457,9 +462,9 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
+            # is_args=False,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('We were mysteries, unwon'),
@@ -520,7 +525,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Dict,
             pep_sign=HintSignDict,
-            is_typevared=_IS_SIGN_TYPEVARED,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
             stdlib_type=dict,
             piths_satisfied_meta=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -561,8 +567,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Dict[S, T],
             pep_sign=HintSignDict,
-            is_typevared=True,
             stdlib_type=dict,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Dictionary mapping string keys to integer values.
                 HintPithSatisfiedMetadata({
@@ -600,7 +606,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericUnsubscriptedSingle,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUnsubscriptedSingle,
-            is_subscripted=False,
+            # is_args=False,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
@@ -626,7 +632,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericUntypevaredSingle,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUntypevaredSingle,
-            is_subscripted=False,
+            # is_args=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
@@ -652,7 +658,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericTypevaredSingle,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredSingle,
-            is_typevared=True,
+            is_typevars=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic.
@@ -673,7 +679,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericTypevaredSingle[S, T],
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredSingle,
-            is_typevared=True,
+            is_typevars=True,
             # The type of subscripted PEP 484-compliant generics is:
             # * Under Python >= 3.7.0, "typing".
             # * Under Python 3.6.x, the module defining those generics.
@@ -699,7 +705,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericUntypevaredMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUntypevaredMultiple,
-            is_subscripted=False,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
@@ -724,7 +729,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericTypevaredShallowMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredShallowMultiple,
-            is_typevared=True,
+            # is_args=False,
+            is_typevars=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of string constants.
@@ -747,7 +753,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pep484GenericTypevaredDeepMultiple,
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredDeepMultiple,
-            is_typevared=True,
+            # is_args=False,
+            is_typevars=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
@@ -810,7 +817,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List,
             pep_sign=HintSignList,
             stdlib_type=list,
-            is_typevared=_IS_SIGN_TYPEVARED,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
@@ -894,7 +902,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[T],
             pep_sign=HintSignList,
             stdlib_type=list,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
@@ -916,7 +924,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=NewType('TotallyNotAStr', str),
             pep_sign=HintSignNewType,
-            is_subscripted=False,
+            # is_args=False,
             # "typing.NewType" type hints are always declared by that module.
             is_typing=True,
             # If the active Python interpreter targets:
@@ -945,7 +953,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Match,
             pep_sign=HintSignMatch,
             stdlib_type=RegexMatchType,
-            is_typevared=_IS_SIGN_TYPEVARED,
+            is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
+            is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
                 HintPithSatisfiedMetadata(re.search(
@@ -984,7 +993,8 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pattern,
             pep_sign=HintSignPattern,
             stdlib_type=RegexCompiledType,
-            is_typevared=_IS_SIGN_TYPEVARED,
+            is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
+            is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
                 HintPithSatisfiedMetadata(
@@ -1200,8 +1210,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Tuple[S, T],
             pep_sign=HintSignTuple,
-            is_typevared=True,
             stdlib_type=tuple,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -1258,8 +1268,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Tuple[T, ...],
             pep_sign=HintSignTuple,
-            is_typevared=True,
             stdlib_type=tuple,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
@@ -1279,8 +1289,9 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Type,
             pep_sign=HintSignType,
-            is_typevared=_IS_SIGN_TYPEVARED,
             stdlib_type=type,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_satisfied_meta=(
                 # Transitive superclass of all superclasses.
                 HintPithSatisfiedMetadata(object),
@@ -1312,8 +1323,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Type[T],
             pep_sign=HintSignType,
-            is_typevared=True,
             stdlib_type=type,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
                 HintPithSatisfiedMetadata(int),
@@ -1501,7 +1512,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Union[str, Iterable[Tuple[S, T]]],
             pep_sign=HintSignUnion,
-            is_typevared=True,
+            is_typevars=True,
         ),
 
         # ................{ UNION ~ nested                    }................

@@ -17,7 +17,6 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
 )
-from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED,
@@ -876,11 +875,16 @@ is_hint_pep_type_typing.__doc__ = '''
         * Else, the class of this object is defined by a typing module.
     '''
 
-# ....................{ TESTERS ~ subscript               }....................
-def is_hint_pep_subscripted(hint: object) -> bool:
+# ....................{ TESTERS ~ args                    }....................
+#FIXME: Overkill. Replace directly with a simple test, please.
+#
+#Note that the corresponding unit test should be preserved, as that test is
+#essential to ensuring sanity across type hints and Python versions.
+def is_hint_pep_args(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **subscripted PEP-compliant type
-    hint** (i.e., PEP-compliant type hint indexed by one or more objects).
+    hint** (i.e., PEP-compliant type hint directly indexed by one or more
+    objects).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -911,38 +915,17 @@ def is_hint_pep_subscripted(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_typevars,
-    )
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
-    # Return true only if this hint is either...
-    return (
-        # A PEP-compliant subscripted generic under Python >= 3.9, including:
-        # * A PEP 484- or 585-compliant subscripted generic.
-        # * A PEP 585-compliant builtin type hint.
-        #
-        # Surprisingly, this test is *NOT* simply an optimization. Although
-        # most subscripted generics do preserve their subscripted objects as
-        # one or more arguments and/or type variables, PEP 585-compliant empty
-        # tuple type hints (i.e., "tuple[()]") do *NOT*. Thankfully, this
-        # simple and efficient test conveniently handles all edge cases
-        # associated with PEP 585.
-        isinstance(hint, HintGenericSubscriptedType) or
-        # Any other PEP-compliant type hint subscripted by one or more
-        # arguments and/or type variables. Note that this test is *NOT*
-        # reducible to merely:
-        #     bool(get_hint_pep_args(hint) or get_hint_pep_typevars(hint))
-        # Frankly, we have no idea why. We suspect we'd probably have to
-        # change the "or" operator in the above expression to the "+" operator,
-        # at which point the resulting operation is likely to be substantially
-        # slower than the simple series of tests performed here.
-        bool(get_hint_pep_args(hint)) or
-        bool(get_hint_pep_typevars(hint))
-    )
+    # Return true only if this hint is subscripted by one or more arguments.
+    return bool(get_hint_pep_args(hint))
 
-# ....................{ TESTERS ~ subscript : typevar     }....................
-def is_hint_pep_typevared(hint: object) -> bool:
+# ....................{ TESTERS ~ typevars                }....................
+#FIXME: Overkill. Replace directly with a simple test, please.
+#
+#Note that the corresponding unit test should be preserved, as that test is
+#essential to ensuring sanity across type hints and Python versions.
+def is_hint_pep_typevars(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a PEP-compliant type hint
     parametrized by one or more **type variables** (i.e., instances of the
@@ -998,17 +981,17 @@ def is_hint_pep_typevared(hint: object) -> bool:
     ----------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpeptest import (
-        ...     is_hint_pep_typevared)
+        ...     is_hint_pep_typevars)
         >>> T = typing.TypeVar('T')
         >>> class UserList(typing.List[T]): pass
         # Unparametrized type hint.
-        >>> is_hint_pep_typevared(typing.List[int])
+        >>> is_hint_pep_typevars(typing.List[int])
         False
         # Directly parametrized type hint.
-        >>> is_hint_pep_typevared(typing.List[T])
+        >>> is_hint_pep_typevars(typing.List[T])
         True
         # Superclass-parametrized type hint.
-        >>> is_hint_pep_typevared(UserList)
+        >>> is_hint_pep_typevars(UserList)
         True
     '''
 

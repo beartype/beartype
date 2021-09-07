@@ -130,7 +130,7 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     die_if_hint_pep_sign_unsupported,
     is_hint_pep,
-    is_hint_pep_subscripted,
+    is_hint_pep_args,
     is_hint_pep_typing,
     warn_if_hint_pep_deprecated,
 )
@@ -862,7 +862,7 @@ def pep_code_check_hint(
                 # type-checked against that type *AND is either...
                 hint_curr_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                     #FIXME: Ideally, this line should just resemble:
-                    #    not is_hint_pep_subscripted(hint_curr)
+                    #    not is_hint_pep_args(hint_curr)
                     #Unfortunately, unsubscripted type hints under Python 3.6
                     #like "typing.List" are technically subscripted due to
                     #subclassing subscripted superclasses, which is insane. Due
@@ -871,7 +871,7 @@ def pep_code_check_hint(
                     #drop this as soon as we drop Python 3.6 support.
                     # Unsubscripted *OR*...
                     not (
-                        is_hint_pep_subscripted(hint_curr)
+                        is_hint_pep_args(hint_curr)
                         if IS_PYTHON_AT_LEAST_3_7 else
                         hint_childs_len
                     ) or
@@ -1718,8 +1718,10 @@ def pep_code_check_hint(
 
                     # Code type-checking this pith against this superclass.
                     func_curr_code = PEP484585_CODE_HINT_SUBCLASS_format(
-                        pith_curr_expr=pith_curr_expr,
+                        pith_curr_assign_expr=pith_curr_assign_expr,
+                        pith_curr_var_name=pith_curr_var_name,
                         hint_curr_expr=hint_curr_expr,
+                        indent_curr=indent_curr,
                     )
                 # Else, this hint is neither a PEP 484- nor 585-compliant
                 # subclass type hint.

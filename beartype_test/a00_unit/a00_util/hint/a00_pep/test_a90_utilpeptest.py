@@ -22,27 +22,27 @@ from pytest import raises
 # dramatically improving readability of test failures.
 
 # ....................{ TESTS ~ kind : typevar            }....................
-def test_is_hint_pep_typevared() -> None:
+def test_is_hint_pep_typevars() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevared`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevars`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevared
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevars
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert that various "TypeVar"-centric types are correctly detected.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_typevared(hint_pep_meta.hint) is (
-            hint_pep_meta.is_typevared)
+        assert is_hint_pep_typevars(hint_pep_meta.hint) is (
+            hint_pep_meta.is_typevars)
 
     # Assert that various "TypeVar"-agnostic types are correctly detected.
     for nonhint_pep in HINTS_NONPEP:
-        assert is_hint_pep_typevared(nonhint_pep) is False
+        assert is_hint_pep_typevars(nonhint_pep) is False
 
 # ....................{ TESTS ~ typing                    }....................
 def test_is_hint_pep_typing() -> None:
@@ -122,27 +122,27 @@ def test_is_hint_pep() -> None:
         assert is_hint_pep(not_hint_pep) is False
 
 
-def test_is_hint_pep_subscripted() -> None:
+def test_is_hint_pep_args() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_subscripted`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_args`
     tester.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_args
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
 
     # Assert this tester accepts PEP-compliant subscripted type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
-            hint_pep_meta.is_subscripted)
+        assert is_hint_pep_args(hint_pep_meta.hint) is (
+            hint_pep_meta.is_args)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_subscripted(not_hint_pep) is False
+        assert is_hint_pep_args(not_hint_pep) is False
 
 
 #FIXME: Implement us up, please.

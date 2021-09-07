@@ -149,7 +149,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=IO,
             pep_sign=HintSignGeneric,
             generic_type=IO,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Open read-only file handle to this submodule.
                 HintPithSatisfiedMetadata(
@@ -169,7 +169,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=BinaryIO,
             pep_sign=HintSignGeneric,
             generic_type=BinaryIO,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Open read-only binary file handle to this submodule.
                 HintPithSatisfiedMetadata(
@@ -189,7 +188,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=TextIO,
             pep_sign=HintSignGeneric,
             generic_type=TextIO,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
@@ -212,7 +210,7 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=SupportsAbs,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(73),
@@ -228,7 +226,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsBytes,
             pep_sign=HintSignGeneric,
             generic_type=SupportsBytes,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Platform-agnostic filesystem path object constant.
                 #
@@ -273,7 +270,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsFloat,
             pep_sign=HintSignGeneric,
             generic_type=SupportsFloat,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(92),
@@ -290,7 +286,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsIndex,
             pep_sign=HintSignGeneric,
             generic_type=SupportsIndex,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(29),
@@ -306,7 +301,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsInt,
             pep_sign=HintSignGeneric,
             generic_type=SupportsInt,
-            is_subscripted=False,
             piths_satisfied_meta=(
                 # Floating-point number constant.
                 HintPithSatisfiedMetadata(25.78),
@@ -327,7 +321,7 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=SupportsRound,
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Floating-point number constant.
                 HintPithSatisfiedMetadata(87.52),
@@ -353,7 +347,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ProtocolCustomUntypevared,
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomUntypevared,
-            is_subscripted=False,
             is_type_typing=False,
             piths_satisfied_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),
@@ -369,7 +362,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ProtocolCustomTypevared,
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomTypevared,
-            is_typevared=True,
+            is_typevars=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),
@@ -386,7 +379,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ProtocolCustomTypevared[T],
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomTypevared,
-            is_typevared=True,
+            is_typevars=True,
             is_typing=False,
             piths_satisfied_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),

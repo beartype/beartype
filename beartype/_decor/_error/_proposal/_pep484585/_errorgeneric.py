@@ -13,16 +13,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._decor._error._errortype import (
     get_cause_or_none_instance_type)
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
+from beartype._util.hint.pep.proposal.utilpep484585 import (
+    get_hint_pep484585_generic_bases_unerased,
+    get_hint_pep484585_generic_type_or_none,
+)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
-from beartype._util.hint.pep.proposal.utilpep484585 import (
-    get_hint_pep484585_generic_type_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from typing import Optional
@@ -65,8 +67,12 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
         return pith_cause
     # Else, this pith is an instance of this class.
 
-    # For each pseudo-superclass of this class...
-    for hint_base in sleuth.hint_childs:
+    # Tuple of the one or more unerased pseudo-superclasses originally
+    # subclassed by this generic.
+    hint_bases = get_hint_pep484585_generic_bases_unerased(sleuth.hint)
+
+    # For each such pseudo-superclass...
+    for hint_base in hint_bases:
         # If this pseudo-superclass is an actual superclass, this
         # pseudo-superclass is effectively ignorable. Why? Because the
         # isinstance() call above already type-checked this pith against the

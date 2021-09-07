@@ -348,7 +348,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=dict[S, T],
             pep_sign=HintSignDict,
             stdlib_type=dict,
-            is_typevared=True,
+            is_typevars=True,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Dictionary mapping string keys to integer values.
@@ -394,7 +394,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredSingle,
             is_pep585_generic=True,
-            is_subscripted=False,
+            is_args=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(Pep585GenericUntypevaredSingle((
@@ -420,7 +420,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(Pep585GenericTypevaredSingle((
@@ -447,7 +447,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(Pep585GenericTypevaredSingle((
@@ -475,7 +475,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericUntypevaredMultiple,
             is_pep585_generic=True,
-            is_subscripted=False,
+            is_args=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
                 HintPithSatisfiedMetadata(Pep585GenericUntypevaredMultiple((
@@ -501,7 +501,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredShallowMultiple,
             is_pep585_generic=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of string constants.
                 HintPithSatisfiedMetadata(
@@ -525,7 +525,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep585GenericTypevaredDeepMultiple,
             is_pep585_generic=True,
-            is_typevared=True,
+            is_typevars=True,
             is_type_typing=False,
             piths_satisfied_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
@@ -647,7 +647,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=list[T],
             pep_sign=HintSignList,
             stdlib_type=list,
-            is_typevared=True,
+            is_typevars=True,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -871,7 +871,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -930,7 +930,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTuple,
             stdlib_type=tuple,
             is_pep585_builtin=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
@@ -968,7 +968,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignType,
             stdlib_type=type,
             is_pep585_builtin=True,
-            is_typevared=True,
+            is_typevars=True,
             piths_satisfied_meta=(
                 # Builtin "int" class itself.
                 HintPithSatisfiedMetadata(int),

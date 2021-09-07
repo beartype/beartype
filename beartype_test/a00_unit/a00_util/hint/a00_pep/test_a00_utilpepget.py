@@ -17,6 +17,73 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
+# ....................{ TESTS ~ attr                      }....................
+def test_get_hint_pep_args() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_args`
+    getter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_typevars,
+    )
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+
+    # For each PEP-compliant hint, assert this getter returns...
+    for hint_pep_meta in HINTS_PEP_META:
+        # Tuple of all arguments subscripting this hint.
+        hint_args = get_hint_pep_args(hint_pep_meta.hint)
+        assert isinstance(hint_args, tuple)
+
+        # For subscripted hints, one or more arguments.
+        if hint_pep_meta.is_args:
+            assert hint_args
+        # For non-argumentative hints, *NO* arguments.
+        else:
+            assert hint_args == ()
+
+    # Assert this getter returns *NO* type variables for non-"typing" hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert get_hint_pep_args(not_hint_pep) == ()
+
+
+def test_get_hint_pep_typevars() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
+    getter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.hint.pep.proposal.utilpep484 import (
+        is_hint_pep484_typevar)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+
+    # For each PEP-compliant hint, assert this getter returns...
+    for hint_pep_meta in HINTS_PEP_META:
+        # Tuple of all type variables subscripting this hint.
+        hint_typevars = get_hint_pep_typevars(hint_pep_meta.hint)
+        assert isinstance(hint_typevars, tuple)
+
+        # For typevared hints, one or more type variables.
+        if hint_pep_meta.is_typevars:
+            assert hint_typevars
+            for hint_typevar in hint_typevars:
+                assert is_hint_pep484_typevar(hint_typevar)
+        # For non-typevared hints, *NO* type variables.
+        else:
+            assert hint_typevars == ()
+
+    # Assert this getter returns *NO* type variables for non-"typing" hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert get_hint_pep_typevars(not_hint_pep) == ()
+
 # ....................{ TESTS ~ sign                      }....................
 def test_get_hint_pep_sign() -> None:
     '''
@@ -87,7 +154,7 @@ def test_get_hint_pep_type_origin_isinstanceable() -> None:
             get_hint_pep_origin_type_isinstanceable(not_hint_pep)
 
 
-def test_get_hint_pep_type_origin_stdlib_or_none() -> None:
+def test_get_hint_pep_type_origin_isinstanceable_or_none() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_type_origin_isinstanceable_or_none`
@@ -114,34 +181,3 @@ def test_get_hint_pep_type_origin_stdlib_or_none() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
             get_hint_pep_type_origin_isinstanceable_or_none(not_hint_pep)
-
-# ....................{ TESTS ~ kind : typevar            }....................
-def test_get_hint_pep_typevars() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
-    getter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
-
-    # Assert this getter returns...
-    for hint_pep_meta in HINTS_PEP_META:
-        # Tuple of all tupe variables returned by this function.
-        hint_pep_typevars = get_hint_pep_typevars(hint_pep_meta.hint)
-
-        # Returns one or more type variables for typevared PEP-compliant type
-        # hints.
-        if hint_pep_meta.is_typevared:
-            assert isinstance(hint_pep_typevars, tuple)
-            assert hint_pep_typevars
-        # *NO* type variables for untypevared PEP-compliant type hints.
-        else:
-            assert hint_pep_typevars == ()
-
-    # Assert this getter returns *NO* type variables for non-"typing" hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep_typevars(not_hint_pep) == ()

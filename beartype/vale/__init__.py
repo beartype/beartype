@@ -71,6 +71,22 @@ from beartype.vale._valeisoper import IsEqual
 #the answer and came up with absolutely nothing. At this point, it frankly
 #doesn't matter how NumPy notifies mypy; we simply need to figure out how to
 #prevent mypy from complaining about our stuff. *shrug*
+#FIXME: *OKAY.* Given mypy + NumPy interaction, we're fairly convinced the
+#following ridiculous kludge will satisfy everyone's inane desires:
+#    # In "_valeisabc":
+#    import types
+#    from typing import TYPE_CHECKING
+#    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+#    _IsABCSuperclass = (
+#        types.GenericAlias
+#        if TYPE_CHECKING and IS_PYTHON_AT_LEAST_3_9 else
+#        object
+#    )
+#    class _IsABC(_IsABCSuperclass, metaclass=ABCMeta):
+#The idea here is that we conditionally subclass beartype validators from
+#"types.GenericAlias" if and only if we are currently subject to static
+#type-checking *AND* this is Python >= 3.9. Probably won't work, but it's
+#trivial. So, let's give it a go, eh?
 
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:
