@@ -13,10 +13,13 @@ cases on behalf of higher-level unit test submodules.
 # ....................{ IMPORTS                           }....................
 import builtins
 from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
+from contextlib import contextmanager
 from sys import exc_info, implementation
-from typing import Callable
+from typing import Callable, ContextManager, Generator
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES ~ hierarchy : 1           }....................
+# Arbitrary class hierarchy.
+
 class Class(object):
     '''
     Arbitrary pure-Python class defining an arbitrary method.
@@ -34,7 +37,7 @@ class Subclass(Class):
     '''
     Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
     '''
-    
+
     pass
 
 
@@ -43,7 +46,39 @@ class SubclassSubclass(Subclass):
     Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
     arbitrary pure-Python superclass.
     '''
-    
+
+    pass
+
+# ....................{ CLASSES ~ hierarchy : 2           }....................
+# Yet another arbitrary class hierarchy.
+
+class OtherClass(object):
+    '''
+    Arbitrary pure-Python class defining an arbitrary method.
+    '''
+
+    def instance_method(self):
+        '''
+        Arbitrary pure-Python instance method.
+        '''
+
+        pass
+
+
+class OtherSubclass(OtherClass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
+    '''
+
+    pass
+
+
+class OtherSubclassSubclass(OtherSubclass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
+    arbitrary pure-Python superclass.
+    '''
+
     pass
 
 # ....................{ CLASSES ~ isinstance              }....................
@@ -92,36 +127,6 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 
     pass
 
-# ....................{ CALLABLES                         }....................
-def function():
-    '''
-    Arbitrary pure-Python function.
-    '''
-
-    pass
-
-
-def decorator(func: Callable) -> Callable:
-    '''
-    **Identity decorator** (i.e., decorator returning the passed callable
-    unmodified).
-
-    This decorator enables logic elsewhere to exercise the
-    :mod:`beartype.beartype` decorator with respect to nested callables
-    decorated by both the :mod:`beartype.beartype` decorator and one or more
-    decorators *not* the :mod:`beartype.beartype` decorator.
-    '''
-
-    return func
-
-
-def generator_factory():
-    '''
-    Arbitrary pure-Python generator factory function.
-    '''
-
-    yield 1
-
 # ....................{ CALLABLES ~ async                 }....................
 async def async_generator_factory():
     '''
@@ -152,6 +157,71 @@ Arbitrary pure-Python coroutine.
 
 # Prevent Python from emitting "ResourceWarning" warnings.
 coroutine.close()
+
+# ....................{ CALLABLES ~ sync                  }....................
+def function():
+    '''
+    Arbitrary pure-Python function.
+    '''
+
+    pass
+
+
+def decorator(func: Callable) -> Callable:
+    '''
+    **Identity decorator** (i.e., decorator returning the passed callable
+    unmodified).
+
+    This decorator enables logic elsewhere to exercise the
+    :mod:`beartype.beartype` decorator with respect to nested callables
+    decorated by both the :mod:`beartype.beartype` decorator and one or more
+    decorators *not* the :mod:`beartype.beartype` decorator.
+    '''
+
+    return func
+
+
+@contextmanager
+def context_manager_factory(obj: object) -> ContextManager[object]:
+    '''
+    Create and return a new **identity context manager** (i.e., context
+    manager trivially yielding the passed object).
+    '''
+
+    yield obj
+
+# ....................{ CALLABLES ~ sync : generator      }....................
+def generator_factory() -> Generator[int, None, None]:
+    '''
+    Create and return a pure-Python generator yielding a single integer,
+    accepting nothing, and returning nothing.
+    '''
+
+    yield 1
+
+
+def generator_factory_yield_int_send_float_return_str() -> (
+    Generator[int, float, str]):
+    '''
+    Create and return a pure-Python generator yielding integers, accepting
+    floating-point numbers sent to this generator by the caller, and returning
+    strings.
+
+    See Also
+    ----------
+    https://www.python.org/dev/peps/pep-0484/#id39
+        ``echo_round`` function strongly inspiring this implementation, copied
+        verbatim from this subsection of :pep:`484`.
+    '''
+
+    # Initial value externally sent to this generator.
+    res = yield
+
+    while res:
+        res = yield round(res)
+
+    # Return a string constant.
+    return 'Unmarred, scarred revanent remnants'
 
 # ....................{ CALLABLES ~ closure               }....................
 def closure_factory():

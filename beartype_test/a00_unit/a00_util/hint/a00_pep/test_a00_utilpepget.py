@@ -139,9 +139,9 @@ def test_get_hint_pep_type_origin_isinstanceable() -> None:
     for hint_pep_meta in HINTS_PEP_META:
         # Returns the expected type origin for all PEP-compliant type hints
         # originating from an origin type.
-        if hint_pep_meta.stdlib_type is not None:
+        if hint_pep_meta.isinstanceable_type is not None:
             assert get_hint_pep_origin_type_isinstanceable(hint_pep_meta.hint) is (
-                hint_pep_meta.stdlib_type)
+                hint_pep_meta.isinstanceable_type)
         # Raises the expected exception for all other hints.
         else:
             with raises(BeartypeDecorHintPepException):
@@ -174,7 +174,7 @@ def test_get_hint_pep_type_origin_isinstanceable_or_none() -> None:
     # type hints.
     for hint_pep_meta in HINTS_PEP_META:
         assert get_hint_pep_type_origin_isinstanceable_or_none(hint_pep_meta.hint) is (
-            hint_pep_meta.stdlib_type)
+            hint_pep_meta.isinstanceable_type)
 
     # Assert this getter raises the expected exception for non-PEP-compliant
     # type hints.

@@ -253,7 +253,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=list[Literal[
                 'ç‐omically gnomical whitebellied burden’s empathy of']],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List of Unicode string constants semantically equal to the

@@ -164,9 +164,9 @@ class HintPepMetadata(HintNonPepMetadata):
         otherwise (i.e., if this hint is associated with *no* such type).
         Defaults to either:
 
-        * If this hint is subscripted, :attr:`stdlib_type`.
+        * If this hint is subscripted, :attr:`isinstanceable_type`.
         * Else, ``None``.
-    stdlib_type : Optional[type]
+    isinstanceable_type : Optional[type]
         **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
         satisfying this hint are instances of this class) originating this hint
         if this hint originates from a non-:mod:`typing` class *or* ``None``
@@ -191,15 +191,15 @@ class HintPepMetadata(HintNonPepMetadata):
         is_typevars: bool = False,
         is_type_typing: Optional[bool] = None,
         is_typing: Optional[bool] = None,
-        stdlib_type: Optional[type] = None,
+        isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
         **kwargs
     ) -> None:
         assert isinstance(is_typevars, bool), (
             f'{repr(is_typevars)} not bool.')
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
-        assert isinstance(stdlib_type, _NoneTypeOrType), (
-            f'{repr(stdlib_type)} neither class nor "None".')
+        assert isinstance(isinstanceable_type, _NoneTypeOrType), (
+            f'{repr(isinstanceable_type)} neither class nor "None".')
 
         # Initialize our superclass with all passed keyword arguments.
         super().__init__(**kwargs)
@@ -239,7 +239,7 @@ class HintPepMetadata(HintNonPepMetadata):
         if generic_type is None:
             # Default this parameter to this hint's type origin only if this
             # hint is subscripted.
-            generic_type = stdlib_type if is_args else None
+            generic_type = isinstanceable_type if is_args else None
 
         # Defer validating parameters defaulting to "None" until *AFTER*
         # initializing these parameters above.
@@ -276,7 +276,7 @@ class HintPepMetadata(HintNonPepMetadata):
         self.is_type_typing = is_type_typing
         self.is_typing = is_typing
         self.generic_type = generic_type
-        self.stdlib_type = stdlib_type
+        self.isinstanceable_type = isinstanceable_type
 
     # ..................{ STRINGIFIERS                      }..................
     def __repr__(self) -> str:
@@ -285,7 +285,7 @@ class HintPepMetadata(HintNonPepMetadata):
             f'    hint={repr(self.hint)},',
             f'    pep_sign={repr(self.pep_sign)},',
             f'    generic_type={repr(self.generic_type)},',
-            f'    stdlib_type={repr(self.stdlib_type)},',
+            f'    isinstanceable_type={repr(self.isinstanceable_type)},',
             f'    is_args={repr(self.is_args)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_pep585_builtin={repr(self.is_pep585_builtin)},',

@@ -19,6 +19,7 @@ from beartype.roar import (
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
+    HintSignUnion,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import die_unless_type
@@ -39,7 +40,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, TypeVar, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -92,7 +93,7 @@ See Also
 
 # ....................{ HINTS ~ private                   }....................
 _HINT_PEP484585_SUBCLASS_ARGS_1_TYPES = (
-    (type,) + HINT_PEP484585_FORWARDREF_TYPES)
+    (type, tuple, TypeVar,) + HINT_PEP484585_FORWARDREF_TYPES)
 '''
 Tuple union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints
@@ -100,8 +101,17 @@ subscripting (indexing) a subclass type hint).
 '''
 
 
-_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = Union[
-    type, HINT_PEP484585_FORWARDREF_UNION]
+_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = (
+    # If the active Python interpreter targets Python >= 3.7, include the sane
+    # "typing.TypeVar" type in this union;
+    Union[type, Tuple[type], TypeVar, HINT_PEP484585_FORWARDREF_UNION,]
+    if IS_PYTHON_AT_LEAST_3_7 else
+    # Else, the active Python interpreter targets Python 3.6. In this case,
+    # exclude the insane "typing.TypeVar" type from this union. Naively
+    # including that type here induces fatal runtime exceptions resembling:
+    #     AttributeError: type object 'TypeVar' has no attribute '_gorg'
+    Union[type, Tuple[type], HINT_PEP484585_FORWARDREF_UNION,]
+)
 '''
 Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints
@@ -331,8 +341,8 @@ def get_hint_pep484585_args_1(
 
     Returns
     ----------
-    type
-        Superclass subscripting this subclass type hint.
+    object
+        Single Argument subscripting this type hint.
 
     Raises
     ----------
@@ -771,10 +781,11 @@ def get_hint_pep484585_subclass_superclass(
     hint_label: str = 'Annotated',
 ) -> _HINT_PEP484585_SUBCLASS_ARGS_1_UNION:
     '''
-    **Issubclassable superclass** (i.e., class whose metaclass does *not*
-    define a ``__subclasscheck__()`` dunder method that raises an exception)
-    subscripting the passed :pep:`484`- or :pep:`585`-compliant **subclass type
-    hint** (i.e., hint constraining objects to subclass that superclass).
+    **Issubclassable superclass(es)** (i.e., class whose metaclass does *not*
+    define a ``__subclasscheck__()`` dunder method that raises an exception,
+    tuple of such classes, or forward reference to such a class) subscripting
+    the passed :pep:`484`- or :pep:`585`-compliant **subclass type hint**
+    (i.e., hint constraining objects to subclass that superclass).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -793,10 +804,15 @@ def get_hint_pep484585_subclass_superclass(
     _HINT_PEP484585_SUBCLASS_ARGS_1_UNION
         Argument subscripting this subclass type hint, guaranteed to be either:
 
-        * A class.
-        * A :pep:`484`-compliant forward reference to a class (i.e.,
+        * An issubclassable class.
+        * A tuple of issubclassable classes.
+        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
+          :class:`typing.TypeVar` instance).
+        * A :pep:`484`-compliant forward reference to an issubclassable class
+          that typically has yet to be declared (i.e.,
           :class:`typing.ForwardRef` instance).
-        * A :pep:`585`-compliant forward reference to a class (i.e., string).
+        * A :pep:`585`-compliant forward reference to an issubclassable class
+          (i.e., string).
 
     Raises
     ----------
@@ -816,11 +832,16 @@ def get_hint_pep484585_subclass_superclass(
           * Two or more arguments.
 
         * A :pep:`484`- or :pep:`585`-compliant subclass type hint subscripted
-          by one argument that is *not* a class.
+          by one argument that is neither a class, union of classes, nor
+          forward reference to a class.
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_sign,
+        get_hint_pep_sign_or_none,
+    )
 
     # If this is neither a PEP 484- nor PEP 585-compliant subclass type hint,
     # raise an exception.
@@ -841,9 +862,28 @@ def get_hint_pep484585_subclass_superclass(
         raise BeartypeDecorHintPep585Exception(
             f'{hint_label} PEP 585 subclass type hint {repr(hint)} '
             f'argument {repr(hint_superclass)} neither '
-            f'class nor forward reference to class.'
+            f'class, union of classes, nor forward reference to class.'
         )
-    # Else, this superclass is either a class or forward reference to a class,
+    # Else, this superclass is either a class, union of classes, or forward
+    # reference to a class.
+
+    # Sign identifying this superclass.
+    hint_superclass_sign = get_hint_pep_sign_or_none(hint_superclass)
+
+    #FIXME: Unit test us up, please.
+    # If this superclass is actually a union of superclasses...
+    if hint_superclass_sign is HintSignUnion:
+        # Efficiently reduce this superclass to the tuple of superclasses
+        # subscripting and thus underlying this union.
+        hint_superclass = get_hint_pep_args(hint_superclass)
+
+        #FIXME: Generalize the die_unless_type_issubclassable() validator to
+        #accept both classes and tuples of classes. *sigh*
+        # If any item of this tuple is *NOT* an issubclassable class, raise an
+        # exception.
+        die_unless_type_issubclassable(
+            cls=hint_superclass, cls_label=hint_label)  # type: ignore[arg-type]
+    # Else, this superclass is *NOT* a union of superclasses...
     #
     # If this superclass is a class...
     elif isinstance(hint_superclass, type):

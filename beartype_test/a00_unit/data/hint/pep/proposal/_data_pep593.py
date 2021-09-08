@@ -349,7 +349,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=HINT_ATTR_LIST[AnnotatedStrIsLength],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=HINT_ATTR_LIST is list,
             piths_satisfied_meta=(
                 # List of string constants satisfying this validator.

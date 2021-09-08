@@ -288,6 +288,8 @@ def die_unless_hint_nonpep_type(
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
 #Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
 #real-world use cases) that this mild inefficiency probably no longer matters.
+#FIXME: Actually, tuple unions underlie a variety of common real-world
+#PEP-compliant type hints (e.g., "Type[Union[str, bool]]"). Optimize, please.
 def die_unless_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,

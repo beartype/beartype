@@ -8,29 +8,7 @@ Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-import re
-from beartype._cave._cavefast import IntType
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignByteString,
-    HintSignCallable,
-    HintSignContextManager,
-    HintSignDict,
-    HintSignGenerator,
-    HintSignGeneric,
-    HintSignList,
-    HintSignMatch,
-    HintSignMutableSequence,
-    HintSignPattern,
-    HintSignSequence,
-    HintSignTuple,
-    HintSignType,
-)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -53,6 +31,38 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.9-specific imports.
+    import re
+    from beartype._cave._cavefast import IntType
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignByteString,
+        HintSignCallable,
+        HintSignContextManager,
+        HintSignDict,
+        HintSignGenerator,
+        HintSignGeneric,
+        HintSignList,
+        HintSignMatch,
+        HintSignMutableSequence,
+        HintSignPattern,
+        HintSignSequence,
+        HintSignTuple,
+        HintSignType,
+    )
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        Subclass,
+        SubclassSubclass,
+        OtherClass,
+        OtherSubclass,
+        # OtherSubclassSubclass,
+        context_manager_factory,
+        generator_factory_yield_int_send_float_return_str,
+    )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
     from collections.abc import (
         ByteString,
         Callable,
@@ -63,10 +73,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Sequence,
         Sized,
     )
-    from contextlib import (
-        AbstractContextManager,
-        contextmanager,
-    )
+    from contextlib import AbstractContextManager
     from re import Match, Pattern
     from typing import Any, TypeVar, Union
 
@@ -81,40 +88,6 @@ def add_data(data_module: 'ModuleType') -> None:
     '''
     User-defined generic :mod:`typing` type variable.
     '''
-
-    # ..................{ CALLABLES                         }..................
-    @contextmanager
-    def _make_context_manager(obj: object) -> AbstractContextManager[object]:
-        '''
-        Create and return a context manager trivially yielding the passed
-        object.
-        '''
-
-        yield obj
-
-
-    def _make_generator_yield_int_send_float_return_str() -> (
-        Generator[int, float, str]):
-        '''
-        Create and return a generator yielding integers, accepting
-        floating-point numbers sent to this generator by the caller, and
-        returning strings.
-
-        See Also
-        ----------
-        https://www.python.org/dev/peps/pep-0484/#id39
-            ``echo_round`` function strongly inspiring this implementation,
-            copied verbatim from this subsection of :pep:`484`.
-        '''
-
-        # Initial value externally sent to this generator.
-        res = yield
-
-        while res:
-            res = yield round(res)
-
-        # Return a string constant.
-        return 'Unmarred, scarred revanent remnants'
 
     # ..................{ CLASSES ~ generics : single       }..................
     class Pep585GenericUntypevaredSingle(list[str]):
@@ -237,6 +210,20 @@ def add_data(data_module: 'ModuleType') -> None:
         def __len__(self) -> bool:
             return len(self._iterable)
 
+    # ..................{ PRIVATE ~ forwardref              }..................
+    _TEST_PEP585_FORWARDREF_CLASSNAME = (
+        'beartype_test.a00_unit.data.data_type.Subclass')
+    '''
+    Fully-qualified classname of an arbitrary class guaranteed to be
+    importable.
+    '''
+
+
+    _TEST_PEP585_FORWARDREF_TYPE = Subclass
+    '''
+    Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
+    '''
+
     # ..................{ MAPPINGS                          }..................
     # Add PEP 585-specific test type hints to this dictionary global.
     data_module.HINTS_PEP_META.extend((
@@ -253,7 +240,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=ByteString[int],
             pep_sign=HintSignByteString,
-            stdlib_type=ByteString,
+            isinstanceable_type=ByteString,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Byte string constant.
@@ -270,7 +257,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=ByteString[IntType],
             pep_sign=HintSignByteString,
-            stdlib_type=ByteString,
+            isinstanceable_type=ByteString,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Byte array initialized from a byte string constant.
@@ -288,7 +275,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
-            stdlib_type=Callable,
+            isinstanceable_type=Callable,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Lambda function returning a string constant.
@@ -305,12 +292,12 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=AbstractContextManager[str],
             pep_sign=HintSignContextManager,
-            stdlib_type=AbstractContextManager,
+            isinstanceable_type=AbstractContextManager,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Context manager.
                 HintPithSatisfiedMetadata(
-                    pith=lambda: _make_context_manager(
+                    pith=lambda: context_manager_factory(
                         'We were mysteries, unwon'),
                     is_context_manager=True,
                     is_pith_factory=True,
@@ -327,7 +314,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=dict[int, str],
             pep_sign=HintSignDict,
-            stdlib_type=dict,
+            isinstanceable_type=dict,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Dictionary mapping integer keys to string values.
@@ -347,7 +334,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=dict[S, T],
             pep_sign=HintSignDict,
-            stdlib_type=dict,
+            isinstanceable_type=dict,
             is_typevars=True,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -368,13 +355,13 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Generator[int, float, str],
             pep_sign=HintSignGenerator,
-            stdlib_type=Generator,
+            isinstanceable_type=Generator,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Generator yielding integers, accepting floating-point numbers
                 # sent to this generator by the caller, and returning strings.
                 HintPithSatisfiedMetadata(
-                    _make_generator_yield_int_send_float_return_str()),
+                    generator_factory_yield_int_send_float_return_str()),
             ),
             piths_unsatisfied_meta=(
                 # Lambda function returning a string constant.
@@ -553,7 +540,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=list[Pep585GenericUntypevaredMultiple],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List of subclass-specific generic 2-tuples of string
@@ -588,7 +575,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=list[object],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -611,7 +598,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=list[str],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -646,7 +633,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=list[T],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_typevars=True,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
@@ -670,7 +657,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Match[str],
             pep_sign=HintSignMatch,
-            stdlib_type=Match,
+            isinstanceable_type=Match,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Regular expression match of one or more string constants.
@@ -690,7 +677,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Pattern[str],
             pep_sign=HintSignPattern,
-            stdlib_type=Pattern,
+            isinstanceable_type=Pattern,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Regular expression string pattern.
@@ -702,6 +689,95 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPithUnsatisfiedMetadata('Obsessing men'),
             ),
         ),
+
+        #FIXME: Uncomment after finalizing the most recent commit chain.
+        # # ................{ SUBCLASS                          }................
+        # # Any type, semantically equivalent under PEP 484 to the unsubscripted
+        # # "Type" singleton.
+        # HintPepMetadata(
+        #     hint=type[Any],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     piths_satisfied_meta=(
+        #         # Arbitrary class.
+        #         HintPithSatisfiedMetadata(float),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
+        #     ),
+        # ),
+        #
+        # # Specific class.
+        # HintPepMetadata(
+        #     hint=type[Class],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     is_pep585_builtin=True,
+        #     piths_satisfied_meta=(
+        #         # Subclass of this class.
+        #         HintPithSatisfiedMetadata(Subclass),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Namely,'),
+        #         # Non-subclass of this class.
+        #         HintPithUnsatisfiedMetadata(str),
+        #     ),
+        # ),
+        #
+        # # Specific class deferred with a forward reference.
+        # HintPepMetadata(
+        #     hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     piths_satisfied_meta=(
+        #         # Subclass of this class.
+        #         HintPithSatisfiedMetadata(SubclassSubclass),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
+        #         # Non-subclass of this class.
+        #         HintPithUnsatisfiedMetadata(dict),
+        #     ),
+        # ),
+        #
+        # # Two or more specific classes.
+        # HintPepMetadata(
+        #     hint=type[Union[Class, OtherClass,]],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     piths_satisfied_meta=(
+        #         # Arbitrary subclass of one class subscripting this hint.
+        #         HintPithSatisfiedMetadata(Subclass),
+        #         # Arbitrary subclass of another class subscripting this hint.
+        #         HintPithSatisfiedMetadata(OtherSubclass),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Jabberings'),
+        #         # Non-subclass of any classes subscripting this hint.
+        #         HintPithUnsatisfiedMetadata(set),
+        #     ),
+        # ),
+        #
+        # # Generic class.
+        # HintPepMetadata(
+        #     hint=type[T],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     is_pep585_builtin=True,
+        #     is_typevars=True,
+        #     piths_satisfied_meta=(
+        #         # Arbitrary class.
+        #         HintPithSatisfiedMetadata(int),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Obligation, and'),
+        #     ),
+        # ),
 
         # ................{ TUPLE ~ fixed                     }................
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
@@ -715,7 +791,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[()],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Empty tuple.
@@ -741,7 +817,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[Any, object,],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Tuple containing arbitrary items.
@@ -767,7 +843,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[float, Any, str,],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Tuple containing a floating-point number, string, and integer
@@ -817,7 +893,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[tuple[float, Any, str,], ...],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Tuple containing tuples containing a floating-point number,
@@ -869,7 +945,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[S, T],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             is_typevars=True,
             piths_satisfied_meta=(
@@ -895,7 +971,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[str, ...],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Tuple containing arbitrarily many string constants.
@@ -928,7 +1004,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=tuple[T, ...],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=True,
             is_typevars=True,
             piths_satisfied_meta=(
@@ -945,40 +1021,6 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ TYPE                              }................
-        # Builtin type.
-        HintPepMetadata(
-            hint=type[dict],
-            pep_sign=HintSignType,
-            stdlib_type=type,
-            is_pep585_builtin=True,
-            piths_satisfied_meta=(
-                # Builtin "dict" class itself.
-                HintPithSatisfiedMetadata(dict),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                HintPithUnsatisfiedMetadata('Namely,'),
-            ),
-        ),
-
-        # Generic type.
-        HintPepMetadata(
-            hint=type[T],
-            pep_sign=HintSignType,
-            stdlib_type=type,
-            is_pep585_builtin=True,
-            is_typevars=True,
-            piths_satisfied_meta=(
-                # Builtin "int" class itself.
-                HintPithSatisfiedMetadata(int),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                HintPithUnsatisfiedMetadata('Obligation, and'),
-            ),
-        ),
-
         # ................{ UNION ~ nested                    }................
         # Nested unions exercising edge cases induced by Python >= 3.8
         # optimizations leveraging PEP 572-style assignment expressions.
@@ -987,7 +1029,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=list[Union[int, str,]],
             pep_sign=HintSignList,
-            stdlib_type=list,
+            isinstanceable_type=list,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List containing a mixture of integer and string constants.
@@ -1038,7 +1080,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Sequence[Union[str, ByteString]],
             pep_sign=HintSignSequence,
-            stdlib_type=Sequence,
+            isinstanceable_type=Sequence,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Sequence of string and bytestring constants.
@@ -1087,7 +1129,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=HintSignMutableSequence,
-            stdlib_type=MutableSequence,
+            isinstanceable_type=MutableSequence,
             is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # Mutable sequence of string and bytestring constants.

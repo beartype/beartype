@@ -195,7 +195,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=HINT_ATTR_TUPLE[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignTuple,
-            stdlib_type=tuple,
+            isinstanceable_type=tuple,
             is_pep585_builtin=HINT_ATTR_TUPLE is tuple,
             piths_satisfied_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.

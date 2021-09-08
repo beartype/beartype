@@ -17,6 +17,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignNewType,
     HintSignNumpyArray,
+    HintSignType,
 )
 from typing import Any
 
@@ -134,6 +135,28 @@ def get_hint_reduced(
         # Reduce this unsupported PEP-noncompliant hint to the equivalent
         # well-supported PEP-noncompliant beartype validator.
         hint = reduce_hint_numpy_ndarray(hint=hint, hint_label=hint_label)
+    # ..................{ PEP 484 ~ subclass                }..................
+    #FIXME: Remove this *AFTER* implementing support for type variables. We
+    #currently (mis)use this getter to subversively ignore type variables
+    #subscripting subclass type hints, which arguably constitutes a semantic
+    #abuse but also inarguably offers the most elegant means of doing so.
+
+    # If this hint is a PEP 484-compliant subclass type hint subscripted by
+    # either the ignorable "Any" type hint *OR* a type variable, silently
+    # ignore this argument by reducing this hint to the "type" superclass.
+    # Although this logic could also be performed elsewhere, doing so here
+    # simplifies matters.
+    #
+    # Subclass type hints are reasonably uncommon and thus detected late.
+    elif hint_sign is HintSignType:
+        #FIXME: Implement us up, please.
+        # Avoid circular import dependencies.
+        # from beartype._util.hint.pep.proposal.utilpep484 import (
+        #     get_hint_pep484_newtype_class)
+        # hint = get_hint_pep484_newtype_class(hint)
+
+        pass
+
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
