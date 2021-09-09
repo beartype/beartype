@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python module importation** utilities (i.e., functions
-dynamically importing modules and/or attributes from modules).
+Project-wide **Python module importer** utilities (i.e., callables dynamically
+importing modules and/or attributes from modules).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
 from importlib import import_module as importlib_import_module
 from sys import modules as sys_modules
 from types import ModuleType
@@ -130,8 +131,8 @@ def import_module_attr(
     module_attr_name: str,
 
     # Optional parameters.
-    module_attr_label: str = 'Module attribute',
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_prefix: str = 'Module attribute ',
 ) -> Any:
     '''
     Dynamically import and return the **module attribute** (i.e., object
@@ -142,12 +143,12 @@ def import_module_attr(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be imported.
-    module_attr_label : str
-        Human-readable label prefixing this name in the exception message
-        raised by this function. Defaults to ``"Module attribute"``.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -180,14 +181,14 @@ def import_module_attr(
     # *OR* "None" otherwise.
     module_attr = import_module_attr_or_none(
         module_attr_name=module_attr_name,
-        module_attr_label=module_attr_label,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
     # If this module declares *NO* such attribute, raise an exception.
     if module_attr is None:
         raise exception_cls(
-            f'{module_attr_label} "{module_attr_name}" unimportable.')
+            f'{exception_prefix}"{module_attr_name}" unimportable.')
 
     # Else, return this attribute.
     return module_attr
@@ -198,8 +199,8 @@ def import_module_attr_or_none(
     module_attr_name: str,
 
     # Optional parameters.
-    module_attr_label: str = 'Module attribute',
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_prefix: str = 'Module attribute ',
 ) -> Any:
     '''
     Dynamically import and return the **module attribute** (i.e., object
@@ -210,12 +211,12 @@ def import_module_attr_or_none(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be imported.
-    module_attr_label : str
-        Human-readable label prefixing this name in the exception message
-        raised by this function. Defaults to ``"Module attribute"``.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
         :class:`_BeartypeUtilModuleException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -246,8 +247,8 @@ def import_module_attr_or_none(
     # module attribute that may or may not actually exist, raise an exception.
     die_unless_module_attr_name(
         module_attr_name=module_attr_name,
-        module_attr_label=module_attr_label,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
     # Else, this object is the fully-qualified syntactically valid name of a
     # module attribute. In particular, this implies this name to contain one or
@@ -278,7 +279,7 @@ def import_module_typing_any_attr(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     Dynamically import and return the **typing attribute** (i.e., object
@@ -450,7 +451,7 @@ def import_module_typing_attr_or_none(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     The **typing attribute** (i.e., object declared at module scope by the
@@ -485,8 +486,8 @@ def import_module_typing_attr_or_none(
     # By the power of Greyskull!
     return import_module_attr_or_none(
         module_attr_name=f'typing.{typing_attr_basename}',
-        module_attr_label='Typing attribute',
         exception_cls=exception_cls,
+        exception_prefix='Typing attribute ',
     )
 
 
@@ -495,7 +496,7 @@ def import_module_typingextensions_attr_or_none(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     The **typing attribute** (i.e., object declared at module scope by the
@@ -531,6 +532,6 @@ def import_module_typingextensions_attr_or_none(
     # When our powers combine!
     return import_module_attr_or_none(
         module_attr_name=f'typing_extensions.{typing_attr_basename}',
-        module_attr_label='Typing attribute',
         exception_cls=exception_cls,
+        exception_prefix='Typing attribute ',
     )

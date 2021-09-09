@@ -25,7 +25,7 @@ from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
 )
-from beartype._util.text.utiltextidentifier import is_identifier
+from beartype._util.text.utiltextident import is_identifier
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_7,

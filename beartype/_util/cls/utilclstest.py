@@ -15,15 +15,10 @@ from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
 from beartype._data.cls.datacls import TYPES_BUILTIN_FAKE
 from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
-from typing import Tuple, Type, Union
-
-# ....................{ HINTS                             }....................
-TestableTypes = Union[type, Tuple[type, ...]]
-'''
-PEP-compliant type hint matching all **testable types** (i.e., types suitable
-for use as the second parameter passed to the :func:`isinstance` and
-:func:`issubclass` builtins).
-'''
+from beartype._util.utiltyping import (
+    HINT_TYPE_EXCEPTION,
+    HINT_TYPE_OR_TYPES_TUPLE,
+)
 
 # ....................{ VALIDATORS                        }....................
 def die_unless_type(
@@ -31,7 +26,8 @@ def die_unless_type(
     cls: object,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilTypeException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilTypeException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception of the passed type unless the passed object is a class.
@@ -43,6 +39,9 @@ def die_unless_type(
     exception_cls : Type[Exception]
         Type of exception to be raised. Defaults to
         :exc:`_BeartypeUtilTypeException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -54,50 +53,114 @@ def die_unless_type(
     if not isinstance(cls, type):
         assert isinstance(exception_cls, type), (
             'f{repr(exception_cls)} not exception class.')
-        raise exception_cls(f'{repr(cls)} not class.')
+        assert isinstance(exception_prefix, str), (
+            'f{repr(exception_prefix)} not string.')
 
-# ....................{ TESTERS                           }....................
-def is_type_subclass(cls: object, base_classes: TestableTypes) -> bool:
+        raise exception_cls(f'{exception_prefix}{repr(cls)} not class.')
+
+
+#FIXME: Unit test us up.
+def die_unless_type_or_types(
+    # Mandatory parameters.
+    type_or_types: object,
+
+    # Optional parameters.
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilTypeException,
+    exception_prefix: str = '',
+) -> None:
     '''
-    ``True`` only if the passed object is a subclass of either the passed class
-    if passed one class *or* at least one of the passed classes if passed a
-    tuple of classes.
-
-    Caveats
-    ----------
-    **This higher-level tester should always be called in lieu of the
-    lower-level** :func:`issubclass` **builtin,** which raises an undescriptive
-    exception when the first passed parameter is *not* a class: e.g.,
-
-    .. code-block:: python
-
-       >>> issubclass(object(), type)
-       TypeError: issubclass() arg 1 must be a class
-
-    This tester suffers no such deficits, instead safely returning ``False``
-    when the first passed parameter is *not* a class.
+    Raise an exception of the passed type unless the passed object is either a
+    class *or* tuple of one or more classes.
 
     Parameters
     ----------
-    obj : object
-        Object to be inspected.
-    base_classes : TestableTypes
-        Class(es) to test whether this object is a subclass of defined as
-        either:
+    type_or_types : object
+        Object to be validated.
+    exception_cls : Type[Exception]
+        Type of exception to be raised. Defaults to
+        :exc:`_BeartypeUtilTypeException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
-        * A single class.
-        * A tuple of one or more classes.
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this object is neither a class *nor* tuple of one or more classes.
+    '''
+
+    # If this object is neither a class *NOR* tuple of one or more classes,
+    # raise an exception.
+    if not is_type_or_types(type_or_types):
+        assert isinstance(exception_cls, type), (
+            'f{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            'f{repr(exception_prefix)} not string.')
+
+        # Exception message to be raised below.
+        exception_message = (
+            f'{exception_prefix}{repr(type_or_types)} neither '
+            f'class nor tuple of one or more classes'
+        )
+
+        # If this object is a tuple...
+        if isinstance(type_or_types, tuple):
+            # If this tuple is empty, note that.
+            if not type_or_types:
+                exception_message += ' (i.e., is empty tuple)'
+            # Else, this tuple is non-empty. In this case...
+            else:
+                # For the 0-based index of each tuple item and that item...
+                for cls_index, cls in enumerate(type_or_types):
+                    # If this object is *NOT* a class...
+                    if not isinstance(cls, type):
+                        # Note this.
+                        exception_message += (
+                            f' (i.e., tuple item {cls_index} '
+                            f'{repr(cls)} not class)'
+                        )
+
+                        # Halt iteration.
+                        break
+                    # Else, this object is a class. Continue to the next item.
+        # Else, this object is a non-tuple. In this case, the general-purpose
+        # exception message suffices.
+
+        # Raise this exception.
+        raise exception_cls(f'{exception_message}.')
+
+# ....................{ TESTERS                           }....................
+def is_type_or_types(type_or_types: object) -> bool:
+    '''
+    ``True`` only if the passed object is either a class *or* tuple of one or
+    more classes.
+
+    Parameters
+    ----------
+    type_or_types : object
+        Object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this object is a subclass of these class(es).
+        ``True`` only if this object is either a class *or* tuple of one or
+        more classes.
     '''
-    assert isinstance(base_classes, TestableTypesTuple), (
-        f'{repr(base_classes)} neither class nor tuple of classes.')
 
-    # One-liners for tremendous bravery.
-    return isinstance(cls, type) and issubclass(cls, base_classes)
+    # Return true only if either...
+    return (
+        # This object is a class *OR*...
+        isinstance(type_or_types, type) or
+        (
+            # This object is a tuple *AND*...
+            isinstance(type_or_types, tuple) and
+            # This tuple is non-empty *AND*...
+            bool(type_or_types) and
+            # This tuple contains only classes.
+            all(isinstance(cls, type) for cls in type_or_types)
+        )
+    )
+
 
 
 def is_type_builtin(cls: type) -> bool:
@@ -148,3 +211,47 @@ def is_type_builtin(cls: type) -> bool:
     # This return true only if this name is that of the "builtins" module
     # declaring all builtin types.
     return cls_module_name == BUILTINS_MODULE_NAME
+
+
+def is_type_subclass(
+    cls: object, base_classes: HINT_TYPE_OR_TYPES_TUPLE) -> bool:
+    '''
+    ``True`` only if the passed object is a subclass of either the passed class
+    if passed one class *or* at least one of the passed classes if passed a
+    tuple of classes.
+
+    Caveats
+    ----------
+    **This higher-level tester should always be called in lieu of the
+    lower-level** :func:`issubclass` **builtin,** which raises an undescriptive
+    exception when the first passed parameter is *not* a class: e.g.,
+
+    .. code-block:: python
+
+       >>> issubclass(object(), type)
+       TypeError: issubclass() arg 1 must be a class
+
+    This tester suffers no such deficits, instead safely returning ``False``
+    when the first passed parameter is *not* a class.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+    base_classes : TestableTypes
+        Class(es) to test whether this object is a subclass of defined as
+        either:
+
+        * A single class.
+        * A tuple of one or more classes.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a subclass of these class(es).
+    '''
+    assert isinstance(base_classes, TestableTypesTuple), (
+        f'{repr(base_classes)} neither class nor tuple of classes.')
+
+    # One-liners for tremendous bravery.
+    return isinstance(cls, type) and issubclass(cls, base_classes)

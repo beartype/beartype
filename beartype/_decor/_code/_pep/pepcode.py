@@ -20,26 +20,25 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPepException
+from beartype._decor._cache.cachetype import (
+    bear_typistry,
+    register_typistry_forwardref,
+)
 from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
+from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
     PARAM_KIND_TO_PEP_CODE_LOCALIZE,
     PEP_CODE_CHECK_RETURN_PREFIX,
     PEP_CODE_CHECK_RETURN_SUFFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
+    PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
 )
-from beartype._decor._code._pep._pephint import pep_code_check_hint
-from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER)
 from beartype._decor._data import BeartypeData
-from beartype._decor._cache.cachetype import (
-    bear_typistry,
-    register_typistry_forwardref,
-)
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
-from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.hint.pep.proposal.utilpep484585 import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
+from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
     label_callable_decorated_param,
     label_callable_decorated_return,

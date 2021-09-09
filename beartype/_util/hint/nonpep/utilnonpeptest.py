@@ -268,7 +268,7 @@ def die_unless_hint_nonpep_type(
     # that this validation is typically slower than the prior validation and
     # thus intentionally performed last.
     die_unless_type_isinstanceable(
-        cls=hint, cls_label=hint_label, exception_cls=exception_cls)
+        cls=hint, exception_cls=exception_cls, exception_prefix=hint_label)
     # If this object is an isinstanceable class.
 
 
@@ -288,8 +288,11 @@ def die_unless_hint_nonpep_type(
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
 #Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
 #real-world use cases) that this mild inefficiency probably no longer matters.
-#FIXME: Actually, tuple unions underlie a variety of common real-world
-#PEP-compliant type hints (e.g., "Type[Union[str, bool]]"). Optimize, please.
+#FIXME: Indeed! Now that we have the die_unless_type_or_types_isinstanceable()
+#validator, this validator should reduce to efficiently calling
+#die_unless_type_or_types_isinstanceable() directly if "is_str_valid" is False.
+#die_unless_type_or_types_isinstanceable() performs the desired EAFP-style
+#isinstance() check in an optimally efficient manner.
 def die_unless_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,

@@ -15,7 +15,36 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises, warns
+
+# ....................{ TESTS ~ validator                 }....................
+def test_die_unless_module_attr_name() -> None:
+    '''
+    Test the :func:`beartype._util.mod.utilmodtest.die_unless_module_attr_name`
+    validator.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
+    from beartype._util.mod.utilmodtest import die_unless_module_attr_name
+    from pytest import raises
+
+    # Assert this validator raises *NO* exception when passed a syntactically
+    # valid Python identifier.
+    die_unless_module_attr_name('She_dwelt.among_the.untrodden.ways_2')
+
+    # Assert this validator raises the expected exception when passed:
+    # * A non-string.
+    # * The empty string.
+    # * A non-empty string containing *NO* "." delimiters.
+    # * A non-empty string syntactically invalid as a Python identifier.
+    with raises(_BeartypeUtilModuleException):
+        die_unless_module_attr_name(b'Sentient.No6')
+    with raises(_BeartypeUtilModuleException):
+        die_unless_module_attr_name('')
+    with raises(_BeartypeUtilModuleException):
+        die_unless_module_attr_name('typing')
+    with raises(_BeartypeUtilModuleException):
+        die_unless_module_attr_name('Sentient.6')
 
 # ....................{ TESTS ~ tester                    }....................
 def test_is_module() -> None:
@@ -26,6 +55,7 @@ def test_is_module() -> None:
     # Defer heavyweight imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype._util.mod.utilmodtest import is_module
+    from pytest import warns
 
     # Assert this tester accepts the name of a (possibly unimported) existing
     # importable module.

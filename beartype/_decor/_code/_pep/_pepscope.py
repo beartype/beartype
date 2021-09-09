@@ -38,6 +38,7 @@ from beartype._util.hint.pep.proposal.utilpep484585 import (
     get_hint_pep484585_forwardref_classname,
 )
 from beartype._util.utilobject import get_object_type_basename
+from beartype._util.utiltyping import HINT_TYPES_TUPLE
 from collections.abc import Set
 from typing import AbstractSet, Optional, Tuple, Union
 
@@ -57,6 +58,12 @@ Note that the :class:`Set` abstract base class (ABC) rather than the concrete
    True
    >>> issubclass(frozenset, set)
    False
+'''
+
+
+_HINT_SET_OR_TUPLE_OF_TYPES = Union[AbstractSet[type], HINT_TYPES_TUPLE]
+'''
+PEP-compliant type hint matching a set *or* tuple of zero or more classes.
 '''
 
 # ....................{ ADDERS ~ type                     }....................
@@ -105,7 +112,7 @@ def add_func_scope_type(
     '''
 
     # If this object is *NOT* an isinstanceable class, raise an exception.
-    die_unless_type_isinstanceable(cls=cls, cls_label=attr_label)
+    die_unless_type_isinstanceable(cls=cls, exception_prefix=attr_label)
     # Else, this object is an isinstanceable class.
 
     # Return either...
@@ -123,7 +130,7 @@ def add_func_scope_type(
 
 def add_func_scope_types(
     # Mandatory parameters.
-    types: Union[AbstractSet[type], Tuple[type, ...]],
+    types: _HINT_SET_OR_TUPLE_OF_TYPES,
     func_scope: CallableScope,
 
     # Optional parameters.
@@ -183,7 +190,7 @@ def add_func_scope_types(
 
     Parameters
     ----------
-    types : Union[AbstractSet[type], Tuple[type, ...]]
+    types : _HINT_SET_OR_TUPLE_OF_TYPES
         Set or tuple of arbitrary types to be added to this scope.
     func_scope : CallableScope
         Local or global scope to add this object to.

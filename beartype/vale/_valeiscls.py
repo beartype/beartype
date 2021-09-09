@@ -22,16 +22,17 @@ from beartype.vale._valeisabc import _IsABC
 from beartype._vale._valesnip import VALE_CODE_CHECK_ISSUBCLASS_format
 from beartype._vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import (
-    TestableTypes,
-    is_type_subclass,
+from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_type_issubclassable,
+    die_unless_type_or_types_issubclassable,
 )
-from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
 from beartype._util.utilobject import get_object_name
+from beartype._util.utiltyping import HINT_TYPE_OR_TYPES_TUPLE
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -134,7 +135,7 @@ class IsSubclass(_IsABC):
     # ..................{ DUNDERS                           }..................
     @callable_cached
     def __class_getitem__(
-        cls, base_classes: TestableTypes) -> _SubscriptedIs:
+        cls, base_classes: HINT_TYPE_OR_TYPES_TUPLE) -> _SubscriptedIs:
         '''
         :pep:`560`-compliant dunder method creating and returning a new
         beartype validator validating type inheritance against at least one of
@@ -145,7 +146,7 @@ class IsSubclass(_IsABC):
 
         Parameters
         ----------
-        base_classes : TestableTypes
+        base_classes : HINT_TYPE_OR_TYPES_TUPLE
             One or more arbitrary classes to validate inheritance against.
 
         Returns
@@ -182,15 +183,17 @@ class IsSubclass(_IsABC):
 
             # If any such argument is *NOT* an issubclassable type, raise an
             # exception.
-            for base_class in base_classes:
-                die_unless_type_issubclassable(
-                    cls=base_class,
-                    exception_cls=BeartypeValeSubscriptionException,
-                )
+            die_unless_type_or_types_issubclassable(
+                type_or_types=base_classes,
+                exception_cls=BeartypeValeSubscriptionException,
+                exception_prefix=f'{repr(cls)} subscripted by ',
+            )
+            # Else, all such arguments are issubclassable types.
 
+            # For each such type...
+            for base_class in base_classes:
                 # Append the fully-qualified name of this type to this string.
                 base_classes_repr += f'{get_object_name(base_class)}, '
-            # Else, all such arguments are issubclassable types.
 
             # Strip the suffixing ", " from this string for readability.
             base_classes_repr = base_classes_repr[:-2]
@@ -201,6 +204,7 @@ class IsSubclass(_IsABC):
             die_unless_type_issubclassable(
                 cls=base_classes,
                 exception_cls=BeartypeValeSubscriptionException,
+                exception_prefix=f'{repr(cls)} subscripted by ',
             )
             # Else, this argument is an issubclassable type.
 

@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python module tester** utilities.
+Project-wide **Python module tester** (i.e., callables dynamically testing
+modules and/or attributes in modules) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -13,9 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from importlib import import_module as importlib_import_module
-from sys import modules as sys_modules
-from typing import Type
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -26,8 +25,8 @@ def die_unless_module_attr_name(
     module_attr_name: str,
 
     # Optional parameters.
-    module_attr_label: str = 'Module attribute name',
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_prefix: str = 'Module attribute name ',
 ) -> None:
     '''
     Raise an exception unless the passed string is the fully-qualified
@@ -41,12 +40,12 @@ def die_unless_module_attr_name(
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be validated.
-    module_attr_label : str
-        Human-readable label prefixing this name in the exception message
-        raised by this function. Defaults to ``"Module attribute name"``.
-    exception_cls : type
-        Type of exception to be raised by this function. Defaults to
+    exception_cls : type, optional
+        Type of exception to be raised. Defaults to
         :class:`_BeartypeUtilModuleException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to something reasonably sane.
 
     Raises
     ----------
@@ -69,17 +68,17 @@ def die_unless_module_attr_name(
           * One or more ``.`` characters but syntactically invalid as a
             classname (e.g., ``0h!muh?G0d.``).
     '''
-    assert isinstance(module_attr_label, str), (
-        f'{repr(module_attr_label)} not string.')
     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # Avoid circular import dependencies.
-    from beartype._util.text.utiltextidentifier import is_identifier
+    from beartype._util.text.utiltextident import is_identifier
 
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
         raise exception_cls(
-            f'{module_attr_label} {repr(module_attr_name)} not string.')
+            f'{exception_prefix}{repr(module_attr_name)} not string.')
     # Else, this object is a string.
     #
     # If this string contains *NO* "." characters and thus either is relative
@@ -87,7 +86,7 @@ def die_unless_module_attr_name(
     # exception.
     elif '.' not in module_attr_name:
         raise exception_cls(
-            f'{module_attr_label} "{module_attr_name}" '
+            f'{exception_prefix}"{module_attr_name}" '
             f'relative or refers to builtin object '
             f'(i.e., due to containing no "." characters).'
         )
@@ -98,7 +97,7 @@ def die_unless_module_attr_name(
     # attribute name, raise an exception.
     elif not is_identifier(module_attr_name):
         raise exception_cls(
-            f'{module_attr_label} "{module_attr_name}" '
+            f'{exception_prefix}"{module_attr_name}" '
             f'syntactically invalid as module attribute name.'
         )
     # Else, this string is syntactically valid as a fully-qualified module
@@ -216,7 +215,7 @@ def is_module_typing_any_attr(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilModuleException,
+    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
 ) -> bool:
     '''
     ``True`` only if a **typing attribute** (i.e., object declared at module

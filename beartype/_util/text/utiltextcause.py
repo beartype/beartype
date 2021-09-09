@@ -24,7 +24,7 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
 from beartype._util.text.utiltextlabel import label_class
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Tuple
+from beartype._util.utiltyping import HINT_TYPES_TUPLE
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -78,7 +78,7 @@ def get_cause_object_not_instance_type(pith: object, hint: type) -> str:
 
 #FIXME: Unit test us up.
 def get_cause_object_not_instance_types(
-    pith: object, hint: Tuple[type, ...]) -> str:
+    pith: object, hint: HINT_TYPES_TUPLE) -> str:
     '''
     Human-readable error message describing the failure of the passed arbitrary
     object to satisfy (i.e., be an instance of at least one of the items of)

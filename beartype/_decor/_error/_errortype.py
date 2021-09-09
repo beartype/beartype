@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.cls.pep.utilpep3119 import (
@@ -59,8 +60,8 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     # If this hint is *NOT* an isinstanceable type, raise an exception.
     die_unless_type_isinstanceable(
         cls=sleuth.hint,
-        cls_label=sleuth.hint_label,
         exception_cls=_BeartypeCallHintPepRaiseException,
+        exception_prefix=sleuth.hint_label,
     )
     # Else, this hint is an isinstanceable type.
 
@@ -71,7 +72,8 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return get_cause_object_not_instance_type(pith=sleuth.pith, hint=sleuth.hint)
+    return get_cause_object_not_instance_type(
+        pith=sleuth.pith, hint=sleuth.hint)
 
 
 def get_cause_or_none_instance_type_forwardref(
@@ -93,12 +95,12 @@ def get_cause_or_none_instance_type_forwardref(
         f'{sleuth.hint_sign} not forward reference.')
 
     # Class referred to by this forward reference.
-    hint_forwardref_type = (
-        import_pep484585_forwardref_type_relative_to_object(
-            hint=sleuth.hint,
-            hint_label=sleuth.hint_label,
-            obj=sleuth.func,
-        ))
+    hint_forwardref_type = import_pep484585_forwardref_type_relative_to_object(
+        hint=sleuth.hint,
+        obj=sleuth.func,
+        exception_cls=BeartypeCallHintForwardRefException,
+        exception_prefix=sleuth.hint_label,
+    )
 
     # Defer to the getter function handling isinstanceable classes. Neato!
     return get_cause_or_none_instance_type(
@@ -171,7 +173,8 @@ def get_cause_or_none_instance_types_tuple(
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return get_cause_object_not_instance_types(pith=sleuth.pith, hint=sleuth.hint)
+    return get_cause_object_not_instance_types(
+        pith=sleuth.pith, hint=sleuth.hint)
 
 # ....................{ GETTERS ~ subclass : type         }....................
 def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
@@ -201,19 +204,19 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
     if not isinstance(hint_superclass, type):
         # Reduce this superclass to the class referred to by this forward
         # reference.
-        hint_superclass = (
-            import_pep484585_forwardref_type_relative_to_object(
-                hint=hint_superclass,
-                hint_label=sleuth.hint_label,
-                obj=sleuth.func,
-            ))
+        hint_superclass = import_pep484585_forwardref_type_relative_to_object(
+            hint=hint_superclass,
+            obj=sleuth.func,
+            exception_cls=BeartypeCallHintForwardRefException,
+            exception_prefix=sleuth.hint_label,
+        )
     # In either case, this superclass is now a class.
 
     # If this hint is *NOT* an issubclassable type, raise an exception.
     die_unless_type_issubclassable(
         cls=hint_superclass,
-        cls_label=sleuth.hint_label,
         exception_cls=_BeartypeCallHintPepRaiseException,
+        exception_prefix=sleuth.hint_label,
     )
     # Else, this hint is an issubclassable type.
 

@@ -15,6 +15,7 @@ from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
+from beartype._util.utiltyping import HINT_TYPES_TUPLE
 from typing import Any, Set, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -243,7 +244,7 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(hint: object) -> Tuple[type, ...]:
+def get_hint_pep585_generic_typevars(hint: object) -> HINT_TYPES_TUPLE:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed :pep:`585`:-compliant generic listed by the caller

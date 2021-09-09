@@ -23,7 +23,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import die_unless_type
-from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_type_issubclassable,
+    die_unless_type_or_types_issubclassable,
+)
 from beartype._util.hint.pep.proposal.utilpep484 import (
     HINT_PEP484_FORWARDREF_TYPE,
     HINT_PEP484_TUPLE_EMPTY,
@@ -40,6 +43,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
 from typing import Any, Optional, Tuple, TypeVar, Union
 
 # See the "beartype.cave" submodule for further commentary.
@@ -877,19 +881,17 @@ def get_hint_pep484585_subclass_superclass(
         # subscripting and thus underlying this union.
         hint_superclass = get_hint_pep_args(hint_superclass)
 
-        #FIXME: Generalize the die_unless_type_issubclassable() validator to
-        #accept both classes and tuples of classes. *sigh*
         # If any item of this tuple is *NOT* an issubclassable class, raise an
         # exception.
-        die_unless_type_issubclassable(
-            cls=hint_superclass, cls_label=hint_label)  # type: ignore[arg-type]
+        die_unless_type_or_types_issubclassable(
+            type_or_types=hint_superclass, exception_prefix=hint_label)  # type: ignore[arg-type]
     # Else, this superclass is *NOT* a union of superclasses...
     #
     # If this superclass is a class...
     elif isinstance(hint_superclass, type):
         # If this superclass is *NOT* issubclassable, raise an exception.
         die_unless_type_issubclassable(
-            cls=hint_superclass, cls_label=hint_label)
+            cls=hint_superclass, exception_prefix=hint_label)
         # Else, this superclass is issubclassable.
 
     # Return this superclass.
@@ -903,7 +905,8 @@ def import_pep484585_forwardref_type_relative_to_object(
     obj: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintForwardRefException,
+    exception_prefix: str = '',
 ) -> type:
     '''
     Class referred to by the passed :pep:`484` or :pep:`585`-compliant
@@ -924,9 +927,12 @@ def import_pep484585_forwardref_type_relative_to_object(
     obj : object
         Object to canonicalize the classname referred to by this forward
         reference if that classname is unqualified (i.e., relative).
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in
-        exception messages. Defaults to a reasonably sane string.
+    exception_cls : Type[Exception]
+        Type of exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintForwardRefException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -935,10 +941,13 @@ def import_pep484585_forwardref_type_relative_to_object(
 
     Raises
     ----------
-    :exc:`_BeartypeUtilTypeException`
-        If this object referred to by this forward reference is *not* a class.
+    :exc:`exception_cls`
+        If the object referred to by this forward reference is either undefined
+        *or* is defined but is not a class.
     '''
-    assert isinstance(hint_label, str), f'{hint_label} not string.'
+
+    # Human-readable label prefixing exception messages raised below.
+    EXCEPTION_PREFIX = f'{exception_prefix}{repr(hint)} referenced class '
 
     # Fully-qualified classname referred to by this forward reference relative
     # to this object.
@@ -949,11 +958,16 @@ def import_pep484585_forwardref_type_relative_to_object(
     # Object dynamically imported from this classname.
     hint_forwardref_type = import_module_attr(
         module_attr_name=hint_forwardref_classname,
-        module_attr_label=f'{hint_label} forward reference type hint',
+        exception_cls=exception_cls,
+        exception_prefix=EXCEPTION_PREFIX,
     )
 
     # If this object is *NOT* a class, raise an exception.
-    die_unless_type(cls=hint_forwardref_type)
+    die_unless_type(
+        cls=hint_forwardref_type,
+        exception_cls=exception_cls,
+        exception_prefix=EXCEPTION_PREFIX,
+    )
     # Else, this object is a class.
 
     # Return this class.

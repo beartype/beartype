@@ -20,15 +20,15 @@ from itertools import count
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS ~ hint : label          }....................
-FUNC_WRAPPER_LOCAL_LABEL = f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter'
+# ....................{ CONSTANTS ~ exception             }....................
+EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter '
 '''
-Human-readable label describing a new wrapper paramater required by the
+Human-readable substring describing a new wrapper parameter required by the
 root hint in exception messages.
 '''
 
 
-HINT_ROOT_LABEL = f'{EXCEPTION_CACHED_PLACEHOLDER} type hint'
+EXCEPTION_PREFIX_HINT_ROOT = f'{EXCEPTION_CACHED_PLACEHOLDER} type hint '
 '''
 Human-readable label describing the root hint in exception messages.
 '''
