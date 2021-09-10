@@ -17,6 +17,7 @@ from beartype.roar import (
     BeartypeDecorHintPep585Exception,
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignForwardRef,
     HintSignType,
     HintSignUnion,
 )
@@ -142,16 +143,14 @@ def get_hint_pep484585_subclass_superclass(
     hint_superclass = get_hint_pep484585_args_1(
         hint=hint, exception_prefix=exception_prefix)
 
-    # If this superclass is neither a class nor forward reference to a class,
-    # raise an exception.
+    # If this superclass is of an unexpected type, raise an exception.
     if not isinstance(hint_superclass, _HINT_PEP484585_SUBCLASS_ARGS_1_TYPES):
         raise BeartypeDecorHintPep585Exception(
             f'{exception_prefix}PEP 585 subclass type hint {repr(hint)} '
             f'argument {repr(hint_superclass)} neither '
             f'class, union of classes, nor forward reference to class.'
         )
-    # Else, this superclass is either a class, union of classes, or forward
-    # reference to a class.
+    # Else, this superclass is of an expected type.
 
     # Sign identifying this superclass.
     hint_superclass_sign = get_hint_pep_sign_or_none(hint_superclass)
@@ -164,8 +163,14 @@ def get_hint_pep484585_subclass_superclass(
 
         # If any item of this tuple is *NOT* an issubclassable class, raise an
         # exception.
+        # print(f'hint_superclass union arg: {hint_superclass}')
         die_unless_type_or_types_issubclassable(
             type_or_types=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
+    # If this superclass is actually a forward reference to a superclass,
+    # silently accept this reference as is. This conditional exists only to
+    # ensure that the subsequent exception is *NOT* raised.
+    elif hint_superclass_sign is HintSignForwardRef:
+        pass
     # Else, this superclass is *NOT* a union of superclasses...
     #
     # If this superclass is a class...
@@ -174,11 +179,26 @@ def get_hint_pep484585_subclass_superclass(
         die_unless_type_issubclassable(
             cls=hint_superclass, exception_prefix=exception_prefix)
         # Else, this superclass is issubclassable.
+    # Else, this superclass is of an unexpected type. In this case, raise an
+    # exception. Note that this edge case should *NEVER* occur due to the above
+    # validation, but that this edge case actually did occur in practice and is
+    # thus explicitly guarded against here. Why? Because the PEP 585-compliant
+    # empty subclass type hint is subscripted by the empty tuple, which is
+    # technically an argument (albeit an insane argument):
+    #     >>> type[()].__args__
+    #     ()
+    else:
+        raise BeartypeDecorHintPep484585Exception(
+            f'{exception_prefix}subclass type hint {repr(hint)} '
+            f'argument {repr(hint_superclass)} neither '
+            f'class, union of classes, nor forward reference to class.'
+        )
 
     # Return this superclass.
     return hint_superclass
 
 # ....................{ REDUCERS                          }....................
+#FIXME: Unit test us up.
 def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     # Mandatory parameters.
     hint: Any,

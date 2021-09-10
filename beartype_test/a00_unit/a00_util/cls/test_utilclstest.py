@@ -17,6 +17,34 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
+def test_is_type_or_types() -> None:
+    '''
+    Test the :func:`beartype._util.cls.utilclstest.is_type_or_types` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.cls.utilclstest import is_type_or_types
+
+    # Assert this tester accepts an arbitrary type.
+    assert is_type_or_types(str) is True
+
+    # Assert this tester accepts an arbitrary non-empty tuple of types.
+    assert is_type_or_types((bool, int)) is True
+
+    # Assert this tester rejects an arbitrary object that is neither a type
+    # nor a non-empty tuple of types.
+    assert is_type_or_types(
+        'To drink their odours, and their mighty swinging') is False
+
+    # Assert this tester rejects the empty tuple.
+    assert is_type_or_types(()) is False
+
+    # Assert this tester rejects an arbitrary non-empty tuple containing one or
+    # more non-types.
+    assert is_type_or_types(
+        (dict, 'To hear—an old and solemn harmony;', float)) is False
+
+
 def test_is_type_builtin() -> None:
     '''
     Test the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester.

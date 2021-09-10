@@ -86,7 +86,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         #
         # Note there intentionally exists *NO* corresponding PEP 484 test, as
         # the "typing.Type" factory already validates this to be the case.
-        with raises(BeartypeDecorHintPep585Exception):
+        with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_subclass_superclass(type[()])
 
         # Assert this getter raises the expected exception when passed a PEP

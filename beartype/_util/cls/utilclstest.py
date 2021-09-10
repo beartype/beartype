@@ -162,7 +162,6 @@ def is_type_or_types(type_or_types: object) -> bool:
     )
 
 
-
 def is_type_builtin(cls: type) -> bool:
     '''
     ``True`` only if the passed class is **builtin** (i.e., globally accessible
