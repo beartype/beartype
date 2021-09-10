@@ -17,12 +17,12 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._decor._error._errortype import (
     get_cause_or_none_instance_type)
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.hint.pep.proposal.utilpep484 import (
-    get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
     get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type_or_none,
 )
+from beartype._util.hint.pep.proposal.utilpep484 import (
+    get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing

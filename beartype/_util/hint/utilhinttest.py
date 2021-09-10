@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-agnostic type hint tester utilities** (i.e., callables
-validating arbitrary objects to be PEP-agnostic type hints).
+Project-wide **PEP-agnostic type hint tester utilities** (i.e., callables
+validating arbitrary objects to be type hints supported by :mod:`beartype`,
+regardless of whether those hints comply with PEP standards or not).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

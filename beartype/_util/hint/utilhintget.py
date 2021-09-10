@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-agnostic type hint getter utilities** (i.e., callables querying
-arbitrary objects for attributes applicable to both PEP-compliant and
--noncompliant type hints).
+Project-wide **PEP-agnostic type hint getter utilities** (i.e., callables
+querying type hints supported by :mod:`beartype` for various properties,
+regardless of whether those hints comply with PEP standards or not).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -124,39 +124,33 @@ def get_hint_reduced(
         # this hint as is for subsequent handling elsewhere.
     # ..................{ NON-PEP ~ numpy                   }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
-    # "numpy.typing.NDArray[np.float64]")...
+    # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
+    # well-supported beartype validator.
     #
     # Typed NumPy arrays are increasingly common and thus detected next.
     elif hint_sign is HintSignNumpyArray:
-        # Defer heavyweight imports.
+        # Avoid circular import dependencies.
         from beartype._util.hint.pep.mod.utilmodnumpy import (
             reduce_hint_numpy_ndarray)
-
-        # Reduce this unsupported PEP-noncompliant hint to the equivalent
-        # well-supported PEP-noncompliant beartype validator.
-        hint = reduce_hint_numpy_ndarray(hint=hint, hint_label=hint_label)
-    # ..................{ PEP 484 ~ subclass                }..................
-    #FIXME: Remove this *AFTER* implementing support for type variables. We
-    #currently (mis)use this getter to subversively ignore type variables
-    #subscripting subclass type hints, which arguably constitutes a semantic
-    #abuse but also inarguably offers the most elegant means of doing so.
-
-    # If this hint is a PEP 484-compliant subclass type hint subscripted by
-    # either the ignorable "Any" type hint *OR* a type variable, silently
-    # ignore this argument by reducing this hint to the "type" superclass.
-    # Although this logic could also be performed elsewhere, doing so here
-    # simplifies matters.
+        hint = reduce_hint_numpy_ndarray(
+            hint=hint, exception_prefix=hint_label)
+    # ..................{ PEP (484|585) ~ subclass          }..................
+    # If this hint is a PEP 484-compliant subclass type hint subscripted by an
+    # ignorable child type hint (e.g., "object", "typing.Any"), silently ignore
+    # this argument by reducing this hint to the "type" superclass. Although
+    # this logic could also be performed elsewhere, doing so here simplifies
+    # matters dramatically. Note that this reduction *CANNOT* be performed by
+    # the is_hint_ignorable() tester, as subclass type hints subscripted by
+    # ignorable child type hints are *NOT* ignorable; they're simply safely
+    # reducible to the "type" superclass.
     #
     # Subclass type hints are reasonably uncommon and thus detected late.
     elif hint_sign is HintSignType:
-        #FIXME: Implement us up, please.
         # Avoid circular import dependencies.
-        # from beartype._util.hint.pep.proposal.utilpep484 import (
-        #     get_hint_pep484_newtype_class)
-        # hint = get_hint_pep484_newtype_class(hint)
-
-        pass
-
+        from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+            reduce_hint_pep484585_subclass_superclass_if_ignorable)
+        hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
+            hint=hint, exception_prefix=hint_label)
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also

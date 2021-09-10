@@ -28,10 +28,6 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_args,
 )
-from beartype._util.hint.pep.proposal.utilpep484585 import (
-    get_hint_pep484585_generic_bases_unerased,
-    is_hint_pep484585_generic,
-)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Any, Callable, Optional, Tuple

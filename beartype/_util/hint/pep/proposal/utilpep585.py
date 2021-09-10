@@ -16,7 +16,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
 from beartype._util.utiltyping import HINT_TYPES_TUPLE
-from typing import Any, Set, Tuple
+from typing import Any, Set
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -61,7 +61,8 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_builtin(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484585 import is_hint_pep484585_generic
+        from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+            is_hint_pep484585_generic)
 
         # Return true only if this hint...
         return (
@@ -77,7 +78,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484585 import (
+        from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
             get_hint_pep484585_generic_type_or_none)
 
         # If this hint is *NOT* a class, reduce this hint to the object
@@ -131,7 +132,6 @@ else:
         return False
 
 # ....................{ TESTERS ~ doc                     }....................
-# Docstring for this function regardless of implementation details.
 # Docstring for this function regardless of implementation details.
 is_hint_pep585_builtin.__doc__ = '''
     ``True`` only if the passed object is a C-based :pep:`585`:-compliant
@@ -221,12 +221,12 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 
     See Also
     ----------
-    :func:`beartype._util.hint.pep.proposal.utilpep484585.get_hint_pep484585_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilpep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating

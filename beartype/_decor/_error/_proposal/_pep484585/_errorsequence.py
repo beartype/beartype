@@ -18,7 +18,7 @@ from beartype._decor._error._errortype import (
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._util.hint.pep.proposal.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextrepr import represent_object

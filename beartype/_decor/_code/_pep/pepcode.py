@@ -36,7 +36,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
-from beartype._util.hint.pep.proposal.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (

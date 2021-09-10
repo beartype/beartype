@@ -1050,6 +1050,22 @@ def add_data(data_module: 'ModuleType') -> None:
         #     ),
         # ),
         #
+        # # "type" superclass, semantically equivalent to the unsubscripted
+        # # "Type" singleton.
+        # HintPepMetadata(
+        #     hint=Type[type],
+        #     pep_sign=HintSignType,
+        #     isinstanceable_type=type,
+        #     piths_satisfied_meta=(
+        #         # Arbitrary class.
+        #         HintPithSatisfiedMetadata(complex),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata('Had al-'),
+        #     ),
+        # ),
+        #
         # # Specific class.
         # HintPepMetadata(
         #     hint=Type[Class],

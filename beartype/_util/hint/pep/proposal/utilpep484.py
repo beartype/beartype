@@ -145,7 +145,7 @@ def is_hint_pep484_ignorable_or_none(
         # "typing.Generic[T]"), return true.
         #
         # Note that we intentionally avoid calling the
-        # get_hint_pep_type_origin_isinstanceable_or_none() function here, which has been
+        # get_hint_pep_type_isinstanceable_or_none() function here, which has been
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if getattr(hint, '__origin__', None) is Generic:
@@ -267,7 +267,7 @@ if IS_PYTHON_AT_LEAST_3_7:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484585 import (
+        from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
             get_hint_pep484585_generic_type_or_none)
 
         # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
@@ -328,7 +328,7 @@ else:
     def is_hint_pep484_generic(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484585 import (
+        from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
             get_hint_pep484585_generic_type_or_none)
         from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_type_typing)
@@ -706,7 +706,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
     See Also
     ----------
-    :func:`beartype._util.hint.pep.proposal.utilpep484585.get_hint_pep484585_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 
@@ -831,7 +831,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #    duplicate superclasses.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilpep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating

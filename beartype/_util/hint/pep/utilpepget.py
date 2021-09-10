@@ -480,7 +480,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     # ..................{ IMPORTS                           }..................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilpep484585 import is_hint_pep484585_generic
+    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+        is_hint_pep484585_generic)
 
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
@@ -703,7 +704,7 @@ get_hint_pep_origin_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_type_origin_isinstanceable_or_none` function should
+    **The high-level** :func:`get_hint_pep_type_isinstanceable_or_none` function should
     always be called in lieu of this low-level function.** Whereas the former
     is guaranteed to return either a class or ``None``, this function enjoys no
     such guarantees and instead returns what the caller can only safely assume
@@ -796,12 +797,12 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
 
     See Also
     ----------
-    :func:`get_hint_pep_type_origin_isinstanceable_or_none`
+    :func:`get_hint_pep_type_isinstanceable_or_none`
         Related getter.
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_origin_type = get_hint_pep_type_origin_isinstanceable_or_none(hint)
+    hint_origin_type = get_hint_pep_type_isinstanceable_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
     if hint_origin_type is None:
@@ -816,7 +817,7 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     return hint_origin_type
 
 
-def get_hint_pep_type_origin_isinstanceable_or_none(
+def get_hint_pep_type_isinstanceable_or_none(
     hint: Any) -> Optional[type]:
     '''
     **Standard origin type** (i.e., isinstanceable class declared by Python's

@@ -106,13 +106,16 @@ from beartype._util.func.utilfuncscope import (
 from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     get_hint_pep484585_args_1,
-    get_hint_pep484585_generic_bases_unerased,
-    get_hint_pep484585_generic_type_or_none,
-    get_hint_pep484585_subclass_superclass,
     is_hint_pep484585_tuple_empty,
 )
+from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+    get_hint_pep484585_generic_bases_unerased,
+    get_hint_pep484585_generic_type_or_none,
+)
+from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+    get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilpep586 import (
@@ -1429,7 +1432,7 @@ def pep_code_check_hint(
                     # hint of this parent hint *WITH* validation.
                     else:
                         hint_child = get_hint_pep484585_args_1(
-                            hint=hint_curr, hint_label=hint_curr_label)
+                            hint=hint_curr, exception_prefix=hint_curr_label)
 
                     # If this child hint is *NOT* ignorable, deeply type-check
                     # both the type of the current pith *AND* a randomly
@@ -1686,7 +1689,7 @@ def pep_code_check_hint(
 
                     # Superclass this pith is required to be a subclass of.
                     hint_child = get_hint_pep484585_subclass_superclass(
-                        hint=hint_curr, hint_label=hint_curr_label)
+                        hint=hint_curr, exception_prefix=hint_curr_label)
 
                     #FIXME: Unit test us up, please.
 

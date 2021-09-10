@@ -25,12 +25,12 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.pep.proposal.utilpep484585 import (
-    get_hint_pep484585_subclass_superclass,
-    import_pep484585_forwardref_type_relative_to_object,
-)
+from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
+    import_pep484585_forwardref_type_relative_to_object)
+from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+    get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_type_origin_isinstanceable_or_none)
+    get_hint_pep_type_isinstanceable_or_none)
 from beartype._util.text.utiltextcause import (
     get_cause_object_not_instance_type,
     get_cause_object_not_instance_types,
@@ -126,7 +126,7 @@ def get_cause_or_none_type_instance_origin(
     # Isinstanceable origin type originating this hint if any *OR* "None"
     # otherwise.
     hint_type_origin_isinstanceable = (
-        get_hint_pep_type_origin_isinstanceable_or_none(sleuth.hint))
+        get_hint_pep_type_isinstanceable_or_none(sleuth.hint))
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin_isinstanceable is None:
@@ -195,7 +195,7 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
 
     # Superclass this pith is required to be a subclass of.
     hint_superclass = get_hint_pep484585_subclass_superclass(
-        hint=sleuth.hint, hint_label=sleuth.hint_label)
+        hint=sleuth.hint, exception_prefix=sleuth.hint_label)
 
     # If this superclass is *NOT* a class, this superclass *MUST* by process of
     # elimination and the validation already performed above by the

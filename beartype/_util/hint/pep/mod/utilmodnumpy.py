@@ -75,26 +75,22 @@ def reduce_hint_numpy_ndarray(
     hint: Any,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> Any:
     '''
-    Beartype validator validating arbitrary objects to be NumPy arrays whose
-    **NumPy array data type** (i.e., :class:`numpy.dtype` instance) is equal to
-    that subscripting the passed PEP-noncompliant typed NumPy array (e.g.,
-    ``numpy.dtype(numpy.float64)`` when passed
-    ``numpy.typing.NDArray[numpy.float64]``).
-
-    This getter effectively reduces any PEP-noncompliant third-party typed
-    NumPy array to a semantically equivalent PEP-noncompliant first-party
-    beartype validator -- which has the substantial merits of already being
-    well-supported, well-tested, and well-known to generate optimally efficient
-    type-checking by the :func:`beartype.beartype` decorator.
+    Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
+    subscription of the third-party :attr:`numpy.typing.NDArray` type hint
+    factory) to the equivalent beartype validator validating arbitrary objects
+    be instances of that array type -- which has the substantial merit of
+    already being well-supported, well-tested, and well-known to generate
+    optimally efficient type-checking by the :func:`beartype.beartype`
+    decorator.
 
     Technically, beartype could instead explicitly handle typed NumPy arrays
     throughout the codebase. Of course, doing so would yield *no* tangible
     benefits while imposing a considerable maintenance burden.
 
-    This getter is intentionally *not* memoized (e.g., by the
+    This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
@@ -102,9 +98,9 @@ def reduce_hint_numpy_ndarray(
     ----------
     hint : object
         PEP-noncompliant typed NumPy array to return the data type of.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
+    exception_prefix : Optional[str]
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -162,8 +158,9 @@ def reduce_hint_numpy_ndarray(
     # If this hint is *NOT* a typed NumPy array, raise an exception.
     if hint_sign is not HintSignNumpyArray:
         raise BeartypeDecorHintNonPepNumPyException(
-            f'{hint_label} type hint {repr(hint)} not NumPy array type hint '
-            f'(i.e., "numpy.typing.NDArray" instance).'
+            f'{exception_prefix}{repr(hint)} not typed NumPy array '
+            f'(i.e., subscription of the '
+            f'"numpy.typing.NDArray" type hint factory).'
         )
     # Else, this hint is a typed NumPy array.
 
@@ -174,7 +171,7 @@ def reduce_hint_numpy_ndarray(
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
         raise BeartypeDecorHintNonPepNumPyException(
-            f'{hint_label} NumPy array type hint {repr(hint)} '
+            f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'not subscripted by exactly two arguments.'
         )
     # Else, this hint was subscripted by exactly two arguments.
@@ -192,7 +189,7 @@ def reduce_hint_numpy_ndarray(
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
         raise BeartypeDecorHintNonPepNumPyException(
-            f'{hint_label} NumPy array type hint {repr(hint)} '
+            f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'data type subhint {repr(hint_dtype_subhint)} '
             f'not subscripted by exactly one argument.'
         )
@@ -256,7 +253,7 @@ def reduce_hint_numpy_ndarray(
         #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
         except Exception as exception:
             raise BeartypeDecorHintNonPepNumPyException(
-                f'{hint_label} NumPy array type hint {repr(hint)} '
+                f'{exception_prefix}typed NumPy array {repr(hint)} '
                 f'data type {repr(hint_dtype_like)} invalid '
                 f'(i.e., neither data type nor coercible to data type).'
             ) from exception
@@ -324,4 +321,3 @@ def _get_numpy_dtype_type_abcs() -> FrozenSet[type]:
         signedinteger,
         unsignedinteger,
     ))
-
