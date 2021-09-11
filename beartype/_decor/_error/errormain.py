@@ -97,7 +97,8 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Callable, Dict, NoReturn, Optional, Type
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from typing import Callable, Dict, NoReturn, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -227,7 +228,7 @@ def raise_pep_call_exception(
     assert callable(func), f'{repr(func)} uncallable.'
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
     assert isinstance(random_int, NoneTypeOr[int]), (
-        f'{repr(random_int)} not integer or "None".')
+        f'{repr(random_int)} neither integer nor "None".')
     # print('''raise_pep_call_exception(
     #     func={!r},
     #     pith_name={!r},
@@ -235,7 +236,7 @@ def raise_pep_call_exception(
     # )'''.format(func, pith_name, pith_value))
 
     # Type of exception to be raised.
-    exception_cls: Type[Exception] = None  # type: ignore[assignment]
+    exception_cls: HINT_TYPE_EXCEPTION = None  # type: ignore[assignment]
 
     # Human-readable label describing this parameter or return value.
     pith_label: str = None  # type: ignore[assignment]
@@ -252,7 +253,7 @@ def raise_pep_call_exception(
         exception_cls = BeartypeCallHintPepParamException
         pith_label = label_callable_decorated_param_value(
             func=func,
-            param_name =pith_name,
+            param_name=pith_name,
             param_value=pith_value,
         )
 
@@ -274,7 +275,8 @@ def raise_pep_call_exception(
     # generally supported by both parameters and return values. In this case...
     if hint is not NoReturn:
         # If type hint is *NOT* a supported type hint, raise an exception.
-        die_unless_hint(hint=hint, hint_label=f'{pith_label} type hint')
+        die_unless_hint(
+            hint=hint, exception_prefix=f'{pith_label} type hint ')
         # Else, this type hint is supported.
 
     # Human-readable string describing the failure of this pith to satisfy this
@@ -285,7 +287,7 @@ def raise_pep_call_exception(
         pith=pith_value,
         hint=hint,
         cause_indent='',
-        hint_label=pith_label,
+        exception_prefix=f'{pith_label} ',
         random_int=random_int,
     ).get_cause_or_none()
 

@@ -69,7 +69,8 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
 
     # Tuple of the one or more unerased pseudo-superclasses originally
     # subclassed by this generic.
-    hint_bases = get_hint_pep484585_generic_bases_unerased(sleuth.hint)
+    hint_bases = get_hint_pep484585_generic_bases_unerased(
+        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
 
     # For each such pseudo-superclass...
     for hint_base in hint_bases:

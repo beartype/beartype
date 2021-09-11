@@ -111,12 +111,12 @@ def pep_code_check_param(
         #probably by defining a new label_callable_decorated_param_kind().
 
         # Human-readable label describing this parameter.
-        hint_label = label_callable_decorated_param(
+        exception_prefix = label_callable_decorated_param(
             func=data.func, param_name=param.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            f'{hint_label} kind {repr(param.kind)} '
+            f'{exception_prefix}kind {repr(param.kind)} '
             f'currently unsupported by @beartype.'
         )
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".

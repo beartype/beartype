@@ -240,7 +240,7 @@ def pep_code_check_hint(
 
     Caveats
     ----------
-    **This function intentionally accepts no** ``hint_label`` **parameter.**
+    **This function intentionally accepts no** ``exception_prefix`` **parameter.**
     Why? Since that parameter is typically specific to the caller, accepting
     that parameter would effectively prevent this code generator from memoizing
     the passed hint with the returned code, which would rather defeat the
@@ -718,7 +718,7 @@ def pep_code_check_hint(
         # third-party "numpy.typing.NDArray" hints) into semantically
         # equivalent hints we would (e.g., first-party beartype validators).
         hint_curr = get_hint_reduced(
-            hint=hint_curr, hint_label=hint_curr_label)
+            hint=hint_curr, exception_prefix=hint_curr_label)
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -740,7 +740,7 @@ def pep_code_check_hint(
             #FIXME: Actually, in that case, we can simply reduce the following
             #two calls to simply:
             #    die_if_hint_pep_ignorable(
-            #        hint=hint_curr, hint_label=hint_curr_label)
+            #        hint=hint_curr, exception_prefix=hint_curr_label)
             #Of course, this implies we want to refactor the
             #die_if_hint_pep_unsupported() function into
             #die_if_hint_pep_ignorable()... probably.
@@ -753,7 +753,7 @@ def pep_code_check_hint(
             # the above call to the same function, this call is guaranteed to
             # *NEVER* raise an exception for that hint.
             die_if_hint_pep_unsupported(
-                hint=hint_curr, hint_label=hint_curr_label)
+                hint=hint_curr, exception_prefix=hint_curr_label)
             # Else, this hint is supported.
 
             # Assert that this hint is unignorable. Iteration below generating
@@ -777,13 +777,13 @@ def pep_code_check_hint(
             # above call to the die_if_hint_pep_unsupported() function, this
             # call is guaranteed to *NEVER* raise exceptions for the root hint.
             die_if_hint_pep_sign_unsupported(
-                hint_sign=hint_curr_sign, hint_label=hint_curr_label)
+                hint_sign=hint_curr_sign, exception_prefix=hint_curr_label)
             # Else, this attribute is supported.
 
             # If this hint is deprecated, emit a non-fatal warning.
             # print(f'Testing {hint_curr_label} hint {repr(hint_curr)} for deprecation...')
             warn_if_hint_pep_deprecated(
-                hint=hint_curr, hint_label=hint_curr_label)
+                hint=hint_curr, exception_prefix=hint_curr_label)
 
             # Tuple of all arguments subscripting this hint if any *OR* the
             # empty tuple otherwise (e.g., if this hint is its own unsubscripted
@@ -1778,7 +1778,7 @@ def pep_code_check_hint(
                     # originally listed as superclasses prior to their type
                     # erasure by this generic.
                     hint_childs = get_hint_pep484585_generic_bases_unerased(
-                        hint=hint_curr, hint_label=hint_curr_label)
+                        hint=hint_curr, exception_prefix=hint_curr_label)
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.

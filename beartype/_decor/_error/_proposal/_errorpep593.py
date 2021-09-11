@@ -69,7 +69,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         # @beartype decorator enforces this constraint at decoration time.
         if not isinstance(hint_metadatum, _SubscriptedIs):
             raise _BeartypeCallHintPepRaiseException(
-                f'{sleuth.hint_label} PEP 593 type hint '
+                f'{sleuth.exception_prefix}PEP 593 type hint '
                 f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} not '
                 f'not subscription of "beartype.vale.Is*" class.'
             )

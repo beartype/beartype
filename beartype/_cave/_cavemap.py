@@ -146,7 +146,7 @@ class _NoneTypeOrType(dict):
         # exception.
         die_unless_hint_nonpep(
             hint=hint,
-            hint_label='"NoneTypeOr" key',
+            exception_prefix='"NoneTypeOr" key',
             exception_cls=BeartypeCaveNoneTypeOrKeyException,
         )
 

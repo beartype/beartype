@@ -29,7 +29,7 @@ Memoization prohibits those callables from raising human-readable exception
 messages. Why? Doing so would require those callables to accept fine-grained
 parameters unique to each call to those callables, which those callables would
 then dynamically format into human-readable exception messages raised by those
-callables. The standard example would be a ``hint_label`` parameter labelling
+callables. The standard example would be a ``exception_prefix`` parameter labelling
 the human-readable category of type hint being inspected by the current call
 (e.g., ``@beartyped muh_func() parameter "muh_param" PEP type hint "List[int]"``
 for a ``List[int]`` type hint on the `muh_param` parameter of a ``muh_func()``

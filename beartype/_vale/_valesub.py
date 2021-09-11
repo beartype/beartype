@@ -51,7 +51,7 @@ this callable dynamically generating that representation. Pragmatically,
 generating this representation is sufficiently slow for numerous types of
 validators that deferring their generation until required by a call to the
 :meth:`__repr__` dunder method externally called by a call to the :func:`repr`
-builtin` on this validator is effectively mandatory. Data validators whose
+builtin` on this validator is effectively mandatory. Validators whose
 representations are particularly slow to generate include:
 
 * The :class:`Is` class subscripted by a lambda rather than non-lambda
@@ -208,10 +208,7 @@ class _SubscriptedIs(object):
         die_unless_func_args_len_flexible_equal(
             func=is_valid,
             func_args_len_flexible=1,
-            func_label=(
-                f'Class "beartype.vale.Is" subscripted argument '
-                f'{repr(is_valid)}'
-            ),
+            func_label=f'Validator callable {repr(is_valid)}',
             exception_cls=BeartypeValeSubscriptionException,
         )
         # Else, this validator is a pure-Python callable accepting exactly one
@@ -226,23 +223,23 @@ class _SubscriptedIs(object):
         # If this code is *NOT* a string, raise an exception.
         if not isinstance(is_valid_code, str):
             raise BeartypeValeSubscriptionException(
-                f'Data validator code not string:\n'
+                f'Validator code not string:\n'
                 f'{represent_object(is_valid_code)}'
             )
         # Else, this code is a string.
         #
         # If this code is the empty string, raise an exception.
         elif not is_valid_code:
-            raise BeartypeValeSubscriptionException(
-                'Data validator code empty.')
+            raise BeartypeValeSubscriptionException('Validator code empty.')
         # Else, this code is a non-empty string.
         #
         # If this code does *NOT* contain the test subject substring
         # "{obj}" and is invalid, raise an exception.
         elif '{obj}' not in is_valid_code:
             raise BeartypeValeSubscriptionException(
-                f'Data validator code invalid (i.e., test subject '
-                f'substring "{{obj}}" not found):\n{is_valid_code}'
+                f'Validator code invalid '
+                f'(i.e., test subject substring "{{obj}}" not found):\n'
+                f'{is_valid_code}'
             )
         # Else, this code is hopefully valid.
         #
@@ -260,9 +257,8 @@ class _SubscriptedIs(object):
         # exception.
         if not isinstance(is_valid_code_locals, dict):
             raise BeartypeValeSubscriptionException(
-                f'Data validator locals '
-                f'{represent_object(is_valid_code_locals)} not '
-                f'dictionary.'
+                f'Validator locals '
+                f'{represent_object(is_valid_code_locals)} not dictionary.'
             )
         # Else, this dictionary of code locals is a dictionary.
 

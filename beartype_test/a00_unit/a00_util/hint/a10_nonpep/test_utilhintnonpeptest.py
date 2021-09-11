@@ -61,15 +61,16 @@ def test_is_hint_nonpep() -> None:
 
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
-        assert is_hint_nonpep(hint_nonpep) is True
+        assert is_hint_nonpep(hint=hint_nonpep, is_str_valid=True) is True
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in NOT_HINTS_NONPEP:
-        assert is_hint_nonpep(not_hint_nonpep) is False
+        assert is_hint_nonpep(hint=not_hint_nonpep, is_str_valid=True) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        assert is_hint_nonpep(non_hint_unhashable) is False
+        assert is_hint_nonpep(
+            hint=non_hint_unhashable, is_str_valid=True) is False
 
 
 def test_is_hint_nonpep_tuple() -> None:
@@ -87,13 +88,13 @@ def test_is_hint_nonpep_tuple() -> None:
 
     # Assert this function accepts PEP-noncompliant tuples.
     for hint_nonpep in HINTS_NONPEP:
-        assert _is_hint_nonpep_tuple(hint_nonpep) is isinstance(
+        assert _is_hint_nonpep_tuple(hint_nonpep, True) is isinstance(
             hint_nonpep, tuple)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in NOT_HINTS_NONPEP:
-        assert _is_hint_nonpep_tuple(not_hint_nonpep) is False
+        assert _is_hint_nonpep_tuple(not_hint_nonpep, True) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        assert _is_hint_nonpep_tuple(non_hint_unhashable) is False
+        assert _is_hint_nonpep_tuple(non_hint_unhashable, True) is False

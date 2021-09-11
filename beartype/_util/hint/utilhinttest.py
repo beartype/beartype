@@ -33,7 +33,7 @@ def die_unless_hint(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **supported type hint**
@@ -51,7 +51,7 @@ def die_unless_hint(
     Efficiency
     ----------
     This validator is effectively (but technically *not*) memoized. Since the
-    passed ``hint_label`` parameter is typically unique to each call to this
+    passed ``exception_prefix`` parameter is typically unique to each call to this
     validator, memoizing this validator would uselessly consume excess space
     *without* improving time efficiency. Instead, this validator first calls
     the memoized :func:`is_hint_pep` tester. If that tester returns ``True``,
@@ -64,9 +64,9 @@ def die_unless_hint(
     ----------
     hint : object
         Object to be validated.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -93,12 +93,12 @@ def die_unless_hint(
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
     if is_hint_pep(hint):
-        die_if_hint_pep_unsupported(hint=hint, hint_label=hint_label)
+        die_if_hint_pep_unsupported(hint=hint, exception_prefix=exception_prefix)
 
     # Else, this hint is *NOT* PEP-compliant. In this case, raise an exception
     # only if this hint is also *NOT* PEP-noncompliant. By definition, all
     # PEP-noncompliant type hints are supported by @beartype.
-    die_unless_hint_nonpep(hint=hint, hint_label=hint_label)
+    die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
 # ....................{ TESTERS                           }....................
 @callable_cached
@@ -144,7 +144,7 @@ def is_hint(hint: object) -> bool:
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype.
-        is_hint_nonpep(hint)
+        is_hint_nonpep(hint=hint, is_str_valid=True)
     )
 
 # ....................{ TESTERS ~ ignorable               }....................

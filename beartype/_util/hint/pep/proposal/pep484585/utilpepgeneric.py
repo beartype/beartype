@@ -151,8 +151,7 @@ def get_hint_pep484585_generic_bases_unerased(
     hint: object,
 
     # Optional parameters.
-    #FIXME: Actually pass this parameter.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> Tuple[object, ...]:
     '''
     Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
@@ -286,9 +285,9 @@ def get_hint_pep484585_generic_bases_unerased(
     ----------
     hint : object
         Generic type hint to be inspected.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in
-        exception messages. Defaults to a reasonably sane string.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -327,7 +326,7 @@ def get_hint_pep484585_generic_bases_unerased(
     #FIXME: Refactor get_hint_pep585_generic_bases_unerased() and
     #get_hint_pep484_generic_bases_unerased() to:
     #* Raise "BeartypeDecorHintPep484585Exception" instead.
-    #* Accept an optional "hint_label" parameter, which we should pass here.
+    #* Accept an optional "exception_prefix" parameter, which we should pass here.
 
     # Tuple of either...
     #
@@ -351,7 +350,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # * If this generic is PEP 585-compliant, CPython or PyPy itself.
     if not hint_pep_generic_bases_unerased:
         raise BeartypeDecorHintPep484585Exception(
-            f'{hint_label} PEP 484 or 585 generic {repr(hint)} '
+            f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
             f'subclasses no superclasses.'
         )
     # Else, this generic subclasses one or more pseudo-superclasses.

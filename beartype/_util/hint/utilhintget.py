@@ -30,7 +30,7 @@ def get_hint_reduced(
     hint: Any,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> Any:
     '''
     Lower-level type hint reduced (i.e., converted, extracted) from the passed
@@ -52,9 +52,9 @@ def get_hint_reduced(
     ----------
     hint : Any
         Type hint to be possibly reduced.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to ``"Annotated"``.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -133,7 +133,7 @@ def get_hint_reduced(
         from beartype._util.hint.pep.mod.utilmodnumpy import (
             reduce_hint_numpy_ndarray)
         hint = reduce_hint_numpy_ndarray(
-            hint=hint, exception_prefix=hint_label)
+            hint=hint, exception_prefix=exception_prefix)
     # ..................{ PEP (484|585) ~ subclass          }..................
     # If this hint is a PEP 484-compliant subclass type hint subscripted by an
     # ignorable child type hint (e.g., "object", "typing.Any"), silently ignore
@@ -150,7 +150,7 @@ def get_hint_reduced(
         from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
             reduce_hint_pep484585_subclass_superclass_if_ignorable)
         hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
-            hint=hint, exception_prefix=hint_label)
+            hint=hint, exception_prefix=exception_prefix)
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also

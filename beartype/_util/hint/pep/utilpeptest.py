@@ -47,7 +47,8 @@ from beartype._util.mod.utilmodule import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from typing import NoReturn, Type
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from typing import NoReturn
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -87,8 +88,8 @@ def die_if_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
-    exception_cls: Type[Exception] = BeartypeDecorHintPepException,
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-compliant type
@@ -102,29 +103,30 @@ def die_if_hint_pep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in
-        exception messages. Defaults to ``"Annotated"``.
     exception_cls : Type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this object is a PEP-compliant type hint.
     '''
 
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
 
         # Raise an exception of this class.
         raise exception_cls(
-            f'{hint_label} {repr(hint)} is PEP-compliant '
-            f'(e.g., rather than non-"typing" type).'
+            f'{exception_prefix}type hint {repr(hint)} is PEP-compliant '
+            f'(e.g., rather than isinstanceable class).'
         )
 
 
@@ -133,7 +135,8 @@ def die_unless_hint_pep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-compliant type
@@ -147,21 +150,28 @@ def die_unless_hint_pep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
+    exception_cls : Type[Exception], optional
+        Type of the exception to be raised by this function. Defaults to
+        :class:`BeartypeDecorHintPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
-    BeartypeDecorHintPepException
+    :exc:`exception_cls`
         If this object is *not* a PEP-compliant type hint.
     '''
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
     if not is_hint_pep(hint):
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
-        raise BeartypeDecorHintPepException(
-            f'{hint_label} {repr(hint)} not PEP-compliant.')
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
 
 # ....................{ EXCEPTIONS ~ supported            }....................
 #FIXME: *DANGER.* This and the die_if_hint_pep_sign_unsupported() function make
@@ -174,7 +184,7 @@ def die_if_hint_pep_unsupported(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-compliant unsupported
@@ -208,9 +218,9 @@ def die_if_hint_pep_unsupported(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -235,10 +245,11 @@ def die_if_hint_pep_unsupported(
     # Else, this object is *NOT* a supported PEP-compliant type hint. In this
     # case, subsequent logic raises an exception specific to the passed
     # parameters.
-    assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
 
     # If this hint is *NOT* PEP-compliant, raise an exception.
-    die_unless_hint_pep(hint=hint, hint_label=hint_label)
+    die_unless_hint_pep(hint=hint, exception_prefix=exception_prefix)
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # Else, this hint is PEP-compliant.
     #
@@ -246,8 +257,8 @@ def die_if_hint_pep_unsupported(
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:
         raise BeartypeDecorHintPep484Exception(
-            f'{hint_label} {repr(hint)} invalid (i.e., "typing.NoReturn" '
-            f'valid only as non-nested return annotation).'
+            f'{exception_prefix}return type hint {repr(hint)} invalid (i.e., '
+            f'"typing.NoReturn" valid only as non-nested return annotation).'
         )
     # Else, this is any PEP-compliant type hint other than "typing.NoReturn".
     # In this case, raise a general-purpose exception.
@@ -258,7 +269,9 @@ def die_if_hint_pep_unsupported(
     # validating that expectation here.
     else:
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} {repr(hint)} currently unsupported by @beartype.')
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'currently unsupported by @beartype.'
+        )
 
 
 def die_if_hint_pep_sign_unsupported(
@@ -266,7 +279,7 @@ def die_if_hint_pep_sign_unsupported(
     hint_sign: HintSign,
 
     # Optional parameters.
-    hint_label: str = 'Annotation sign',
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **supported PEP-compliant
@@ -281,9 +294,9 @@ def die_if_hint_pep_sign_unsupported(
     ----------
     hint : HintSign
         Sign to be validated.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        exception message raised by this function. Defaults to 'Annotation'.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -296,14 +309,15 @@ def die_if_hint_pep_sign_unsupported(
 
     # If this hint is *NOT* a supported sign, raise an exception.
     if hint_sign not in HINT_SIGNS_SUPPORTED:
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
         raise BeartypeDecorHintPepUnsupportedException(
-            f'{hint_label} sign {repr(hint_sign)} '
+            f'{exception_prefix}type hint sign {repr(hint_sign)} '
             f'currently unsupported by @beartype.'
         )
 
 # ....................{ WARNINGS                          }....................
-#FIXME: Resurrect support for the passed "hint_label" parameter. We've
+#FIXME: Resurrect support for the passed "exception_prefix" parameter. We've
 #currently disabled this parameter as it's typically just a non-human-readable
 #placeholder substring *NOT* intended to be exposed to end users (e.g.,
 #"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
@@ -315,7 +329,7 @@ def warn_if_hint_pep_deprecated(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> None:
     '''
     Emit a non-fatal warning if the passed PEP-compliant type hint is
@@ -330,9 +344,9 @@ def warn_if_hint_pep_deprecated(
     ----------
     hint : object
         PEP-compliant type hint to be inspected.
-    hint_label : Optional[str]
-        Human-readable label prefixing this object's representation in the
-        warning message emitted by this function. Defaults to ``"Annotated"``.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        warning message. Defaults to the empty string.
 
     Warns
     ----------
@@ -357,10 +371,10 @@ def warn_if_hint_pep_deprecated(
         #relevant logic currently disabled for reasons that hopefully no longer
         #apply. *Urgh!*
 
-        # assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        # assert isinstance(exception_prefix, str), f'{repr(exception_prefix)} not string.'
         #
         # # Warning message to be emitted.
-        # warning_message = f'{hint_label} PEP type hint {repr(hint)} deprecated'
+        # warning_message = f'{exception_prefix}PEP type hint {repr(hint)} deprecated'
 
         # Warning message to be emitted.
         warning_message = f'Type hint {repr(hint)} deprecated'
@@ -383,7 +397,7 @@ def warn_if_hint_pep_deprecated(
             warning_message += '.'
 
         # Emit this warning.
-        # print(f'Emitting {hint_label} hint {repr(hint)} deprecation warning...')
+        # print(f'Emitting {exception_prefix}hint {repr(hint)} deprecation warning...')
         warn(warning_message, BeartypeDecorHintPepDeprecatedWarning)
     # Else, this sign is *NOT* deprecated. In this case, reduce to a noop.
 
@@ -397,7 +411,7 @@ def warn_if_hint_pep_deprecated(
 #     hint: object,
 #
 #     # Optional parameters.
-#     hint_label: str = 'Annotated',
+#     exception_prefix: str = 'Annotated',
 # ) -> bool:
 #     '''
 #     Return ``True`` and emit a non-fatal warning only if the passed object is a
@@ -412,9 +426,9 @@ def warn_if_hint_pep_deprecated(
 #     ----------
 #     hint : object
 #         Object to be validated.
-#     hint_label : Optional[str]
+#     exception_prefix : Optional[str]
 #         Human-readable label prefixing this object's representation in the
-#         warning message emitted by this function. Defaults to ``"Annotated"``.
+#         warning message emitted by this function. Defaults to the empty string.
 #
 #     Returns
 #     ----------
@@ -442,15 +456,15 @@ def warn_if_hint_pep_deprecated(
 #
 #     # If this object is an unsupported PEP-compliant type hint...
 #     if not is_hint_pep_supported_test:
-#         assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+#         assert isinstance(exception_prefix, str), f'{repr(exception_prefix)} not string.'
 #
 #         # If this hint is *NOT* PEP-compliant, raise an exception.
-#         die_unless_hint_pep(hint=hint, hint_label=hint_label)
+#         die_unless_hint_pep(hint=hint, exception_prefix=exception_prefix)
 #
 #         # Else, this hint is PEP-compliant. In this case, emit a warning.
 #         warn(
 #             (
-#                 f'{hint_label} PEP type hint {repr(hint)} '
+#                 f'{exception_prefix}PEP type hint {repr(hint)} '
 #                 f'currently unsupported by @beartype.'
 #             ),
 #             BeartypeDecorHintPepUnsupportedWarning

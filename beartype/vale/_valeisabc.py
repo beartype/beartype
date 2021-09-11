@@ -22,12 +22,47 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta
 from beartype.roar import BeartypeValeSubscriptionException
+from typing import TYPE_CHECKING, Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
+# ....................{ METACLASSES                       }....................
+class _IsMeta(ABCMeta):
+    '''
+    Metaclass all **beartype validator factory subclasses** (i.e.,
+    :class:`_IsABC` subclasses).
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(cls, classname, superclasses, attr_name_to_value) -> None:
+        super().__init__(classname, superclasses, attr_name_to_value)
+
+        # Sanitize the fully-qualified name of the module declaring this class
+        # from the private name of the module implementing this classes to the
+        # public name of the module exporting this class, improving end user
+        # clarity and usability.
+        cls.__module__ = 'beartype.vale'
+
+    # ..................{ DUNDERS                           }..................
+    #FIXME: Report an upstream mypy issue. It's deeply unfortunate that mypy
+    #fails to support the __class_getitem__() dunder method first introduced
+    #with PEP 560. The kludge below is simply that; it's a kludge, which we
+    #wouldn't have to do if mypy properly supported PEP 560.
+
+    # If beartype is currently being subjected to static type checking by a
+    # static type checker that is almost certainly mypy, prevent that checker
+    # from erroneously emitting one error for each otherwise valid
+    # subscription of each "_IsABC" subclass: e.g.,
+    #     $ mypy
+    #     error: The type "Type[IsAttr]" is not generic and not indexable  [misc]
+    if TYPE_CHECKING:
+        def __getitem__(self, *args, **kwargs) -> Any:
+            raise BeartypeValeSubscriptionException(
+                f'{repr(self)} not indexable.')
+
 # ....................{ SUPERCLASSES                      }....................
-class _IsABC(object, metaclass=ABCMeta):
+class _IsABC(object, metaclass=_IsMeta):
     '''
     Abstract base class of all **beartype validator factory subclasses**
     (i.e., subclasses that, when subscripted (indexed) by subclass-specific
@@ -62,3 +97,24 @@ class _IsABC(object, metaclass=ABCMeta):
             f'like most "typing" classes (e.g., "typing.Annotated"), '
             f'this class is only intended to be subscripted (indexed).'
         )
+
+    # # ..................{ DUNDERS                           }..................
+    # def __getitem__(self, *args, **kwargs) -> Any:
+    #     '''
+    #     Prohibit direct instantiation by unconditionally raising an exception.
+    #
+    #     Like standard type hints (e.g., :attr:`typing.Union`), this class is
+    #     *only* intended to be subscripted (indexed).
+    #
+    #     Raises
+    #     ----------
+    #     BeartypeValeSubscriptionException
+    #         Always.
+    #     '''
+    #
+    #     # Murderbot would know what to do here.
+    #     raise BeartypeValeSubscriptionException(
+    #         f'{repr(self)} not instantiable; '
+    #         f'like most "typing" classes (e.g., "typing.Annotated"), '
+    #         f'this class is only intended to be subscripted (indexed).'
+    #     )

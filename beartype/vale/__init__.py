@@ -39,55 +39,6 @@ from beartype.vale._valeisobj import IsAttr
 from beartype.vale._valeisoper import IsEqual
 
 # ....................{ TODO                              }....................
-#FIXME: Mypy completely fails to support the __class_getitem__() dunder method,
-#which almost certainly constitutes a bug -- although they will, of course,
-#argue otherwise, because they are mypy. Nonetheless, let's at least try
-#reporting this. *ANY* attempt to subscript a type defining __class_getitem__()
-#causes mypy to emit a false positive resembling:
-#    error: The type "Type[IsAttr]" is not generic and not indexable  [misc]
-#When submitting this report, we should also note that Django developers have
-#hit similar issues in a recent PR. Ergo, this is a meaningful issue.
-#FIXME: Actually, NumPy solves this somehow. The "numpy.typing.NDArray" type
-#hint factory supports subscription in a mypy-compliant manner -- whatever that
-#is. We suspect what's required here is some combination of (A) an actual mypy
-#plugin, which "numpy.typing" actually is and (B) "types.GenericAlias", which
-#"numpy.typing.NDArray" subclasses. Unfortunately, subclassing our validators
-#from "types.GenericAlias" isn't really an option, as doing so would both imply
-#that our validators are valid type hints (they're not), that they have origin
-#types (they don't), and that they're meaningfully subscriptable by generic
-#type variables (they're not). Oh, vey!
-#We originally thought the solution was ".pyi"-suffixed stub files and that
-#beartype would need to ship a top-level "__init__.pyi" file. Stub files appear
-#to literally be Python, which is great, except that the bodies of all
-#callables are required to be "...", which is also great. Unfortunately,
-#NumPy's top-level "__init__.pyi" file has nothing to say about
-#"numpy.typing.NDArray" -- so that clearly can't be it. It probably is as silly
-#as inheriting from "types.GenericAlias", which is asinine beyond redemption.
-#That said, how does mypy know to properly interpret "NDArray[np.floating]"
-#versus "NDArray[np.float64]" type hints? The former requires a subclass test;
-#the latter, an equality test. The two are fundamentally different, which means
-#that *SOMEWHERE* in the NumPy codebase lies the answer to this insanity.
-#Oh, *VERY WELL.* We ~~wasted~~ "invested" several hours in trying to decipher
-#the answer and came up with absolutely nothing. At this point, it frankly
-#doesn't matter how NumPy notifies mypy; we simply need to figure out how to
-#prevent mypy from complaining about our stuff. *shrug*
-#FIXME: *OKAY.* Given mypy + NumPy interaction, we're fairly convinced the
-#following ridiculous kludge will satisfy everyone's inane desires:
-#    # In "_valeisabc":
-#    import types
-#    from typing import TYPE_CHECKING
-#    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-#    _IsABCSuperclass = (
-#        types.GenericAlias
-#        if TYPE_CHECKING and IS_PYTHON_AT_LEAST_3_9 else
-#        object
-#    )
-#    class _IsABC(_IsABCSuperclass, metaclass=ABCMeta):
-#The idea here is that we conditionally subclass beartype validators from
-#"types.GenericAlias" if and only if we are currently subject to static
-#type-checking *AND* this is Python >= 3.9. Probably won't work, but it's
-#trivial. So, let's give it a go, eh?
-
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
 #additional classes support constraints resembling:
 #

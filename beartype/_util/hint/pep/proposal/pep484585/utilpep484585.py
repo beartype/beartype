@@ -147,7 +147,7 @@ def get_hint_pep484585_args_1(
     # If this hint was *NOT* subscripted by one argument, raise an exception.
     if len(hint_args) != 1:
         assert isinstance(exception_prefix, str), (
-            f'{exception_prefix} not string.')
+            f'{exception_prefix}not string.')
         raise BeartypeDecorHintPep585Exception(
             f'{exception_prefix}PEP 585 type hint {repr(hint)} '
             f'not subscripted (indexed) by exactly one argument.'

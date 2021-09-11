@@ -61,7 +61,7 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     die_unless_type_isinstanceable(
         cls=sleuth.hint,
         exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=sleuth.hint_label,
+        exception_prefix=sleuth.exception_prefix,
     )
     # Else, this hint is an isinstanceable type.
 
@@ -99,7 +99,7 @@ def get_cause_or_none_instance_type_forwardref(
         hint=sleuth.hint,
         obj=sleuth.func,
         exception_cls=BeartypeCallHintForwardRefException,
-        exception_prefix=sleuth.hint_label,
+        exception_prefix=sleuth.exception_prefix,
     )
 
     # Defer to the getter function handling isinstanceable classes. Neato!
@@ -131,7 +131,7 @@ def get_cause_or_none_type_instance_origin(
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type_origin_isinstanceable is None:
         raise _BeartypeCallHintPepRaiseException(
-            f'{sleuth.hint_label} type hint '
+            f'{sleuth.exception_prefix}type hint '
             f'{repr(sleuth.hint)} not originated from '
             f'isinstanceable origin type.'
         )
@@ -160,7 +160,7 @@ def get_cause_or_none_instance_types_tuple(
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(
         hint=sleuth.hint,
-        hint_label=sleuth.hint_label,
+        exception_prefix=sleuth.exception_prefix,
         exception_cls=_BeartypeCallHintPepRaiseException,
     )
     # Else, this hint is a tuple union.
@@ -195,7 +195,7 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
 
     # Superclass this pith is required to be a subclass of.
     hint_superclass = get_hint_pep484585_subclass_superclass(
-        hint=sleuth.hint, exception_prefix=sleuth.hint_label)
+        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
 
     # If this superclass is *NOT* a class, this superclass *MUST* by process of
     # elimination and the validation already performed above by the
@@ -208,7 +208,7 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
             hint=hint_superclass,
             obj=sleuth.func,
             exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix=sleuth.hint_label,
+            exception_prefix=sleuth.exception_prefix,
         )
     # In either case, this superclass is now a class.
 
@@ -216,7 +216,7 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
     die_unless_type_issubclassable(
         cls=hint_superclass,
         exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=sleuth.hint_label,
+        exception_prefix=sleuth.exception_prefix,
     )
     # Else, this hint is an issubclassable type.
 

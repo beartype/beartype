@@ -12,16 +12,12 @@ PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Refactor to leverage f-strings after dropping Python 3.5 support,
-#which are the optimal means of performing string formatting.
-
 # ....................{ IMPORTS                           }....................
 from beartype._decor._code.codesnip import (
-    ARG_NAME_FUNC,
-    ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_ARGS_LEN,
+    ARG_NAME_FUNC,
     VAR_NAME_PITH_ROOT,
+    ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_RANDOM_INT,
 )
 from inspect import Parameter

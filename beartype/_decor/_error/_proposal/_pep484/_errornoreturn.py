@@ -17,6 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.text.utiltextrepr import represent_object
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -41,5 +42,5 @@ def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     # longer string.
     return (
         f'"NoReturn"-annotated {label_callable(sleuth.func)} '
-        f'returned {sleuth.pith}'
+        f'returned {represent_object(sleuth.pith)}'
     )

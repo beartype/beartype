@@ -63,6 +63,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
         # Sanitize the fully-qualified module name of the class of this
         # exception. See the docstring for justification.
         self.__class__.__module__ = 'beartype.roar'
+        # print(f'{self.__class__.__name__}: {message}')
 
 # ....................{ CAVE                              }....................
 class BeartypeCaveException(BeartypeException):

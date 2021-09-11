@@ -116,7 +116,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
             # subscripted arguments of unions are either PEP-compliant type
             # hints or non-"typing" classes.
             assert isinstance(hint_child, type), (
-                f'{sleuth.hint_label} union type hint '
+                f'{sleuth.exception_prefix}union type hint '
                 f'{repr(sleuth.hint)} child hint {repr(hint_child)} invalid '
                 f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
@@ -169,7 +169,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     # If prior logic appended *NO* causes, raise an exception.
     if not causes_union:
         raise _BeartypeCallHintPepRaiseException(
-            f'{sleuth.hint_label} type hint '
+            f'{sleuth.exception_prefix}type hint '
             f'{repr(sleuth.hint)} failure causes unknown.'
         )
     # Else, prior logic appended one or more strings describing these failures.

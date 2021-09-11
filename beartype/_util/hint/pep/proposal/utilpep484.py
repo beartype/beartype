@@ -781,7 +781,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #                raise BeartypeDecorHintPep560Exception(
     #                    '{} PEP type {!r} subclasses more than '
     #                    '{} "typing" types.'.format(
-    #                        hint_label,
+    #                        exception_prefix,
     #                        hint,
     #                        SIZE_BIG))
     #        # Else, this superclass is *NOT* a typing attribute. In this case...

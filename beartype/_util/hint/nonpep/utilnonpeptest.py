@@ -23,7 +23,7 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
-from typing import Type
+from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -35,9 +35,9 @@ def die_if_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
     is_str_valid: bool = True,
-    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception if the passed object is a **PEP-noncompliant type hint**
@@ -51,9 +51,6 @@ def die_if_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
     is_str_valid : bool, optional
         ``True`` only if this function permits this object to either be a
         string or contain strings. Defaults to ``True``. If this boolean is:
@@ -65,6 +62,9 @@ def die_if_hint_nonpep(
     exception_cls : type[Exception]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -87,12 +87,14 @@ def die_if_hint_nonpep(
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
     if is_hint_nonpep(hint, is_str_valid):
-        assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not type.')
 
         raise exception_cls(
-            f'{hint_label} {repr(hint)} is PEP-noncompliant (e.g., ' +
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'is PEP-noncompliant (e.g., ' +
             (
                 (
                     'isinstanceable class, forward reference, or tuple of '
@@ -111,9 +113,9 @@ def die_unless_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
     is_str_valid: bool = True,
-    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant type
@@ -127,9 +129,6 @@ def die_unless_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
     is_str_valid : bool, optional
         ``True`` only if this function permits this object to either be a
         string or contain strings. Defaults to ``True``. If this boolean is:
@@ -141,6 +140,9 @@ def die_unless_hint_nonpep(
     exception_cls : type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -166,10 +168,6 @@ def die_unless_hint_nonpep(
         return
     # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
-    #
-    # Note that the prior call has already validated "is_str_valid".
-    assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
-    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
@@ -180,7 +178,7 @@ def die_unless_hint_nonpep(
         # If this class is *NOT* PEP-noncompliant, raise an exception.
         die_unless_hint_nonpep_type(
             hint=hint,
-            hint_label=hint_label,
+            exception_prefix=exception_prefix,
             exception_cls=exception_cls,
         )
 
@@ -193,7 +191,7 @@ def die_unless_hint_nonpep(
     elif isinstance(hint, tuple):
         die_unless_hint_nonpep_tuple(
             hint=hint,
-            hint_label=hint_label,
+            exception_prefix=exception_prefix,
             is_str_valid=is_str_valid,
             exception_cls=exception_cls,
         )
@@ -202,8 +200,13 @@ def die_unless_hint_nonpep(
     #
     # If forward references are supported, raise an exception noting that.
     elif is_str_valid:
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
         raise exception_cls(
-            f'{hint_label} {repr(hint)} '
+            f'{exception_prefix}type hint {repr(hint)} '
             f'neither PEP-compliant nor -noncompliant '
             f'(e.g., isinstanceable class, forward reference, or '
             f'tuple of isinstanceable classes and forward references).'
@@ -212,7 +215,7 @@ def die_unless_hint_nonpep(
     # exception noting that.
     else:
         raise exception_cls(
-            f'{hint_label} {repr(hint)} '
+            f'{exception_prefix}type hint {repr(hint)} '
             f'neither PEP-compliant nor -noncompliant '
             f'(e.g., isinstanceable class or tuple of isinstanceable classes).'
         )
@@ -224,8 +227,8 @@ def die_unless_hint_nonpep_type(
     hint: type,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
-    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is an **isinstanceable type**
@@ -240,12 +243,12 @@ def die_unless_hint_nonpep_type(
     ----------
     hint : type
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -261,14 +264,20 @@ def die_unless_hint_nonpep_type(
 
     # If this object is a PEP-compliant type hint, raise an exception.
     die_if_hint_pep(
-        hint=hint, hint_label=hint_label, exception_cls=exception_cls)
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # Else, this object is *NOT* a PEP-noncompliant type hint.
     #
     # If this object is *NOT* an isinstanceable class, raise an exception. Note
     # that this validation is typically slower than the prior validation and
     # thus intentionally performed last.
     die_unless_type_isinstanceable(
-        cls=hint, exception_cls=exception_cls, exception_prefix=hint_label)
+        cls=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # If this object is an isinstanceable class.
 
 
@@ -298,9 +307,9 @@ def die_unless_hint_nonpep_tuple(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
     is_str_valid: bool = False,
-    exception_cls: Type[Exception] = BeartypeDecorHintNonPepException,
+    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is a **PEP-noncompliant tuple**
@@ -314,9 +323,6 @@ def die_unless_hint_nonpep_tuple(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable label prefixing this object's representation in the
-        exception message. Defaults to ``"Annotated"``.
     is_str_valid : bool, optional
         ``True`` only if this function permits this tuple to contain strings.
         Defaults to ``False``. If:
@@ -327,6 +333,9 @@ def die_unless_hint_nonpep_tuple(
     exception_cls : type, optional
         Type of the exception to be raised by this function. Defaults to
         :class:`BeartypeDecorHintNonPepException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -356,8 +365,9 @@ def die_unless_hint_nonpep_tuple(
     # raises an exception specific to the passed parameters.
     #
     # Note that the prior call has already validated "is_str_valid".
-    assert isinstance(hint_label, str), f'{repr(hint_label)} not string.'
     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the _is_hint_nonpep_tuple() tester.
@@ -365,12 +375,13 @@ def die_unless_hint_nonpep_tuple(
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
-        raise exception_cls(f'{hint_label} {repr(hint)} not tuple.')
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not tuple.')
     # Else, this object is a tuple.
     #
     # If this tuple is empty, raise an exception.
     elif not hint:
-        raise exception_cls(f'{hint_label} tuple empty.')
+        raise exception_cls(f'{exception_prefix}tuple type hint empty.')
     # Else, this tuple is non-empty.
 
     # For each item of this tuple...
@@ -384,7 +395,7 @@ def die_unless_hint_nonpep_tuple(
             # If this class is *NOT* PEP-noncompliant, raise an exception.
             die_unless_hint_nonpep_type(
                 hint=hint_item,
-                hint_label=hint_label,
+                exception_prefix=exception_prefix,
                 exception_cls=exception_cls,
             )
         # Else, this item is *NOT* a class.
@@ -394,7 +405,7 @@ def die_unless_hint_nonpep_tuple(
             # If forward references are unsupported, raise an exception.
             if not is_str_valid:
                 raise exception_cls(
-                    f'{hint_label} {repr(hint)} '
+                    f'{exception_prefix}tuple type hint {repr(hint)} '
                     f'forward reference "{hint_item}" unsupported.'
                 )
             # Else, silently accept this item.
@@ -404,7 +415,8 @@ def die_unless_hint_nonpep_tuple(
         # forward references are permitted or not.
         else:
             raise exception_cls(
-                f'{hint_label} {repr(hint)} item {repr(hint_item)} '
+                f'{exception_prefix}tuple type hint {repr(hint)} '
+                f'item {repr(hint_item)} invalid '
                 f'{"neither type nor string" if is_str_valid else "not type"}.'
             )
 
@@ -414,7 +426,7 @@ def is_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = True,
+    is_str_valid: bool = False,
 ) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-noncompliant type hint**
@@ -429,9 +441,9 @@ def is_hint_nonpep(
     ----------
     hint : object
         Object to be inspected.
-    is_str_valid : Optional[bool]
+    is_str_valid : bool, optional
         ``True`` only if this function permits this object to be a string.
-        Defaults to ``True``. If this boolean is:
+        Defaults to ``False``. If this boolean is:
 
         * ``True``, this object is valid only if this object is either a class
           or tuple of classes and/or classnames.
@@ -485,7 +497,7 @@ def _is_hint_nonpep_tuple(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = True,
+    is_str_valid: bool = False,
 ) -> bool:
     '''
     ``True`` only if the passed object is a PEP-noncompliant non-empty tuple of
@@ -497,9 +509,9 @@ def _is_hint_nonpep_tuple(
     ----------
     hint : object
         Object to be inspected.
-    is_str_valid : Optional[bool]
+    is_str_valid : bool, optional
         ``True`` only if this function permits this tuple to contain strings.
-        Defaults to ``True``. If this boolean is:
+        Defaults to ``False``. If this boolean is:
 
         * ``True``, this tuple is valid only when containing classes and/or
           classnames.

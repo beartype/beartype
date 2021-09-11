@@ -110,7 +110,7 @@ def coerce_hint_pep(
     func: Callable,
     pith_name: str,
     hint: object,
-    hint_label: str,
+    exception_prefix: str,
 ) -> object:
     '''
     Coerce the passed type hint annotating the parameter or return with the
@@ -147,7 +147,7 @@ def coerce_hint_pep(
         * If this hint annotates the return, ``"return"``.
     hint : object
         Type hint to be rendered PEP-compliant.
-    hint_label : str
+    exception_prefix : str
         Human-readable label describing this hint.
 
     Returns
@@ -246,7 +246,7 @@ def coerce_hint_pep(
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.
-    die_unless_hint(hint=hint, hint_label=hint_label)
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is either a PEP-noncompliant type hint *OR* supported
     # PEP-compliant type hint.
 
@@ -258,7 +258,7 @@ def cache_hint_nonpep563(
     func: Callable,
     pith_name: str,
     hint: Any,
-    hint_label: str,
+    exception_prefix: str,
 ) -> Any:
     '''
     Coerce and cache the passed (possibly non-self-cached and/or
@@ -369,7 +369,7 @@ def cache_hint_nonpep563(
         Possibly non-self-cached and/or PEP-noncompliant type hint to be
         coerced and cached into the equivalent :mod:`beartype`-cached
         PEP-compliant type hint.
-    hint_label : str
+    exception_prefix : str
         Human-readable label describing this hint.
 
     Returns
@@ -412,7 +412,7 @@ def cache_hint_nonpep563(
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.
-    die_unless_hint(hint=hint, hint_label=hint_label)
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is either a PEP-noncompliant type hint *OR* supported
     # PEP-compliant type hint.
 

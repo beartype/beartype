@@ -139,14 +139,14 @@ def die_unless_type_isinstanceable(
         #     # If this class is a PEP 544-compliant protocol, a message
         #     # documenting this exact issue and how to resolve it;
         #     (
-        #         f'{hint_label} PEP 544 protocol {hint} '
+        #         f'{exception_prefix}PEP 544 protocol {hint} '
         #         f'uncheckable at runtime (i.e., '
         #         f'not decorated by @typing.runtime_checkable).'
         #     )
         #     if is_hint_pep544_protocol(hint) else
         #     # Else, a fallback message documenting this general issue.
         #     (
-        #         f'{hint_label} type {hint} uncheckable at runtime (i.e., '
+        #         f'{exception_prefix}type {hint} uncheckable at runtime (i.e., '
         #         f'not passable as second parameter to isinstance() '
         #         f'due to raising "{exception}" from metaclass '
         #         f'__instancecheck__() method).'
@@ -156,7 +156,7 @@ def die_unless_type_isinstanceable(
         # Exception message to be raised.
         exception_message = (
             f'{exception_prefix}{repr(cls)} uncheckable at runtime '
-            f'(i.e., not passable as second parameter to isinstance() '
+            f'(i.e., not passable as second parameter to isinstance(), '
             f'due to raising "{exception}" from metaclass '
             f'__instancecheck__() method).'
         )
@@ -365,7 +365,7 @@ def die_unless_type_issubclassable(
         # Exception message to be raised.
         exception_message = (
             f'{exception_prefix}{repr(cls)} uncheckable at runtime '
-            f'(i.e., not passable as second parameter to issubclass() '
+            f'(i.e., not passable as second parameter to issubclass(), '
             f'due to raising "{exception}" from metaclass '
             f'__subclasscheck__() method).'
         )

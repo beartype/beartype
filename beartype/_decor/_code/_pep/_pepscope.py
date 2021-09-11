@@ -256,7 +256,7 @@ def add_func_scope_types(
     # If any item in this collection is *NOT* a standard class, raise an
     # exception.
     for cls in types:
-        die_unless_hint_nonpep_type(hint=cls, hint_label=attr_label)
+        die_unless_hint_nonpep_type(hint=cls, exception_prefix=attr_label)
     # Else, all items of this collection are standard classes.
 
     # If this tuple only contains one type, register only this type.
@@ -364,7 +364,7 @@ def express_func_scope_type_forwardref(
 
     # If this object is *NOT* a forward reference, raise an exception.
     die_unless_hint_pep484585_forwardref(
-        hint=forwardref, hint_label=attr_label)
+        hint=forwardref, exception_prefix=attr_label)
     # Else, this object is a forward reference.
 
     # Fully-qualified or unqualified classname referred to by this reference.

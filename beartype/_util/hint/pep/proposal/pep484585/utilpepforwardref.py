@@ -80,7 +80,7 @@ def die_unless_hint_pep484585_forwardref(
     hint: object,
 
     # Optional parameters.
-    hint_label: str = 'Annotated',
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception unless the passed object is either a :pep:`484`- or
@@ -101,9 +101,9 @@ def die_unless_hint_pep484585_forwardref(
     ----------
     hint : object
         Object to be validated.
-    hint_label : str, optional
-        Human-readable substring describing this object in exception messages.
-        Defaults to a reasonably sane string.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -114,7 +114,7 @@ def die_unless_hint_pep484585_forwardref(
     # If this is *NOT* a forward reference type hint, raise an exception.
     if not isinstance(hint, HINT_PEP484585_FORWARDREF_TYPES):
         raise BeartypeDecorHintForwardRefException(
-            f'{hint_label} {repr(hint)} not forward reference.')
+            f'{exception_prefix}{repr(hint)} not forward reference.')
 
 # ....................{ GETTERS ~ kind : forwardref       }....................
 #FIXME: Unit test against nested classes.

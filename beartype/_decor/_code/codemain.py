@@ -325,7 +325,7 @@ def _code_check_params(data: BeartypeData) -> str:
             func=func,
             pith_name=param_name,
             hint=hint,
-            hint_label=f'{pith_label} type hint',
+            exception_prefix=f'{pith_label} type hint',
         )
 
         # If this hint is ignorable, continue to the next parameter.
@@ -430,7 +430,7 @@ def _code_check_return(data: BeartypeData) -> str:
             func=func,
             pith_name='return',
             hint=hint,
-            hint_label=f'{label_callable_decorated_return(func)} type hint',
+            exception_prefix=f'{label_callable_decorated_return(func)} type hint',
         )
 
         # If this PEP-compliant hint is ignorable, generate code calling this
