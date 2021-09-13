@@ -32,7 +32,7 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_attr,
 )
 from beartype._util.utilobject import get_object_name
-from beartype._util.utiltyping import HINT_TYPE_OR_TYPES_TUPLE
+from beartype._util.utiltyping import TypeOrTupleTypes
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -135,7 +135,7 @@ class IsSubclass(_IsABC):
     # ..................{ DUNDERS                           }..................
     @callable_cached
     def __class_getitem__(
-        cls, base_classes: HINT_TYPE_OR_TYPES_TUPLE) -> _SubscriptedIs:
+        cls, base_classes: TypeOrTupleTypes) -> _SubscriptedIs:
         '''
         :pep:`560`-compliant dunder method creating and returning a new
         beartype validator validating type inheritance against at least one of
@@ -146,7 +146,7 @@ class IsSubclass(_IsABC):
 
         Parameters
         ----------
-        base_classes : HINT_TYPE_OR_TYPES_TUPLE
+        base_classes : TypeOrTupleTypes
             One or more arbitrary classes to validate inheritance against.
 
         Returns

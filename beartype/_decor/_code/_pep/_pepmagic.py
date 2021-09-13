@@ -21,14 +21,15 @@ from itertools import count
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS ~ exception             }....................
-EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter '
+EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
+    f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter ')
 '''
 Human-readable substring describing a new wrapper parameter required by the
 root hint in exception messages.
 '''
 
 
-EXCEPTION_PREFIX_HINT_ROOT = f'{EXCEPTION_CACHED_PLACEHOLDER} type hint '
+EXCEPTION_PREFIX_HINT_ROOT = EXCEPTION_CACHED_PLACEHOLDER
 '''
 Human-readable label describing the root hint in exception messages.
 '''

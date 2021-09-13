@@ -301,12 +301,7 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     HintSignMutableSequence,
     HintSignSequence,
     HintSignTuple,
-
-    #FIXME: Uncomment after worky. As difficult as this is to believe, this is
-    #still non-working despite a week's worth of volunteerism. There appears to
-    #be something edge casey about the unsubscripted "typing.Type" attribute
-    #under Python <= 3.8, which is no surprise whatsoever. *sigh*
-    # HintSignType,
+    HintSignType,
 
     # ..................{ PEP 544                           }..................
     HintSignProtocol,

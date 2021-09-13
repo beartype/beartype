@@ -21,7 +21,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
+from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed, uppercase_char_first)
 from beartype._util.text.utiltextrepr import represent_object
@@ -136,7 +136,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     if hint_classes_unsatisfied:
         # Human-readable comma-delimited disjunction of the names of these
         # classes (e.g., "bool, float, int, or str").
-        cause_types_unsatisfied = join_delimited_disjunction_classes(
+        cause_types_unsatisfied = join_delimited_disjunction_types(
             hint_classes_unsatisfied)
 
         # Prepend this cause as a discrete bullet-prefixed line.

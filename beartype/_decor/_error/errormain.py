@@ -92,12 +92,12 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
-    label_callable_decorated_param_value,
-    label_callable_decorated_return_value,
+    prefix_callable_decorated_param_value,
+    prefix_callable_decorated_return_value,
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 from typing import Callable, Dict, NoReturn, Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -236,22 +236,22 @@ def raise_pep_call_exception(
     # )'''.format(func, pith_name, pith_value))
 
     # Type of exception to be raised.
-    exception_cls: HINT_TYPE_EXCEPTION = None  # type: ignore[assignment]
+    exception_cls: TypeException = None  # type: ignore[assignment]
 
     # Human-readable label describing this parameter or return value.
-    pith_label: str = None  # type: ignore[assignment]
+    exception_prefix: str = None  # type: ignore[assignment]
 
     # If the name of this parameter is the magic string implying the passed
     # object to be a return value, set the above local variables appropriately.
     if pith_name == 'return':
         exception_cls = BeartypeCallHintPepReturnException
-        pith_label = label_callable_decorated_return_value(
+        exception_prefix = prefix_callable_decorated_return_value(
             func=func, return_value=pith_value)
     # Else, the passed object is a parameter. In this case, set the above local
     # variables appropriately.
     else:
         exception_cls = BeartypeCallHintPepParamException
-        pith_label = label_callable_decorated_param_value(
+        exception_prefix = prefix_callable_decorated_param_value(
             func=func,
             param_name=pith_name,
             param_value=pith_value,
@@ -264,7 +264,8 @@ def raise_pep_call_exception(
     # could deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
     if pith_name not in func.__annotations__:
-        raise _BeartypeCallHintPepRaiseException(f'{pith_label} unannotated.')
+        raise _BeartypeCallHintPepRaiseException(
+            f'{exception_prefix}unannotated.')
     # Else, this parameter or return value is annotated.
 
     # PEP-compliant type hint annotating this parameter or return value.
@@ -275,8 +276,7 @@ def raise_pep_call_exception(
     # generally supported by both parameters and return values. In this case...
     if hint is not NoReturn:
         # If type hint is *NOT* a supported type hint, raise an exception.
-        die_unless_hint(
-            hint=hint, exception_prefix=f'{pith_label} type hint ')
+        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
         # Else, this type hint is supported.
 
     # Human-readable string describing the failure of this pith to satisfy this
@@ -287,7 +287,7 @@ def raise_pep_call_exception(
         pith=pith_value,
         hint=hint,
         cause_indent='',
-        exception_prefix=f'{pith_label} ',
+        exception_prefix=exception_prefix,
         random_int=random_int,
     ).get_cause_or_none()
 
@@ -299,7 +299,7 @@ def raise_pep_call_exception(
 
         # Raise an exception of the desired class embedding this cause.
         raise exception_cls(  # type: ignore[misc]
-            f'{pith_label} violates type hint {repr(hint)}, as '
+            f'{exception_prefix}violates type hint {repr(hint)}, as '
             f'{exception_cause_suffixed}'
         )
 
@@ -312,7 +312,7 @@ def raise_pep_call_exception(
     pith_value_repr = represent_object(
         obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
     raise _BeartypeCallHintPepRaiseDesynchronizationException(
-        f'{pith_label} violates type hint {repr(hint)}, '
+        f'{exception_prefix}violates type hint {repr(hint)}, '
         f'but utility function raise_pep_call_exception() '
         f'suggests this object satisfies this hint. '
         f'Please report this desynchronization failure to '

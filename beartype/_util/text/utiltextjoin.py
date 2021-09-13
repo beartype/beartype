@@ -11,12 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.utiltyping import IterableStrs
 from collections.abc import Iterable, Sequence
 from typing import Iterable as typing_Iterable
 
 # ....................{ JOINERS                           }....................
 def join_delimited(
-    strs: typing_Iterable[str],
+    strs: IterableStrs,
     delimiter_if_two: str,
     delimiter_if_three_or_more_nonlast: str,
     delimiter_if_three_or_more_last: str
@@ -110,7 +111,7 @@ def join_delimited(
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
 # ....................{ JOINERS ~ disjunction             }....................
-def join_delimited_disjunction(strs: typing_Iterable[str]) -> str:
+def join_delimited_disjunction(strs: IterableStrs) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas
     and/or the disjunction "or" (conditionally depending on both the length of
@@ -149,7 +150,7 @@ def join_delimited_disjunction(strs: typing_Iterable[str]) -> str:
     )
 
 
-def join_delimited_disjunction_classes(classes: typing_Iterable[type]) -> str:
+def join_delimited_disjunction_types(types: typing_Iterable[type]) -> str:
     '''
     Concatenate the human-readable classname of each class in the passed
     iterable delimited by commas and/or the disjunction "or" (conditionally
@@ -159,7 +160,7 @@ def join_delimited_disjunction_classes(classes: typing_Iterable[type]) -> str:
 
     Parameters
     ----------
-    strs : Iterable[type]
+    types : Iterable[type]
         Iterable of all classes whose human-readable classnames are to be
         concatenated disjunctively.
 
@@ -170,7 +171,7 @@ def join_delimited_disjunction_classes(classes: typing_Iterable[type]) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.text.utiltextlabel import label_class
+    from beartype._util.text.utiltextlabel import label_type
 
     # Make it so, ensign.
-    return join_delimited_disjunction(label_class(cls) for cls in classes)
+    return join_delimited_disjunction(label_type(cls) for cls in types)

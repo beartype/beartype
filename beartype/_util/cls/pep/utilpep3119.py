@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype._util.utiltyping import (
-    HINT_TYPE_EXCEPTION,
-    HINT_TYPE_OR_TYPES_TUPLE,
+    TypeException,
+    TypeOrTupleTypes,
 )
 
 # ....................{ VALIDATORS ~ instance             }....................
@@ -24,7 +24,7 @@ def die_unless_type_isinstanceable(
     cls: type,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPep3119Exception,
+    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -87,7 +87,7 @@ def die_unless_type_isinstanceable(
     ----------
     cls : object
         Object to be validated.
-    exception_cls : HINT_TYPE_EXCEPTION, optional
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
@@ -168,10 +168,10 @@ def die_unless_type_isinstanceable(
 #FIXME: Unit test us up.
 def die_unless_type_or_types_isinstanceable(
     # Mandatory parameters.
-    type_or_types: HINT_TYPE_OR_TYPES_TUPLE,
+    type_or_types: TypeOrTupleTypes,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPep3119Exception,
+    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -184,7 +184,7 @@ def die_unless_type_or_types_isinstanceable(
     ----------
     type_or_types : object
         Object to be validated.
-    exception_cls : HINT_TYPE_EXCEPTION, optional
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
@@ -264,7 +264,7 @@ def die_unless_type_issubclassable(
     cls: type,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPep3119Exception,
+    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -327,7 +327,7 @@ def die_unless_type_issubclassable(
     ----------
     cls : object
         Object to be validated.
-    exception_cls : HINT_TYPE_EXCEPTION, optional
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
@@ -377,10 +377,10 @@ def die_unless_type_issubclassable(
 #FIXME: Unit test us up.
 def die_unless_type_or_types_issubclassable(
     # Mandatory parameters.
-    type_or_types: HINT_TYPE_OR_TYPES_TUPLE,
+    type_or_types: TypeOrTupleTypes,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPep3119Exception,
+    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -393,7 +393,7 @@ def die_unless_type_or_types_issubclassable(
     ----------
     type_or_types : object
         Object to be validated.
-    exception_cls : HINT_TYPE_EXCEPTION, optional
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional

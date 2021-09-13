@@ -38,8 +38,8 @@ from beartype._decor._code._pep.pepcode import (
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
-    label_callable_decorated_param,
-    label_callable_decorated_return,
+    prefix_callable_decorated_param,
+    prefix_callable_decorated_return,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from inspect import Parameter, Signature
@@ -276,7 +276,7 @@ def _code_check_params(data: BeartypeData) -> str:
 
     # ..................{ LOCALS ~ other                    }..................
     # Human-readable label describing the current parameter.
-    pith_label = None
+    exception_prefix = None
 
     # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
     # otherwise (i.e., if this parameter is unannotated).
@@ -301,13 +301,13 @@ def _code_check_params(data: BeartypeData) -> str:
 
         # Human-readable labels describing the current parameter and type
         # hint annotating this parameter.
-        pith_label = label_callable_decorated_param(func, param_name)
+        exception_prefix = prefix_callable_decorated_param(func, param_name)
 
         # If this parameter's name is reserved for use by the @beartype
         # decorator, raise an exception.
         if param_name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
-                f'{pith_label} reserved by @beartype.')
+                f'{exception_prefix}reserved by @beartype.')
         # If either the type of this parameter is silently ignorable, continue
         # to the next parameter.
         elif param_kind in _PARAM_KINDS_IGNORABLE:
@@ -325,7 +325,7 @@ def _code_check_params(data: BeartypeData) -> str:
             func=func,
             pith_name=param_name,
             hint=hint,
-            exception_prefix=f'{pith_label} type hint',
+            exception_prefix=f'{exception_prefix}type hint ',
         )
 
         # If this hint is ignorable, continue to the next parameter.
@@ -430,7 +430,8 @@ def _code_check_return(data: BeartypeData) -> str:
             func=func,
             pith_name='return',
             hint=hint,
-            exception_prefix=f'{label_callable_decorated_return(func)} type hint',
+            exception_prefix=(
+                f'{prefix_callable_decorated_return(func)}type hint '),
         )
 
         # If this PEP-compliant hint is ignorable, generate code calling this

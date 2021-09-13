@@ -38,11 +38,17 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.data_type import NonIssubclassableClass
     from pytest import raises
-    from typing import Type
+    from typing import Type, Union
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a class.
     assert get_hint_pep484585_subclass_superclass(Type[str]) is str
+
+    # Assert this getter returns the expected object when passed a PEP
+    # 484-compliant subclass type hint subscripted by a union of classes.
+    hint_superclass = get_hint_pep484585_subclass_superclass(
+        Type[Union[dict, set]])
+    assert hint_superclass == (dict, set) or hint_superclass == (set, dict)
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a forward reference to a
@@ -69,7 +75,13 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         assert get_hint_pep484585_subclass_superclass(type[bool]) is bool
 
         # Assert this getter returns the expected object when passed a PEP
-        # 484-compliant subclass type hint subscripted by a forward reference
+        # 585-compliant subclass type hint subscripted by a union of classes.
+        hint_superclass = get_hint_pep484585_subclass_superclass(
+            type[Union[dict, set]])
+        assert hint_superclass == (dict, set) or hint_superclass == (set, dict)
+
+        # Assert this getter returns the expected object when passed a PEP
+        # 585-compliant subclass type hint subscripted by a forward reference
         # to a class.
         assert get_hint_pep484585_subclass_superclass(type['complex']) == (
             'complex')
@@ -103,6 +115,6 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         #
         # Note there intentionally exists *NO* corresponding PEP 484 test, as
         # the "typing.Type" factory already validates this to be the case.
-        with raises(BeartypeDecorHintPep585Exception):
+        with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_subclass_superclass(type[
                 b'Counterrevolutionary'])

@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -25,7 +25,7 @@ def die_unless_module_attr_name(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
     exception_prefix: str = 'Module attribute name ',
 ) -> None:
     '''
@@ -215,7 +215,7 @@ def is_module_typing_any_attr(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
 ) -> bool:
     '''
     ``True`` only if a **typing attribute** (i.e., object declared at module

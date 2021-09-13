@@ -25,6 +25,7 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep593Exception,
 )
+from beartype._cave._cavefast import TestableTypes
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PREFIX_PITH,
@@ -42,6 +43,7 @@ from beartype._decor._code._pep._pepmagic import (
 from beartype._decor._code._pep._pepscope import (
     add_func_scope_type,
     add_func_scope_types,
+    add_func_scope_type_or_types,
     express_func_scope_type_forwardref,
 )
 from beartype._decor._code._pep._pepsnip import (
@@ -898,7 +900,7 @@ def pep_code_check_hint(
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                        exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -924,7 +926,7 @@ def pep_code_check_hint(
                         forwardrefs_class_basename=(
                             hint_forwardrefs_class_basename),
                         func_scope=func_wrapper_locals,
-                        attr_label=hint_curr_label,
+                        exception_prefix=hint_curr_label,
                     ))
 
                 # Code type-checking the current pith against this class.
@@ -1311,7 +1313,7 @@ def pep_code_check_hint(
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_locals,
-                                    attr_label=(
+                                    exception_prefix=(
                                         _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                                 ),
                             ))
@@ -1416,7 +1418,7 @@ def pep_code_check_hint(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                        exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
@@ -1693,14 +1695,15 @@ def pep_code_check_hint(
 
                     #FIXME: Unit test us up, please.
 
-                    # If this superclass is actually a class...
-                    if isinstance(hint_child, type):
+                    # If this superclass is either a class *OR* tuple of
+                    # classes...
+                    if isinstance(hint_child, TestableTypes):
                         # Python expression evaluating to this superclass.
-                        hint_curr_expr = add_func_scope_type(
-                            # Superclass subscripting this hint.
-                            cls=hint_child,  # type: ignore[arg-type]
+                        hint_curr_expr = add_func_scope_type_or_types(
+                            type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_locals,
-                            attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                            exception_prefix=(
+                                _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                         )
 
                     #FIXME: *UNIT TEST THIS PLEASE.*
@@ -1915,7 +1918,7 @@ def pep_code_check_hint(
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
                             func_scope=func_wrapper_locals,
-                            attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                            exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                         ),
                     )
                     # print(f'{hint_curr_label} PEP generic {repr(hint)} handled.')
@@ -1957,7 +1960,7 @@ def pep_code_check_hint(
                                 for hint_child in hint_childs
                             ),
                             func_scope=func_wrapper_locals,
-                            attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                            exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                         ),
                     )
 
@@ -1974,7 +1977,7 @@ def pep_code_check_hint(
                                 hint_child_expr=add_func_scope_attr(
                                     attr=hint_child,
                                     func_scope=func_wrapper_locals,
-                                    attr_label=(
+                                    exception_prefix=(
                                         _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                                 ),
                             ))
@@ -2030,7 +2033,7 @@ def pep_code_check_hint(
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     func_scope=func_wrapper_locals,
-                    attr_label=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                    exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                 ),
             )
 

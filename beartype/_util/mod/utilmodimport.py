@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 from importlib import import_module as importlib_import_module
 from sys import modules as sys_modules
 from types import ModuleType
@@ -131,7 +131,7 @@ def import_module_attr(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
     exception_prefix: str = 'Module attribute ',
 ) -> Any:
     '''
@@ -157,7 +157,7 @@ def import_module_attr(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If either:
 
         * This name is syntactically invalid.
@@ -167,7 +167,7 @@ def import_module_attr(
 
     Warns
     ----------
-    BeartypeModuleUnimportableWarning
+    :class:`BeartypeModuleUnimportableWarning`
         If a module prefixed by this name exists *but* that module is
         unimportable due to module-scoped side effects at importation time.
 
@@ -199,7 +199,7 @@ def import_module_attr_or_none(
     module_attr_name: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
     exception_prefix: str = 'Module attribute ',
 ) -> Any:
     '''
@@ -230,12 +230,12 @@ def import_module_attr_or_none(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this name is syntactically invalid.
 
     Warns
     ----------
-    BeartypeModuleUnimportableWarning
+    :class:`BeartypeModuleUnimportableWarning`
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''
@@ -279,7 +279,7 @@ def import_module_typing_any_attr(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     Dynamically import and return the **typing attribute** (i.e., object
@@ -451,7 +451,7 @@ def import_module_typing_attr_or_none(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     The **typing attribute** (i.e., object declared at module scope by the
@@ -496,7 +496,7 @@ def import_module_typingextensions_attr_or_none(
     typing_attr_basename: str,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilModuleException,
+    exception_cls: TypeException = _BeartypeUtilModuleException,
 ) -> Any:
     '''
     The **typing attribute** (i.e., object declared at module scope by the

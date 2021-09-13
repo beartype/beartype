@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_classes
+from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
@@ -118,7 +118,7 @@ def die_unless_hint_pep586(hint: Any) -> None:
             if not isinstance(hint_literal, _LITERAL_ARG_TYPES):
                 # Human-readable concatenation of the types of all valid
                 # literal arguments, delimited by commas and/or "or".
-                hint_literal_types = join_delimited_disjunction_classes(
+                hint_literal_types = join_delimited_disjunction_types(
                     _LITERAL_ARG_TYPES)
 
                 # Raise an exception.

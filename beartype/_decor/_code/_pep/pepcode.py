@@ -40,8 +40,8 @@ from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
-    label_callable_decorated_param,
-    label_callable_decorated_return,
+    prefix_callable_decorated_param,
+    prefix_callable_decorated_return,
 )
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
@@ -108,10 +108,10 @@ def pep_code_check_param(
     if PARAM_LOCALIZE_TEMPLATE is None:
         #FIXME: Generalize this label to embed the kind of parameter as well
         #(e.g., "positional-only", "keyword-only", "variadic positional"),
-        #probably by defining a new label_callable_decorated_param_kind().
+        #probably by defining a new prefix_callable_decorated_param_kind().
 
         # Human-readable label describing this parameter.
-        exception_prefix = label_callable_decorated_param(
+        exception_prefix = prefix_callable_decorated_param(
             func=data.func, param_name=param.name)
 
         # Raise an exception embedding this label.
@@ -152,7 +152,7 @@ def pep_code_check_param(
     except Exception as exception:
         reraise_exception_cached(
             exception=exception,
-            target_str=label_callable_decorated_param(
+            target_str=prefix_callable_decorated_param(
                 func=data.func, param_name=param.name),
         )
 
@@ -218,7 +218,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
     except Exception as exception:
         reraise_exception_cached(
             exception=exception,
-            target_str=label_callable_decorated_return(data.func),
+            target_str=prefix_callable_decorated_return(data.func),
         )
 
     # Unmemoize this snippet against this return.

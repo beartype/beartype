@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeDecorHintPep484585Exception,
-    BeartypeDecorHintPep585Exception,
-)
+from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
@@ -28,25 +25,14 @@ from beartype._util.cls.pep.utilpep3119 import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
-    HINT_PEP484585_FORWARDREF_TYPES,
-    HINT_PEP484585_FORWARDREF_UNION,
-)
+    HINT_PEP484585_FORWARDREF_UNION)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import Any, Tuple, TypeVar, Union
+from typing import Any, Tuple, Type, TypeVar, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS ~ private                   }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1_TYPES = (
-    (type, tuple, TypeVar,) + HINT_PEP484585_FORWARDREF_TYPES)
-'''
-Tuple union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
-**subclass type hint arguments** (i.e., PEP-compliant child type hints
-subscripting (indexing) a subclass type hint).
-'''
-
-
 _HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = (
     # If the active Python interpreter targets Python >= 3.7, include the sane
     # "typing.TypeVar" type in this union;
@@ -98,12 +84,14 @@ def get_hint_pep484585_subclass_superclass(
 
         * An issubclassable class.
         * A tuple of issubclassable classes.
-        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
-          :class:`typing.TypeVar` instance).
         * A :pep:`484`-compliant forward reference to an issubclassable class
           that typically has yet to be declared (i.e.,
           :class:`typing.ForwardRef` instance).
-        * A :pep:`585`-compliant forward reference to an issubclassable class
+        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
+          :class:`typing.TypeVar` instance).
+        * A :pep:`585`-compliant union of two or more issubclassable classes.
+        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
+          :class:`typing.TypeVar` instance).
           (i.e., string).
 
     Raises
@@ -113,8 +101,12 @@ def get_hint_pep484585_subclass_superclass(
         **issubclassable** (i.e., class whose metaclass defines a
         ``__subclasscheck__()`` dunder method raising an exception).
     :exc:`BeartypeDecorHintPep484585Exception`
-        If this hint is neither a :pep:`484`- nor :pep:`585`-compliant subclass
-        type hint.
+        If this hint is either:
+
+        * Neither a :pep:`484`- nor :pep:`585`-compliant subclass type hint.
+        * A :pep:`484`- or :pep:`585`-compliant subclass type hint subscripted
+          by one argument that is neither a class, union of classes, nor
+          forward reference to a class.
     :exc:`BeartypeDecorHintPep585Exception`
         If this hint is either:
 
@@ -122,10 +114,6 @@ def get_hint_pep484585_subclass_superclass(
 
           * *No* arguments.
           * Two or more arguments.
-
-        * A :pep:`484`- or :pep:`585`-compliant subclass type hint subscripted
-          by one argument that is neither a class, union of classes, nor
-          forward reference to a class.
     '''
 
     # Avoid circular import dependencies.
@@ -143,15 +131,6 @@ def get_hint_pep484585_subclass_superclass(
     hint_superclass = get_hint_pep484585_args_1(
         hint=hint, exception_prefix=exception_prefix)
 
-    # If this superclass is of an unexpected type, raise an exception.
-    if not isinstance(hint_superclass, _HINT_PEP484585_SUBCLASS_ARGS_1_TYPES):
-        raise BeartypeDecorHintPep585Exception(
-            f'{exception_prefix}PEP 585 subclass type hint {repr(hint)} '
-            f'argument {repr(hint_superclass)} neither '
-            f'class, union of classes, nor forward reference to class.'
-        )
-    # Else, this superclass is of an expected type.
-
     # Sign identifying this superclass.
     hint_superclass_sign = get_hint_pep_sign_or_none(hint_superclass)
 
@@ -168,7 +147,7 @@ def get_hint_pep484585_subclass_superclass(
             type_or_types=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
     # If this superclass is actually a forward reference to a superclass,
     # silently accept this reference as is. This conditional exists only to
-    # ensure that the subsequent exception is *NOT* raised.
+    # avoid raising a subsequent exception.
     elif hint_superclass_sign is HintSignForwardRef:
         pass
     # Else, this superclass is *NOT* a union of superclasses...
@@ -180,17 +159,20 @@ def get_hint_pep484585_subclass_superclass(
             cls=hint_superclass, exception_prefix=exception_prefix)
         # Else, this superclass is issubclassable.
     # Else, this superclass is of an unexpected type. In this case, raise an
-    # exception. Note that this edge case should *NEVER* occur due to the above
-    # validation, but that this edge case actually did occur in practice and is
-    # thus explicitly guarded against here. Why? Because the PEP 585-compliant
-    # empty subclass type hint is subscripted by the empty tuple, which is
-    # technically an argument (albeit an insane argument):
+    # exception.
+    #
+    # Note that PEP 585-compliant subclass type hints infrequently trigger this
+    # edge case. Although the "typing" module explicitly validates the
+    # arguments subscripting PEP 484-compliant type hints, the CPython
+    # interpreter applies *NO* such validation to PEP 585-compliant subclass
+    # type hints. For example, PEP 585-compliant subclass type hints are
+    # subscriptable by the empty tuple, which is technically an argument:
     #     >>> type[()].__args__
-    #     ()
+    #     ()   # <---- thanks fer nuthin
     else:
         raise BeartypeDecorHintPep484585Exception(
             f'{exception_prefix}subclass type hint {repr(hint)} '
-            f'argument {repr(hint_superclass)} neither '
+            f'child type hint {repr(hint_superclass)} neither '
             f'class, union of classes, nor forward reference to class.'
         )
 
@@ -240,6 +222,22 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     _die_unless_hint_pep484585_subclass(
         hint=hint, exception_prefix=exception_prefix)
     # Else, this is either a subclass type hint.
+
+    # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
+    # immediately reduce this hint to the "type" superclass.
+    #
+    # Note that this is *NOT* merely a nonsensical optimization. The
+    # implementation of the unsubscripted PEP 484-compliant subclass type hint
+    # significantly differs across Python versions. Under some but *NOT* all
+    # supported Python versions (notably, Python 3.7 and 3.8), the "typing"
+    # module subversively subscripts this hint by a type variable; under all
+    # others, this hint remains unsubscripted. In the latter case, passing this
+    # hint to the subsequent get_hint_pep484585_args_1() would erroneously
+    # raise an exception.
+    if hint == Type:
+        return type
+    # Else, this hint is *NOT* the unsubscripted PEP 484-compliant subclass
+    # type hint.
 
     # Superclass subscripting this hint.
     #

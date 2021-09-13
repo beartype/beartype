@@ -690,110 +690,113 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        #FIXME: Uncomment after finalizing the most recent commit chain.
-        # # ................{ SUBCLASS                          }................
-        # # Any type, semantically equivalent under PEP 484 to the unsubscripted
-        # # "Type" singleton.
-        # HintPepMetadata(
-        #     hint=type[Any],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     piths_satisfied_meta=(
-        #         # Arbitrary class.
-        #         HintPithSatisfiedMetadata(float),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
-        #     ),
-        # ),
-        #
-        # # "type" superclass, semantically equivalent to the unsubscripted
-        # # "Type" singleton.
-        # HintPepMetadata(
-        #     hint=type[type],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     piths_satisfied_meta=(
-        #         # Arbitrary class.
-        #         HintPithSatisfiedMetadata(complex),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Had al-'),
-        #     ),
-        # ),
-        #
-        # # Specific class.
-        # HintPepMetadata(
-        #     hint=type[Class],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     is_pep585_builtin=True,
-        #     piths_satisfied_meta=(
-        #         # Subclass of this class.
-        #         HintPithSatisfiedMetadata(Subclass),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Namely,'),
-        #         # Non-subclass of this class.
-        #         HintPithUnsatisfiedMetadata(str),
-        #     ),
-        # ),
-        #
-        # # Specific class deferred with a forward reference.
-        # HintPepMetadata(
-        #     hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     piths_satisfied_meta=(
-        #         # Subclass of this class.
-        #         HintPithSatisfiedMetadata(SubclassSubclass),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
-        #         # Non-subclass of this class.
-        #         HintPithUnsatisfiedMetadata(dict),
-        #     ),
-        # ),
-        #
-        # # Two or more specific classes.
-        # HintPepMetadata(
-        #     hint=type[Union[Class, OtherClass,]],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     piths_satisfied_meta=(
-        #         # Arbitrary subclass of one class subscripting this hint.
-        #         HintPithSatisfiedMetadata(Subclass),
-        #         # Arbitrary subclass of another class subscripting this hint.
-        #         HintPithSatisfiedMetadata(OtherSubclass),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Jabberings'),
-        #         # Non-subclass of any classes subscripting this hint.
-        #         HintPithUnsatisfiedMetadata(set),
-        #     ),
-        # ),
-        #
-        # # Generic class.
-        # HintPepMetadata(
-        #     hint=type[T],
-        #     pep_sign=HintSignType,
-        #     isinstanceable_type=type,
-        #     is_pep585_builtin=True,
-        #     is_typevars=True,
-        #     piths_satisfied_meta=(
-        #         # Arbitrary class.
-        #         HintPithSatisfiedMetadata(int),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Obligation, and'),
-        #     ),
-        # ),
+        # ................{ SUBCLASS                          }................
+        # Any type, semantically equivalent under PEP 484 to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=type[Any],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(float),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
+            ),
+        ),
+
+        # "type" superclass, semantically equivalent to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=type[type],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(complex),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Had al-'),
+            ),
+        ),
+
+        # Specific class.
+        HintPepMetadata(
+            hint=type[Class],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(Subclass),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Namely,'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(str),
+            ),
+        ),
+
+        # Specific class deferred with a forward reference.
+        HintPepMetadata(
+            hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(SubclassSubclass),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(dict),
+            ),
+        ),
+
+        # Two or more specific classes.
+        HintPepMetadata(
+            hint=type[Union[Class, OtherClass,]],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            piths_satisfied_meta=(
+                # Arbitrary subclass of one class subscripting this hint.
+                HintPithSatisfiedMetadata(Subclass),
+                # Arbitrary subclass of another class subscripting this hint.
+                HintPithSatisfiedMetadata(OtherSubclass),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabberings'),
+                # Non-subclass of any classes subscripting this hint.
+                HintPithUnsatisfiedMetadata(set),
+            ),
+        ),
+
+        # Generic class.
+        HintPepMetadata(
+            hint=type[T],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin=True,
+            is_typevars=True,
+            piths_satisfied_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(int),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Obligation, and'),
+            ),
+        ),
 
         # ................{ TUPLE ~ fixed                     }................
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal

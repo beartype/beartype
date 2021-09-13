@@ -23,7 +23,7 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -36,7 +36,7 @@ def die_if_hint_nonpep(
 
     # Optional parameters.
     is_str_valid: bool = True,
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonPepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -114,7 +114,7 @@ def die_unless_hint_nonpep(
 
     # Optional parameters.
     is_str_valid: bool = True,
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonPepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -227,7 +227,7 @@ def die_unless_hint_nonpep_type(
     hint: type,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonPepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -308,7 +308,7 @@ def die_unless_hint_nonpep_tuple(
 
     # Optional parameters.
     is_str_valid: bool = False,
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonPepException,
     exception_prefix: str = '',
 ) -> None:
     '''

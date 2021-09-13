@@ -124,6 +124,7 @@ def get_func_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
+    from beartype._util.text.utiltextlabel import prefix_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -133,13 +134,10 @@ def get_func_code_lines_or_none(
         # If that function raised *ANY* exception, reduce that exception to a
         # non-fatal warning.
         except Exception:
-            # Avoid circular import dependencies.
-            from beartype._util.text.utiltextlabel import label_callable
-
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             warn(
-                f'{label_callable(func)} not parsable:\n{format_exc()}',
+                f'{prefix_callable(func)}not parsable:\n{format_exc()}',
                 warning_cls,
             )
     # Else, the passed callable only exists in-memory.
@@ -196,6 +194,7 @@ def get_func_file_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
+    from beartype._util.text.utiltextlabel import prefix_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -235,13 +234,10 @@ def get_func_file_code_lines_or_none(
         #     >>> inspect.findsource(built_to_fail[1])}
         #     tokenize.TokenError: ('EOF in multi-line string', (323, 8))
         except Exception:
-            # Avoid circular import dependencies.
-            from beartype._util.text.utiltextlabel import label_callable
-
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             warn(
-                f'{label_callable(func)} not parsable:\n{format_exc()}',
+                f'{prefix_callable(func)}not parsable:\n{format_exc()}',
                 warning_cls,
             )
     # Else, the passed callable only exists in-memory.
@@ -275,12 +271,10 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.func.utilfunctest import is_func_lambda
+        from beartype._util.text.utiltextlabel import prefix_callable
 
         # If the passed callable is a pure-Python lambda function...
         if is_func_lambda(func):
-            # Avoid circular import dependencies.
-            from beartype._util.text.utiltextlabel import label_callable
-
             # Attempt to parse the substring of the source code defining this
             # lambda from the file providing that code.
             #
@@ -317,7 +311,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                     if len(lambda_file_code) >= LAMBDA_CODE_FILESIZE_MAX:
                         warn(
                             (
-                                f'{label_callable(func)} not parsable, '
+                                f'{prefix_callable(func)}not parsable, '
                                 f'as file size exceeds safe maximum '
                                 f'{LAMBDA_CODE_FILESIZE_MAX}MB.'
                             ),
@@ -362,7 +356,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                                 # Emit this warning.
                                 warn(
                                     (
-                                        f'{label_callable(func)} ambiguous, '
+                                        f'{prefix_callable(func)}ambiguous, '
                                         f'as that line defines '
                                         f'{len(lambdas_code)} lambdas; '
                                         f'arbitrarily selecting first '
@@ -387,7 +381,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                         # superficially reasonable. Yet, we don't. See above.
                         else:
                             warn(
-                                f'{label_callable(func)} not found.',
+                                f'{prefix_callable(func)}not found.',
                                 warning_cls,
                             )
                 # Else, that lambda is dynamically defined in-memory.
@@ -403,7 +397,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             #     result with RecursionError.
             except Exception:
                 warn(
-                    f'{label_callable(func)} not parsable:\n{format_exc()}',
+                    f'{prefix_callable(func)}not parsable:\n{format_exc()}',
                     warning_cls,
                 )
         # Else, the passed callable is *NOT* a pure-Python lambda function.

@@ -47,7 +47,7 @@ from beartype._util.mod.utilmodule import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 from typing import NoReturn
 from warnings import warn
 
@@ -88,7 +88,7 @@ def die_if_hint_pep(
     hint: object,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPepException,
+    exception_cls: TypeException = BeartypeDecorHintPepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -135,7 +135,7 @@ def die_unless_hint_pep(
     hint: object,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintPepException,
+    exception_cls: TypeException = BeartypeDecorHintPepException,
     exception_prefix: str = '',
 ) -> None:
     '''

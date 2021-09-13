@@ -30,7 +30,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_7,
 )
-from beartype._util.text.utiltextlabel import label_callable_decorated_pith
+from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from sys import modules as sys_modules
 from typing import Optional
 
@@ -253,13 +253,13 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
                 # as a string.
 
                 # Human-readable label describing this pith.
-                pith_label = label_callable_decorated_pith(
+                exception_prefix = prefix_callable_decorated_pith(
                     func=func, pith_name=pith_name)
 
                 # Wrap this low-level non-human-readable exception with a
                 # high-level human-readable beartype-specific exception.
                 raise BeartypeDecorHintPep563Exception(
-                    f'{pith_label} PEP 563-postponed type hint '
+                    f'{exception_prefix}PEP 563-postponed type hint '
                     f'{repr(pith_hint)} syntactically invalid '
                     f'(i.e., "{str(exception)}") under:\n'
                     f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'

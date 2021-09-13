@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
-from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.text.utiltextlabel import prefix_callable
 from beartype._util.text.utiltextrepr import represent_object
 
 # See the "beartype.cave" submodule for further commentary.
@@ -41,6 +41,6 @@ def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'"NoReturn"-annotated {label_callable(sleuth.func)} '
+        f'"NoReturn"-annotated {prefix_callable(sleuth.func)}'
         f'returned {represent_object(sleuth.pith)}'
     )

@@ -16,8 +16,8 @@ from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
 from beartype._data.cls.datacls import TYPES_BUILTIN_FAKE
 from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
 from beartype._util.utiltyping import (
-    HINT_TYPE_EXCEPTION,
-    HINT_TYPE_OR_TYPES_TUPLE,
+    TypeException,
+    TypeOrTupleTypes,
 )
 
 # ....................{ VALIDATORS                        }....................
@@ -26,7 +26,7 @@ def die_unless_type(
     cls: object,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilTypeException,
+    exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -65,7 +65,7 @@ def die_unless_type_or_types(
     type_or_types: object,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = _BeartypeUtilTypeException,
+    exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -213,7 +213,7 @@ def is_type_builtin(cls: type) -> bool:
 
 
 def is_type_subclass(
-    cls: object, base_classes: HINT_TYPE_OR_TYPES_TUPLE) -> bool:
+    cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''
     ``True`` only if the passed object is a subclass of either the passed class
     if passed one class *or* at least one of the passed classes if passed a

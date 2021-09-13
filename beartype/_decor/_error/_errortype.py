@@ -14,14 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._util.cls.pep.utilpep3119 import (
-    die_unless_type_isinstanceable,
-    die_unless_type_issubclassable,
-)
+from beartype._cave._cavefast import TestableTypes
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
+)
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_type_isinstanceable,
+    die_unless_type_issubclassable,
 )
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
@@ -35,7 +37,8 @@ from beartype._util.text.utiltextcause import (
     get_cause_object_not_instance_type,
     get_cause_object_not_instance_types,
 )
-from beartype._util.text.utiltextlabel import label_class
+from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
@@ -197,11 +200,11 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
     hint_superclass = get_hint_pep484585_subclass_superclass(
         hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
 
-    # If this superclass is *NOT* a class, this superclass *MUST* by process of
-    # elimination and the validation already performed above by the
-    # get_hint_pep484585_subclass_superclass() getter be a forward reference to
-    # a class. In this case...
-    if not isinstance(hint_superclass, type):
+    # If this superclass is neither a class nor tuple of classes, this
+    # superclass *MUST* by process of elimination and the validation already
+    # performed above by the get_hint_pep484585_subclass_superclass() getter be
+    # a forward reference to a class. In this case...
+    if not isinstance(hint_superclass, TestableTypes):
         # Reduce this superclass to the class referred to by this forward
         # reference.
         hint_superclass = import_pep484585_forwardref_type_relative_to_object(
@@ -210,24 +213,30 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
             exception_cls=BeartypeCallHintForwardRefException,
             exception_prefix=sleuth.exception_prefix,
         )
-    # In either case, this superclass is now a class.
 
-    # If this hint is *NOT* an issubclassable type, raise an exception.
-    die_unless_type_issubclassable(
-        cls=hint_superclass,
-        exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=sleuth.exception_prefix,
-    )
-    # Else, this hint is an issubclassable type.
+        # If this superclass is *NOT* issubclassable, raise an exception.
+        die_unless_type_issubclassable(
+            cls=hint_superclass,
+            exception_cls=_BeartypeCallHintPepRaiseException,
+            exception_prefix=sleuth.exception_prefix,
+        )
+        # Else, this superclass is issubclassable.
+    # In either case, this superclass is now issubclassable.
 
-    # If this pith is a subclass of this type, return "None".
-    if issubclass(sleuth.pith, hint_superclass):
+    # If this pith subclasses this superclass, return "None".
+    if is_type_subclass(sleuth.pith, hint_superclass):
         return None
-    # Else, this pith is *NOT* a subclass of this type.
+    # Else, this pith does *NOT* subclass this superclass.
 
-    # Return a substring describing this failure intended to be embedded in a
-    # longer string.
-    return (
-        f'{represent_object(sleuth.pith)} not '
-        f'{label_class(hint_superclass)}'
+    # Description of this superclasses, defined as either...
+    hint_superclass_label = (
+        # If this superclass is a class, a description of this class;
+        f'{label_type(hint_superclass)} subclass'
+        if isinstance(hint_superclass, type) else
+        # Else, this superclass is a tuple of classes. In this case, a
+        # description of these classes...
+        f'{join_delimited_disjunction_types(hint_superclass)} subclass'
     )
+
+    # Return a substring describing this failure.
+    return f'{represent_object(sleuth.pith)} not {hint_superclass_label}'

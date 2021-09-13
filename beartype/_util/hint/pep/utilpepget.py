@@ -45,7 +45,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,
 )
-from beartype._util.utiltyping import HINT_TYPES_TUPLE
+from beartype._util.utiltyping import TupleTypes
 from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -189,7 +189,7 @@ get_hint_pep_args.__doc__ = '''
 # type hints that are not PEP 585-compliant generics *OR* to synthetically
 # reconstruct that attribute for PEP 585-compliant generics. *sigh*
 if IS_PYTHON_AT_LEAST_3_9:
-    def get_hint_pep_typevars(hint: object) -> HINT_TYPES_TUPLE:
+    def get_hint_pep_typevars(hint: object) -> TupleTypes:
 
         # Value of the "__parameters__" dunder attribute on this object if this
         # object defines this attribute *OR* "None" otherwise.
@@ -213,7 +213,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 # Else if the active Python interpreter targets Python >= 3.7, implement
 # this function to directly access the "__parameters__" dunder attribute.
 elif IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_typevars(hint: object) -> HINT_TYPES_TUPLE:
+    def get_hint_pep_typevars(hint: object) -> TupleTypes:
 
         # Value of the "__parameters__" dunder attribute on this object if this
         # object defines this attribute *OR* the empty tuple otherwise. Note:
@@ -231,7 +231,7 @@ elif IS_PYTHON_AT_LEAST_3_7:
 #
 # Gods... this is horrible. Thanks for nuthin', Python 3.6.
 else:
-    def get_hint_pep_typevars(hint: object) -> HINT_TYPES_TUPLE:
+    def get_hint_pep_typevars(hint: object) -> TupleTypes:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.utilpep484 import (

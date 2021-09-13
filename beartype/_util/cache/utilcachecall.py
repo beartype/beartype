@@ -34,7 +34,7 @@ from beartype._util.func.utilfuncarg import (
     # is_func_argless,
     is_func_arg_variadic,
 )
-from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.text.utiltextlabel import prefix_callable
 from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
 from inspect import Parameter
@@ -209,7 +209,7 @@ def callable_cached(func: Callable) -> Callable:
     # If this wrappee accepts variadic arguments, raise an exception.
     if is_func_arg_variadic(func_wrappee):
         raise _BeartypeUtilCallableCachedException(
-            f'@callable_cached {label_callable(func)} '
+            f'@callable_cached {prefix_callable(func)}'
             f'variadic arguments uncacheable.'
         )
 

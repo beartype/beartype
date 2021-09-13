@@ -12,16 +12,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from typing import Union, Tuple, Type
+from typing import Iterable, Tuple, Type, Union
+
+# ....................{ HINTS ~ iterable                  }....................
+IterableStrs = Iterable[str]
+'''
+PEP-compliant type hint matching *any* iterable of zero or more strings.
+'''
 
 # ....................{ HINTS ~ type                      }....................
-HINT_TYPE_EXCEPTION = Type[Exception]
+TypeException = Type[Exception]
 '''
 PEP-compliant type hint matching *any* exception class.
 '''
 
 # ....................{ HINTS ~ type : tuple              }....................
-HINT_TYPES_TUPLE = Tuple[type, ...]
+TupleTypes = Tuple[type, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more classes.
 
@@ -30,7 +36,7 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-HINT_TYPE_OR_TYPES_TUPLE = Union[type, HINT_TYPES_TUPLE]
+TypeOrTupleTypes = Union[type, TupleTypes]
 '''
 PEP-compliant type hint matching either a single class *or* a tuple of zero or
 more classes.

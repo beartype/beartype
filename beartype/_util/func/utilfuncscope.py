@@ -535,7 +535,7 @@ def add_func_scope_attr(
     func_scope: CallableScope,
 
     # Optional parameters.
-    attr_label: str = 'Globally or locally scoped attribute',
+    exception_prefix: str = 'Globally or locally scoped attribute ',
 ) -> str:
     '''
     Add a new **scoped attribute** (i.e., new key-value pair of the passed
@@ -551,9 +551,9 @@ def add_func_scope_attr(
         Arbitrary object to be added to this scope.
     func_scope : CallableScope
         Local or global scope to add this object to.
-    attr_label : str, optional
-        Human-readable substring describing this object in exception messages.
-        Defaults to a reasonably sane string.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -570,6 +570,8 @@ def add_func_scope_attr(
         raised as a private rather than public exception.
     '''
     assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # Name of the new attribute referring to this object in this scope, mildly
     # obfuscated so as to avoid name collisions.
@@ -579,8 +581,7 @@ def add_func_scope_attr(
     # this scope, raise an exception.
     if func_scope.get(attr_name, attr) is not attr:
         raise _BeartypeUtilCallableException(
-            f'{attr_label} "{attr_name}" already exists with '
-            f'differing value:\n'
+            f'{exception_prefix}"{attr_name}" already exists with differing value:\n'
             f'~~~~[ NEW VALUE ]~~~~\n{repr(attr)}\n'
             f'~~~~[ OLD VALUE ]~~~~\n{repr(func_scope[attr_name])}'
         )

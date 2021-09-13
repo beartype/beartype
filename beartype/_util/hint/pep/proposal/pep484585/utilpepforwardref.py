@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilpep484 import (
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from beartype._util.utiltyping import HINT_TYPE_EXCEPTION
+from beartype._util.utiltyping import TypeException
 from typing import Any, Union
 
 # See the "beartype.cave" submodule for further commentary.
@@ -247,7 +247,7 @@ def import_pep484585_forwardref_type_relative_to_object(
     obj: object,
 
     # Optional parameters.
-    exception_cls: HINT_TYPE_EXCEPTION = BeartypeDecorHintForwardRefException,
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> type:
     '''
