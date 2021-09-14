@@ -21,7 +21,7 @@ See Also
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-from beartype_test.util.pyterror import raises_uncached
+from beartype_test.util.pytroar import raises_uncached
 from typing import NoReturn, Union, no_type_check
 
 # ....................{ TESTS ~ decor : no_type_check     }....................

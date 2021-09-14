@@ -14,9 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype._util.func.utilfunccodeobj import (
-    CallableOrFrameOrCodeType,
-    get_func_unwrapped_codeobj,
+from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
+from beartype._util.utiltyping import (
+    CallableCodeObjable,
+    TypeException,
 )
 from enum import Enum as EnumMemberType
 from inspect import (
@@ -33,7 +34,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #FIXME: Uncomment as needed.
 # def die_unless_func_argless(
 #     # Mandatory parameters.
-#     func: CallableOrFrameOrCodeType,
+#     func: CallableCodeObjable,
 #
 #     # Optional parameters.
 #     func_label: str = 'Callable',
@@ -45,7 +46,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #
 #     Parameters
 #     ----------
-#     func : CallableOrFrameOrCodeType
+#     func : CallableCodeObjable
 #         Pure-Python callable, frame, or code object to be inspected.
 #     func_label : str, optional
 #         Human-readable label describing this callable in exception messages
@@ -80,12 +81,12 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 def die_unless_func_args_len_flexible_equal(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
     func_args_len_flexible: int,
 
     # Optional parameters.
     func_label: str = 'Callable',
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> None:
     '''
     Raise an exception unless the passed pure-Python callable accepts the
@@ -94,7 +95,7 @@ def die_unless_func_args_len_flexible_equal(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
+    func : CallableCodeObjable
         Pure-Python callable, frame, or code object to be inspected.
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
@@ -137,11 +138,11 @@ def die_unless_func_args_len_flexible_equal(
 # ....................{ TESTERS ~ kind                    }....................
 def is_func_argless(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
 
     # Optional parameters.
     func_label: str = 'Callable',
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> bool:
     '''
     ``True`` only if the passed pure-Python callable is **argument-less**
@@ -149,7 +150,7 @@ def is_func_argless(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
+    func : CallableCodeObjable
         Pure-Python callable, frame, or code object to be inspected.
     func_label : str, optional
         Human-readable label describing this callable in exception messages
@@ -188,7 +189,7 @@ def is_func_argless(
     )
 
 # ....................{ TESTERS ~ kind : variadic         }....................
-def is_func_arg_variadic(func: CallableOrFrameOrCodeType) -> bool:
+def is_func_arg_variadic(func: CallableCodeObjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts any **variadic
     parameters** and thus either variadic positional arguments (e.g.,
@@ -224,7 +225,7 @@ def is_func_arg_variadic(func: CallableOrFrameOrCodeType) -> bool:
     )
 
 
-def is_func_arg_variadic_positional(func: CallableOrFrameOrCodeType) -> bool:
+def is_func_arg_variadic_positional(func: CallableCodeObjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts variadic
     positional arguments (e.g., "*args").
@@ -253,7 +254,7 @@ def is_func_arg_variadic_positional(func: CallableOrFrameOrCodeType) -> bool:
     return func_codeobj.co_flags & CO_VARARGS != 0
 
 
-def is_func_arg_variadic_keyword(func: CallableOrFrameOrCodeType) -> bool:
+def is_func_arg_variadic_keyword(func: CallableCodeObjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts variadic
     keyword arguments (e.g., "**kwargs").
@@ -282,7 +283,7 @@ def is_func_arg_variadic_keyword(func: CallableOrFrameOrCodeType) -> bool:
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
 
 # ....................{ TESTERS ~ name                    }....................
-def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
+def is_func_arg_name(func: CallableCodeObjable, arg_name: str) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts an argument with
     the passed name.
@@ -328,11 +329,11 @@ def is_func_arg_name(func: CallableOrFrameOrCodeType, arg_name: str) -> bool:
 # ....................{ GETTERS                           }....................
 def get_func_args_len_flexible(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
 
     # Optional parameters.
     func_label: str = 'Callable',
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> int:
     '''
     Number of **flexible parameters** (i.e., parameters passable as either
@@ -341,7 +342,7 @@ def get_func_args_len_flexible(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
+    func : CallableCodeObjable
         Pure-Python callable, frame, or code object to be inspected.
     func_label : str, optional
         Human-readable label describing this callable in exception messages
@@ -372,7 +373,7 @@ def get_func_args_len_flexible(
 #FIXME: Unit test us up, please.
 #FIXME: Replace all existing usage of inspect.signature() throughout the
 #codebase with usage of this supremely fast generator instead.
-def iter_func_args(func: CallableOrFrameOrCodeType) -> Generator[
+def iter_func_args(func: CallableCodeObjable) -> Generator[
     Tuple[str, EnumMemberType, Any], None, None]:
     '''
     Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)`` for

@@ -104,7 +104,7 @@ def test_pep_param_kind_variadic_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintPepException
-    from beartype_test.util.pyterror import raises_uncached
+    from beartype_test.util.pytroar import raises_uncached
     from typing import Union
 
     # Decorated callable to be exercised.

@@ -127,7 +127,13 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 
     pass
 
-# ....................{ CALLABLES ~ async                 }....................
+# ....................{ CALLABLES ~ async : factory       }....................
+# Note that we intentionally avoid declaring a factory function for deprecated
+# generator-based coroutines decorated by either the types.coroutine() or
+# asyncio.coroutine() decorators. CPython 3.10 removes support for these
+# decorators and thus generator-based coroutines. See also:
+#     https://docs.python.org/3/library/asyncio-task.html#asyncio.coroutine
+
 async def async_generator_factory():
     '''
     Arbitrary pure-Python asynchronous generator factory function.
@@ -138,12 +144,13 @@ async def async_generator_factory():
 
 async def coroutine_factory():
     '''
-    Arbitrary pure-Python coroutine factory function.
+    Arbitrary pure-Python asynchronous non-generator coroutine factory
+    function.
     '''
 
     pass
 
-
+# ....................{ CALLABLES ~ async : instance      }....................
 async_generator = async_generator_factory()
 '''
 Arbitrary pure-Python asynchronous generator.
@@ -152,7 +159,7 @@ Arbitrary pure-Python asynchronous generator.
 
 coroutine = coroutine_factory()
 '''
-Arbitrary pure-Python coroutine.
+Arbitrary pure-Python asynchronous non-generator coroutine.
 '''
 
 # Prevent Python from emitting "ResourceWarning" warnings.

@@ -47,16 +47,13 @@
 
 #FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
 #coroutine *MUST* be called preceded by the "await" keyword rather than merely
-#called as is. Detecting coroutines is trivial, thankfully: e.g.,
-#
-#    if inspect.iscoroutinefunction(func):
-#
-#Actually, shouldn't that be the more general-purpose test:
-#
-#    if inspect.isawaitable(func):
-#
-#The latter seems more correct. In any case, given that:
-#
+#called as is. Detecting coroutines is trivial, thanks to our newly defined
+#beartype._util.func.utilfunctest.is_func_async_coroutine() tester. Note that
+#*ONLY* non-generator callables explicitly declared with "async def" should be
+#subject to this logic, which is why we'll intentionally call
+#is_func_async_coroutine() rather than is_func_async() to discriminate.
+#Asynchronous generator callables are actually factories that only *RETURN* an
+#asynchronous generator; they aren't actually asynchronous themselves. So:
 #* Modify the "CODE_CALL_CHECKED" and "CODE_CALL_UNCHECKED" snippets to
 #  conditionally precede the function call with the substring "await ": e.g.,
 #      CODE_CALL_UNCHECKED = '''
@@ -68,17 +65,6 @@
 #      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
 #* Oh, and note that our defined wrapper function must also be preceded by the
 #  "async " keyword. So, we'll also need to augment "CODE_SIGNATURE".
-#FIXME: As a counterargument to the above approach, note this commentary I
-#stumbled across while researching an entirely separate topic:
-#    "...trying to automatically detect whether a function is sync or async
-#    it’s almost always a bad idea, because it’s very difficult to do reliably.
-#    Instead it’s almost always better to make the user say explicitly which
-#    one they mean, for example by having two versions of a decorator and
-#    telling the user to use @mydecorator_sync on sync functions and
-#    @mydecorator_async on async functions."
-#Is this actually the case? Clearly, we'll need to research just how
-#deterministic the inspect.isawaitable() tester is. Does that tester fall down
-#(i.e., return false negatives or positives) in well-known edge cases?
 #FIXME: Unit test this extensively, please.
 
 #FIXME: Non-critical optimization: if the active Python interpreter is already

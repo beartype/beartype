@@ -16,7 +16,7 @@ to **PEP-noncompliant type hints** (i.e., :mod:`beartype`-specific annotations
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pyterror import raises_uncached
+from beartype_test.util.pytroar import raises_uncached
 from pytest import raises
 
 # ....................{ TODO                              }....................

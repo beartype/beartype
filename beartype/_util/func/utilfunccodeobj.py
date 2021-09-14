@@ -16,27 +16,24 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncwrap import unwrap_func
-from collections.abc import Callable
-from types import CodeType, FrameType, FunctionType, MethodType
-from typing import Optional, Type, Union
+from beartype._util.utiltyping import (
+    CallableCodeObjable,
+    TypeException,
+)
+from types import CodeType, FrameType, FunctionType, GeneratorType, MethodType
+from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ HINTS                             }....................
-CallableOrFrameOrCodeType = Union[Callable, CodeType, FrameType]
-'''
-PEP-compliant type hint matching either a callable *or* code object.
-'''
-
 # ....................{ GETTERS ~ unwrap                  }....................
 def get_func_unwrapped_codeobj(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
 
     # Optional parameters.
     func_label: str = 'Callable',
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
@@ -60,8 +57,8 @@ def get_func_unwrapped_codeobj(
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
-        Callable or frame or code object to be inspected.
+    func : CallableCodeObjable
+        Codeobjable to be inspected.
     func_label : str, optional
         Human-readable label describing this callable in exception messages
         raised by this validator. Defaults to ``'Callable'``.
@@ -108,8 +105,7 @@ def get_func_unwrapped_codeobj(
     return func_codeobj  # type: ignore[return-value]
 
 
-def get_func_unwrapped_codeobj_or_none(
-    func: CallableOrFrameOrCodeType) -> Optional[CodeType]:
+def get_func_unwrapped_codeobj_or_none(func: object) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
     the **wrappee** (i.e., callable proxied by the passed callable by either
@@ -121,8 +117,8 @@ def get_func_unwrapped_codeobj_or_none(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Callable or frame or code object to be inspected.
+    func : CallableCodeObjable
+        Codeobjable to be inspected.
 
     Returns
     ----------
@@ -147,16 +143,16 @@ def get_func_unwrapped_codeobj_or_none(
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed callable if that callable is pure-Python *or* raise an exception
-    otherwise (e.g., if that callable is C-based or a class or object defining
-    the ``__call__()`` dunder method).
+    the passed **codeobjable** (i.e., pure-Python object directly associated
+    with a code object) if this object is codeobjable *or* raise an exception
+    otherwise (e.g., if this object is *not* codeobjable).
 
     For convenience, this getter also accepts a code object, in which case that
     code object is simply returned as is.
@@ -204,8 +200,8 @@ def get_func_codeobj(
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
-        Callable or frame or code object to be inspected.
+    func : CallableCodeObjable
+        Codeobjable to be inspected.
     exception_cls : type, optional
         Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -247,13 +243,12 @@ def get_func_codeobj(
     return func_codeobj  # type: ignore[return-value]
 
 
-def get_func_codeobj_or_none(
-    func: CallableOrFrameOrCodeType) -> Optional[CodeType]:
+def get_func_codeobj_or_none(func: Any) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed callable if this callable is pure-Python *or* ``None`` otherwise
-    (e.g., if this callable is C-based or a class or object defining the
-    ``__call__()`` dunder method).
+    the passed **codeobjable** (i.e., pure-Python object directly associated
+    with a code object) if this object is codeobjable *or* ``None`` otherwise
+    (e.g., if this object is *not* codeobjable).
 
     Caveats
     ----------
@@ -262,8 +257,8 @@ def get_func_codeobj_or_none(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Callable or frame or code object to be inspected.
+    func : CallableCodeObjable
+        Codeobjable to be inspected.
 
     Returns
     ----------
@@ -285,6 +280,11 @@ def get_func_codeobj_or_none(
     if isinstance(func, CodeType):
         return func
     # Else, this object is *NOT* already a code object.
+    #
+    # If this object is a generator, return this generator's code object.
+    elif isinstance(func, GeneratorType):
+        return func.gi_code
+    # Else, this object is *NOT* a generator.
     #
     # If this object is a call stack frame, return this frame's code object.
     elif isinstance(func, FrameType):

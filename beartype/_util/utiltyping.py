@@ -12,7 +12,25 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from collections.abc import Callable
+from types import CodeType, FrameType, GeneratorType
 from typing import Iterable, Tuple, Type, Union
+
+# ....................{ HINTS ~ callable                  }....................
+CallableCodeObjable = Union[Callable, CodeType, FrameType, GeneratorType]
+'''
+PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
+directly associated with a code object and thus safely passable as the first
+parameter to the :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`
+getter retrieving the code object associated with this codeobjable).
+
+Specifically, this hint matches:
+
+* Code objects.
+* Pure-Python callables, including generators (but *not* C-based callables,
+  which lack code objects).
+* Pure-Python callable stack frames.
+'''
 
 # ....................{ HINTS ~ iterable                  }....................
 IterableStrs = Iterable[str]

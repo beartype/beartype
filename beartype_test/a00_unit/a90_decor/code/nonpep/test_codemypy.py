@@ -17,7 +17,7 @@ PEP-compliant but are effectively PEP-compliant due to being accepted by
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pyterror import raises_uncached
+from beartype_test.util.pytroar import raises_uncached
 
 # ....................{ TESTS ~ decor : no_type_check     }....................
 def test_decor_mypy_notimplemented() -> None:

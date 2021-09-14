@@ -16,7 +16,6 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from functools import wraps
-from pytest import raises
 
 # ....................{ DATA                              }....................
 # Arbitrary pure-Python wrappee function.
@@ -40,6 +39,10 @@ class OfStagnantWaters(object):
         self, *args, **kwargs) -> str:
         return self.altar(*args, **kwargs)
 
+# Arbitrary pure-Python generator.
+def thou_hadst_a_voice():
+    yield 'whose sound was like the sea:'
+
 # ....................{ TESTS                             }....................
 def test_get_func_codeobj() -> None:
     '''
@@ -49,8 +52,9 @@ def test_get_func_codeobj() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._cave._cavefast import CallableCodeObjectType
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from pytest import raises
 
     # Instance of that class.
     fireside = OfStagnantWaters()
@@ -61,6 +65,10 @@ def test_get_func_codeobj() -> None:
         the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
     assert isinstance(
         get_func_codeobj(fireside.altar), CallableCodeObjectType)
+
+    # Assert this tester accepts pure-Python generators.
+    assert isinstance(
+        get_func_codeobj(thou_hadst_a_voice), CallableCodeObjectType)
 
     # Assert this tester also accepts code objects.
     assert get_func_codeobj(
@@ -81,19 +89,23 @@ def test_get_func_codeobj_or_none() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
     from beartype._cave._cavefast import CallableCodeObjectType
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 
     # Instance of that class.
     fireside = OfStagnantWaters()
 
-    # Assert this tester accepts pure-Python callables.
+    # Assert this tester accepts pure-Python non-generator callables.
     the_heroic_wealth_of_hall_and_bower = get_func_codeobj_or_none(
         england_hath_need)
     assert isinstance(
         the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
     assert isinstance(
         get_func_codeobj_or_none(fireside.altar), CallableCodeObjectType)
+
+    # Assert this tester accepts pure-Python generators.
+    assert isinstance(
+        get_func_codeobj_or_none(thou_hadst_a_voice), CallableCodeObjectType)
 
     # Assert this tester also accepts code objects.
     assert get_func_codeobj_or_none(
@@ -118,6 +130,7 @@ def test_get_func_unwrapped_codeobj() -> None:
         get_func_unwrapped_codeobj,
     )
     from beartype._cave._cavefast import CallableCodeObjectType
+    from pytest import raises
 
     # Instance of that class.
     fireside = OfStagnantWaters()

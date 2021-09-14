@@ -16,10 +16,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
-    CallableOrFrameOrCodeType,
-    get_func_codeobj_or_none,
+    get_func_unwrapped_codeobj_or_none)
+from beartype._util.utiltyping import (
+    CallableCodeObjable,
+    TypeException,
 )
-from typing import Any, Type
+from collections.abc import Awaitable
+from inspect import CO_COROUTINE
+from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -88,11 +92,11 @@ edge cases, and false positives. If you must pick your poison, pick this one.
 
 def die_unless_func_python(
     # Mandatory parameters.
-    func: CallableOrFrameOrCodeType,
+    func: CallableCodeObjable,
 
     # Optional parameters.
     func_label: str = 'Callable',
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> None:
     '''
     Raise an exception if the passed callable is **C-based** (i.e., implemented
@@ -105,7 +109,7 @@ def die_unless_func_python(
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
+    func : CallableCodeObjable
         Callable to be inspected.
     func_label : str, optional
         Human-readable label describing this callable in exception messages
@@ -145,23 +149,22 @@ def die_unless_func_python(
         )
 
 # ....................{ TESTERS                           }....................
-def is_func_lambda(func: CallableOrFrameOrCodeType) -> bool:
+def is_func_lambda(func: Any) -> bool:
     '''
-    ``True`` only if the passed callable is a **pure-Python lambda function**
+    ``True`` only if the passed object is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
     statement rather than as a full-blown ``def`` statement).
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Callable to be inspected.
+    func : object
+        Object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable is a pure-Python lambda function.
+        ``True`` only if this object is a pure-Python lambda function.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
 
     # Return true only if this both...
     return (
@@ -170,8 +173,8 @@ def is_func_lambda(func: CallableOrFrameOrCodeType) -> bool:
         # This callable's name is the lambda-specific placeholder name
         # initially given by Python to *ALL* lambda functions. Technically,
         # this name may be externally changed by malicious third parties after
-        # the declaration of this lambda. Pragmatically, no one sane would
-        # ever do such a horrible thing.
+        # the declaration of this lambda. Pragmatically, no one sane would ever
+        # do such a horrible thing. Would they!?!?
         #
         # While predictably absurd, this is also the only efficient (and thus
         # sane) means of differentiating lambda from non-lambda callables.
@@ -181,24 +184,98 @@ def is_func_lambda(func: CallableOrFrameOrCodeType) -> bool:
     )
 
 
-def is_func_python(func: CallableOrFrameOrCodeType) -> bool:
+def is_func_python(func: object) -> bool:
     '''
-    ``True`` only if the passed callable is **C-based** (i.e., implemented in
-    Python as either a function or method rather than in C as either a builtin
-    bundled with the active Python interpreter *or* third-party C extension
-    function).
+    ``True`` only if the passed object is a **pure-Python callable** (i.e.,
+    implemented in Python as either a function or method rather than in C as
+    either a builtin bundled with the active Python interpreter *or*
+    third-party C extension function).
 
     Parameters
     ----------
-    func : CallableOrFrameOrCodeType
-        Callable to be inspected.
+    func : object
+        Object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if this callable is C-based.
+        ``True`` only if this object is a pure-Python callable
     '''
 
-    # Return true only if a code object underlies this callable. C-based
-    # callables have *NO* such object.
-    return get_func_codeobj_or_none(func) is not None
+    # Return true only if a pure-Python code object underlies this object.
+    # C-based callables are associated with *NO* code objects.
+    return get_func_unwrapped_codeobj_or_none(func) is not None
+
+# ....................{ TESTERS ~ async                   }....................
+#FIXME: Unit test us up.
+def is_func_async(func: object) -> bool:
+    '''
+    ``True`` only if the passed object is **asynchronous** (i.e., awaitable
+    object satisfying the :class:`collections.abc.Awaitable` protocol by
+    declaring the ``__await__()`` dunder method and thus permissible for use in
+    ``await`` expressions).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is asynchronous.
+    '''
+
+    # Return true only if this callable satisfies the awaitable protocol.
+    #
+    # Note that there exists a less efficient and more fragile (albeit arguably
+    # more general-purpose) approach that instead resembles:
+    #     func_codeobj = get_func_codeobj_or_none(func)
+    #     return (
+    #         func_codeobj is not None and (
+    #             func_codeobj.co_flags == CO_COROUTINE or
+    #             func_codeobj.co_flags == CO_ITERABLE_COROUTINE or
+    #             func_codeobj.co_flags == CO_ASYNC_GENERATOR
+    #         )
+    #     )
+    # That approach hard-codes assumptions about low-level code objects and is
+    # thus considerably more fragile than the current approach, which trivially
+    # leverages the existing awaitable protocol.
+    return isinstance(func, Awaitable)
+
+
+#FIXME: Unit test us up.
+def is_func_async_coroutine(func: object) -> bool:
+    '''
+    ``True`` only if the passed object is an **asynchronous coroutine**
+    (i.e., awaitable callable satisfying the :class:`collections.abc.Awaitable`
+    protocol by being declared via the ``async def`` syntax and thus callable
+    *only* when preceded by comparable ``await`` syntax).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is an asynchronous coroutine.
+
+    See Also
+    ----------
+    :func:`inspect.iscoroutinefunction`
+        Stdlib function strongly inspiring this implementation.
+    '''
+
+    # Code object underlying this pure-Python callable if any *OR* "None".
+    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+
+    # Return true only if...
+    return (
+        # This object is a pure-Python callable *AND*...
+        func_codeobj is not None and
+        # This callable's code object implies this callable to be an
+        # asynchronous coroutine.
+        func_codeobj.co_flags & CO_COROUTINE != 0
+    )
