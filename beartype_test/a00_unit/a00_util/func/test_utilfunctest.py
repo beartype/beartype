@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable code object utility unit tests.**
+Project-wide **callable tester utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.utilfunc.utilfunctest` submodule.
@@ -15,7 +15,42 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+
+# ....................{ TESTS ~ async                     }....................
+def test_is_func_coroutine() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_coroutine` function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.func.utilfunctest import is_func_coroutine
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype_test.a00_unit.data.data_type import (
+        async_generator,
+        async_generator_factory,
+        coroutine,
+        coroutine_factory,
+        function,
+    )
+
+    # Assert this tester accepts pure-Python coroutine callables.
+    assert is_func_coroutine(coroutine_factory) is True
+
+    # Assert this tester accepts pure-Python coroutine objects.
+    assert is_func_coroutine(coroutine) is False
+
+    # Assert this tester rejects pure-Python asynchronous generator callables.
+    assert is_func_coroutine(async_generator_factory) is False
+
+    # Assert this tester rejects pure-Python asynchronous generator objects.
+    assert is_func_coroutine(async_generator) is False
+
+    # Assert this tester rejects pure-Python non-asynchronous callables.
+    assert is_func_coroutine(function) is False
+
+    # Assert this tester rejects arbitrary non-asynchronous objects.
+    assert is_func_coroutine('To hear—an old and solemn harmony;') is False
 
 # ....................{ TESTS ~ lambda                    }....................
 def test_is_func_lambda() -> None:
@@ -26,7 +61,6 @@ def test_is_func_lambda() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfunctest import is_func_lambda
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     def intimations_of_immortality(): 'from Recollections of Early Childhood'
 
@@ -49,6 +83,7 @@ def test_die_unless_func_python() -> None:
     # Defer heavyweight imports.
     from beartype._util.func.utilfunctest import die_unless_func_python
     from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from pytest import raises
 
     # Assert this validator accepts pure-Python callables.
     die_unless_func_python(lambda: True)
@@ -66,7 +101,6 @@ def test_is_func_python() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfunctest import is_func_python
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
 
     # Assert this tester accepts pure-Python callables.
     assert is_func_python(lambda: True) is True

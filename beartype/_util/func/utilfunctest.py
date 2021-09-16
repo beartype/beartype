@@ -21,7 +21,6 @@ from beartype._util.utiltyping import (
     CallableCodeObjable,
     TypeException,
 )
-from collections.abc import Awaitable
 from inspect import CO_COROUTINE
 from typing import Any
 
@@ -207,45 +206,7 @@ def is_func_python(func: object) -> bool:
     return get_func_unwrapped_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ async                   }....................
-#FIXME: Unit test us up.
-def is_func_async(func: object) -> bool:
-    '''
-    ``True`` only if the passed object is **asynchronous** (i.e., awaitable
-    object satisfying the :class:`collections.abc.Awaitable` protocol by
-    declaring the ``__await__()`` dunder method and thus permissible for use in
-    ``await`` expressions).
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is asynchronous.
-    '''
-
-    # Return true only if this callable satisfies the awaitable protocol.
-    #
-    # Note that there exists a less efficient and more fragile (albeit arguably
-    # more general-purpose) approach that instead resembles:
-    #     func_codeobj = get_func_codeobj_or_none(func)
-    #     return (
-    #         func_codeobj is not None and (
-    #             func_codeobj.co_flags == CO_COROUTINE or
-    #             func_codeobj.co_flags == CO_ITERABLE_COROUTINE or
-    #             func_codeobj.co_flags == CO_ASYNC_GENERATOR
-    #         )
-    #     )
-    # That approach hard-codes assumptions about low-level code objects and is
-    # thus considerably more fragile than the current approach, which trivially
-    # leverages the existing awaitable protocol.
-    return isinstance(func, Awaitable)
-
-
-#FIXME: Unit test us up.
-def is_func_async_coroutine(func: object) -> bool:
+def is_func_coroutine(func: object) -> bool:
     '''
     ``True`` only if the passed object is an **asynchronous coroutine**
     (i.e., awaitable callable satisfying the :class:`collections.abc.Awaitable`

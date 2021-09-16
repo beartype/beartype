@@ -1769,7 +1769,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +====================+=========================================+===============================+===========================+
 | decoratable        | classes                                 | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | coroutines                              | *none*                        | *none*                    |
+|                    | coroutines                              | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | functions                               | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -4560,7 +4560,7 @@ rather than Python runtime) include:
 .. _enforce_typing:
    https://github.com/matchawine/python-enforce-typing
 .. _pydantic:
-   https://pydantic-docs.helpmanual.io/
+   https://pydantic-docs.helpmanual.io
 .. _pytypes:
    https://github.com/Stewori/pytypes
 .. _typeen:

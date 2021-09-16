@@ -65,8 +65,8 @@ def die_unless_module_attr_name(
               implicitly imported everywhere, there exists *no* demonstrable
               reason to even attempt to import them anywhere.
 
-          * One or more ``.`` characters but syntactically invalid as a
-            classname (e.g., ``0h!muh?G0d.``).
+          * One or more ``.`` characters but syntactically invalid as an
+            identifier (e.g., ``0h!muh?G0d.``).
     '''
     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
     assert isinstance(exception_prefix, str), (

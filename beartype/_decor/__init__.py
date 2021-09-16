@@ -28,6 +28,13 @@
 #* Conditionally generate type-checking code throughout that function depending
 #  on the value of that parameter.
 
+#FIXME: [SAFETY] @beartype should raise exceptions when decorating callables
+#that are actually generators, asynchronous generators, or coroutines whose
+#returns are annotated with any type hint whose sign is *NOT*
+#"HintSignGenerator", "HintSignAsyncGenerator", or "HintSignCoroutine"
+#respectively. Since detecting generators, asynchronous generators, and
+#coroutines is trivial, this should be trivial.
+
 #FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
 #are called with purely positional rather than keyword arguments. Currently, we
 #suspect the inverse is the case. To do so, we'll probably want to augment the
@@ -61,7 +68,7 @@
 #      '''
 #  Note the absence of delimiting space. This is, of course, intentional.
 #* Unconditionally format the "func_await" substring into both of those
-#  snippets, define ala:
+#  snippets, defined ala:
 #      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
 #* Oh, and note that our defined wrapper function must also be preceded by the
 #  "async " keyword. So, we'll also need to augment "CODE_SIGNATURE".

@@ -20,7 +20,7 @@ from beartype._util.text.utiltextmagic import CODE_INDENT_1
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CODE                              }....................
-CODE_SIGNATURE = f'''def {{func_wrapper_name}}(
+CODE_SIGNATURE = f'''{{func_prefix}}def {{func_wrapper_name}}(
     *args,{{func_wrapper_params}}{CODE_INDENT_1}**kwargs
 ):'''
 '''

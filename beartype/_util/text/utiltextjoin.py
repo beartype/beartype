@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype string joining utilities** (i.e., callables joining passed
+Project-wide **string joining utilities** (i.e., callables joining passed
 strings into new strings delimited by passed substring delimiters).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -98,9 +98,8 @@ def join_delimited(
     # If two strings are passed, return these strings delimited appropriately.
     elif num_strs == 2:
         return f'{strs[0]}{delimiter_if_two}{strs[1]}'
-
     # Else, three or more strings are passed.
-    #
+
     # All such strings except the last two, delimited appropriately.
     strs_nonlast = delimiter_if_three_or_more_nonlast.join(strs[0:-2])
 

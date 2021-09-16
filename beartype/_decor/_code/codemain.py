@@ -36,6 +36,7 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
+from beartype._util.func.utilfunctest import is_func_coroutine
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_param,
@@ -183,6 +184,24 @@ def generate_code(data: BeartypeData) -> str:
 
     # Python code snippet declaring the signature of this wrapper.
     code_sig = CODE_SIGNATURE.format(
+        #FIXME: Verify this. Are we *REALLY* sure asynchronous generator
+        #callables should be excluded here? Coroutines are basically just
+        #generators; like generators, they return something when sent
+        #something, can accept things, and return something when awaited on.
+
+        # Substring prefixing the declaration of this wrapper, defined as:
+        # * If this decorated callable is an asynchronous coroutine callable
+        #   (i.e., callable declared with the "async" keyword performing *NO*
+        #   "yield" statements), the "async" keyword.
+        # * Else, the empty string.
+        #
+        # Note that asynchronous generator callables (i.e., callables declared
+        # with the "async" keyword performing one or more "yield" rather than
+        # "return" statements) are *NOT* themselves asynchronous. Of course,
+        # neither are asynchronous coroutines. Technically, both are called
+        # synchronously and return an asynchronous object (i.e., asynchronous
+        # generator and coroutine, respectively). 
+        func_prefix=('async ' if is_func_coroutine(data.func) else ''),
         func_wrapper_name=data.func_wrapper_name,
         func_wrapper_params=f'\n{func_wrapper_code_params}',
     )

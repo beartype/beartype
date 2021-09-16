@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype string-joining utility unit tests.**
+Project-wide **string-joining utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.text.utiltextjoin` submodule.
@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_join_delimited() -> None:
