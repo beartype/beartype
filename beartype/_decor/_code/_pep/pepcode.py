@@ -121,16 +121,12 @@ def pep_code_check_param(
         )
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
 
-    # Python code snippet localizing this parameter.
-    func_wrapper_code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
-        arg_name=param.name, arg_index=param_index)
-
     # Attempt to...
     try:
         # Generate a memoized parameter-agnostic code snippet type-checking any
         # parameter or return value with an arbitrary name.
         (
-            func_wrapper_code,
+            code_param_check_pith,
             func_wrapper_locals,
             hint_forwardrefs_class_basename,
         ) = pep_code_check_hint(hint)
@@ -140,9 +136,9 @@ def pep_code_check_param(
         update_mapping(data.func_wrapper_locals, func_wrapper_locals)
 
         # Unmemoize this snippet against the current parameter.
-        func_wrapper_code = _unmemoize_pep_code(
+        code_param_check = _unmemoize_pep_code(
             data=data,
-            func_wrapper_code=func_wrapper_code,
+            func_wrapper_code=code_param_check_pith,
             pith_repr=repr(param.name),
             hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
         )
@@ -156,8 +152,12 @@ def pep_code_check_param(
                 func=data.func, param_name=param.name),
         )
 
+    # Python code snippet localizing this parameter.
+    code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
+        arg_name=param.name, arg_index=param_index)
+
     # Return a Python code snippet localizing and type-checking this parameter.
-    return f'{func_wrapper_code_param_localize}{func_wrapper_code}'
+    return f'{code_param_localize}{code_param_check}'
 
 
 def pep_code_check_return(data: BeartypeData, hint: object) -> str:
@@ -183,10 +183,6 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
-    # Memoized parameter-agnostic code snippet type-checking any parameter or
-    # return with an arbitrary name.
-    func_wrapper_code: str = None  # type: ignore[assignment]
-
     # Empty tuple, passed below to satisfy the _unmemoize_pep_code() API.
     hint_forwardrefs_class_basename = ()
 
@@ -195,7 +191,7 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
         # Generate a memoized parameter-agnostic code snippet type-checking any
         # parameter or return value with an arbitrary name.
         (
-            func_wrapper_code,
+            code_return_check_pith,
             func_wrapper_locals,
             hint_forwardrefs_class_basename,
         ) = pep_code_check_hint(hint)
@@ -204,13 +200,26 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
         # local scope currently required by the current wrapper function.
         update_mapping(data.func_wrapper_locals, func_wrapper_locals)
 
+        # Python code snippet type-checking this return.
+        code_return_check_prefix = PEP_CODE_CHECK_RETURN_PREFIX.format(
+            func_call_prefix=data.func_wrapper_code_call_prefix)
+
         # Extend this snippet to:
         # * Call the decorated callable and localize its return *AND*...
         # * Type-check this return *AND*...
         # * Return this return from this wrapper function.
-        func_wrapper_code = (
-            f'{PEP_CODE_CHECK_RETURN_PREFIX}{func_wrapper_code}'
+        code_return_check_memoized = (
+            f'{code_return_check_prefix}'
+            f'{code_return_check_pith}'
             f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
+        )
+
+        # Unmemoize this snippet against this return.
+        code_return_check = _unmemoize_pep_code(
+            data=data,
+            func_wrapper_code=code_return_check_memoized,
+            pith_repr=_RETURN_REPR,
+            hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
         )
     # If the prior call to the memoized pep_code_check_hint() function raised a
     # cached exception, reraise this cached exception's memoized
@@ -221,16 +230,8 @@ def pep_code_check_return(data: BeartypeData, hint: object) -> str:
             target_str=prefix_callable_decorated_return(data.func),
         )
 
-    # Unmemoize this snippet against this return.
-    func_wrapper_code = _unmemoize_pep_code(
-        data=data,
-        func_wrapper_code=func_wrapper_code,
-        pith_repr=_RETURN_REPR,
-        hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
-    )
-
     # Return this code.
-    return func_wrapper_code
+    return code_return_check
 
 # ....................{ PRIVATE ~ unmemoize               }....................
 def _unmemoize_pep_code(

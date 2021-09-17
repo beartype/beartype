@@ -114,7 +114,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
     get_hint_pep484585_generic_bases_unerased,
-    get_hint_pep484585_generic_type_or_none,
+    get_hint_pep484585_generic_type,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
     get_hint_pep484585_subclass_superclass)
@@ -506,7 +506,7 @@ def pep_code_check_hint(
     #
     # Note that "hint_curr_label" should almost *ALWAYS* be used instead.
     _EXCEPTION_PREFIX_HINT_CHILD = (
-        f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} nested type hint ')
+        f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} nested ')
 
     # Human-readable label prefixing the machine-readable representation of the
     # currently visited type hint in exception and warning messages.
@@ -765,8 +765,8 @@ def pep_code_check_hint(
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                f'{hint_curr_label}{repr(hint_curr)} '
-                f'ignorable but not ignored.')
+                f'{hint_curr_label}ignorable type hint {repr(hint_curr)} '
+                f'not ignored.')
 
             # Sign uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
@@ -1196,7 +1196,8 @@ def pep_code_check_hint(
                     #       >>> typing.Union[()]
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
-                        f'{hint_curr_label}{repr(hint_curr)} unsubscripted.')
+                        f'{hint_curr_label}union type hint {repr(hint_curr)} '
+                        f'unsubscripted.')
                     # Else, this union is subscripted by two or more arguments.
                     # Why two rather than one? Because the "typing" module
                     # reduces unions of one argument to that argument: e.g.,
@@ -1513,8 +1514,8 @@ def pep_code_check_hint(
                     assert (
                         hint_childs_len <= 1 or
                         hint_childs[1] is not Ellipsis
-                    ), (f'{hint_curr_label}{repr(hint_curr)} '
-                        f'variadic tuple unhandled.')
+                    ), (f'{hint_curr_label}variadic tuple type hint '
+                        f'{repr(hint_curr)} unhandled.')
 
                     # Initialize the code type-checking the current pith
                     # against this tuple to the substring prefixing all such
@@ -1634,9 +1635,9 @@ def pep_code_check_hint(
                         # for consistency and safety.
                         if not isinstance(hint_child, _SubscriptedIs):
                             raise BeartypeDecorHintPep593Exception(
-                                f'{hint_curr_label}{repr(hint_curr)} '
-                                f'subscripted by both @beartype-specific '
-                                f'and -agnostic metadata '
+                                f'{hint_curr_label}PEP 593 type hint '
+                                f'{repr(hint_curr)} subscripted by both '
+                                f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
                                 f'subscription of "beartype.vale.Is*" class).'
                             )
@@ -1683,7 +1684,7 @@ def pep_code_check_hint(
                     #FIXME: Optimization: if the superclass is an ignorable
                     #class (e.g., "object", "Protocol"), this type hint is
                     #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
-                    #thus need to:
+                    #thus want to:
                     #* Add that detection logic to one or more
                     #  is_hint_*_ignorable() testers elsewhere.
                     #* Call is_hint_ignorable() below.
@@ -1749,16 +1750,17 @@ def pep_code_check_hint(
                 #   pseudo-superclasses) *OR*...
                 # Then this hint is a PEP-compliant generic. In this case...
                 elif hint_curr_sign is HintSignGeneric:
-                    #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate *ALL*
-                    #child type hints subscripting a generic up to *ALL*
+                    #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
+                    #*ALL* child type hints subscripting a generic up to *ALL*
                     #pseudo-superclasses of that generic (e.g., the "int" child
                     #hint subscripting a parent hint "MuhGeneric[int]" of type
                     #"class MuhGeneric(list[T]): pass" up to its "list[T]"
                     #pseudo-superclass).
                     #
-                    #For now, we just strip *ALL* child type hints subscripting a
-                    #generic with the following call. This suffices, because we
-                    #just need this to work. So it goes, uneasy code bedfellows.
+                    #For now, we just strip *ALL* child type hints subscripting
+                    #a generic with the following call. This suffices, because
+                    #we just need this to work. So it goes, uneasy code
+                    #bedfellows.
 
                     # If this hint is *NOT* a class, this hint is *NOT* an
                     # unsubscripted generic but could still be a generic
@@ -1770,12 +1772,10 @@ def pep_code_check_hint(
                     # generic, which would then imply this hint to be a
                     # subscripted generic. If this strikes you as insane,
                     # you're not alone.
-                    hint_curr = get_hint_pep484585_generic_type_or_none(hint_curr)
-
-                    # Assert this hint to be a class.
-                    assert isinstance(hint_curr, type), (
-                        f'{hint_curr_label}{repr(hint_curr)} '
-                        f'generic not class.')
+                    hint_curr = get_hint_pep484585_generic_type(
+                        hint=hint_curr,
+                        exception_prefix=hint_curr_label,
+                    )
 
                     # Tuple of the one or more unerased pseudo-superclasses
                     # originally listed as superclasses prior to their type
@@ -2037,9 +2037,8 @@ def pep_code_check_hint(
                 ),
             )
 
-        # Else, this hint is neither PEP-compliant *NOR* a class. In this
-        # case, raise an exception. Note that:
-        #
+        # Else, this hint is neither PEP-compliant *NOR* a class. In this case,
+        # raise an exception. Note that:
         # * This should *NEVER* happen, as the "typing" module goes to great
         #   lengths to validate the integrity of PEP-compliant types at
         #   declaration time.
@@ -2051,8 +2050,8 @@ def pep_code_check_hint(
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{hint_curr_label}{repr(hint_curr)} not PEP-compliant '
-                f'(e.g., neither "typing" object nor non-"typing" class).'
+                f'{hint_curr_label}type hint {repr(hint_curr)} '
+                f'not PEP-compliant.'
             )
 
         # ................{ CLEANUP                           }................

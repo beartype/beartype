@@ -36,7 +36,6 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.func.utilfunctest import is_func_coroutine
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_param,
@@ -133,7 +132,8 @@ def generate_code(data: BeartypeData) -> str:
               overwritten by a function accepting a parameter of the same name,
               this unlikely edge case is guarded against elsewhere.
 
-          * Statements type checking parameters passed to the decorated callable.
+          * Statements type checking parameters passed to the decorated
+            callable.
           * A call to the decorated callable.
           * A statement type checking the value returned by the decorated
             callable.
@@ -158,17 +158,35 @@ def generate_code(data: BeartypeData) -> str:
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
-    # Python code snippet type-checking all annotated parameters of this
-    # callable and local scope required to do so.
-    code_params = _code_check_params(data)
+    # Python code snippet type-checking all callable parameters if one or more
+    # such parameters are annotated with unignorable type hints *OR* the empty
+    # string otherwise.
+    code_check_params = _code_check_params(data)
 
-    # Python code snippet type-checking the annotated return of this callable
-    # and local scope required to do so.
-    code_return = _code_check_return(data)
+    # Python code snippet type-checking the callable return if this return is
+    # annotated with an unignorable type hint *OR* the empty string otherwise.
+    code_check_return = _code_check_return(data)
+
+    # If the callable return requires *NO* type-checking...
+    if not code_check_return:
+        # If all callable parameters also require *NO* type-checking, this
+        # callable itself requires *NO* type-checking. In this case, return the
+        # empty string instructing the parent @beartype decorator to reduce to
+        # a noop (i.e., the identity decorator returning this callable as is).
+        if not code_check_params:
+            return ''
+        # Else, one or more callable parameters require type-checking.
+
+        # Python code snippet calling this callable unchecked, returning the
+        # value returned by this callable from this wrapper.
+        code_check_return = CODE_RETURN_UNCHECKED.format(
+            func_call_prefix=data.func_wrapper_code_call_prefix)
+    # Else, the callable return requires type-checking.
 
     # Python code snippet declaring all optional private beartype-specific
-    # parameters directly derived from the above local scope.
-    func_wrapper_code_params = ''.join(
+    # parameters directly derived from the local scope established by the above
+    # calls to the _code_check_params() and _code_check_return() functions.
+    code_signature_params = ''.join(
         # For the name of each such parameter...
         (
             f'{CODE_INDENT_1}'
@@ -183,65 +201,41 @@ def generate_code(data: BeartypeData) -> str:
     )
 
     # Python code snippet declaring the signature of this wrapper.
-    code_sig = CODE_SIGNATURE.format(
-        #FIXME: Verify this. Are we *REALLY* sure asynchronous generator
-        #callables should be excluded here? Coroutines are basically just
-        #generators; like generators, they return something when sent
-        #something, can accept things, and return something when awaited on.
-
-        # Substring prefixing the declaration of this wrapper, defined as:
-        # * If this decorated callable is an asynchronous coroutine callable
-        #   (i.e., callable declared with the "async" keyword performing *NO*
-        #   "yield" statements), the "async" keyword.
-        # * Else, the empty string.
-        #
-        # Note that asynchronous generator callables (i.e., callables declared
-        # with the "async" keyword performing one or more "yield" rather than
-        # "return" statements) are *NOT* themselves asynchronous. Of course,
-        # neither are asynchronous coroutines. Technically, both are called
-        # synchronously and return an asynchronous object (i.e., asynchronous
-        # generator and coroutine, respectively). 
-        func_prefix=('async ' if is_func_coroutine(data.func) else ''),
+    code_signature = CODE_SIGNATURE.format(
+        func_wrapper_prefix=data.func_wrapper_code_signature_prefix,
         func_wrapper_name=data.func_wrapper_name,
-        func_wrapper_params=f'\n{func_wrapper_code_params}',
+        func_wrapper_params=code_signature_params,
     )
 
-    # Python code snippet declaring the signature of this wrapper followed by
-    # preliminary statements (e.g., assignment initializations) if desired
-    # *AFTER* generating snippets type-checking parameters and return values,
-    # both of which modify instance variables of the dataclass tested below.
-    code_init = (
+    # Python code snippet of preliminary statements (e.g., local variable
+    # assignments) if any *AFTER* generating snippets type-checking parameters
+    # and return values, both of which modify instance variables of the
+    # dataclass tested below.
+    code_body_init = (
         # If the body of this wrapper requires a pseudo-random integer, append
         # code generating and localizing such an integer to this signature.
-        f'{code_sig}{CODE_INIT_RANDOM_INT}'
+        CODE_INIT_RANDOM_INT
         if ARG_NAME_GETRANDBITS in data.func_wrapper_locals else
         # Else, this body requires *NO* such integer. In this case, preserve
         # this signature as is.
-        code_sig
+        ''
     )
 
-    # Python code defining the wrapper type-checking this callable.
-    #
+    # Return Python code defining the wrapper type-checking this callable.
     # While there exist numerous alternatives to string formatting (e.g.,
     # appending to a list or bytearray before joining the items of that
     # iterable into a string), these alternatives are either:
-    #
     # * Slower, as in the case of a list (e.g., due to the high up-front cost
     #   of list construction).
     # * Cumbersome, as in the case of a bytearray.
     #
     # Since string concatenation is heavily optimized by the official CPython
-    # interpreter, the simplest approach is the most ideal.
-    func_wrapper_code = f'{code_init}{code_params}{code_return}'
-
-    # Return either...
+    # interpreter, the simplest approach is the most ideal. KISS, bro.
     return (
-        # If this callable requires *NO* type-checking, the empty string
-        # instructing the parent @beartype decorator to reduce to a noop.
-        ''
-        if func_wrapper_code == f'{code_sig}{CODE_RETURN_UNCHECKED}' else
-        # Else, this code and local scope.
-        func_wrapper_code
+        f'{code_signature}'
+        f'{code_body_init}'
+        f'{code_check_params}'
+        f'{code_check_return}'
     )
 
 # ....................{ CODERS ~ private                  }....................
@@ -377,12 +371,12 @@ def _code_check_params(data: BeartypeData) -> str:
         # Append code type-checking this parameter against this hint.
         func_wrapper_code += func_wrapper_code_param
 
-    # If this callable accepts one or more positional parameters, prefix this
-    # code by a snippet localizing the number of these parameters.
+    # If this callable accepts one or more positional type-checked parameters,
+    # prefix this code by a snippet localizing the number of these parameters.
     if is_params_positional:
         func_wrapper_code = f'{CODE_INIT_ARGS_LEN}{func_wrapper_code}'
-    # Else, this callable accepts *NO* positional parameters. In this
-    # case, preserve this code as is.
+    # Else, this callable accepts *NO* positional type-checked parameters. In
+    # this case, preserve this code as is.
 
     # Return this code.
     return func_wrapper_code
@@ -420,24 +414,26 @@ def _code_check_return(data: BeartypeData) -> str:
     # Decorated callable.
     func = data.func
 
-    # Python code snippet to be returned.
-    func_wrapper_code = None
+    # Python code snippet to be returned, defaulting to the empty string
+    # implying this callable's return to either be unannotated *OR* annotated
+    # by a safely ignorable type hint.
+    func_wrapper_code = ''
 
     # Type hint annotating this callable's return if any *OR*
     # "_RETURN_HINT_EMPTY" otherwise (i.e., if this return is unannotated).
     hint = data.func_sig.return_annotation
 
-    # If this return is unannotated, generate code calling this callable
-    # unchecked and returning this value from this wrapper.
+    # If this return is unannotated, silently reduce to a noop.
     if hint is _RETURN_HINT_EMPTY:
-        func_wrapper_code = CODE_RETURN_UNCHECKED
+        pass
     # Else, this return is annotated.
     #
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation, default this snippet to a pre-generated
     # snippet validating this callable to *NEVER* successfully return. Yup!
     elif hint is NoReturn:
-        func_wrapper_code = PEP484_CODE_CHECK_NORETURN
+        func_wrapper_code = PEP484_CODE_CHECK_NORETURN.format(
+            func_call_prefix=data.func_wrapper_code_call_prefix)
     # Else, this is *NOT* "typing.NoReturn". In this case...
     else:
         # PEP-compliant type hint converted from this PEP-noncompliant type
@@ -453,15 +449,12 @@ def _code_check_return(data: BeartypeData) -> str:
                 f'{prefix_callable_decorated_return(func)}type hint '),
         )
 
-        # If this PEP-compliant hint is ignorable, generate code calling this
-        # callable unchecked and returning that return from this wrapper.
-        if is_hint_ignorable(hint):
-            # print(f'Ignoring {data.func_name} return hint {repr(hint)}...')
-            func_wrapper_code = CODE_RETURN_UNCHECKED
-        # Else, this hint is unignorable. In this case...
-        else:
-            # Python code snippet type-checking this return against this hint.
+        # If this PEP-compliant hint is unignorable, generate and return a
+        # snippet type-checking this return against this hint.
+        if not is_hint_ignorable(hint):
             func_wrapper_code = pep_code_check_return(data=data, hint=hint)
+        # Else, this PEP-compliant hint is ignorable.
+        # if not func_wrapper_code: print(f'Ignoring {data.func_name} return hint {repr(hint)}...')
 
     # Return this code.
     return func_wrapper_code

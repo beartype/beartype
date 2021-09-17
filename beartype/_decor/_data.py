@@ -47,6 +47,7 @@ from beartype._decor._code.codesnip import (
 )
 from beartype._decor._error.errormain import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
+from beartype._util.func.utilfunctest import is_func_coroutine
 from collections.abc import Callable
 from inspect import Signature
 
@@ -96,13 +97,29 @@ class BeartypeData(object):
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator) if the :meth:`reinit` method has
         been called *or* ``None`` otherwise.
-    func_codeobj : Optional[CallableCodeObjectType]
-        **Code object** (i.e., instance of the :class:`CodeType` type)
-        underlying the decorated callable if the :meth:`reinit` method has been
-        called *or* ``None`` otherwise.
     func_sig : Optional[inspect.Signature]
         :class:`inspect.Signature` object describing this signature if the
         :meth:`reinit` method has been called *or* ``None`` otherwise.
+    func_wrapper_code_call_prefix : Optional[str]
+        Code snippet prefixing all calls to the decorated callable in the body
+        of the wrapper function wrapping that callable with type checking if
+        the :meth:`reinit` method has been called *or* ``None`` otherwise. If
+        non-``None``, this string is guaranteed to be either:
+
+        * If the decorated callable is synchronous (i.e., neither a coroutine
+          nor asynchronous generator), the empty string.
+        * If the decorated callable is asynchronous (i.e., either a coroutine
+          nor asynchronous generator), the ``"await "`` keyword.
+    func_wrapper_code_signature_prefix : Optional[str]
+        Code snippet prefixing the signature declaring the wrapper function
+        wrapping the decorated callable with type checking if the
+        :meth:`reinit` method has been called *or* ``None`` otherwise. If
+        non-``None``, this string is guaranteed to be either:
+
+        * If the decorated callable is synchronous (i.e., neither a coroutine
+          nor asynchronous generator), the empty string.
+        * If the decorated callable is asynchronous (i.e., either a coroutine
+          nor asynchronous generator), the ``"async "`` keyword.
     func_wrapper_locals : CallableScope
         **Local scope** (i.e., dictionary mapping from the name to value of
         each attribute referenced in the signature) of this wrapper function
@@ -113,9 +130,6 @@ class BeartypeData(object):
         *or* ``None`` otherwise. To efficiently (albeit imperfectly) avoid
         clashes with existing attributes of the module defining that function,
         this name is obfuscated while still preserving human-readability.
-
-    .. _PEP 563:
-        https://www.python.org/dev/peps/pep-0563
     '''
 
     # ..................{ CLASS VARIABLES                   }..................
@@ -125,9 +139,9 @@ class BeartypeData(object):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'func',
-        #FIXME: Uncomment if needed.
-        # 'func_codeobj',
         'func_sig',
+        'func_wrapper_code_call_prefix',
+        'func_wrapper_code_signature_prefix',
         'func_wrapper_locals',
         'func_wrapper_name',
     )
@@ -164,9 +178,9 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
-        #FIXME: Uncomment if needed.
-        # self.func_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_sig: Signature = None  # type: ignore[assignment]
+        self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
+        self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_locals: CallableScope = {}
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
@@ -177,7 +191,7 @@ class BeartypeData(object):
         acquisition of a previously cached instance of this class from the
         :mod:`beartype._util.cache.pool.utilcachepoolobject` submodule.
 
-        If `PEP 563`_ is conditionally active for this callable, this function
+        If :pep:`563` is conditionally active for this callable, this function
         additionally resolves all postponed annotations on this callable to
         their referents (i.e., the intended annotations to which those
         postponed annotations refer).
@@ -197,9 +211,6 @@ class BeartypeData(object):
             If this callable is neither a pure-Python function *nor* method;
             equivalently, if this callable is either C-based *or* a class or
             object defining the ``__call__()`` dunder method.
-
-        .. _PEP 563:
-           https://www.python.org/dev/peps/pep-0563
         '''
         assert callable(func), f'{repr(func)} uncallable.'
 
@@ -209,13 +220,28 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        #FIXME: Uncomment if needed.
-        # Code object underlying that callable unwrapped if that callable is
-        # pure-Python *OR* raise an exception otherwise.
-        # self.func_codeobj = get_func_unwrapped_codeobj(
-        #     func=func, exception_cls=BeartypeDecorWrappeeException)
+        #FIXME: Verify this. Are we *REALLY* sure asynchronous generator
+        #callables should be excluded here? Coroutines are basically just
+        #generators; like generators, they return something when sent
+        #something, can accept things, and return something when awaited on.
 
-        # Efficiently Reduce this local scope back to the dictionary of all
+        # If this callable is asynchronous (i.e., callable declared with
+        # "async def" rather than merely "def")...
+        if is_func_coroutine(func):
+            # Code snippet prefixing all calls to this callable.
+            self.func_wrapper_code_call_prefix = 'await '
+
+            # Code snippet prefixing the declaration of the wrapper function
+            # wrapping this callable with type-checking.
+            self.func_wrapper_code_signature_prefix = 'async '
+        # Else, this callable is synchronous (i.e., callable declared with
+        # "def" rather than "async def"). In this case, reduce these code
+        # snippets to the empty string.
+        else:
+            self.func_wrapper_code_call_prefix = ''
+            self.func_wrapper_code_signature_prefix = ''
+
+        # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_locals.clear()
         self.func_wrapper_locals[ARG_NAME_FUNC] = func

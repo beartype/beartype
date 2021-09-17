@@ -22,6 +22,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
+from beartype._util.utiltyping import TypeException
 from typing import Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -75,82 +76,13 @@ def is_hint_pep484585_generic(hint: object) -> bool:
         is_hint_pep585_generic(hint)
     )
 
-# ....................{ GETTERS                           }....................
-@callable_cached
-def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
-    '''
-    Either the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e.,
-    class superficially subclassing at least one PEP-compliant type hint that
-    is possibly *not* an actual class) if **unsubscripted** (i.e., indexed by
-    *no* arguments or type variables), the unsubscripted generic underlying
-    this generic if **subscripted** (i.e., indexed by one or more arguments
-    and/or type variables), *or* ``None`` otherwise (i.e., if this hint is
-    *not* a generic).
-
-    Specifically, this getter returns:
-
-    * If this hint both originates from an **origin type** (i.e.,
-      non-:mod:`typing` class such that *all* objects satisfying this hint are
-      instances of that class), that origin type.
-    * Else if this hint is already a class, this hint as is.
-    * Else, ``None``.
-
-    This getter is memoized for efficiency.
-
-    Caveats
-    ----------
-    **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics. Callers
-    *must* perform subsequent tests to distinguish these two cases.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Optional[type]
-        Either:
-
-        * If this hint is a generic, the class originating this generic.
-        * Else, ``None``.
-
-    See Also
-    ----------
-    :func:`get_hint_pep_origin_or_none`
-        Further details.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
-
-    # Arbitrary object originating this hint if any *OR* "None" otherwise.
-    hint_origin = get_hint_pep_origin_or_none(hint)
-    # print(f'{repr(hint)} hint_origin: {repr(hint_origin)}')
-
-    # If this origin is a type, this is the origin type originating this hint.
-    # In this case, return this type.
-    if isinstance(hint_origin, type):
-        return hint_origin
-    # Else, this origin is *NOT* a type.
-    #
-    # Else if this hint is already a type, this type is effectively already its
-    # origin type. In this case, return this type as is.
-    elif isinstance(hint, type):
-        return hint
-    # Else, this hint is *NOT* a type. In this case, this hint originates from
-    # *NO* origin type.
-
-    # Return the "None" singleton.
-    return None
-
-
+# ....................{ GETTERS ~ bases                   }....................
 def get_hint_pep484585_generic_bases_unerased(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> Tuple[object, ...]:
     '''
@@ -285,9 +217,12 @@ def get_hint_pep484585_generic_bases_unerased(
     ----------
     hint : object
         Generic type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -296,7 +231,7 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484585Exception`
+    :exc:`exception_cls`
         If this hint is either:
 
         * Neither a :pep:`484`- nor :pep:`585`-compliant generic.
@@ -349,7 +284,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # * If this generic is PEP 484-compliant, the "typing" module.
     # * If this generic is PEP 585-compliant, CPython or PyPy itself.
     if not hint_pep_generic_bases_unerased:
-        raise BeartypeDecorHintPep484585Exception(
+        raise exception_cls(
             f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
             f'subclasses no superclasses.'
         )
@@ -357,3 +292,161 @@ def get_hint_pep484585_generic_bases_unerased(
 
     # Return this tuple of these pseudo-superclasses.
     return hint_pep_generic_bases_unerased
+
+# ....................{ GETTERS                           }....................
+#FIXME: Unit test us up, please.
+def get_hint_pep484585_generic_type(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> type:
+    '''
+    Either the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e.,
+    class superficially subclassing at least one PEP-compliant type hint that
+    is possibly *not* an actual class) if **unsubscripted** (i.e., indexed by
+    *no* arguments or type variables), the unsubscripted generic underlying
+    this generic if **subscripted** (i.e., indexed by one or more child type
+    hints and/or type variables), *or* raise an exception otherwise (i.e., if
+    this hint is *not* a generic).
+
+    Specifically, this getter returns (in order):
+
+    * If this hint originates from an **origin type** (i.e., isinstanceable
+      class such that *all* objects satisfying this hint are instances of that
+      class), regardless of whether this hint is already a class, this origin
+      type.
+    * Else if this hint is already a class, this hint as is.
+    * Else, raise an exception.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Caveats
+    ----------
+    **This getter returns false positives in edge cases.** That is, this getter
+    returns non-``None`` values for both generics and non-generics (notably,
+    non-generics defining the ``__origin__`` dunder attribute to an
+    isinstanceable class). Callers *must* perform subsequent tests to
+    distinguish these two cases.
+
+    Parameters
+    ----------
+    hint : object
+        Generic type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    type
+        Class originating this generic.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this hint is *not* a generic.
+
+    See Also
+    ----------
+    :func:`get_hint_pep484585_generic_type_or_none`
+        Further details.
+    '''
+
+    # Either this hint if this hint is an unsubscripted generic, the
+    # unsubscripted generic underlying this hint if this hint is a subscripted
+    # generic, *OR* "None" if this hint is not a generic.
+    hint_generic_type = get_hint_pep484585_generic_type_or_none(hint)
+
+    # If this hint is *NOT* a generic, raise an exception.
+    if hint_generic_type is None:
+        raise exception_cls(
+            f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+            f'not generic (i.e., originates from no isinstanceable class).'
+        )
+    # Else, this hint is a generic.
+
+    # Return this class.
+    return hint_generic_type
+
+
+def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
+    '''
+    Either the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e.,
+    class superficially subclassing at least one PEP-compliant type hint that
+    is possibly *not* an actual class) if **unsubscripted** (i.e., indexed by
+    *no* arguments or type variables), the unsubscripted generic underlying
+    this generic if **subscripted** (i.e., indexed by one or more child type
+    hints and/or type variables), *or* ``None`` otherwise (i.e., if this hint
+    is *not* a generic).
+
+    Specifically, this getter returns (in order):
+
+    * If this hint originates from an **origin type** (i.e., isinstanceable
+      class such that *all* objects satisfying this hint are instances of that
+      class), regardless of whether this hint is already a class, this origin
+      type.
+    * Else if this hint is already a class, this hint as is.
+    * Else, ``None``.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Caveats
+    ----------
+    **This getter returns false positives in edge cases.** That is, this getter
+    returns non-``None`` values for both generics and non-generics (notably,
+    non-generics defining the ``__origin__`` dunder attribute to an
+    isinstanceable class). Callers *must* perform subsequent tests to
+    distinguish these two cases.
+
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[type]
+        Either:
+
+        * If this hint is a generic, the class originating this generic.
+        * Else, ``None``.
+
+    See Also
+    ----------
+    :func:`get_hint_pep_origin_or_none`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+
+    # Arbitrary object originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_or_none(hint)
+    # print(f'{repr(hint)} hint_origin: {repr(hint_origin)}')
+
+    # If this origin is a type, this is the origin type originating this hint.
+    # In this case, return this type.
+    if isinstance(hint_origin, type):
+        return hint_origin
+    # Else, this origin is *NOT* a type.
+    #
+    # Else if this hint is already a type, this type is effectively already its
+    # origin type. In this case, return this type as is.
+    elif isinstance(hint, type):
+        return hint
+    # Else, this hint is *NOT* a type. In this case, this hint originates from
+    # *NO* origin type.
+
+    # Return the "None" singleton.
+    return None

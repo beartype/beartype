@@ -102,22 +102,22 @@ that callable's next parameter to be type-checked.
 PEP_CODE_CHECK_RETURN_PREFIX = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
 
-    # Noop required to artifically increase indentation level. Note that
+    # Noop required to artificially increase indentation level. Note that
     # CPython implicitly optimizes this conditional away - which is nice.
     if True:'''
 '''
 PEP-compliant code snippet calling the decorated callable and localizing the
 value returned by that call.
 
-Note that this snippet intentionally terminates on a line containing only the
-``(`` character, enabling subsequent type-checking code to effectively ignore
+Note that this snippet intentionally terminates on a noop increasing the
+indentation level, enabling subsequent type-checking code to effectively ignore
 indentation level and thus uniformly operate on both:
 
-* Parameters localized via values of the :data:`PARAM_KIND_TO_PEP_CODE_LOCALIZE`
-  dictionary.
-* Return values localized via this sippet.
+* Parameters localized via values of the
+  :data:`PARAM_KIND_TO_PEP_CODE_LOCALIZE` dictionary.
+* Return values localized via this snippet.
 
 See Also
 ----------
@@ -132,10 +132,6 @@ PEP_CODE_CHECK_RETURN_SUFFIX = f'''
 '''
 PEP-compliant code snippet returning from the wrapper function the successfully
 type-checked value returned from the decorated callable.
-
-Note that this snippet intentionally terminates on a line containing only the
-``)`` character, which closes the corresponding character terminating the
-:data:`PEP_CODE_GET_RETURN` snippet.
 '''
 
 # ....................{ HINT ~ placeholder : child        }....................
@@ -177,7 +173,7 @@ caller-defined module declaring the currently decorated callable).
 '''
 
 # ....................{ HINT ~ hint : root                }....................
-PEP_CODE_HINT_ROOT_PREFIX = f'''
+PEP_CODE_HINT_ROOT_PREFIX = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
         if not '''

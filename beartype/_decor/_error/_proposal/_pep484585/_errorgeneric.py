@@ -19,12 +19,11 @@ from beartype._decor._error._errortype import (
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
     get_hint_pep484585_generic_bases_unerased,
-    get_hint_pep484585_generic_type_or_none,
+    get_hint_pep484585_generic_type,
 )
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
-from beartype._util.hint.pep.proposal.utilpep585 import (
-    is_hint_pep585_builtin)
+from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from typing import Optional
@@ -54,8 +53,7 @@ def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
 
     # If this hint is *NOT* a class, reduce this hint to the generic class
     # originating this hint if any. See the is_hint_pep484_generic() tester.
-    sleuth.hint = get_hint_pep484585_generic_type_or_none(sleuth.hint)
-    assert isinstance(sleuth.hint, type), f'{repr(sleuth.hint)} not class.'
+    sleuth.hint = get_hint_pep484585_generic_type(sleuth.hint)
 
     # Human-readable string describing the failure of this pith to be an
     # instance of this class if this pith is not an instance of this class *OR*

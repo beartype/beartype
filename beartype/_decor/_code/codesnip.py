@@ -19,16 +19,7 @@ from beartype._util.text.utiltextmagic import CODE_INDENT_1
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CODE                              }....................
-CODE_SIGNATURE = f'''{{func_prefix}}def {{func_wrapper_name}}(
-    *args,{{func_wrapper_params}}{CODE_INDENT_1}**kwargs
-):'''
-'''
-PEP-agnostic code snippet declaring the signature of the wrapper function
-type-checking the decorated callable.
-'''
-
-# ....................{ CODE ~ arg                        }....................
+# ....................{ NAMES ~ argument                  }....................
 # To avoid colliding with the names of arbitrary caller-defined parameters, the
 # beartype-specific parameter names *MUST* be prefixed by "__beartype_".
 
@@ -71,7 +62,7 @@ decorator requiring one or more types or tuples of types cached by this
 singleton).
 '''
 
-# ....................{ CODE ~ var                        }....................
+# ....................{ NAMES ~ variable                  }....................
 VAR_NAME_PREFIX_PITH = '__beartype_pith_'
 '''
 Substring prefixing all local variables providing a **pith** (i.e., either the
@@ -99,6 +90,16 @@ VAR_NAME_RANDOM_INT = '__beartype_random_int'
 Name of the local variable providing a **pseudo-random integer** (i.e.,
 unsigned 32-bit integer pseudo-randomly generated for subsequent use in
 type-checking randomly indexed container items by the current call).
+'''
+
+# ....................{ CODE                              }....................
+CODE_SIGNATURE = f'''{{func_wrapper_prefix}}def {{func_wrapper_name}}(
+    *args,
+{{func_wrapper_params}}{CODE_INDENT_1}**kwargs
+):'''
+'''
+PEP-agnostic code snippet declaring the signature of the wrapper function
+type-checking the decorated callable.
 '''
 
 # ....................{ CODE ~ init                       }....................
@@ -203,7 +204,7 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
 CODE_RETURN_UNCHECKED = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call.
-    return {ARG_NAME_FUNC}(*args, **kwargs)'''
+    return {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
 '''
 PEP-agnostic code snippet calling the decorated callable *without*
 type-checking the value returned by that call (if any).
@@ -213,7 +214,7 @@ type-checking the value returned by that call (if any).
 PEP484_CODE_CHECK_NORETURN = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
 
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python

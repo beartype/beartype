@@ -32,8 +32,8 @@
 #that are actually generators, asynchronous generators, or coroutines whose
 #returns are annotated with any type hint whose sign is *NOT*
 #"HintSignGenerator", "HintSignAsyncGenerator", or "HintSignCoroutine"
-#respectively. Since detecting generators, asynchronous generators, and
-#coroutines is trivial, this should be trivial.
+#respectively. Since detecting generator callables, asynchronous generator
+#callables, and coroutine callables is trivial, this should be trivial.
 
 #FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
 #are called with purely positional rather than keyword arguments. Currently, we
@@ -72,7 +72,17 @@
 #      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
 #* Oh, and note that our defined wrapper function must also be preceded by the
 #  "async " keyword. So, we'll also need to augment "CODE_SIGNATURE".
-#FIXME: Unit test this extensively, please.
+#FIXME: Unit test this extensively, please. The only sane way to do so will be
+#to generalize the dynamic loop over all type hints declaring a synchronous
+#closure iteratively type-hinted by each to *ALSO* declare an asynchronous
+#closure. Actually... that sounds like overkill, frankly. We really only need
+#to test these notable edge cases:
+#* Asynchronous callable with an unannotated return.
+#* Asynchronous callable with a return annotated by "typing.NoReturn", which
+#  generates different return (and thus awaitable) semantics.
+#* Asynchronous callable with a return annotated by *ANY* PEP-compliant type
+#  hint other than "typing.NoReturn", which also generates different return
+#  (and thus awaitable) semantics.
 
 #FIXME: Non-critical optimization: if the active Python interpreter is already
 #performing static type checking (e.g., with Pyre or mypy), @beartype should

@@ -770,11 +770,11 @@ get_hint_pep_origin_or_none.__doc__ = '''
 # ....................{ GETTERS ~ origin : type           }....................
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     '''
-    **Standard origin type** (i.e., isinstanceable class declared by Python's
-    standard library such that *all* objects satisfying the passed
-    PEP-compliant type hint are instances of this class) originating this hint
-    if this hint originates from such a type *or* raise an exception otherwise
-    (i.e., if this hint does *not* originate from such a type).
+    **Isinstanceable origin type** (i.e., class passable as the second argument
+    to the :func:`isinstance` builtin such that *all* objects satisfying the
+    passed PEP-compliant type hint are instances of this class) originating
+    this hint if this hint originates from such a type *or* raise an exception
+    otherwise (i.e., if this hint does *not* originate from such a type).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -807,9 +807,8 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     # If this type does *NOT* exist, raise an exception.
     if hint_origin_type is None:
         raise BeartypeDecorHintPepException(
-            f'Type hint {repr(hint)} not originative '
-            f'(i.e., does not originate from isinstanceable class declared by '
-            f"Python's standard library)."
+            f'Type hint {repr(hint)} not isinstanceable (i.e., does not '
+            f'originate from isinstanceable class).'
         )
     # Else, this type exists.
 

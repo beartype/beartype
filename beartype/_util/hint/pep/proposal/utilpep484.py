@@ -28,7 +28,7 @@ from beartype._util.py.utilpyversion import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from types import FunctionType
-from typing import Any, Generic, Optional, Tuple, TypeVar, Union
+from typing import Any, Generic, Optional, Tuple, TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -134,7 +134,10 @@ def is_hint_pep484_ignorable_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_origin_or_none,
+    )
     # print(f'Testing PEP 484 hint {repr(hint)} [{repr(hint_sign)}] deep ignorability...')
 
     # If this hint is a PEP 484-compliant generic...
@@ -148,7 +151,7 @@ def is_hint_pep484_ignorable_or_none(
         # get_hint_pep_type_isinstanceable_or_none() function here, which has been
         # intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
-        if getattr(hint, '__origin__', None) is Generic:
+        if get_hint_pep_origin_or_none(hint) is Generic:
             # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
             return True
         # Else, this generic is *NOT* the "typing.Generic" superclass directly
@@ -640,9 +643,12 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
         pseudo-superclass.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+
     # Erased superclass originating this unerased pseudo-superclass if any *OR*
     # "None" otherwise.
-    hint_type_origin = getattr(hint, '__origin__', None)
+    hint_type_origin = get_hint_pep_origin_or_none(hint)
 
     # If this hint originates from *NO* such superclass, raise an exception.
     if hint_type_origin is None:
@@ -835,7 +841,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
-    # this hint if any. See is_hint_pep484_generic() tester for details.
+    # this hint if any. See is_hint_pep484_generic() for details.
     hint = get_hint_pep484585_generic_type_or_none(hint)
 
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
