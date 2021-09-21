@@ -47,7 +47,7 @@ from beartype._decor._code.codesnip import (
 )
 from beartype._decor._error.errormain import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
-from beartype._util.func.utilfunctest import is_func_coroutine
+from beartype._util.func.utilfunctest import is_func_async
 from collections.abc import Callable
 from inspect import Signature
 
@@ -220,14 +220,9 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        #FIXME: Verify this. Are we *REALLY* sure asynchronous generator
-        #callables should be excluded here? Coroutines are basically just
-        #generators; like generators, they return something when sent
-        #something, can accept things, and return something when awaited on.
-
         # If this callable is asynchronous (i.e., callable declared with
         # "async def" rather than merely "def")...
-        if is_func_coroutine(func):
+        if is_func_async(func):
             # Code snippet prefixing all calls to this callable.
             self.func_wrapper_code_call_prefix = 'await '
 

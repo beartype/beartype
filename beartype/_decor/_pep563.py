@@ -4,16 +4,13 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** `PEP 563`_ **support.**
+**Beartype decorator** :pep:`563` **support.**
 
-This private submodule this submodule implements `PEP 563`_ (i.e., "Postponed
+This private submodule this submodule implements :pep:`563` (i.e., "Postponed
 Evaluation of Annotations") support on behalf of the :func:`beartype.beartype`
 decorator.
 
 This private submodule is *not* intended for importation by downstream callers.
-
-.. _PEP 563:
-   https://www.python.org/dev/peps/pep-0563
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -40,22 +37,22 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ RESOLVERS                         }....................
 def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     '''
-    Resolve all `PEP 563`_-based **postponed annotations** (i.e., strings that
+    Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
     on the currently decorated callable to their **referents** (i.e., the
     actual annotations to which those postponed annotations evaluate) if `PEP
     563`_ is active for this callable *or* silently reduce to a noop otherwise
-    (i.e., if `PEP 563`_ is *not* active for this callable).
+    (i.e., if :pep:`563` is *not* active for this callable).
 
-    `PEP 563`_ is active for this callable if the active Python interpreter
+    :pep:`563` is active for this callable if the active Python interpreter
     targets:
 
-    * Python >= 3.10, where `PEP 563`_ is globally, unconditionally enabled.
+    * Python >= 3.10, where :pep:`563` is globally, unconditionally enabled.
     * Python >= 3.7 < 3.10 *and* the module declaring this callable explicitly
-      enables `PEP 563`_ support with a leading dunder importation of the form
+      enables :pep:`563` support with a leading dunder importation of the form
       ``from __future__ import annotations``.
 
-    If `PEP 563`_ is active for this callable, then for each type-hint
+    If :pep:`563` is active for this callable, then for each type-hint
     annotating this callable:
 
     * If that hint is a string and thus postponed, this function:
@@ -88,9 +85,6 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
         If evaluating a postponed annotation on this callable raises an
         exception (e.g., due to that annotation referring to local state
         inaccessible in this deferred context).
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
@@ -393,7 +387,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
 #     ----------
 #     hint_repr : str
 #         Machine-readable representation of this annotation, typically but *not*
-#         necessarily as a `PEP 563`_-formatted postponed string.
+#         necessarily as a :pep:`563`-formatted postponed string.
 #     pith_label : str
 #         Human-readable label describing the callable parameter or return value
 #         annotated by this string.
@@ -402,9 +396,6 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
 #     ----------
 #     BeartypeDecorHintPepException
 #         If this representation internally exceeds this limit.
-#
-#     .. _PEP 563:
-#        https://www.python.org/dev/peps/pep-0563
 #     '''
 #     assert isinstance(hint_repr, str), f'{repr(hint_repr)} not string.'
 #

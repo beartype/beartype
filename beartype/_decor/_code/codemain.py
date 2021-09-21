@@ -21,7 +21,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorParamNameException
+from beartype.roar import (
+    BeartypeDecorHintPep484Exception,
+    BeartypeDecorParamNameException,
+)
 from beartype._decor._cache.cachehint import coerce_hint_pep
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
@@ -36,8 +39,10 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
+from beartype._util.func.utilfunctest import is_func_async
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
+    label_callable,
     prefix_callable_decorated_param,
     prefix_callable_decorated_return,
 )
@@ -429,11 +434,25 @@ def _code_check_return(data: BeartypeData) -> str:
     # Else, this return is annotated.
     #
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
-    # *ONLY* as a return annotation, default this snippet to a pre-generated
-    # snippet validating this callable to *NEVER* successfully return. Yup!
+    # *ONLY* as a return annotation...
     elif hint is NoReturn:
-        func_wrapper_code = PEP484_CODE_CHECK_NORETURN.format(
-            func_call_prefix=data.func_wrapper_code_call_prefix)
+        # If the decorated callable is asynchronous, this type hint is
+        # impermissible on this callable. In this case, raise an exception. See
+        # commentary preceding the definition of "PEP484_CODE_CHECK_NORETURN".
+        if is_func_async(func):
+            raise BeartypeDecorHintPep484Exception(
+                f'{prefix_callable_decorated_return(func)}type hint '
+                f'impermissible as return annotation for '
+                f'{label_callable(func)} '
+                f'(i.e., expected either "Coroutine[...]" or '
+                f'"AsyncGenerator[...]").'
+            )
+        # Else, the decorated callable is synchronous, in which case this type
+        # hint is permissible on this callable.
+
+        # Default this snippet to a pre-generated snippet validating this
+        # callable to *NEVER* successfully return. Yup!
+        func_wrapper_code = PEP484_CODE_CHECK_NORETURN
     # Else, this is *NOT* "typing.NoReturn". In this case...
     else:
         # PEP-compliant type hint converted from this PEP-noncompliant type

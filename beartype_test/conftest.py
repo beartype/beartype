@@ -31,7 +31,7 @@ https://github.com/pytest-dev/pytest-asyncio/blob/master/pytest_asyncio/plugin.p
 # ....................{ IMPORTS                           }....................
 from asyncio import (
     ensure_future,
-    get_event_loop,
+    get_event_loop_policy,
     new_event_loop,
     set_event_loop,
 )
@@ -43,7 +43,7 @@ from pytest import hookimpl
 @hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
     '''
-    Hook wrapper called immediately *BEFORE* calling the passed test function.
+    Hook wrapper called immediately *before* calling the passed test function.
 
     Specifically, this hook wrapper:
 
@@ -89,7 +89,16 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
             '''
 
             # Current event loop for the current threading context if any *OR*
-            # create a new event loop otherwise.
+            # create a new event loop otherwise. Note that the higher-level
+            # asyncio.get_event_loop() getter is intentionally *NOT* called
+            # here, as Python 3.10 broke backward compatibility by refactoring
+            # that getter to be an alias for the wildly different
+            # asyncio.get_running_loop() getter, which *MUST* be called only
+            # from within either an asynchronous callable or running event
+            # loop. In either case, asyncio.get_running_loop() and thus
+            # asyncio.get_event_loop() is useless in this context. Instead, we
+            # call the lower-level get_event_loop_policy().get_event_loop()
+            # getter -- which asyncio.get_event_loop() used to wrap. *facepalm*
             #
             # This getter should ideally return "None" rather than creating a
             # new event loop without our permission if no loop has been set.
@@ -103,7 +112,7 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
             #
             # Since there exists *NO* other means of querying the current event
             # loop, we reluctantly bite the bullet and pay the drunken piper.
-            event_loop_old = get_event_loop()
+            event_loop_old = get_event_loop_policy().get_event_loop()
 
             # Close this loop, regardless of whether the prior get_event_loop()
             # call just implicitly created this loop, because the "asyncio" API

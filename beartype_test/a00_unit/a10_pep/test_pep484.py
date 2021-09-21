@@ -96,19 +96,28 @@ def test_pep484_hint_noreturn() -> None:
     with raises_uncached(BeartypeCallHintPepException):
         we_do_not_need_the_wall()
 
-    # Assert this decorator raises the expected exception when decorating a
-    # callable returning a value incorrectly annotating its return as
-    # "NoReturn".
+    # Assert this decorator raises the expected exception when decorating an
+    # asynchronous callable annotating its return as "NoReturn". By definition,
+    # asynchronous callables *MUST* be annotated as returning either
+    # "Coroutine[...]" or "AsyncGenerator[...]".
     with raises_uncached(BeartypeDecorHintPep484Exception):
-        # Callable returning a value incorrectly annotating a parameter as
-        # "NoReturn".
         @beartype
-        def upper_boulders(spills: NoReturn):
+        async def work_of_hunters(another_thing) -> NoReturn:
+            raise BeforeIBuiltAWallIdAskToKnow(
+                'The work of hunters is another thing:')
+
+    # Assert this decorator raises the expected exception when decorating a
+    # synchronous callable returning a value incorrectly annotating its return
+    # as "NoReturn".
+    with raises_uncached(BeartypeDecorHintPep484Exception):
+        @beartype
+        def upper_boulders(in_the_sun: NoReturn):
             return 'And spills the upper boulders in the sun;'
 
     # Assert this decorator raises the expected exception when decorating a
-    # callable returning a value annotating a parameter as a supported PEP
-    # 484-compliant type hint incorrectly subscripted by "NoReturn".
+    # synchronous callable returning a value annotating a parameter as a
+    # supported PEP 484-compliant type hint incorrectly subscripted by
+    # "NoReturn".
     with raises_uncached(BeartypeDecorHintPep484Exception):
         @beartype
         def makes_gaps(abreast: Union[str, NoReturn]):

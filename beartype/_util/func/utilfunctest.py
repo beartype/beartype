@@ -21,7 +21,11 @@ from beartype._util.utiltyping import (
     CallableCodeObjable,
     TypeException,
 )
-from inspect import CO_COROUTINE
+from inspect import (
+    CO_ASYNC_GENERATOR,
+    CO_COROUTINE,
+    CO_GENERATOR,
+)
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
@@ -206,12 +210,61 @@ def is_func_python(func: object) -> bool:
     return get_func_unwrapped_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ async                   }....................
-def is_func_coroutine(func: object) -> bool:
+def is_func_async(func: object) -> bool:
     '''
-    ``True`` only if the passed object is an **asynchronous coroutine**
+    ``True`` only if the passed object is an **asynchronous callable**
     (i.e., awaitable callable satisfying the :class:`collections.abc.Awaitable`
     protocol by being declared via the ``async def`` syntax and thus callable
     *only* when preceded by comparable ``await`` syntax).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is an asynchronous callable.
+
+    See Also
+    ----------
+    :func:`inspect.iscoroutinefunction`
+    :func:`inspect.isasyncgenfunction`
+        Stdlib functions strongly inspiring this implementation.
+    '''
+
+    # Code object underlying this pure-Python callable if any *OR* "None".
+    #
+    # Note this tester intentionally inlines the tests performed by the
+    # is_func_async_coroutine() and
+    # is_func_async_generator() testers for efficiency.
+    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+
+    # If this object is *NOT* a pure-Python callable, immediately return false.
+    if func_codeobj is None:
+        return False
+    # Else, this object is a pure-Python callable.
+
+    # Bit field of OR-ed binary flags describing this callable.
+    func_codeobj_flags = func_codeobj.co_flags
+
+    # Return true only if these flags imply this callable to be either...
+    return (
+        # An asynchronous coroutine *OR*...
+        func_codeobj_flags & CO_COROUTINE != 0 or
+        # An asynchronous generator.
+        func_codeobj_flags & CO_ASYNC_GENERATOR != 0
+    )
+
+
+def is_func_async_coroutine(func: object) -> bool:
+    '''
+    ``True`` only if the passed object is an **asynchronous coroutine**
+    (i.e., awaitable callable containing *no* ``yield`` expressions satisfying
+    the :class:`collections.abc.Awaitable` protocol by being declared via the
+    ``async def`` syntax and thus callable *only* when preceded by comparable
+    ``await`` syntax).
 
     Parameters
     ----------
@@ -239,4 +292,78 @@ def is_func_coroutine(func: object) -> bool:
         # This callable's code object implies this callable to be an
         # asynchronous coroutine.
         func_codeobj.co_flags & CO_COROUTINE != 0
+    )
+
+
+#FIXME: Unit test us up.
+def is_func_async_generator(func: object) -> bool:
+    '''
+    ``True`` only if the passed object is an **asynchronous generator**
+    (i.e., awaitable callable containing one or more ``yield`` expressions
+    satisfying the :class:`collections.abc.Awaitable` protocol by being
+    declared via the ``async def`` syntax and thus callable *only* when
+    preceded by comparable ``await`` syntax).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is an asynchronous generator.
+
+    See Also
+    ----------
+    :func:`inspect.isasyncgenfunction`
+        Stdlib function strongly inspiring this implementation.
+    '''
+
+    # Code object underlying this pure-Python callable if any *OR* "None".
+    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+
+    # Return true only if...
+    return (
+        # This object is a pure-Python callable *AND*...
+        func_codeobj is not None and
+        # This callable's code object implies this callable to be an
+        # asynchronous generator.
+        func_codeobj.co_flags & CO_ASYNC_GENERATOR != 0
+    )
+
+# ....................{ TESTERS ~ async                   }....................
+#FIXME: Unit test us up.
+def is_func_sync_generator(func: object) -> bool:
+    '''
+    ``True`` only if the passed object is a **synchronous generator**
+    (i.e., awaitable callable containing one or more ``yield`` expressions
+    declared with the ``def`` rather than ``async def`` keyword).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a synchronous generator.
+
+    See Also
+    ----------
+    :func:`inspect.isgeneratorfunction`
+        Stdlib function strongly inspiring this implementation.
+    '''
+
+    # Code object underlying this pure-Python callable if any *OR* "None".
+    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+
+    # Return true only if...
+    return (
+        # This object is a pure-Python callable *AND*...
+        func_codeobj is not None and
+        # This callable's code object implies this callable to be a
+        # synchronous generator.
+        func_codeobj.co_flags & CO_GENERATOR != 0
     )

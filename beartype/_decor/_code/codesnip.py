@@ -211,10 +211,18 @@ type-checking the value returned by that call (if any).
 '''
 
 
+# Unlike above, this snippet intentionally omits the "{{func_call_prefix}}"
+# substring prefixing the "{ARG_NAME_FUNC}(*args, **kwargs)" call. Why? Because
+# callables whose returns are annotated by "typing.NoReturn" *MUST* necessarily
+# be synchronous (rather than asynchronous) and thus require no such prefix.
+# Why? Because the returns of asynchronous callables are either unannotated
+# *OR* annotated by either "Coroutine[...]" *OR* "AsyncGenerator[...]" type
+# hints. Since "typing.NoReturn" is neither, "typing.NoReturn" *CANNOT*
+# annotate the returns of asynchronous callables. The implication then follows.
 PEP484_CODE_CHECK_NORETURN = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
 
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python

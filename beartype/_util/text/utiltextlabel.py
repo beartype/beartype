@@ -21,7 +21,7 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS ~ callable              }....................
-def prefix_callable(func: Callable) -> str:
+def label_callable(func: Callable) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
     method, property).
@@ -42,7 +42,12 @@ def prefix_callable(func: Callable) -> str:
     from beartype._util.func.utilfuncarg import get_func_args_len_flexible
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
-    from beartype._util.func.utilfunctest import is_func_lambda
+    from beartype._util.func.utilfunctest import (
+        is_func_lambda,
+        is_func_async_coroutine,
+        is_func_async_generator,
+        is_func_sync_generator,
+    )
 
     # If the passed callable is a pure-Python lambda function, that callable
     # has *NO* unique fully-qualified name. In this case, return a string
@@ -72,178 +77,36 @@ def prefix_callable(func: Callable) -> str:
 
         # Return this label.
         return func_label
-
     # Else, the passed callable is *NOT* a pure-Python lambda function and thus
-    # has a unique fully-qualified name. In this case, simply return that name.
-    return f'{get_object_basename_scoped(func)}() '
+    # has a unique fully-qualified name.
 
+    # Substring preceding the string to be returned, typically identifying the
+    # specialized type of this callable if this callable has a specialized
+    # type.
+    func_label_prefix = ''
 
-def prefix_callable_decorated(func: Callable) -> str:
-    '''
-    Human-readable label describing the passed **decorated callable** (i.e.,
-    callable wrapped by the :func:`beartype.beartype` decorator with a wrapper
-    function type-checking that callable).
+    # If that callable is a synchronous generator, return this string prefixed
+    # by a substring emphasizing that fact.
+    if is_func_sync_generator(func):
+        func_label_prefix = 'generator '
+    # Else, that callable is *NOT* a synchronous generator.
+    #
+    # If that callable is an asynchronous coroutine, return this string
+    # prefixed by a substring emphasizing that fact.
+    elif is_func_async_coroutine(func):
+        func_label_prefix = 'coroutine '
+    # Else, that callable is *NOT* an asynchronous coroutine.
+    #
+    # If that callable is an asynchronous generator, return this string
+    # prefixed by a substring emphasizing that fact.
+    elif is_func_async_generator(func):
+        func_label_prefix = 'asynchronous generator '
+    # Else, that callable is *NOT* an asynchronous generator.
 
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
+    # Return the fully-qualified name of this callable preceded by this prefix.
+    return f'{func_label_prefix}{get_object_basename_scoped(func)}()'
 
-    Returns
-    ----------
-    str
-        Human-readable label describing this decorated callable.
-    '''
-
-    # Create and return this label.
-    return f'@beartyped {prefix_callable(func)}'
-
-
-def prefix_callable_decorated_pith(
-    func: Callable, pith_name: str) -> str:
-    '''
-    Human-readable label describing either the parameter with the passed name
-    *or* return value if this name is ``return`` of the passed **decorated
-    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
-    decorator with a wrapper function type-checking that callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    pith_name : str
-        Name of the parameter or return value of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing either the name of this parameter *or*
-        this return value.
-    '''
-    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
-
-    # Return a human-readable label describing either...
-    return (
-        # If this name is "return", the return value of this callable.
-        prefix_callable_decorated_return(func)
-        if pith_name == 'return' else
-        # Else, the parameter with this name of this callable.
-        prefix_callable_decorated_param(func=func, param_name=pith_name)
-    )
-
-# ....................{ LABELLERS ~ callable : param      }....................
-def prefix_callable_decorated_param(
-    func: Callable, param_name: str) -> str:
-    '''
-    Human-readable label describing the parameter with the passed name of the
-    passed **decorated callable** (i.e., callable wrapped by the
-    :func:`beartype.beartype` decorator with a wrapper function type-checking
-    that callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    param_name : str
-        Name of the parameter of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this parameter's name.
-    '''
-    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
-
-    # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter "{param_name}" '
-
-
-def prefix_callable_decorated_param_value(
-    func: Callable, param_name: str, param_value: object) -> str:
-    '''
-    Human-readable label describing the parameter with the passed name and
-    trimmed value of the passed **decorated callable** (i.e., callable wrapped
-    by the :func:`beartype.beartype` decorator with a wrapper function
-    type-checking that callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    param_name : str
-        Name of the parameter of this callable to be labelled.
-    param_value : object
-        Value of the parameter of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this parameter's name and value.
-    '''
-    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
-
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import represent_object
-
-    # Create and return this label.
-    return (
-        f'{prefix_callable_decorated(func)}parameter '
-        f'{param_name}={represent_object(param_value)} '
-    )
-
-# ....................{ LABELLERS ~ callable : return     }....................
-def prefix_callable_decorated_return(func: Callable) -> str:
-    '''
-    Human-readable label describing the return of the passed **decorated
-    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
-    decorator with a wrapper function type-checking that callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this return.
-    '''
-
-    # Create and return this label.
-    return f'{prefix_callable_decorated(func)}return '
-
-
-def prefix_callable_decorated_return_value(
-    func: Callable, return_value: object) -> str:
-    '''
-    Human-readable label describing the passed trimmed return value of the
-    passed **decorated callable** (i.e., callable wrapped by the
-    :func:`beartype.beartype` decorator with a wrapper function type-checking
-    that callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    return_value : object
-        Value returned by this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this return value.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import represent_object
-
-    # Create and return this label.
-    return (
-        f'{prefix_callable_decorated_return(func)}'
-        f'{represent_object(return_value)} '
-    )
-
-# ....................{ LABELLERS ~ callable : class      }....................
+# ....................{ LABELLERS ~ type                  }....................
 def label_type(cls: type) -> str:
     '''
     Human-readable label describing the passed class.
@@ -335,3 +198,193 @@ def label_exception(exception: Exception) -> str:
 
     # Return this exception's label.
     return f'{exception.__class__.__qualname__}: {str(exception)}'
+
+# ....................{ PREFIXERS ~ callable              }....................
+def prefix_callable(func: Callable) -> str:
+    '''
+    Human-readable label describing the passed **callable** (e.g., function,
+    method, property) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this callable.
+    '''
+    assert callable(func), f'{repr(func)} uncallable.'
+
+    # Testify, beartype!
+    return f'{label_callable(func)} '
+
+
+def prefix_callable_decorated(func: Callable) -> str:
+    '''
+    Human-readable label describing the passed **decorated callable** (i.e.,
+    callable wrapped by the :func:`beartype.beartype` decorator with a wrapper
+    function type-checking that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this decorated callable.
+    '''
+
+    # Create and return this label.
+    return f'@beartyped {prefix_callable(func)}'
+
+
+def prefix_callable_decorated_pith(
+    func: Callable, pith_name: str) -> str:
+    '''
+    Human-readable label describing either the parameter with the passed name
+    *or* return value if this name is ``return`` of the passed **decorated
+    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
+    decorator with a wrapper function type-checking that callable) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    pith_name : str
+        Name of the parameter or return value of this callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing either the name of this parameter *or*
+        this return value.
+    '''
+    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
+
+    # Return a human-readable label describing either...
+    return (
+        # If this name is "return", the return value of this callable.
+        prefix_callable_decorated_return(func)
+        if pith_name == 'return' else
+        # Else, the parameter with this name of this callable.
+        prefix_callable_decorated_param(func=func, param_name=pith_name)
+    )
+
+# ....................{ PREFIXERS ~ callable : param      }....................
+def prefix_callable_decorated_param(
+    func: Callable, param_name: str) -> str:
+    '''
+    Human-readable label describing the parameter with the passed name of the
+    passed **decorated callable** (i.e., callable wrapped by the
+    :func:`beartype.beartype` decorator with a wrapper function type-checking
+    that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    param_name : str
+        Name of the parameter of this callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this parameter's name.
+    '''
+    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
+
+    # Create and return this label.
+    return f'{prefix_callable_decorated(func)}parameter "{param_name}" '
+
+
+def prefix_callable_decorated_param_value(
+    func: Callable, param_name: str, param_value: object) -> str:
+    '''
+    Human-readable label describing the parameter with the passed name and
+    trimmed value of the passed **decorated callable** (i.e., callable wrapped
+    by the :func:`beartype.beartype` decorator with a wrapper function
+    type-checking that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    param_name : str
+        Name of the parameter of this callable to be labelled.
+    param_value : object
+        Value of the parameter of this callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this parameter's name and value.
+    '''
+    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextrepr import represent_object
+
+    # Create and return this label.
+    return (
+        f'{prefix_callable_decorated(func)}parameter '
+        f'{param_name}={represent_object(param_value)} '
+    )
+
+# ....................{ PREFIXERS ~ callable : return     }....................
+def prefix_callable_decorated_return(func: Callable) -> str:
+    '''
+    Human-readable label describing the return of the passed **decorated
+    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
+    decorator with a wrapper function type-checking that callable) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this return.
+    '''
+
+    # Create and return this label.
+    return f'{prefix_callable_decorated(func)}return '
+
+
+def prefix_callable_decorated_return_value(
+    func: Callable, return_value: object) -> str:
+    '''
+    Human-readable label describing the passed trimmed return value of the
+    passed **decorated callable** (i.e., callable wrapped by the
+    :func:`beartype.beartype` decorator with a wrapper function type-checking
+    that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    return_value : object
+        Value returned by this callable to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing this return value.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextrepr import represent_object
+
+    # Create and return this label.
+    return (
+        f'{prefix_callable_decorated_return(func)}'
+        f'{represent_object(return_value)} '
+    )
+
