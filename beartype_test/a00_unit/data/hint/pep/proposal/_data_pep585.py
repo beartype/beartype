@@ -38,7 +38,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignCallable,
         HintSignContextManager,
         HintSignDict,
-        HintSignGenerator,
         HintSignGeneric,
         HintSignList,
         HintSignMatch,
@@ -56,7 +55,6 @@ def add_data(data_module: 'ModuleType') -> None:
         OtherSubclass,
         # OtherSubclassSubclass,
         context_manager_factory,
-        generator_factory_yield_int_send_float_return_str,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -67,7 +65,6 @@ def add_data(data_module: 'ModuleType') -> None:
         ByteString,
         Callable,
         Container,
-        Generator,
         Iterable,
         MutableSequence,
         Sequence,
@@ -351,23 +348,9 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ GENERATOR                         }................
-        # Flat generator.
-        HintPepMetadata(
-            hint=Generator[int, float, str],
-            pep_sign=HintSignGenerator,
-            isinstanceable_type=Generator,
-            is_pep585_builtin=True,
-            piths_satisfied_meta=(
-                # Generator yielding integers, accepting floating-point numbers
-                # sent to this generator by the caller, and returning strings.
-                HintPithSatisfiedMetadata(
-                    generator_factory_yield_int_send_float_return_str()),
-            ),
-            piths_unsatisfied_meta=(
-                # Lambda function returning a string constant.
-                HintPithUnsatisfiedMetadata(lambda: 'Cessation'),
-            ),
-        ),
+        # Note that testing generators requires creating generators, which
+        # require a different syntax to that of standard callables; ergo,
+        # generator type hints are tested elsewhere.
 
         # ................{ GENERICS ~ single                 }................
         # Note that PEP 585-compliant generics are *NOT* explicitly detected as

@@ -38,7 +38,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignContextManager,
     HintSignDict,
     HintSignForwardRef,
-    HintSignGenerator,
     HintSignGeneric,
     HintSignHashable,
     HintSignList,
@@ -72,7 +71,6 @@ from beartype_test.a00_unit.data.data_type import (
     OtherSubclass,
     # OtherSubclassSubclass,
     context_manager_factory,
-    generator_factory_yield_int_send_float_return_str,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintPithSatisfiedMetadata,
@@ -91,7 +89,6 @@ from typing import (
     Container,
     ContextManager,
     Dict,
-    Generator,
     Generic,
     Hashable,
     IO,
@@ -574,22 +571,9 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ GENERATOR                         }................
-        # Flat generator.
-        HintPepMetadata(
-            hint=Generator[int, float, str],
-            pep_sign=HintSignGenerator,
-            isinstanceable_type=collections_abc.Generator,
-            piths_satisfied_meta=(
-                # Generator yielding integers, accepting floating-point numbers
-                # sent to this generator by the caller, and returning strings.
-                HintPithSatisfiedMetadata(
-                    generator_factory_yield_int_send_float_return_str()),
-            ),
-            piths_unsatisfied_meta=(
-                # Lambda function returning a string constant.
-                HintPithUnsatisfiedMetadata(lambda: 'Cessation'),
-            ),
-        ),
+        # Note that testing generators requires creating generators, which
+        # require a different syntax to that of standard callables; ergo,
+        # generator type hints are tested elsewhere.
 
         # ................{ GENERICS ~ single                 }................
         # Generic subclassing a single unsubscripted "typing" type.

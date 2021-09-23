@@ -22,7 +22,7 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
     die_unless_type_or_types_issubclassable,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpeparg import (
     get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
     HINT_PEP484585_FORWARDREF_UNION)

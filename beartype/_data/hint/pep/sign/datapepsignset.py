@@ -73,7 +73,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SIGNS ~ bare                      }....................
-HINT_BARE_SIGNS_IGNORABLE = frozenset((
+HINT_SIGNS_BARE_IGNORABLE = frozenset((
     # ..................{ PEP 484                           }..................
     # The "Any" singleton is semantically synonymous with the ignorable
     # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
@@ -147,6 +147,28 @@ HINT_BARE_SIGNS_IGNORABLE = frozenset((
 Frozen set of all **bare ignorable signs** (i.e., arbitrary objects uniquely
 identifying unsubscripted type hints that are unconditionally ignorable by the
 :func:`beartype.beartype` decorator).
+'''
+
+# ....................{ SIGNS ~ func                      }....................
+HINT_SIGNS_RETURN_CONSTRAINED = frozenset((
+    # ..................{ PEP (484|585)                     }..................
+    HintSignAsyncGenerator,
+    HintSignCoroutine,
+    HintSignGenerator,
+))
+'''
+Frozen set of all signs uniquely identifying **PEP-compliant return-constrained
+type hints** (i.e., hints which, when annotating the returns of callables,
+constrain the types of those callables).
+
+Specifically, this set contains:
+
+* :data:`HintSignAsyncGenerator`, as the returns of asynchronous generators are
+  required to either be unannotated *or* ``AsyncGenerator[...]``.
+* :data:`HintSignCoroutine`, as the returns of asynchronous coroutines are
+  required to either be unannotated *or* ``Coroutine[...]``.
+* :data:`HintSignGenerator`, as the returns of synchronous generators are
+  required to either be unannotated *or* ``Generator[...]``.
 '''
 
 # ....................{ SIGNS ~ type                      }....................

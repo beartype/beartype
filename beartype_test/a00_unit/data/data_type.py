@@ -15,7 +15,13 @@ import builtins
 from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
 from contextlib import contextmanager
 from sys import exc_info, implementation
-from typing import Callable, ContextManager, Generator
+from typing import (
+    AsyncGenerator,
+    Callable,
+    ContextManager,
+    Coroutine,
+    Generator,
+)
 
 # ....................{ CLASSES ~ hierarchy : 1           }....................
 # Arbitrary class hierarchy.
@@ -134,7 +140,7 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 # decorators and thus generator-based coroutines. See also:
 #     https://docs.python.org/3/library/asyncio-task.html#asyncio.coroutine
 
-async def async_generator_factory():
+async def async_generator_factory() -> AsyncGenerator[None, None]:
     '''
     Arbitrary pure-Python asynchronous generator factory function.
     '''
@@ -142,7 +148,7 @@ async def async_generator_factory():
     yield
 
 
-async def coroutine_factory():
+async def async_coroutine_factory() -> Coroutine[None, None, None]:
     '''
     Arbitrary pure-Python asynchronous non-generator coroutine factory
     function.
@@ -157,13 +163,13 @@ Arbitrary pure-Python asynchronous generator.
 '''
 
 
-coroutine = coroutine_factory()
+async_coroutine = async_coroutine_factory()
 '''
 Arbitrary pure-Python asynchronous non-generator coroutine.
 '''
 
 # Prevent Python from emitting "ResourceWarning" warnings.
-coroutine.close()
+async_coroutine.close()
 
 # ....................{ CALLABLES ~ sync                  }....................
 def function():
@@ -198,7 +204,7 @@ def context_manager_factory(obj: object) -> ContextManager[object]:
     yield obj
 
 # ....................{ CALLABLES ~ sync : generator      }....................
-def generator_factory() -> Generator[int, None, None]:
+def sync_generator_factory() -> Generator[int, None, None]:
     '''
     Create and return a pure-Python generator yielding a single integer,
     accepting nothing, and returning nothing.
@@ -207,7 +213,7 @@ def generator_factory() -> Generator[int, None, None]:
     yield 1
 
 
-def generator_factory_yield_int_send_float_return_str() -> (
+def sync_generator_factory_yield_int_send_float_return_str() -> (
     Generator[int, float, str]):
     '''
     Create and return a pure-Python generator yielding integers, accepting
@@ -228,9 +234,9 @@ def generator_factory_yield_int_send_float_return_str() -> (
         res = yield round(res)
 
     # Return a string constant.
-    return 'Unmarred, scarred revanent remnants'
+    return 'Unmarred, scarred revenant remnants'
 
-# ....................{ CALLABLES ~ closure               }....................
+# ....................{ CALLABLES ~ sync : closure        }....................
 def closure_factory():
     '''
     Arbitrary pure-Python closure factory function.
@@ -267,6 +273,12 @@ def closure_cell_factory():
 
     # Return this closure's first and only cell variable.
     return closure.__closure__[0]
+
+# ....................{ CALLABLES ~ sync : instance       }....................
+sync_generator = sync_generator_factory()
+'''
+Arbitrary pure-Python synchronous generator.
+'''
 
 # ....................{ CONSTANTS                         }....................
 CALLABLE_CODE_OBJECT = function.__code__
@@ -330,10 +342,10 @@ NON_CALLABLES = (
     CALLABLE_CODE_OBJECT,
     type.__dict__,      # Mapping Proxy Type
     implementation,     # Simple Namespace Type
+    async_coroutine,
     async_generator,
+    sync_generator,
     closure_cell_factory(), # Cell type
-    coroutine,
-    generator_factory(),
     TRACEBACK,
     TRACEBACK.tb_frame,
 )

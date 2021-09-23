@@ -47,7 +47,7 @@ from beartype._decor._code.codesnip import (
 )
 from beartype._decor._error.errormain import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
-from beartype._util.func.utilfunctest import is_func_async
+from beartype._util.func.utilfunctest import is_func_async_coroutine
 from collections.abc import Callable
 from inspect import Signature
 
@@ -220,22 +220,6 @@ class BeartypeData(object):
         # Callable currently being decorated.
         self.func = func
 
-        # If this callable is asynchronous (i.e., callable declared with
-        # "async def" rather than merely "def")...
-        if is_func_async(func):
-            # Code snippet prefixing all calls to this callable.
-            self.func_wrapper_code_call_prefix = 'await '
-
-            # Code snippet prefixing the declaration of the wrapper function
-            # wrapping this callable with type-checking.
-            self.func_wrapper_code_signature_prefix = 'async '
-        # Else, this callable is synchronous (i.e., callable declared with
-        # "def" rather than "async def"). In this case, reduce these code
-        # snippets to the empty string.
-        else:
-            self.func_wrapper_code_call_prefix = ''
-            self.func_wrapper_code_signature_prefix = ''
-
         # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_locals.clear()
@@ -257,3 +241,31 @@ class BeartypeData(object):
         # "Signature" instance encapsulating this callable's signature,
         # dynamically parsed by the stdlib "inspect" module from this callable.
         self.func_sig = inspect.signature(func)
+
+        # If this callable is an asynchronous coroutine callable (i.e.,
+        # callable declared with "async def" rather than merely "def" keywords
+        # containing *NO* "yield" expressions)...
+        #
+        # Note that the higher-level is_func_async() tester is intentionally
+        # *NOT* called here, as doing so would also implicitly prefix all calls
+        # to asynchronous generator callables (i.e., callables also declared
+        # with the "async def" rather than merely "def" keywords but containing
+        # one or more "yield" expressions) with the "await" keyword. Whereas
+        # asynchronous coroutine objects implicitly returned by all
+        # asynchronous coroutine callables return a single awaitable value,
+        # asynchronous generator objects implicitly returned by all
+        # asynchronous generator callables *NEVER* return any awaitable value;
+        # they instead yield one or more values to external "async for" loops.
+        if is_func_async_coroutine(func):
+            # Code snippet prefixing all calls to this callable.
+            self.func_wrapper_code_call_prefix = 'await '
+
+            # Code snippet prefixing the declaration of the wrapper function
+            # wrapping this callable with type-checking.
+            self.func_wrapper_code_signature_prefix = 'async '
+        # Else, this callable is synchronous (i.e., callable declared with
+        # "def" rather than "async def"). In this case, reduce these code
+        # snippets to the empty string.
+        else:
+            self.func_wrapper_code_call_prefix = ''
+            self.func_wrapper_code_signature_prefix = ''

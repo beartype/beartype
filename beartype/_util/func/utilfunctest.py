@@ -295,7 +295,6 @@ def is_func_async_coroutine(func: object) -> bool:
     )
 
 
-#FIXME: Unit test us up.
 def is_func_async_generator(func: object) -> bool:
     '''
     ``True`` only if the passed object is an **asynchronous generator**
@@ -332,8 +331,7 @@ def is_func_async_generator(func: object) -> bool:
         func_codeobj.co_flags & CO_ASYNC_GENERATOR != 0
     )
 
-# ....................{ TESTERS ~ async                   }....................
-#FIXME: Unit test us up.
+# ....................{ TESTERS ~ sync                    }....................
 def is_func_sync_generator(func: object) -> bool:
     '''
     ``True`` only if the passed object is a **synchronous generator**
@@ -355,6 +353,22 @@ def is_func_sync_generator(func: object) -> bool:
     :func:`inspect.isgeneratorfunction`
         Stdlib function strongly inspiring this implementation.
     '''
+
+    # If this object is uncallable, immediately return False.
+    #
+    # Note this test is explicitly required to differentiate synchronous
+    # generator callables from synchronous generator objects (i.e., the objects
+    # they implicitly create and return). Whereas both asynchronous coroutine
+    # objects *AND* asynchronous generator objects do *NOT* contain code
+    # objects whose "CO_COROUTINE" and "CO_ASYNC_GENERATOR" flags are non-zero,
+    # synchronous generator objects do contain code objects whose
+    # "CO_GENERATOR" flag is non-zero. This implies synchronous generator
+    # callables to create and return synchronous generator objects that are
+    # themselves technically valid synchronous generator callables, which is
+    # absurd. We prohibit this ambiguity by differentiating the two here.
+    if not callable(func):
+        return False
+    # Else, this object is callable.
 
     # Code object underlying this pure-Python callable if any *OR* "None".
     func_codeobj = get_func_unwrapped_codeobj_or_none(func)

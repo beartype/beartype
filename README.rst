@@ -1470,21 +1470,18 @@ Let's type-check like `greased lightning`_:
    from beartype import beartype
 
    # Import PEP 585-compliant type hints. Note this requires Python ≥ 3.9.
-   from collections.abc import (
-       Callable, Generator, Iterable, MutableSequence, Sequence)
-
-   # Import PEP 593-compliant type hints. Note this requires Python ≥ 3.9.
-   from typing import Annotated
+   from collections import abc
 
    # Import PEP 484-compliant type hints, too. Note that many of these types
    # have been deprecated by PEP 585-compliant type hints under Python ≥ 3.9,
    # where @beartype emits non-fatal deprecation warnings at decoration time.
    # See also: https://docs.python.org/3/library/typing.html
-   from typing import Any, List, Optional, Tuple, Union
+   import typing
 
    # Import backported PEP-compliant type hints from "typing_extensions",
-   # improving portability of type hints across major Python versions.
-   from typing_extensions import Literal
+   # improving portability across Python versions. "typing.Literal" requires
+   # Python ≥ 3.9; "typing_extensions.Literal" only requires Python ≥ 3.6.
+   import typing_extensions
 
    # Import beartype-specific types to annotate callables with.
    from beartype.cave import NoneType, NoneTypeOr, RegexTypes, ScalarTypes
@@ -1499,21 +1496,18 @@ Let's type-check like `greased lightning`_:
    # User-defined PEP 484-compliant type variable. Note @beartype currently
    # ignores type variables, but that @beartype 1.0.0 is expected to fully
    # support type variables. See also: https://github.com/beartype/beartype/issues/7
-   from typing import TypeVar
-   T = TypeVar('T')
+   T = typing.TypeVar('T')
 
    # ..................{              PROTOCOLS             }..................
    # User-defined PEP 544-compliant protocol referenced below in type hints.
    # Note this requires Python ≥ 3.8 and that protocols *MUST* be explicitly
    # decorated by the @runtime_checkable decorator to be usable with @beartype.
-   from typing import Protocol, runtime_checkable
-
-   @runtime_checkable   # <---- mandatory boilerplate line. it is sad.
-   class MyProtocol(Protocol):
+   @typing.runtime_checkable   # <---- mandatory boilerplate line. it is sad.
+   class MyProtocol(typing.Protocol):
        def my_method(self) -> str:
            return (
-               'Objects satisfy this protocol only if their '
-               'classes define a method with the same signature as this method.'
+               'Objects satisfy this protocol only if their classes '
+               'define a method with the same signature as this method.'
            )
 
    # ..................{              FUNCTIONS             }..................
@@ -1529,18 +1523,19 @@ Let's type-check like `greased lightning`_:
 
        # Annotate PEP 593-compliant types, indexed by a PEP-compliant type hint
        # followed by zero or more arbitrary objects.
-       param_must_satisfy_pep593: Annotated[dict[int, bool], range(5), True],
+       param_must_satisfy_pep593: typing.Annotated[set[int], range(5), True],
 
        # Annotate PEP 586-compliant literals, indexed by either a boolean, byte
        # string, integer, string, "enum.Enum" member, or "None".
-       param_must_satisfy_pep586: Literal['This parameter must equal this string.'],
+       param_must_satisfy_pep586: typing.Literal[
+           'This parameter must equal this string.'],
 
        # Annotate PEP 585-compliant builtin container types, indexed by the
-       # types of items these containers are required to contain.
+       # types of items these containers are expected to contain.
        param_must_satisfy_pep585_builtin: list[str],
 
        # Annotate PEP 585-compliant standard collection types, indexed too.
-       param_must_satisfy_pep585_collection: MutableSequence[str],
+       param_must_satisfy_pep585_collection: abc.MutableSequence[str],
 
        # Annotate PEP 544-compliant protocols, either unindexed or indexed by
        # one or more type variables.
@@ -1550,11 +1545,12 @@ Let's type-check like `greased lightning`_:
        # "typing" module, optionally indexed and only usable as type hints.
        # Note that these types have all been deprecated by PEP 585 under Python
        # ≥ 3.9. See also: https://docs.python.org/3/library/typing.html
-       param_must_satisfy_pep484_typing: List[int],
+       param_must_satisfy_pep484_typing: typing.List[int],
 
        # Annotate PEP 484-compliant unions of arbitrary types, including
        # builtin types, type variables, and PEP 585-compliant type hints.
-       param_must_satisfy_pep484_union: Union[dict, T, tuple[MyClass, ...]],
+       param_must_satisfy_pep484_union: typing.Union[
+           dict, T, tuple[MyClass, ...]],
 
        # Annotate PEP 484-compliant relative forward references dynamically
        # resolved at call time as unqualified classnames relative to the
@@ -1565,7 +1561,7 @@ Let's type-check like `greased lightning`_:
        # Annotate PEP-compliant types indexed by relative forward references.
        # Forward references are supported everywhere standard types are.
        param_must_satisfy_pep484_indexed_relative_forward_ref: (
-           Union['MyPep484Generic', set['MyPep585Generic']]),
+           typing.Union['MyPep484Generic', set['MyPep585Generic']]),
 
        # Annotate beartype-specific types predefined by the beartype cave.
        param_must_satisfy_beartype_type_from_cave: NoneType,
@@ -1577,7 +1573,8 @@ Let's type-check like `greased lightning`_:
        param_must_satisfy_beartype_union_from_cave: ScalarTypes,
 
        # Annotate beartype-specific unions concatenated together.
-       param_must_satisfy_beartype_union_concatenated: (Iterator,) + ScalarTypes,
+       param_must_satisfy_beartype_union_concatenated: (
+           abc.Iterator,) + ScalarTypes,
 
        # Annotate beartype-specific absolute forward references dynamically
        # resolved at call time as fully-qualified "."-delimited classnames.
@@ -1586,15 +1583,15 @@ Let's type-check like `greased lightning`_:
 
        # Annotate beartype-specific forward references in unions of types, too.
        param_must_satisfy_beartype_union_with_forward_ref: (
-           Iterable, 'my_package.my_module.MyOtherClass', NoneType),
+           abc.Iterable, 'my_package.my_module.MyOtherClass', NoneType),
 
        # Annotate PEP 484-compliant optional types. Note that parameters
        # annotated by this type typically default to the "None" singleton.
-       param_must_satisfy_pep484_optional: Optional[float] = None,
+       param_must_satisfy_pep484_optional: typing.Optional[float] = None,
 
        # Annotate PEP 484-compliant optional unions of types.
        param_must_satisfy_pep484_optional_union: (
-           Optional[Union[float, int]]) = None,
+           typing.Optional[typing.Union[float, int]]) = None,
 
        # Annotate beartype-specific optional types.
        param_must_satisfy_beartype_type_optional: NoneTypeOr[float] = None,
@@ -1606,17 +1603,34 @@ Let's type-check like `greased lightning`_:
        *args: ScalarTypes + (Real, 'my_package.my_module.MyScalarType'),
 
        # Annotate keyword-only arguments as above, too.
-       param_must_be_passed_by_keyword_only: Sequence[Union[bool, list[str]]],
+       param_must_be_passed_by_keyword_only: abc.Sequence[
+           typing.Union[bool, list[str]]],
 
    # Annotate return types as above, too.
    ) -> Union[Integral, 'MyPep585Generic', bool]:
        return 0xDEADBEEF
 
-   # ..................{              GENERATORS            }..................
-   # Decorate generators as above but returning a generator type.
+   # Decorate coroutines as above but returning a coroutine type.
    @beartype
-   def my_generator() -> Generator[int, None, None]:
+   async def my_coroutine() -> abc.Coroutine[None, None, int]:
+       from async import sleep
+       await sleep(0)
+       return 0xDEFECA7E
+
+   # ..................{              GENERATORS            }..................
+   # Decorate synchronous generators as above but returning a synchronous
+   # generator type.
+   @beartype
+   def my_sync_generator() -> abc.Generator[int, None, None]:
        yield from range(0xBEEFBABE, 0xCAFEBABE)
+
+   # Decorate asynchronous generators as above but returning an asynchronous
+   # generator type.
+   @beartype
+   async def my_async_generator() -> abc.AsyncGenerator[int, None]:
+       from async import sleep
+       await sleep(0)
+       yield 0x8BADF00D
 
    # ..................{              CLASSES               }..................
    # User-defined class referenced in forward references above.
@@ -1638,13 +1652,13 @@ Let's type-check like `greased lightning`_:
        # Decorate static methods as above.
        @staticmethod
        @beartype
-       def my_staticmethod(callable: Callable, *args: str) -> Any:
-           return callable(*args)
+       def my_staticmethod(callable: abc.Callable[[str], T], text: str) -> T:
+           return callable(text)
 
        # Decorate property getter methods as above.
        @property
        @beartype
-       def my_gettermethod(self) -> Iterator[int]:
+       def my_gettermethod(self) -> abc.Iterator[int]:
            return range(0x0B00B135 + int(self._scalar), 0xB16B00B5)
 
        # Decorate property setter methods as above.
@@ -1669,10 +1683,10 @@ Let's type-check like `greased lightning`_:
            return tuple.__new__(cls, (integer, real))
 
    # User-defined PEP 484-compliant generic referenced above in type hints.
-   class MyPep484Generic(Tuple[str, ...]):
+   class MyPep484Generic(typing.Tuple[str, ...]):
        # Decorate static class methods as above without annotating "cls".
        @beartype
-       def __new__(cls, *args: str) -> Tuple[str, ...]:
+       def __new__(cls, *args: str) -> typing.Tuple[str, ...]:
            return tuple.__new__(cls, args)
 
    # ..................{             VALIDATORS             }..................
@@ -1690,7 +1704,7 @@ Let's type-check like `greased lightning`_:
    # Validator matching only two-dimensional NumPy arrays of 64-bit floats,
    # specified with a single caller-defined lambda function.
    NumpyArray2DFloat = Annotated[np.ndarray, Is[
-       lambda array: array.ndim == 2 and array.dtype == np.dtype(np.float64)]]
+       lambda arr: arr.ndim == 2 and arr.dtype == np.dtype(np.float64)]]
 
    # Validator matching only one-dimensional NumPy arrays of 64-bit floats,
    # specified with two declarative expressions. Although verbose, this
@@ -1700,7 +1714,7 @@ Let's type-check like `greased lightning`_:
    NumpyArray1DFloat = Annotated[np.ndarray, IsNumpyArray1D, IsNumpyArrayFloat]
 
    # Validator matching only empty NumPy arrays, equivalent to but faster than:
-   #     NumpyArrayEmpty = Annotated[np.ndarray, Is[lambda array: array.size != 0]]
+   #     NumpyArrayEmpty = Annotated[np.ndarray, Is[lambda arr: arr.size != 0]]
    IsNumpyArrayEmpty = IsAttr['size', IsEqual[0]]
    NumpyArrayEmpty = Annotated[np.ndarray, IsNumpyArrayEmpty]
 
@@ -1849,7 +1863,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | collections.abc.Container_              | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | collections.abc.Coroutine_              | **0.5.0**\ —\ *current*       | *none*                    |
+|                    | collections.abc.Coroutine_              | **0.5.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | collections.abc.Generator_              | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -1925,7 +1939,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.ContextManager_                  | **0.4.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | typing.Coroutine_                       | **0.2.0**\ —\ *current*       | *none*                    |
+|                    | typing.Coroutine_                       | **0.2.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Counter_                         | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+

@@ -21,10 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import (
-    BeartypeDecorHintPep484Exception,
-    BeartypeDecorParamNameException,
-)
+from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._cache.cachehint import coerce_hint_pep
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
@@ -39,10 +36,10 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.func.utilfunctest import is_func_async
+from beartype._util.hint.pep.proposal.pep484585.utilpepfunc import (
+    reduce_hint_pep484585_func_return)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
-    label_callable,
     prefix_callable_decorated_param,
     prefix_callable_decorated_return,
 )
@@ -83,7 +80,7 @@ _RETURN_HINT_EMPTY = Signature.empty
 (i.e., return *not* annotated with a type hint).
 '''
 
-# ....................{ CODERS                            }....................
+# ....................{ GENERATORS                        }....................
 def generate_code(data: BeartypeData) -> str:
     '''
     Generate a Python code snippet dynamically defining the wrapper function
@@ -243,7 +240,7 @@ def generate_code(data: BeartypeData) -> str:
         f'{code_check_return}'
     )
 
-# ....................{ CODERS ~ private                  }....................
+# ....................{ PRIVATE ~ params                  }....................
 def _code_check_params(data: BeartypeData) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of
@@ -276,6 +273,13 @@ def _code_check_params(data: BeartypeData) -> str:
     # ..................{ LOCALS ~ func                     }..................
     # Decorated callable.
     func = data.func
+
+    #FIXME: Optimize everything below away for argless callables: e.g.,
+    #    func_params = data.func_sig.parameters
+    #    if not func_params:
+    #        return ''
+    #Obviously, we'll want to ensure that we're testing decoration of argless
+    #callables. Are we? Let's hope so, as we're tired!
 
     # Python code snippet to be returned.
     func_wrapper_code = ''
@@ -386,7 +390,7 @@ def _code_check_params(data: BeartypeData) -> str:
     # Return this code.
     return func_wrapper_code
 
-# ....................{ CODERS                            }....................
+# ....................{ PRIVATE ~ return                  }....................
 def _code_check_return(data: BeartypeData) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
@@ -405,7 +409,14 @@ def _code_check_return(data: BeartypeData) -> str:
 
     Raises
     ----------
-    BeartypeDecorHintNonPepException
+    :exc:`BeartypeDecorHintPep484585Exception`
+        If this callable is either:
+
+        * A coroutine *not* annotated by a :attr:`typing.Coroutine` type hint.
+        * A generator *not* annotated by a :attr:`typing.Generator` type hint.
+        * An asynchronous generator *not* annotated by a
+          :attr:`typing.AsyncGenerator` type hint.
+    :exc:`BeartypeDecorHintNonPepException`
         If the type hint annotating this return (if any) of this callable is
         neither:
 
@@ -419,37 +430,30 @@ def _code_check_return(data: BeartypeData) -> str:
     # Decorated callable.
     func = data.func
 
-    # Python code snippet to be returned, defaulting to the empty string
-    # implying this callable's return to either be unannotated *OR* annotated
-    # by a safely ignorable type hint.
-    func_wrapper_code = ''
-
     # Type hint annotating this callable's return if any *OR*
     # "_RETURN_HINT_EMPTY" otherwise (i.e., if this return is unannotated).
     hint = data.func_sig.return_annotation
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is _RETURN_HINT_EMPTY:
-        pass
+        return ''
     # Else, this return is annotated.
-    #
+
+    # This hint reduced to a simpler hint if this hint is either PEP 484- *OR*
+    # 585-compliant *AND* requires reduction (e.g., from "Coroutine[None, None,
+    # str]" to just "str"), raising an exception if this hint is contextually
+    # invalid for this callable (e.g., coroutine whose return is *NOT*
+    # annotated as "Coroutine[...]").
+    hint = reduce_hint_pep484585_func_return(func)
+
+    # Python code snippet to be returned, defaulting to the empty string
+    # implying this callable's return to either be unannotated *OR* annotated
+    # by a safely ignorable type hint.
+    func_wrapper_code = ''
+
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation...
-    elif hint is NoReturn:
-        # If the decorated callable is asynchronous, this type hint is
-        # impermissible on this callable. In this case, raise an exception. See
-        # commentary preceding the definition of "PEP484_CODE_CHECK_NORETURN".
-        if is_func_async(func):
-            raise BeartypeDecorHintPep484Exception(
-                f'{prefix_callable_decorated_return(func)}type hint '
-                f'impermissible as return annotation for '
-                f'{label_callable(func)} '
-                f'(i.e., expected either "Coroutine[...]" or '
-                f'"AsyncGenerator[...]").'
-            )
-        # Else, the decorated callable is synchronous, in which case this type
-        # hint is permissible on this callable.
-
+    if hint is NoReturn:
         # Default this snippet to a pre-generated snippet validating this
         # callable to *NEVER* successfully return. Yup!
         func_wrapper_code = PEP484_CODE_CHECK_NORETURN

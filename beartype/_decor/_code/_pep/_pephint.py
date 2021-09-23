@@ -109,9 +109,9 @@ from beartype._util.hint.utilhintget import get_hint_reduced
 from beartype._util.hint.pep.proposal.utilpep484 import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args_1,
-    is_hint_pep484585_tuple_empty,
-)
+    is_hint_pep484585_tuple_empty)
+from beartype._util.hint.pep.proposal.pep484585.utilpeparg import (
+    get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
     get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type,
