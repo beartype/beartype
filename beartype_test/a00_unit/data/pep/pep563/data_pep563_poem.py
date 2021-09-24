@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 563`_ **data submodule.**
+Project-wide :pep:`563` **poetic data submodule.**
 
-This submodule exercises `PEP 563`_ support implemented in the
+This submodule exercises :pep:`563` support implemented in the
 :func:`beartype.beartype` decorator by enabling this support with a leading
 ``from __future__ import annotations`` statement and then declaring a callable
 decorated by that decorator. External unit tests are expected to conditionally
@@ -18,31 +18,16 @@ Caveats
 **This submodule requires the active Python interpreter to target at least
 Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 :class:`AttributeError` exception.
-
-.. _PEP 563:
-   https://www.python.org/dev/peps/pep-0563
 '''
 
 # ....................{ IMPORTS                           }....................
 from __future__ import annotations
 from beartype import beartype
 from beartype._cave._cavefast import IntType
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
 from beartype_test.a00_unit.data.data_type import decorator
 from collections.abc import Callable
-from typing import List, Union
-
-# ....................{ HINTS                             }....................
-ListStrType = list[str] if IS_PYTHON_AT_LEAST_3_9 else List[str]
-'''
-PEP-compliant type hint matching a list of strings.
-
-This hint is globalized to avoid `PEP 585`_-specific deprecating warnings under
-Python >= 3.9.
-
-.. _PEP 585:
-   https://www.python.org/dev/peps/pep-0585
-'''
+from typing import Union
 
 # ....................{ CONSTANTS                         }....................
 _MINECRAFT_END_TXT_STANZAS = (
@@ -164,7 +149,7 @@ def get_minecraft_end_txt_closure(player_name: str) -> Callable:
     # PEP-compliant type hints accessible only as local variables to the
     # following closure, exercising a significant edge case in PEP 563 support.
     StringLike = Union[str, int, bytes]
-    ListOfStrings = ListStrType
+    ListOfStrings = HINT_ATTR_LIST[str]
 
     # Intentionally delimited by one layer of decoration to exercise edges.
     @decorator
@@ -204,7 +189,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     # following closure, exercising a significant edge case in PEP 563 support.
     IntLike = Union[float, int]
     ReturnType = Callable
-    InnerReturnType = ListStrType
+    InnerReturnType = HINT_ATTR_LIST[str]
 
     # Intentionally delimited by two layers of decoration to exercise edges.
     @decorator

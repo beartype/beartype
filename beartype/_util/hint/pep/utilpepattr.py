@@ -11,10 +11,6 @@ Python version targeted by the active Python interpreter) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: This submodule is appallingly obsolete. Shift the entirety of this
-#submodule into "utilpep484585", where these globals rightly belong.
-
 # ....................{ IMPORTS                           }....................
 from beartype._util.utilobject import SENTINEL
 from typing import Any

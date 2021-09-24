@@ -27,7 +27,7 @@ def represent_object(
     obj: object,
 
     # Optional parameters.
-    max_len: int = 76,
+    max_len: int = 96,
     is_strip_from_newline_first: bool = True,
 ) -> str:
     """
@@ -79,7 +79,7 @@ def represent_object(
         Object to be represented.
     max_len: int, optional
         Maximum length of the string to be returned. Defaults to a standard
-        line length of 80 characters minus output indentation of 4 characters.
+        line length of 100 characters minus output indentation of 4 characters.
 
     Returns
     ----------

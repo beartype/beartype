@@ -126,7 +126,7 @@ def is_module(module_name: str) -> bool:
 
     Warns
     ----------
-    BeartypeModuleUnimportableWarning
+    :class:`BeartypeModuleUnimportableWarning`
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''

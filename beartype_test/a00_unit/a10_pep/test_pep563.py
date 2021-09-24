@@ -36,9 +36,76 @@ from beartype_test.util.mark.pytskip import (
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,
 )
-# from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ club                      }....................
+@skip_if_python_version_less_than('3.7.0')
+def test_pep563_class_self_reference_reloaded() -> None:
+    '''
+    Test module-scoped :pep:`563` support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
+
+    This test exercises a `recently submitted issue <issue #49_>`__ concerning
+    a :pep:`563`-postponed circular reference to a class currently being
+    declared from a method of that class decorated by
+    :func:`beartype.beartype`. See the
+    :meth:`beartype_test.a00_unit.data.pep.pep563.data_pep563_club.Chameleon.like_a_dream`
+    docstring for further details.
+
+    .. _issue #49:
+       https://github.com/beartype/beartype/issues/49
+    '''
+
+    # Defer heavyweight imports.
+    #
+    # Note that the "data_pep563_club" submodule is intentionally imported as
+    # an attribute rather than importing the requisite attributes from that
+    # submodule. Why? Because the entire intention of this test is to exercise
+    # reloading of @beartype-decorated callables annotated with circular
+    # references under PEP 563.
+    from beartype_test.a00_unit.data.pep.pep563 import data_pep563_club
+    from importlib import reload
+
+    # Assert that a @beartype-decorated class method whose circular return
+    # annotation is postponed under PEP 563 returns the expected value.
+    assert data_pep563_club.Chameleon.like_my_dreams().colors == (
+        data_pep563_club.COLORS)
+
+    # Intentionally reload this submodule into the same attribute.
+    print('Reloading submodule "data_pep563_club"...')
+    data_pep563_club = reload(data_pep563_club)
+    print('Reloaded submodule "data_pep563_club".')
+
+    # Assert the same constraint as above.
+    assert data_pep563_club.Chameleon.like_my_dreams().colors == (
+        data_pep563_club.COLORS)
+
+
+@skip_if_python_version_less_than('3.7.0')
+def test_pep563_class_self_reference_override() -> None:
+    '''
+    Test module-scoped :pep:`563` support implemented in the
+    :func:`beartype.beartype` decorator if the active Python interpreter
+    targets Python >= 3.7 *or* skip otherwise.
+
+    This test exercises an edge case in which a :pep:`563`-postponed circular
+    reference to a class currently being declared from a method of that class
+    decorated by :func:`beartype.beartype` overrides and thus conflicts with a
+    previously declared global with the same name as that class in the module
+    declaring that class.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_club import (
+        DREAMS, Karma)
+
+    # Assert that a @beartype-decorated class method whose circular return
+    # annotation is postponed under PEP 563 to a string of the same name as a
+    # previously declared global of the module declaring that class returns the
+    # expected value.
+    assert Karma.if_your_colors().dreams == DREAMS
+
+# ....................{ TESTS ~ poem                      }....................
 @skip_if_python_version_less_than('3.7.0')
 def test_pep563_module() -> None:
     '''
@@ -49,7 +116,7 @@ def test_pep563_module() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype_test.a00_unit.data.data_pep563 import (
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_stanza,
     )
@@ -107,7 +174,7 @@ def test_pep563_closure_nonnested() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.a00_unit.data.data_pep563 import (
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure)
 
     # Assert that declaring a @beartype-decorated closure works under PEP 563.
@@ -168,7 +235,7 @@ def test_pep563_closure_nested() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.a00_unit.data.data_pep563 import (
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure_factory)
 
     # Assert that declaring a @beartype-decorated closure factory works under
@@ -201,7 +268,7 @@ def test_pep563_class() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.a00_unit.data.data_pep563 import (
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         MinecraftEndTxtUnscrambler)
 
     # Assert that instantiating a class with a @beartype-decorated __init__()
@@ -225,7 +292,7 @@ def test_pep563_class() -> None:
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. See commentary in the
-#"beartype_test.a00_unit.data.data_pep563" submodule for all the appalling details.
+#"beartype_test.a00_unit.data.pep.pep563.data_pep563_poem" submodule for all the appalling details.
 
 # @skip_if_python_version_less_than('3.7.0')
 # def test_die_if_hint_repr_exceeds_child_limit() -> None:
@@ -240,7 +307,7 @@ def test_pep563_class() -> None:
 #     # Defer heavyweight imports.
 #     from beartype import beartype
 #     from beartype.roar import BeartypeDecorHintPepException
-#     from beartype_test.a00_unit.data.data_pep563 import player_was_love
+#     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import player_was_love
 #
 #     # Assert @beartype raises the expected exception when decorating a
 #     # callable violating this limit.

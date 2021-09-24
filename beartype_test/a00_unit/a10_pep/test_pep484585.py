@@ -15,8 +15,13 @@ to :pep:`484`- and :pep:`585`-compliant type hints.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.roar import BeartypeDecorHintPepDeprecatedWarning
+from beartype_test.util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS ~ decor : async             }....................
+# Prevent pytest from capturing and displaying all expected non-fatal
+# beartype-specific warnings emitted by the @beartype decorator below. Urgh!
+@ignore_warnings(BeartypeDecorHintPepDeprecatedWarning)
 async def test_decor_async_coroutine() -> None:
     '''
     Test decorating coroutines with the :func:`beartype.beartype` decorator.
@@ -87,6 +92,9 @@ async def test_decor_async_coroutine() -> None:
             return sea_was_a_cup + earth_was_a_screen_green_as_clozapine
 
 
+# Prevent pytest from capturing and displaying all expected non-fatal
+# beartype-specific warnings emitted by the @beartype decorator below. Hurk!
+@ignore_warnings(BeartypeDecorHintPepDeprecatedWarning)
 async def test_decor_async_generator() -> None:
     '''
     Test decorating asynchronous generators with the :func:`beartype.beartype`
@@ -168,6 +176,9 @@ async def test_decor_async_generator() -> None:
             yield mouth_opened_wide + earth_was_skied
 
 # ....................{ TESTS ~ decor : sync              }....................
+# Prevent pytest from capturing and displaying all expected non-fatal
+# beartype-specific warnings emitted by the @beartype decorator below. Blargh!
+@ignore_warnings(BeartypeDecorHintPepDeprecatedWarning)
 def test_decor_sync_generator() -> None:
     '''
     Test decorating synchronous generators with the :func:`beartype.beartype`

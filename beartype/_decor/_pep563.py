@@ -21,6 +21,7 @@ from beartype._util.func.utilfuncscope import (
     CallableScope,
     get_func_globals,
     get_func_locals,
+    is_func_nested,
 )
 from beartype._util.text.utiltextident import is_identifier
 from beartype._util.py.utilpyversion import (
@@ -29,10 +30,17 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from sys import modules as sys_modules
-from typing import Optional
+from typing import Any, FrozenSet, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ CONSTANTS                         }....................
+_FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
+'''
+Empty frozen set, globalized as a mild optimization for the body of the
+:func:`resolve_hints_pep563_if_active` resolver.
+'''
 
 # ....................{ RESOLVERS                         }....................
 def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
@@ -88,6 +96,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     '''
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
+    # ..................{ DETECTION                         }..................
     # Localize attributes of this metadata for negligible efficiency gains.
     func = data.func
 
@@ -111,21 +120,31 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
             getattr(sys_modules[func.__module__], 'annotations', None) is (
                 __future__.annotations)
         )
+    ):
     # Then this callable's hints are *NOT* postponed under PEP 563. In
     # this case, silently reduce to a noop.
-    ):
         return
     # Else, these hints are postponed under PEP 563. In this case, resolve
     # these hints to their referents.
 
-    # Dictionary mapping from parameter name to resolved hint for each
-    # annotated parameter and return value of this callable, initialized to a
-    # copy of the dictionary mapping from parameter name to postponed hint.
-    func_hints = func.__annotations__.copy()
-
+    # ..................{ LOCALS                            }..................
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
         func=func, exception_cls=BeartypeDecorHintPep563Exception)
+
+    # Dictionary mapping from parameter name to postponed hint for each
+    # annotated parameter and return value of this callable.
+    func_hints_postponed = func.__annotations__
+
+    # Dictionary mapping from parameter name to resolved hint for each
+    # annotated parameter and return value of this callable, initialized to a
+    # shallow copy of the postponed dictionary.
+    #
+    # Note that the "func.__annotations__" dictionary *CANNOT* be safely
+    # directly assigned to below, as the loop performing that assignment below
+    # necessarily iterates over that dictionary. As with most languages, Python
+    # containers cannot be safely mutated while being iterated.
+    func_hints_resolved = func_hints_postponed.copy()
 
     # Local scope for the decorated callable. Since calculating this scope is
     # O(n**2) for an arbitrary large integer n, defer doing so until we must
@@ -133,6 +152,18 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     # given only the global scope of that callable).
     func_locals: Optional[CallableScope] = None
 
+    # Non-empty frozen set of the unqualified names of all parent callables
+    # lexically containing this nested callable (including this nested
+    # callable itself) if this callable is nested *OR* the empty frozen set
+    # otherwise (i.e., if this callable is declared at global scope in its
+    # submodule).
+    func_scope_names = (
+        frozenset(func.__qualname__.rsplit(sep='.'))
+        if is_func_nested(func) else
+        _FROZEN_SET_EMPTY
+    )
+
+    # ..................{ RESOLUTION                        }..................
     # For the parameter name (or "return" for the return value) and
     # corresponding annotation of each of this callable's type hints...
     #
@@ -142,7 +173,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     # as largely pointless (e.g., due to dictionary comprehensions being either
     # no faster or even slower than explicit iteration for small dictionary
     # sizes, as "func.__annotations__" usually is).
-    for pith_name, pith_hint in func.__annotations__.items():
+    for pith_name, pith_hint in func_hints_postponed.items():
         # If...
         if (
             # This hint is a string *AND*...
@@ -156,13 +187,13 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
         # replaced in-place with its referent, which is itself a string
         # matching the PEP 563 format without actually being a PEP
         # 563-formatted postponed string. Since there's nothing we can do about
-        # this, we choose to silently pretend everything will be okay.
+        # that, we choose to just silently pretend everything will be okay.
             # print(f'Resolving postponed hint {repr(pith_hint)}...')
 
             #FIXME: Since CPython appears to currently be incapable of even
             #defining a deeply nested annotation that would violate this limit,
             #we avoid performing this test for the moment. Nonetheless, it's
-            #likely that CPython will permit such annotations to be defined at
+            #likely that CPython will permit such annotations to be defined
             #under some *VERY* distant major version. Ergo, we preserve this.
             # If this string internally exceeds the child limit (i.e., maximum
             # number of nested child type hints listed as subscripted arguments
@@ -170,6 +201,103 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
             # string) permitted by the @beartype decorator, raise an exception.
             #_die_if_hint_repr_exceeds_child_limit(
             #    hint_repr=pith_hint, pith_label=pith_label)
+
+            # If this hint is the unqualified name of one or more parent
+            # callables or classes of this callable, then this hint is a
+            # relative forward reference to a parent callable or class of this
+            # callable that is currently being defined but has yet to be
+            # defined in full. By deduction, we can infer this hint *MUST* have
+            # been a locally or globally scoped attribute of this callable
+            # before being postponed by PEP 563 into a relative forward
+            # reference to that attribute: e.g.,
+            #     # If this loop is iterating over a postponed type hint
+            #     # annotating this post-PEP 563 method signature...
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> 'MuhClass': ...
+            #
+            #     # ...then the original type hints prior to being postponed
+            #     # *MUST* have annotated this pre-PEP 563 method signature.
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> MuhClass: ...
+            #
+            # In this case, we absolutely *MUST* avoid attempting to resolve
+            # this forward reference. Why? Disambiguity. Although the
+            # "MuhClass" class has yet to be defined at the time @beartype
+            # decorates the muh_method() method, an attribute of the same name
+            # may already have been defined at that time: e.g.,
+            #     # While bad form, PEP 563 postpones this valid logic...
+            #     MuhClass = "Just kidding! Had you going there, didn't I?"
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> MuhClass: ...
+            #
+            #     # ...into this relative forward reference.
+            #     MuhClass = "Just kidding! Had you going there, didn't I?"
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> 'MuhClass': ...
+            #
+            # Naively resolving this forward reference would erroneously
+            # replace this hint with the previously declared attribute rather
+            # than the class currently being declared: e.g.,
+            #     # Naive PEP 563 resolution would replace the above by this!
+            #     MuhClass = "Just kidding! Had you going there, didn't I?"
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> (
+            #             "Just kidding! Had you going there, didn't I?"): ...
+            #
+            # This isn't simply an edge-case disambiguity, however. This exact
+            # situation commonly arises whenever reloading modules containing
+            # @beartype-decorated callables annotated with self-references
+            # (e.g., by passing those modules to the standard
+            # importlib.reload() function). Why? Because module reloading is
+            # ill-defined and mostly broken under Python. Since the
+            # importlib.reload() function fails to delete any of the attributes
+            # of the module to be reloaded before reloading that module, the
+            # parent callable or class referred to by this hint will be briefly
+            # defined for the duration of @beartype's decoration of this
+            # callable as the prior version of that parent callable or class!
+            #
+            # Resolving this hint would thus superficially succeed, while
+            # actually erroneously replacing this hint with the prior rather
+            # than current version of that parent callable or class. @beartype
+            # would then wrap the decorated callable with a wrapper expecting
+            # the prior rather than current version of that parent callable or
+            # class. All subsequent calls to that wrapper would then fail.
+            # Since this actually happened, we ensure it never does again.
+            #
+            # Lastly, note that this edge case *ONLY* supports top-level
+            # relative forward references (i.e., syntactically valid Python
+            # identifier names subscripting *NO* parent type hints). Child
+            # relative forward references will continue to raise exceptions. As
+            # resolving PEP 563-postponed type hints effectively reduces to a
+            # single "all or nothing" call of the low-level eval() builtin
+            # accepting *NO* meaningful configuration, there exists *NO* means
+            # of only partially resolving parent type hints while preserving
+            # relative forward references subscripting those hints. The
+            # solution in those cases is for end users to replace implicit with
+            # explicit forward references: e.g.,
+            #     # Users should replace this implicit forward reference, which
+            #     # will fail at runtime...
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> list[MuhClass]: ...
+            #
+            #     # ...with this explicit forward reference, which will work.
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> list['MuhClass']: ...
+            #
+            # Indeed, the *ONLY* reasons we support this common edge case are:
+            # * This edge case is indeed common.
+            # * This edge case is both trivial and efficient to support.
+            #
+            # tl;dr: Preserve this hint for disambiguity and skip to the next.
+            if pith_hint in func_scope_names:
+                continue
 
             # If the local scope of the decorated callable has yet to be
             # decided...
@@ -188,7 +316,8 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
                 #   that decision should be deferred as long as feasible to
                 #   minimize space and time costs of the @beartype decorator.
                 try:
-                    func_hints[pith_name] = eval(pith_hint, func_globals)
+                    func_hints_resolved[pith_name] = eval(
+                        pith_hint, func_globals)
 
                     # If that succeeded, continue to the next postponed hint.
                     continue
@@ -216,7 +345,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
             # Attempt to resolve this hint against both the global and local
             # scopes for the decorated callable.
             try:
-                func_hints[pith_name] = eval(
+                func_hints_resolved[pith_name] = eval(
                     pith_hint, func_globals, func_locals)
             # If that resolution also fails...
             except Exception as exception:
@@ -242,6 +371,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
                     # doesn't. Instead, it simply preserves forward references
                     # hinted as strings! Who approved this appalling
                     # abomination that breaks CPython itself?
+                    # print(f'Deferring postponed forward reference hint {repr(pith_hint)}...')
                     continue
                 # Else, this hint is *PROBABLY NOT* a forward reference hinted
                 # as a string.
@@ -307,10 +437,10 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
             #    pith_label=pith_label)
 
     # Assert the above resolution resolved the expected number of type hints.
-    assert len(func_hints) == len(func.__annotations__), (
+    assert len(func_hints_resolved) == len(func_hints_postponed), (
         f'{func.__qualname__}() PEP 563-postponed type hint resolution mismatch: '
-        f'{len(func_hints)} resolved hints != '
-        f'{len(func.__annotations__)} postponed hints.')
+        f'{len(func_hints_resolved)} resolved hints != '
+        f'{len(func_hints_postponed)} postponed hints.')
 
     # Atomically (i.e., all-at-once) replace this callable's postponed
     # annotations with these resolved annotations for safety and efficiency.
@@ -323,19 +453,10 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     # with useful real annotations; so, we do so.
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'
-    #     f'\n\t------[ POSTPONED ]------\n\t{func.__annotations__}'
-    #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints}'
+    #     f'\n\t------[ POSTPONED ]------\n\t{func_hints_postponed}'
+    #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints_resolved}'
     # )
-    func.__annotations__ = func_hints
-
-    #FIXME: We currently no longer require this, but nonetheless preserve this
-    #for both posterity and the unknowable future to come.
-    # Else, this callable's annotations are *NOT* postponed under PEP 563. In
-    # this case, shallowly copy the originating annotations dictionary to a
-    # beartype-specific annotations dictionary to enable other functions
-    # elsewhere to safely modify these annotations.
-    # else:
-    #     data.func_hints = data.func.__annotations__.copy()
+    func.__annotations__ = func_hints_resolved
 
 # ....................{ PRIVATE ~ resolvers               }....................
 #FIXME: We currently no longer require this. See above for further commentary.
@@ -376,7 +497,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
 #     implementations of the :mod:`typing` module are sufficiently
 #     space-consumptive that they already implicitly prohibit deep nesting of
 #     PEP-compliant type hints. See commentary in the
-#     :mod:`beartype_test.a00_unit.data.data_pep563` submodule for appalling details.
+#     :mod:`beartype_test.a00_unit.data.pep.pep563.data_pep563_poem` submodule for appalling details.
 #     Ergo, this validator could technically be disabled. Indeed, if this
 #     validator actually incurred any measurable costs, it *would* be disabled.
 #     Since it doesn't, this validator has preserved purely for forward
