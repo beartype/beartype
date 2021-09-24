@@ -33,10 +33,6 @@ from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
     get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_isinstanceable_or_none)
-from beartype._util.text.utiltextcause import (
-    get_cause_object_not_instance_type,
-    get_cause_object_not_instance_types,
-)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_object
@@ -75,8 +71,10 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return get_cause_object_not_instance_type(
-        pith=sleuth.pith, hint=sleuth.hint)
+    return (
+        f'{represent_object(sleuth.pith)} not instance of '
+        f'{label_type(sleuth.hint)}'
+    )
 
 
 def get_cause_or_none_instance_type_forwardref(
@@ -176,8 +174,10 @@ def get_cause_or_none_instance_types_tuple(
 
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
-    return get_cause_object_not_instance_types(
-        pith=sleuth.pith, hint=sleuth.hint)
+    return (
+        f'{represent_object(sleuth.pith)} not instance of '
+        f'{join_delimited_disjunction_types(sleuth.hint)}'
+    )
 
 # ....................{ GETTERS ~ subclass : type         }....................
 def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
@@ -231,12 +231,15 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
     # Description of this superclasses, defined as either...
     hint_superclass_label = (
         # If this superclass is a class, a description of this class;
-        f'{label_type(hint_superclass)} subclass'
+        label_type(hint_superclass)
         if isinstance(hint_superclass, type) else
         # Else, this superclass is a tuple of classes. In this case, a
         # description of these classes...
-        f'{join_delimited_disjunction_types(hint_superclass)} subclass'
+        join_delimited_disjunction_types(hint_superclass)
     )
 
     # Return a substring describing this failure.
-    return f'{represent_object(sleuth.pith)} not {hint_superclass_label}'
+    return (
+        f'{represent_object(sleuth.pith)} not subclass of '
+        f'{hint_superclass_label}'
+    )
