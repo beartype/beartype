@@ -149,28 +149,6 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 :func:`beartype.beartype` decorator).
 '''
 
-# ....................{ SIGNS ~ func                      }....................
-HINT_SIGNS_RETURN_CONSTRAINED = frozenset((
-    # ..................{ PEP (484|585)                     }..................
-    HintSignAsyncGenerator,
-    HintSignCoroutine,
-    HintSignGenerator,
-))
-'''
-Frozen set of all signs uniquely identifying **PEP-compliant return-constrained
-type hints** (i.e., hints which, when annotating the returns of callables,
-constrain the types of those callables).
-
-Specifically, this set contains:
-
-* :data:`HintSignAsyncGenerator`, as the returns of asynchronous generators are
-  required to either be unannotated *or* ``AsyncGenerator[...]``.
-* :data:`HintSignCoroutine`, as the returns of asynchronous coroutines are
-  required to either be unannotated *or* ``Coroutine[...]``.
-* :data:`HintSignGenerator`, as the returns of synchronous generators are
-  required to either be unannotated *or* ``Generator[...]``.
-'''
-
 # ....................{ SIGNS ~ type                      }....................
 HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     # ..................{ PEP (484|585)                     }..................

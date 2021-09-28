@@ -36,6 +36,23 @@ async def test_decor_async_coroutine() -> None:
     from collections.abc import Coroutine as Pep585Coroutine
     from typing import Union, Coroutine as Pep484Coroutine
 
+    # Decorated coroutine whose return is annotated with an arbitrary
+    # PEP-compliant type hint.
+    @beartype
+    async def control_the_car(
+        said_the: Union[str, int],
+        biggest_greenest_bat: Union[str, float],
+    ) -> Union[str, float]:
+        await sleep(0)
+        return said_the + biggest_greenest_bat
+
+    # Assert awaiting this coroutine returns the expected value.
+    assert await control_the_car(
+        'I saw the big green bat bat a green big eye. ',
+        'Suddenly I knew I had gone too far.') == (
+        'I saw the big green bat bat a green big eye. '
+        'Suddenly I knew I had gone too far.')
+
     # Decorated coroutine whose return is annotated with a PEP 484-compliant
     # coroutine type hint.
     @beartype
@@ -71,25 +88,6 @@ async def test_decor_async_coroutine() -> None:
         #FIXME: Assert this decorator raises the expected exception when
         #decorating an asynchronous callable annotating its return as
         #"Pep585Coroutine[...]" accepting an invalid number of arguments.
-
-    # Assert this decorator raises the expected exception when decorating an
-    # asynchronous callable annotating its return as anything *EXCEPT*
-    # "Coroutine[...]".
-    with raises_uncached(BeartypeDecorHintPep484585Exception):
-        @beartype
-        async def a_watery_sun(shone_in: str, an_oily_sky: str) -> str:
-            await sleep(0)
-            return shone_in + an_oily_sky
-
-    # Assert this decorator raises the expected exception when decorating a
-    # non-asynchronous callable annotating its return as "Coroutine[...]".
-    with raises_uncached(BeartypeDecorHintPep484585Exception):
-        @beartype
-        def bat_rose_up(
-            sea_was_a_cup: str,
-            earth_was_a_screen_green_as_clozapine: str,
-        ) -> Pep484Coroutine[None, None, str]:
-            return sea_was_a_cup + earth_was_a_screen_green_as_clozapine
 
 
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -156,7 +154,7 @@ async def test_decor_async_generator() -> None:
                 'A meteorite of pure delight struck the sea without a sound.')
 
     # Assert this decorator raises the expected exception when decorating an
-    # asynchronous callable annotating its return as anything *EXCEPT*
+    # asynchronous generator annotating its return as anything *EXCEPT*
     # "AsyncGenerator[...]".
     with raises_uncached(BeartypeDecorHintPep484585Exception):
         @beartype
@@ -164,16 +162,6 @@ async def test_decor_async_generator() -> None:
             roots_in_the_breeze: str, branches_underground: str) -> str:
             await sleep(0)
             yield roots_in_the_breeze + branches_underground
-
-    # Assert this decorator raises the expected exception when decorating a
-    # non-asynchronous generator annotating its return as
-    # "AsyncGenerator[...]".
-    with raises_uncached(BeartypeDecorHintPep484585Exception):
-        @beartype
-        def sky_a_voracious_mouth(
-            mouth_opened_wide: str, earth_was_skied: str) -> (
-            Pep484AsyncGenerator[str, None]):
-            yield mouth_opened_wide + earth_was_skied
 
 # ....................{ TESTS ~ decor : sync              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -231,21 +219,11 @@ def test_decor_sync_generator() -> None:
             'the moon and stars shot south.'
         )
 
-    # Assert this decorator raises the expected exception when decorating an
-    # synchronous callable annotating its return as anything *EXCEPT*
+    # Assert this decorator raises the expected exception when decorating a
+    # synchronous generator annotating its return as anything *EXCEPT*
     # "Generator[...]".
     with raises_uncached(BeartypeDecorHintPep484585Exception):
         @beartype
         def GET_OUT_OF_THE_CAR(
             FOR_THE_LOVE_OF_GOD: str, FACTOR_THE_NUMBER: str) -> str:
             yield FOR_THE_LOVE_OF_GOD + FACTOR_THE_NUMBER
-
-    # Assert this decorator raises the expected exception when decorating a
-    # non-synchronous generator annotating its return as "Generator[...]".
-    with raises_uncached(BeartypeDecorHintPep484585Exception):
-        @beartype
-        def sea_fell_in_with_an_awful_din(
-            trees_were_moons: str,
-            sand_in_the_dunes_was_a_blazing_comet: str,
-        ) -> Pep484Generator[str, None, None]:
-            return trees_were_moons + sand_in_the_dunes_was_a_blazing_comet

@@ -19,18 +19,10 @@ parameters are satisfied (e.g., the importability of the passed module name).
 import pytest, sys
 from collections.abc import Mapping, Sequence
 from types import FunctionType
-from typing import Optional
+from typing import Optional, Type
 
 # Sadly, the following imports require private modules and packages.
 from _pytest.runner import Skipped
-
-# ....................{ GLOBALS                           }....................
-_NoneType = type(None)
-'''
-Type of the ``None`` singleton, duplicated from the possibly unsafe
-:mod:`beartype.cave` submodule to avoid raising exceptions from the early
-testing-time decorators defined by this utility submodule.
-'''
 
 # ....................{ GLOBALS ~ constants               }....................
 _PYTHON_VERSION_TUPLE = sys.version_info[:3]
@@ -99,7 +91,7 @@ def skip(reason: str):
     pytest.skipif
         Decorator skipping the decorated test with this justification.
     '''
-    assert isinstance(reason, str), '"{!r}" not string.'.format(reason)
+    assert isinstance(reason, str), f'{repr(reason)} not string.'
 
     return skip_if(True, reason=reason)
 
@@ -263,7 +255,7 @@ def skip_unless_module(
     '''
     assert isinstance(module_name, str), (
         f'{repr(module_name)} not string.')
-    assert isinstance(minimum_version, (str, _NoneType)), (
+    assert isinstance(minimum_version, (str, type(None))), (
         f'{repr(minimum_version)} neither string nor "None".')
 
     return _skip_if_callable_raises_exception(
@@ -275,12 +267,12 @@ def skip_unless_module(
 # ....................{ SKIP ~ private                    }....................
 def _skip_if_callable_raises_exception(
     # Mandatory parameters.
-    exception_type: type,
+    exception_type: Type[BaseException],
     func: FunctionType,
 
     # Optional parameters.
-    args: 'Optional[Sequence]' = None,
-    kwargs: 'Optional[Mapping]' = None,
+    args: Optional[Sequence] = None,
+    kwargs: Optional[Mapping] = None,
 ):
     '''
     Skip the decorated test or fixture if calling the passed callable with the
@@ -295,7 +287,7 @@ def _skip_if_callable_raises_exception(
 
     Parameters
     ----------
-    exception_type : type
+    exception_type : Type[BaseException]
         Type of exception expected to be raised by this callable.
     func : FunctionType
         Callable to be called.

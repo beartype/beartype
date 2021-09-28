@@ -222,7 +222,7 @@ type-checking the value returned by that call (if any).
 PEP484_CODE_CHECK_NORETURN = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
-    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
 
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python

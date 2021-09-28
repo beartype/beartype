@@ -41,7 +41,7 @@ def test_pep484_decor_no_type_check() -> None:
     assert of_beechen_green is of_beechen_green_beartyped
 
 # ....................{ TESTS ~ hint : noreturn           }....................
-def test_pep484_hint_noreturn_sync() -> None:
+def test_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on synchronous callables
     against all edge cases of the :pep:`484`-compliant :attr:`typing.NoReturn`
@@ -60,8 +60,8 @@ def test_pep484_hint_noreturn_sync() -> None:
     # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
     class BeforeIBuiltAWallIdAskToKnow(Exception): pass
 
-    # Callable unconditionally raising an exception correctly annotating its
-    # return as "NoReturn".
+    # Synchronous callable unconditionally raising an exception correctly
+    # annotating its return as "NoReturn".
     @beartype
     def mending_wall() -> NoReturn:
         raise BeforeIBuiltAWallIdAskToKnow(
@@ -118,18 +118,13 @@ async def test_pep484_hint_noreturn_async() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep484585Exception
-    from beartype_test.util.pytroar import raises_uncached
     from typing import NoReturn
 
-    # Assert this decorator raises the expected exception when decorating an
-    # asynchronous callable annotating its return as "NoReturn". By definition,
-    # asynchronous callables *MUST* be annotated as returning either
-    # "Coroutine[...]" or "AsyncGenerator[...]".
-    with raises_uncached(BeartypeDecorHintPep484585Exception):
-        @beartype
-        async def work_of_hunters(another_thing) -> NoReturn:
-            raise ValueError('The work of hunters is another thing:')
+    # Asynchronous coroutine unconditionally raising an exception correctly
+    # annotating its return as "NoReturn".
+    @beartype
+    async def work_of_hunters(another_thing) -> NoReturn:
+        raise ValueError('The work of hunters is another thing:')
 
 # ....................{ TESTS ~ hint : sequence           }....................
 def test_pep484_hint_sequence_args_1_cached() -> None:

@@ -442,8 +442,11 @@ def _code_check_return(data: BeartypeData) -> str:
     # This hint reduced to a simpler hint if this hint is either PEP 484- *OR*
     # 585-compliant *AND* requires reduction (e.g., from "Coroutine[None, None,
     # str]" to just "str"), raising an exception if this hint is contextually
-    # invalid for this callable (e.g., coroutine whose return is *NOT*
-    # annotated as "Coroutine[...]").
+    # invalid for this callable (e.g., generator whose return is *NOT*
+    # annotated as "Generator[...]").
+    #
+    # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
+    # accept "Coroutine[None, None, typing.NoReturn]" as expected).
     hint = reduce_hint_pep484585_func_return(func)
 
     # Python code snippet to be returned, defaulting to the empty string
@@ -456,7 +459,8 @@ def _code_check_return(data: BeartypeData) -> str:
     if hint is NoReturn:
         # Default this snippet to a pre-generated snippet validating this
         # callable to *NEVER* successfully return. Yup!
-        func_wrapper_code = PEP484_CODE_CHECK_NORETURN
+        func_wrapper_code = PEP484_CODE_CHECK_NORETURN.format(
+            func_call_prefix=data.func_wrapper_code_call_prefix)
     # Else, this is *NOT* "typing.NoReturn". In this case...
     else:
         # PEP-compliant type hint converted from this PEP-noncompliant type
