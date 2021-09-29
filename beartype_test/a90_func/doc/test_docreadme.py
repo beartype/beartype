@@ -48,7 +48,7 @@ def test_doc_readme(monkeypatch) -> None:
     from beartype_test.util.path.pytpathproject import get_project_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
-    README_CONTENTS = get_project_readme_file().read_text()
+    README_CONTENTS = get_project_readme_file().read_text(encoding='utf-8')
 
     # List of all warning and error messages emitted by "docutils" during
     # parsing of this project's top-level "README.rst" file.
