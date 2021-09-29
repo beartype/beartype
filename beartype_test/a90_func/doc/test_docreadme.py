@@ -48,6 +48,13 @@ def test_doc_readme(monkeypatch) -> None:
     from beartype_test.util.path.pytpathproject import get_project_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
+    #
+    # Note this encoding *MUST* explicitly be passed here. Although macOS and
+    # Linux both default to this encoding, Windows defaults to the single-byte
+    # encoding "cp1252" for backward compatibility. Failing to pass this
+    # encoding here results in a non-human-readable test failure under Windows:
+    #     UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in
+    #     position 1495: character maps to <undefined>
     README_CONTENTS = get_project_readme_file().read_text(encoding='utf-8')
 
     # List of all warning and error messages emitted by "docutils" during

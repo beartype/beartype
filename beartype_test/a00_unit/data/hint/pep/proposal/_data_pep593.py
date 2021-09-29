@@ -43,7 +43,10 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._util.hint.pep.utilpepattr import (
         HINT_ATTR_LIST,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_8,
+        IS_PYTHON_AT_LEAST_3_7,
+    )
     from beartype_test.a00_unit.data.data_type import Class, Subclass
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -96,23 +99,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
                     'Of languished anger’s sap‐spated rushings',]),
-            ),
-        ),
-
-        # Unhashable annotated of an isinstanceable type annotated by an
-        # unhashable mutable container.
-        HintPepMetadata(
-            hint=Annotated[str, []],
-            pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
-                # String constant.
-                HintPithSatisfiedMetadata(
-                    'Papally Ľust‐besmirched Merchet laws'),
-            ),
-            piths_unsatisfied_meta=(
-                # List of string constants.
-                HintPithUnsatisfiedMetadata([
-                    "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
             ),
         ),
 
@@ -457,3 +443,29 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
+
+    # If the active Python interpreter targets Python >= 3.7, the "typing"
+    # module is sufficiently sane to support subscripting the third-party
+    # "typing_extensions.Literal" factory by unhashable objects. Under Python
+    # 3.6, these type hints fail at subscription time with non-human-readable
+    # exceptions resembling:
+    #     TypeError: unhashable type: 'list'
+    if IS_PYTHON_AT_LEAST_3_7:
+        data_module.HINTS_PEP_META.extend((
+            # Unhashable annotated of an isinstanceable type annotated by an
+            # unhashable mutable container.
+            HintPepMetadata(
+                hint=Annotated[str, []],
+                pep_sign=HintSignAnnotated,
+                piths_satisfied_meta=(
+                    # String constant.
+                    HintPithSatisfiedMetadata(
+                        'Papally Ľust‐besmirched Merchet laws'),
+                ),
+                piths_unsatisfied_meta=(
+                    # List of string constants.
+                    HintPithUnsatisfiedMetadata([
+                        "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
+                ),
+            ),
+        ))

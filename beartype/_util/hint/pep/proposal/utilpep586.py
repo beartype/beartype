@@ -13,7 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype._util.utiltyping import TypeException
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
@@ -32,10 +34,19 @@ These types are explicitly listed by :pep:`586` as follows:
 '''
 
 # ....................{ VALIDATORS                        }....................
-def die_unless_hint_pep586(hint: Any) -> None:
+def die_unless_hint_pep586(
+    # Mandatory parameters.
+    hint: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep586Exception,
+    exception_prefix: str = '',
+) -> None:
     '''
-    Raise an exception unless the passed object is a :pep:`586`-compliant
-    type hint (i.e., subscription of the :attr:`typing.Literal` singleton).
+    Raise an exception of the passed type unless the passed object is a
+    :pep:`586`-compliant type hint (i.e., subscription of either the
+    :attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
+    factories).
 
     Ideally, the :attr:`typing.Literal` singleton would internally validate the
     literal objects subscripting that singleton at subscription time (i.e., in
@@ -50,23 +61,30 @@ def die_unless_hint_pep586(hint: Any) -> None:
     ----------
     **This function is slow** and should thus be called only once per
     visitation of a :pep:`586`-compliant type hint. Specifically, this function
-    is O(n) where n is the number of arguments subscripting this hint.
+    is O(n) for n the number of arguments subscripting this hint.
 
     Parameters
     ----------
     hint : object
         Object to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep586Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Raises
     ----------
-    BeartypeDecorHintPep586Exception
+    :exc:`exception_cls`
         If this object either:
 
-        * Is *not* a subscription of the :attr:`typing.Literal` singleton.
-        * Subscripts :attr:`typing.Literal` with zero arguments via the empty
-          tuple, which :attr:`typing.Literal` sadly fails to guard against.
-        * Subscripts :attr:`typing.Literal` with one or more arguments that are
-          *not* **valid literals**, defined as the set of all:
+        * Is *not* a subscription of either the :attr:`typing.Literal` or
+          :attr:`typing_extensions.Literal` type hint factories.
+        * Subscripts either factory with zero arguments via the empty tuple,
+          which these factories sadly fails to guard against.
+        * Subscripts either factory with one or more arguments that are *not*
+          **valid literals**, defined as the set of all:
 
           * Booleans.
           * Byte strings.
@@ -76,24 +94,21 @@ def die_unless_hint_pep586(hint: Any) -> None:
           * The ``None`` singleton.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-
-    # If this hint is *NOT* PEP 586-compliant, raise an exception.
-    if get_hint_pep_sign(hint) is not HintSignLiteral:
-        raise BeartypeDecorHintPep586Exception(
-            f'PEP 586 type hint {repr(hint)} not "typing.Literal".')
-    # Else, this hint is PEP 586-compliant.
-
     # Tuple of zero or more literal objects subscripting this hint.
-    hint_literals = hint.__args__
+    hint_literals = get_hint_pep586_literals(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # If the caller maliciously subscripted this hint by the empty tuple and
     # thus *NO* arguments, raise an exception. Ideally, the "typing.Literal"
     # singleton would guard against this itself. It does not; thus, we do.
     if not hint_literals:
-        raise BeartypeDecorHintPep586Exception(
-            f'PEP 586 type hint {repr(hint)} subscripted by empty tuple.')
+        raise exception_cls(
+            f'{exception_prefix}PEP 586 type hint {repr(hint)} '
+            f'subscripted by empty tuple.'
+        )
 
     # If any argument subscripting this hint is *NOT* a valid literal...
     #
@@ -103,7 +118,6 @@ def die_unless_hint_pep586(hint: Any) -> None:
     # those restrictions onto third-party type checkers by intentionally
     # implementing that singleton to permissively accept all possible
     # objects when subscripted:
-    #
     #     Although the set of parameters Literal[...] may contain at type
     #     check time is very small, the actual implementation of
     #     typing.Literal will not perform any checks at runtime.
@@ -122,8 +136,103 @@ def die_unless_hint_pep586(hint: Any) -> None:
                     _LITERAL_ARG_TYPES)
 
                 # Raise an exception.
-                raise BeartypeDecorHintPep586Exception(
-                    f'PEP 586 type hint {repr(hint)} '
+                raise exception_cls(
+                    f'{exception_prefix}PEP 586 type hint {repr(hint)} '
                     f'argument {hint_literal_index} {repr(hint_literal)} '
                     f'not {hint_literal_types}.'
                 )
+
+# ....................{ GETTERS                           }....................
+#FIXME: Refactor everything accessing ".__args__" to call this instead.
+
+# If the active Python interpreter targets Python >= 3.7, define this getter to
+# return the standard "__args__" dunder tuple.
+if IS_PYTHON_AT_LEAST_3_7:
+    def get_hint_pep586_literals(
+        # Mandatory parameters.
+        hint: Any,
+
+        # Optional parameters.
+        exception_cls: TypeException = BeartypeDecorHintPep586Exception,
+        exception_prefix: str = '',
+    ) -> tuple:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+        # If this hint is *NOT* PEP 586-compliant, raise an exception.
+        if get_hint_pep_sign(hint) is not HintSignLiteral:
+            raise exception_cls(
+                f'{exception_prefix}PEP 586 type hint {repr(hint)} neither '
+                f'"typing.Literal" nor "typing_extensions.Literal".'
+            )
+        # Else, this hint is PEP 586-compliant.
+
+        # Return the standard tuple of all literals subscripting this hint.
+        return hint.__args__
+# Else, the active Python interpreter targets Python 3.6. In this case, define
+# this getter to return the non-standard "__values__" dunder tuple declared by
+# the third-party "typing_extensions.Literal" type hint factory.
+else:
+    def get_hint_pep586_literals(
+        # Mandatory parameters.
+        hint: Any,
+
+        # Optional parameters.
+        exception_cls: TypeException = BeartypeDecorHintPep586Exception,
+        exception_prefix: str = '',
+    ) -> tuple:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+        # If this hint is *NOT* PEP 586-compliant, raise an exception.
+        if get_hint_pep_sign(hint) is not HintSignLiteral:
+            raise exception_cls(
+                f'{exception_prefix}PEP 586 type hint {repr(hint)} neither '
+                f'"typing.Literal" nor "typing_extensions.Literal".'
+            )
+        # Else, this hint is PEP 586-compliant.
+
+        # Return the non-standard tuple of all literals subscripting this hint.
+        return hint.__values__
+
+
+get_hint_pep586_literals.__doc__ = '''
+Tuple of zero or more literal objects subscripting the passed
+:pep:`586`-compliant type hint (i.e., subscription of either the
+:attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
+factories).
+
+This getter is intentionally *not* memoized (e.g., by the
+:func:`callable_cached` decorator), as the implementation trivially reduces to
+an efficient one-liner.
+
+Caveats
+----------
+**This low-level getter performs no validation of the contents of this tuple.**
+Consider calling the high-level :func:`die_unless_hint_pep586` validator to do
+so before leveraging this tuple elsewhere.
+
+Parameters
+----------
+hint : object
+    :pep:`586`-compliant type hint to be inspected.
+exception_cls : TypeException
+    Type of exception to be raised. Defaults to
+    :exc:`BeartypeDecorHintPep586Exception`.
+exception_prefix : str, optional
+    Human-readable substring prefixing the representation of this object in
+    the exception message. Defaults to the empty string.
+
+Returns
+----------
+tuple
+    Tuple of zero or more literal objects subscripting this hint.
+
+Raises
+----------
+:exc:`exception_cls`
+    If this object *not* a subscription of either the :attr:`typing.Literal` or
+    :attr:`typing_extensions.Literal` type hint factories.
+'''

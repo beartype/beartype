@@ -333,19 +333,19 @@ def _init() -> None:
         get_cause_or_none_subclass_type,
         get_cause_or_none_type_instance_origin,
     )
-    from beartype._decor._error._proposal._pep484._errornoreturn import (
+    from beartype._decor._error._pep._pep484._errornoreturn import (
         get_cause_or_none_noreturn)
-    from beartype._decor._error._proposal._pep484._errorunion import (
+    from beartype._decor._error._pep._pep484._errorunion import (
         get_cause_or_none_union)
-    from beartype._decor._error._proposal._pep484585._errorgeneric import (
+    from beartype._decor._error._pep._pep484585._errorgeneric import (
         get_cause_or_none_generic)
-    from beartype._decor._error._proposal._pep484585._errorsequence import (
+    from beartype._decor._error._pep._pep484585._errorsequence import (
         get_cause_or_none_sequence_args_1,
         get_cause_or_none_tuple,
     )
-    from beartype._decor._error._proposal._errorpep586 import (
+    from beartype._decor._error._pep._errorpep586 import (
         get_cause_or_none_literal)
-    from beartype._decor._error._proposal._errorpep593 import (
+    from beartype._decor._error._pep._errorpep593 import (
         get_cause_or_none_annotated)
 
     # Map each originative sign to the appropriate getter *BEFORE* any other

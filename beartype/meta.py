@@ -303,7 +303,10 @@ unavailable under older Python interpreters supported by the
 # Note that we intentionally omit NumPy here. If you want it, you're already
 # using it; likewise, if you don't want it, you're *NOT* already using it.
 LIBS_RUNTIME_OPTIONAL = (
-    f'typing_extensions >={_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}',
+    (
+        f'typing_extensions >='
+        f'{_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}'
+    ),
 )
 '''
 Optional runtime package dependencies as a tuple of :mod:`setuptools`-specific

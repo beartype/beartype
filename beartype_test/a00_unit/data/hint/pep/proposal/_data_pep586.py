@@ -8,16 +8,8 @@ Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignList,
-    HintSignLiteral,
-)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
+from beartype_test.util.mod.pytmodimport import (
+    import_module_typing_any_attr_or_none_safe)
 from enum import Enum
 
 # ....................{ ENUMERATIONS                      }....................
@@ -41,18 +33,31 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 586. In this case, reduce to a noop.
-    if not IS_PYTHON_AT_LEAST_3_9:
+    # "typing.Literal" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise.
+    Literal = import_module_typing_any_attr_or_none_safe('Literal')
+
+    # If this factory is unimportable, the active Python interpreter fails to
+    # support PEP 593. In this case, reduce to a noop.
+    if Literal is None:
+        # print('Ignoring "Literal"...')
         return
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 586.
+    # print('Testing "Literal"...')
+    # Else, this interpreter supports PEP 593.
 
     # ..................{ IMPORTS                           }..................
-    # Defer Python >= 3.9-specific imports.
-    from typing import (
-        Literal,
+    # Defer attribute-dependent imports.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignList,
+        HintSignLiteral,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
+    from typing import List
 
     # ..................{ TUPLES                            }..................
     # Add PEP 586-specific test type hints to this tuple global.
@@ -62,6 +67,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Literal[None],
             pep_sign=HintSignLiteral,
+            # "typing_extensions.Literal" type hints define a non-standard
+            # "__values__" rather than standard "__args__" dunder tuple under
+            # Python 3.6 – for unknown and presumably indefensible reasons.
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # "None" singleton defined by the same syntax.
                 HintPithSatisfiedMetadata(None),
@@ -85,6 +94,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Literal[True],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Boolean constant defined by the same syntax.
                 HintPithSatisfiedMetadata(True),
@@ -115,6 +125,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Literal[0x2a],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Integer constant defined by the same syntax.
                 HintPithSatisfiedMetadata(0x2a),
@@ -146,6 +157,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Literal[
                 b"Worthy, 'vain truthiness of (very invective-elected)"],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Byte string constant defined by the same syntax.
                 HintPithSatisfiedMetadata(
@@ -183,6 +195,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Literal['Thanklessly classed, nominal'],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Unicode string constant defined by the same syntax.
                 HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
@@ -217,10 +230,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Literal[
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Enumeration member accessed by the same syntax.
                 HintPithSatisfiedMetadata(
-                    _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF),
+                    _MasterlessDecreeVenomlessWhich.
+                    NOMENCLATURE_WEATHER_VANES_OF),
                 # Enumeration member accessed by different syntax but
                 # semantically equal to the same enumeration member.
                 HintPithSatisfiedMetadata(
@@ -229,7 +244,9 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # Enumeration member *NOT* equal to the same member.
                 HintPithUnsatisfiedMetadata(
-                    pith=_MasterlessDecreeVenomlessWhich.NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A,
+                    pith=(
+                        _MasterlessDecreeVenomlessWhich.
+                        NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A),
                     # Match that the exception message raised for this object
                     # embeds the representation of the expected literal.
                     exception_str_match_regexes=(
@@ -250,11 +267,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ LITERALS ~ nested                 }................
         # List of literal arbitrary Unicode strings.
         HintPepMetadata(
-            hint=list[Literal[
+            hint=List[Literal[
                 'ç‐omically gnomical whitebellied burden’s empathy of']],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            is_pep585_builtin=True,
             piths_satisfied_meta=(
                 # List of Unicode string constants semantically equal to the
                 # same Unicode string.
@@ -304,6 +320,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF,
             ],
             pep_sign=HintSignLiteral,
+            is_args=IS_PYTHON_AT_LEAST_3_7,
             piths_satisfied_meta=(
                 # Literal objects subscripting this literal union.
                 HintPithSatisfiedMetadata(None),

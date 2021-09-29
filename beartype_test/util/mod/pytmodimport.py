@@ -53,6 +53,7 @@ def import_module_typing_any_attr_or_none_safe(*args, **kwargs) -> Any:
         import_module_typing_attr_or_none,
     )
     from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
+    # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')
 
     # Return either...
     return (
