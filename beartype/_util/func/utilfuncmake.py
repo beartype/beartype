@@ -173,7 +173,7 @@ def make_func(
         #     SyntaxError: invalid syntax
         raise exception_cls(
             f'{func_label} unparseable, as @beartype generated '
-            f'invalid code with "{label_exception(exception)}":\n\n'
+            f'invalid code raising "{label_exception(exception)}":\n\n'
             f'{number_lines(func_code)}'
         ) from exception
 

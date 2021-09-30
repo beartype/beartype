@@ -21,7 +21,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 
 # ....................{ IMPORTS                           }....................
 from beartype_test.util.mod.pytmodtest import (
-    is_package_numpy_typing_ndarray_supported)
+    is_package_numpy_typing_ndarray_deep)
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -35,12 +35,13 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If @beartype does *NOT* support the "numpy.typing.NDArray" type hint
-    # under the active Python, reduce to a noop.
-    if not is_package_numpy_typing_ndarray_supported():
+    # ..................{ UNSUPPORTED                       }..................
+    # If beartype does *NOT* deeply support "numpy.typing.NDArray" type hints
+    # under the active Python interpreter, silently reduce to a noop.
+    if not is_package_numpy_typing_ndarray_deep():
         return
-    # If @beartype supports the "numpy.typing.NDArray" type hint under the
-    # active Python.
+    # Else, beartype deeply supports "numpy.typing.NDArray" type hints under
+    # the active Python interpreter.
 
     # ..................{ IMPORTS                           }..................
     # Defer attribute-dependent imports.
@@ -53,10 +54,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HINT_ATTR_TUPLE,
     )
     from beartype._util.mod.utilmodimport import import_module_typing_any_attr
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_8,
-        IS_PYTHON_AT_LEAST_3_9,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -77,7 +75,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignNumpyArray,
             # "NDArray" is implemented as:
             # * Under Python >= 3.9, a PEP 585-compliant generic.
-            # * Under Python < 3.9, a pure-Python generic backport.
+            # * Under Python >= 3.8, a pure-Python generic backport.
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
@@ -165,14 +163,6 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
-
-    # ..................{ VALIDATORS                        }..................
-    # If the active Python interpreter does *NOT* support Python >= 3.8 and
-    # thus the __class_getitem__() dunder method required for beartype
-    # validators, immediately return.
-    if not IS_PYTHON_AT_LEAST_3_8:
-        return
-    # Else, this interpreter supports beartype validators.
 
     # ..................{ VALIDATORS ~ hints                }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or

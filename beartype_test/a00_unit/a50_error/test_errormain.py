@@ -29,7 +29,7 @@ def test_raise_pep_call_exception() -> None:
     from beartype.roar import (
         BeartypeCallHintPepParamException,
         BeartypeCallHintPepReturnException,
-        BeartypeDecorHintNonPepException,
+        BeartypeDecorHintNonpepException,
     )
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._decor._error.errormain import (
@@ -119,7 +119,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when passed a
     # parameter annotated by an object that is unsupported as a type hint
     # (i.e., is neither PEP-compliant nor -noncompliant).
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='amaranth_symbol',

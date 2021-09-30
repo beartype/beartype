@@ -145,7 +145,7 @@ def generate_code(data: BeartypeData) -> str:
     BeartypeDecorParamNameException
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__bear``.
-    BeartypeDecorHintNonPepException
+    BeartypeDecorHintNonpepException
         If any type hint annotating any parameter of this callable is neither:
 
         * **PEP-compliant** (i.e., :mod:`beartype`-agnostic hint compliant with
@@ -262,7 +262,7 @@ def _code_check_params(data: BeartypeData) -> str:
     BeartypeDecorParamNameException
         If the name of any parameter declared on this callable is prefixed by
         the reserved substring ``__bear``.
-    BeartypeDecorHintNonPepException
+    BeartypeDecorHintNonpepException
         If any type hint annotating any parameter of this callable is neither:
 
         * A PEP-noncompliant type hint.
@@ -416,7 +416,7 @@ def _code_check_return(data: BeartypeData) -> str:
         * A generator *not* annotated by a :attr:`typing.Generator` type hint.
         * An asynchronous generator *not* annotated by a
           :attr:`typing.AsyncGenerator` type hint.
-    :exc:`BeartypeDecorHintNonPepException`
+    :exc:`BeartypeDecorHintNonpepException`
         If the type hint annotating this return (if any) of this callable is
         neither:
 

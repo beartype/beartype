@@ -69,7 +69,7 @@ defined as a tuple rather than a set.
 '''
 
 # ....................{ NON-PEP ~ classes                 }....................
-class NonPepCustom(str):
+class NonpepCustom(str):
     '''
     PEP-noncompliant user-defined class subclassing an arbitrary superclass.
     '''
@@ -77,7 +77,7 @@ class NonPepCustom(str):
     pass
 
 
-class NonPepCustomFakeTyping(object):
+class NonpepCustomFakeTyping(object):
     '''
     PEP-noncompliant user-defined class subclassing an arbitrary superclass
     erroneously masquerading as a :mod:`typing` class.
@@ -92,10 +92,10 @@ class NonPepCustomFakeTyping(object):
 
     def __repr__(self) -> str:
         return 'typing.FakeTypingType'
-NonPepCustomFakeTyping.__module__ = 'typing'
+NonpepCustomFakeTyping.__module__ = 'typing'
 
 # ....................{ NON-PEP ~ sets                    }....................
-# Note that we intentionally omit the "NonPepCustomFakeTyping" class here, as
+# Note that we intentionally omit the "NonpepCustomFakeTyping" class here, as
 # that class masquerades too well as a "typing" class -- so well, in fact, that
 # "beartype._util.hint.pep.utilpeptest" functions are incapable of reasonably
 # distinguishing instances of that class from actual "typing" type hints.
@@ -105,7 +105,7 @@ HINTS_NONPEP = frozenset((
     # Builtin scalar type.
     str,
     # User-defined type.
-    NonPepCustom,
+    NonpepCustom,
     # Beartype cave type.
     NoneType,
     # Non-empty tuple containing two types.

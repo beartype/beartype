@@ -194,8 +194,8 @@ class BeartypeDecorHintTypeException(BeartypeDecorHintException):
 
     pass
 
-# ....................{ DECORATOR ~ hint : nonpep         }....................
-class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
+# ....................{ DECORATOR ~ hint : non-pep        }....................
+class BeartypeDecorHintNonpepException(BeartypeDecorHintException):
     '''
     **Beartype decorator PEP-noncompliant type hint exception.**
 
@@ -215,25 +215,18 @@ class BeartypeDecorHintNonPepException(BeartypeDecorHintException):
     pass
 
 
-class BeartypeDecorHintNonPepNumPyException(BeartypeDecorHintNonPepException):
+class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
     '''
     **Beartype decorator PEP-noncompliant NumPy type hint exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by a
-    **PEP-noncompliant annotations** (i.e., annotations that
-    fail to comply with :mod:`beartype`-specific semantics, including tuple
-    unions and fully-qualified forward references) in a semantic context
-    expecting PEP-noncompliant annotations.
-
-    Tuple unions, for example, are required to contain *only* PEP-noncompliant
-    annotations. This exception is thus raised for callables type-hinted with
-    tuples containing one or more PEP-compliant items (e.g., instances or
-    classes declared by the stdlib :mod:`typing` module) *or* arbitrary objects
-    (e.g., dictionaries, lists, numbers, sets).
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid NumPy type hint** (e.g., ``numpy.typed.NDArray[...]`` type hint
+    subscripted by an invalid number of arguments).
     '''
 
     pass
+
 # ....................{ DECORATOR ~ hint : pep            }....................
 class BeartypeDecorHintPepException(BeartypeDecorHintException):
     '''

@@ -16,7 +16,7 @@ higher-level unit test submodules.
 HINTS_NONPEP_META = []
 '''
 Tuple of **PEP-noncompliant type hint metadata** (i.e.,
-:class:`HintNonPepMetadata` instances describing test-specific PEP-noncompliant
+:class:`HintNonpepMetadata` instances describing test-specific PEP-noncompliant
 type hints with metadata leveraged by various testing scenarios).
 '''
 
@@ -35,7 +35,7 @@ def _init() -> None:
         _data_nonpep484,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintNonPepMetadata)
+        HintNonpepMetadata)
 
     # Submodule globals to be redefined below.
     global HINTS_NONPEP_META
@@ -59,10 +59,10 @@ def _init() -> None:
 
     # Assert this global to contain only instances of its expected dataclass.
     assert (
-        isinstance(hint_nonpep_meta, HintNonPepMetadata)
+        isinstance(hint_nonpep_meta, HintNonpepMetadata)
         for hint_nonpep_meta in HINTS_NONPEP_META
     ), (f'{repr(HINTS_NONPEP_META)} not iterable of '
-        f'"HintNonPepMetadata" instances.')
+        f'"HintNonpepMetadata" instances.')
 
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.

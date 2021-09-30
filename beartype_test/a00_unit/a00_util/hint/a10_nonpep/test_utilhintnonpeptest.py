@@ -26,7 +26,7 @@ def test_die_unless_hint_nonpep() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintNonPepException
+    from beartype.roar import BeartypeDecorHintNonpepException
     from beartype._util.hint.nonpep.utilnonpeptest import (
         die_unless_hint_nonpep)
     from beartype_test.a00_unit.data.hint.data_hint import (
@@ -38,12 +38,12 @@ def test_die_unless_hint_nonpep() -> None:
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in NOT_HINTS_NONPEP:
-        with raises(BeartypeDecorHintNonPepException):
+        with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(not_hint_nonpep)
 
     # Assert this function rejects unhashable objects.
     for not_hint_unhashable in NOT_HINTS_UNHASHABLE:
-        with raises(BeartypeDecorHintNonPepException):
+        with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(not_hint_unhashable)
 
 # ....................{ TESTS ~ tester                    }....................

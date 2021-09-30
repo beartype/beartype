@@ -15,16 +15,19 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
 
 # ....................{ TESTS                             }....................
+# Ignore non-fatal NumPy warnings emitted by this unit test under Python < 3.8.
 def test_get_hint_reduced() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintget.get_hint_reduced` getter.
     '''
 
     # Defer heavyweight imports.
-    from beartype.roar import BeartypeDecorHintNonPepNumPyException
+    from beartype.roar import (
+        BeartypeDecorHintNonpepNumpyException,
+        BeartypeDecorHintNonpepNumpyWarning,
+    )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
     from beartype._data.hint.pep.sign.datapepsigns import (
@@ -38,7 +41,10 @@ def test_get_hint_reduced() -> None:
     from beartype_test.util.mod.pytmodimport import (
         import_module_typing_any_attr_or_none_safe)
     from beartype_test.util.mod.pytmodtest import (
-        is_package_numpy_typing_ndarray_supported)
+        is_package_numpy,
+        is_package_numpy_typing_ndarray_deep,
+    )
+    from pytest import raises, warns
 
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
@@ -80,22 +86,31 @@ def test_get_hint_reduced() -> None:
                 str, IsEqual['In their noonday dreams.']]
             assert get_hint_reduced(leaves_when_laid) is leaves_when_laid
 
-    # If the "numpy.typing.NDArray" type hint is supported by beartype under
-    # the active Python interpreter...
-    if is_package_numpy_typing_ndarray_supported():
+    # If a recent version of NumPy is importable...
+    if is_package_numpy():
         # Defer third party imports.
-        from numpy import float64
+        from numpy import float64, ndarray
         from numpy.typing import NDArray
 
-        # Beartype validator reduced from a "numpy.typing.NDArray" type hint.
-        ndarray_reduced = get_hint_reduced(NDArray[float64])
+        # If beartype deeply supports "numpy.typing.NDArray" type hints under
+        # the active Python interpreter...
+        if is_package_numpy_typing_ndarray_deep():
+            # Beartype validator reduced from such a hint.
+            ndarray_reduced = get_hint_reduced(NDArray[float64])
 
-        # Assert this validator is a "typing{_extensions}.Annotated" type hint.
-        assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
+            # Assert this validator is a "typing{_extensions}.Annotated" hint.
+            assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
 
-        # Assert that reducing a "numpy.typing.NDArray" type hint erroneously
-        # subscripted by an object *NOT* reducible to a data type raises the
-        # expected exception.
-        with raises(BeartypeDecorHintNonPepNumPyException):
-            get_hint_reduced(NDArray[
-                'From my wings are shaken the dews that waken'])
+            # Assert that reducing a "numpy.typing.NDArray" type hint
+            # erroneously subscripted by an object *NOT* reducible to a data
+            # type raises the expected exception.
+            with raises(BeartypeDecorHintNonpepNumpyException):
+                get_hint_reduced(NDArray[
+                    'From my wings are shaken the dews that waken'])
+        # Else, beartype only shallowly supports "numpy.typing.NDArray" type
+        # hints under the active Python interpreter. In this case...
+        else:
+            # Assert this getter reduces such a hint to the untyped NumPy array
+            # class "numpy.ndarray" with a non-fatal warning.
+            with warns(BeartypeDecorHintNonpepNumpyWarning):
+                assert get_hint_reduced(NDArray[float64]) is ndarray

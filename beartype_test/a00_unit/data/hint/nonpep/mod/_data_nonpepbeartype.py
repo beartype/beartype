@@ -18,7 +18,7 @@ These hints include:
 # ....................{ IMPORTS                           }....................
 import sys
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintNonPepMetadata,
+    HintNonpepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -69,7 +69,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # isinstanceable classes).
 
         # Tuple union of one isinstanceable class.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=(str,),
             piths_satisfied_meta=(
                 # String constant.
@@ -95,7 +95,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Tuple union of two or more isinstanceable classes.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=(int, str),
             piths_satisfied_meta=(
                 # Integer constant.
@@ -125,7 +125,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ TYPE ~ builtin                    }................
         # Builtin type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=str,
             piths_satisfied_meta=(
                 # String constant.
@@ -163,7 +163,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # * The "beartype._data.cls.datacls.TYPES_BUILTIN_FAKE" set.
 
         # Fake builtin ellipsis type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=EllipsisType,
             piths_satisfied_meta=(
                 # Ellipsis singleton.
@@ -177,7 +177,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin pure-Python function type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=FunctionType,
             piths_satisfied_meta=(
                 # Pure-Python function.
@@ -190,7 +190,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin C-based function type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=FunctionOrMethodCType,
             piths_satisfied_meta=(
                 # C-based function.
@@ -204,7 +204,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin bound method type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=MethodBoundInstanceOrClassType,
             piths_satisfied_meta=(
                 # Bound method.
@@ -218,7 +218,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin module type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=ModuleType,
             piths_satisfied_meta=(
                 # Imported module.
@@ -232,7 +232,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin "None" singleton type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=NoneType,
             piths_satisfied_meta=(
                 # "None" singleton.
@@ -246,7 +246,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # Fake builtin  type.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=NotImplementedType,
             piths_satisfied_meta=(
                 # "NotImplemented" singleton.

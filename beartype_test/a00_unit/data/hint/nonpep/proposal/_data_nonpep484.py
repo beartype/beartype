@@ -18,7 +18,7 @@ PEP-noncompliant type hints include:
 
 # ....................{ IMPORTS                           }....................
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintNonPepMetadata,
+    HintNonpepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
@@ -53,7 +53,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ NAMEDTUPLE                        }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
-        HintNonPepMetadata(
+        HintNonpepMetadata(
             hint=NamedTupleType,
             piths_satisfied_meta=(
                 # Named tuple containing correctly typed items.

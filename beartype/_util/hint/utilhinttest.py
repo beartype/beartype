@@ -73,7 +73,7 @@ def die_unless_hint(
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintNonPepException
+    BeartypeDecorHintNonpepException
         If this object is neither:
 
         * A PEP-noncompliant type hint.

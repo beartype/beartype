@@ -171,7 +171,7 @@ def test_add_func_scope_types_fail() -> None:
     '''
 
     # Defer heavyweight imports
-    from beartype.roar import BeartypeDecorHintNonPepException
+    from beartype.roar import BeartypeDecorHintNonpepException
     from beartype._decor._code._pep._pepscope import add_func_scope_types
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
@@ -182,7 +182,7 @@ def test_add_func_scope_types_fail() -> None:
     func_scope = {}
 
     # Assert this function raises the expected exception for unhashable tuples.
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(
             types=(
                 int, str, {
@@ -200,7 +200,7 @@ def test_add_func_scope_types_fail() -> None:
         )
 
     # Assert this function raises the expected exception for non-tuples.
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(
             types='\n'.join((
                 'I will arise and go now, and go to Innisfree,',
@@ -212,12 +212,12 @@ def test_add_func_scope_types_fail() -> None:
         )
 
     # Assert this function raises the expected exception for empty tuples.
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(types=(), func_scope=func_scope)
 
     # Assert this function raises the expected exception for tuples containing
     # one or more PEP-compliant types.
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(
             types=(int, Pep484GenericTypevaredSingle, str,),
             func_scope=func_scope,
@@ -226,7 +226,7 @@ def test_add_func_scope_types_fail() -> None:
     # Assert this function raises the expected exception for tuples containing
     # one or more PEP 560-compliant classes whose metaclasses define an
     # __instancecheck__() dunder method to unconditionally raise exceptions.
-    with raises(BeartypeDecorHintNonPepException):
+    with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(
             types=(bool, NonIsinstanceableClass, float,),
             func_scope=func_scope,

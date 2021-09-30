@@ -172,11 +172,11 @@ def test_nonpep_param_hint_invalid_fail() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintNonPepException
+    from beartype.roar import BeartypeDecorHintNonpepException
 
     # Assert that type-checking a function with an integer parameter annotation
     # raises the expected exception.
-    with raises_uncached(BeartypeDecorHintNonPepException):
+    with raises_uncached(BeartypeDecorHintNonpepException):
         @beartype
         def nurgle(nurgling: str, great_unclean_one: 0x8BADF00D) -> str:
             return nurgling + str(great_unclean_one)
@@ -211,11 +211,11 @@ def test_nonpep_fail_return_hint_nonpep() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintNonPepException
+    from beartype.roar import BeartypeDecorHintNonpepException
 
     # Assert the expected exception from attempting to type-check a function
     # with a return annotation that is *NOT* a supported type.
-    with raises_uncached(BeartypeDecorHintNonPepException):
+    with raises_uncached(BeartypeDecorHintNonpepException):
         @beartype
         def tzeentch(disc: str, lord_of_change: str) -> 0xB16B00B5:
             return len(disc + lord_of_change)

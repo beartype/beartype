@@ -28,7 +28,7 @@ def test_die_unless_hint() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import (
-        BeartypeDecorHintNonPepException,
+        BeartypeDecorHintNonpepException,
         BeartypeDecorHintPepUnsupportedException,
     )
     from beartype._util.hint.utilhinttest import die_unless_hint
@@ -54,7 +54,7 @@ def test_die_unless_hint() -> None:
     # Assert this function rejects objects *NOT* supported as either
     # PEP-noncompliant or -compliant type hints.
     for non_hint in NOT_HINTS:
-        with raises(BeartypeDecorHintNonPepException):
+        with raises(BeartypeDecorHintNonpepException):
             die_unless_hint(non_hint)
 
 

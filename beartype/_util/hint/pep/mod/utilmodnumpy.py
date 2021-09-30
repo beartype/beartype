@@ -43,7 +43,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import BeartypeDecorHintNonPepNumPyException
+from beartype.roar import (
+    BeartypeDecorHintNonpepNumpyException,
+    BeartypeDecorHintNonpepNumpyWarning,
+)
 from beartype.vale import IsAttr, IsEqual, IsSubclass
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.cache.utilcachecall import callable_cached
@@ -52,8 +55,10 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.utilobject import is_object_hashable
 from typing import Any, FrozenSet
+from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -104,7 +109,7 @@ def reduce_hint_numpy_ndarray(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintNonPepNumPyException`
+    :exc:`BeartypeDecorHintNonpepNumpyException`
         If either:
 
         * The active Python interpreter targets Python < 3.9 and either:
@@ -149,7 +154,7 @@ def reduce_hint_numpy_ndarray(
     # Note that this memoized function is intentionally passed positional
     # rather than keyword arguments for minor efficiency gains.
     typing_annotated = import_module_typing_any_attr(
-        'Annotated', BeartypeDecorHintNonPepNumPyException)
+        'Annotated', BeartypeDecorHintNonpepNumpyException)
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
@@ -157,12 +162,32 @@ def reduce_hint_numpy_ndarray(
 
     # If this hint is *NOT* a typed NumPy array, raise an exception.
     if hint_sign is not HintSignNumpyArray:
-        raise BeartypeDecorHintNonPepNumPyException(
-            f'{exception_prefix}{repr(hint)} not typed NumPy array '
+        raise BeartypeDecorHintNonpepNumpyException(
+            f'{exception_prefix}type hint {repr(hint)} not typed NumPy array '
             f'(i.e., subscription of the '
             f'"numpy.typing.NDArray" type hint factory).'
         )
     # Else, this hint is a typed NumPy array.
+
+    # If the active Python interpreter does *NOT* support Python >= 3.8 and
+    # thus the __class_getitem__() dunder method required by the beartype
+    # validators to which this function reduces typed NumPy arrays...
+    if not IS_PYTHON_AT_LEAST_3_8:
+        # Emit a non-fatal warning informing the user of this issue.
+        warn(
+            (
+                f'{exception_prefix}typed NumPy array {repr(hint)} '
+                f'reduced to untyped NumPy array {repr(ndarray)} '
+                f'under Python < 3.8 (i.e., due to lack of support for '
+                f'PEP 560-compliant __class_getitem__() dunder methods and '
+                f'thus beartype validators under Python < 3.8).'
+            ),
+            BeartypeDecorHintNonpepNumpyWarning,
+        )
+
+        # Reduce this hint to the untyped "ndarray" class with apologies.
+        return ndarray
+    # Else, this interpreter supports beartype validators.
 
     # Objects subscripting this hint if any *OR* the empty tuple otherwise.
     hint_args = get_hint_pep_args(hint)
@@ -170,7 +195,7 @@ def reduce_hint_numpy_ndarray(
     # If this hint was *NOT* subscripted by exactly two arguments, this hint is
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
-        raise BeartypeDecorHintNonPepNumPyException(
+        raise BeartypeDecorHintNonpepNumpyException(
             f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'not subscripted by exactly two arguments.'
         )
@@ -188,7 +213,7 @@ def reduce_hint_numpy_ndarray(
     # If this hint was *NOT* subscripted by exactly one argument, this subhint
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
-        raise BeartypeDecorHintNonPepNumPyException(
+        raise BeartypeDecorHintNonpepNumpyException(
             f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'data type subhint {repr(hint_dtype_subhint)} '
             f'not subscripted by exactly one argument.'
@@ -252,7 +277,7 @@ def reduce_hint_numpy_ndarray(
         #     >>> NDArray['wut']
         #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
         except Exception as exception:
-            raise BeartypeDecorHintNonPepNumPyException(
+            raise BeartypeDecorHintNonpepNumpyException(
                 f'{exception_prefix}typed NumPy array {repr(hint)} '
                 f'data type {repr(hint_dtype_like)} invalid '
                 f'(i.e., neither data type nor coercible to data type).'

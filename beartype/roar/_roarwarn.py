@@ -68,7 +68,7 @@ class BeartypeDecorHintPepWarning(BeartypeWarning):
 
     Instances of subclasses of this warning are emitted at decoration time from
     the :func:`beartype.beartype` decorator on receiving a callable annotated
-    by suspicious (but *not* necessarily erroneous) PEP-compliant type hints
+    by a suspicious (but *not* necessarily erroneous) PEP-compliant type hint
     warranting non-fatal warnings *without* raising fatal exceptions.
     '''
 
@@ -127,6 +127,36 @@ class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
 #     '''
 #
 #     pass
+
+# ....................{ DECORATOR ~ hint : non-pep        }....................
+class BeartypeDecorHintNonpepWarning(BeartypeWarning):
+    '''
+    Abstract base class of all **beartype decorator PEP-noncompliant type hint
+    warnings.**
+
+    Instances of subclasses of this warning are emitted at decoration time from
+    the :func:`beartype.beartype` decorator on receiving a callable annotated
+    by a suspicious (but *not* necessarily erroneous) PEP-noncompliant type
+    hint warranting non-fatal warnings *without* raising fatal exceptions.
+    '''
+
+    pass
+
+
+class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
+    '''
+    **Beartype decorator PEP-noncompliant NumPy type hint warning.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    suspicious NumPy type hint, including:
+
+    * **Typed NumPy arrays** (i.e., ``numpy.typed.NDArray[...]`` type hints)
+      under Python < 3.8, which this decorator currently reduces to
+      **untyped NumPy arrays** (i.e., :class:`numpy.ndarray`).
+    '''
+
+    pass
 
 # ....................{ MODULE                            }....................
 class BeartypeModuleWarning(BeartypeWarning):
@@ -256,5 +286,3 @@ class _BeartypeUtilCallableCachedKwargsWarning(_BeartypeUtilCallableWarning):
     '''
 
     pass
-
-

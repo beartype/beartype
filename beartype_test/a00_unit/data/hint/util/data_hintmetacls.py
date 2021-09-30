@@ -20,7 +20,7 @@ _NoneTypeOrType = (type, type(None))
 '''
 
 # ....................{ CLASSES ~ hint : superclass       }....................
-class HintNonPepMetadata(object):
+class HintNonpepMetadata(object):
     '''
     **PEP-noncompliant type hint metadata** (i.e., dataclass whose instance
     variables describe a type hint that is either PEP-noncompliant or *mostly*
@@ -110,7 +110,7 @@ class HintNonPepMetadata(object):
         ))
 
 # ....................{ CLASSES ~ hint : subclass         }....................
-class HintPepMetadata(HintNonPepMetadata):
+class HintPepMetadata(HintNonpepMetadata):
     '''
     **PEP-compliant type hint metadata** (i.e., dataclass whose instance
     variables describe a PEP-compliant type hint with metadata applicable to
@@ -174,7 +174,7 @@ class HintPepMetadata(HintNonPepMetadata):
         Defaults to ``None``.
 
     All remaining keyword arguments are passed as is to the superclass
-    :meth:`HintNonPepMetadata.__init__` method.
+    :meth:`HintNonpepMetadata.__init__` method.
     '''
 
     # ..................{ INITIALIZERS                      }..................

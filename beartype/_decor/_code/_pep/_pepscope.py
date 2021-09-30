@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintNonPepException
+from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._decor._cache.cachetype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
@@ -109,7 +109,7 @@ def add_func_scope_type_or_types(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintNonPepException`
+    :exc:`BeartypeDecorHintNonpepException`
         If this hint is either:
 
         * Neither a class nor tuple.
@@ -308,7 +308,7 @@ def add_func_scope_types(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintNonPepException`
+    :exc:`BeartypeDecorHintNonpepException`
         If this hint is either:
 
         * Neither a set nor tuple.
@@ -328,13 +328,13 @@ def add_func_scope_types(
 
     # If this object is neither a set nor tuple, raise an exception.
     if not isinstance(types, _SET_OR_TUPLE):
-        raise BeartypeDecorHintNonPepException(
+        raise BeartypeDecorHintNonpepException(
             f'{exception_prefix}{repr(types)} neither set nor tuple.')
     # Else, this object is either a set or tuple.
     #
     # If this collection is empty, raise an exception.
     elif not types:
-        raise BeartypeDecorHintNonPepException(f'{exception_prefix}empty.')
+        raise BeartypeDecorHintNonpepException(f'{exception_prefix}empty.')
     # Else, this collection is non-empty.
 
     # If any item in this collection is *NOT* a standard class, raise an

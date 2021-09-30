@@ -67,7 +67,7 @@ def get_hint_reduced(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintNonPepNumPyException`
+    :exc:`BeartypeDecorHintNonpepNumpyException`
         See the
         :func:`beartype._util.hint.pep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
         function for further details.

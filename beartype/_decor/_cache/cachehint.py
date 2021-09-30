@@ -161,7 +161,7 @@ def coerce_hint_pep(
 
     Raises
     ----------
-    BeartypeDecorHintNonPepException
+    BeartypeDecorHintNonpepException
         If this object is neither:
 
         * A PEP-noncompliant type hint.
@@ -384,7 +384,7 @@ def cache_hint_nonpep563(
 
     Raises
     ----------
-    BeartypeDecorHintNonPepException
+    BeartypeDecorHintNonpepException
         If this object is neither:
 
         * A PEP-noncompliant type hint.

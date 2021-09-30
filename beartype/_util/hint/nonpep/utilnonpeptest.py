@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    from beartype._util.mod.utilmodule import die_unless_module_attr_name
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorHintNonPepException
+from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
@@ -36,7 +36,7 @@ def die_if_hint_nonpep(
 
     # Optional parameters.
     is_str_valid: bool = True,
-    exception_cls: TypeException = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -61,7 +61,7 @@ def die_if_hint_nonpep(
           or tuple of classes.
     exception_cls : type[Exception]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonPepException`.
+        :class:`BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -114,7 +114,7 @@ def die_unless_hint_nonpep(
 
     # Optional parameters.
     is_str_valid: bool = True,
-    exception_cls: TypeException = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -139,7 +139,7 @@ def die_unless_hint_nonpep(
           or tuple of classes.
     exception_cls : type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonPepException`.
+        :class:`BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -227,7 +227,7 @@ def die_unless_hint_nonpep_type(
     hint: type,
 
     # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -245,7 +245,7 @@ def die_unless_hint_nonpep_type(
         Object to be validated.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonPepException`.
+        :class:`BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -308,7 +308,7 @@ def die_unless_hint_nonpep_tuple(
 
     # Optional parameters.
     is_str_valid: bool = False,
-    exception_cls: TypeException = BeartypeDecorHintNonPepException,
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -332,7 +332,7 @@ def die_unless_hint_nonpep_tuple(
         * ``False``, this tuple is valid only when containing classes.
     exception_cls : type, optional
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonPepException`.
+        :class:`BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
