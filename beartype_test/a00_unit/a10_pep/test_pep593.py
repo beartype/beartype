@@ -17,23 +17,32 @@ This submodule unit tests :pep:`593` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-def test_is_hint_pep593() -> None:
+def test_die_unless_hint_pep593() -> None:
     '''
-    Test the :beartype._util.hint.pep.proposal.utilpep593.is_hint_pep593`
-    tester.
+    Test the
+    :beartype._util.hint.pep.proposal.utilpep593.die_unless_hint_pep593`
+    validator.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
-        is_hint_pep593)
+        die_unless_hint_pep593)
+    from beartype_test.util.mod.pytmodimport import (
+        import_module_typing_any_attr_or_none_safe)
+    from pytest import raises
     from typing import Optional
 
-    # If the active Python interpreter targets at least Python >= 3.9 and thus
-    # supports PEP 593, assert this tester accepts annotated type hints.
-    if IS_PYTHON_AT_LEAST_3_9:
-        from typing import Annotated
-        assert is_hint_pep593(Annotated[Optional[str], int]) is True
+    # "typing.Annotated" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise.
+    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
 
-    # Assert this tester rejects unannotated type hints in either case.
-    assert is_hint_pep593(Optional[str]) is False
+    # If this factory exists, assert this validator avoids raising exceptions
+    # for a type hint subscripting this factory.
+    if Annotated is not None:
+        die_unless_hint_pep593(Annotated[Optional[str], int])
+
+    # Assert this validator raises the expected exception for an arbitrary
+    # PEP-compliant type hint *NOT* subscripting this factory.
+    with raises(BeartypeDecorHintPep593Exception):
+        die_unless_hint_pep593(Optional[str])

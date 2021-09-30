@@ -284,6 +284,8 @@ def get_hint_pep484585_generic_bases_unerased(
     # * If this generic is PEP 484-compliant, the "typing" module.
     # * If this generic is PEP 585-compliant, CPython or PyPy itself.
     if not hint_pep_generic_bases_unerased:
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
         raise exception_cls(
             f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
             f'subclasses no superclasses.'

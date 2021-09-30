@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.utiltyping import TypeException
 from beartype._vale._valesub import _SubscriptedIs
 from typing import Any, Optional, Tuple
 
@@ -20,17 +22,31 @@ from typing import Any, Optional, Tuple
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ VALIDATORS                        }....................
-#FIXME: Unit test us up, please.
-def die_unless_hint_pep593(hint: object) -> None:
+#FIXME: Pass "exception_prefix" to all calls of this validator.
+def die_unless_hint_pep593(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep593Exception,
+    exception_prefix: str = '',
+) -> None:
     '''
-    Raise an exception unless the passed object is a :pep:`593`-compliant
-    **type metahint** (i.e., subscription of the :attr:`typing.Annotated`
-    singleton).
+    Raise an exception of the passed type unless the passed object is a
+    :pep:`593`-compliant **type metahint** (i.e., subscription of either the
+    :attr:`typing.Annotated` or :attr:`typing_extensions.Annotated` type hint
+    factories).
 
     Parameters
     ----------
     hint : object
         Object to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep593Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Raises
     ----------
@@ -38,50 +54,20 @@ def die_unless_hint_pep593(hint: object) -> None:
         If this object is *not* a :pep:`593`-compliant type metahint.
     '''
 
-    # If this hint is *NOT* PEP 593-compliant, raise an exception.
-    if not is_hint_pep593(hint):
-        raise BeartypeDecorHintPep593Exception(
-            f'PEP 593 type hint {repr(hint)} not "typing.Annotated".')
-
-# ....................{ TESTERS                           }....................
-#FIXME: This tester is now trivially silly. Excise as follows:
-#* Replace all calls to this tester with tests resembling:
-#      get_hint_pep_sign_or_none(hint) is HintSignAnnotated
-#* Excise this tester.
-def is_hint_pep593(hint: object) -> bool:
-    '''
-    ``True`` only if the passed object is a :pep:`593`-compliant **type
-    metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
-
-    This tester is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a :pep:`593`-compliant user-defined
-        type metahint.
-    '''
-
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_sign_or_none)
 
-    # Return true only if the machine-readable representation of this object
-    # implies this object to be a PEP 593-compliant type hint hint.
-    #
-    # Note that this approach has been intentionally designed to apply to
-    # arbitrary and hence possibly PEP-noncompliant type hints. Notably, this
-    # approach avoids the following equally applicable but considerably less
-    # efficient heuristic:
-    #    return is_hint_pep(hint) and get_hint_pep_sign(hint) is HintSignAnnotated
-    return get_hint_pep_sign_or_none(hint) is HintSignAnnotated
+    # If this hint is *NOT* PEP 593-compliant, raise an exception.
+    if get_hint_pep_sign_or_none(hint) is not HintSignAnnotated:
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+        raise exception_cls(
+            f'{exception_prefix}PEP 593 type hint {repr(hint)} '
+            f'neither "typing.Annotated" nor "typing_extensions.Annotated".'
+        )
 
-
+# ....................{ TESTERS                           }....................
 def is_hint_pep593_ignorable_or_none(
     hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''
@@ -182,8 +168,69 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
         return False
 
 # ....................{ GETTERS                           }....................
-#FIXME: Unit test us up, please.
-def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
+# If the active Python interpreter targets Python >= 3.7, define these getters
+# to return standard dunder attributes.
+if IS_PYTHON_AT_LEAST_3_7:
+    #FIXME: Unit test us up, please.
+    def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
+
+        # If this object is *NOT* a metahint, raise an exception.
+        die_unless_hint_pep593(hint)
+        # Else, this object is a metahint.
+
+        # Return the tuple of one or more objects annotating this metahint.
+        return hint.__metadata__
+
+
+    #FIXME: Unit test us up, please.
+    def get_hint_pep593_metahint(hint: Any) -> Any:
+
+        # If this object is *NOT* a metahint, raise an exception.
+        die_unless_hint_pep593(hint)
+        # Else, this object is a metahint.
+
+        # Return the PEP-compliant type hint annotated by this metahint.
+        #
+        # Note that most edge-case PEP-compliant type hints store their data in
+        # hint-specific dunder attributes (e.g., "__supertype__" for new type
+        # aliases, "__forward_arg__" for forward references). Some, however,
+        # coopt and misuse standard dunder attributes commonly used for
+        # entirely different purposes. PEP 593-compliant type metahints are the
+        # latter sort, preferring to store their class in the standard
+        # "__origin__" attribute commonly used to store the origin type of type
+        # hints originating from a standard class rather than in a
+        # metahint-specific dunder attribute.
+        return hint.__origin__
+# Else, the active Python interpreter targets Python 3.6. In this case, define
+# this getter to return slices of the non-standard "__args__" dunder attribute
+# declared by the third-party "typing_extensions.Annotated" type hint factory.
+else:
+    def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
+
+        # If this object is *NOT* a metahint, raise an exception.
+        die_unless_hint_pep593(hint)
+        # Else, this object is a metahint.
+
+        # Return the tuple of one or more objects annotating this metahint.
+        # Since this is Python 3.6, this metahint *MUST* be a subscription of
+        # the third-party "typing_extensions.Annotated" type hint factory.
+        # Under Python 3.6, this factory stores both this tuple *AND* the
+        # the PEP-compliant type hint annotated by this metahint in the same
+        # non-standard "__args__" dunder attribute (in subscription order).
+        return hint.__args__[1:]
+
+
+    def get_hint_pep593_metahint(hint: Any) -> Any:
+
+        # If this object is *NOT* a metahint, raise an exception.
+        die_unless_hint_pep593(hint)
+        # Else, this object is a metahint.
+
+        # Return the PEP-compliant type hint annotated by this metahint.
+        return hint.__args__[0]
+
+
+get_hint_pep593_metadata.__doc__ = (
     '''
     Tuple of one or more arbitrary objects annotating the passed
     :pep:`593`-compliant **type metahint** (i.e., subscription of the
@@ -214,22 +261,12 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
 
     See Also
     ----------
-    :func:`is_hint_pep593`
-        Further commentary.
     :func:`get_hint_pep593_metahint`
         Related getter.
-    '''
-
-    # If this object is *NOT* a metahint, raise an exception.
-    die_unless_hint_pep593(hint)
-    # Else, this object is a metahint.
-
-    # Return the tuple of one or more objects annotating this metahint.
-    return hint.__metadata__
+    ''')
 
 
-#FIXME: Unit test us up, please.
-def get_hint_pep593_metahint(hint: Any) -> Any:
+get_hint_pep593_metahint.__doc__ = (
     '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
@@ -260,24 +297,6 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
 
     See Also
     ----------
-    :func:`is_hint_pep593`
-        Further commentary.
     :func:`get_hint_pep593_metadata`
         Related getter.
-    '''
-
-    # If this object is *NOT* a metahint, raise an exception.
-    die_unless_hint_pep593(hint)
-    # Else, this object is a metahint.
-
-    # Return the standard class annotated by this metahint.
-    #
-    # Note that most edge-case PEP-compliant type hints store their data in
-    # hint-specific dunder attributes (e.g., "__supertype__" for new type
-    # aliases, "__forward_arg__" for forward references). Some, however, coopt
-    # and misuse standard dunder attributes commonly used for entirely
-    # different purposes. PEP 593-compliant type metahints the latter sort,
-    # preferring to store their class in the standard "__origin__" attribute
-    # commonly used to store the origin type of type hints originating from a
-    # standard class rather than in a metahint-specific dunder attribute.
-    return hint.__origin__
+    ''')

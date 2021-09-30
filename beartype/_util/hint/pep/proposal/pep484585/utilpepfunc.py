@@ -36,6 +36,7 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
+#FIXME: Unit test us up, please.
 def reduce_hint_pep484585_func_return(func: Callable) -> object:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the

@@ -143,8 +143,6 @@ def die_unless_hint_pep586(
                 )
 
 # ....................{ GETTERS                           }....................
-#FIXME: Refactor everything accessing ".__args__" to call this instead.
-
 # If the active Python interpreter targets Python >= 3.7, define this getter to
 # return the standard "__args__" dunder tuple.
 if IS_PYTHON_AT_LEAST_3_7:
@@ -198,41 +196,41 @@ else:
         return hint.__values__
 
 
-get_hint_pep586_literals.__doc__ = '''
-Tuple of zero or more literal objects subscripting the passed
-:pep:`586`-compliant type hint (i.e., subscription of either the
-:attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
-factories).
+get_hint_pep586_literals.__doc__ = (
+    '''
+    Tuple of zero or more literal objects subscripting the passed
+    :pep:`586`-compliant type hint (i.e., subscription of either the
+    :attr:`typing.Literal` or :attr:`typing_extensions.Literal` type hint
+    factories).
 
-This getter is intentionally *not* memoized (e.g., by the
-:func:`callable_cached` decorator), as the implementation trivially reduces to
-an efficient one-liner.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
-Caveats
-----------
-**This low-level getter performs no validation of the contents of this tuple.**
-Consider calling the high-level :func:`die_unless_hint_pep586` validator to do
-so before leveraging this tuple elsewhere.
+    Caveats
+    ----------
+    **This low-level getter performs no validation of the contents of this
+    tuple.** Consider calling the high-level :func:`die_unless_hint_pep586`
+    validator to do so before leveraging this tuple elsewhere.
 
-Parameters
-----------
-hint : object
-    :pep:`586`-compliant type hint to be inspected.
-exception_cls : TypeException
-    Type of exception to be raised. Defaults to
-    :exc:`BeartypeDecorHintPep586Exception`.
-exception_prefix : str, optional
-    Human-readable substring prefixing the representation of this object in
-    the exception message. Defaults to the empty string.
+    Parameters
+    ----------
+    hint : object
+        :pep:`586`-compliant type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep586Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
-Returns
-----------
-tuple
-    Tuple of zero or more literal objects subscripting this hint.
+    Returns
+    ----------
+    tuple
+        Tuple of zero or more literal objects subscripting this hint.
 
-Raises
-----------
-:exc:`exception_cls`
-    If this object *not* a subscription of either the :attr:`typing.Literal` or
-    :attr:`typing_extensions.Literal` type hint factories.
-'''
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this object *not* a :pep:`586`-compliant type hint.
+    ''')

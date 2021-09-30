@@ -18,8 +18,6 @@ This submodule unit tests the public API of the private
 from pytest import raises
 
 # ....................{ TESTS                             }....................
-#FIXME: Test *ALL* kinds of hints reduced by this getter, including:
-#* Typed NumPy arrays (e.g., "numpy.typing.NDArray[numpy.float64]").
 def test_get_hint_reduced() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintget.get_hint_reduced` getter.
@@ -73,9 +71,14 @@ def test_get_hint_reduced() -> None:
         # lower-level hint it annotates.
         assert get_hint_reduced(Annotated[int, 42]) is int
 
-        # Assert this getter preserves a beartype-specific metahint as is.
-        leaves_when_laid = Annotated[str, IsEqual['In their noonday dreams.']]
-        assert get_hint_reduced(leaves_when_laid) is leaves_when_laid
+        # If the active Python interpreter targets Python >= 3.8 and thus
+        # supports the __class_getitem__() dunder method required by beartype
+        # validators...
+        if IS_PYTHON_AT_LEAST_3_8:
+            # Assert this getter preserves a beartype-specific metahint as is.
+            leaves_when_laid = Annotated[
+                str, IsEqual['In their noonday dreams.']]
+            assert get_hint_reduced(leaves_when_laid) is leaves_when_laid
 
     # If the "numpy.typing.NDArray" type hint is supported by beartype under
     # the active Python interpreter...

@@ -15,7 +15,6 @@ Test-specific **Python module importation** utilities.
 from typing import Any
 
 # ....................{ IMPORTERS ~ typing                }....................
-#FIXME: Revise docstring for clarity, please.
 def import_module_typing_any_attr_or_none_safe(*args, **kwargs) -> Any:
     '''
     Dynamically import and return the **typing attribute** (i.e., object
