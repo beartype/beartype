@@ -1136,7 +1136,7 @@ Validator Caveats
 
 .. # FIXME: Coerce this into a proper reST note box when Sphinxifying this.
 
-**‼** **Validators require:**
+**‼ Validators require:**
 
 * **Beartype.** Currently, all other static and runtime type checkers silently
   ignore beartype validators during type-checking. This includes mypy_ – which
@@ -1489,37 +1489,38 @@ What Does This Mean?
 
 The `PEP 585`_ standard first introduced by Python 3.9.0 deprecated (obsoleted)
 *most* of the `PEP 484`_ standard first introduced by Python 3.5.0 in the
-official typing_ module, scheduling all deprecated type hints to "...be removed
+official typing_ module. All deprecated type hints are slated to "be removed
 from the typing_ module in the first Python version released 5 years after the
 release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th,
-2020. This means that **most of the "typing" module will be removed sometime in
-2025 or 2026.**
+2020. This means that:
+
+    **‼ Most of the "typing" module will be removed in 2025 or 2026.**
 
 If your codebase currently imports from the typing_ module, *most* of those
-imports will break under an upcoming Python release. This is what beartype is
-shouting about. Bad Changes™ are coming to dismantle your working code.
+imports will break under an upcoming Python release. This is what ``beartype``
+is shouting about. Bad Changes™ are coming to dismantle your working code.
 
 Are We on the Worst Timeline?
 +++++++++++++++++++++++++++++
 
 Season Eight of *Game of Thrones* previously answered this question, but let's
 try again. You have three options to avert the looming disaster that threatens
-to destroy everything you hold precious (in descending order of sanity):
+to destroy everything you hold dear (in ascending order of justice):
 
 #. **Drop Python < 3.9.** The easiest (but worst) solution is to unilaterally
    drop support for Python < 3.9 by globally replacing all deprecated `PEP
    484`_-compliant type hints with equivalent `PEP 585`_-compliant type hints
    (e.g., ``typing.List[int]`` with ``list[int]``). This is really only ideal
    for closed-source proprietary projects with a limited userbase. All other
-   projects should prefer one of the two other solutions outlined below.
+   projects should prefer saner solutions outlined below.
 #. **Hide warnings.** The middle-finger way is to just squelch all deprecation
    warnings with an ignore warning filter targeting the
-   `BeartypeDecorHintPep484DeprecationWarning` category. On the one hand, this
-   will still fail in 2025 or 2026 with fiery explosions and thus only
+   ``BeartypeDecorHintPep484DeprecationWarning`` category. On the one hand,
+   this will still fail in 2025 or 2026 with fiery explosions and thus only
    constitutes a temporary workaround at best. On the other hand, this has the
    obvious advantage of preserving Python < 3.9 support with minimal to no
    refactoring costs. The two ways to do this have differing tradeoffs
-   depending on who you want to suffer – your developers or your userbase:
+   depending on who you want to suffer most – your developers or your userbase:
 
    .. code-block:: python
 
@@ -1543,14 +1544,15 @@ to destroy everything you hold precious (in descending order of sanity):
    to conditionally annotate callables with either `PEP 484`_ *or* `585 <PEP
    585_>`__ type hints depending on the major version of the current Python
    interpreter. Since this is life, the hard way is also the best way – but
-   it's also hard. Unlike the **drop Python 3.9** approach, this approach
+   also hard. Unlike the **drop Python < 3.9** approach, this approach
    preserves backward compatibility with Python < 3.9. Unlike the **hide
-   warnings** approach, this approach preserves forward compatibility with
-   Python ≥ 3.14159265. This approach means defining a new private
-   `{your_package}._typing` submodule resembling:
+   warnings** approach, this approach also preserves forward compatibility with
+   Python ≥ 3.14159265. `Type aliases`_ means defining a new private
+   ``{your_package}._typing`` submodule resembling:
 
    .. code-block:: python
 
+      # In "{your_package}._typing":
       from sys import version_info
       
       if version_info >= (3, 9):
@@ -1560,8 +1562,8 @@ to destroy everything you hold precious (in descending order of sanity):
       else:
           from typing import List, Tuple, ...
 
-   Then "just" globally refactor all deprecated `PEP 484`_ imports from
-   `typing` to `{your_package}._typing` instead: e.g.,
+   Then globally refactor all deprecated `PEP 484`_ imports from typing_ to
+   ``{your_package}._typing`` instead:
 
    .. code-block:: python
 
@@ -1571,9 +1573,9 @@ to destroy everything you hold precious (in descending order of sanity):
       # ...just do this.
       from {your_package}._typing import List, Tuple
 
-   What could be simpler? :superscript:`gagging noises faintly heard`
+   What could be simpler? :superscript:`...gagging noises faintly heard`
 
-Coming up: *shocking revelation that cheaters prosper.*
+Coming up! A shocking revelation that cheaters prosper.
 
 Cheatsheet
 ==========
