@@ -13,15 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
-    BeartypeDecorHintPepDeprecatedWarning,
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
+    BeartypeDecorHintPep484DeprecationWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.datapeprepr import (
-    HINTS_PEP484_REPR_PREFIX_DEPRECATED,
-    HINTS_REPR_PREFIX_DEPRECATED,
-)
+    HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
@@ -317,7 +315,7 @@ def die_if_hint_pep_sign_unsupported(
         )
 
 # ....................{ WARNINGS                          }....................
-#FIXME: Resurrect support for the passed "exception_prefix" parameter. We've
+#FIXME: Resurrect support for the passed "warning_prefix" parameter. We've
 #currently disabled this parameter as it's typically just a non-human-readable
 #placeholder substring *NOT* intended to be exposed to end users (e.g.,
 #"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
@@ -329,7 +327,7 @@ def warn_if_hint_pep_deprecated(
     hint: object,
 
     # Optional parameters.
-    exception_prefix: str = '',
+    warning_prefix: str = '',
 ) -> None:
     '''
     Emit a non-fatal warning if the passed PEP-compliant type hint is
@@ -344,14 +342,15 @@ def warn_if_hint_pep_deprecated(
     ----------
     hint : object
         PEP-compliant type hint to be inspected.
-    exception_prefix : str, optional
+    warning_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         warning message. Defaults to the empty string.
 
     Warns
     ----------
-    BeartypeDecorHintPepDeprecatedWarning
-        If this hint is deprecated.
+    :class:`BeartypeDecorHintPep585DeprecationWarning`
+        If this hint is a :pep:`484`-compliant type hint deprecated by
+        :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
     '''
 
     # Substring of the machine-readable representation of this hint preceding
@@ -362,44 +361,33 @@ def warn_if_hint_pep_deprecated(
     # optimally efficient means of parsing trivial prefixes.
     hint_bare_repr, _, _ = repr(hint).partition('[')
 
-    # If this representation is deprecated...
-    if hint_bare_repr in HINTS_REPR_PREFIX_DEPRECATED:
-        #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
-        #FIXME: Unit test that this string contains *NO* non-human-readable
-        #placeholder substrings. Note that the existing
-        #"beartype_test.a00_unit.decor.code.test_codemain" submodule contains
-        #relevant logic currently disabled for reasons that hopefully no longer
-        #apply. *Urgh!*
+    #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
+    #FIXME: Unit test that this string contains *NO* non-human-readable
+    #placeholder substrings. Note that the existing
+    #"beartype_test.a00_unit.decor.code.test_codemain" submodule contains
+    #relevant logic currently disabled for reasons that hopefully no longer
+    #apply. *Urgh!*
+    # assert isinstance(exception_prefix, str), f'{repr(exception_prefix)} not string.'
 
-        # assert isinstance(exception_prefix, str), f'{repr(exception_prefix)} not string.'
-        #
-        # # Warning message to be emitted.
-        # warning_message = f'{exception_prefix}PEP type hint {repr(hint)} deprecated'
-
-        # Warning message to be emitted.
-        warning_message = f'Type hint {repr(hint)} deprecated'
-
-        # If this sign uniquely identifies PEP 484-compliant type hints
-        # originating from origin types (e.g., "typing.List[int]"), this sign
-        # has been deprecated by the equivalent PEP 585-compliant sign (e.g.,
-        # "list[int]"). In this case, suffix this warning message with
-        # pragmatic suggestions for resolving this deprecation.
-        if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
-            warning_message += (
-                ' by PEP 585. To resolve this, globally replace this hint by '
-                'the equivalent PEP 585 type hint '
-                '(e.g., "typing.List[int]" by "list[int]"). See also:\n'
-                '    https://www.python.org/dev/peps/pep-0585'
-            )
-        # Else, this sign is of unknown deprecation. In this case, simply
-        # terminate this unterminated sentence fragment as is.
-        else:
-            warning_message += '.'
-
-        # Emit this warning.
-        # print(f'Emitting {exception_prefix}hint {repr(hint)} deprecation warning...')
-        warn(warning_message, BeartypeDecorHintPepDeprecatedWarning)
-    # Else, this sign is *NOT* deprecated. In this case, reduce to a noop.
+    # If this hint is a PEP 484-compliant type hint originating from an origin
+    # type (e.g., "typing.List[int]"), this hint has been deprecated by the
+    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
+    # emit a non-fatal PEP 585-specific deprecation warning.
+    if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
+        warn(
+            (
+                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 and '
+                f'slated for removal in the first Python version '
+                f'released after October 5th, 2025. To resolve this, '
+                f'either drop Python < 3.9 support and globally replace this '
+                f'hint by the equivalent PEP 585 type hint '
+                f'(e.g., "typing.List[int]" by "list[int]") or see this '
+                f'discussion topic for saner and more portable solutions:\n'
+                f'    https://github.com/beartype/beartype#pep-484-deprecations'
+            ),
+            BeartypeDecorHintPep484DeprecationWarning,
+        )
+    # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
 
 
 #FIXME: Unit test us up.

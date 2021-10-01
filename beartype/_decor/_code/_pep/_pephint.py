@@ -280,7 +280,7 @@ def pep_code_check_hint(
           mapping from the name to value of each attribute referenced in the
           signature) of this wrapper function needed for this type-checking.
         * ``hint_forwardrefs_class_basename`` is a tuple of the unqualified
-          classnames of `PEP 484`_-compliant relative forward references
+          classnames of :pep:`484`-compliant relative forward references
           visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
           given the root hint ``Union['MuhClass', List['YoClass']]``).
 
@@ -291,16 +291,13 @@ def pep_code_check_hint(
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintPepDeprecatedWarning
-        If one or more PEP-compliant type hints visitable from this object are
-        deprecated.
     BeartypeDecorHintPep484Exception
         If one or more PEP-compliant type hints visitable from this object are
         nested :attr:`typing.NoReturn` child hints, since
         :attr:`typing.NoReturn` is valid *only* as a non-nested return hint.
     BeartypeDecorHintPep593Exception
         If one or more PEP-compliant type hints visitable from this object
-        subscript the `PEP 593`_-compliant :class:`typing.Annotated` class such
+        subscript the :pep:`593`-compliant :class:`typing.Annotated` class such
         that:
 
         * The second argument subscripting that class is an instance of the
@@ -308,10 +305,11 @@ def pep_code_check_hint(
         * One or more further arguments subscripting that class are *not*
           instances of the :class:`beartype.vale.Is` class.
 
-    .. PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. PEP 593:
-       https://www.python.org/dev/peps/pep-0593
+    Warns
+    ----------
+    BeartypeDecorHintPep484DeprecationWarning
+        If one or more :pep:`484`-compliant type hints visitable from this
+        object have been deprecated by :pep:`585`.
     '''
 
     # ..................{ HINT ~ root                       }..................
@@ -787,7 +785,7 @@ def pep_code_check_hint(
             # If this hint is deprecated, emit a non-fatal warning.
             # print(f'Testing {hint_curr_exception_prefix} hint {repr(hint_curr)} for deprecation...')
             warn_if_hint_pep_deprecated(
-                hint=hint_curr, exception_prefix=hint_curr_exception_prefix)
+                hint=hint_curr, warning_prefix=hint_curr_exception_prefix)
 
             # Tuple of all arguments subscripting this hint if any *OR* the
             # empty tuple otherwise (e.g., if this hint is its own unsubscripted

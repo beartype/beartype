@@ -75,30 +75,6 @@ class BeartypeDecorHintPepWarning(BeartypeWarning):
     pass
 
 
-class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
-    '''
-    **Beartype decorator deprecated PEP-compliant type hint warning.**
-
-    This warning is emitted at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **deprecated PEP-compliant type hints** (i.e., type hints
-    compliant with outdated PEPs that have since been obsoleted by recent
-    PEPs), including:
-
-    * If the active Python interpreter targets at least Python >= 3.9 and thus
-      supports `PEP 585`_, outdated `PEP 484`_-compliant type hints (e.g.,
-      ``typing.List[int]``) that have since been obsoleted by the equivalent
-      `PEP 585`_-compliant type hints (e.g., ``list[int]``).
-
-    .. _PEP 484:
-       https://www.python.org/dev/peps/pep-0484
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
-    '''
-
-    pass
-
-
 #FIXME: Consider removal.
 # class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
 #     '''
@@ -127,6 +103,53 @@ class BeartypeDecorHintPepDeprecatedWarning(BeartypeDecorHintPepWarning):
 #     '''
 #
 #     pass
+
+# ....................{ DECORATOR ~ hint : pep : deprecate}....................
+class BeartypeDecorHintPepDeprecationWarning(BeartypeDecorHintPepWarning):
+    '''
+    **Beartype decorator PEP-compliant type hint deprecation warning.**
+
+    This warning is emitted at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more **deprecated PEP-compliant type hints** (i.e., type hints
+    compliant with outdated PEPs that have since been obsoleted by recent
+    PEPs), including:
+
+    * If the active Python interpreter targets at least Python >= 3.9 and thus
+      supports :pep:`585`, outdated :pep:`484`-compliant type hints (e.g.,
+      ``typing.List[int]``) that have since been obsoleted by the equivalent
+      :pep:`585`-compliant type hints (e.g., ``list[int]``).
+    '''
+
+    pass
+
+
+#FIXME: Mark as deprecated and schedule for removal, please. For a practical
+#implementation, see:
+#    https://www.python.org/dev/peps/pep-0562/#id8
+BeartypeDecorHintPepDeprecatedWarning = BeartypeDecorHintPepDeprecationWarning
+
+
+class BeartypeDecorHintPep484DeprecationWarning(
+    BeartypeDecorHintPepDeprecationWarning):
+    '''
+    **Beartype decorator** :pep:`585`-mandated **deprecation of**
+    :pep:`484`-compliant **type hint warning.**
+
+    This warning is emitted at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more outdated :pep:`484`-compliant type hints (e.g.,
+    ``typing.List[int]``) that have since been obsoleted by the equivalent
+    :pep:`585`-compliant type hints (e.g., ``list[int]``) if the active Python
+    interpreter targets at least Python >= 3.9 and thus supports :pep:`585`.
+
+    See Also
+    ----------
+    https://github.com/beartype/beartype#pep-585-deprecations
+        Further discussion
+    '''
+
+    pass
 
 # ....................{ DECORATOR ~ hint : non-pep        }....................
 class BeartypeDecorHintNonpepWarning(BeartypeWarning):

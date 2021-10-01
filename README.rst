@@ -530,7 +530,7 @@ Generally, as little as it can while still satisfying the accepted definition
 of "runtime type checker." Specifically, ``beartype`` performs a `one-way
 random walk over the expected data structure of objects passed to and returned
 from @beartype-decorated functions and methods <That's Some Catch, That
-Catch-22_>`__.
+Catch-22_>`__. Basically, ``beartype`` type-checks randomly sampled data.
 
 Consider `the prior example of a function annotated as accepting a
 triply-nested list of integers passed a list containing 1,000 nested lists each
@@ -1455,6 +1455,123 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
     * numpy.integer_, the superclass of all fixed-precision integer dtypes.
     * numpy.floating_, the superclass of all fixed-precision floating-point
       dtypes.
+
+Warnings
+--------
+
+Beartype occasionally emits non-fatal warnings at decoration time. While most
+are self-explanatory, more than a few assume prior knowledge of arcane
+type-hinting standards *or* require non-trivial resolutions warranting further
+discussion. Let's ELI5 this for the good of the common... good.
+
+PEP 484 Deprecations
+~~~~~~~~~~~~~~~~~~~~
+
+Beartype may occasionally emit non-fatal `PEP 484`_ deprecation warnings under
+Python ≥ 3.9 resembling:
+
+.. code-block::
+
+   /home/kumamon/beartype/_util/hint/pep/utilpeptest.py:377: 
+   BeartypeDecorHintPep484DeprecationWarning: PEP 484 type hint
+   typing.List[int] deprecated by PEP 585 and slated for removal in the first
+   Python version released after October 5th, 2025. To resolve this, either
+   drop Python < 3.9 support and globally replace this hint by the equivalent
+   PEP 585 type hint (e.g., "typing.List[int]" by "list[int]") or see this
+   discussion topic for saner and more portable solutions:
+       https://github.com/beartype/beartype#pep-484-deprecations
+
+This is that discussion topic. Let's dissect this like a mantis shrimp
+repeatedly punching out giant kraken.
+
+What Does This Mean?
+++++++++++++++++++++
+
+The `PEP 585`_ standard first introduced by Python 3.9.0 deprecated (obsoleted)
+*most* of the `PEP 484`_ standard first introduced by Python 3.5.0 in the
+official typing_ module, scheduling all deprecated type hints to "...be removed
+from the typing_ module in the first Python version released 5 years after the
+release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th,
+2020. This means that **most of the "typing" module will be removed sometime in
+2025 or 2026.**
+
+If your codebase currently imports from the typing_ module, *most* of those
+imports will break under an upcoming Python release. This is what beartype is
+shouting about. Bad Changes™ are coming to dismantle your working code.
+
+Are We on the Worst Timeline?
++++++++++++++++++++++++++++++
+
+Season Eight of *Game of Thrones* previously answered this question, but let's
+try again. You have three options to avert the looming disaster that threatens
+to destroy everything you hold precious (in descending order of sanity):
+
+#. **Drop Python < 3.9.** The easiest (but worst) solution is to unilaterally
+   drop support for Python < 3.9 by globally replacing all deprecated `PEP
+   484`_-compliant type hints with equivalent `PEP 585`_-compliant type hints
+   (e.g., ``typing.List[int]`` with ``list[int]``). This is really only ideal
+   for closed-source proprietary projects with a limited userbase. All other
+   projects should prefer one of the two other solutions outlined below.
+#. **Hide warnings.** The middle-finger way is to just squelch all deprecation
+   warnings with an ignore warning filter targeting the
+   `BeartypeDecorHintPep484DeprecationWarning` category. On the one hand, this
+   will still fail in 2025 or 2026 with fiery explosions and thus only
+   constitutes a temporary workaround at best. On the other hand, this has the
+   obvious advantage of preserving Python < 3.9 support with minimal to no
+   refactoring costs. The two ways to do this have differing tradeoffs
+   depending on who you want to suffer – your developers or your userbase:
+
+   .. code-block:: python
+
+      # Do it globally for everyone, whether they want you to or not!
+      # This is the "Make Users Suffer" option.
+      from beartype.roar import BeartypeDecorHintPep484DeprecationWarning
+      from warnings import filterwarnings
+      filterwarnings("ignore", category=BeartypeDecorHintPep484DeprecationWarning)
+      ...
+      
+      # Do it locally only for you! (Hope you like increasing your
+      # indentation level in every single codebase module.)
+      # This is the "Make Yourself Suffer" option.
+      from beartype.roar import BeartypeDecorHintPep484DeprecationWarning
+      from warnings import catch_warnings, filterwarnings
+      with catch_warnings():
+          filterwarnings("ignore", category=BeartypeDecorHintPep484DeprecationWarning)
+          ...
+
+#. **Type aliases.** The hardest (but best) solution is to use `type aliases`_
+   to conditionally annotate callables with either `PEP 484`_ *or* `585 <PEP
+   585_>`__ type hints depending on the major version of the current Python
+   interpreter. Since this is life, the hard way is also the best way – but
+   it's also hard. Unlike the **drop Python 3.9** approach, this approach
+   preserves backward compatibility with Python < 3.9. Unlike the **hide
+   warnings** approach, this approach preserves forward compatibility with
+   Python ≥ 3.14159265. This approach means defining a new private
+   `{your_package}._typing` submodule resembling:
+
+   .. code-block:: python
+
+      from sys import version_info
+      
+      if version_info >= (3, 9):
+          List = list
+          Tuple = tuple
+          ...
+      else:
+          from typing import List, Tuple, ...
+
+   Then "just" globally refactor all deprecated `PEP 484`_ imports from
+   `typing` to `{your_package}._typing` instead: e.g.,
+
+   .. code-block:: python
+
+      # Instead of this...
+      from typing import List, Tuple
+      
+      # ...just do this.
+      from {your_package}._typing import List, Tuple
+
+   What could be simpler? :superscript:`gagging noises faintly heard`
 
 Coming up: *shocking revelation that cheaters prosper.*
 
@@ -4271,6 +4388,8 @@ rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0484
 .. _relative forward references:
    https://www.python.org/dev/peps/pep-0484/#id28
+.. _type aliases:
+   https://www.python.org/dev/peps/pep-0484/#type-aliases
 
 .. # ------------------( LINKS ~ py : pep : 560             )------------------
 .. _PEP 560:

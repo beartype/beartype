@@ -237,16 +237,6 @@ signs.
 
 # ....................{ SETS ~ deprecated                 }....................
 # Initialized with automated inspection below in the _init() function.
-HINTS_REPR_PREFIX_DEPRECATED: FrozenSet[str] = None  # type: ignore[assignment]
-'''
-Frozen set of all **bare deprecated PEP-compliant type hint representations**
-(i.e., machine-readable strings returned by the :func:`repr` builtin suffixed
-by *no* "["- and "]"-delimited subscription representations for all obsoleted
-hints, often by equivalent hints standardized under more recent PEPs).
-'''
-
-
-# Initialized with automated inspection below in the _init() function.
 HINTS_PEP484_REPR_PREFIX_DEPRECATED: FrozenSet[str] = set()  # type: ignore[assignment]
 '''
 Frozen set of all **bare deprecated** :pep:`484`-compliant **type hint
@@ -331,7 +321,6 @@ def _init() -> None:
 
     # Permit redefinition of these globals below.
     global \
-        HINTS_REPR_PREFIX_DEPRECATED, \
         HINTS_PEP484_REPR_PREFIX_DEPRECATED, \
         HINTS_REPR_IGNORABLE_SHALLOW
 
@@ -585,7 +574,6 @@ def _init() -> None:
     # Freeze all relevant global sets for safety.
     HINTS_PEP484_REPR_PREFIX_DEPRECATED = frozenset(
         HINTS_PEP484_REPR_PREFIX_DEPRECATED)
-    HINTS_REPR_PREFIX_DEPRECATED = HINTS_PEP484_REPR_PREFIX_DEPRECATED
     HINTS_REPR_IGNORABLE_SHALLOW = frozenset(HINTS_REPR_IGNORABLE_SHALLOW)
 
     # ..................{ DEBUGGING                         }..................
