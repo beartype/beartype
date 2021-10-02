@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._valeisoper` submodule.
+:mod:`beartype.vale._factory._valeisoper` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -29,7 +29,7 @@ def test_api_vale_isequal_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import IsEqual
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
 
     # Arbitrary tuple objects with which to subscript the "IsEqual" class,
     # exercising edge cases in the __class_getitem__() dunder method.

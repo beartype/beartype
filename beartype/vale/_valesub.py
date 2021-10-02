@@ -31,7 +31,7 @@ from typing import Any, Callable, Union
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-SubscriptedIsValidator = Callable[[Any,], bool]
+_SubscriptedIsValidator = Callable[[Any,], bool]
 '''
 PEP-compliant type hint matching a **validator** (i.e., caller-defined callable
 accepting a single arbitrary object and returning either ``True`` if that
@@ -83,7 +83,7 @@ class _SubscriptedIs(object):
 
     Attributes
     ----------
-    _is_valid : SubscriptedIsValidator
+    _is_valid : _SubscriptedIsValidator
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
         an arbitrary constraint *or* ``False`` otherwise).
@@ -129,7 +129,7 @@ class _SubscriptedIs(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
-        is_valid: SubscriptedIsValidator,
+        is_valid: _SubscriptedIsValidator,
         is_valid_code: str,
         is_valid_code_locals: CallableScope,
         get_repr: SubscriptedIsRepresenter,
@@ -142,7 +142,7 @@ class _SubscriptedIs(object):
 
         Parameters
         ----------
-        is_valid : SubscriptedIsValidator
+        is_valid : _SubscriptedIsValidator
             **Validator** (i.e., caller-defined callable accepting a single
             arbitrary object and returning either ``True`` if that object
             satisfies an arbitrary constraint *or* ``False`` otherwise).
@@ -278,7 +278,7 @@ class _SubscriptedIs(object):
     # Properties with no corresponding setter and thus read-only.
 
     @property
-    def is_valid(self) -> SubscriptedIsValidator:
+    def is_valid(self) -> _SubscriptedIsValidator:
         '''
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies

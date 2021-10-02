@@ -15,7 +15,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utiltyping import TypeException
-from beartype._vale._valesub import _SubscriptedIs
+from beartype.vale._valesub import _SubscriptedIs
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.

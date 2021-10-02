@@ -15,7 +15,7 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
-    BeartypeDecorHintPep484DeprecationWarning,
+    BeartypeDecorHintPep585DeprecationWarning,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.datapeprepr import (
@@ -376,8 +376,8 @@ def warn_if_hint_pep_deprecated(
     if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
         warn(
             (
-                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 and '
-                f'slated for removal in the first Python version '
+                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 '
+                f'scheduled for removal in the first Python version '
                 f'released after October 5th, 2025. To resolve this, '
                 f'either drop Python < 3.9 support and globally replace this '
                 f'hint by the equivalent PEP 585 type hint '
@@ -385,7 +385,7 @@ def warn_if_hint_pep_deprecated(
                 f'discussion topic for saner and more portable solutions:\n'
                 f'    https://github.com/beartype/beartype#pep-484-deprecations'
             ),
-            BeartypeDecorHintPep484DeprecationWarning,
+            BeartypeDecorHintPep585DeprecationWarning,
         )
     # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
 

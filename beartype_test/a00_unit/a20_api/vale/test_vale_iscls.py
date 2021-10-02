@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._valeiscls` submodule.
+:mod:`beartype.vale._factory._valeiscls` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -30,7 +30,7 @@ def test_api_vale_issubclass_pass() -> None:
     # Defer heavyweight imports.
     from beartype.vale import IsSubclass
     from beartype._util.utilobject import get_object_name
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
     from beartype_test.a00_unit.data.data_type import (
         Class, Subclass, SubclassSubclass)
 

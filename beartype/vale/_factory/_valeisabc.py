@@ -49,6 +49,19 @@ class _IsMeta(ABCMeta):
     #fails to support the __class_getitem__() dunder method first introduced
     #with PEP 560. The kludge below is simply that; it's a kludge, which we
     #wouldn't have to do if mypy properly supported PEP 560.
+    #FIXME: Ah-hah! This is awful. Instead, what we want to do is extend
+    #support for beartype validators back to Python 3.7 (especially) and 3.6
+    #(urgh!) by:
+    #* Refactoring the "_IsABC" superclass to implement __getitem__() rather
+    #  than __class_getitem__().
+    #* Privatizing all subclasses of that superclass: e.g.,
+    #  * Rename "IsAttr" to "_IsAttrClass".
+    #* Instantiating all of those subclasses with single line singletons in
+    #  "__init__": e.g.,
+    #    IsAttr = _IsAttrClass()
+    #    IsEqual = _IsEqualClass()
+    #    ...
+    #Voila! Pretty sweetness, eh? Yup. Yup, it is.
 
     # If beartype is currently being subjected to static type checking by a
     # static type checker that is almost certainly mypy, prevent that checker
@@ -76,7 +89,7 @@ class _IsABC(object, metaclass=_IsMeta):
     # ..................{ INITIALIZERS                      }..................
     # Ideally, this class method should be typed as returning "NoReturn", but
     # doing so causes MyPy to vociferously complain: e.g.,
-    #     beartype/vale/_valeisabc.py:43: error: "__new__" must return a class
+    #     beartype.vale._factory._valeisabc.py:43: error: "__new__" must return a class
     #     instance (got "NoReturn")  [misc]
     def __new__(cls, *args, **kwargs) -> '_IsABC':
         '''

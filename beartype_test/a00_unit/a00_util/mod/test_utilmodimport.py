@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises, warns
 
 # ....................{ TESTS                             }....................
 def test_import_module_or_none() -> None:
@@ -28,6 +27,7 @@ def test_import_module_or_none() -> None:
     import beartype
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype._util.mod.utilmodimport import import_module_or_none
+    from pytest import warns
 
     # Assert this function returns the expected module when passed the
     # fully-qualified name of a previously imported module.
@@ -63,6 +63,7 @@ def test_import_module_attr() -> None:
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_attr
+    from pytest import raises
 
     # Attribute dynamically imported from a module.
     module_attr = import_module_attr(
@@ -90,6 +91,7 @@ def test_import_module_attr_or_none() -> None:
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_attr_or_none
+    from pytest import raises, warns
 
     # Attribute declared by an importable module.
     module_attr_good = import_module_attr_or_none(
@@ -156,6 +158,7 @@ def test_import_module_typing_any_attr() -> None:
         import_module_typing_any_attr,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from pytest import raises
     from typing import Union
 
     # Assert that dynamically importing "typing.Union" attribute (guaranteed to

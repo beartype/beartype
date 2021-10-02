@@ -33,10 +33,10 @@ Instead, callers are expected to (in order):
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.vale._valeis import Is
-from beartype.vale._valeiscls import IsSubclass
-from beartype.vale._valeisobj import IsAttr
-from beartype.vale._valeisoper import IsEqual
+from beartype.vale._factory._valeis import Is
+from beartype.vale._factory._valeiscls import IsSubclass
+from beartype.vale._factory._valeisobj import IsAttr
+from beartype.vale._factory._valeisoper import IsEqual
 
 # ....................{ TODO                              }....................
 #FIXME: As intelligently requested by @Saphyel at #32, add support for

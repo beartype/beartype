@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._valeis` submodule.
+:mod:`beartype.vale._factory._valeis` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -29,7 +29,7 @@ def test_api_vale_is_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import Is
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
     from collections.abc import Mapping
 
     def _is_quoted(text):

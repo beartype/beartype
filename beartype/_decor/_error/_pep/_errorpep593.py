@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._vale._valesub import _SubscriptedIs
+from beartype.vale._valesub import _SubscriptedIs
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.

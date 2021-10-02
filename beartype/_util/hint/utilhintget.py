@@ -42,7 +42,7 @@ def get_hint_reduced(
     * *Not* PEP-compliant, this hint is returned as is unmodified.
     * PEP 593-compliant (i.e., :class:`typing.Annotated`) but beartype-agnostic
       (i.e., its second argument is *not* an instance of the
-      :class:`beartype._vale._valesub._SubscriptedIs` class produced by
+      :class:`beartype.vale._valesub._SubscriptedIs` class produced by
       subscripting the :class:`beartype.vale.Is` class), this hint is reduced
       to the first argument subscripting this hint. Doing so ignores *all*
       irrelevant annotations on this hint (e.g., reducing

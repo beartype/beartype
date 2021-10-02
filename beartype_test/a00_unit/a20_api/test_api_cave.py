@@ -641,13 +641,6 @@ def test_api_cave_tuple_core() -> None:
         _THE_PHANTOM_RICKSHAW,
     )
 
-    # Test "VersionComparableTypes" against...
-    _assert_tuple_objects(
-        cave.VersionComparableTypes,
-        # Tuple-based version specifier.
-        (6, 9, 6),
-    )
-
 
 def test_api_cave_tuple_nonetypeor() -> None:
     '''
@@ -756,7 +749,6 @@ def test_api_cave_lib_numpy() -> None:
     _assert_types_objects(
         {
             cave.BoolType,
-            cave.NumpyScalarType,
         },
         # NumPy boolean.
         array_bool[0],
@@ -766,7 +758,6 @@ def test_api_cave_lib_numpy() -> None:
     _assert_types_objects(
         {
             cave.StrType,
-            cave.NumpyScalarType,
         },
         # NumPy Unicode string.
         array_str[0],
@@ -778,7 +769,6 @@ def test_api_cave_lib_numpy() -> None:
         {
             cave.NumberType,
             cave.IntOrFloatType,
-            cave.NumpyScalarType,
         },
         # NumPy floating-point number.
         array_float[0],
@@ -788,7 +778,6 @@ def test_api_cave_lib_numpy() -> None:
             cave.NumberType,
             cave.IntOrFloatType,
             cave.IntType,
-            cave.NumpyScalarType,
         },
         # NumPy integer.
         array_int[0],
@@ -805,42 +794,4 @@ def test_api_cave_lib_numpy() -> None:
         array_float[0],
         # NumPy integer.
         array_int[0],
-    )
-
-
-@skip_unless_package('pkg_resources')
-def test_api_cave_lib_setuptools() -> None:
-    '''
-    Test all core simple types published by the :mod:`beartype.cave` submodule
-    against various :mod:`setuptools` objects if that third-party package is
-    importable *or* reduce to a noop otherwise.
-    '''
-
-    # Defer heavyweight imports.
-    #
-    # Note that the "packaging" package is available as both a top-level
-    # "packaging" package *AND* as the "pkg_resources.extern.packaging"
-    # subpackage implicitly called by various "pkg_resources" functions
-    # (e.g., pkg_resources.parse_version()). As the latter is generally more
-    # stable than the former, we ignore "packaging" entirely and simply call
-    # "pkg_resources" functions directly instead.
-    import pkg_resources
-    from beartype import cave
-
-    # Test "VersionComparableTypes" and "SetuptoolsVersionTypes" against...
-    _assert_tuples_objects(
-        {
-            cave.VersionComparableTypes,
-            cave.SetuptoolsVersionTypes,
-        },
-        # PEP 440-compliant version object.
-        pkg_resources.parse_version('6.9.6a'),
-
-        #FIXME: Sadly, the recent deprecation of
-        #"pkg_resources.packaging.version.LegacyVersion" that we previously
-        #used to support PEP-440-noncompliant version objects also deprecates
-        #that support. Let's preserve this in the unlikely event we think of
-        #some non-deprecated means of resurrecting this. So it goes.
-        # PEP 440-noncompliant version object.
-        # pkg_resources.parse_version('6.9.6t'),
     )

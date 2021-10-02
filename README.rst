@@ -1474,7 +1474,7 @@ Python ≥ 3.9 resembling:
 
    /home/kumamon/beartype/_util/hint/pep/utilpeptest.py:377: 
    BeartypeDecorHintPep484DeprecationWarning: PEP 484 type hint
-   typing.List[int] deprecated by PEP 585 and slated for removal in the first
+   typing.List[int] deprecated by PEP 585 scheduled for removal in the first
    Python version released after October 5th, 2025. To resolve this, either
    drop Python < 3.9 support and globally replace this hint by the equivalent
    PEP 585 type hint (e.g., "typing.List[int]" by "list[int]") or see this
@@ -1492,9 +1492,11 @@ The `PEP 585`_ standard first introduced by Python 3.9.0 deprecated (obsoleted)
 official typing_ module. All deprecated type hints are slated to "be removed
 from the typing_ module in the first Python version released 5 years after the
 release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th,
-2020. This means that:
+2020. Altogether, this means that:
 
-    **‼ Most of the "typing" module will be removed in 2025 or 2026.**
+    **‼**
+
+    **Most of the "typing" module will be removed in 2025 or 2026.**
 
 If your codebase currently imports from the typing_ module, *most* of those
 imports will break under an upcoming Python release. This is what ``beartype``

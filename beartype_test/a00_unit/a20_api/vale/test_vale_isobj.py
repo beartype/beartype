@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._valeisobj` submodule.
+:mod:`beartype.vale._factory._valeisobj` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -124,7 +124,7 @@ def test_api_vale_isattr_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import IsAttr, IsEqual
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
 
     # Instances of valid test classes declared above.
     from_rainbow_clouds = AllTheEarthAndAir()

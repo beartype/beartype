@@ -23,10 +23,10 @@ from beartype.roar import (
     BeartypeValeSubscriptionException,
     BeartypeValeLambdaWarning,
 )
-from beartype.vale._valeisabc import _IsABC
-from beartype._vale._valesub import (
+from beartype.vale._factory._valeisabc import _IsABC
+from beartype.vale._valesub import (
     _SubscriptedIs,
-    SubscriptedIsValidator,
+    _SubscriptedIsValidator,
 )
 from beartype._util.func.utilfuncscope import (
     CallableScope,
@@ -266,7 +266,7 @@ class Is(_IsABC):
 
     # ..................{ DUNDERS                           }..................
     def __class_getitem__(
-        cls, is_valid: SubscriptedIsValidator) -> _SubscriptedIs:
+        cls, is_valid: _SubscriptedIsValidator) -> _SubscriptedIs:
         '''
         :pep:`560`-compliant dunder method creating and returning a new
         :class:`_SubscriptedIs` object from the passed **validator callable**

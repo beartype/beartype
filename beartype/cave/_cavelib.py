@@ -25,13 +25,13 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 #cares. While importing from stdlib modules is (of course) okay, importing from
 #third-party modules is not. Ergo, deprecate all of the following:
 #
-#* NumpyArrayType.
-#* NumpyScalarType.
-#* SequenceOrNumpyArrayTypes.
-#* SequenceMutableOrNumpyArrayTypes.
-#* SetuptoolsVersionTypes.
-#* VersionComparableTypes.
-#* VersionTypes.
+#* _NumpyArrayType.
+#* _NumpyScalarType.
+#* _SequenceOrNumpyArrayTypes.
+#* _SequenceMutableOrNumpyArrayTypes.
+#* _SetuptoolsVersionTypes.
+#* _VersionComparableTypes.
+#* _VersionTypes.
 #
 #...should have done this ages ago, honestly.
 
@@ -67,7 +67,7 @@ from weakref import (
 
 # ....................{ TYPES ~ lib : numpy               }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyArrayType: type = UnavailableType
+_NumpyArrayType: type = UnavailableType
 '''
 Type of all **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class implemented in low-level C and Fortran) if
@@ -77,7 +77,7 @@ Type of all **NumPy arrays** (i.e., instances of the concrete
 
 
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-NumpyScalarType: type = UnavailableType
+_NumpyScalarType: type = UnavailableType
 '''
 Type of all **NumPy scalars** (i.e., instances of the abstract
 :class:`numpy.generic` base class implemented in low-level C and Fortran) if
@@ -121,14 +121,14 @@ reference proxies.
 
 # ....................{ TUPLES ~ version                  }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-VersionComparableTypes: Tuple[type, ...] = (tuple,)
+_VersionComparableTypes: Tuple[type, ...] = (tuple,)
 '''
 Tuple of all **comparable version types** (i.e., types suitable for use both as
 parameters to callables accepting arbitrary version specifiers *and* as
 operands to numeric operators comparing such specifiers) if
 :mod:`pkg_resources` is importable *or* ``(tuple,)`` otherwise.
 
-This is the proper subset of types listed by the :data:`VersionTypes` tuple
+This is the proper subset of types listed by the :data:`_VersionTypes` tuple
 that are directly comparable, thus excluding the :class:`str` type.
 ``.``-delimited version specifier strings are only indirectly comparable after
 conversion to a comparable version type.
@@ -137,7 +137,7 @@ Caveats
 ----------
 Note that all types listed by this tuple are *only* safely comparable with
 versions of the same type. In particular, the types listed by the
-:class:`SetuptoolsVersionTypes` tuple do *not* necessarily support direct
+:class:`_SetuptoolsVersionTypes` tuple do *not* necessarily support direct
 comparison with either the :class:`tuple` *or* `class:`str` version types;
 ironically, those types supported both under older but *not* newer versions of
 :mod:`setuptools`. This is why we can't have good things.
@@ -150,7 +150,7 @@ ironically, those types supported both under older but *not* newer versions of
 
 # ....................{ TUPLES ~ lib : numpy              }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceOrNumpyArrayTypes: Tuple[type, ...] = (SequenceType,)
+_SequenceOrNumpyArrayTypes: Tuple[type, ...] = (SequenceType,)
 '''
 Tuple of all **mutable** and **immutable sequence types** (i.e., both concrete
 and structural subclasses of the abstract :class:`collections.abc.Sequence`
@@ -172,7 +172,7 @@ See Also
 
 
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
-SequenceMutableOrNumpyArrayTypes: Tuple[type, ...] = (SequenceMutableType,)
+_SequenceMutableOrNumpyArrayTypes: Tuple[type, ...] = (SequenceMutableType,)
 '''
 Tuple of all **mutable sequence types** (i.e., both concrete and structural
 subclasses of the abstract :class:`collections.abc.Sequence` base class;
@@ -194,7 +194,7 @@ See Also
 
 # ....................{ TUPLES ~ lib : setuptools         }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
-SetuptoolsVersionTypes: Tuple[type, ...] = UnavailableTypes
+_SetuptoolsVersionTypes: Tuple[type, ...] = UnavailableTypes
 '''
 Tuple of all **:mod:`setuptools`-specific version types** (i.e., types
 instantiated and returned by both the third-party
@@ -237,12 +237,12 @@ try:
     import numpy as _numpy  # type: ignore
 
     # Define NumPy-specific types.
-    NumpyArrayType  = _numpy.ndarray
-    NumpyScalarType = _numpy.generic
+    _NumpyArrayType  = _numpy.ndarray
+    _NumpyScalarType = _numpy.generic
 
     # Extend NumPy-agnostic types with NumPy-specific types.
-    SequenceOrNumpyArrayTypes        += (NumpyArrayType,)
-    SequenceMutableOrNumpyArrayTypes += (NumpyArrayType,)
+    _SequenceOrNumpyArrayTypes        += (_NumpyArrayType,)
+    _SequenceMutableOrNumpyArrayTypes += (_NumpyArrayType,)
 # Else, NumPy is unimportable. We're done here, folks.
 except:
     pass
@@ -256,20 +256,20 @@ try:
     #deprecated, we need to refactor this up as follows:
     #* Define a new *PRIVATE* alias:
     #  _SetuptoolsVersionType = _pkg_resources.packaging.version.Version
-    #  VersionComparableTypes += (_SetuptoolsVersionType,)
+    #  _VersionComparableTypes += (_SetuptoolsVersionType,)
     #  Exposing a "setuptools"-specific class was clearly a bad idea.
-    #* Refactor "SetuptoolsVersionTypes" to be deprecated by us, too. *shrug*
+    #* Refactor "_SetuptoolsVersionTypes" to be deprecated by us, too. *shrug*
 
     # Define setuptools-specific types.
-    SetuptoolsVersionTypes = (_pkg_resources.packaging.version.Version,)  # type: ignore[attr-defined]
-    VersionComparableTypes += SetuptoolsVersionTypes
+    _SetuptoolsVersionTypes = (_pkg_resources.packaging.version.Version,)  # type: ignore[attr-defined]
+    _VersionComparableTypes += _SetuptoolsVersionTypes
 # Else, setuptools is unimportable. While this should typically *NEVER* be the
 # case, edge cases gonna edge case.
 except:
     pass
 
 # ....................{ TUPLES ~ post-init : version      }....................
-VersionTypes = (StrType,) + VersionComparableTypes
+_VersionTypes = (StrType,) + _VersionComparableTypes
 '''
 Tuple of all **version types** (i.e., types suitable for use as parameters to
 callables accepting arbitrary version specifiers) if :mod:`pkg_resources` is
@@ -281,7 +281,7 @@ This includes:
   format (e.g., ``2.4.14.2.1.356.23``).
 * :class:`tuple`, specifying versions as one or more positive integers (e.g.,
   ``(2, 4, 14, 2, 1, 356, 23)``),
-* :class:`SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types
+* :class:`_SetuptoolsVersionTypes`, whose :mod:`setuptools`-specific types
   specify versions as instance variables convertible into both of the prior
-  formats (e.g., ``SetuptoolsVersionTypes[0]('2.4.14.2.1.356.23')``).
+  formats (e.g., ``_SetuptoolsVersionTypes[0]('2.4.14.2.1.356.23')``).
 '''

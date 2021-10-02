@@ -124,13 +124,7 @@ class BeartypeDecorHintPepDeprecationWarning(BeartypeDecorHintPepWarning):
     pass
 
 
-#FIXME: Mark as deprecated and schedule for removal, please. For a practical
-#implementation, see:
-#    https://www.python.org/dev/peps/pep-0562/#id8
-BeartypeDecorHintPepDeprecatedWarning = BeartypeDecorHintPepDeprecationWarning
-
-
-class BeartypeDecorHintPep484DeprecationWarning(
+class BeartypeDecorHintPep585DeprecationWarning(
     BeartypeDecorHintPepDeprecationWarning):
     '''
     **Beartype decorator** :pep:`585`-mandated **deprecation of**

@@ -18,9 +18,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._valeisabc import _IsABC
-from beartype._vale._valesnip import VALE_CODE_CHECK_ISATTR_format
-from beartype._vale._valesub import _SubscriptedIs
+from beartype.vale._factory._valeisabc import _IsABC
+from beartype.vale._util._valesnip import VALE_CODE_CHECK_ISATTR_format
+from beartype.vale._valesub import _SubscriptedIs
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.func.utilfuncscope import (
@@ -238,7 +238,7 @@ class IsAttr(_IsABC):
 
         # Callable inefficiently validating object attributes with this name
         # against this validator.
-        # is_valid: SubscriptedIsValidator = None  # type: ignore[assignment]
+        # is_valid: _SubscriptedIsValidator = None  # type: ignore[assignment]
 
         # Code snippet efficiently validating object attributes with this name
         # against this validator.

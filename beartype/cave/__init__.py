@@ -74,17 +74,19 @@ from beartype.cave._cavelib import (
     # Types.
     ArgParserType,
     ArgSubparsersType,
-    NumpyArrayType,
-    NumpyScalarType,
     WeakRefCType,
 
     # Type tuples.
-    SequenceMutableOrNumpyArrayTypes,
-    SequenceOrNumpyArrayTypes,
-    SetuptoolsVersionTypes,
-    VersionComparableTypes,
-    VersionTypes,
     WeakRefProxyCTypes,
+
+    # Deprecated types and type tuples.
+    _NumpyArrayType,
+    _NumpyScalarType,
+    _SequenceMutableOrNumpyArrayTypes,
+    _SequenceOrNumpyArrayTypes,
+    _SetuptoolsVersionTypes,
+    _VersionComparableTypes,
+    _VersionTypes,
 )
 from beartype._cave._caveabc import BoolType
 from beartype._cave._cavefast import (
@@ -161,12 +163,58 @@ from beartype._cave._cavefast import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 
-# ....................{ IMPORTS ~ obsolete                }....................
-#FIXME: Deprecate this. We previously published this ambiguously named type.
-#Perhaps use a module __getattr__() under whatever Python versions support it?
-#Note this requires Python >= 3.7, but that Python 3.6 will simply ignore that
-#dunder method, which is obviously acceptable, because Python 3.6 is dead.
-HintPep585Type = HintGenericSubscriptedType
+# ....................{ DEPRECATIONS                      }....................
+def __getattr__(attr_deprecated_name: str) -> object:
+    '''
+    Dynamically retrieve a deprecated attribute with the passed unqualified
+    name from this submodule and emit a non-fatal deprecation warning on each
+    such retrieval if this submodule defines this attribute *or* raise an
+    exception otherwise.
+
+    The Python interpreter implicitly calls this :pep:`562`-compliant module
+    dunder function under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from this submodule.
+
+    Parameters
+    ----------
+    attr_deprecated_name : str
+        Unqualified name of the deprecated attribute to be retrieved.
+
+    Returns
+    ----------
+    object
+        Value of this deprecated attribute.
+
+    Warns
+    ----------
+    :class:`DeprecationWarning`
+        If this attribute is deprecated.
+
+    Raises
+    ----------
+    :exc:`AttributeError`
+        If this attribute is unrecognized and thus erroneous.
+    '''
+
+    # Isolate imports to avoid polluting the module namespace.
+    from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
+
+    # Return the value of this deprecated attribute and emit a warning.
+    return deprecate_module_attr(
+        attr_deprecated_name=attr_deprecated_name,
+        attr_deprecated_name_to_nondeprecated_name={
+            'HintPep585Type': 'HintGenericSubscriptedType',
+            'NumpyArrayType': '_NumpyArrayType',
+            'NumpyScalarType': '_NumpyScalarType',
+            'SequenceOrNumpyArrayTypes': '_SequenceOrNumpyArrayTypes',
+            'SequenceMutableOrNumpyArrayTypes': (
+                '_SequenceMutableOrNumpyArrayTypes'),
+            'SetuptoolsVersionTypes': '_SetuptoolsVersionTypes',
+            'VersionComparableTypes': '_VersionComparableTypes',
+            'VersionTypes': '_VersionTypes',
+        },
+        attr_nondeprecated_name_to_value=globals(),
+    )
 
 # ....................{ DUNDERS                           }....................
 # Intentionally defined last, as nobody wants to stumble into a full-bore rant

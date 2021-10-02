@@ -73,9 +73,8 @@ from beartype.roar._roarexc import (
 from beartype.roar._roarwarn import (
     BeartypeWarning,
     BeartypeDecorHintPepWarning,
-    BeartypeDecorHintPepDeprecatedWarning,
     BeartypeDecorHintPepDeprecationWarning,
-    BeartypeDecorHintPep484DeprecationWarning,
+    BeartypeDecorHintPep585DeprecationWarning,
     BeartypeDecorHintNonpepWarning,
     BeartypeDecorHintNonpepNumpyWarning,
     BeartypeModuleNotFoundWarning,
@@ -84,4 +83,52 @@ from beartype.roar._roarwarn import (
     BeartypeValeLambdaWarning,
 )
 
-# ....................{ TODO                              }....................
+# ....................{ DEPRECATIONS                      }....................
+def __getattr__(attr_deprecated_name: str) -> object:
+    '''
+    Dynamically retrieve a deprecated attribute with the passed unqualified
+    name from this submodule and emit a non-fatal deprecation warning on each
+    such retrieval if this submodule defines this attribute *or* raise an
+    exception otherwise.
+
+    The Python interpreter implicitly calls this :pep:`562`-compliant module
+    dunder function under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from this submodule.
+
+    Parameters
+    ----------
+    attr_deprecated_name : str
+        Unqualified name of the deprecated attribute to be retrieved.
+
+    Returns
+    ----------
+    object
+        Value of this deprecated attribute.
+
+    Warns
+    ----------
+    :class:`DeprecationWarning`
+        If this attribute is deprecated.
+
+    Raises
+    ----------
+    :exc:`AttributeError`
+        If this attribute is unrecognized and thus erroneous.
+    '''
+
+    # Isolate imports to avoid polluting the module namespace.
+    from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
+
+    # Return the value of this deprecated attribute and emit a warning.
+    return deprecate_module_attr(
+        attr_deprecated_name=attr_deprecated_name,
+        attr_deprecated_name_to_nondeprecated_name={
+            'BeartypeDecorHintNonPepException': (
+                'BeartypeDecorHintNonpepException'),
+            'BeartypeDecorHintNonPepNumPyException': (
+                'BeartypeDecorHintNonpepNumpyException'),
+            'BeartypeDecorHintPepDeprecatedWarning': (
+                'BeartypeDecorHintPepDeprecationWarning'),
+        },
+        attr_nondeprecated_name_to_value=globals(),
+    )

@@ -6,7 +6,7 @@
 '''
 **Beartype callable-based data validation unit tests.**
 
-This submodule unit tests the private :mod:`beartype._vale._valesub` submodule.
+This submodule unit tests the private :mod:`beartype.vale._valesub` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,13 +21,13 @@ from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 def test_api_vale_subscriptedis_pass() -> None:
     '''
     Test successful usage of the private
-    :mod:`beartype._vale._valesub._SubscriptedIs` class if the active Python
+    :mod:`beartype.vale._valesub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
 
     # Arbitrary valid data validator.
     not_though_the_soldier_knew = lambda text: bool('Someone had blundered.')
@@ -81,14 +81,14 @@ def test_api_vale_subscriptedis_pass() -> None:
 def test_api_vale_subscriptedis_fail() -> None:
     '''
     Test unsuccessful usage of the private
-    :mod:`beartype._vale._valesub._SubscriptedIs` class if the active Python
+    :mod:`beartype.vale._valesub._SubscriptedIs` class if the active Python
     interpreter targets Python >= 3.7 (and thus supports the
     ``__class_getitem__()`` dunder method) *or* skip otherwise.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
-    from beartype._vale._valesub import _SubscriptedIs
+    from beartype.vale._valesub import _SubscriptedIs
     from pytest import raises
 
     # Arbitrary valid data validator.
