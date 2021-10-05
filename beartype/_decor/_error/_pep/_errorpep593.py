@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._valevale import BeartypeValidator
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -34,7 +34,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
-    :class:`_SubscriptedIs` objects, each produced by subscripting the
+    :class:`BeartypeValidator` objects, each produced by subscripting the
     :class:`beartype.vale.Is` class or a subclass of that class) if this object
     actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
     object satisfies this hint).
@@ -67,11 +67,12 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         #
         # Note that this object should already be beartype-specific, as the
         # @beartype decorator enforces this constraint at decoration time.
-        if not isinstance(hint_metadatum, _SubscriptedIs):
+        if not isinstance(hint_metadatum, BeartypeValidator):
             raise _BeartypeCallHintPepRaiseException(
                 f'{sleuth.exception_prefix}PEP 593 type hint '
-                f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} not '
-                f'not subscription of "beartype.vale.Is*" class.'
+                f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} '
+                f'not beartype validator '
+                f'(i.e., subscripted "beartype.vale.Is*" factory).'
             )
         # Else, this object is beartype-specific.
 

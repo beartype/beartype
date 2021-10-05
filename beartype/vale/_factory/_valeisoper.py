@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: *Useful optimization.* For "IsEqual", we can (and should) directly
+#FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should) directly
 #embed the values of builtins when comparing against builtins (e.g., integers,
 #strings). Specifically, we should only conditionally perform this line below:
 #       param_name_obj_value = add_func_scope_attr(
@@ -40,7 +40,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #that *ISN'T* the case, that is a bug in those third-parties. *shrug*
 
 #FIXME: Generalize to support arbitrary binary operators by:
-#* Define a new "_IsOperatorBinaryABC(_IsABC, metaclass=ABCMeta)" superclass.
+#* Define a new "_IsOperatorBinaryABC(_BeartypeValidatorFactoryABC, metaclass=ABCMeta)" superclass.
 #* In that superclass:
 #  * Define a stock __class_getitem__() method whose implementation is
 #    sufficiently generic so as to be applicable to all subclasses. To do so,
@@ -49,13 +49,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #    methods forcing subclasses to define various metadata, for the unfortunate
 #    reason that abstract class methods do *NOT* actually enforce subclasses
 #    that aren't instantiable anyway to implement those methods. *sigh*
-#* Refactor "IsEqual" to:
+#* Refactor "_IsEqualFactory" to:
 #  * Subclass that superclass.
 #  * Define the following class variables, which the superclass
 #    __class_getitem__() method will internally access to implement itself:
 #    from operator import __eq__
 #
-#    class IsEqual(_IsOperatorBinaryABC):
+#    class _IsEqualFactory(_IsOperatorBinaryABC):
 #        _operator = __eq__
 #        _operator_code = '=='
 #
@@ -63,9 +63,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._factory._valeisabc import _IsABC
-from beartype.vale._util._valesnip import VALE_CODE_CHECK_ISEQUAL_format
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilsnip import VALE_CODE_CHECK_ISEQUAL_format
+from beartype.vale._valevale import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
     CallableScope,
@@ -77,7 +77,7 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ equal                   }....................
-class IsEqual(_IsABC):
+class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object equality validator factory** (i.e., object creating and
     returning a new beartype validator when subscripted (indexed) by any
@@ -187,12 +187,11 @@ class IsEqual(_IsABC):
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
-    def __class_getitem__(cls, obj: Any) -> _SubscriptedIs:
+    def __getitem__(self, obj: Any) -> BeartypeValidator:
         '''
-        :pep:`560`-compliant dunder method creating and returning a new
-        beartype validator validating equality against the passed object,
-        suitable for subscripting :pep:`593`-compliant :attr:`typing.Annotated`
-        type hints.
+        Create and return a new beartype validator validating equality against
+        the passed object, suitable for subscripting :pep:`593`-compliant
+        :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
 
@@ -203,7 +202,7 @@ class IsEqual(_IsABC):
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
@@ -216,7 +215,7 @@ class IsEqual(_IsABC):
 
         See Also
         ----------
-        :class:`IsEqual`
+        :class:`_IsEqualFactory`
             Usage instructions.
         '''
 
@@ -230,10 +229,10 @@ class IsEqual(_IsABC):
         # Then raise an exception.
         ):
             raise BeartypeValeSubscriptionException(
-                f'{repr(cls)} subscripted by empty tuple.')
+                f'{self._getitem_exception_prefix}empty tuple.')
         # Else, this factory was subscripted by one or more arguments. In any
         # case, accept this object as is. See the class docstring for details.
-        # print(f'IsEqual[{repr(obj)}]')
+        # print(f'_IsEqualFactory[{repr(obj)}]')
 
         # Callable inefficiently validating against this object.
         is_valid = lambda pith: pith == obj
@@ -253,9 +252,9 @@ class IsEqual(_IsABC):
             param_name_obj_value=param_name_obj_value)
 
         # Create and return this subscription.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda: f'{cls.__name__}[{repr(obj)}]',
+            get_repr=lambda: f'{self._basename}[{repr(obj)}]',
         )

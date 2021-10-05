@@ -35,7 +35,12 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer attribute-dependent imports.
-    from beartype.vale import Is, IsAttr, IsEqual, IsSubclass
+    from beartype.vale import (
+        Is,
+        IsAttr,
+        IsEqual,
+        IsSubclass,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
         HintSignList,
@@ -43,10 +48,7 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._util.hint.pep.utilpepattr import (
         HINT_ATTR_LIST,
     )
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_8,
-        IS_PYTHON_AT_LEAST_3_7,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     from beartype_test.a00_unit.data.data_type import Class, Subclass
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -120,14 +122,6 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
     ))
-
-    # ..................{ VALIDATORS                        }..................
-    # If the active Python interpreter does *NOT* support Python >= 3.8 and
-    # thus the __class_getitem__() dunder method required for beartype
-    # validators, immediately return.
-    if not IS_PYTHON_AT_LEAST_3_8:
-        return
-    # Else, this interpreter supports beartype validators.
 
     # ..................{ VALIDATORS ~ is                   }..................
     # Beartype-specific validators defined as lambda functions.

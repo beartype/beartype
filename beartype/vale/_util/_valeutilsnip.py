@@ -13,11 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                         }....................
+#FIXME: Generalize to support Python < 3.8. This does *NOT* need to terribly
+#efficient under Python 3.6 and 3.7; it simply needs to work.
 VALE_CODE_CHECK_ISATTR = '''(
 {{indent}}    # True only if this pith defines an attribute with this name.
 {{indent}}    ({local_name_obj_attr_value} := getattr(

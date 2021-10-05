@@ -33,10 +33,25 @@ Instead, callers are expected to (in order):
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.vale._factory._valeis import Is
-from beartype.vale._factory._valeiscls import IsSubclass
-from beartype.vale._factory._valeisobj import IsAttr
-from beartype.vale._factory._valeisoper import IsEqual
+from beartype.vale._factory._valeis import _IsFactory
+from beartype.vale._factory._valeiscls import _IsSubclassFactory
+from beartype.vale._factory._valeisobj import _IsAttrFactory
+from beartype.vale._factory._valeisoper import _IsEqualFactory
+
+# ....................{ SINGLETONS                        }....................
+# Public factory singletons instantiating these private factory classes.
+Is = _IsFactory(basename='Is')
+IsAttr = _IsAttrFactory(basename='IsAttr')
+IsEqual = _IsEqualFactory(basename='IsEqual')
+IsSubclass = _IsSubclassFactory(basename='IsSubclass')
+
+# Delete all private factory classes imported above for safety.
+del (
+    _IsFactory,
+    _IsAttrFactory,
+    _IsEqualFactory,
+    _IsSubclassFactory,
+)
 
 # ....................{ TODO                              }....................
 #FIXME: As intelligently requested by @Saphyel at #32, add support for
@@ -58,17 +73,17 @@ from beartype.vale._factory._valeisoper import IsEqual
 #  * Range.
 #  * DivisibleBy.
 
-#FIXME: Add a new _SubscriptedIs.get_cause_or_none() method with the same
+#FIXME: Add a new BeartypeValidator.get_cause_or_none() method with the same
 #signature and docstring as the existing CauseSleuth.get_cause_or_none()
-#method. This new _SubscriptedIs.get_cause_or_none() method should then be
+#method. This new BeartypeValidator.get_cause_or_none() method should then be
 #called by the "_peperrorannotated" submodule to generate human-readable
 #exception messages. Note that this implies that:
-#* The _SubscriptedIs.__init__() method will need to additionally accept a new
+#* The BeartypeValidator.__init__() method will need to additionally accept a new
 #  mandatory "get_cause_or_none: Callable[[], Optional[str]]" parameter, which
 #  that method should then localize to "self.get_cause_or_none".
-#* Each __class_getitem__() dunder method of each "_IsABC" subclass will need
+#* Each __class_getitem__() dunder method of each "_BeartypeValidatorFactoryABC" subclass will need
 #  to additionally define and pass that callable when creating and returning
-#  its "_SubscriptedIs" instance.
+#  its "BeartypeValidator" instance.
 
 #FIXME: *BRILLIANT IDEA.* Holyshitballstime. The idea here is that we can
 #leverage all of our existing "beartype.is" infrastructure to dynamically

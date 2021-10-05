@@ -4,10 +4,13 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype core validation classes.**
+**Beartype validators.**
 
-This private submodule defines the core low-level class hierarchy driving the
-entire :mod:`beartype` validation ecosystem.
+This private submodule defines the core private :class:`BeartypeValidator`
+class instantiated by public **beartype validator factories** (i.e., instances
+of concrete subclasses of the private
+:class:`beartype._vale._factory._valeisabc._BeartypeValidatorFactoryABC`
+abstract base class).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -31,20 +34,23 @@ from typing import Any, Callable, Union
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-_SubscriptedIsValidator = Callable[[Any,], bool]
+BeartypeValidatorTester = Callable[[Any,], bool]
 '''
-PEP-compliant type hint matching a **validator** (i.e., caller-defined callable
-accepting a single arbitrary object and returning either ``True`` if that
-object satisfies an arbitrary constraint *or* ``False`` otherwise).
+PEP-compliant type hint matching a **beartype validator tester** (i.e.,
+caller-defined callable accepting a single arbitrary object and returning
+either ``True`` if that object satisfies an arbitrary constraint *or* ``False``
+otherwise).
 
-Validators are suitable for subscripting the :class:`Is` class.
+Beartype validator testers are suitable for subscripting various beartype
+validator factories (e.g., :attr:`beartype.vale.Is`).
 '''
 
 
-SubscriptedIsRepresenter = Union[str, Callable[[], str]]
+BeartypeValidatorRepresenter = Union[str, Callable[[], str]]
 '''
-**Representer** (i.e., either a string *or* caller-defined callable accepting
-no arguments returning a machine-readable representation of this validator).
+PEP-compliant type hint matching a **beartype validator representer** (i.e.,
+either a string *or* caller-defined callable accepting no arguments returning a
+machine-readable representation of a beartype validator).
 
 Technically, this representation *could* be passed by the caller rather than
 this callable dynamically generating that representation. Pragmatically,
@@ -65,7 +71,7 @@ representations are particularly slow to generate include:
 '''
 
 # ....................{ CLASSES ~ subscripted             }....................
-class _SubscriptedIs(object):
+class BeartypeValidator(object):
     '''
     **Beartype validator** (i.e., object encapsulating a caller-defined
     validation callable returning ``True`` when an arbitrary object passed to
@@ -83,7 +89,7 @@ class _SubscriptedIs(object):
 
     Attributes
     ----------
-    _is_valid : _SubscriptedIsValidator
+    _is_valid : BeartypeValidatorTester
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
         an arbitrary constraint *or* ``False`` otherwise).
@@ -102,10 +108,10 @@ class _SubscriptedIs(object):
         **Validator code local scope** (i.e., dictionary mapping from the name
         to value of each local attribute referenced in :attr:`code`) required
         to dynamically compile this validator code into byte code at runtime.
-    _get_repr : SubscriptedIsRepresenter
+    _get_repr : BeartypeValidatorRepresenter
         **Representer** (i.e., either a string *or* caller-defined callable
         accepting no arguments returning a machine-readable representation of
-        this validator). See the :data:`SubscriptedIsRepresenter` type hint for
+        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
         further details.
 
     See Also
@@ -129,10 +135,10 @@ class _SubscriptedIs(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
-        is_valid: _SubscriptedIsValidator,
+        is_valid: BeartypeValidatorTester,
         is_valid_code: str,
         is_valid_code_locals: CallableScope,
-        get_repr: SubscriptedIsRepresenter,
+        get_repr: BeartypeValidatorRepresenter,
     ) -> None:
         '''
         Initialize this object with the passed validation callable, code, and
@@ -142,7 +148,7 @@ class _SubscriptedIs(object):
 
         Parameters
         ----------
-        is_valid : _SubscriptedIsValidator
+        is_valid : BeartypeValidatorTester
             **Validator** (i.e., caller-defined callable accepting a single
             arbitrary object and returning either ``True`` if that object
             satisfies an arbitrary constraint *or* ``False`` otherwise).
@@ -167,10 +173,10 @@ class _SubscriptedIs(object):
             name to value of each local attribute referenced in
             :attr:`is_valid_code` code) required to dynamically compile this
             validator code into byte code at runtime.
-        get_repr : SubscriptedIsRepresenter
+        get_repr : BeartypeValidatorRepresenter
             **Representer** (i.e., either a string *or* caller-defined callable
             accepting no arguments returning a machine-readable representation
-            of this validator). See the :data:`SubscriptedIsRepresenter` type
+            of this validator). See the :data:`BeartypeValidatorRepresenter` type
             hint for further details.
 
         Raises
@@ -278,7 +284,7 @@ class _SubscriptedIs(object):
     # Properties with no corresponding setter and thus read-only.
 
     @property
-    def is_valid(self) -> _SubscriptedIsValidator:
+    def is_valid(self) -> BeartypeValidatorTester:
         '''
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
@@ -291,11 +297,11 @@ class _SubscriptedIs(object):
     # Properties with a corresponding setter and thus writeable.
 
     @property
-    def get_repr(self) -> SubscriptedIsRepresenter:
+    def get_repr(self) -> BeartypeValidatorRepresenter:
         '''
         **Representer** (i.e., either a string *or* caller-defined callable
         accepting no arguments returning a machine-readable representation of
-        this validator). See the :data:`SubscriptedIsRepresenter` type hint for
+        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
         further details.
         '''
 
@@ -303,16 +309,16 @@ class _SubscriptedIs(object):
 
 
     @get_repr.setter
-    def get_repr(self, get_repr: SubscriptedIsRepresenter) -> None:
+    def get_repr(self, get_repr: BeartypeValidatorRepresenter) -> None:
         '''
         Override the initial representer for this validator.
 
         Parameters
         ----------
-        get_repr : SubscriptedIsRepresenter
+        get_repr : BeartypeValidatorRepresenter
             **Representer** (i.e., either a string *or* caller-defined callable
             accepting no arguments returning a machine-readable representation
-            of this validator). See the :data:`SubscriptedIsRepresenter` type
+            of this validator). See the :data:`BeartypeValidatorRepresenter` type
             hint for further details.
 
         Raises
@@ -352,22 +358,22 @@ class _SubscriptedIs(object):
     # ..................{ DUNDERS ~ operator                }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # combine and Override
-    def __and__(self, other: '_SubscriptedIs') -> (
-        '_SubscriptedIs'):
+    def __and__(self, other: 'BeartypeValidator') -> (
+        'BeartypeValidator'):
         '''
         **Conjunction** (i.e., ``self & other``), synthesizing a new
-        :class:`_SubscriptedIs` object whose validator returns ``True`` only
+        :class:`BeartypeValidator` object whose validator returns ``True`` only
         when the validators of both this *and* the passed
-        :class:`_SubscriptedIs` objects all return ``True``.
+        :class:`BeartypeValidator` objects all return ``True``.
 
         Parameters
         ----------
-        other : _SubscriptedIs
+        other : BeartypeValidator
             Object to conjunctively synthesize with this object.
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             New object conjunctively synthesized with this object.
 
         Raises
@@ -378,7 +384,7 @@ class _SubscriptedIs(object):
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, _SubscriptedIs):
+        if not isinstance(other, BeartypeValidator):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class & operand '
                 f'{represent_object(other)} not '
@@ -395,7 +401,7 @@ class _SubscriptedIs(object):
             self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=lambda obj: self.is_valid(obj) and other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
@@ -403,28 +409,28 @@ class _SubscriptedIs(object):
         )
 
 
-    def __or__(self, other: '_SubscriptedIs') -> (
-        '_SubscriptedIs'):
+    def __or__(self, other: 'BeartypeValidator') -> (
+        'BeartypeValidator'):
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
-        :class:`_SubscriptedIs` object whose validator returns ``True`` only
+        :class:`BeartypeValidator` object whose validator returns ``True`` only
         when the validators of either this *or* the passed
-        :class:`_SubscriptedIs` objects return ``True``.
+        :class:`BeartypeValidator` objects return ``True``.
 
         Parameters
         ----------
-        other : _SubscriptedIs
+        other : BeartypeValidator
             Object to disjunctively synthesize with this object.
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             New object disjunctively synthesized with this object.
         '''
 
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
-        if not isinstance(other, _SubscriptedIs):
+        if not isinstance(other, BeartypeValidator):
             raise BeartypeValeSubscriptionException(
                 f'Subscripted "beartype.vale.Is*" class | operand '
                 f'{represent_object(other)} not '
@@ -441,7 +447,7 @@ class _SubscriptedIs(object):
             self._is_valid_code_locals, other._is_valid_code_locals)
 
         # Closures for great justice.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=lambda obj: self.is_valid(obj) or other.is_valid(obj),
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
@@ -450,22 +456,22 @@ class _SubscriptedIs(object):
 
 
     #FIXME: Fun optimization: if inverting something that's already been
-    #inverted, return the original "_SubscriptedIs" object sans inversion. :p
-    def __invert__(self) -> '_SubscriptedIs':
+    #inverted, return the original "BeartypeValidator" object sans inversion. :p
+    def __invert__(self) -> 'BeartypeValidator':
         '''
         **Negation** (i.e., ``~self``), synthesizing a new
-        :class:`_SubscriptedIs` object whose validator returns ``True`` only
-        when the validators of this :class:`_SubscriptedIs` object returns
+        :class:`BeartypeValidator` object whose validator returns ``True`` only
+        when the validators of this :class:`BeartypeValidator` object returns
         ``False``.
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             New object negating this object.
         '''
 
         # Closures for profound lore.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=lambda obj: not self.is_valid(obj),
             # Inverted validator code, defined as the trivial boolean negation
             # of this validator.

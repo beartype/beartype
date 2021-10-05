@@ -20,18 +20,20 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
-from typing import TYPE_CHECKING, Any
+from beartype.vale._valevale import BeartypeValidator
+from beartype._util.text.utiltextrepr import represent_object
+from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ METACLASSES                       }....................
-class _IsMeta(ABCMeta):
+class _BeartypeValidatorFactoryABCMeta(ABCMeta):
     '''
     Metaclass all **beartype validator factory subclasses** (i.e.,
-    :class:`_IsABC` subclasses).
+    :class:`_BeartypeValidatorFactoryABC` subclasses).
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -44,90 +46,113 @@ class _IsMeta(ABCMeta):
         # clarity and usability.
         cls.__module__ = 'beartype.vale'
 
-    # ..................{ DUNDERS                           }..................
-    #FIXME: Report an upstream mypy issue. It's deeply unfortunate that mypy
-    #fails to support the __class_getitem__() dunder method first introduced
-    #with PEP 560. The kludge below is simply that; it's a kludge, which we
-    #wouldn't have to do if mypy properly supported PEP 560.
-    #FIXME: Ah-hah! This is awful. Instead, what we want to do is extend
-    #support for beartype validators back to Python 3.7 (especially) and 3.6
-    #(urgh!) by:
-    #* Refactoring the "_IsABC" superclass to implement __getitem__() rather
-    #  than __class_getitem__().
-    #* Privatizing all subclasses of that superclass: e.g.,
-    #  * Rename "IsAttr" to "_IsAttrClass".
-    #* Instantiating all of those subclasses with single line singletons in
-    #  "__init__": e.g.,
-    #    IsAttr = _IsAttrClass()
-    #    IsEqual = _IsEqualClass()
-    #    ...
-    #Voila! Pretty sweetness, eh? Yup. Yup, it is.
-
-    # If beartype is currently being subjected to static type checking by a
-    # static type checker that is almost certainly mypy, prevent that checker
-    # from erroneously emitting one error for each otherwise valid
-    # subscription of each "_IsABC" subclass: e.g.,
-    #     $ mypy
-    #     error: The type "Type[IsAttr]" is not generic and not indexable  [misc]
-    if TYPE_CHECKING:
-        def __getitem__(self, *args, **kwargs) -> Any:
-            raise BeartypeValeSubscriptionException(
-                f'{repr(self)} not indexable.')
-
 # ....................{ SUPERCLASSES                      }....................
-class _IsABC(object, metaclass=_IsMeta):
+class _BeartypeValidatorFactoryABC(
+    object, metaclass=_BeartypeValidatorFactoryABCMeta):
     '''
     Abstract base class of all **beartype validator factory subclasses**
     (i.e., subclasses that, when subscripted (indexed) by subclass-specific
-    objects, create new :class:`_SubscriptedIs` objects encapsulating those
+    objects, create new :class:`BeartypeValidator` objects encapsulating those
     objects, themselves suitable for subscripting (indexing)
     :attr:`typing.Annotated` type hints, themselves enforcing subclass-specific
     validation constraints and contracts on :mod:`beartype`-decorated callable
     parameters and returns annotated by those hints).
+
+    Attributes
+    ----------
+    _basename : str
+        Machine-readable basename of the public factory singleton
+        instantiating this private factory subclass (e.g., ``"IsAttr"``).
+    _getitem_exception_prefix : str
+        Human-readable substring prefixing exceptions raised by the subclass
+        implementation of the abstract :meth:__getitem__` dunder method.
     '''
 
     # ..................{ INITIALIZERS                      }..................
-    # Ideally, this class method should be typed as returning "NoReturn", but
-    # doing so causes MyPy to vociferously complain: e.g.,
-    #     beartype.vale._factory._valeisabc.py:43: error: "__new__" must return a class
-    #     instance (got "NoReturn")  [misc]
-    def __new__(cls, *args, **kwargs) -> '_IsABC':
+    def __init__(self, basename: str) -> None:
         '''
-        Prohibit direct instantiation by unconditionally raising an exception.
+        Initialize this subclass instance.
 
-        Like standard type hints (e.g., :attr:`typing.Union`), this class is
-        *only* intended to be subscripted (indexed).
+        Parameters
+        ----------
+        basename : str
+            Machine-readable basename of the public factory singleton
+            instantiating this private factory subclass (e.g., ``"IsAttr"``).
+        '''
+        assert isinstance(basename, str), f'{repr(basename)} not string.'
+
+        # Classify all passed parameters.
+        self._basename = basename
+
+        # Initialize all remaining instance variables.
+        self._getitem_exception_prefix = (
+            f'Beartype validator factory "{self._basename}" '
+            f'subscripted by '
+        )
+
+    # ..................{ ABSTRACT ~ dunder                 }..................
+    @abstractmethod
+    def __getitem__(self, *args, **kwargs) -> BeartypeValidator:
+        '''
+        Create and return a new beartype validator validating the subclass
+        constraint parametrized by the passed arguments subscripting this
+        beartype validator factory.
+
+        Like standard type hints (e.g., :attr:`typing.Union`), instances of
+        concrete subclasses of this abstract base class (ABC) are *only*
+        intended to be subscripted (indexed).
+
+        Concrete subclasses are required to implement this abstract method.
+        Concrete subclasses are strongly recommended (but *not* required) to
+        memoize their implementations by the
+        :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
+
+        Returns
+        ----------
+        BeartypeValidator
+            Beartype validator encapsulating this validation.
+        '''
+
+        pass
+
+    # ..................{ PRIVATE ~ validator               }..................
+    #FIXME: Unit test us up, please.
+    def _die_unless_getitem_args_one(self, args: Any) -> None:
+        '''
+        Raise an exception unless this beartype validator factory was
+        subscripted (indexed) by exactly one argument.
+
+        This validator is intended to be called by concrete subclass
+        implementations of the :meth:`__getitem__` dunder method to validate
+        the arguments subscripting this beartype validator factory.
+
+        Parameters
+        ----------
+        args : Any
+            Variadic positional arguments to be inspected.
 
         Raises
         ----------
         BeartypeValeSubscriptionException
-            Always.
+            If the caller dunder method was passed either:
+
+            * No arguments.
+            * Two or more arguments.
         '''
 
-        # Murderbot would know what to do here.
-        raise BeartypeValeSubscriptionException(
-            f'{repr(cls)} not instantiable; '
-            f'like most "typing" classes (e.g., "typing.Annotated"), '
-            f'this class is only intended to be subscripted (indexed).'
-        )
-
-    # # ..................{ DUNDERS                           }..................
-    # def __getitem__(self, *args, **kwargs) -> Any:
-    #     '''
-    #     Prohibit direct instantiation by unconditionally raising an exception.
-    #
-    #     Like standard type hints (e.g., :attr:`typing.Union`), this class is
-    #     *only* intended to be subscripted (indexed).
-    #
-    #     Raises
-    #     ----------
-    #     BeartypeValeSubscriptionException
-    #         Always.
-    #     '''
-    #
-    #     # Murderbot would know what to do here.
-    #     raise BeartypeValeSubscriptionException(
-    #         f'{repr(self)} not instantiable; '
-    #         f'like most "typing" classes (e.g., "typing.Annotated"), '
-    #         f'this class is only intended to be subscripted (indexed).'
-    #     )
+        # If this object was subscripted by either no arguments or two or more
+        # arguments, raise an exception. Specifically...
+        if isinstance(args, tuple):
+            # If this object was subscripted by two or more arguments, raise a
+            # human-readable exception.
+            if args:
+                raise BeartypeValeSubscriptionException(
+                    f'{self._getitem_exception_prefix}two or more arguments '
+                    f'{represent_object(args)}.'
+                )
+            # Else, this object was subscripted by *NO* arguments. In this case,
+            # raise a human-readable exception.
+            else:
+                raise BeartypeValeSubscriptionException(
+                    f'{self._getitem_exception_prefix}empty tuple.')
+        # Else, this object was subscripted by exactly one argument.

@@ -35,18 +35,10 @@ def is_package_beartype_vale_usable() -> bool:
 
     # Defer heavyweight imports.
     from beartype._util.mod.utilmodtest import is_module_typing_any_attr
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-    # Return true only if...
-    return (
-        # The active Python interpreter targets Python >= 3.8 and thus supports
-        # the __class_getitem__() dunder method required by beartype
-        # validators *AND*...
-        IS_PYTHON_AT_LEAST_3_8 and
-        # The "Annotated" type hint is importable from either the official
-        # "typing" or third-party "typing_extensions" modules.
-        is_module_typing_any_attr('Annotated')
-    )
+    # Return true only if the "Annotated" type hint is importable from either
+    # the official "typing" or third-party "typing_extensions" modules.
+    return is_module_typing_any_attr('Annotated')
 
 # ....................{ TESTERS ~ numpy                   }....................
 @callable_cached

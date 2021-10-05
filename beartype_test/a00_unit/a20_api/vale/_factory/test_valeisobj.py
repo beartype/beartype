@@ -16,7 +16,6 @@ This submodule unit tests the subset of the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ CONSTANTS                         }....................
 AS_WHEN_NIGHT_IS_BARE = (
@@ -113,18 +112,15 @@ class InADellOfDew(object):
 
         self.what_is_most_like_thee = TillTheWorldIsWrought()
 
-# ....................{ TESTS ~ class : isattr           }....................
-@skip_if_python_version_less_than('3.7.0')
+# ....................{ TESTS ~ class : isattr            }....................
 def test_api_vale_isattr_pass() -> None:
     '''
-    Test successful usage of the public :mod:`beartype.vale.IsAttr` class if
-    the active Python interpreter targets Python >= 3.7 (and thus supports the
-    ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test successful usage of the :mod:`beartype.vale.IsAttr` factory.
     '''
 
     # Defer heavyweight imports.
     from beartype.vale import IsAttr, IsEqual
-    from beartype.vale._valesub import _SubscriptedIs
+    from beartype.vale._valevale import BeartypeValidator
 
     # Instances of valid test classes declared above.
     from_rainbow_clouds = AllTheEarthAndAir()
@@ -135,19 +131,19 @@ def test_api_vale_isattr_pass() -> None:
     like_a_high_born_maiden = TillTheWorldIsWrought()
     scattering_unbeholden = InADellOfDew()
 
-    # Validator produced by subscripting the "IsAttr" class with the name of an
+    # Validator produced by subscripting this factory with the name of an
     # attribute defined by the former class and that attribute's value.
     IsInTheLightOfThought = IsAttr[
         'with_thy_voice_is_loud', IsEqual[AS_WHEN_NIGHT_IS_BARE]]
 
-    # Validator produced by subscripting the "IsAttr" class with the name of an
+    # Validator produced by subscripting this factory with the name of an
     # attribute defined by the latter class and the prior validator.
     IsSingingHymnsUnbidden = IsAttr[
         'what_is_most_like_thee', IsInTheLightOfThought]
 
     # Assert these validators satisfy the expected API.
-    assert isinstance(IsInTheLightOfThought, _SubscriptedIs)
-    assert isinstance(IsSingingHymnsUnbidden, _SubscriptedIs)
+    assert isinstance(IsInTheLightOfThought, BeartypeValidator)
+    assert isinstance(IsSingingHymnsUnbidden, BeartypeValidator)
 
     # Assert these validators produce the same objects when subscripted by the
     # same arguments (and are thus memoized on subscripted arguments).
@@ -195,12 +191,9 @@ def test_api_vale_isattr_pass() -> None:
     assert '|' in repr(IsInTheLightOfThoughtOrSingingHymnsUnbidden)
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_api_vale_isattr_fail() -> None:
     '''
-    Test unsuccessful usage of the public :mod:`beartype.vale.IsAttr` class if
-    the active Python interpreter targets Python >= 3.7 (and thus supports the
-    ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test unsuccessful usage of the :mod:`beartype.vale.IsAttr` factory.
     '''
 
     # Defer heavyweight imports.
@@ -208,28 +201,23 @@ def test_api_vale_isattr_fail() -> None:
     from beartype.vale import IsAttr, IsEqual
     from pytest import raises
 
-    # Assert that instantiating the "IsAttr" class raises the expected
-    # exception.
-    with raises(BeartypeValeSubscriptionException):
-        IsAttr()
-
-    # Assert that subscripting the "IsAttr" class with the empty tuple raises
-    # the expected exception.
+    # Assert that subscripting this factory with the empty tuple raises the
+    # expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr[()]
 
-    # Assert that subscripting the "IsAttr" class with the empty tuple raises
-    # the expected exception.
+    # Assert that subscripting this factory with the empty tuple raises the
+    # expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr[()]
 
-    # Assert that subscripting the "IsAttr" class with one non-tuple argument
-    # raises the expected exception.
+    # Assert that subscripting this factory with one non-tuple argument raises
+    # the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr['Among the flowers and grass, which screen it from the view:']
 
-    # Assert that subscripting the "IsAttr" class with three or more arguments
-    # raises the expected exception.
+    # Assert that subscripting this factory with three or more arguments raises
+    # the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr[
             "Like a rose embower'd",
@@ -237,21 +225,20 @@ def test_api_vale_isattr_fail() -> None:
             "By warm winds deflower'd,",
         ]
 
-    # Assert that subscripting the "IsAttr" class with two arguments whose
-    # first argument is *NOT* a string raises the expected exception.
+    # Assert that subscripting this factory with two arguments whose first
+    # argument is *NOT* a string raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr[
             IsEqual['Till the scent it gives'],
             IsEqual[
                 'Makes faint with too much sweet those heavy-winged thieves:']]
 
-    # Assert that subscripting the "IsAttr" class with two arguments whose
-    # first argument is the empty string raises the expected exception.
+    # Assert that subscripting this factory with two arguments whose first
+    # argument is the empty string raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr['', IsEqual['Sound of vernal showers']]
 
-    # Assert that subscripting the "IsAttr" class with two arguments whose
-    # first argument is an invalid Python identifier raises the expected
-    # exception.
+    # Assert that subscripting this factory with two arguments whose first
+    # argument is an invalid Python identifier raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsAttr['On the twinkling grass,', IsEqual["Rain-awaken'd flowers,"]]

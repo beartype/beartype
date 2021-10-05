@@ -15,7 +15,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utiltyping import TypeException
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._valevale import BeartypeValidator
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -124,7 +124,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
     ``True`` only if the first argument subscripting the passed
     :pep:`593`-compliant :attr:`typing.Annotated` type hint is
-    :mod:`beartype`-specific (e.g., instance of the :class:`_SubscriptedIs`
+    :mod:`beartype`-specific (e.g., instance of the :class:`BeartypeValidator`
     class produced by subscripting (indexing) the :class:`Is` class).
 
     Parameters
@@ -160,7 +160,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     #     TypeError: Annotated[...] should be used with at least two
     #     arguments (a type and an annotation).
     try:
-        return isinstance(hint.__metadata__[0], _SubscriptedIs)
+        return isinstance(hint.__metadata__[0], BeartypeValidator)
     # If the metaclass of the first argument subscripting this hint overrides
     # the __isinstancecheck__() dunder method to raise an exception, silently
     # ignore this exception by returning false instead.

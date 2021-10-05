@@ -529,7 +529,7 @@ PEP593_CODE_HINT_VALIDATOR_PREFIX = '''(
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
 against a :pep:`593`-compliant :class:`typing.Annotated` type hint subscripted
-by one or more :class:`beartype.vale._SubscriptedIs` objects.
+by one or more :class:`beartype.vale.BeartypeValidator` objects.
 '''
 
 
@@ -538,7 +538,7 @@ PEP593_CODE_HINT_VALIDATOR_SUFFIX = '''
 '''
 PEP-compliant code snippet suffixing all code type-checking the current pith
 against each a :pep:`593`-compliant :class:`typing.Annotated` type hint
-subscripted by one or more :class:`beartype.vale._SubscriptedIs` objects.
+subscripted by one or more :class:`beartype.vale.BeartypeValidator` objects.
 '''
 
 
@@ -549,8 +549,8 @@ PEP593_CODE_HINT_VALIDATOR_CHILD = '''
 '''
 PEP-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
-:meth:`beartype.vale._SubscriptedIs._is_valid_code` string) of the current
-child :class:`beartype.vale._SubscriptedIs` argument subscripting a parent `PEP
+:meth:`beartype.vale.BeartypeValidator._is_valid_code` string) of the current
+child :class:`beartype.vale.BeartypeValidator` argument subscripting a parent `PEP
 593`_-compliant :class:`typing.Annotated` type hint.
 
 Caveats

@@ -254,7 +254,7 @@ def reduce_hint_numpy_ndarray(
 
         # Equivalent nested beartype validator reduced from this hint.
         hint_validator = (
-            IsAttr['dtype', IsAttr['type', IsSubclass[hint_dtype_like]]])  # type: ignore[misc]
+            IsAttr['dtype', IsAttr['type', IsSubclass[hint_dtype_like]]])
     # Else, this dtype-like is either unhashable *OR* not such an ABC.
     else:
         # Attempt to coerce this possibly non-dtype into a proper dtype. Note
@@ -285,7 +285,7 @@ def reduce_hint_numpy_ndarray(
         # Else, this object is now a proper dtype.
 
         # Equivalent nested beartype validator reduced from this hint.
-        hint_validator = IsAttr['dtype', IsEqual[hint_dtype]]  # type: ignore[misc]
+        hint_validator = IsAttr['dtype', IsEqual[hint_dtype]]
 
     # Replace the usually less readable representation of this validator to the
     # usually more readable representation of this hint (e.g.,

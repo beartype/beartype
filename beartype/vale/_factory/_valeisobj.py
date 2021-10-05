@@ -18,9 +18,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._factory._valeisabc import _IsABC
-from beartype.vale._util._valesnip import VALE_CODE_CHECK_ISATTR_format
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilsnip import VALE_CODE_CHECK_ISATTR_format
+from beartype.vale._valevale import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.func.utilfuncscope import (
@@ -36,7 +36,7 @@ from typing import Any, Tuple
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ attr                    }....................
-class IsAttr(_IsABC):
+class _IsAttrFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object attribute validator factory** (i.e., object creating and
     returning a new beartype validator when subscripted (indexed) by both the
@@ -137,19 +137,17 @@ class IsAttr(_IsABC):
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
-    def __class_getitem__(
-        cls, args: Tuple[str, _SubscriptedIs]) -> _SubscriptedIs:
+    def __getitem__(self, args: Tuple[str, BeartypeValidator]) -> BeartypeValidator:
         '''
-        :pep:`560`-compliant dunder method creating and returning a new
-        beartype validator validating object attributes with the passed name
-        satisfying the passed validator, suitable for subscripting
-        :pep:`593`-compliant :attr:`typing.Annotated` type hints.
+        Create and return a new beartype validator validating object attributes
+        with the passed name satisfying the passed validator, suitable for
+        subscripting :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
 
         Parameters
         ----------
-        args : Tuple[str, _SubscriptedIs]
+        args : Tuple[str, BeartypeValidator]
             2-tuple ``(attr_name, attr_validator)``, where:
 
             * ``attr_name`` is the arbitrary attribute name to validate that
@@ -160,7 +158,7 @@ class IsAttr(_IsABC):
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
@@ -174,7 +172,7 @@ class IsAttr(_IsABC):
 
         See Also
         ----------
-        :class:`IsAttr`
+        :class:`_IsAttrFactory`
             Usage instructions.
         '''
 
@@ -182,8 +180,8 @@ class IsAttr(_IsABC):
         # exception.
         if not isinstance(args, tuple):
             raise BeartypeValeSubscriptionException(
-                f'{repr(cls)} subscripted by one non-tuple argument:\n'
-                f'{represent_object(args)}'
+                f'{self._getitem_exception_prefix}non-tuple argument '
+                f'{represent_object(args)}.'
             )
         # Else, this class was subscripted by either no *OR* two or more
         # arguments (contained in this tuple).
@@ -195,14 +193,14 @@ class IsAttr(_IsABC):
             # In this case, raise a human-readable exception.
             if args:
                 raise BeartypeValeSubscriptionException(
-                    f'{repr(cls)} subscripted by three or more arguments:\n'
-                    f'{represent_object(args)}'
+                    f'{self._getitem_exception_prefix}three or more arguments '
+                    f'{represent_object(args)}.'
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
                 raise BeartypeValeSubscriptionException(
-                    f'{repr(cls)} subscripted by empty tuple.')
+                    f'{self._getitem_exception_prefix}empty tuple.')
         # Else, this class was subscripted by exactly two arguments.
 
         # Localize these arguments to human-readable local variables.
@@ -212,22 +210,20 @@ class IsAttr(_IsABC):
         # machine-readable representation of this validator), defined *AFTER*
         # localizing these validator arguments.
         get_repr = lambda: (
-            f'{cls.__name__}[{repr(attr_name)}, {repr(attr_validator)}]')
+            f'{self._basename}[{repr(attr_name)}, {repr(attr_validator)}]')
 
         # If this name is *NOT* a string, raise an exception.
         if not isinstance(attr_name, str):
             raise BeartypeValeSubscriptionException(
-                f'{get_repr()} subscripted first argument '
-                f'{repr(attr_name)} not string.'
+                f'{get_repr()} first argument '
+                f'{represent_object(attr_name)} not string.'
             )
         # Else, this name is a string.
         #
         # If this name is the empty string, raise an exception.
         elif not attr_name:
             raise BeartypeValeSubscriptionException(
-                f'{get_repr()} subscripted first argument '
-                f'{repr(attr_name)} empty.'
-            )
+                f'{get_repr()} first argument is empty string.')
         # Else, this name is a non-empty string.
         #
         # Note that this name has *NOT* yet been validated to be valid Python
@@ -238,7 +234,7 @@ class IsAttr(_IsABC):
 
         # Callable inefficiently validating object attributes with this name
         # against this validator.
-        # is_valid: _SubscriptedIsValidator = None  # type: ignore[assignment]
+        # is_valid: BeartypeValidatorTester = None  # type: ignore[assignment]
 
         # Code snippet efficiently validating object attributes with this name
         # against this validator.
@@ -255,16 +251,15 @@ class IsAttr(_IsABC):
             # exception.
             if not attr_name.isidentifier():
                 raise BeartypeValeSubscriptionException(
-                    f'{get_repr()} subscripted first argument '
-                    f'{repr(attr_name)} syntactically invalid '
-                    f'(i.e., not valid Python identifier).'
+                    f'{get_repr()} first argument {repr(attr_name)} not '
+                    f'syntactically valid Python identifier.'
                 )
             # Else, this name is a valid Python identifier.
 
             def is_valid(pith: Any) -> bool:
                 f'''
                 ``True`` only if the passed object defines an attribute named
-                {repr(attr_name)} whose value satisfies the validator
+                "{attr_name}" whose value satisfies the validator
                 {repr(attr_validator)}.
                 '''
 
@@ -341,13 +336,13 @@ class IsAttr(_IsABC):
             #FIXME: Implement us up when we find the time, please. We currently
             #raise an exception simply because we ran out of time for this. :{
             raise BeartypeValeSubscriptionException(
-                f'{get_repr()} subscripted first argument '
+                f'{get_repr()} first argument '
                 f'{repr(attr_name)} not unqualified Python identifier '
                 f'(i.e., contains one or more "." characters).'
             )
 
         # Create and return this subscription.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,

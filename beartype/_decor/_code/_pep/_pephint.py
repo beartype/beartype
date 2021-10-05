@@ -153,7 +153,7 @@ from beartype._util.text.utiltextmagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._valevale import BeartypeValidator
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
@@ -1586,7 +1586,7 @@ def pep_code_check_hint(
                 # If this hint is a PEP 593-compliant type metahint, this
                 # metahint is guaranteed by the reduction performed above to be
                 # beartype-specific (i.e., metahint whose second argument is an
-                # instance of "beartype.vale._valesub._SubscriptedIs" produced
+                # instance of "beartype.vale._valevale.BeartypeValidator" produced
                 # by subscripting the "Is" class). In this case...
                 elif hint_curr_sign is HintSignAnnotated:
                     # PEP-compliant type hint annotated by this metahint,
@@ -1633,13 +1633,13 @@ def pep_code_check_hint(
                         # beartype-specific, all additional arguments are
                         # explicitly required to be beartype-specific as well
                         # for consistency and safety.
-                        if not isinstance(hint_child, _SubscriptedIs):
+                        if not isinstance(hint_child, BeartypeValidator):
                             raise BeartypeDecorHintPep593Exception(
                                 f'{hint_curr_exception_prefix}PEP 593 type hint '
                                 f'{repr(hint_curr)} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
-                                f'subscription of "beartype.vale.Is*" class).'
+                                f'beartype validator).'
                             )
                         # Else, this argument is beartype-specific.
 

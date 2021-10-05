@@ -18,9 +18,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._factory._valeisabc import _IsABC
-from beartype.vale._util._valesnip import VALE_CODE_CHECK_ISSUBCLASS_format
-from beartype.vale._valesub import _SubscriptedIs
+from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilsnip import VALE_CODE_CHECK_ISSUBCLASS_format
+from beartype.vale._valevale import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
@@ -38,7 +38,7 @@ from beartype._util.utiltyping import TypeOrTupleTypes
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES ~ type                    }....................
-class IsSubclass(_IsABC):
+class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype type inheritance validator factory** (i.e., object creating and
     returning a new beartype validator when subscripted (indexed) by any class,
@@ -51,8 +51,8 @@ class IsSubclass(_IsABC):
     :mod:`beartype`-decorated callable parameter or return annotated by a
     :attr:`typing.Annotated` type hint subscripted by this factory subscripted
     by any class (e.g., ``typing.Annotated[type,
-    beartype.vale.IsSubclass[{cls}]]`` for any class ``{cls}``) validates that
-    parameter or return value to be a subclass of that class.
+    beartype.vale.IsSubclass[{cls}]]`` for any class ``{cls}``)
+    validates that parameter or return value to be a subclass of that class.
 
     This factory is a generalization of the :pep:`484`-compliant
     :attr:`typing.Type` and :pep:`585`-compliant :class:`type` type hint
@@ -66,7 +66,7 @@ class IsSubclass(_IsABC):
 
     * Callable parameters and returns.
     * **Attributes** of callable parameters and returns via the
-      :class:`beartype.vale.IsAttr` factory.
+      :class:`beartype.vale._IsAttrFactory` factory.
 
     **This factory incurs no time performance penalties at call time.** Whereas
     the general-purpose :class:`beartype.vale.Is` factory necessarily calls
@@ -134,13 +134,11 @@ class IsSubclass(_IsABC):
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
-    def __class_getitem__(
-        cls, base_classes: TypeOrTupleTypes) -> _SubscriptedIs:
+    def __getitem__(self, base_classes: TypeOrTupleTypes) -> BeartypeValidator:
         '''
-        :pep:`560`-compliant dunder method creating and returning a new
-        beartype validator validating type inheritance against at least one of
-        the passed classes, suitable for subscripting :pep:`593`-compliant
-        :attr:`typing.Annotated` type hints.
+        Create and return a new beartype validator validating type inheritance
+        against at least one of the passed classes, suitable for subscripting
+        :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 
         This method is memoized for efficiency.
 
@@ -151,7 +149,7 @@ class IsSubclass(_IsABC):
 
         Returns
         ----------
-        _SubscriptedIs
+        BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
@@ -164,7 +162,7 @@ class IsSubclass(_IsABC):
 
         See Also
         ----------
-        :class:`IsAttr`
+        :class:`_IsAttrFactory`
             Usage instructions.
         '''
 
@@ -178,7 +176,7 @@ class IsSubclass(_IsABC):
             # exception.
             if not base_classes:
                 raise BeartypeValeSubscriptionException(
-                    f'{repr(cls)} subscripted by empty tuple.')
+                    f'{self._getitem_exception_prefix}empty tuple.')
             # Else, this factory was subscripted by two or more arguments.
 
             # If any such argument is *NOT* an issubclassable type, raise an
@@ -186,7 +184,7 @@ class IsSubclass(_IsABC):
             die_unless_type_or_types_issubclassable(
                 type_or_types=base_classes,
                 exception_cls=BeartypeValeSubscriptionException,
-                exception_prefix=f'{repr(cls)} subscripted by ',
+                exception_prefix=self._getitem_exception_prefix,
             )
             # Else, all such arguments are issubclassable types.
 
@@ -204,7 +202,7 @@ class IsSubclass(_IsABC):
             die_unless_type_issubclassable(
                 cls=base_classes,
                 exception_cls=BeartypeValeSubscriptionException,
-                exception_prefix=f'{repr(cls)} subscripted by ',
+                exception_prefix=self._getitem_exception_prefix,
             )
             # Else, this argument is an issubclassable type.
 
@@ -230,7 +228,7 @@ class IsSubclass(_IsABC):
             param_name_base_cls=param_name_base_cls)
 
         # Create and return this subscription.
-        return _SubscriptedIs(
+        return BeartypeValidator(
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
@@ -239,5 +237,5 @@ class IsSubclass(_IsABC):
             # representation as a string rather than lambda function returning
             # a string, as this string is safely, immediately, and efficiently
             # constructable from these arguments' representation.
-            get_repr=f'{cls.__name__}[{base_classes_repr}]',
+            get_repr=f'{self._basename}[{base_classes_repr}]',
         )

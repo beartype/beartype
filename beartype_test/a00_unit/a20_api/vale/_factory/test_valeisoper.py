@@ -16,20 +16,16 @@ This submodule unit tests the subset of the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ class : isequal           }....................
-@skip_if_python_version_less_than('3.7.0')
 def test_api_vale_isequal_pass() -> None:
     '''
-    Test successful usage of the public :mod:`beartype.vale.IsEqual` class if
-    the active Python interpreter targets Python >= 3.7 (and thus supports the
-    ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test successful usage of the :mod:`beartype.vale.IsEqual` factory.
     '''
 
     # Defer heavyweight imports.
     from beartype.vale import IsEqual
-    from beartype.vale._valesub import _SubscriptedIs
+    from beartype.vale._valevale import BeartypeValidator
 
     # Arbitrary tuple objects with which to subscript the "IsEqual" class,
     # exercising edge cases in the __class_getitem__() dunder method.
@@ -50,8 +46,8 @@ def test_api_vale_isequal_pass() -> None:
     IsKeenArrows = IsEqual[KEEN_ARROWS]
 
     # Assert these validators satisfy the expected API.
-    assert isinstance(IsUnbodiedJoy, _SubscriptedIs)
-    assert isinstance(IsKeenArrows, _SubscriptedIs)
+    assert isinstance(IsUnbodiedJoy, BeartypeValidator)
+    assert isinstance(IsKeenArrows, BeartypeValidator)
 
     # Assert these validators produce the same objects when subscripted by the
     # same arguments (and are thus memoized on subscripted arguments).
@@ -89,23 +85,15 @@ def test_api_vale_isequal_pass() -> None:
     assert '|' in repr(IsUnbodiedJoyOrKeenArrows)
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_api_vale_isequal_fail() -> None:
     '''
-    Test unsuccessful usage of the public :mod:`beartype.vale.IsEqual` class if
-    the active Python interpreter targets Python >= 3.7 (and thus supports the
-    ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test unsuccessful usage of the :mod:`beartype.vale.IsEqual` factory.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsEqual
     from pytest import raises
-
-    # Assert that instantiating the "IsEqual" class raises the expected
-    # exception.
-    with raises(BeartypeValeSubscriptionException):
-        IsEqual()
 
     # Assert that subscripting the "IsEqual" class with the empty tuple raises
     # the expected exception.

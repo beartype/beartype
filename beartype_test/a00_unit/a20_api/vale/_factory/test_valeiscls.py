@@ -16,41 +16,36 @@ This submodule unit tests the subset of the public API of the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ class : issubclass        }....................
-@skip_if_python_version_less_than('3.7.0')
 def test_api_vale_issubclass_pass() -> None:
     '''
-    Test successful usage of the public :mod:`beartype.vale.IsSubclass` class
-    if the active Python interpreter targets Python >= 3.7 (and thus supports
-    the ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test successful usage of the :mod:`beartype.vale.IsSubclass` factory.
     '''
 
     # Defer heavyweight imports.
     from beartype.vale import IsSubclass
     from beartype._util.utilobject import get_object_name
-    from beartype.vale._valesub import _SubscriptedIs
+    from beartype.vale._valevale import BeartypeValidator
     from beartype_test.a00_unit.data.data_type import (
         Class, Subclass, SubclassSubclass)
 
-    # Subclasses of classes subscripting the "IsSubclass" class below.
+    # Subclasses of classes subscripting this factory below.
     class UnicodeString(str): pass
     class ByteString(bytes): pass
 
-    # Validators produced by subscripting the "IsSubclass" class with exactly
-    # one superclass.
+    # Validators produced by subscripting this factory with one superclass.
     IsClassSubclass = IsSubclass[Class]
     IsSubclassSubclass = IsSubclass[Subclass]
 
-    # Validator produced by subscripting the "IsSubclass" class with two or
-    # more superclasses.
+    # Validator produced by subscripting this factory with two or more
+    # superclasses.
     IsStrOrBytesSubclass = IsSubclass[str, bytes]
 
     # Assert these validators satisfy the expected API.
-    assert isinstance(IsClassSubclass, _SubscriptedIs)
-    assert isinstance(IsSubclassSubclass, _SubscriptedIs)
-    assert isinstance(IsStrOrBytesSubclass, _SubscriptedIs)
+    assert isinstance(IsClassSubclass, BeartypeValidator)
+    assert isinstance(IsSubclassSubclass, BeartypeValidator)
+    assert isinstance(IsStrOrBytesSubclass, BeartypeValidator)
 
     # Assert these validators produce the same objects when subscripted by the
     # same arguments (and are thus memoized on subscripted arguments).
@@ -108,12 +103,9 @@ def test_api_vale_issubclass_pass() -> None:
     assert '|' in repr(IsClassOrStrOrBytesSubclass)
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_api_vale_issubclass_fail() -> None:
     '''
-    Test unsuccessful usage of the public :mod:`beartype.vale.IsSubclass` class
-    if the active Python interpreter targets Python >= 3.7 (and thus supports
-    the ``__class_getitem__()`` dunder method) *or* skip otherwise.
+    Test unsuccessful usage of the :mod:`beartype.vale.IsSubclass` factory.
     '''
 
     # Defer heavyweight imports.
@@ -122,33 +114,27 @@ def test_api_vale_issubclass_fail() -> None:
     from beartype_test.a00_unit.data.data_type import NonIssubclassableClass
     from pytest import raises
 
-    # Assert that instantiating the "IsSubclass" class raises the expected
-    # exception.
-    with raises(BeartypeValeSubscriptionException):
-        IsSubclass()
-
-    # Assert that subscripting the "IsSubclass" class with the empty tuple
-    # raises the expected exception.
+    # Assert that subscripting this factory with the empty tuple raises the
+    # expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsSubclass[()]
 
-    # Assert that subscripting the "IsSubclass" class with a non-class raises
-    # the expected exception.
+    # Assert that subscripting this factory with a non-class raises the
+    # expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsSubclass['Where Power in likeness of the Arve comes down']
 
-    # Assert that subscripting the "IsSubclass" class with a non-issubclassable
-    # class raises the expected exception.
+    # Assert that subscripting this factory with a non-issubclassable class
+    # raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsSubclass[NonIssubclassableClass]
 
-    # Assert that subscripting the "IsSubclass" class with both a class and
-    # non-class raises the expected exception.
+    # Assert that subscripting this factory with both a class and non-class
+    # raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsSubclass[str, 'Of lightning through the tempest;—thou dost lie,']
 
-    # Assert that subscripting the "IsSubclass" class with both an
-    # issubclassable and non-issubclassable class raises the expected
-    # exception.
+    # Assert that subscripting this factory with both an issubclassable and
+    # non-issubclassable class raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         IsSubclass[bytes, NonIssubclassableClass]
