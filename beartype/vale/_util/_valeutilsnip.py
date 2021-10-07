@@ -13,45 +13,88 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
+
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
-#FIXME: Generalize to support Python < 3.8. This does *NOT* need to terribly
-#efficient under Python 3.6 and 3.7; it simply needs to work.
-VALE_CODE_CHECK_ISATTR = '''(
+# ....................{ INDENTATION                       }....................
+VALE_CODE_INDENT_1 = f'{{indent}}{CODE_INDENT_1}'
+'''
+Code snippet prefixed by the placeholder substring ``"{indent}"`` (which the
+:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` replaces with
+the indentation level required by the current beartype validator) followed by a
+single level of indentation.
+'''
+
+# ....................{ CHECK ~ factory                   }....................
+VALE_CODE_CHECK_ISEQUAL_TEST = '''
+{{indent}}# True only if this pith equals this object.
+{{indent}}{{obj}} == {param_name_obj_value}'''
+'''
+:attr:`beartype.vale.IsEqual`-specific code snippet validating an arbitrary
+object to be equal to another arbitrary object.
+'''
+
+
+VALE_CODE_CHECK_ISSUBCLASS_TEST = '''
+{{indent}}# True only if this pith is a class subclassing this superclass.
+{{indent}}(isinstance({{obj}}, type) and issubclass({{obj}}, {param_name_base_cls}))'''
+'''
+:attr:`beartype.vale.IsSubclass`-specific code snippet validating an arbitrary
+type to subclass another arbitrary type.
+'''
+
+# ....................{ CHECK ~ factory : isattr          }....................
+VALE_CODE_CHECK_ISATTR_TEST = '''(
 {{indent}}    # True only if this pith defines an attribute with this name.
-{{indent}}    ({local_name_obj_attr_value} := getattr(
-{{indent}}        {{obj}}, {attr_name_expr}, {local_name_sentinel}))
-{{indent}}        is not {local_name_sentinel} and {obj_attr_value_is_valid_expr}
+{{indent}}    {attr_value_expr}
+{{indent}}    is not {local_name_sentinel} and {attr_value_is_valid_expr}
 {{indent}})'''
 '''
-:mod:`beartype.vale.IsAttr`-specific code snippet validating an arbitrary
+:attr:`beartype.vale.IsAttr`-specific code snippet validating an arbitrary
 object to define an attribute with an arbitrary name satisfying an arbitrary
 expression evaluating to a boolean.
 '''
 
 
-VALE_CODE_CHECK_ISEQUAL = '''
-{{indent}}# True only if this pith equals this object.
-{{indent}}{{obj}} == {param_name_obj_value}'''
+_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW = (
+    'getattr({{obj}}, {attr_name_expr}, {local_name_sentinel})')
 '''
-:mod:`beartype.vale.IsEqual`-specific code snippet validating an arbitrary
-object to be equal to another arbitrary object.
+:attr:`beartype.vale.IsAttr`-specific Python expression inefficiently yielding
+the value of the attribute with an arbitrary name of an arbitrary object to be
+validated.
 '''
 
 
-VALE_CODE_CHECK_ISSUBCLASS = '''
-{{indent}}# True only if this pith is a class subclassing this superclass.
-{{indent}}isinstance({{obj}}, type) and issubclass({{obj}}, {param_name_base_cls})'''
+VALE_CODE_CHECK_ISATTR_VALUE_EXPR = (
+    # If the active Python interpreter targets Python >= 3.8 and thus supports
+    # assignment expressions, localize the value of this attribute to optimize
+    # subsequent access of that value;
+    f'({{local_name_attr_value}} := {_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW})'
+    if IS_PYTHON_AT_LEAST_3_8 else
+    # Else, the active Python interpreter targets Python < 3.8 and thus fails
+    # to support assignment expressions. In this case, directly access that
+    # value repeatedly (and thus inefficiently) *WITHOUT* localization.
+    _VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW
+)
 '''
-:mod:`beartype.vale.IsSubclass`-specific code snippet validating an arbitrary
-type to subclass another arbitrary type.
+:attr:`beartype.vale.IsAttr`-specific Python expression efficiently yielding
+the value of the attribute with an arbitrary name of an arbitrary object to be
+validated.
+
+If the active Python interpreter targets Python >= 3.8 and thus supports
+assignment expressions, this expression is optimized to localize this value to
+a local variable whose name *must* be uniquified and formatted by the caller
+into the ``local_name_attr_value`` format variable.
 '''
 
 # ....................{ METHODS                           }....................
 # Format methods of the code snippets declared above as a microoptimization.
 
-VALE_CODE_CHECK_ISATTR_format  = VALE_CODE_CHECK_ISATTR.format
-VALE_CODE_CHECK_ISEQUAL_format = VALE_CODE_CHECK_ISEQUAL.format
-VALE_CODE_CHECK_ISSUBCLASS_format = VALE_CODE_CHECK_ISSUBCLASS.format
+VALE_CODE_CHECK_ISATTR_TEST_format = VALE_CODE_CHECK_ISATTR_TEST.format
+VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format = (
+    VALE_CODE_CHECK_ISATTR_VALUE_EXPR.format)
+VALE_CODE_CHECK_ISEQUAL_TEST_format = VALE_CODE_CHECK_ISEQUAL_TEST.format
+VALE_CODE_CHECK_ISSUBCLASS_TEST_format = VALE_CODE_CHECK_ISSUBCLASS_TEST.format

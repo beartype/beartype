@@ -98,20 +98,21 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
 }
 '''
 Dictionary mapping from the **possibly unsubscripted PEP-compliant type hint
-representation prefixes** (i.e., unsubscripted prefix of the machine-readable
+representation prefix** (i.e., unsubscripted prefix of the machine-readable
 strings returned by the :func:`repr` builtin for PEP-compliant type hints
-permissible in both subscripted and unsubscripted forms) of all hints uniquely
-identifiable by those representations to their identifying signs.
+permissible in both subscripted and unsubscripted forms) of each hint uniquely
+identifiable by that representations to its identifying sign.
 
 Notably, this dictionary maps from the representation prefixes of:
 
-* All :pep:`484`-compliant type hints. Whereas all :pep:`585`-compliant type
-  hints (e.g., ``list[str]``) are necessarily subscripted, all
-  :pep:`484`-compliant type hints support at least unsubscripted form and most
-  :pep:`484`-compliant type hints support subscription as well. Moreover, the
-  unsubscripted form of all :pep:`484`-compliant type hints conveys deep
-  semantics and thus require detection as PEP-compliant (e.g., ``typing.List``,
-  requiring detection and reduction to ``list``).
+* *All* :pep:`484`-compliant type hints. Whereas *all* :pep:`585`-compliant
+  type hints (e.g., ``list[str]``) are necessarily subscripted and thus omitted
+  from this dictionary, *all* :pep:`484`-compliant type hints support at least
+  unsubscripted form and most :pep:`484`-compliant type hints support
+  subscription as well. Moreover, the unsubscripted forms of most
+  :pep:`484`-compliant type hints convey deep semantics and thus require
+  detection as PEP-compliant (e.g., ``typing.List``, requiring detection and
+  reduction to ``list``).
 '''
 
 
@@ -508,7 +509,7 @@ def _init() -> None:
         _HINT_TYPING_ATTR_NAMES_IGNORABLE.add('Generic')
 
     # ..................{ CONSTRUCTION                      }..................
-    # For the name of each top-level hinting module...
+    # For the name of each top-level type hinting module...
     for typing_module_name in TYPING_MODULE_NAMES:
         # For the name of each sign...
         #
@@ -517,13 +518,13 @@ def _init() -> None:
         #   that getter internally defers to dir() and getattr() with a
         #   considerable increase in runtime complexity.
         # * The "__dict__" dunder attribute should *NEVER* be accessed directly
-        #   on a module, as this attribute commonly contains artificial entries
+        #   on a module, as that attribute commonly contains artificial entries
         #   *NOT* explicitly declared by that module (e.g., "__", "e__",
         #   "ns__").
         for hint_sign_name in dir(datapepsigns):
             # If this name is *NOT* prefixed by the substring prefixing the
             # names of all signs, this name is *NOT* the name of a sign. In
-            # this case, continue to the next sign.
+            # this case, silently continue to the next sign.
             if not hint_sign_name.startswith('HintSign'):
                 continue
 
@@ -548,25 +549,29 @@ def _init() -> None:
                 typing_attr_name, typing_attr_name)
 
             # Map from that attribute in this module to this sign.
+            # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
             HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
                 f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign
 
         # For the unqualified classname identifying each sign to that sign...
-        for hint_type_basename, hint_sign in (
+        for typing_attr_name, hint_sign in (
             _HINT_TYPE_BASENAMES_TO_SIGN.items()):
             # Map from that classname in this module to this sign.
+            # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_name}" -> {repr(hint_sign)}...')
             HINT_TYPE_NAME_TO_SIGN[
-                f'{typing_module_name}.{hint_type_basename}'] = hint_sign
+                f'{typing_module_name}.{typing_attr_name}'] = hint_sign
 
         # For each shallowly ignorable typing attribute name...
         for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
             # Add that attribute relative to this module to this set.
+            # print(f'[datapeprepr] Registering ignorable "{typing_module_name}.{typing_attr_name}"...')
             HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_name}')
 
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
             # Add that attribute relative to this module to this set.
+            # print(f'[datapeprepr] Registering deprecated "{typing_module_name}.{typing_attr_name}"...')
             HINTS_PEP484_REPR_PREFIX_DEPRECATED.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_name}')
 

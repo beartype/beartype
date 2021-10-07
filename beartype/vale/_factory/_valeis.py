@@ -14,10 +14,6 @@ entire :mod:`beartype` validation ecosystem.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeLambdaWarning
 from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
@@ -258,7 +254,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
     '''
 
     # ..................{ DUNDERS                           }..................
-    def __getitem__(
+    def __getitem__(  # type: ignore[override]
         self, is_valid: BeartypeValidatorTester) -> BeartypeValidator:
         '''
         Create and return a new beartype validator from the passed **validator
@@ -301,7 +297,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
         # If this class was subscripted by either no arguments *OR* two or more
         # arguments, raise an exception.
-        self._die_unless_getitem_args_one(is_valid)
+        self._die_unless_getitem_args_1(is_valid)
         # Else, this class was subscripted by exactly one argument.
 
         # Dictionary mapping from the name to value of each local attribute

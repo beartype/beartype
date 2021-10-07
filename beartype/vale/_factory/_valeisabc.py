@@ -15,10 +15,6 @@ entire :mod:`beartype` data validation ecosystem.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
 # ....................{ IMPORTS                           }....................
 from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
@@ -117,7 +113,7 @@ class _BeartypeValidatorFactoryABC(
 
     # ..................{ PRIVATE ~ validator               }..................
     #FIXME: Unit test us up, please.
-    def _die_unless_getitem_args_one(self, args: Any) -> None:
+    def _die_unless_getitem_args_1(self, args: Any) -> None:
         '''
         Raise an exception unless this beartype validator factory was
         subscripted (indexed) by exactly one argument.

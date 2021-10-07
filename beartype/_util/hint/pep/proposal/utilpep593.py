@@ -150,17 +150,15 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     die_unless_hint_pep593(hint)
     # Else, this object is a PEP 593-compliant type metahint.
 
-    # Attempt to return true only if the first argument subscripting this hint
-    # is beartype-specific.
-    #
-    # Note that the "__metadata__" dunder attribute is both guaranteed to exist
-    # for metahints *AND* be a non-empty tuple of arbitrary objects: e.g.,
-    #     >>> from typing import Annotated
-    #     >>> Annotated[int]
-    #     TypeError: Annotated[...] should be used with at least two
-    #     arguments (a type and an annotation).
+    # Attempt to...
     try:
-        return isinstance(hint.__metadata__[0], BeartypeValidator)
+        # Tuple of one or more arbitrary objects annotating this metahint.
+        hint_metadata = get_hint_pep593_metadata(hint)
+
+        # Return true only if the first such object is a beartype validator.
+        # Note this object is guaranteed to exist by PEP 593 design.
+        # print(f'Checking first PEP 593 type hint {repr(hint)} arg {repr(hint_metadata[0])}...')
+        return isinstance(hint_metadata[0], BeartypeValidator)
     # If the metaclass of the first argument subscripting this hint overrides
     # the __isinstancecheck__() dunder method to raise an exception, silently
     # ignore this exception by returning false instead.
@@ -178,7 +176,12 @@ if IS_PYTHON_AT_LEAST_3_7:
         die_unless_hint_pep593(hint)
         # Else, this object is a metahint.
 
-        # Return the tuple of one or more objects annotating this metahint.
+        # Return the tuple of one or more objects annotating this metahint. By
+        # design, this tuple is guaranteed to be non-empty: e.g.,
+        #     >>> from typing import Annotated
+        #     >>> Annotated[int]
+        #     TypeError: Annotated[...] should be used with at least two
+        #     arguments (a type and an annotation).
         return hint.__metadata__
 
 
@@ -214,10 +217,9 @@ else:
         # Return the tuple of one or more objects annotating this metahint.
         # Since this is Python 3.6, this metahint *MUST* be a subscription of
         # the third-party "typing_extensions.Annotated" type hint factory.
-        # Under Python 3.6, this factory stores both this tuple *AND* the
-        # the PEP-compliant type hint annotated by this metahint in the same
-        # non-standard "__args__" dunder attribute (in subscription order).
-        return hint.__args__[1:]
+        # Under Python 3.6, this factory stores this tuple as the second item
+        # of the non-standard "__args__" dunder attribute tuple. (I sigh.)
+        return hint.__args__[1]
 
 
     def get_hint_pep593_metahint(hint: Any) -> Any:

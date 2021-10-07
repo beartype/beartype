@@ -12,14 +12,11 @@ supported object introspectors efficiently generating stack-free code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._util._valeutilsnip import VALE_CODE_CHECK_ISSUBCLASS_format
+from beartype.vale._util._valeutilsnip import (
+    VALE_CODE_CHECK_ISSUBCLASS_TEST_format)
 from beartype.vale._valevale import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
@@ -224,7 +221,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
             attr=base_classes, func_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this type.
-        is_valid_code = VALE_CODE_CHECK_ISSUBCLASS_format(
+        is_valid_code = VALE_CODE_CHECK_ISSUBCLASS_TEST_format(
             param_name_base_cls=param_name_base_cls)
 
         # Create and return this subscription.

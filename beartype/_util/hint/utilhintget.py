@@ -119,6 +119,7 @@ def get_hint_reduced(
         # ignore all annotations on this hint by reducing this hint to the
         # lower-level hint it annotates.
         if not is_hint_pep593_beartype(hint):
+            # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
             hint = get_hint_pep593_metahint(hint)
         # Else, this metahint is beartype-specific. In this case, preserve
         # this hint as is for subsequent handling elsewhere.

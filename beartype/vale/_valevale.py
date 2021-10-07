@@ -15,10 +15,6 @@ abstract base class).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype._util.kind.utilkinddict import merge_mappings_two

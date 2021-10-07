@@ -69,6 +69,8 @@ def test_codemain() -> None:
 
     # For each predefined PEP-compliant type hint and associated metadata...
     for hint_meta in HINTS_META:
+        # print(f'Type-checking PEP type hint {repr(hint_meta.hint)}...')
+
         # If this hint is currently unsupported, continue to the next.
         if not hint_meta.is_supported:
             continue
@@ -123,7 +125,6 @@ def test_codemain() -> None:
                 # Assert this metadata is an instance of the desired dataclass.
                 assert isinstance(
                     pith_satisfied_meta, HintPithSatisfiedMetadata)
-                # print('PEP-testing {!r} against {!r}...'.format(hint_pep, pith_satisfied))
 
                 # Pith to be type-checked against this hint, defined as...
                 pith = (
@@ -136,6 +137,7 @@ def test_codemain() -> None:
                     # Else, localize this pith as is.
                     pith_satisfied_meta.pith
                 )
+                # print(f'Type-checking PEP type hint {repr(hint_meta.hint)} against {repr(pith)}...')
 
                 # If...
                 if (

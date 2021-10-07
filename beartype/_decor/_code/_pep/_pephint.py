@@ -770,6 +770,7 @@ def pep_code_check_hint(
 
             # Sign uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
+            # print(f'Type-checking PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
             # If this sign is currently unsupported, raise an exception.
             #
@@ -1585,9 +1586,9 @@ def pep_code_check_hint(
                 # ............{ ANNOTATED                         }............
                 # If this hint is a PEP 593-compliant type metahint, this
                 # metahint is guaranteed by the reduction performed above to be
-                # beartype-specific (i.e., metahint whose second argument is an
-                # instance of "beartype.vale._valevale.BeartypeValidator" produced
-                # by subscripting the "Is" class). In this case...
+                # beartype-specific (i.e., metahint whose second argument is a
+                # beartype validator produced by subscripting a beartype
+                # validator factory). In this case...
                 elif hint_curr_sign is HintSignAnnotated:
                     # PEP-compliant type hint annotated by this metahint,
                     # localized to the "hint_child" local variable to satisfy
@@ -1624,18 +1625,21 @@ def pep_code_check_hint(
                                 pith_curr_assign_expr),
                         ))
 
-                    # For each beartype-specific argument subscripting this
-                    # hint, excluding the first beartype-agnostic argument
-                    # guaranteed to be a type...
+                    # For each beartype validator annotating this metahint...
                     for hint_child in get_hint_pep593_metadata(hint_curr):
-                        # If this argument is *NOT* beartype-specific, raise an
-                        # exception. Since the second argument was
-                        # beartype-specific, all additional arguments are
-                        # explicitly required to be beartype-specific as well
-                        # for consistency and safety.
+                        # print(f'Type-checking PEP 593 type hint {repr(hint_curr)} argument {repr(hint_child)}...')
+                        # If this is *NOT* a beartype validator, raise an
+                        # exception.
+                        #
+                        # Note that the previously called get_hint_reduced()
+                        # function validated only the first such to be a
+                        # beartype validator. All remaining arguments have yet
+                        # to be validated, so we do so now for consistency and
+                        # safety.
                         if not isinstance(hint_child, BeartypeValidator):
                             raise BeartypeDecorHintPep593Exception(
-                                f'{hint_curr_exception_prefix}PEP 593 type hint '
+                                f'{hint_curr_exception_prefix}'
+                                f'PEP 593 type hint '
                                 f'{repr(hint_curr)} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '

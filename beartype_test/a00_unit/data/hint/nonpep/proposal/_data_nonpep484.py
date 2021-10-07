@@ -79,6 +79,6 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # ................{ COLLECTIONS ~ typeddict           }................
         # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that "TypeDict" was
+        #FIXME: Implement us up, but note when doing so that "TypedDict" was
         #first introduced with Python 3.8.
     ))

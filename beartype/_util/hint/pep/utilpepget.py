@@ -385,10 +385,6 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 #* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
 #  dramatically simpler approach, we no longer require the excessive glut of
 #  PEP-specific testers we previously required.
-#* Merge the contents of all now minimal
-#  "beartype._data.hint.pep.proposal.*" submodules into their parent
-#  "beartype._util.hint.pep.proposal.*" submodules. There's no longer any
-#  demonstrable benefit to separating the two, so please cease doing so.
 @callable_cached
 def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
@@ -516,7 +512,10 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Class of this hint.
     hint_type = hint.__class__
 
-    # Fully-qualified name of this class.
+    #FIXME: Is this actually the case? Do non-physical classes dynamically
+    #defined at runtime actually define these dunder attributes as well?
+    # Fully-qualified name of this class. Note that *ALL* classes are
+    # guaranteed to define the dunder attributes accessed here.
     hint_type_name = f'{hint_type.__module__}.{hint_type.__qualname__}'
 
     # Sign identifying this hint if this hint is identifiable by its classname

@@ -13,12 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
-#FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should) directly
-#embed the values of builtins when comparing against builtins (e.g., integers,
-#strings). Specifically, we should only conditionally perform this line below:
+#FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should)
+#directly embed the values of builtins when comparing against builtins (e.g.,
+#integers, strings). Specifically, we should only conditionally perform this
+#line below:
 #       param_name_obj_value = add_func_scope_attr(
 #           attr=obj, func_scope=is_valid_code_locals)
 #...when we absolutely must. So when mustn't we? We see two simple approaches
@@ -64,7 +62,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._util._valeutilsnip import VALE_CODE_CHECK_ISEQUAL_format
+from beartype.vale._util._valeutilsnip import (
+    VALE_CODE_CHECK_ISEQUAL_TEST_format)
 from beartype.vale._valevale import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
@@ -248,7 +247,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
             attr=obj, func_scope=is_valid_code_locals)
 
         # Code snippet efficiently validating against this object.
-        is_valid_code = VALE_CODE_CHECK_ISEQUAL_format(
+        is_valid_code = VALE_CODE_CHECK_ISEQUAL_TEST_format(
             param_name_obj_value=param_name_obj_value)
 
         # Create and return this subscription.
