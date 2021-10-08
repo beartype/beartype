@@ -50,7 +50,8 @@ from beartype.roar import (
 from beartype.vale import IsAttr, IsEqual, IsSubclass
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.mod.utilmodimport import import_module_typing_any_attr
+from beartype._util.mod.utilmodimport import (
+    import_module_typing_any_attr_or_none)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
@@ -142,20 +143,7 @@ def reduce_hint_numpy_ndarray(
     # attribute passed to this getter.
     from numpy import dtype, ndarray
 
-    # ..................{ CONSTANTS                         }..................
-    # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
-    NUMPY_DTYPE_TYPE_ABCS = _get_numpy_dtype_type_abcs()
-
-    # ..................{ LOCALS                            }..................
-    # "typing.Annotated" attribute safely imported from whichever of the
-    # "typing" or "typing_extensions" modules declares this attribute if one or
-    # more do *OR* raise an exception otherwise.
-    #
-    # Note that this memoized function is intentionally passed positional
-    # rather than keyword arguments for minor efficiency gains.
-    typing_annotated = import_module_typing_any_attr(
-        'Annotated', BeartypeDecorHintNonpepNumpyException)
-
+    # ..................{ VALIDATION                        }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -169,26 +157,39 @@ def reduce_hint_numpy_ndarray(
         )
     # Else, this hint is a typed NumPy array.
 
-    # If the active Python interpreter does *NOT* support Python >= 3.8 and
-    # thus the __class_getitem__() dunder method required by the beartype
-    # validators to which this function reduces typed NumPy arrays...
-    if not IS_PYTHON_AT_LEAST_3_8:
+    # "typing.Annotated" type hint factory safely imported from whichever of
+    # the "typing" or "typing_extensions" modules declares this attribute if
+    # one or more do *OR* "None" otherwise (i.e., if none do).
+    #
+    # Note that this memoized function is intentionally passed positional
+    # rather than keyword arguments for minor efficiency gains.
+    typing_annotated = import_module_typing_any_attr_or_none(
+        'Annotated', BeartypeDecorHintNonpepNumpyException)
+
+    # If this factory is unimportable, this typed NumPy array *CANNOT* be
+    # reduced to a subscription of this factory by one or more semantically
+    # equivalent beartype validators. In this case...
+    if typing_annotated is None:
         # Emit a non-fatal warning informing the user of this issue.
         warn(
             (
                 f'{exception_prefix}typed NumPy array {repr(hint)} '
                 f'reduced to untyped NumPy array {repr(ndarray)} '
-                f'under Python < 3.8 (i.e., due to lack of support for '
-                f'PEP 560-compliant __class_getitem__() dunder methods and '
-                f'thus beartype validators under Python < 3.8).'
+                f'(i.e., as neither "typing.Annotated" nor '
+                f'"typing_extensions.Annotated" importable).'
             ),
             BeartypeDecorHintNonpepNumpyWarning,
         )
 
         # Reduce this hint to the untyped "ndarray" class with apologies.
         return ndarray
-    # Else, this interpreter supports beartype validators.
+    # Else, this factory is importable.
 
+    # ..................{ CONSTANTS                         }..................
+    # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
+    NUMPY_DTYPE_TYPE_ABCS = _get_numpy_dtype_type_abcs()
+
+    # ..................{ LOCALS                            }..................
     # Objects subscripting this hint if any *OR* the empty tuple otherwise.
     hint_args = get_hint_pep_args(hint)
 
