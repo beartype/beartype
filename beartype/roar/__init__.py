@@ -23,6 +23,14 @@ raids native beehives for organic honey.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
+# hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
+# explicitly reimported under the same names with "{exception_name} as
+# {exception_name}" syntax rather than merely "{exception_name}". Yes, this is
+# ludicrous. Yes, this is mypy. For posterity, these failures resemble:
+#     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
+#     explicitly export attribute "BeartypeCallUnavailableTypeException";
+#     implicit reexport disabled  [attr-defined]
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
@@ -31,56 +39,56 @@ raids native beehives for organic honey.
 
 # Public exception hierarchy.
 from beartype.roar._roarexc import (
-    BeartypeException,
-    BeartypeCaveException,
-    BeartypeCaveNoneTypeOrException,
-    BeartypeCaveNoneTypeOrKeyException,
-    BeartypeCaveNoneTypeOrMutabilityException,
-    BeartypeDecorException,
-    BeartypeDecorWrappeeException,
-    BeartypeDecorWrapperException,
-    BeartypeDecorHintException,
-    BeartypeDecorHintForwardRefException,
-    BeartypeDecorHintNonpepException,
-    BeartypeDecorHintNonpepNumpyException,
-    BeartypeDecorHintPepException,
-    BeartypeDecorHintPepSignException,
-    BeartypeDecorHintPepUnsupportedException,
-    BeartypeDecorHintPep484Exception,
-    BeartypeDecorHintPep484585Exception,
-    BeartypeDecorHintPep544Exception,
-    BeartypeDecorHintPep563Exception,
-    BeartypeDecorHintPep585Exception,
-    BeartypeDecorHintPep586Exception,
-    BeartypeDecorHintPep593Exception,
-    BeartypeDecorHintPep3119Exception,
-    BeartypeDecorHintTypeException,
-    BeartypeDecorParamException,
-    BeartypeDecorParamNameException,
-    BeartypeDecorPepException,
-    BeartypeCallException,
-    BeartypeCallUnavailableTypeException,
-    BeartypeCallHintException,
-    BeartypeCallHintForwardRefException,
-    BeartypeCallHintPepException,
-    BeartypeCallHintPepParamException,
-    BeartypeCallHintPepReturnException,
-    BeartypeValeException,
-    BeartypeValeSubscriptionException,
+    BeartypeException as BeartypeException,
+    BeartypeCaveException as BeartypeCaveException,
+    BeartypeCaveNoneTypeOrException as BeartypeCaveNoneTypeOrException,
+    BeartypeCaveNoneTypeOrKeyException as BeartypeCaveNoneTypeOrKeyException,
+    BeartypeCaveNoneTypeOrMutabilityException as BeartypeCaveNoneTypeOrMutabilityException,
+    BeartypeDecorException as BeartypeDecorException,
+    BeartypeDecorWrappeeException as BeartypeDecorWrappeeException,
+    BeartypeDecorWrapperException as BeartypeDecorWrapperException,
+    BeartypeDecorHintException as BeartypeDecorHintException,
+    BeartypeDecorHintForwardRefException as BeartypeDecorHintForwardRefException,
+    BeartypeDecorHintNonpepException as BeartypeDecorHintNonpepException,
+    BeartypeDecorHintNonpepNumpyException as BeartypeDecorHintNonpepNumpyException,
+    BeartypeDecorHintPepException as BeartypeDecorHintPepException,
+    BeartypeDecorHintPepSignException as BeartypeDecorHintPepSignException,
+    BeartypeDecorHintPepUnsupportedException as BeartypeDecorHintPepUnsupportedException,
+    BeartypeDecorHintPep484Exception as BeartypeDecorHintPep484Exception,
+    BeartypeDecorHintPep484585Exception as BeartypeDecorHintPep484585Exception,
+    BeartypeDecorHintPep544Exception as BeartypeDecorHintPep544Exception,
+    BeartypeDecorHintPep563Exception as BeartypeDecorHintPep563Exception,
+    BeartypeDecorHintPep585Exception as BeartypeDecorHintPep585Exception,
+    BeartypeDecorHintPep586Exception as BeartypeDecorHintPep586Exception,
+    BeartypeDecorHintPep593Exception as BeartypeDecorHintPep593Exception,
+    BeartypeDecorHintPep3119Exception as BeartypeDecorHintPep3119Exception,
+    BeartypeDecorHintTypeException as BeartypeDecorHintTypeException,
+    BeartypeDecorParamException as BeartypeDecorParamException,
+    BeartypeDecorParamNameException as BeartypeDecorParamNameException,
+    BeartypeDecorPepException as BeartypeDecorPepException,
+    BeartypeCallException as BeartypeCallException,
+    BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
+    BeartypeCallHintException as BeartypeCallHintException,
+    BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
+    BeartypeCallHintPepException as BeartypeCallHintPepException,
+    BeartypeCallHintPepParamException as BeartypeCallHintPepParamException,
+    BeartypeCallHintPepReturnException as BeartypeCallHintPepReturnException,
+    BeartypeValeException as BeartypeValeException,
+    BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
 )
 
 # Public warning hierarchy.
 from beartype.roar._roarwarn import (
-    BeartypeWarning,
-    BeartypeDecorHintPepWarning,
-    BeartypeDecorHintPepDeprecationWarning,
-    BeartypeDecorHintPep585DeprecationWarning,
-    BeartypeDecorHintNonpepWarning,
-    BeartypeDecorHintNonpepNumpyWarning,
-    BeartypeModuleNotFoundWarning,
-    BeartypeModuleUnimportableWarning,
-    BeartypeValeWarning,
-    BeartypeValeLambdaWarning,
+    BeartypeWarning as BeartypeWarning,
+    BeartypeDecorHintPepWarning as BeartypeDecorHintPepWarning,
+    BeartypeDecorHintPepDeprecationWarning as BeartypeDecorHintPepDeprecationWarning,
+    BeartypeDecorHintPep585DeprecationWarning as BeartypeDecorHintPep585DeprecationWarning,
+    BeartypeDecorHintNonpepWarning as BeartypeDecorHintNonpepWarning,
+    BeartypeDecorHintNonpepNumpyWarning as BeartypeDecorHintNonpepNumpyWarning,
+    BeartypeModuleNotFoundWarning as BeartypeModuleNotFoundWarning,
+    BeartypeModuleUnimportableWarning as BeartypeModuleUnimportableWarning,
+    BeartypeValeWarning as BeartypeValeWarning,
+    BeartypeValeLambdaWarning as BeartypeValeLambdaWarning,
 )
 
 # ....................{ DEPRECATIONS                      }....................

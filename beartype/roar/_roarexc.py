@@ -827,8 +827,8 @@ class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
     **Beartype object name exception.**
 
     This exception is raised by the
-    :func:`beartype._util.utilobject.get_object_basename_scoped` getter when the
-    passed object is **unnamed** (i.e., fails to declare either the
+    :func:`beartype._util.utilobject.get_object_basename_scoped` getter when
+    the passed object is **unnamed** (i.e., fails to declare either the
     ``__name__`` or ``__qualname__`` dunder attributes).
 
     This exception denotes a critical internal issue and should thus *never* be
@@ -836,4 +836,3 @@ class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
     '''
 
     pass
-
