@@ -84,7 +84,7 @@ efficiency, portability, and thrilling puns.
 
    # Call those callables with invalid parameters.
    >>> quote_wiggum_safer([])
-   boartype.roar.BeartypeCallHintPepParamException: @beartyped
+   beartype.roar.BeartypeCallHintPepParamException: @beartyped
    quote_wiggum_safer() parameter lines=[] violates type hint
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
