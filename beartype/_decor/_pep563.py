@@ -102,6 +102,11 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
 
     # If neither...
     if not (
+        #FIXME: Revert this as soon as Gentoo's Python 3.10 target reverts
+        #unconditional enabling of PEP 563. Actually, let's just revert this
+        #now, because we absolutely know we're going to forget about this, and
+        #then everything terrifyingly breaks when the real Python 3.10 drops.
+
         # The active Python interpreter targets Python >= 3.10 *NOR*...
         #
         # If this interpreter targets Python >= 3.10, PEP 563 is

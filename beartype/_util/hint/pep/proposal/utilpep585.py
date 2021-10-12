@@ -177,7 +177,7 @@ is_hint_pep585_generic.__doc__ = '''
     (i.e., class superficially subclassing at least one subscripted `PEP
     585`_-compliant pseudo-superclass).
 
-    This tester memoized for efficiency.
+    This tester is memoized for efficiency.
 
     Parameters
     ----------

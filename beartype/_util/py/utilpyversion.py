@@ -71,6 +71,14 @@ IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or version_info >= (3, 8)
 '''
 
 
+#FIXME: After dropping Python 3.8 support, *REMOVE* all code conditionally
+#testing this global.
+IS_PYTHON_3_8 = version_info[:2] == (3, 8)
+'''
+``True`` only if the active Python interpreter targets exactly Python 3.8.
+'''
+
+
 #FIXME: After dropping Python 3.6 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
