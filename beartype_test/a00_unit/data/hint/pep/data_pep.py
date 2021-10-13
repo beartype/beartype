@@ -92,6 +92,7 @@ def _init() -> None:
         _data_pep544,
         _data_pep585,
         _data_pep586,
+        _data_pep589,
         _data_pep593,
     )
 
@@ -113,6 +114,7 @@ def _init() -> None:
         _data_pep544,
         _data_pep585,
         _data_pep586,
+        _data_pep589,
         _data_pep593,
     )
 

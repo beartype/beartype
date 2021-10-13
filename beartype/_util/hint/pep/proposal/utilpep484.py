@@ -299,28 +299,28 @@ if IS_PYTHON_AT_LEAST_3_7:
         #     >>> MuhList.__mro__
         #     (__main__.MuhList, list, typing.Generic, object)
         #
-        # Note that this issubclass() call implicitly performs a surprisingly
-        # inefficient search over the method resolution order (MRO) of all
-        # superclasses of this hint. In theory, the cost of this search might
-        # be circumventable by observing that this ABC is expected to reside at
-        # the second-to-last index of the tuple exposing this MRO far all
-        # generics by virtue of fragile implementation details violating
-        # privacy encapsulation. In practice, this codebase is fragile enough.
-        #
-        # Note lastly that the following logic superficially appears to
-        # implement the same test *WITHOUT* the onerous cost of a search:
-        #     return len(get_hint_pep484_generic_bases_unerased_or_none(hint)) > 0
-        #
-        # Why didn't we opt for that, then? Because this tester is routinely
-        # passed objects that *CANNOT* be guaranteed to be PEP-compliant.
-        # Indeed, the high-level is_hint_pep() tester establishing the
-        # PEP-compliance of arbitrary objects internally calls this lower-level
-        # tester to do so. Since the
-        # get_hint_pep484_generic_bases_unerased_or_none() getter internally
-        # reduces to returning the tuple of the general-purpose
-        # "__orig_bases__" dunder attribute formalized by PEP 560, testing
-        # whether that tuple is non-empty or not in no way guarantees this
-        # object to be a PEP-compliant generic.
+        # Note that:
+        # * This issubclass() call implicitly performs a surprisingly
+        #   inefficient search over the method resolution order (MRO) of all
+        #   superclasses of this hint. In theory, the cost of this search might
+        #   be circumventable by observing that this ABC is expected to reside
+        #   at the second-to-last index of the tuple exposing this MRO far all
+        #   generics by virtue of fragile implementation details violating
+        #   privacy encapsulation. In practice, this codebase is already
+        #   fragile enough.
+        # * The following logic superficially appears to implement the same
+        #   test *WITHOUT* the onerous cost of a search:
+        #       return len(get_hint_pep484_generic_bases_unerased_or_none(hint)) > 0
+        #   Why didn't we opt for that, then? Because this tester is routinely
+        #   passed objects that *CANNOT* be guaranteed to be PEP-compliant.
+        #   Indeed, the high-level is_hint_pep() tester establishing the
+        #   PEP-compliance of arbitrary objects internally calls this
+        #   lower-level tester to do so. Since the
+        #   get_hint_pep484_generic_bases_unerased_or_none() getter internally
+        #   reduces to returning the tuple of the general-purpose
+        #   "__orig_bases__" dunder attribute formalized by PEP 560, testing
+        #   whether that tuple is non-empty or not in no way guarantees this
+        #   object to be a PEP-compliant generic.
         return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
 # Else, the active Python interpreter targets Python 3.6.x. In this case,
 # implement this function specific to this Python version.
@@ -378,17 +378,17 @@ else:
 
 # Docstring for this function regardless of implementation details.
 is_hint_pep484_generic.__doc__ = '''
-    ``True`` only if the passed object is a :mod:`typing` **generic** (i.e.,
-    class superficially subclassing at least one non-class PEP-compliant
-    object defined by the :mod:`typing` module).
+    ``True`` only if the passed object is a :pep:`484`-compliant **generic**
+    (i.e., object that may *not* actually be a class originally subclassing at
+    least one PEP-compliant type hint defined by the :mod:`typing` module).
 
-    Specifically, this tester returns ``True`` only if this object is a class
-    subclassing a combination of:
+    Specifically, this tester returns ``True`` only if this object was
+    originally defined as a class subclassing a combination of:
 
     * At least one of:
 
       * The :pep:`484`-compliant :mod:`typing.Generic` superclass.
-      * The `PEP 544`-_compliant :mod:`typing.Protocol` superclass.
+      * The :pep:`544`-compliant :mod:`typing.Protocol` superclass.
 
     * Zero or more non-class :mod:`typing` pseudo-superclasses (e.g.,
       ``typing.List[int]``).
@@ -397,21 +397,6 @@ is_hint_pep484_generic.__doc__ = '''
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
-
-    Design
-    ----------
-    Since *all* :mod:`typing` generics subclass the :pep:`484`-compliant
-    :mod:`typing.Generic` superclass first introduced with :pep:`484`, this
-    tester is intentionally:
-
-    * Defined in the :pep:`484`-specific submodule rather than either the `PEP
-      585`_-specific submodule *or* higher-level PEP-agnostic test submodule.
-    * Named ``is_hint_pep484_generic`` rather than
-      ``is_hint_pep484or544_generic`` or ``is_hint_pep_typing_generic``.
-
-    From the end user perspective, *all* :mod:`typing` generics are effectively
-    indistinguishable from :pep:`484`-compliant generics and should typically
-    be generically treated as such.
 
     Parameters
     ----------

@@ -18,7 +18,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
     HintSignNumpyArray,
     HintSignType,
+    HintSignTypedDict,
 )
+from collections.abc import Mapping
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
@@ -91,6 +93,9 @@ def get_hint_reduced(
     #
     # ..................{ NON-PEP                           }..................
     # If this hint is unidentifiable, return this hint as is unmodified.
+    #
+    # Since this includes *ALL* isinstanceable classes (including both
+    # user-defined classes and builtin types), this is *ALWAYS* detected first.
     if hint_sign is None:
         return hint
     # ..................{ PEP 484 ~ none                    }..................
@@ -99,15 +104,16 @@ def get_hint_reduced(
     # "typing" module, PEP 484 explicitly supports this singleton:
     #     When used in a type hint, the expression None is considered
     #     equivalent to type(None).
+    #
     # The "None" singleton is used to type callables lacking an explicit
-    # "return" statement and thus absurdly common. Ergo, detect this first.
+    # "return" statement and thus absurdly common. Ergo, detect this early.
     elif hint is None:
         hint = NoneType
     # ..................{ PEP 593                           }..................
     # If this hint is a PEP 593-compliant metahint...
     #
     # Since metahints form the core backbone of our beartype-specific data
-    # validation API, metahints are extremely common and thus detected next.
+    # validation API, metahints are extremely common and thus detected early.
     elif hint_sign is HintSignAnnotated:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.utilpep593 import (
@@ -128,7 +134,7 @@ def get_hint_reduced(
     # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
     # well-supported beartype validator.
     #
-    # Typed NumPy arrays are increasingly common and thus detected next.
+    # Typed NumPy arrays are increasingly common and thus detected early.
     elif hint_sign is HintSignNumpyArray:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.mod.utilmodnumpy import (
@@ -152,6 +158,32 @@ def get_hint_reduced(
             reduce_hint_pep484585_subclass_superclass_if_ignorable)
         hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
             hint=hint, exception_prefix=exception_prefix)
+    # ..................{ PEP 589                           }..................
+    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+    #shallowly type-checking such hints by reduction to untyped dictionaries
+    #remains the sanest temporary work-around.
+    #FIXME: The PEP 589 edict that "any TypedDict type is consistent with
+    #"Mapping[str, object]" suggests that we should trivially reduce this hint
+    #to "Mapping[str, object]" rather than merely "Mapping" *AFTER* we deeply
+    #type-check mappings. Doing so will get us slightly deeper type-checking of
+    #typed dictionaries, effectively for free. Note that:
+    #* Care should be taken to ensure that the "Mapping" factory appropriate
+    #  for the active Python interpreter is used. PEP 585 gonna PEP 585.
+    #* We should cache "Mapping[str, object]" to a private global above rather
+    #  than return a new "Mapping[str, object]" type hint on each call. Right?
+
+    # If this hint is a PEP 589-compliant typed dictionary (i.e.,
+    # "typing.TypedDict" or "typing_extensions.TypedDict" subclass), silently
+    # ignore all child type hints annotating this dictionary by reducing this
+    # hint to the "Mapping" superclass. Yes, "Mapping" rather than "dict". By
+    # PEP 589 edict:
+    #     First, any TypedDict type is consistent with Mapping[str, object].
+    #
+    # Typed dictionaries are largely discouraged in the typing community, due
+    # to their non-standard semantics and syntax. Ergo, typed dictionaries are
+    # reasonably uncommon and thus detected late.
+    elif hint_sign is HintSignTypedDict:
+        return Mapping
     # ..................{ PEP 484 ~ new type                }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
@@ -171,7 +203,7 @@ def get_hint_reduced(
     # corresponding functionally useful beartype-specific PEP 544-compliant
     # protocol implementing this hint.
     #
-    # IO generic base classes are extremely rare and thus detected last.
+    # IO generic base classes are extremely rare and thus detected even later.
     #
     # Note that PEP 484-compliant IO generic base classes are technically
     # usable under Python < 3.8 (e.g., by explicitly subclassing those classes

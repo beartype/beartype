@@ -35,6 +35,7 @@ class NonTypedDict(dict):
     #   subclass to be erroneously detected as a typed dictionary under Python
     #   >= 3.8. And we will sleep now. This has spiralled into insanity, folks.
     __optional_keys__ = ()
+    __total__ = True
 
 # ....................{ TESTS ~ validators                }....................
 def test_is_hint_pep589() -> None:

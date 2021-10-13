@@ -28,6 +28,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTypedDict,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -345,6 +346,8 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 
     See Also
     ----------
+    :func:`get_hint_pep_sign_or_none`
+        Further details.
     '''
 
     # Sign uniquely identifying this hint if recognized *OR* "None" otherwise.
@@ -474,11 +477,6 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         typing.Iterable
     '''
 
-    # ..................{ IMPORTS                           }..................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
-        is_hint_pep484585_generic)
-
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
     #
@@ -583,11 +581,14 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # For minor efficiency gains, the following tests are intentionally ordered
     # in descending likelihood of a match.
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+        is_hint_pep484585_generic)
+    from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
+
     # If this hint is a PEP 484- or 585-compliant generic (i.e., user-defined
     # class superficially subclassing at least one PEP 484- or 585-compliant
-    # type hint), return that sign
-    #
-    # However, note that:
+    # type hint), return that sign. However, note that:
     # * Generics *CANNOT* be detected by the general-purpose logic performed
     #   above, as the "typing.Generic" ABC does *NOT* define a __repr__()
     #   dunder method returning a string prefixed by the "typing." substring.
@@ -605,14 +606,27 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # * *NO* PEP 585-compliant generics subclass this ABC unless those generics
     #   are also either PEP 484- or 544-compliant. Indeed, PEP 585-compliant
     #   generics subclass *NO* common superclass.
+    # * Generics are *NOT* necessarily classes, despite originally being
+    #   declared as classes. Although *MOST* generics are classes, some are
+    #   shockingly *NOT*: e.g.,
+    #       >>> from typing import Generic, TypeVar
+    #       >>> S = TypeVar('S')
+    #       >>> T = TypeVar('T')
+    #       >>> class MuhGeneric(Generic[S, T]): pass
+    #       >>> non_class_generic = MuhGeneric[S, T]
+    #       >>> isinstance(non_class_generic, type)
+    #       False
     #
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
-    # generics. While non-ideal, the failure of PEP 585-compliant generics to
-    # subclass a common superclass leaves us with little alternative.
+    # generics. While non-ideal, the failure of PEP 585-compliant generics
+    # to subclass a common superclass leaves us with little alternative.
     if is_hint_pep484585_generic(hint):
         return HintSignGeneric
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
+    # If this hint is a PEP 589-compliant typed dictionary, return that sign.
+    elif is_hint_pep589(hint):
+        return HintSignTypedDict
     # If the active Python interpreter targets Python < 3.10 (and thus defines
     # PEP 484-compliant "NewType" type hints as closures returned by that
     # function that are sufficiently dissimilar from all other type hints to
@@ -621,8 +635,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #
     # Note that these hints *CANNOT* be detected by the general-purpose logic
     # performed above, as the __repr__() dunder methods of the closures created
-    # and returned by the NewType() closure factory function returns a standard
-    # representation rather than string prefixed by "typing.": e.g.,
+    # and returned by the NewType() closure factory function return a standard
+    # representation rather than a string prefixed by "typing.": e.g.,
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'

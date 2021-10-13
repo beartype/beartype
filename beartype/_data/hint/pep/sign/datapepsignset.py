@@ -64,6 +64,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSized,
     HintSignTuple,
     HintSignType,
+    HintSignTypedDict,
     HintSignTypeVar,
     HintSignUnion,
     HintSignValuesView,
@@ -267,12 +268,17 @@ I have no code and I must scream.
 _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
     # ..................{ PEP 484                           }..................
     HintSignTypeVar,
+
+    # ..................{ PEP 589                           }..................
+    #FIXME: Shift into "HINT_SIGNS_SUPPORTED_DEEP" *AFTER* deeply type-checking
+    #typed dictionaries.
+    HintSignTypedDict,
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e.,
 arbitrary objects uniquely identifying PEP-compliant type hints *not*
-originating from a non-:mod:`typing` origin type for which the
-:func:`beartype.beartype` decorator generates shallow type-checking code).
+originating from an isinstanceable type for which the :func:`beartype.beartype`
+decorator generates shallow type-checking code).
 '''
 
 

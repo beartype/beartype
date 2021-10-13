@@ -103,8 +103,7 @@ def test_get_hint_pep_sign() -> None:
     # Assert this getter returns the expected unsubscripted "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.
     for hint_pep_meta in HINTS_PEP_META:
-        assert get_hint_pep_sign(hint_pep_meta.hint) == (
-            hint_pep_meta.pep_sign)
+        assert get_hint_pep_sign(hint_pep_meta.hint) is hint_pep_meta.pep_sign
 
     # Assert this getter raises the expected exception for an instance of a
     # class erroneously masquerading as a "typing" class.

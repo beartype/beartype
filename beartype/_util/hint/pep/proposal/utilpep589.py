@@ -10,16 +10,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                           }....................
-#FIXME: Call this tester directly *ONLY* from the get_hint_pep_sign_or_none()
-#getter. All other areas of the code should efficiently test signs against
-#"HintSignTypedDict" instead.
-
 # The implementation of the "typing.TypedDict" attribute substantially varies
 # across Python interpreter *AND* "typing" implementation. Specifically:
 # * The "typing.TypedDict" attribute under Python >= 3.9 is *NOT* actually a
@@ -73,19 +70,36 @@ def is_hint_pep589(hint: object) -> bool:
         ``True`` only if this object is a typed dictionary.
     '''
 
-    # If this hint is neither...
-    if not (
-        # A class *NOR*...
-        isinstance(hint, type) and
-        # A "dict" subclass...
-        issubclass(hint, dict)
-    # Then this hint *CANNOT* be a typed dictionary. By definition, each typed
-        # dictionary is necessarily a "dict" subclass.
-    ):
+    # If this hint is *NOT* a "dict" subclass, this hint *CANNOT* be a typed
+    # dictionary. By definition, typed dictionaries are "dict" subclasses.
+    #
+    # Note that PEP 589 actually lies about the type of typed dictionaries:
+    #     Methods are not allowed, since the runtime type of a TypedDict object
+    #     will always be just dict (it is never a subclass of dict).
+    #
+    # This is *ABSOLUTELY* untrue. PEP 589 authors plainly forgot to implement
+    # this constraint. Contrary to the above:
+    # * All typed dictionaries are subclasses of "dict".
+    # * The type of typed dictionaries is the private "typing._TypedDictMeta"
+    #   metaclass across all Python versions (as of this comment).
+    #
+    # This is where we generously and repeatedly facepalm ourselves.
+    if not is_type_subclass(hint, dict):
         return False
-    # Else, this hint is a "dict" subclass and thus might be a typed
+    # Else, this hint is a "dict" subclass and thus *MIGHT* be a typed
     # dictionary.
 
+    # Return true *ONLY* if this "dict" subclass defines all three dunder
+    # attributes guaranteed to be defined by all typed dictionaries. Although
+    # slow, this is still faster than the MRO-based approach delineated above.
+    #
+    # Note that *ONLY* the Python 3.8-specific implementation of
+    # "typing.TypedDict" fails to unconditionally define the
+    # "__required_keys__" and "__optional_keys__" dunder attributes. Ergo, if
+    # the active Python interpreter targets exactly Python 3.8, we relax this
+    # test to *ONLY* test for the "__annotations__" dunder attribute.
+    # Specifically, we return true only if...
+    #
     # Technically, this test can also be performed by inefficiently violating
     # privacy encapsulation. Specifically, this test could perform an O(k) walk
     # up the class inheritance tree of the passed class (for k the number of
@@ -110,20 +124,10 @@ def is_hint_pep589(hint: object) -> bool:
     # efficiently rather than accommodate this error.
     #
     # In short, the current approach of is strongly preferable.
-
-    # Return true *ONLY* if this "dict" subclass defines all three dunder
-    # attributes guaranteed to be defined by all typed dictionaries. Although
-    # slow, this is still faster than the MRO-based approach delineated above.
-    #
-    # Note that *ONLY* the Python 3.8-specific implementation of
-    # "typing.TypedDict" fails to unconditionally define the
-    # "__required_keys__" and "__optional_keys__" dunder attributes. Ergo, if
-    # the active Python interpreter targets exactly Python 3.8, we relax this
-    # test to *ONLY* test for the "__annotations__" dunder attribute.
-    # Specifically, we return true only if...
     return (
-        # This "dict" subclass defines this "TypedDict" attribute *AND*...
+        # This "dict" subclass defines these "TypedDict" attributes *AND*...
         hasattr(hint, '__annotations__') and
+        hasattr(hint, '__total__') and
         # Either...
         (
             # The active Python interpreter targets exactly Python 3.8 and

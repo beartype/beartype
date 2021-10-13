@@ -33,11 +33,11 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def is_hint_pep484585_generic(hint: object) -> bool:
     '''
     ``True`` only if the passed object is either a :pep:`484`- or
-    :pep:`585`-compliant **generic** (i.e., class superficially subclassing at
-    least one PEP-compliant type hint that is possibly *not* an actual class).
+    :pep:`585`-compliant **generic** (i.e., object that may *not* actually be a
+    class despite subclassing at least one PEP-compliant type hint that also
+    may *not* actually be a class).
 
-    Specifically, this tester returns ``True`` only if this object is a class
-    that is either:
+    Specifically, this tester returns ``True`` only if this object is either:
 
     * A :pep:`585`-compliant generic as tested by the lower-level
       :func:`is_hint_pep585_generic` function.
@@ -48,6 +48,23 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     trivially reduces to a one-liner, constant factors associated with that
     one-liner are non-negligible. Moreover, this tester is called frequently
     enough to warrant its reduction to an efficient lookup.
+
+    Caveats
+    ----------
+    **Generics are not necessarily classes,** despite originally being declared
+    as classes. Although *most* generics are classes, subscripting a generic
+    class usually produces a generic non-class that *must* nonetheless be
+    transparently treated as a generic class: e.g.,
+
+    .. code-block:: python
+
+       >>> from typing import Generic, TypeVar
+       >>> S = TypeVar('S')
+       >>> T = TypeVar('T')
+       >>> class MuhGeneric(Generic[S, T]): pass
+       >>> non_class_generic = MuhGeneric[S, T]
+       >>> isinstance(non_class_generic, type)
+       False
 
     Parameters
     ----------
@@ -409,7 +426,6 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     non-generics defining the ``__origin__`` dunder attribute to an
     isinstanceable class). Callers *must* perform subsequent tests to
     distinguish these two cases.
-
 
     Parameters
     ----------

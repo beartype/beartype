@@ -33,7 +33,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # "typing.Literal" type hint factory imported from either the "typing" or
+    # "Literal" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
     Literal = import_module_typing_any_attr_or_none_safe('Literal')
 
