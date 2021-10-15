@@ -54,9 +54,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignUnion,
 )
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     HINT_PEP484_FORWARDREF_TYPE)
-
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9,

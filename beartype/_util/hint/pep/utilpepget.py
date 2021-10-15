@@ -29,14 +29,14 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
     HintSignTypedDict,
+    HintSignTypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.utilpep484 import (
-    is_hint_pep484_newtype_pre_python310,
-)
+from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+    is_hint_pep484_newtype_pre_python310)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_generic,
@@ -180,7 +180,7 @@ get_hint_pep_args.__doc__ = '''
         ...     get_hint_pep_args)
         >>> get_hint_pep_args(typing.Any)
         ()
-        >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str])
+        >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str]])
         (int, str, typing.Dict[str, str])
     '''
 
@@ -234,10 +234,6 @@ elif IS_PYTHON_AT_LEAST_3_7:
 else:
     def get_hint_pep_typevars(hint: object) -> TupleTypes:
 
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484 import (
-            is_hint_pep484_typevar)
-
         # If this hint is a poorly designed Python 3.6-specific "type alias",
         # this hint is a subscription of either the "typing.Match" or
         # "typing.Pattern" objects. In this case, this hint declares a
@@ -245,9 +241,12 @@ else:
         # "typing.AnyStr", "str", or "bytes". Since only the former is an
         # actual type variable, however, we further test that condition.
         if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
+            # Sign uniquely identifying this hint if any *OR* "None" otherwise.
+            hint_sign = get_hint_pep_sign_or_none(hint.type_var)
+
             # If this value is a type variable, return a new 1-tuple containing
             # only this type variable.
-            if is_hint_pep484_typevar(hint.type_var):
+            if hint_sign is HintSignTypeVar:
                 return (hint.type_var,)
             # Else, this value is *NOT* a type variable. In this case, return
             # the empty tuple.
@@ -582,7 +581,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # in descending likelihood of a match.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         is_hint_pep484585_generic)
     from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
 

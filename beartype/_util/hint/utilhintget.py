@@ -18,6 +18,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
     HintSignNumpyArray,
     HintSignType,
+    HintSignTypeVar,
     HintSignTypedDict,
 )
 from collections.abc import Mapping
@@ -109,6 +110,16 @@ def get_hint_reduced(
     # "return" statement and thus absurdly common. Ergo, detect this early.
     elif hint is None:
         hint = NoneType
+    # ..................{ PEP 484 ~ typevar                 }..................
+    #FIXME: Unit test us up, please.
+    #FIXME: Remove this *AFTER* deeply type-checking type variables.
+
+    # If this is a PEP 484-compliant type variable...
+    #
+    # Type variables are excruciatingly common and thus detected very early.
+    #FIXME: Implement us up after implementing requisite utilities, please.
+    # elif hint is HintSignTypeVar:
+    #     hint_child = hint.__bound__
     # ..................{ PEP 593                           }..................
     # If this hint is a PEP 593-compliant metahint...
     #
@@ -154,7 +165,7 @@ def get_hint_reduced(
     # Subclass type hints are reasonably uncommon and thus detected late.
     elif hint_sign is HintSignType:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+        from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
             reduce_hint_pep484585_subclass_superclass_if_ignorable)
         hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
             hint=hint, exception_prefix=exception_prefix)
@@ -193,7 +204,7 @@ def get_hint_reduced(
     # thus fairly rare in the wild. Ergo, detect these late.
     elif hint_sign is HintSignNewType:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.utilpep484 import (
+        from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
             get_hint_pep484_newtype_class)
         hint = get_hint_pep484_newtype_class(hint)
     # ..................{ PEP 484 ~ io                      }..................

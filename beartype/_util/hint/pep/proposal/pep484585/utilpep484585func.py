@@ -24,7 +24,7 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
     is_func_sync_generator,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpeparg import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_3)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextlabel import (

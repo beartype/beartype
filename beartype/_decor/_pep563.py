@@ -24,10 +24,7 @@ from beartype._util.func.utilfuncscope import (
     is_func_nested,
 )
 from beartype._util.text.utiltextident import is_identifier
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_7,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from sys import modules as sys_modules
 from typing import Any, FrozenSet, Optional
@@ -100,31 +97,18 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     # Localize attributes of this metadata for negligible efficiency gains.
     func = data.func
 
-    # If neither...
+    # If it is *NOT* the case that...
     if not (
-        #FIXME: Revert this as soon as Gentoo's Python 3.10 target reverts
-        #unconditional enabling of PEP 563. Actually, let's just revert this
-        #now, because we absolutely know we're going to forget about this, and
-        #then everything terrifyingly breaks when the real Python 3.10 drops.
-
-        # The active Python interpreter targets Python >= 3.10 *NOR*...
-        #
-        # If this interpreter targets Python >= 3.10, PEP 563 is
-        # unconditionally active. In this case, *ALL* annotations including
-        # this callable's annotations are necessarily postponed.
-        IS_PYTHON_AT_LEAST_3_10 or
-        (
-            # The active Python interpreter targets Python >= 3.7 *AND*...
-            IS_PYTHON_AT_LEAST_3_7 and
-            # This callable was declared by on on-disk module *AND*...
-            func.__module__ is not None and
-            # This callable's module defined an "annotations" attribute to be
-            # the "__future__.annotations" object. In this case, that module
-            # enabled PEP 563 support with a leading statement resembling:
-            #     from __future__ import annotations
-            getattr(sys_modules[func.__module__], 'annotations', None) is (
-                __future__.annotations)
-        )
+        # The active Python interpreter targets Python >= 3.7 *AND*...
+        IS_PYTHON_AT_LEAST_3_7 and
+        # This callable was declared by on on-disk module *AND*...
+        func.__module__ is not None and
+        # This callable's module defined an "annotations" attribute to be
+        # the "__future__.annotations" object. In this case, that module
+        # enabled PEP 563 support with a leading statement resembling:
+        #     from __future__ import annotations
+        getattr(sys_modules[func.__module__], 'annotations', None) is (
+            __future__.annotations)
     ):
     # Then this callable's hints are *NOT* postponed under PEP 563. In
     # this case, silently reduce to a noop.

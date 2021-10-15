@@ -27,9 +27,9 @@ from beartype._util.cls.pep.utilpep3119 import (
 )
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     import_pep484585_forwardref_type_relative_to_object)
-from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_isinstanceable_or_none)

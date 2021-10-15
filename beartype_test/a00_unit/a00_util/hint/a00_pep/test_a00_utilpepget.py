@@ -26,10 +26,7 @@ def test_get_hint_pep_args() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_typevars,
-    )
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
@@ -59,9 +56,11 @@ def test_get_hint_pep_typevars() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilpep484 import (
-        is_hint_pep484_typevar)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_typevars,
+        get_hint_pep_sign_or_none,
+    )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
@@ -75,7 +74,8 @@ def test_get_hint_pep_typevars() -> None:
         if hint_pep_meta.is_typevars:
             assert hint_typevars
             for hint_typevar in hint_typevars:
-                assert is_hint_pep484_typevar(hint_typevar)
+                assert get_hint_pep_sign_or_none(hint_typevar) is (
+                    HintSignTypeVar)
         # For non-typevared hints, *NO* type variables.
         else:
             assert hint_typevars == ()

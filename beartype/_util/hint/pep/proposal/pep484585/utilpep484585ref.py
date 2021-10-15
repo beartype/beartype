@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._util.cls.utilclstest import die_unless_type
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     HINT_PEP484_FORWARDREF_TYPE,
     get_hint_pep484_forwardref_type_basename,
     is_hint_pep484_forwardref,

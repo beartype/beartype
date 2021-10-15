@@ -32,7 +32,7 @@ from beartype._util.func.utilfuncscope import (
 )
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_type)
-from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     HINT_PEP484585_FORWARDREF_UNION,
     die_unless_hint_pep484585_forwardref,
     get_hint_pep484585_forwardref_classname,

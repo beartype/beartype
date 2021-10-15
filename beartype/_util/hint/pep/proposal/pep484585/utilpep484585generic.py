@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_generic,
 )

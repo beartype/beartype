@@ -6,14 +6,32 @@
 '''
 **Beartype.**
 
-For PEP 8 compliance, this namespace exposes a subset of the metadata constants
-provided by the top-level :mod:`meta` submodule commonly inspected by external
-automation.
+For :pep:`8` compliance, this namespace exposes a subset of the metadata
+constants published by the :mod:`beartype.meta` submodule. These metadata
+constants are commonly inspected (and thus expected) by external automation.
 '''
 
 # ....................{ TODO                              }....................
 #FIXME: Consider significantly expanding the above module docstring, assuming
 #Sphinx presents this module in its generated frontmatter.
+
+#FIXME: *SHALLOWLY TYPE-CHECK BOUND TYPE VARIABLES.* While deep type-checking
+#for type variables remains but a distant new hope, we *SHOULD* at least be
+#able to trivially shallowly type-check bound type variables (i.e., "TypeVar"
+#instances parametrized by the "bound=" parameter). For example:
+#    # Given this PEP 484-compliant type hint...
+#    hint = TypeVar('CallableT', bound=Callable[..., Any])
+#
+#    # ...we can meaningfully reduce this hint to this PEP 484-compliant type
+#    # hint.
+#    hint = Callable[..., Any]
+#Trivial, now that we consider it. Welp! Happily, given any arbitrary bound
+#type variable "T", runtime introspection readily yields that bound:
+#    >>> from typing import TypeVar
+#    >>> TypeVar('T', bound=str).__bound__
+#    str
+#    >>> TypeVar('T').__bound__
+#    None
 
 #FIXME: [NEW PROJECT] Consider creating a new private "beartype._bearable"
 #subpackage to enable arbitrary O(1) runtime type checking. By "arbitrary," we

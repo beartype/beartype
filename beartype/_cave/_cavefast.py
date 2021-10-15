@@ -891,7 +891,7 @@ To distinguish between the various semantic types of hints ambiguously matched
 by this type, higher-level PEP-specific functions *must* be called instead.
 These include:
 
-* :func:`beartype._util.hint.pep.proposal.utilpep484.is_hint_pep484_generic`.
+* :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`.
   detecting `PEP 484`_-compliant generic type hints.
 * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin`.
   detecting `PEP 585`_-compliant builtin type hints.

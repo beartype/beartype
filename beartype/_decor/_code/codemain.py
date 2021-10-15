@@ -36,7 +36,7 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
-from beartype._util.hint.pep.proposal.pep484585.utilpepfunc import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (

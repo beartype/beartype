@@ -7,7 +7,7 @@
 **Beartype** :pep:`484` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep484` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.utilpep484` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -17,22 +17,23 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ kind : typevar            }....................
-def test_is_hint_pep484_typevar() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep484.is_hint_pep484_typevar`
-    tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.hint.pep.proposal.utilpep484 import (
-        is_hint_pep484_typevar)
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import T
-    from typing import Optional
-
-    # Assert that type variables are type variables.
-    assert is_hint_pep484_typevar(T) is True
-
-    # Assert that "typing" types parametrized by type variables are *NOT* type
-    # variables.
-    assert is_hint_pep484_typevar(Optional[T]) is False
+#FIXME: Obsolete, but useful as a template if we require anything similar.
+# def test_is_hint_pep484_typevar() -> None:
+#     '''
+#     Test the
+#     :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_typevar`
+#     tester.
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+#         is_hint_pep484_typevar)
+#     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import T
+#     from typing import Optional
+#
+#     # Assert that type variables are type variables.
+#     assert is_hint_pep484_typevar(T) is True
+#
+#     # Assert that "typing" types parametrized by type variables are *NOT* type
+#     # variables.
+#     assert is_hint_pep484_typevar(Optional[T]) is False

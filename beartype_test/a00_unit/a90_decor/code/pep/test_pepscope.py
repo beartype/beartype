@@ -248,7 +248,7 @@ def test_express_func_scope_type_forwardref() -> None:
     from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
     from beartype._decor._code._pep._pepscope import (
         express_func_scope_type_forwardref)
-    from beartype._util.hint.pep.proposal.utilpep484 import (
+    from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.utilobject import get_object_type_basename
     from beartype_test.a00_unit.data.data_type import Class

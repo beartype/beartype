@@ -106,17 +106,17 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_attr,
 )
 from beartype._util.hint.utilhintget import get_hint_reduced
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.pep484585.utilpeparg import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
-from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_builtin)

@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     HINT_PEP585_TUPLE_EMPTY)

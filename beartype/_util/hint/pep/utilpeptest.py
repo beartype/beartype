@@ -29,7 +29,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_TYPE_MIMIC,
 )
 from beartype._data.mod.datamod import TYPING_MODULE_NAMES
-from beartype._util.hint.pep.proposal.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_ignorable_or_none,
 )
 from beartype._util.hint.pep.proposal.utilpep544 import (
@@ -713,7 +713,7 @@ def is_hint_pep_supported(hint: object) -> bool:
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
 #access of "TYPING_MODULE_NAMES" instead. We only see two remaining in:
 #* beartype/_util/hint/pep/proposal/utilpep544.py
-#* beartype/_util/hint/pep/proposal/utilpep484.py
+#* beartype._util.hint.pep.proposal.pep484.utilpep484.py
 #Thankfully, nobody really cares about generalizing these two edge cases to
 #"testing_extensions", so they're mostly fine for various definitions of fine.
 @callable_cached

@@ -8,7 +8,7 @@ Project-wide :pep:`484` and :pep:`585` **subclass type hint utility unit
 tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpepsubclass` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep484585_subclass_superclass() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepsubclass.get_hint_pep484585_subclass_superclass`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type.get_hint_pep484585_subclass_superclass`
     tester.
     '''
 
@@ -31,9 +31,9 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         BeartypeDecorHintPep484585Exception,
         BeartypeDecorHintPep585Exception,
     )
-    from beartype._util.hint.pep.proposal.utilpep484 import (
+    from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)
-    from beartype._util.hint.pep.proposal.pep484585.utilpepsubclass import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
         get_hint_pep484585_subclass_superclass)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.data_type import NonIssubclassableClass

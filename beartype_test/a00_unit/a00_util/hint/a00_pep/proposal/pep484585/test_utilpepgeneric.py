@@ -8,7 +8,7 @@ Project-wide :pep:`484` and :pep:`585` **generic type hint utility unit
 tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -21,13 +21,13 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep484585_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric.is_hint_pep484585_generic`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.is_hint_pep484585_generic`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         is_hint_pep484585_generic)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
@@ -48,13 +48,13 @@ def test_is_hint_pep484585_generic() -> None:
 def test_get_hint_pep484585_generic_type_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric.get_hint_pep484585_generic_type_or_none`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_type_or_none`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         get_hint_pep484585_generic_type_or_none)
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
@@ -88,14 +88,14 @@ def test_get_hint_pep484585_generic_type_or_none() -> None:
 def test_get_hint_pep484585_generic_bases_unerased() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpepgeneric.get_hint_pep484585_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_bases_unerased`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-    from beartype._util.hint.pep.proposal.pep484585.utilpepgeneric import (
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         get_hint_pep484585_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP

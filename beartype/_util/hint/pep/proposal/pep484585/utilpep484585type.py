@@ -22,9 +22,9 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
     die_unless_type_or_types_issubclassable,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpeparg import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
-from beartype._util.hint.pep.proposal.pep484585.utilpepforwardref import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     HINT_PEP484585_FORWARDREF_UNION)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from typing import Any, Tuple, Type, TypeVar, Union
