@@ -14,6 +14,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from typing import Generic, Optional, Tuple
@@ -107,6 +108,34 @@ def is_hint_pep484_ignorable_or_none(
     '''
     # print(f'Testing PEP 484 hint {repr(hint)} [{repr(hint_sign)}] deep ignorability...')
 
+    #FIXME: Remove this *AFTER* properly supporting type variables. For
+    #now, ignoring type variables is required ta at least shallowly support
+    #generics parametrized by one or more type variables.
+
+    # For minor efficiency gains, the following tests are intentionally ordered
+    # in descending likelihood of a match.
+    #
+    # If this hint is a PEP 484-compliant type variable, unconditionally return
+    # true. Type variables require non-trivial and currently unimplemented
+    # decorator support.
+    if hint_sign is HintSignTypeVar:
+        return True
+    # Else, this hint is *NOT* a PEP 484-compliant type variable.
+    #
+    # If this hint is a PEP 484-compliant union...
+    elif hint_sign in HINT_SIGNS_UNION:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+        from beartype._util.hint.utilhinttest import is_hint_ignorable
+
+        # Return true only if one or more child hints of this union are
+        # recursively ignorable. See the function docstring.
+        return any(
+            is_hint_ignorable(hint_child)
+            for hint_child in get_hint_pep_args(hint)
+        )
+    # Else, this hint is *NOT* a PEP 484-compliant union.
+    #
     # If this hint is a PEP 484-compliant generic...
     if hint_sign is HintSignGeneric:
         # Avoid circular import dependencies.
@@ -134,9 +163,9 @@ def is_hint_pep484_ignorable_or_none(
         # both ignorable and unignorable protocols is "Protocol" rather than
         # "Generic". Ergo, this generic could still be an ignorable protocol.
         # print(f'Testing generic hint {repr(hint)} deep ignorability... False')
-    # Else, this hint is *NOT* a generic.
+    # Else, this hint is *NOT* a PEP 484-compliant generic.
     #
-    # If this hint is a new type...
+    # If this hint is a PEP 484-compliant new type...
     elif hint_sign is HintSignNewType:
         # Avoid circular import dependencies.
         from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -145,21 +174,7 @@ def is_hint_pep484_ignorable_or_none(
 
         # Return true only if this hint aliases an ignorable child type hint.
         return is_hint_ignorable(get_hint_pep484_newtype_class(hint))
-    # Else, this hint is *NOT* a new type.
-    #
-    # If this hint is a union...
-    elif hint_sign in HINT_SIGNS_UNION:
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-        from beartype._util.hint.utilhinttest import is_hint_ignorable
-
-        # Return true only if one or more child hints of this union are
-        # recursively ignorable. See the function docstring.
-        return any(
-            is_hint_ignorable(hint_child)
-            for hint_child in get_hint_pep_args(hint)
-        )
-    # Else, this hint is *NOT* a union.
+    # Else, this hint is *NOT* a PEP 484-compliant new type.
 
     # Return "None", as this hint is unignorable only under PEP 484.
     return None

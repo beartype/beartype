@@ -21,9 +21,6 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignTypeVar,
-)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
@@ -35,8 +32,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
 from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep585 import (
-    is_hint_pep585_builtin,
-)
+    is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.mod.utilmodule import (
@@ -614,16 +610,6 @@ def is_hint_pep_ignorable(hint: object) -> bool:
 
     # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign(hint)
-
-    #FIXME: Remove this *AFTER* properly supporting type variables. For
-    #now, ignoring type variables is required ta at least shallowly support
-    #generics parametrized by one or more type variables.
-
-    # If this hint is a type variable, return true. Type variables require
-    # non-trivial and currently unimplemented decorator support.
-    if hint_sign is HintSignTypeVar:
-        return True
-    # Else, this hint is *NOT* a type variable.
 
     # For each PEP-specific function testing whether this hint is an ignorable
     # type hint fully compliant with that PEP...

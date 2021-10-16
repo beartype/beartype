@@ -17,7 +17,6 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-# Ignore non-fatal NumPy warnings emitted by this unit test under Python < 3.8.
 def test_get_hint_reduced() -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintget.get_hint_reduced` getter.
@@ -37,7 +36,11 @@ def test_get_hint_reduced() -> None:
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        PEP484_GENERICS_IO)
+        PEP484_GENERICS_IO,
+        T,
+        T_BOUNDED,
+        T_CONSTRAINED,
+    )
     from beartype_test.util.mod.pytmodimport import (
         import_module_typing_any_attr_or_none_safe)
     from beartype_test.util.mod.pytmodtest import (
@@ -45,17 +48,31 @@ def test_get_hint_reduced() -> None:
         is_package_numpy_typing_ndarray_deep,
     )
     from pytest import raises, warns
+    from typing import TypeVar
 
-    # "typing.Annotated" type hint factory imported from either the "typing" or
-    # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
-
-    # Assert this getter preserves a PEP-noncompliant object as is.
+    # ..................{ CORE                              }..................
+    # Assert this getter preserves an isinstanceable type as is.
     assert get_hint_reduced(int) is int
 
     # Assert this getter reduces "None" to "type(None)".
     assert get_hint_reduced(None) is NoneType
 
+    # ..................{ PEP 484 ~ typevar                 }..................
+    # Assert this getter preserves unbounded type variables as is.
+    assert get_hint_reduced(T) is T
+
+    # Assert this getter reduces bounded type variables to their upper bound.
+    assert get_hint_reduced(T_BOUNDED) is int
+
+    # Union of all constraints parametrizing a constrained type variable,
+    # reduced from that type variable.
+    typevar_constraints_union = get_hint_reduced(T_CONSTRAINED)
+
+    # Assert this union contains all constraints parametrizing this variable.
+    assert str   in typevar_constraints_union.__args__
+    assert bytes in typevar_constraints_union.__args__
+
+    # ..................{ PEP 544                           }..................
     # If the active Python interpreter targets Python >= 3.8 and thus declares
     # the "typing.Protocol" superclass...
     if IS_PYTHON_AT_LEAST_3_8:
@@ -69,6 +86,11 @@ def test_get_hint_reduced() -> None:
 
             # Assert this protocol actually is a protocol.
             assert issubclass(pep544_protocol_io, Protocol)
+
+    # ..................{ PEP 593                           }..................
+    # "typing.Annotated" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise.
+    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
 
     # If this factory is importable, the active Python interpreter supports PEP
     # 593. In this case...
@@ -86,6 +108,7 @@ def test_get_hint_reduced() -> None:
                 str, IsEqual['In their noonday dreams.']]
             assert get_hint_reduced(leaves_when_laid) is leaves_when_laid
 
+    # ..................{ NUMPY                             }..................
     # If a recent version of NumPy is importable...
     if is_package_numpy():
         # Defer third party imports.

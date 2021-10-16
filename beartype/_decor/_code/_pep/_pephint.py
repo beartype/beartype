@@ -509,8 +509,14 @@ def pep_code_check_hint(
         f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} nested ')
 
     # Human-readable label prefixing the machine-readable representation of the
-    # currently visited type hint in exception and warning messages.
-    hint_curr_exception_prefix: str = None  # type: ignore[assignment]
+    # currently visited type hint in exception and warning messages,
+    # initialized to the label describing the root type hint.
+    #
+    # Note that this label intentionally only describes the root and currently
+    # iterated child hints rather than the root hint, the currently iterated
+    # child hint, and all interim child hints leading from the former to the
+    # latter. The latter approach would be non-human-readable and insane.
+    hint_curr_exception_prefix = _EXCEPTION_PREFIX_HINT_ROOT
 
     # ..................{ METADATA                          }..................
     # Tuple of metadata describing the currently visited hint, appended by
@@ -689,29 +695,6 @@ def pep_code_check_hint(
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
-
-        #FIXME: This test can be trivially avoided by:
-        #* Initializing "hint_curr_exception_prefix = EXCEPTION_PREFIX_HINT_ROOT" above.
-        #* Unconditionally setting "hint_curr_exception_prefix = _EXCEPTION_PREFIX_HINT_CHILD"
-        #  below at the end of each iteration of this loop.
-        #
-        #Since we're going to be fundamentally refactoring this entire
-        #algorithm into a two-phase algorithm, let's hold off on that until the
-        #radioactive dust settles, shall we?
-
-        # Human-readable label prefixing the machine-readable representation of
-        # the currently visited type hint in exception and warning messages.
-        #
-        # Note that this label intentionally only describes the root and
-        # currently iterated child hints rather than the root hint, the
-        # currently iterated child hint, and all interim child hints leading
-        # from the former to the latter. The latter approach would be
-        # non-human-readable and insane.
-        hint_curr_exception_prefix = (
-            _EXCEPTION_PREFIX_HINT_ROOT
-            if hints_meta_index_curr == 0 else
-            _EXCEPTION_PREFIX_HINT_CHILD
-        )
 
         # Reduce the currently visited hint to a lower-level hint-like object
         # associated with this hint if this hint satisfies a condition,
@@ -2084,11 +2067,14 @@ def pep_code_check_hint(
         # list for safety.
         hints_meta[hints_meta_index_curr] = None
 
-        # Increment the 0-based index of metadata describing the next visited
-        # hint in the "hints_meta" list *BEFORE* visiting this hint but *AFTER*
+        # Set the following *BEFORE* visiting the next visited hint but *AFTER*
         # performing all other logic for the currently visited hint, implying
-        # this should be the last statement of this iteration.
+        # these should be the last statements of this iteration:
+        # * Increment the 0-based index of metadata describing the next visited
+        #   hint in the "hints_meta" list.
+        # * Label prefixing the representation of the next visited hint.
         hints_meta_index_curr += 1
+        hint_curr_exception_prefix = _EXCEPTION_PREFIX_HINT_CHILD
 
     # ..................{ CLEANUP                           }..................
     # Release the fixed list of all such metadata.

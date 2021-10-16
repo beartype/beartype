@@ -2714,6 +2714,11 @@ the types of) parameters and return values annotated by these typing_ types:
   the collections.abc_ or contextlib_ modules like collections.abc.Iterable_
   or contextlib.AbstractContextManager_ with one or more PEP-compliant child
   type hints).
+* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
+  type-checking of generically substitutable types), including:
+
+  * typing.AnyStr_.
+
 * **Type variable-parametrized types** (i.e., typing_ objects subscripted by
   one or more type variables).
 
@@ -2729,10 +2734,6 @@ Beartype currently silently ignores these typing_ types at decoration time:
 * typing.ClassVar_.
 * typing.Final_.
 * `@typing.final`_.
-* **Type variables** (i.e., typing.TypeVar_ instances enabling general-purpose
-  type-checking of generically substitutable types), including:
-
-  * typing.AnyStr_.
 
 Subsequent ``beartype`` versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with

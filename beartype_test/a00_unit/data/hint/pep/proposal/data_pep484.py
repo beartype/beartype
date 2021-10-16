@@ -107,16 +107,30 @@ from typing import (
     Union,
 )
 
-# ....................{ TYPEVARS                          }....................
+# ....................{ TYPEVARS ~ unbounded              }....................
 S = TypeVar('S')
 '''
-User-defined generic :mod:`typing` type variable.
+Arbitrary unbounded (i.e., universally applicable) type variable.
 '''
 
 
 T = TypeVar('T')
 '''
-User-defined generic :mod:`typing` type variable.
+Arbitrary unbounded (i.e., universally applicable) type variable.
+'''
+
+# ....................{ TYPEVARS ~ unbounded              }....................
+T_BOUNDED = TypeVar('T_BOUNDED', bound=int)
+'''
+Arbitrary **bounded type variable** (i.e., type variable parametrized by a
+PEP-compliant child type hint passed as the ``bound`` keyword argument).
+'''
+
+
+T_CONSTRAINED = TypeVar('T_CONSTRAINED', str, bytes)
+'''
+Arbitrary **constrained type variable** (i.e., type variable parametrized by
+two or more PEP-compliant child type hints passed as positional arguments).
 '''
 
 # ....................{ GENERICS ~ io                     }....................
@@ -425,8 +439,8 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ UNSUBSCRIPTED ~ typevar           }................
-        # Generic type variable.
+        # ................{ UNSUBSCRIPTED ~ typevar : unbound }................
+        # Unbounded type variable.
         HintPepMetadata(
             hint=T,
             pep_sign=HintSignTypeVar,
@@ -441,15 +455,15 @@ def add_data(data_module: 'ModuleType') -> None:
                 # String constant.
                 HintPithSatisfiedMetadata('Oblate weapon Stacks (actually'),
             ),
-            # By definition, *ALL* objects satisfy *ALL* type variables.
+            # By definition, all objects satisfy all unbounded type variables.
             piths_unsatisfied_meta=(),
         ),
 
-        # String type variable.
+        # ................{ UNSUBSCRIPTED ~ typevar : bound   }................
+        # Constrained type variable declared by the "typing" module.
         HintPepMetadata(
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
-            # is_args=False,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             piths_satisfied_meta=(
@@ -458,16 +472,62 @@ def add_data(data_module: 'ModuleType') -> None:
                 # Byte string constant.
                 HintPithSatisfiedMetadata(b'We donned apportionments'),
             ),
-            #FIXME: Uncomment after fully supporting type variables.
-            # piths_unsatisfied_meta=(
-            #     # Integer constant.
-            #     728,
-            #     # List of string constants.
-            #     HintPithUnsatisfiedMetadata([
-            #         'Of Politico‐policed diction maledictions,',
-            #         'Of that numeral addicts’ “—Additive game,” self‐',
-            #     ]),
-            # ),
+            piths_unsatisfied_meta=(
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(0x8BADF00D),  # <-- 2343432205
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'Of Politico‐policed diction maledictions,',
+                    'Of that numeral addicts’ “—Additive game,” self‐',
+                ]),
+            ),
+        ),
+
+        # User-defined constrained type variable.
+        HintPepMetadata(
+            hint=T_CONSTRAINED,
+            pep_sign=HintSignTypeVar,
+            #FIXME: Remove after fully supporting type variables.
+            is_ignorable=True,
+            is_typing=IS_PYTHON_3_6,
+            piths_satisfied_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata('Prim (or'),
+                # Byte string constant.
+                HintPithSatisfiedMetadata(
+                    b'Primely positional) Quality inducements'),
+            ),
+            piths_unsatisfied_meta=(
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(0xABADBABE),  # <-- 2880289470
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'Into lavishly crested, crestfallen ',
+                    'epaulette‐cross‐pollinated st‐Ints,',
+                ]),
+            ),
+        ),
+
+        # User-defined bounded type variable.
+        HintPepMetadata(
+            hint=T_BOUNDED,
+            pep_sign=HintSignTypeVar,
+            #FIXME: Remove after fully supporting type variables.
+            is_ignorable=True,
+            is_typing=IS_PYTHON_3_6,
+            piths_satisfied_meta=(
+                # Integer constant.
+                HintPithSatisfiedMetadata(0x0B00B135),  # <-- 184594741
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Light‐expectorating, aspectant '
+                    'thujone‐inspecting enswathement of'
+                ),
+                # List of integer constants.
+                HintPithUnsatisfiedMetadata([0xBAAAAAAD, 0xBADDCAFE,]),
+            ),
         ),
 
         # ................{ CALLABLE                          }................

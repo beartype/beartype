@@ -49,9 +49,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                           }....................
-from beartype._cave._cavefast import NotImplementedType, NoneType
-from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._cave._cavefast import NotImplementedType  #, NoneType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
+from beartype._util.hint.utilhintget import get_hint_reduced
+from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+    make_hint_pep484_union)
 from collections.abc import Callable
 from typing import Any, Dict, Union
 
@@ -103,7 +106,9 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 # ....................{ CACHERS                           }....................
 #FIXME: Refactor as follows:
-#* Finish implementing cache_hint_nonpep563() below.
+#* Finish implementing cache_hint_nonpep563() below, ideally by including *ALL*
+#  remaining coercion and reduction logic in coerce_hint_pep() into
+#  cache_hint_nonpep563().
 #* Replace all calls to coerce_hint_pep() with calls to cache_hint_nonpep563().
 #* Remove coerce_hint_pep() entirely.
 def coerce_hint_pep(
@@ -234,7 +239,7 @@ def coerce_hint_pep(
     # By definition, PEP-compliant unions are a superset of PEP-noncompliant
     # tuple unions and thus accept all child hints accepted by the latter.
     elif isinstance(hint, tuple):
-        hint = Union.__getitem__(hint)
+        hint = make_hint_pep484_union(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
     # ..................{ COERCION                          }..................
@@ -249,6 +254,28 @@ def coerce_hint_pep(
     die_unless_hint(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is either a PEP-noncompliant type hint *OR* supported
     # PEP-compliant type hint.
+
+    # ..................{ REDUCTION                         }..................
+    # Reduce this hint to a lower-level hint-like object associated with this
+    # hint if this hint satisfies some condition, simplifying type-checking
+    # generation logic elsewhere by transparently converting hints we'd rather
+    # *NOT* explicitly support (e.g., "numpy.typing.NDArray" hints) into
+    # semantically equivalent hints we would (e.g., beartype validators).
+    #
+    # Note that we intentionally do *NOT* permanently coerce this reduction
+    # into this callable's type hints map above (i.e., "func.__annotations__").
+    # Type hints explicitly coerced above are assumed to be either:
+    # * PEP-noncompliant and thus harmful (in a general sense).
+    # * PEP-compliant but semantically deficient and thus equally harmful (in a
+    #   general sense).
+    #
+    # In either case, coerced type hints are generally harmful in *ALL*
+    # possible contexts for *ALL* possible consumers (including other competing
+    # runtime type-checkers). Reduced type hints, however, are *NOT* harmful in
+    # any sense whatsoever; they're simply non-trivial for @beartype to support
+    # in their current form and thus temporarily reduced in-memory into a more
+    # convenient form for beartype-specific type-checking purposes elsewhere.
+    hint = get_hint_reduced(hint=hint, exception_prefix=exception_prefix)
 
     # Return this hint.
     return hint
@@ -302,8 +329,8 @@ def cache_hint_nonpep563(
     type hints can be meaningfully memoized.
 
     The ``_nonpep563`` substring suffixing the name of this function implies
-    this function is intended to be called *after* all possibly `PEP
-    563`_-compliant **deferred type hints** (i.e., type hints persisted as
+    this function is intended to be called *after* all possibly
+    :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
     evaluatable strings rather than actual type hints) annotating this callable
     if any have been evaluated into actual type hints.
 
@@ -326,7 +353,7 @@ def cache_hint_nonpep563(
     Equivalently, this function *only* caches **non-self-cached type hints**
     (i.e., type hints that do *not* externally cache themselves), as these
     hints are *not* already cached elsewhere. Non-self-cached type hints
-    include *all* `PEP 585`_-compliant type hints produced by subscripting
+    include *all* :pep:`585`-compliant type hints produced by subscripting
     builtin container types, which means that subscripting builtin container
     types with the same child type hints creates new uncached objects rather
     than reusing the same internally cached objects: e.g.,
@@ -389,11 +416,6 @@ def cache_hint_nonpep563(
 
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
-
-    .. _PEP 563:
-        https://www.python.org/dev/peps/pep-0563
-    .. _PEP 585:
-        https://www.python.org/dev/peps/pep-0585
     '''
 
     #FIXME: Call the new is_hint_pep_uncached() tester here to decide whether

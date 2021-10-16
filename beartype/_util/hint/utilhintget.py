@@ -21,6 +21,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignTypedDict,
 )
+# from beartype._util.cache.utilcachecall import callable_cached
 from collections.abc import Mapping
 from typing import Any
 
@@ -28,6 +29,7 @@ from typing import Any
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
+# @callable_cached
 def get_hint_reduced(
     # Mandatory parameters.
     hint: Any,
@@ -111,15 +113,26 @@ def get_hint_reduced(
     elif hint is None:
         hint = NoneType
     # ..................{ PEP 484 ~ typevar                 }..................
-    #FIXME: Unit test us up, please.
     #FIXME: Remove this *AFTER* deeply type-checking type variables.
-
     # If this is a PEP 484-compliant type variable...
     #
     # Type variables are excruciatingly common and thus detected very early.
-    #FIXME: Implement us up after implementing requisite utilities, please.
-    # elif hint is HintSignTypeVar:
-    #     hint_child = hint.__bound__
+    elif hint_sign is HintSignTypeVar:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
+            get_hint_pep484_typevar_bound_or_none)
+
+        # PEP-compliant type hint synthesized from all bounded constraints
+        # parametrizing this type variable if any *OR* "None" otherwise.
+        hint_bound = get_hint_pep484_typevar_bound_or_none(hint)
+        # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
+
+        # If this type variable was parametrized by one or more bounded
+        # constraints, reduce this hint to these constraints.
+        if hint_bound is not None:
+            # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
+            hint = hint_bound
+        # Else, this type variable was parametrized by no bounded constraints.
     # ..................{ PEP 593                           }..................
     # If this hint is a PEP 593-compliant metahint...
     #

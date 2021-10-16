@@ -12,47 +12,37 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
-# from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.utilcachecall import callable_cached
 from typing import TypeVar
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-#FIXME: Unuseful. Refactor this to return a single composite type hint that we
-#can actually feed directly into a reduction algorithm. Notably:
-#* The upper bound case is fine.
-#* The constraints case *MUST* be refactored to return a "typing.Union" of all
-#  constraints. We already perform similar logic when reducing tuple unions to
-#  "typing.Union"; so, find and reuse that logic here. Do *NOT* simply return a
-#  tuple, as that may *NOT* actually be a valid tuple union, which only support
-#  isinstanceable classes. Type variable constraints may be arbitrary
-#  PEP-compliant type hints.
-#FIXME: Rename to:
-#    def get_hint_pep484_typevar_arg_or_none(hint: TypeVar) -> object:
-#FIXME: Unit test us up.
-#FIXME: Consider memoizing if we end up calling this getter frequently.
-#Currently, we only call this getter once during type hint reduction.
-# @callable_cached
-def get_hint_pep484_typevar_args(hint: TypeVar) -> tuple:
+@callable_cached
+def get_hint_pep484_typevar_bound_or_none(hint: TypeVar) -> object:
     '''
-    Tuple of the zero or more **arguments** (i.e., possibly PEP-noncompliant
-    child type hints) parametrizing the passed :pep:`484`-compliant **type
-    variable** (i.e., :mod:`typing.TypeVar` instance).
+    PEP-compliant type hint synthesized from all bounded constraints
+    parametrizing the passed :pep:`484`-compliant **type variable** (i.e.,
+    :mod:`typing.TypeVar` instance) if any *or* ``None`` otherwise (i.e., if
+    this type variable was parametrized by *no* bounded constraints).
 
-    Specifically, this getter returns a possibly empty tuple containing (in
-    order):
+    Specifically, if this type variable was parametrized by:
 
-    #. Zero or more **type variable constraints** (i.e., positional arguments
-       originally passed by the caller to the :meth:`typing.TypeVar.__init__`
-       constructor call initializing this type variable). These constraints
-       effectively form the union of child type hints to which this type
-       variable is covariantly constrained.
-    #. One **type variable upper bound** (i.e., ``bound`` keyword argument
-       originally passed by the caller to the :meth:`typing.TypeVar.__init__`
-       constructor call initializing this type variable). This upper bound is
-       yet another child type hint to which this type variable is covariantly
-       constrained.
+    #. One or more **constraints** (i.e., positional arguments passed by the
+       caller to the :meth:`typing.TypeVar.__init__` call initializing this
+       type variable), this getter returns a new **PEP-compliant union type
+       hint** (i.e., :attr:`typing.Union` subscription) of those constraints.
+    #. One **upper bound** (i.e., ``bound`` keyword argument passed by the
+       caller to the :meth:`typing.TypeVar.__init__` call initializing this
+       type variable), this getter returns that bound as is.
+    #. Else, this getter returns the ``None`` singleton.
+
+    Caveats
+    ----------
+    **This getter treats constraints and upper bounds as semantically
+    equivalent,** preventing callers from distinguishing between these two
+    technically distinct variants of type variable metadata.
 
     For runtime type-checking purposes, type variable constraints and bounds
     are sufficiently similar as to be semantically equivalent for all intents
@@ -76,8 +66,10 @@ def get_hint_pep484_typevar_args(hint: TypeVar) -> tuple:
     analogous operations, due to runtime space and time constraints.
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as this getter is only infrequently
-    called in the codebase.
+    :func:`callable_cached` decorator). If this type variable was parametrized
+    by one or more constraints, the :attr:`typing.Union` type hint factory
+    already caches these constraints; else, this getter performs no work. In
+    any case, this getter effectively performs to work.
 
     Parameters
     ----------
@@ -86,15 +78,18 @@ def get_hint_pep484_typevar_args(hint: TypeVar) -> tuple:
 
     Returns
     ----------
-    tuple
-        Erased superclass originating this :pep:`484`-compliant unerased
-        pseudo-superclass.
+    object
+        Either:
+
+        * If this type variable was parametrized by one or more constraints, a
+          new PEP-compliant union type hint aggregating those constraints.
+        * If this type variable was parametrized by an upper bound, that bound.
+        * Else, ``None``.
 
     Raises
     ----------
-    BeartypeDecorHintPep484Exception
-        if this object is *not* a :pep:`484`-compliant unerased
-        pseudo-superclass.
+    :exc:`BeartypeDecorHintPep484Exception`
+        if this object is *not* a :pep:`484`-compliant type variable.
     '''
 
     # If this hint is *NOT* a type variable, raise an exception.
@@ -103,25 +98,22 @@ def get_hint_pep484_typevar_args(hint: TypeVar) -> tuple:
             f'{repr(hint)} not PEP 484 type variable.')
     # Else, this hint is a type variable.
 
-    # Return either...
+    # If this type variable was parametrized by one or more constraints...
+    if hint.__constraints__:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+            make_hint_pep484_union)
+
+        # Create and return the PEP 484-compliant union of these constraints.
+        return make_hint_pep484_union(hint.__constraints__)
+    # Else, this type variable was parametrized by *NO* constraints.
     #
-    # Note that constraints and upper bounds are mutually exclusive; the
-    # TypeVar.__init__() constructor prevents both from being concurrently
-    # passed and thus forces either one, the other, or neither to be passed.
-    # This enables us to optimize our detection routine below, as we need *NOT*
-    # handle the case in which both are passed.
-    return (
-        # If this type variable was parametrized by one or more constraints,
-        # the tuple of these constraints.
-        hint.__constraints__
-        if hint.__constraints__ else
-        # Else, this type variable was parametrized by *NO* constraints.
-        #
-        # If this type variable was parametrized by an upper bound, the 1-tuple
-        # containing *ONLY* that bound.,
-        (hint.__bound__,)
-        if hint.__bound__ is not None else
-        # Else, this type variable was parametrized by neither constraints
-        # *NOR* an upper bound. In this case, return the empty tuple.
-        ()
-    )
+    # If this type variable was parametrized by an upper bound, return that
+    # bound as is.
+    elif hint.__bound__ is not None:
+        return hint.__bound__
+    # Else, this type variable was parametrized by neither constraints *NOR* an
+    # upper bound.
+
+    # Return "None".
+    return None
