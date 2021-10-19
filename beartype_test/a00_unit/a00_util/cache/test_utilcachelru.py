@@ -7,7 +7,7 @@
 **Beartype Least Recently Used (LRU) caching utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.utilcachelru` submodule.
+:mod:`beartype._util.cache.map.utilmaplru` submodule.
 """
 
 # ....................{ IMPORTS                           }....................
@@ -16,19 +16,19 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
-from beartype.roar._roarexc import _BeartypeUtilLRUCacheException
+from beartype.roar._roarexc import _BeartypeUtilCacheLruException
 
 
 # ....................{ TESTS                             }....................
 def test_lrucachestrong_one_pass() -> None:
     """
     Test successful usage of the
-    :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class against an
+    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class against an
     LRU cache caching at most one key-value pair.
     """
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcachelru import LRUCacheStrong
+    from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
     LRU_CACHE_KEY_A = 'KEY_A'
@@ -38,7 +38,7 @@ def test_lrucachestrong_one_pass() -> None:
     LRU_CACHE_KEY_B = 'KEY_B'
     LRU_CACHE_VALUE_B = 'VALUE_B'
 
-    lru_cache = LRUCacheStrong(size=1)
+    lru_cache = CacheLruStrong(size=1)
     assert len(lru_cache) == 0
 
     # Cache and confirm the first and only key-value pair of this cache is this pair.
@@ -58,12 +58,12 @@ def test_lrucachestrong_one_pass() -> None:
 def test_lrucachestrong_two_pass() -> None:
     """
     Test successful usage of the
-    :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class against an
+    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class against an
     LRU cache caching at most two key-value pairs.
     """
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcachelru import LRUCacheStrong
+    from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
     LRU_CACHE_KEY_A = 'KEY_A'
@@ -80,7 +80,7 @@ def test_lrucachestrong_two_pass() -> None:
     LRU_CACHE_VALUE_C = 'VALUE_C'
     LRU_CACHE_ITEM_C = (LRU_CACHE_KEY_C, LRU_CACHE_VALUE_C)
 
-    lru_cache = LRUCacheStrong(size=2)
+    lru_cache = CacheLruStrong(size=2)
 
     # Cache two arbitrary key-value pairs and confirm they've been cached in insertion order.
     lru_cache[LRU_CACHE_KEY_A] = LRU_CACHE_VALUE_A
@@ -123,16 +123,16 @@ def test_lrucachestrong_two_pass() -> None:
 def test_lrucachestrong_fail() -> None:
     """
     Test unsuccessful usage of the
-    :func:`beartype._util.cache.utilcachelru.LRUCacheStrong` class.
+    :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class.
     """
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcachelru import LRUCacheStrong
+    from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Confirm behaviour for a non-integer size.
-    with raises(_BeartypeUtilLRUCacheException):
-        LRUCacheStrong(size="Wait a minute, I'm not an int!")
+    with raises(_BeartypeUtilCacheLruException):
+        CacheLruStrong(size="Wait a minute, I'm not an int!")
 
     # Confirm behaviour for a non-positive size.
-    with raises(_BeartypeUtilLRUCacheException):
-        LRUCacheStrong(size=0)
+    with raises(_BeartypeUtilCacheLruException):
+        CacheLruStrong(size=0)

@@ -7,7 +7,7 @@
 **Beartype PEP-agnostic type hint getter utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.utilhintget` submodule.
+:mod:`beartype._util.hint.utilhintconv` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -19,7 +19,7 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS                             }....................
 def test_get_hint_reduced() -> None:
     '''
-    Test the :func:`beartype._util.hint.utilhintget.get_hint_reduced` getter.
+    Test the :func:`beartype._util.hint.utilhintconv.reduce_hint` getter.
     '''
 
     # Defer heavyweight imports.
@@ -32,7 +32,7 @@ def test_get_hint_reduced() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
     )
-    from beartype._util.hint.utilhintget import get_hint_reduced
+    from beartype._util.hint.utilhintconv import reduce_hint
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
@@ -52,21 +52,21 @@ def test_get_hint_reduced() -> None:
 
     # ..................{ CORE                              }..................
     # Assert this getter preserves an isinstanceable type as is.
-    assert get_hint_reduced(int) is int
+    assert reduce_hint(int) is int
 
     # Assert this getter reduces "None" to "type(None)".
-    assert get_hint_reduced(None) is NoneType
+    assert reduce_hint(None) is NoneType
 
     # ..................{ PEP 484 ~ typevar                 }..................
     # Assert this getter preserves unbounded type variables as is.
-    assert get_hint_reduced(T) is T
+    assert reduce_hint(T) is T
 
     # Assert this getter reduces bounded type variables to their upper bound.
-    assert get_hint_reduced(T_BOUNDED) is int
+    assert reduce_hint(T_BOUNDED) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
-    typevar_constraints_union = get_hint_reduced(T_CONSTRAINED)
+    typevar_constraints_union = reduce_hint(T_CONSTRAINED)
 
     # Assert this union contains all constraints parametrizing this variable.
     assert str   in typevar_constraints_union.__args__
@@ -82,7 +82,7 @@ def test_get_hint_reduced() -> None:
         # For each PEP 484-compliant "typing" IO generic superclass...
         for pep484_generic_io in PEP484_GENERICS_IO:
             # Equivalent PEP 544-compliant protocol reduced from this generic.
-            pep544_protocol_io = get_hint_reduced(pep484_generic_io)
+            pep544_protocol_io = reduce_hint(pep484_generic_io)
 
             # Assert this protocol actually is a protocol.
             assert issubclass(pep544_protocol_io, Protocol)
@@ -97,7 +97,7 @@ def test_get_hint_reduced() -> None:
     if Annotated is not None:
         # Assert this getter reduces a beartype-agnostic metahint to the
         # lower-level hint it annotates.
-        assert get_hint_reduced(Annotated[int, 42]) is int
+        assert reduce_hint(Annotated[int, 42]) is int
 
         # If the active Python interpreter targets Python >= 3.8 and thus
         # supports the __class_getitem__() dunder method required by beartype
@@ -106,7 +106,7 @@ def test_get_hint_reduced() -> None:
             # Assert this getter preserves a beartype-specific metahint as is.
             leaves_when_laid = Annotated[
                 str, IsEqual['In their noonday dreams.']]
-            assert get_hint_reduced(leaves_when_laid) is leaves_when_laid
+            assert reduce_hint(leaves_when_laid) is leaves_when_laid
 
     # ..................{ NUMPY                             }..................
     # If a recent version of NumPy is importable...
@@ -119,7 +119,7 @@ def test_get_hint_reduced() -> None:
         # the active Python interpreter...
         if is_package_numpy_typing_ndarray_deep():
             # Beartype validator reduced from such a hint.
-            ndarray_reduced = get_hint_reduced(NDArray[float64])
+            ndarray_reduced = reduce_hint(NDArray[float64])
 
             # Assert this validator is a "typing{_extensions}.Annotated" hint.
             assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
@@ -128,7 +128,7 @@ def test_get_hint_reduced() -> None:
             # erroneously subscripted by an object *NOT* reducible to a data
             # type raises the expected exception.
             with raises(BeartypeDecorHintNonpepNumpyException):
-                get_hint_reduced(NDArray[
+                reduce_hint(NDArray[
                     'From my wings are shaken the dews that waken'])
         # Else, beartype only shallowly supports "numpy.typing.NDArray" type
         # hints under the active Python interpreter. In this case...
@@ -136,4 +136,4 @@ def test_get_hint_reduced() -> None:
             # Assert this getter reduces such a hint to the untyped NumPy array
             # class "numpy.ndarray" with a non-fatal warning.
             with warns(BeartypeDecorHintNonpepNumpyWarning):
-                assert get_hint_reduced(NDArray[float64]) is ndarray
+                assert reduce_hint(NDArray[float64]) is ndarray

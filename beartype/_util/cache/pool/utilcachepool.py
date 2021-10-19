@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype key pool type** (i.e., object caching class implemented as a
+Project-wide **key pool type** (i.e., object caching class implemented as a
 dictionary of lists of arbitrary objects to be cached, where objects cached to
 the same list are typically of the same type).
 
@@ -16,7 +16,7 @@ from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
 from collections import defaultdict
 from collections.abc import Callable, Hashable
 from threading import Lock
-from typing import Any, Dict, Union
+from typing import Dict, Union
 
 # ....................{ CLASSES                           }....................
 class KeyPool(object):

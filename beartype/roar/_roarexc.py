@@ -746,12 +746,12 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     pass
 
 
-class _BeartypeUtilLRUCacheException(_BeartypeUtilCachedException):
+class _BeartypeUtilCacheLruException(_BeartypeUtilCachedException):
     '''
     **Beartype Least Recently Used (LRU) cache exception.**
 
     This exception is raised by the
-    :func:`beartype._util.cache.utilcache.utilcachelru.LRUCacheStrong` class
+    :func:`beartype._util.cache.utilcache.utilcachelru.CacheLruStrong` class
     on various fatal errors (e.g., when the cache capacity is *not* a positive
     integer).
 

@@ -19,7 +19,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
-from beartype._util.hint.utilhintget import get_hint_reduced
+from beartype._util.hint.utilhintconv import reduce_hint
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
@@ -176,8 +176,10 @@ class CauseSleuth(object):
 
         # Reduce the currently visited hint to a lower-level hint-like object
         # associated with this hint if this hint satisfies a condition.
-        hint = get_hint_reduced(
-            hint=hint, exception_prefix=self.exception_prefix)
+        #
+        # Note that parameters are intentionally passed positionally to both
+        # optimize memoization efficiency and circumvent memoization warnings.
+        hint = reduce_hint(hint, self.exception_prefix)
 
         # If this hint is PEP-compliant...
         if is_hint_pep(hint):

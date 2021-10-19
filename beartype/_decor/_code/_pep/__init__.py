@@ -859,7 +859,7 @@
 #This means that we do *NOT* need to explicitly cache the "mapping" object
 #mapped by any cached view under Python >= 3.10, reducing space consumption.
 
-#FIXME: *WOOPS.* The "LRUCacheStrong" class is absolutely awesome and we'll
+#FIXME: *WOOPS.* The "CacheLruStrong" class is absolutely awesome and we'll
 #absolutely be reusing that for various supplementary purposes across the
 #codebase (e.g., for perfect O(1) tuple type-checking below). However, this
 #class sadly doesn't get us where we need to be for full O(1) dictionary and
@@ -884,7 +884,7 @@
 #
 #The "LRUDuffleCacheStrong" class satisfies both concerns by caching to a
 #maximum *OBJECT SIZE CAPACITY* rather than merely to an *OBJECT NUMBER
-#CAPACITY.* Whereas the "LRUCacheStrong" class treats all cached objects as
+#CAPACITY.* Whereas the "CacheLruStrong" class treats all cached objects as
 #having a uniform size of 1, the "LRUDuffleCacheStrong" class instead assigns
 #each cached object an estimated abstract size (EAS) as a strictly positive
 #integer intended to reflect its actual transitive in-memory size -- where a
@@ -916,7 +916,7 @@
 #
 #Here's then how the "LRUDuffleCacheStrong" class is implemented:
 #* The "LRUDuffleCacheStrong" class should *NOT* subclass the
-#  "LRUCacheStrong" class but copy-and-paste from the latter into the former.
+#  "CacheLruStrong" class but copy-and-paste from the latter into the former.
 #  This is both for efficiency and maintainability; it's likely their
 #  implementations will mildly diverge.
 #* The LRUDuffleCacheStrong.__init__() method should be implemented like this:
@@ -1042,11 +1042,11 @@
 #  individually passed to each cache_item() call (see below) rather than
 #  globally, as the former enables different types of cached objects to have a
 #  different quantity of metadata cached with those objects.
-#* Drop the __setitem__() implementation borrow from "LRUCacheStrong". Instead,
+#* Drop the __setitem__() implementation borrow from "CacheLruStrong". Instead,
 #  defer to the existing dict.__setitem__() implementation. Why? Because we
 #  need to pass additional cache-specific parameters to our own
 #  __setitem__()-like non-dunder method, which __setitem__() doesn't support.
-#* Define a new cache_obj() method resembling LRUCacheStrong.__setitem__() but
+#* Define a new cache_obj() method resembling CacheLruStrong.__setitem__() but
 #  even more virile and awesome with signature resembling:
 #      def cache_value(
 #          self,
@@ -1064,14 +1064,14 @@
 #guaranteed to check all n items of an arbitrary tuple in exactly n calls, with
 #each subsequent call performing *NO* type-checking by reducing to a noop. How?
 #Simple! We:
-#* Augment our existing "LRUCacheStrong" data structure to optionally accept a
+#* Augment our existing "CacheLruStrong" data structure to optionally accept a
 #  new initialization-time "value_maker" factory function defaulting to "None".
-#  If non-"None", "LRUCacheStrong" will implicitly call that function on each
+#  If non-"None", "CacheLruStrong" will implicitly call that function on each
 #  attempt to access a missing key by assigning the object returned by that
 #  call as the key of a new key-value pair -- or, in other words, by behaving
 #  exactly like "collections.defaultdict".
 #* Globally define a new "_LRU_CACHE_TUPLE_TO_COUNTER" cache somewhere as an
-#  instance of "LRUCacheStrong" whose "value_maker" factory function is
+#  instance of "CacheLruStrong" whose "value_maker" factory function is
 #  initialized to a lambda function simply returning a new
 #  "collections.Counter" object that starts counting at 0. Since tuples
 #  themselves are hashable and thus permissible for direct use as dictionary
@@ -1160,10 +1160,10 @@
 #reentrancy. That is to say, although we have technically monkey-patched away
 #the BeartypeIteratorProxy.__next__() method, that object is still a live
 #object that *WILL BE RECREATED ON EACH CALL TO THE SAME* @beartype-decorated
-#callable. Yikes! So, clearly we yet again cache with an "LRUCacheStrong" cache
-#specific to iterators... or perhaps something like "LRUCacheStrong" that
+#callable. Yikes! So, clearly we yet again cache with an "CacheLruStrong" cache
+#specific to iterators... or perhaps something like "CacheLruStrong" that
 #provides a callback mechanism to enable arbitrary objects to remove themselves
-#from the cache. Yes! Perhaps just augment our existing "LRUCacheStrong" strong
+#from the cache. Yes! Perhaps just augment our existing "CacheLruStrong" strong
 #with some sort of callback or hook support?
 #
 #In any case, the idea here is that the "BeartypeIteratorProxy" class defined
@@ -1171,7 +1171,7 @@
 #* Store a weak rather than strong reference to the underlying iterator.
 #* Register a callback with that weak reference such that:
 #  * When the underlying iterator is garbage-collected, the wrapping
-#    "BeartypeIteratorProxy" proxy removes itself from its "LRUCacheStrong"
+#    "BeartypeIteratorProxy" proxy removes itself from its "CacheLruStrong"
 #    proxy.
 #
 #Of course, we're still not quite done yet. Why? Because we want to avoid
@@ -1230,7 +1230,7 @@
 #Yikes. We can avoid that by instead, on each @beartype call:
 #* Create a new functools.partial()-based wrapper decorator passed our
 #  @beartype decorator and all options passed to the current @beartype call.
-#* Cache that wrapper decorator into a new private "LRUCacheStrong" instance.
+#* Cache that wrapper decorator into a new private "CacheLruStrong" instance.
 #* Return that decorator.
 #* Return the previously cached wrapper decorator on the next @beartype call
 #  passed the same options (rather than recreating that decorator).

@@ -189,6 +189,7 @@ def import_module_attr(
     if module_attr is None:
         raise exception_cls(
             f'{exception_prefix}"{module_attr_name}" unimportable.')
+    # Else, this module declares this attribute.
 
     # Else, return this attribute.
     return module_attr

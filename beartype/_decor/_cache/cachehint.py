@@ -12,14 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: The coercion function(s) defined below should also rewrite unhashable
+#FIXME: The coercion function(s) called below should also rewrite unhashable
 #hints to be hashable *IF FEASIBLE.* This isn't always feasible, of course
-#(e.g., "Annotated[[]]", "Literal[[]]"). The one notable place where this is
+#(e.g., "Annotated[[]]", "Literal[[]]"). The one notable place where this *IS*
 #feasible is with PEP 585-compliant type hints subscripted by unhashable rather
 #than hashable iterables, which can *ALWAYS* be safely rewritten to be hashable
 #(e.g., coercing "callable[[], None]" to "callable[(), None]").
 
-#FIXME: The coercion function(s) defined below should also coerce PEP
+#FIXME: The coercion function(s) called below should also coerce PEP
 #544-compatible protocols *NOT* decorated by @typing.runtime_checkable to be
 #decorated by that decorator, as such protocols are unusable at runtime. Yes,
 #we should always try something *REALLY* sneaky and clever.
@@ -49,60 +49,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                           }....................
-from beartype._cave._cavefast import NotImplementedType  #, NoneType
-from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
-from beartype._util.hint.utilhintget import get_hint_reduced
+from beartype._util.hint.utilhintconv import (
+    coerce_hint,
+    reduce_hint,
+)
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
-    make_hint_pep484_union)
 from collections.abc import Callable
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GLOBALS                           }....................
-_HINT_REPR_TO_HINT: Dict[str, Any] = {}
-'''
-**Type hint cache** (i.e., singleton dictionary mapping from the
-machine-readable representations of all non-self-cached type hints to those
-hints).**
-
-This dictionary caches:
-
-* :pep:`585`-compliant type hints, which do *not* cache themselves.
-* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
-  evaluatable strings rather than actual type hints), enabled if the active
-  Python interpreter targets either:
-
-  * Python 3.7.0 *and* the module declaring this callable explicitly enables
-    :pep:`563` support with a leading dunder importation of the form ``from
-    __future__ import annotations``.
-  * Python 4.0.0, where `PEP 563`_ is expected to be mandatory.
-
-This dictionary does *not* cache:
-
-* Type hints declared by the :mod:`typing` module, which implicitly cache
-  themselves on subscription thanks to inscrutable metaclass magic.
-
-Implementation
---------------
-This dictionary is intentionally designed as a naive dictionary rather than
-robust LRU cache, for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
-rather than the :func:`functools.lru_cache` decorator. Why? Because:
-
-* The number of different type hints instantiated across even worst-case
-  codebases is negligible in comparison to the space consumed by those hints.
-* The :attr:`sys.modules` dictionary persists strong references to all
-  callables declared by previously imported modules. In turn, the
-  ``func.__annotations__`` dunder dictionary of each such callable persists
-  strong references to all type hints annotating that callable. In turn, these
-  two statements imply that type hints are *never* garbage collected but
-  instead persisted for the lifetime of the active Python process. Ergo,
-  temporarily caching hints in an LRU cache is pointless, as there are *no*
-  space savings in dropping stale references to unused hints.
-'''
 
 # ....................{ CACHERS                           }....................
 #FIXME: Refactor as follows:
@@ -144,7 +100,7 @@ def coerce_hint_pep(
     Parameters
     ----------
     func : Callable
-        Callable
+        Callable to coerce this type hint of.
     pith_name : str
         Either:
 
@@ -153,7 +109,8 @@ def coerce_hint_pep(
     hint : object
         Type hint to be rendered PEP-compliant.
     exception_prefix : str
-        Human-readable label describing this hint.
+        Human-readable label prefixing the representation of this object in the
+        exception message.
 
     Returns
     ----------
@@ -175,80 +132,26 @@ def coerce_hint_pep(
     assert callable(func), f'{repr(func)} not callable.'
     assert isinstance(pith_name, str), f'{pith_name} not string.'
 
-    # Original instance of this hint *PRIOR* to being subsequently coerced.
-    hint_old = hint
-
-    # ..................{ MYPY                              }..................
-    # If...
-    if (
-        # This hint annotates the return for the decorated callable *AND*...
-        pith_name == 'return' and
-        # The decorated callable is a binary dunder method (e.g., __eq__())...
-        func.__name__ in METHOD_NAMES_BINARY_DUNDER
-    ):
-        # Expand this hint to accept both this hint *AND* the "NotImplemented"
-        # singleton as valid returns from this method. Why? Because this
-        # expansion has been codified by mypy and is thus a de-facto typing
-        # standard, albeit one currently lacking formal PEP standardization.
-        #
-        # Consider this representative binary dunder method:
-        #     class MuhClass:
-        #         @beartype
-        #         def __eq__(self, other: object) -> bool:
-        #             if isinstance(other, TheCloud):
-        #                 return self is other
-        #             return NotImplemented
-        #
-        # Technically, that method *COULD* be retyped to return:
-        #         def __eq__(self, other: object) -> Union[
-        #             bool, type(NotImplemented)]:
-        #
-        # Pragmatically, mypy and other static type checkers do *NOT* currently
-        # support the type() builtin in a sane manner and thus raise errors
-        # given the otherwise valid logic above. This means that the following
-        # equivalent approach also yields the same errors:
-        #     NotImplementedType = type(NotImplemented)
-        #     class MuhClass:
-        #         @beartype
-        #         def __eq__(self, other: object) -> Union[
-        #             bool, NotImplementedType]:
-        #             if isinstance(other, TheCloud):
-        #                 return self is other
-        #             return NotImplemented
-        #
-        # Of course, the latter approach can be manually rectified by
-        # explicitly typing that type as "Any": e.g.,
-        #     NotImplementedType: Any = type(NotImplemented)
-        #
-        # Of course, expecting users to be aware of these ludicrous sorts of
-        # mypy idiosyncrasies merely to annotate an otherwise normal binary
-        # dunder method is one expectation too far.
-        #
-        # Ideally, official CPython developers would resolve this by declaring
-        # a new "types.NotImplementedType" type global resembling the existing
-        # "types.NoneType" type global. As that has yet to happen, mypy has
-        # instead taken the surprisingly sensible course of silently ignoring
-        # this edge case by effectively performing the same type expansion as
-        # performed here. *applause*
-        hint = Union[hint, NotImplementedType]
-    # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
-    #
-    # ..................{ NON-PEP                           }..................
-    # If this hint is a PEP-noncompliant tuple union, coerce this union into
-    # the equivalent PEP-compliant union subscripted by the same child hints.
-    # By definition, PEP-compliant unions are a superset of PEP-noncompliant
-    # tuple unions and thus accept all child hints accepted by the latter.
-    elif isinstance(hint, tuple):
-        hint = make_hint_pep484_union(hint)
-    # Else, this hint is *NOT* a PEP-noncompliant tuple union.
-
     # ..................{ COERCION                          }..................
-    # If this hint was coerced above into a different instance, replace the
+    # Original instance of this hint *PRIOR* to being subsequently coerced.
+    # PEP-compliant type hint coerced (i.e., permanently converted in the
+    # ``__annotations__`` dunder dictionary of the passed callable) from the
+    # passed possibly PEP-noncompliant type hint if this hint is coercible *or*
+    # this hint as is otherwise (i.e., if this hint is irreducible).
+    hint_coerced = coerce_hint(
+        hint=hint,
+        func=func,
+        pith_name=pith_name,
+        exception_prefix=exception_prefix,
+    )
+
+    # If this hint was coerced above into a different type hint, replace the
     # original instance of this hint in the annotations dunder dictionary
     # attached to the decorated callable with the new instance of this hint.
-    if hint_old is not hint:
-        func.__annotations__[pith_name] = hint
+    if hint is not hint_coerced:
+        hint = func.__annotations__[pith_name] = hint_coerced
 
+    # ..................{ VALIDATION                        }..................
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.
     die_unless_hint(hint=hint, exception_prefix=exception_prefix)
@@ -262,20 +165,23 @@ def coerce_hint_pep(
     # *NOT* explicitly support (e.g., "numpy.typing.NDArray" hints) into
     # semantically equivalent hints we would (e.g., beartype validators).
     #
-    # Note that we intentionally do *NOT* permanently coerce this reduction
-    # into this callable's type hints map above (i.e., "func.__annotations__").
-    # Type hints explicitly coerced above are assumed to be either:
-    # * PEP-noncompliant and thus harmful (in a general sense).
-    # * PEP-compliant but semantically deficient and thus equally harmful (in a
-    #   general sense).
-    #
-    # In either case, coerced type hints are generally harmful in *ALL*
-    # possible contexts for *ALL* possible consumers (including other competing
-    # runtime type-checkers). Reduced type hints, however, are *NOT* harmful in
-    # any sense whatsoever; they're simply non-trivial for @beartype to support
-    # in their current form and thus temporarily reduced in-memory into a more
-    # convenient form for beartype-specific type-checking purposes elsewhere.
-    hint = get_hint_reduced(hint=hint, exception_prefix=exception_prefix)
+    # Note that:
+    # * We intentionally do *NOT* permanently coerce this reduction into this
+    #   callable's type hints map above (i.e., "func.__annotations__"). Type
+    #   hints explicitly coerced above are assumed to be either:
+    #   * PEP-noncompliant and thus harmful (in a general sense).
+    #   * PEP-compliant but semantically deficient and thus equally harmful (in
+    #     a general sense).
+    #   In either case, coerced type hints are generally harmful in *ALL*
+    #   possible contexts for *ALL* possible consumers (including other
+    #   competing runtime type-checkers). Reduced type hints, however, are
+    #   *NOT* harmful in any sense whatsoever; they're simply non-trivial for
+    #   @beartype to support in their current form and thus temporarily reduced
+    #   in-memory into a more convenient form for beartype-specific
+    #   type-checking purposes elsewhere.
+    # * Parameters are intentionally passed positionally to both optimize
+    #   memoization efficiency and circumvent memoization warnings.
+    hint = reduce_hint(hint, exception_prefix)
 
     # Return this hint.
     return hint

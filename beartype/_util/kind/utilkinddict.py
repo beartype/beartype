@@ -14,6 +14,7 @@ from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Sequence, Mapping, MutableMapping
+from threading import Lock
 from typing import Sequence as SequenceHint
 
 # ....................{ VALIDATORS                        }....................
