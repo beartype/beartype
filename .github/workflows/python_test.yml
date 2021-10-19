@@ -108,7 +108,6 @@ jobs:
           - py37-coverage
           - py38-coverage
           - py39-coverage
-          - pypy36-coverage
           - pypy37-coverage
 
           #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
@@ -131,8 +130,6 @@ jobs:
           # - tox-env: py310
           #   python-version: 3.10
           #   python-version: 3.10-dev
-          - tox-env: pypy36-coverage
-            python-version: pypy-3.6
           - tox-env: pypy37-coverage
             python-version: pypy-3.7
 
