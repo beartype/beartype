@@ -11,6 +11,43 @@ type hints from one format into another, either permanently or temporarily
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
+#FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
+#"Literal[[]]"). The one notable place where this *IS* feasible is with PEP
+#585-compliant type hints subscripted by unhashable rather than hashable
+#iterables, which can *ALWAYS* be safely rewritten to be hashable (e.g.,
+#coercing "callable[[], None]" to "callable[(), None]").
+
+#FIXME: coerce_hint() should also coerce PEP 544-compatible protocols *NOT*
+#decorated by @typing.runtime_checkable to be decorated by that decorator, as
+#such protocols are unusable at runtime. Yes, we should always try something
+#*REALLY* sneaky and clever.
+#
+#Specifically, rather than accept "typing" nonsense verbatim, we could instead:
+#* Detect PEP 544-compatible protocol type hints *NOT* decorated by
+#  @typing.runtime_checkable. The existing is_type_isinstanceable() tester now
+#  detects whether arbitrary classes are isinstanceable, so just call that.
+#* Emit a non-fatal warning advising the end user to resolve this on their end.
+#* Meanwhile, beartype can simply:
+#  * Dynamically fabricate a new PEP 544-compatible protocol decorated by
+#    @typing.runtime_checkable using the body of the undecorated user-defined
+#    protocol as its base. Indeed, simply subclassing a new subclass decorated
+#    by @typing.runtime_checkable from the undecorated user-defined protocol as
+#    its base with a noop body of "pass" should suffice.
+#  * Replacing all instances of the undecorated user-defined protocol with that
+#    decorated beartype-defined protocol in annotations. Note this would
+#    strongly benefit from some form of memoization or caching. Since this edge
+#    case should be fairly rare, even a dictionary would probably be overkill.
+#    Just implementing something resembling the following memoized getter
+#    in the "utilpep544" submodule would probably suffice:
+#        @callable_cached
+#        def get_pep544_protocol_checkable_from_protocol_uncheckable(
+#            protocol_uncheckable: object) -> Protocol:
+#            ...
+#
+#Checkmate, "typing". Checkmate.
+
 # ....................{ IMPORTS                           }....................
 from beartype._cave._cavefast import NotImplementedType, NoneType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
@@ -22,6 +59,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignTypedDict,
 )
+from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
@@ -29,6 +67,7 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
     reduce_hint_pep484_generic_io_to_pep544_protocol,
     is_hint_pep484_generic_io,
 )
+from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from collections.abc import Callable, Mapping
 from typing import Any, Union
@@ -37,52 +76,47 @@ from typing import Any, Union
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ PRIVATE ~ mappings                }....................
-#FIXME: Uncomment when adding PEP 585 coercion caching to coerce_hint() below.
-#FIXME: This is non-thread-safe. Declare a new thread-safe dictionary class
-#"beartype._util.cache.map.utilmapbig.CacheUnboundedStrong".
-# _HINT_REPR_TO_HINT: Dict[str, Any] = {}
-# '''
-# **Type hint cache** (i.e., singleton dictionary mapping from the
-# machine-readable representations of all non-self-cached type hints to those
-# hints).**
-#
-# This dictionary caches:
-#
-# * :pep:`585`-compliant type hints, which do *not* cache themselves.
-# * :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
-#   evaluatable strings rather than actual type hints), enabled if the active
-#   Python interpreter targets either:
-#
-#   * Python 3.7.0 *and* the module declaring this callable explicitly enables
-#     :pep:`563` support with a leading dunder importation of the form ``from
-#     __future__ import annotations``.
-#   * Python 4.0.0, where `PEP 563`_ is expected to be mandatory.
-#
-# This dictionary does *not* cache:
-#
-# * Type hints declared by the :mod:`typing` module, which implicitly cache
-#   themselves on subscription thanks to inscrutable metaclass magic.
-#
-# Implementation
-# --------------
-# This dictionary is intentionally designed as a naive dictionary rather than
-# robust LRU cache, for the same reasons that callables accepting hints are
-# memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
-# rather than the :func:`functools.lru_cache` decorator. Why? Because:
-#
-# * The number of different type hints instantiated across even worst-case
-#   codebases is negligible in comparison to the space consumed by those hints.
-# * The :attr:`sys.modules` dictionary persists strong references to all
-#   callables declared by previously imported modules. In turn, the
-#   ``func.__annotations__`` dunder dictionary of each such callable persists
-#   strong references to all type hints annotating that callable. In turn, these
-#   two statements imply that type hints are *never* garbage collected but
-#   instead persisted for the lifetime of the active Python process. Ergo,
-#   temporarily caching hints in an LRU cache is pointless, as there are *no*
-#   space savings in dropping stale references to unused hints.
-# '''
+_HINT_REPR_TO_HINT = CacheUnboundedStrong()
+'''
+**Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
+representations of all non-self-cached type hints to those hints).**
+
+This cache caches:
+
+* :pep:`585`-compliant type hints, which do *not* cache themselves.
+
+This cache does *not* cache:
+
+* Type hints declared by the :mod:`typing` module, which implicitly cache
+  themselves on subscription thanks to inscrutable metaclass magic.
+* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
+  evaluable strings rather than actual type hints). Ideally, this cache would
+  cache the evaluations of *all* deferred type hints. Sadly, doing so is
+  infeasible in the general case due to global and local namespace lookups
+  (e.g., ``Dict[str, int]`` only means what you think it means if an
+  importation resembling ``from typing import Dict`` preceded that type hint).
+
+Implementation
+--------------
+This dictionary is intentionally designed as a naive dictionary rather than
+robust LRU cache, for the same reasons that callables accepting hints are
+memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+rather than the :func:`functools.lru_cache` decorator. Why? Because:
+
+* The number of different type hints instantiated across even worst-case
+  codebases is negligible in comparison to the space consumed by those hints.
+* The :attr:`sys.modules` dictionary persists strong references to all
+  callables declared by previously imported modules. In turn, the
+  ``func.__annotations__`` dunder dictionary of each such callable persists
+  strong references to all type hints annotating that callable. In turn, these
+  two statements imply that type hints are *never* garbage collected but
+  instead persisted for the lifetime of the active Python process. Ergo,
+  temporarily caching hints in an LRU cache is pointless, as there are *no*
+  space savings in dropping stale references to unused hints.
+'''
 
 # ....................{ COERCERS                          }....................
+#FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_hint(
     hint: object,
     func: Callable,
@@ -97,17 +131,33 @@ def coerce_hint(
 
     Specifically, if the passed hint is:
 
-    * A **PEP-compliant uncached type hint** (i.e., PEP-compliant type hint
-      *not* already internally cached by its parent class or module, notably
-      including all :pep:`585`-compliant type hints), this function:
+    * A **PEP-compliant uncached type hint** (i.e., hint *not* already
+      internally cached by its parent class or module), this function:
 
       * If this hint has already been passed to a prior call of this function,
         returns the semantically equivalent PEP-compliant type hint having the
         same machine-readable representation as this hint cached by that call.
-        Doing so deduplicates this hint, minimizing memory space consumption
-        across the lifetime of the active Python process.
+        Doing so deduplicates this hint, which both:
+
+        * Minimizes space complexity across the lifetime of this process.
+        * Minimizes time complexity by enabling beartype-specific memoized
+          callables to efficiently reduce to constant-time lookup operations
+          when repeatedly passed copies of this hint nonetheless sharing the
+          same machine-readable representation.
+
       * Else, internally caches this hint with a thread-safe global cache and
         returns this hint as is.
+
+      Uncached hints include:
+
+      * :pep:`484`-compliant subscripted generics under Python >= 3.9 (e.g.,
+        ``from typing import List; class MuhPep484List(List): pass;
+        MuhPep484List[int]``). See below for further commentary.
+      * :pep:`585`-compliant type hints, including both:
+
+        * Builtin :pep:`585`-compliant type hints (e.g., ``list[int]``).
+        * User-defined :pep:`585`-compliant generics (e.g.,
+          ``class MuhPep585List(list): pass; MuhPep585List[int]``).
 
     * A **PEP-noncompliant tuple union** (i.e., tuple of one or more standard
       classes and forward references to standard classes), this function:
@@ -118,13 +168,78 @@ def coerce_hint(
         this callable with this :pep:`484`-compliant union.
       * Returns this :pep:`484`-compliant union.
 
-    * Already self-cached, this hint is already PEP-compliant by definition. In
-      this case, this function preserves and returns this hint as is.
+    * Already cached, this hint is already PEP-compliant by definition. In this
+      case, this function preserves and returns this hint as is.
 
     This function is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator). Since the hint returned by this
     function conditionally depends upon the passed callable, memoizing this
     function would consume space needlessly with *no* useful benefit.
+
+    Design
+    ------
+    This function does *not* bother caching **self-caching type hints** (i.e.,
+    type hints that externally cache themselves), as these hints are already
+    cached elsewhere. Self-cached type hints include most type hints created by
+    subscripting type hint factories declared by the :mod:`typing` module,
+    which internally cache their resulting type hints: e.g.,
+
+    .. code-block:: python
+
+       >>> import typing
+       >>> typing.List[int] is typing.List[int]
+       True
+
+    Equivalently, this function *only* caches **uncached type hints** (i.e.,
+    type hints that do *not* externally cache themselves), as these hints are
+    *not* already cached elsewhere. Uncached type hints include *all*
+    :pep:`585`-compliant type hints produced by subscripting builtin container
+    types, which fail to internally cache their resulting type hints: e.g.,
+
+    .. code-block:: python
+
+       >>> list[int] is list[int]
+       False
+
+    This function enables callers to coerce uncached type hints into
+    :mod:`beartype`-cached type hints. :mod:`beartype` effectively requires
+    *all* type hints to be cached somewhere! :mod:`beartype` does *not* care
+    who, what, or how is caching those type hints -- only that they are cached
+    before being passed to utility functions in the :mod:`beartype` codebase.
+    Why? Because most such utility functions are memoized for efficiency by the
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator, which
+    maps passed parameters (typically including the standard ``hint`` parameter
+    accepting a type hint) based on object identity to previously cached return
+    values. You see the problem, we trust.
+
+    Uncached type hints that are otherwise semantically equal are nonetheless
+    distinct objects and will thus be treated as distinct parameters by
+    memoization decorators. If this function did *not* exist, uncached type
+    hints could *not* be coerced into :mod:`beartype`-cached type hints and
+    thus could *not* be memoized, dramatically reducing the efficiency of
+    :mod:`beartype` for standard type hints.
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Since this high-level function
+    internally defers to unmemoized low-level functions that are ``O(n)`` in
+    ``n`` the size of the inheritance hierarchy of this hint, this function
+    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
+    submodule for further details.
+
+    This function intentionally does *not* cache :pep:`484`-compliant generics
+    subscripted by type variables under Python < 3.9. Those hints are
+    technically uncached but silently treated by this function as self-cached
+    and thus preserved as is. Why? Because correctly detecting those hints as
+    uncached would require an unmemoized ``O(n)`` search across the inheritance
+    hierarchy of *all* passed objects and thus all type hints annotating
+    callables decorated by :func:`beartype.beartype`. Since this failure only
+    affects obsolete Python versions *and* since the only harms induced by this
+    failure are a slight increase in space and time consumption for edge-case
+    type hints unlikely to actually be used in real-world code, this tradeoff
+    is more than acceptable. We're not the bad guy here. Right?
 
     Parameters
     ----------
@@ -152,9 +267,28 @@ def coerce_hint(
         * Else, this hint as is unmodified.
     '''
 
+    # ..................{ PEP 585                           }..................
+    # If this hint is PEP 585-compliant (e.g., "list[str]"), this hint is *NOT*
+    # self-caching (e.g., "list[str] is not list[str]") and *MUST* thus be
+    # explicitly cached here. Failing to do so disables subsequent memoization,
+    # dramatically reducing decoration-time efficiency when decorating
+    # callables repeatedly annotated by copies of this hint.
+    #
+    # Specifically, deduplicate this hint by either:
+    # * If this is the first copy of this hint passed to this function, cache
+    #   this hint under its machine-readable implementation.
+    # * Else, one or more prior copies of this hint have already been passed to
+    #   this function. In this case, replace this subsequent copy by the first
+    #   copy of this hint originally passed to a prior call of this function.
+
+    #FIXME: *UNIT TEST US UP, PLEASE.* This requires significant testing.
+    if is_hint_pep585_builtin(hint):
+        return _HINT_REPR_TO_HINT.get_value_static(
+            key=repr(hint), value=hint)
+    # Else, this hint is *NOT* PEP 585-compliant.
     # ..................{ MYPY                              }..................
     # If...
-    if (
+    elif (
         # This hint annotates the return for the decorated callable *AND*...
         pith_name == 'return' and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
@@ -204,16 +338,15 @@ def coerce_hint(
         # instead taken the surprisingly sensible course of silently ignoring
         # this edge case by effectively performing the same type expansion as
         # performed here. *applause*
-        hint = Union[hint, NotImplementedType]
+        return Union[hint, NotImplementedType]
     # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
-    #
     # ..................{ NON-PEP                           }..................
     # If this hint is a PEP-noncompliant tuple union, coerce this union into
     # the equivalent PEP-compliant union subscripted by the same child hints.
     # By definition, PEP-compliant unions are a superset of PEP-noncompliant
     # tuple unions and thus accept all child hints accepted by the latter.
     elif isinstance(hint, tuple):
-        hint = make_hint_pep484_union(hint)
+        return make_hint_pep484_union(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
     # Return this possibly coerced hint.

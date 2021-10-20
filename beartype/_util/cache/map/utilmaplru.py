@@ -9,6 +9,25 @@ Project-wide **Least Recently Used (LRU) cache** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: The current "CacheLruStrong" implementation is overly low-level and
+#thus fundamentally *THREAD-UNSAFE.* The core issue here is that the current
+#approach encourages callers to perform thread-unsafe logic resembling:
+#   if key not in lru_dict:  # <-- if a context switch happens here, bad stuff
+#       lru_dict[key] = value
+#
+#For thread-safety, the entire "CacheLruStrong" class *MUST* be rethought along
+#the manner of the comparable "utilmapbig.CacheUnboundedStrong" class. Notably:
+#* "CacheLruStrong" class should *NOT* directly subclass "dict" but instead
+#  simply contain a "_dict" instance.
+#* Thread-unsafe dunder methods (particularly the "__setitem__" method) should
+#  probably *NOT* be defined at all. Yeah, we know.
+#* A new CacheLruStrong.cache_entry() method resembling the existing
+#  CacheUnboundedStrong.cache_entry() method should be declared.
+#* Indeed, we should (arguably) declare a new "CacheStrongABC" base class to
+#  provide a common API here -- trivializing switching between different
+#  caching strategies implemented by concrete subclasses.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCacheLruException
 from threading import Lock
@@ -34,21 +53,21 @@ class CacheLruStrong(dict):
     with no external strong referents, the object would get collected with all
     other short-lived objects in the first generation (i.e., generation 0).
 
-    Notes
-    -----
+    Note that:
+
     * The equivalent LRU cache employing weak references to keys and/or values
       may be trivially implemented by swapping this classes inheritance from
       the builtin :class:`dict` to either of the builtin
       :class:`weakref.WeakKeyDictionary` or
       :class:`weakref.WeakValueDictionary`.
-    * The standard example of a cache-only object is a container iterator -
-      :meth:`dict.items`
+    * The standard example of a cache-only object is a container iterator
+      (e.g., :meth:`dict.items`).
 
     Attributes
     ----------
     _size : int
-        **Cache capacity** - maximum number of key-value pairs persisted by
-        this cache.
+        **Cache capacity** (i.e., maximum number of key-value pairs persisted
+        by this cache).
     _lock : Lock
         **Non-reentrant instance-specific thread lock** (i.e., low-level thread
         locking mechanism implemented as a highly efficient C extension,

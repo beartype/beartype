@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 """
-**Beartype Least Recently Used (LRU) caching utility unit tests.**
+Project-wide **Least Recently Used (LRU) cache** utility unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.cache.map.utilmaplru` submodule.
@@ -17,7 +17,6 @@ This submodule unit tests the public API of the private
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 from beartype.roar._roarexc import _BeartypeUtilCacheLruException
-
 
 # ....................{ TESTS                             }....................
 def test_lrucachestrong_one_pass() -> None:
@@ -41,7 +40,8 @@ def test_lrucachestrong_one_pass() -> None:
     lru_cache = CacheLruStrong(size=1)
     assert len(lru_cache) == 0
 
-    # Cache and confirm the first and only key-value pair of this cache is this pair.
+    # Cache and confirm the first and only key-value pair of this cache is this
+    # pair.
     lru_cache[LRU_CACHE_KEY_A] = LRU_CACHE_VALUE_A
     assert len(lru_cache) == 1
     assert lru_cache[LRU_CACHE_KEY_A] == LRU_CACHE_VALUE_A
@@ -82,7 +82,8 @@ def test_lrucachestrong_two_pass() -> None:
 
     lru_cache = CacheLruStrong(size=2)
 
-    # Cache two arbitrary key-value pairs and confirm they've been cached in insertion order.
+    # Cache two arbitrary key-value pairs and confirm they've been cached in
+    # insertion order.
     lru_cache[LRU_CACHE_KEY_A] = LRU_CACHE_VALUE_A
     lru_cache[LRU_CACHE_KEY_B] = LRU_CACHE_VALUE_B
     lru_cache_items = iter(lru_cache.items())
@@ -108,7 +109,8 @@ def test_lrucachestrong_two_pass() -> None:
     assert len(lru_cache) == 2
     assert LRU_CACHE_KEY_A not in lru_cache
 
-    # Confirm the remaining key-value pairs have been cached in insertion order.
+    # Confirm the remaining key-value pairs have been cached in insertion
+    # order.
     lru_cache_items = iter(lru_cache.items())
     assert next(lru_cache_items) == LRU_CACHE_ITEM_B
     assert next(lru_cache_items) == LRU_CACHE_ITEM_C

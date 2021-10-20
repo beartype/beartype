@@ -11,7 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 # from beartype.roar._roarexc import _BeartypeUtilCacheException
+from beartype._util.utilobject import SENTINEL
+from collections.abc import Hashable
 from threading import Lock
+from typing import Callable, Dict
 
 # ....................{ CLASSES                           }....................
 #FIXME: Implement us up, please. This class intentionally does *NOT* subclass
@@ -20,10 +23,27 @@ from threading import Lock
 #method typically resembles:
 #    def cache_entry(self, key: Hashable, value: object) -> object:
 #        with self._lock:
-#            if key in self._dict:
+#            if key not in self._dict:
 #                self._dict[key] = value
 #            return self._dict[key]
-#FIXME: Unit test us up, please.
+#FIXME: Actually, the above naive cache_entry() implementation fails to scale
+#to the general case. Why? Because the whole point of caching, in general, is
+#that computing the "value" to be cached is expensive; that's typically why
+#you're caching it, right? Ergo, we can't simply pass "value" as a standard
+#parameter above. We instead replace that with a caller-defined value factory:
+#    def cache_entry(
+#        self,
+#        key: Hashable,
+#        value_factory: Callable[[Hashable], Any],
+#    ) -> object:
+#        with self._lock:
+#            if key not in self._dict:
+#                self._dict[key] = value_factory(key)
+#            return self._dict[key]
+#Although certainly feasible, the cost of calling that factory function on each
+#cache miss could eclipse any benefits accrued from caching the values returned
+#by that factory function. Maybe? Or... maybe not. In any case, that's it.
+
 class CacheUnboundedStrong(object):
     '''
     **Thread-safe strongly unbounded cache** (i.e., mapping of unlimited size
@@ -42,8 +62,31 @@ class CacheUnboundedStrong(object):
     with no external strong referents, the object would get collected with all
     other short-lived objects in the first generation (i.e., generation 0).
 
+    This cache intentionally does *not* adhere to standard mapping semantics by
+    subclassing a standard mapping API (e.g., :class:`dict`,
+    :class:`collections.abc.MutableMapping`). Standard mapping semantics are
+    sufficiently low-level as to invite race conditions between competing
+    threads concurrently contesting the same instance of this class. For
+    example, consider the following standard non-atomic logic for caching a new
+    key-value into this cache:
+
+    .. code-block:: python
+
+       if key not in cache:    # <-- If a context switch happens immediately
+                               # <-- after entering this branch, bad stuff!
+           cache[key] = value  # <-- We may overwrite another thread's work.
+
     Attributes
     ----------
+    _key_to_value : dict[Hashable, object]
+        Internal **backing store** (i.e., thread-unsafe dictionary of unlimited
+        size mapping from strongly referenced arbitrary keys onto strongly
+        referenced arbitrary values).
+    _key_to_value_get : Callable
+        The :meth:`self._key_to_value.get` method, classified for efficiency.
+    _key_to_value_set : Callable
+        The :meth:`self._key_to_value.__setitem__` dunder method, classified
+        for efficiency.
     _lock : Lock
         **Non-reentrant instance-specific thread lock** (i.e., low-level thread
         locking mechanism implemented as a highly efficient C extension,
@@ -61,6 +104,9 @@ class CacheUnboundedStrong(object):
     # @beartype decorations. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_key_to_value',
+        '_key_to_value_get',
+        '_key_to_value_set',
         '_lock',
     )
 
@@ -70,5 +116,123 @@ class CacheUnboundedStrong(object):
         Initialize this cache to an empty cache.
         '''
 
-        # Initialize all remaining instance variables.
+        # Initialize all instance variables.
+        self._key_to_value: Dict[Hashable, object] = {}
+        self._key_to_value_get = self._key_to_value.get
+        self._key_to_value_set = self._key_to_value.__setitem__
         self._lock = Lock()
+
+    # ..................{ GETTERS                           }..................
+    def get_value_static(
+        self,
+
+        # Mandatory parameters.
+        key: Hashable,
+        value: object,
+
+        # Hidden parameters, localized for negligible efficiency.
+        _SENTINEL=SENTINEL,
+    ) -> object:
+        '''
+        Statically associate the passed key with the passed value if this cache
+        has yet to cache this key (i.e., if this method has yet to be passed
+        this key) and, in any case, return the value associated with this key.
+
+        Parameters
+        ----------
+        key : Hashable
+            **Key** (i.e., arbitrary hashable object) to return the associated
+            value of.
+        value : object
+            **Value** (i.e., arbitrary object) to associate with this key if
+            this key has yet to be associated with any value.
+
+        Returns
+        ----------
+        object
+            **Value** (i.e., arbitrary object) associated with this key.
+        '''
+        assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
+
+        # Thread-safely (but non-reentrantly)...
+        with self._lock:
+            # Value previously cached under this key if any *OR* the sentinel
+            # placeholder otherwise.
+            value_old = self._key_to_value_get(key, _SENTINEL)
+
+            # If this key has already been cached, return this value as is.
+            if value_old is not _SENTINEL:
+                return value_old
+            # Else, this key has yet to be cached.
+
+            # Cache this key with this value.
+            self._key_to_value_set(key, value)
+
+            # Return this value.
+            return value
+
+
+    #FIXME: Unit test us up.
+    def get_value_dynamic(
+        self,
+
+        # Mandatory parameters.
+        key: Hashable,
+        value_factory: Callable[[Hashable], object],
+
+        # Hidden parameters, localized for negligible efficiency.
+        _SENTINEL=SENTINEL,
+    ) -> object:
+        '''
+        Dynamically associate the passed key with the value returned by the
+        passed **value factory** (i.e., caller-defined function accepting this
+        key and returning the value to be associated with this key) if this
+        cache has yet to cache this key (i.e., if this method has yet to be
+        passed this key) and, in any case, return the value associated with
+        this key.
+
+        Caveats
+        ----------
+        **This value factory must not recursively call this method.** For
+        efficiency, this cache is internally locked through a non-reentrant
+        rather than reentrant thread lock. If this value factory accidentally
+        recursively calls this method, the active thread will be indefinitely
+        locked. Welcome to the risky world of high-cost efficiency gains.
+
+        Parameters
+        ----------
+        key : Hashable
+            **Key** (i.e., arbitrary hashable object) to return the associated
+            value of.
+        value_factory : Callable[[Hashable], object]
+            Caller-defined function accepting this key and dynamically
+            returning the value to be associated with this key.
+
+        Returns
+        ----------
+        object
+            **Value** (i.e., arbitrary object) associated with this key.
+        '''
+        assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
+        assert callable(value_factory), f'{repr(value_factory)} uncallable.'
+
+        # Thread-safely (but non-reentrantly)...
+        with self._lock:
+            # Value previously cached under this key if any *OR* the sentinel
+            # placeholder otherwise.
+            value_old = self._key_to_value_get(key, _SENTINEL)
+
+            # If this key has already been cached, return this value as is.
+            if value_old is not _SENTINEL:
+                return value_old
+            # Else, this key has yet to be cached.
+
+            # Value created by this factory function, localized for negligible
+            # efficiency to avoid the unnecessary subsequent dictionary lookup.
+            value = value_factory(key)
+
+            # Cache this key with this value.
+            self._key_to_value_set(key, value)
+
+            # Return this value.
+            return value

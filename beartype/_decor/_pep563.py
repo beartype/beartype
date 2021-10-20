@@ -50,12 +50,12 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     (i.e., if :pep:`563` is *not* active for this callable).
 
     :pep:`563` is active for this callable if the active Python interpreter
-    targets:
+    targets either:
 
-    * Python >= 3.10, where :pep:`563` is globally, unconditionally enabled.
-    * Python >= 3.7 < 3.10 *and* the module declaring this callable explicitly
-      enables :pep:`563` support with a leading dunder importation of the form
-      ``from __future__ import annotations``.
+    * Python >= 3.7 *and* the module declaring this callable explicitly enables
+      :pep:`563` support with a leading dunder importation of the form ``from
+      __future__ import annotations``.
+    * Python >= ?.?.?, where :pep:`563` is unconditionally globally enabled.
 
     If :pep:`563` is active for this callable, then for each type-hint
     annotating this callable:
@@ -110,8 +110,8 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
         getattr(sys_modules[func.__module__], 'annotations', None) is (
             __future__.annotations)
     ):
-    # Then this callable's hints are *NOT* postponed under PEP 563. In
-    # this case, silently reduce to a noop.
+    # Then this callable's hints are *NOT* postponed under PEP 563. In this
+    # case, silently reduce to a noop.
         return
     # Else, these hints are postponed under PEP 563. In this case, resolve
     # these hints to their referents.
