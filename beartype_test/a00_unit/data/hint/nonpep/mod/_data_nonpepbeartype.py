@@ -245,7 +245,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Fake builtin  type.
+        # Fake builtin "NotImplemented" type.
         HintNonpepMetadata(
             hint=NotImplementedType,
             piths_satisfied_meta=(

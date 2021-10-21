@@ -22,7 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorParamNameException
-from beartype._decor._cache.cachehint import coerce_hint_pep
 from beartype._decor._code.codesnip import (
     ARG_NAME_GETRANDBITS,
     CODE_INIT_ARGS_LEN,
@@ -38,6 +37,7 @@ from beartype._decor._code._pep.pepcode import (
 from beartype._decor._data import BeartypeData
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
+from beartype._util.hint.utilhintconv import sanify_hint_root
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_param,
@@ -343,10 +343,10 @@ def _code_check_params(data: BeartypeData) -> str:
         # supported PEP-compliant hint).
         #
         # Do this first *BEFORE* passing this hint to any further callables.
-        hint = coerce_hint_pep(
+        hint = sanify_hint_root(
+            hint=hint,
             func=func,
             pith_name=param_name,
-            hint=hint,
             exception_prefix=f'{exception_prefix}type hint ',
         )
 
@@ -468,10 +468,10 @@ def _code_check_return(data: BeartypeData) -> str:
         # is both PEP-compliant and supported, *OR* raise an exception
         # otherwise (i.e., if this hint is neither PEP-noncompliant nor a
         # supported PEP-compliant hint).
-        hint = coerce_hint_pep(
+        hint = sanify_hint_root(
+            hint=hint,
             func=func,
             pith_name='return',
-            hint=hint,
             exception_prefix=(
                 f'{prefix_callable_decorated_return(func)}type hint '),
         )

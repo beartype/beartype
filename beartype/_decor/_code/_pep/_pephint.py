@@ -105,7 +105,6 @@ from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-from beartype._util.hint.utilhintconv import reduce_hint
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     get_hint_pep484_generic_base_erased_from_unerased)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
@@ -141,6 +140,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_typing,
     warn_if_hint_pep_deprecated,
 )
+from beartype._util.hint.utilhintconv import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import (
@@ -696,17 +696,16 @@ def pep_code_check_hint(
         pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
 
-        # Reduce the currently visited hint to a lower-level hint-like object
-        # associated with this hint if this hint satisfies a condition,
-        # simplifying type-checking generation logic below by transparently
-        # converting hints we'd rather *NOT* explicitly support (e.g.,
-        # third-party "numpy.typing.NDArray" hints) into semantically
-        # equivalent hints we would (e.g., first-party beartype validators).
+        # If this is a child hint rather than the root hint, sanify (i.e.,
+        # sanitize) this hint if this hint is reducible *OR* preserve this hint
+        # otherwise (i.e., if this hint is irreducible).
         #
-        # Note that parameters are intentionally passed positionally to both
-        # optimize memoization efficiency and circumvent memoization warnings.
-        hint_curr = reduce_hint(
-            hint_curr, hint_curr_exception_prefix)
+        # Note that the root hint has already been permanently sanified by the
+        # calling "beartype._decor._code.codemain" submodule and thus need
+        # *NOT* be inefficiently resanified here.
+        if hints_meta_index_curr:
+            hint_curr = sanify_hint_child(
+                hint=hint_curr, exception_prefix=hint_curr_exception_prefix)
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -1617,7 +1616,7 @@ def pep_code_check_hint(
                         # If this is *NOT* a beartype validator, raise an
                         # exception.
                         #
-                        # Note that the previously called reduce_hint()
+                        # Note that the previously called sanify_hint_child()
                         # function validated only the first such to be a
                         # beartype validator. All remaining arguments have yet
                         # to be validated, so we do so now for consistency and

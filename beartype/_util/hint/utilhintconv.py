@@ -69,6 +69,7 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
 )
 from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.utilhinttest import die_unless_hint
 from collections.abc import Callable, Mapping
 from typing import Any, Union
 
@@ -115,19 +116,312 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
   space savings in dropping stale references to unused hints.
 '''
 
-# ....................{ COERCERS                          }....................
-#FIXME: Document mypy-specific coercion in the docstring as well, please.
-def coerce_hint(
+# ....................{ SANIFIERS                         }....................
+#FIXME: Define a new sanify_hint_child() function internally
+#calling both coerce_hint_child() and _reduce_hint().
+#FIXME: Replace *ALL* external calls to _reduce_hint() with calls to
+#coerce_hint_child() instead.
+
+#FIXME: Unit test us up, please.
+#FIXME: Revise docstring in accordance with recent dramatic improvements.
+def sanify_hint_root(
     hint: object,
     func: Callable,
     pith_name: str,
     exception_prefix: str,
-) -> Any:
+) -> object:
     '''
-    PEP-compliant type hint coerced (i.e., converted) from the passed possibly
-    PEP-noncompliant type hint annotating the parameter or return value with
-    the passed name of the passed callable if this hint is coercible *or* this
-    hint as is otherwise (i.e., if this hint is irreducible).
+    PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
+    type hint** (i.e., possibly PEP-noncompliant type hint annotating the
+    parameter or return with the passed name of the passed callable) if this
+    hint is reducible *or* this hint as is otherwise (i.e., if this hint is
+    irreducible).
+
+    Specifically, this function:
+
+    * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
+      more standard classes and forward references to standard classes):
+
+      * Coerces this tuple union into the equivalent :pep:`484`-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this :pep:`484`-compliant union.
+      * Returns this :pep:`484`-compliant union.
+
+    * Else if this hint is already PEP-compliant, preserves and returns this
+      hint unmodified as is.
+    * Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
+      thus invalid as a type hint), raise an exception.
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Even if this function *could* be
+    meaningfully memoized, there would be no benefit; this function is only
+    called once per parameter or return of the currently decorated callable.
+
+    This function is intended to be called *after* all possibly
+    :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
+    evaluatable strings rather than actual type hints) annotating this callable
+    if any have been evaluated into actual type hints.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly PEP-noncompliant root type hint to be sanified.
+    func : Callable
+        Callable that this hint directly annotates a parameter or return of.
+    pith_name : str
+        Either:
+
+        * If this hint annotates a parameter, the name of that parameter.
+        * If this hint annotates the return, ``"return"``.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this hint is PEP-noncompliant, a PEP-compliant type hint converted
+          from this hint.
+        * If this hint is PEP-compliant, this hint unmodified as is.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonpepException
+        If this object is neither:
+
+        * A PEP-noncompliant type hint.
+        * A supported PEP-compliant type hint.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+    assert isinstance(pith_name, str), f'{pith_name} not string.'
+
+    # PEP-compliant type hint coerced (i.e., permanently converted in the
+    # annotations dunder dictionary of the passed callable) from this possibly
+    # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
+    # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
+    # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
+    hint = func.__annotations__[pith_name] = _coerce_hint_root(
+        hint=hint,
+        func=func,
+        pith_name=pith_name,
+        exception_prefix=exception_prefix,
+    )
+
+    # If this object is neither a PEP-noncompliant type hint *NOR* supported
+    # PEP-compliant type hint, raise an exception.
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+    # Else, this object is a supported PEP-compliant type hint.
+
+    # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
+    # reducible *OR* this hint as is otherwise. Reductions simplify subsequent
+    # logic elsewhere by transparently converting non-trivial hints (e.g.,
+    # numpy.typing.NDArray[...]) into semantically equivalent trivial hints
+    # (e.g., beartype validators).
+    #
+    # Whereas the above coercion permanently persists for the duration of the
+    # active Python process (i.e., by replacing the original type hint in the
+    # annotations dunder dictionary of this callable), this reduction only
+    # temporarily persists for the duration of the current call stack. Why?
+    # Because hints explicitly coerced above are assumed to be either:
+    # * PEP-noncompliant and thus harmful (in the general sense).
+    # * PEP-compliant but semantically deficient and thus equally harmful (in
+    #   the general sense).
+    #
+    # In either case, coerced type hints are generally harmful in *ALL*
+    # possible contexts for *ALL* possible consumers (including other competing
+    # runtime type-checkers). Reduced type hints, however, are *NOT* harmful in
+    # any sense whatsoever; they're simply non-trivial for @beartype to support
+    # in their current form and thus temporarily reduced in-memory into a more
+    # convenient form for beartype-specific type-checking purposes elsewhere.
+    #
+    # Note that parameters are intentionally passed positionally to both
+    # optimize memoization efficiency and circumvent memoization warnings.
+    hint = _reduce_hint(hint, exception_prefix)
+
+    # Return this sanified hint.
+    return hint
+
+
+def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
+    '''
+    PEP-compliant type hint sanified (i.e., sanitized) from the passed
+    **PEP-compliant child type hint** (i.e., hint transitively
+    subscripting the root type hint annotating a parameter or return of the
+    currently decorated callable) if this hint is reducible *or* this
+    hint as is otherwise (i.e., if this hint is *not* irreducible).
+
+    Parameters
+    ----------
+    hint : object
+        PEP-compliant type hint to be sanified.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    ----------
+    object
+        PEP-compliant type hint sanified from this hint.
+    '''
+
+    # Return this hint first coerced and then reduced, intentionally covering
+    # the subset of the logic performed by the sanify_hint_root() sanifier
+    # specifically applicable to child type hints.
+    return _reduce_hint(
+        _coerce_hint_any(hint, exception_prefix), exception_prefix)
+
+# ....................{ COERCERS                          }....................
+#FIXME: Document mypy-specific coercion in the docstring as well, please.
+def _coerce_hint_root(
+    hint: object,
+    func: Callable,
+    pith_name: str,
+    exception_prefix: str,
+) -> object:
+    '''
+    PEP-compliant type hint coerced (i.e., converted) from the passed **root
+    type hint** (i.e., possibly PEP-noncompliant type hint annotating the
+    parameter or return with the passed name of the passed callable if this
+    hint is coercible *or* this hint as is otherwise (i.e., if this hint is
+    *not* coercible).
+
+    Specifically, if the passed hint is:
+
+    * A **PEP-noncompliant tuple union** (i.e., tuple of one or more standard
+      classes and forward references to standard classes), this function:
+
+      * Coerces this tuple union into the equivalent :pep:`484`-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this :pep:`484`-compliant union.
+      * Returns this :pep:`484`-compliant union.
+
+    This function is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator). Since the hint returned by this
+    function conditionally depends upon the passed callable, memoizing this
+    function would consume space needlessly with *no* useful benefit.
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Since this high-level function
+    internally defers to unmemoized low-level functions that are ``O(n)`` in
+    ``n`` the size of the inheritance hierarchy of this hint, this function
+    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
+    submodule for further details.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly PEP-noncompliant type hint to be possibly coerced.
+    func : Callable
+        Callable annotated by this hint.
+    pith_name : str
+        Either:
+
+        * If this hint annotates a parameter of that callable, the name of that
+          parameter.
+        * If this hint annotates the return of that callable, ``"return"``.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this possibly PEP-noncompliant hint is coercible, a PEP-compliant
+          type hint coerced from this hint.
+        * Else, this hint as is unmodified.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+    assert isinstance(pith_name, str), f'{pith_name} not string.'
+
+    # ..................{ MYPY                              }..................
+    # If...
+    if (
+        # This hint annotates the return for the decorated callable *AND*...
+        pith_name == 'return' and
+        # The decorated callable is a binary dunder method (e.g., __eq__())...
+        func.__name__ in METHOD_NAMES_BINARY_DUNDER
+    ):
+        # Expand this hint to accept both this hint *AND* the "NotImplemented"
+        # singleton as valid returns from this method. Why? Because this
+        # expansion has been codified by mypy and is thus a de-facto typing
+        # standard, albeit one currently lacking formal PEP standardization.
+        #
+        # Consider this representative binary dunder method:
+        #     class MuhClass:
+        #         @beartype
+        #         def __eq__(self, other: object) -> bool:
+        #             if isinstance(other, TheCloud):
+        #                 return self is other
+        #             return NotImplemented
+        #
+        # Technically, that method *COULD* be retyped to return:
+        #         def __eq__(self, other: object) -> Union[
+        #             bool, type(NotImplemented)]:
+        #
+        # Pragmatically, mypy and other static type checkers do *NOT* currently
+        # support the type() builtin in a sane manner and thus raise errors
+        # given the otherwise valid logic above. This means that the following
+        # equivalent approach also yields the same errors:
+        #     NotImplementedType = type(NotImplemented)
+        #     class MuhClass:
+        #         @beartype
+        #         def __eq__(self, other: object) -> Union[
+        #             bool, NotImplementedType]:
+        #             if isinstance(other, TheCloud):
+        #                 return self is other
+        #             return NotImplemented
+        #
+        # Of course, the latter approach can be manually rectified by
+        # explicitly typing that type as "Any": e.g.,
+        #     NotImplementedType: Any = type(NotImplemented)
+        #
+        # Of course, expecting users to be aware of these ludicrous sorts of
+        # mypy idiosyncrasies merely to annotate an otherwise normal binary
+        # dunder method is one expectation too far.
+        #
+        # Ideally, official CPython developers would resolve this by declaring
+        # a new "types.NotImplementedType" type global resembling the existing
+        # "types.NoneType" type global. Since that has yet to happen, mypy has
+        # instead taken the surprisingly sensible course of silently ignoring
+        # this edge case by effectively performing the same type expansion as
+        # performed here. *applause*
+        return Union[hint, NotImplementedType]
+    # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
+    # ..................{ NON-PEP                           }..................
+    # If this hint is a PEP-noncompliant tuple union, coerce this union into
+    # the equivalent PEP-compliant union subscripted by the same child hints.
+    # By definition, PEP-compliant unions are a superset of PEP-noncompliant
+    # tuple unions and thus accept all child hints accepted by the latter.
+    elif isinstance(hint, tuple):
+        return make_hint_pep484_union(hint)
+    # Else, this hint is *NOT* a PEP-noncompliant tuple union.
+
+    # Since none of the above conditions applied, this hint could *NOT* be
+    # specifically coerced as a root type hint. Nonetheless, this hint may
+    # still be generically coercible as a hint irrespective of its contextual
+    # position relative to other type hints.
+    #
+    # Return this hint, possibly coerced as a context-agnostic type hint.
+    return _coerce_hint_any(hint=hint, exception_prefix=exception_prefix)
+
+
+def _coerce_hint_any(hint: object, exception_prefix: str) -> Any:
+    '''
+    PEP-compliant type hint coerced (i.e., converted) from the passed
+    PEP-compliant type hint if this hint is coercible *or* this hint as is
+    otherwise (i.e., if this hint is *not* coercible).
 
     Specifically, if the passed hint is:
 
@@ -158,15 +452,6 @@ def coerce_hint(
         * Builtin :pep:`585`-compliant type hints (e.g., ``list[int]``).
         * User-defined :pep:`585`-compliant generics (e.g.,
           ``class MuhPep585List(list): pass; MuhPep585List[int]``).
-
-    * A **PEP-noncompliant tuple union** (i.e., tuple of one or more standard
-      classes and forward references to standard classes), this function:
-
-      * Coerces this tuple union into the equivalent :pep:`484`-compliant
-        union.
-      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
-        this callable with this :pep:`484`-compliant union.
-      * Returns this :pep:`484`-compliant union.
 
     * Already cached, this hint is already PEP-compliant by definition. In this
       case, this function preserves and returns this hint as is.
@@ -244,26 +529,18 @@ def coerce_hint(
     Parameters
     ----------
     hint : object
-        Type hint to be possible coerced.
-    func : Callable
-        Callable annotated by this hint.
-    pith_name : str
-        Either:
-
-        * If this hint annotates a parameter of that callable, the name of that
-          parameter.
-        * If this hint annotates the return of that callable, ``"return"``.
+        Type hint to be possibly coerced.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
     Returns
     ----------
-    Any
+    object
         Either:
 
-        * If the passed possibly PEP-noncompliant type hint is coercible, a
-          PEP-compliant type hint coerced from this hint.
+        * If this PEP-compliant type hint is coercible, another PEP-compliant
+          type hint coerced from this hint.
         * Else, this hint as is unmodified.
     '''
 
@@ -286,81 +563,16 @@ def coerce_hint(
         return _HINT_REPR_TO_HINT.get_value_static(
             key=repr(hint), value=hint)
     # Else, this hint is *NOT* PEP 585-compliant.
-    # ..................{ MYPY                              }..................
-    # If...
-    elif (
-        # This hint annotates the return for the decorated callable *AND*...
-        pith_name == 'return' and
-        # The decorated callable is a binary dunder method (e.g., __eq__())...
-        func.__name__ in METHOD_NAMES_BINARY_DUNDER
-    ):
-        # Expand this hint to accept both this hint *AND* the "NotImplemented"
-        # singleton as valid returns from this method. Why? Because this
-        # expansion has been codified by mypy and is thus a de-facto typing
-        # standard, albeit one currently lacking formal PEP standardization.
-        #
-        # Consider this representative binary dunder method:
-        #     class MuhClass:
-        #         @beartype
-        #         def __eq__(self, other: object) -> bool:
-        #             if isinstance(other, TheCloud):
-        #                 return self is other
-        #             return NotImplemented
-        #
-        # Technically, that method *COULD* be retyped to return:
-        #         def __eq__(self, other: object) -> Union[
-        #             bool, type(NotImplemented)]:
-        #
-        # Pragmatically, mypy and other static type checkers do *NOT* currently
-        # support the type() builtin in a sane manner and thus raise errors
-        # given the otherwise valid logic above. This means that the following
-        # equivalent approach also yields the same errors:
-        #     NotImplementedType = type(NotImplemented)
-        #     class MuhClass:
-        #         @beartype
-        #         def __eq__(self, other: object) -> Union[
-        #             bool, NotImplementedType]:
-        #             if isinstance(other, TheCloud):
-        #                 return self is other
-        #             return NotImplemented
-        #
-        # Of course, the latter approach can be manually rectified by
-        # explicitly typing that type as "Any": e.g.,
-        #     NotImplementedType: Any = type(NotImplemented)
-        #
-        # Of course, expecting users to be aware of these ludicrous sorts of
-        # mypy idiosyncrasies merely to annotate an otherwise normal binary
-        # dunder method is one expectation too far.
-        #
-        # Ideally, official CPython developers would resolve this by declaring
-        # a new "types.NotImplementedType" type global resembling the existing
-        # "types.NoneType" type global. As that has yet to happen, mypy has
-        # instead taken the surprisingly sensible course of silently ignoring
-        # this edge case by effectively performing the same type expansion as
-        # performed here. *applause*
-        return Union[hint, NotImplementedType]
-    # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
-    # ..................{ NON-PEP                           }..................
-    # If this hint is a PEP-noncompliant tuple union, coerce this union into
-    # the equivalent PEP-compliant union subscripted by the same child hints.
-    # By definition, PEP-compliant unions are a superset of PEP-noncompliant
-    # tuple unions and thus accept all child hints accepted by the latter.
-    elif isinstance(hint, tuple):
-        return make_hint_pep484_union(hint)
-    # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
-    # Return this possibly coerced hint.
+    # Return this uncoerced hint as is.
     return hint
 
 # ....................{ REDUCERS                          }....................
 @callable_cached
-def reduce_hint(
-    # Mandatory parameters.
+def _reduce_hint(
     hint: Any,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> Any:
+    exception_prefix: str,
+) -> object:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed
     higher-level type hint if this hint is reducible *or* this hint as is
@@ -383,13 +595,13 @@ def reduce_hint(
     ----------
     hint : Any
         Type hint to be possibly reduced.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Returns
     ----------
-    Any
+    object
         Either:
 
         * If the passed higher-level type hint is reducible, a lower-level type
