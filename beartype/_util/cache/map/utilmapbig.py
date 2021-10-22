@@ -17,33 +17,8 @@ from threading import Lock
 from typing import Callable, Dict
 
 # ....................{ CLASSES                           }....................
-#FIXME: Implement us up, please. This class intentionally does *NOT* subclass
-#"dict", which is too low-level for thread-safe caching. All public API methods
-#of this class need to behave thread-safely. For example, the canonical caching
-#method typically resembles:
-#    def cache_entry(self, key: Hashable, value: object) -> object:
-#        with self._lock:
-#            if key not in self._dict:
-#                self._dict[key] = value
-#            return self._dict[key]
-#FIXME: Actually, the above naive cache_entry() implementation fails to scale
-#to the general case. Why? Because the whole point of caching, in general, is
-#that computing the "value" to be cached is expensive; that's typically why
-#you're caching it, right? Ergo, we can't simply pass "value" as a standard
-#parameter above. We instead replace that with a caller-defined value factory:
-#    def cache_entry(
-#        self,
-#        key: Hashable,
-#        value_factory: Callable[[Hashable], Any],
-#    ) -> object:
-#        with self._lock:
-#            if key not in self._dict:
-#                self._dict[key] = value_factory(key)
-#            return self._dict[key]
-#Although certainly feasible, the cost of calling that factory function on each
-#cache miss could eclipse any benefits accrued from caching the values returned
-#by that factory function. Maybe? Or... maybe not. In any case, that's it.
-
+#FIXME: Submit back to StackOverflow, preferably under this question:
+#    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
 class CacheUnboundedStrong(object):
     '''
     **Thread-safe strongly unbounded cache** (i.e., mapping of unlimited size
