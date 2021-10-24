@@ -16,7 +16,9 @@
 |beartype-banner|
 =================
 
-|ci-badge| |rtd-badge| |codecov-badge|
+|ci-badge| |codecov-badge|
+
+.. #FIXME: Add "|rtd-badge|" back above *AFTER* resolving Sphinx build issues.
 
 .. parsed-literal::
 
@@ -106,6 +108,11 @@ runtime dependencies, `only one test-time dependency <pytest_>`__, and `only
 one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
+
+    Beartype powers `fearsome innovation across the Python landscape <beartype
+    dependents_>`__.
+
+    |icon-graspologic| |icon-pycrisp| |icon-sentipy|
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -4068,6 +4075,17 @@ rather than Python runtime) include:
 .. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
+
+.. # ------------------( IMAGES ~ downstream                )------------------
+.. |icon-graspologic| image:: https://user-images.githubusercontent.com/217028/138580730-dcb3ee22-6372-4a2d-93bf-d1a3c97e67cf.png
+   :target: https://github.com/microsoft/graspologic
+   :alt: Graspologic: Python package for graph statistical algorithms
+.. |icon-pycrisp| image:: https://user-images.githubusercontent.com/217028/138580797-1f09f0b4-bced-4651-82c9-6dae50afe883.png
+   :target: https://gitlab.com/pycrisp/pycrisp
+   :alt: PyCrisp: Typed Python interactions with the Crisp API
+.. |icon-sentipy| image:: https://user-images.githubusercontent.com/217028/138581059-6e3218d0-2a2e-42b7-b15c-7e2759fa2399.png
+   :target: https://github.com/sentimentinvestor/sentipy
+   :alt: SentiPy: Typed Python interactions with the Sentiment Investor API
 
 .. # ------------------( LINKS ~ beartype : funding         )------------------
 .. _BETSE:
