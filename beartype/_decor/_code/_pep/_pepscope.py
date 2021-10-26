@@ -337,10 +337,11 @@ def add_func_scope_types(
         raise BeartypeDecorHintNonpepException(f'{exception_prefix}empty.')
     # Else, this collection is non-empty.
 
-    # If any item in this collection is *NOT* a standard class, raise an
+    # If any item in this collection is *NOT* an isinstanceable class, raise an
     # exception.
     for cls in types:
-        die_unless_hint_nonpep_type(hint=cls, exception_prefix=exception_prefix)
+        die_unless_hint_nonpep_type(
+            hint=cls, exception_prefix=exception_prefix)
     # Else, all items of this collection are standard classes.
 
     # If this tuple only contains one type, register only this type.

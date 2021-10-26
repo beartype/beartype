@@ -504,7 +504,7 @@ def pep_code_check_hint(
     # currently visited type hint if this hint is nested (i.e., any hint
     # *except* the root type hint) in exception and warning messages.
     #
-    # Note that "hint_curr_exception_prefix" should almost *ALWAYS* be used instead.
+    # Note that "hint_curr_exception_prefix" should typically be used instead.
     _EXCEPTION_PREFIX_HINT_CHILD = (
         f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} nested ')
 
@@ -886,7 +886,7 @@ def pep_code_check_hint(
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                        exception_prefix=hint_curr_exception_prefix,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -1182,8 +1182,8 @@ def pep_code_check_hint(
                     #       >>> typing.Union[()]
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
-                        f'{hint_curr_exception_prefix}union type hint {repr(hint_curr)} '
-                        f'unsubscripted.')
+                        f'{hint_curr_exception_prefix}union type hint '
+                        f'{repr(hint_curr)} unsubscripted.')
                     # Else, this union is subscripted by two or more arguments.
                     # Why two rather than one? Because the "typing" module
                     # reduces unions of one argument to that argument: e.g.,
@@ -1264,7 +1264,8 @@ def pep_code_check_hint(
                                     # local variable efficiently reused by
                                     # subsequent code generated for
                                     # PEP-compliant child hints.
-                                    pith_curr_assign_expr if hint_childs_pep else
+                                    pith_curr_assign_expr
+                                    if hint_childs_pep else
                                     # Else, this union is *NOT* subscripted by
                                     # one or more PEP-compliant child hints.
                                     # Since this is the first and only test
@@ -1301,7 +1302,7 @@ def pep_code_check_hint(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_locals,
                                     exception_prefix=(
-                                        _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                                        hint_curr_exception_prefix),
                                 ),
                             ))
 
@@ -1405,7 +1406,7 @@ def pep_code_check_hint(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                        exception_prefix=hint_curr_exception_prefix,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
@@ -1421,7 +1422,8 @@ def pep_code_check_hint(
                     # hint of this parent hint *WITH* validation.
                     else:
                         hint_child = get_hint_pep484585_args_1(
-                            hint=hint_curr, exception_prefix=hint_curr_exception_prefix)
+                            hint=hint_curr,
+                            exception_prefix=hint_curr_exception_prefix)
 
                     # If this child hint is *NOT* ignorable, deeply type-check
                     # both the type of the current pith *AND* a randomly
@@ -1681,9 +1683,8 @@ def pep_code_check_hint(
 
                     # Superclass this pith is required to be a subclass of.
                     hint_child = get_hint_pep484585_subclass_superclass(
-                        hint=hint_curr, exception_prefix=hint_curr_exception_prefix)
-
-                    #FIXME: Unit test us up, please.
+                        hint=hint_curr,
+                        exception_prefix=hint_curr_exception_prefix)
 
                     # If this superclass is either a class *OR* tuple of
                     # classes...
@@ -1693,11 +1694,8 @@ def pep_code_check_hint(
                             type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                                hint_curr_exception_prefix),
                         )
-
-                    #FIXME: *UNIT TEST THIS PLEASE.*
-
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
                     # performed above by the
@@ -1908,7 +1906,7 @@ def pep_code_check_hint(
                             cls=hint_curr,
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                                hint_curr_exception_prefix),
                         ),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
@@ -1948,7 +1946,7 @@ def pep_code_check_hint(
                         pith_curr_assign_expr=pith_curr_assign_expr,
 
                         #FIXME: If "typing.Literal" is ever extended to support
-                        #substantially more types (and thus actually become
+                        #substantially more types (and thus actually becomes
                         #useful), optimize the construction of the "types" set
                         #below to instead leverage a similar
                         #"acquire_object_typed(set)" caching solution as that
@@ -1957,13 +1955,16 @@ def pep_code_check_hint(
                         # Python expression evaluating to a tuple of the unique
                         # types of all literal objects subscripting this hint.
                         hint_child_types_expr=add_func_scope_types(
-                            types=set(
+                            # Set comprehension of all unique literal objects
+                            # subscripting this hint, implicitly discarding all
+                            # duplicate such objects.
+                            types={
                                 type(hint_child)
                                 for hint_child in hint_childs
-                            ),
+                            },
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                                hint_curr_exception_prefix),
                         ),
                     )
 
@@ -1971,19 +1972,16 @@ def pep_code_check_hint(
                     for hint_child in hint_childs:
                         # Generate and append efficient code type-checking
                         # this data validator by embedding this code as is.
-                        func_curr_code += (
-                            PEP586_CODE_HINT_LITERAL_format(
-                                pith_curr_var_name=(
-                                    pith_curr_var_name),
-                                # Python expression evaluating to this literal
-                                # object.
-                                hint_child_expr=add_func_scope_attr(
-                                    attr=hint_child,
-                                    func_scope=func_wrapper_locals,
-                                    exception_prefix=(
-                                        _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                                ),
-                            ))
+                        func_curr_code += PEP586_CODE_HINT_LITERAL_format(
+                            pith_curr_var_name=pith_curr_var_name,
+                            # Python expression evaluating to this object.
+                            hint_child_expr=add_func_scope_attr(
+                                attr=hint_child,
+                                func_scope=func_wrapper_locals,
+                                exception_prefix=(
+                                    _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                            ),
+                        )
 
                     # Munge this code to...
                     func_curr_code = (
@@ -2036,7 +2034,7 @@ def pep_code_check_hint(
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     func_scope=func_wrapper_locals,
-                    exception_prefix=_EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                    exception_prefix=hint_curr_exception_prefix,
                 ),
             )
 

@@ -109,7 +109,7 @@ one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
-    Beartype powers `fearsome innovation across the Python landscape <beartype
+    Beartype powers `quality assurance across the Python ecosystem <beartype
     dependents_>`__.
 
     |icon-graspologic| |icon-pycrisp| |icon-sentipy|
