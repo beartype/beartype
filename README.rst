@@ -1161,9 +1161,11 @@ Validator Caveats
 Validator Showcase
 ~~~~~~~~~~~~~~~~~~
 
-Let's unbox beartype validators with a sleazy slo-mo click-bait YouTube video.
+Let's unbox beartype validators with a sleazy slo-mo monetized click-bait
+YouTube live stream.
 
-:superscript:`Just kidding! It's just real-world industrial-strength examples.`
+:superscript:`Just kidding! It's all real-world industrial-strength examples
+from here on out.`
 
 Tensor Property Matching
 ++++++++++++++++++++++++

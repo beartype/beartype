@@ -11,13 +11,160 @@ classes encapsulating sample type hints instantiated by the
 
 # ....................{ IMPORTS                           }....................
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from typing import Optional
+from typing import Optional, Tuple
 
-# ....................{ HINTS                             }....................
+# ....................{ PRIVATE                           }....................
 _NoneTypeOrType = (type, type(None))
 '''
 2-tuple matching both classes and the ``None`` singleton.
 '''
+
+
+_EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
+    # Ensure *ALL* exception messages contain the substring "type hint".
+    # Exception messages *NOT* containing this substring are overly ambiguous
+    # and thus effectively erroneous.
+    r'\btype hint\b',
+)
+'''
+Tuple of all **mandatory exception matching regexes** (i.e., r''-style
+uncompiled regular expression strings, each unconditionally matching a
+substring of the exception message expected to be raised by wrapper functions
+when either passed or returning *any* possible pith).
+'''
+
+# ....................{ CLASSES ~ hint : [un]satisfied    }....................
+class HintPithSatisfiedMetadata(object):
+    '''
+    **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
+    variables describe an object satisfying a type hint when either passed as a
+    parameter *or* returned as a value annotated by that hint).
+
+    Attributes
+    ----------
+    pith : object
+        Arbitrary object *not* satisfying this hint when either passed as a
+        parameter *or* returned as a value annotated by this hint.
+    is_context_manager : bool
+        If this pith is a **context manager** (i.e., object defining both the
+        ``__exit__`` and ``__enter__`` dunder methods required to satisfy the
+        context manager protocol), this boolean is either:
+
+        * ``True`` if callers should preserve this context manager as is (e.g.,
+          by passing this context manager to the decorated callable).
+        * ``False`` if callers should safely open and close this context
+          manager to its context *and* replace this context manager with that
+          context (e.g., by passing this context to the decorated callable).
+
+        If this pith is *not* a context manager, this boolean is ignored.
+        Defaults to ``False``.
+    is_pith_factory : bool
+        ``True`` only if this pith is actually a **pith factory** (i.e.,
+        callable accepting *no* parameters and dynamically creating and
+        returning the value to be used as the desired pith, presumably by
+        passing this value to the decorated callable). Defaults to ``False``.
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        pith: object,
+
+        # Optional parameters.
+        is_context_manager: bool = False,
+        is_pith_factory: bool = False,
+    ) -> None:
+        assert isinstance(is_context_manager, bool), (
+            f'{repr(is_context_manager)} not boolean.')
+        assert isinstance(is_pith_factory, bool), (
+            f'{repr(is_pith_factory)} not boolean.')
+
+        # Classify all passed parameters.
+        self.pith = pith
+        self.is_context_manager = is_context_manager
+        self.is_pith_factory = is_pith_factory
+
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    pith={repr(self.pith)},',
+            f'    is_context_manager={repr(self.is_context_manager)},',
+            f'    is_pith_factory={repr(self.is_pith_factory)},',
+            f')',
+        ))
+
+
+class HintPithUnsatisfiedMetadata(object):
+    '''
+    **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
+    variables describe an object *not* satisfying a type hint when either
+    passed as a parameter *or* returned as a value annotated by that hint).
+
+    Attributes
+    ----------
+    pith : object
+        Arbitrary object *not* satisfying this hint when either passed as a
+        parameter *or* returned as a value annotated by this hint.
+    exception_str_match_regexes : Tuple[str]
+        Tuple of zero or more r''-style uncompiled regular expression strings,
+        each matching a substring of the exception message expected to be
+        raised by wrapper functions when either passed or returning this
+        ``pith``. Defaults to the empty tuple.
+    exception_str_not_match_regexes : Tuple[str]
+        Tuple of zero or more r''-style uncompiled regular expression strings,
+        each *not* matching a substring of the exception message expected to be
+        raised by wrapper functions when either passed or returning this
+        ``pith``. Defaults to the empty tuple.
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        pith: object,
+
+        # Optional parameters.
+        exception_str_match_regexes: Tuple[str] = (),
+        exception_str_not_match_regexes: Tuple[str] = (),
+    ) -> None:
+        assert isinstance(exception_str_match_regexes, tuple), (
+            f'{repr(exception_str_match_regexes)} not tuple.')
+        assert isinstance(exception_str_not_match_regexes, tuple), (
+            f'{repr(exception_str_not_match_regexes)} not tuple.')
+        assert all(
+            isinstance(exception_str_match_regex, str)
+            for exception_str_match_regex in exception_str_match_regexes
+        ), f'{repr(exception_str_match_regexes)} not tuple of regexes.'
+        assert all(
+            isinstance(exception_str_not_match_regex, str)
+            for exception_str_not_match_regex in (
+                exception_str_not_match_regexes)
+        ), f'{repr(exception_str_not_match_regexes)} not tuple of regexes.'
+
+        # Classify all remaining passed parameters.
+        self.pith = pith
+        self.exception_str_not_match_regexes = exception_str_not_match_regexes
+
+        # Classify the tuple of all r''-style uncompiled regular expression
+        # strings appended by the tuple of all mandatory such strings.
+        self.exception_str_match_regexes = (
+            exception_str_match_regexes +
+            _EXCEPTION_STR_MATCH_REGEXES_MANDATORY
+        )
+
+    # ..................{ STRINGIFIERS                      }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    pith={repr(self.pith)},',
+            f'    exception_str_match_regexes={repr(self.exception_str_match_regexes)},',
+            f'    exception_str_not_match_regexes={repr(self.exception_str_not_match_regexes)},',
+            f')',
+        ))
 
 # ....................{ CLASSES ~ hint : superclass       }....................
 class HintNonpepMetadata(object):
@@ -68,8 +215,8 @@ class HintNonpepMetadata(object):
         # Optional parameters.
         is_ignorable: bool = False,
         is_supported: bool = True,
-        piths_satisfied_meta: 'Tuple[HintPithSatisfiedMetadata]' = (),
-        piths_unsatisfied_meta: 'Tuple[HintPithUnsatisfiedMetadata]' = (),
+        piths_satisfied_meta: Tuple[HintPithSatisfiedMetadata] = (),
+        piths_unsatisfied_meta: Tuple[HintPithUnsatisfiedMetadata] = (),
     ) -> None:
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
@@ -296,132 +443,5 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_satisfied_meta={repr(self.piths_satisfied_meta)},',
             f'    piths_unsatisfied_meta={repr(self.piths_unsatisfied_meta)},',
-            f')',
-        ))
-
-# ....................{ CLASSES ~ hint : [un]satisfied    }....................
-class HintPithSatisfiedMetadata(object):
-    '''
-    **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
-    variables describe an object satisfying a type hint when either passed as a
-    parameter *or* returned as a value annotated by that hint).
-
-    Attributes
-    ----------
-    pith : object
-        Arbitrary object *not* satisfying this hint when either passed as a
-        parameter *or* returned as a value annotated by this hint.
-    is_context_manager : bool
-        If this pith is a **context manager** (i.e., object defining both the
-        ``__exit__`` and ``__enter__`` dunder methods required to satisfy the
-        context manager protocol), this boolean is either:
-
-        * ``True`` if callers should preserve this context manager as is (e.g.,
-          by passing this context manager to the decorated callable).
-        * ``False`` if callers should safely open and close this context
-          manager to its context *and* replace this context manager with that
-          context (e.g., by passing this context to the decorated callable).
-
-        If this pith is *not* a context manager, this boolean is ignored.
-        Defaults to ``False``.
-    is_pith_factory : bool
-        ``True`` only if this pith is actually a **pith factory** (i.e.,
-        callable accepting *no* parameters and dynamically creating and
-        returning the value to be used as the desired pith, presumably by
-        passing this value to the decorated callable). Defaults to ``False``.
-    '''
-
-    # ..................{ INITIALIZERS                      }..................
-    def __init__(
-        self,
-
-        # Mandatory parameters.
-        pith: object,
-
-        # Optional parameters.
-        is_context_manager: bool = False,
-        is_pith_factory: bool = False,
-    ) -> None:
-        assert isinstance(is_context_manager, bool), (
-            f'{repr(is_context_manager)} not boolean.')
-        assert isinstance(is_pith_factory, bool), (
-            f'{repr(is_pith_factory)} not boolean.')
-
-        # Classify all passed parameters.
-        self.pith = pith
-        self.is_context_manager = is_context_manager
-        self.is_pith_factory = is_pith_factory
-
-    # ..................{ STRINGIFIERS                      }..................
-    def __repr__(self) -> str:
-        return '\n'.join((
-            f'{self.__class__.__name__}(',
-            f'    pith={repr(self.pith)},',
-            f'    is_context_manager={repr(self.is_context_manager)},',
-            f'    is_pith_factory={repr(self.is_pith_factory)},',
-            f')',
-        ))
-
-
-class HintPithUnsatisfiedMetadata(object):
-    '''
-    **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
-    variables describe an object *not* satisfying a type hint when either
-    passed as a parameter *or* returned as a value annotated by that hint).
-
-    Attributes
-    ----------
-    pith : object
-        Arbitrary object *not* satisfying this hint when either passed as a
-        parameter *or* returned as a value annotated by this hint.
-    exception_str_match_regexes : Tuple[str]
-        Tuple of zero or more r''-style uncompiled regular expression strings,
-        each matching a substring of the exception message expected to be
-        raised by wrapper functions when either passed or returning this
-        ``pith``. Defaults to the empty tuple.
-    exception_str_not_match_regexes : Tuple[str]
-        Tuple of zero or more r''-style uncompiled regular expression strings,
-        each *not* matching a substring of the exception message expected to be
-        raised by wrapper functions when either passed or returning this
-        ``pith``. Defaults to the empty tuple.
-    '''
-
-    # ..................{ INITIALIZERS                      }..................
-    def __init__(
-        self,
-
-        # Mandatory parameters.
-        pith: object,
-
-        # Optional parameters.
-        exception_str_match_regexes: 'Tuple[str]' = (),
-        exception_str_not_match_regexes: 'Tuple[str]' = (),
-    ) -> None:
-        assert isinstance(exception_str_match_regexes, tuple), (
-            f'{repr(exception_str_match_regexes)} not tuple.')
-        assert isinstance(exception_str_not_match_regexes, tuple), (
-            f'{repr(exception_str_not_match_regexes)} not tuple.')
-        assert all(
-            isinstance(exception_str_match_regex, str)
-            for exception_str_match_regex in exception_str_match_regexes
-        ), f'{repr(exception_str_match_regexes)} not tuple of regexes.'
-        assert all(
-            isinstance(exception_str_not_match_regex, str)
-            for exception_str_not_match_regex in (
-                exception_str_not_match_regexes)
-        ), f'{repr(exception_str_not_match_regexes)} not tuple of regexes.'
-
-        # Classify all passed parameters.
-        self.pith = pith
-        self.exception_str_match_regexes = exception_str_match_regexes
-        self.exception_str_not_match_regexes = exception_str_not_match_regexes
-
-    # ..................{ STRINGIFIERS                      }..................
-    def __repr__(self) -> str:
-        return '\n'.join((
-            f'{self.__class__.__name__}(',
-            f'    pith={repr(self.pith)},',
-            f'    exception_str_match_regexes={repr(self.exception_str_match_regexes)},',
-            f'    exception_str_not_match_regexes={repr(self.exception_str_not_match_regexes)},',
             f')',
         ))

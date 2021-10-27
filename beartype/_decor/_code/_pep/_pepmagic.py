@@ -25,13 +25,23 @@ EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
     f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter ')
 '''
 Human-readable substring describing a new wrapper parameter required by the
-root hint in exception messages.
+current root type hint in exception messages.
 '''
 
 
 EXCEPTION_PREFIX_HINT_ROOT = EXCEPTION_CACHED_PLACEHOLDER
 '''
-Human-readable label describing the root hint in exception messages.
+Human-readable substring describing the current root type hint in exception
+messages.
+'''
+
+
+EXCEPTION_PREFIX_HINT_ROOT_GENERIC = (
+    f'{EXCEPTION_CACHED_PLACEHOLDER} type hint ')
+'''
+Human-readable substring describing the current root type hint generically
+(i.e., *without* respect to the specific PEP to which this hint conforms) in
+exception messages.
 '''
 
 # ....................{ CONSTANTS ~ hint : meta           }....................

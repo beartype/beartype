@@ -114,7 +114,9 @@ def die_unless_hint_pep484585_forwardref(
     # If this is *NOT* a forward reference type hint, raise an exception.
     if not isinstance(hint, HINT_PEP484585_FORWARDREF_TYPES):
         raise BeartypeDecorHintForwardRefException(
-            f'{exception_prefix}{repr(hint)} not forward reference.')
+            f'{exception_prefix}{repr(hint)} not forward reference '
+            f'(i.e., neither string nor "typing.ForwardRef" instance).'
+        )
 
 # ....................{ GETTERS ~ kind : forwardref       }....................
 #FIXME: Unit test against nested classes.

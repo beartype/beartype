@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
+from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
 from pprint import saferepr
@@ -20,6 +21,34 @@ from re import (
     sub as re_sub
 )
 from string import punctuation
+
+# ....................{ PRIVATE                           }....................
+_CHARS_PUNCTUATION = frozenset(punctuation)
+'''
+Frozen set of all **ASCII punctuation characters** (i.e., non-Unicode
+characters satisfying the conventional definition of English punctuation).
+
+Note that the :attr:`string.punctuation` object is actually an inefficient
+string of these characters rather than an efficient collection. Ergo, this set
+should *ALWAYS* be accessed in lieu of that string.
+'''
+
+
+_TYPES_UNQUOTABLE = (
+    # Byte strings, whose representations are already quoted as "b'...'".
+    bytes,
+    # Numbers, whose representations are guaranteed to both contain *NO*
+    # whitespace and be sufficiently terse as to benefit from *NO* quoting.
+    NumberType,
+)
+'''
+**Unquotable tuple union** (i.e., isinstancable tuple of all classes such that
+the :func:`represent_object` function intentionally avoids double-quoting the
+machine-readable representations all instances of these classes, typically due
+to these representations either being effectively quoted already *or*
+sufficiently terse as to not benefit from being quoted).
+'''
+
 
 # ....................{ REPRESENTERS                      }....................
 def represent_object(
@@ -111,10 +140,10 @@ def represent_object(
     # If this representation is neither...
     elif not (
         # Prefixed by punctuation *NOR*...
-        obj_repr[0] in punctuation or
-        # A byte-string, in which case this representation is instead prefixed
-        # by "b'".
-        isinstance(obj, bytes)
+        obj_repr[0] in _CHARS_PUNCTUATION or
+        # An instance of a class whose representations do *NOT* benefit from
+        # explicit quoting...
+        isinstance(obj, _TYPES_UNQUOTABLE)
     ):
     # Then this representation is *NOT* demarcated from preceding characters in
     # the parent string embedding this representation. In this case,

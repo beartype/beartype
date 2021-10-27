@@ -34,6 +34,7 @@ from beartype._decor._code.codesnip import (
 from beartype._decor._code._pep._pepmagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT_ROOT,
+    EXCEPTION_PREFIX_HINT_ROOT_GENERIC,
     HINT_META_INDEX_HINT,
     HINT_META_INDEX_PLACEHOLDER,
     HINT_META_INDEX_PITH_EXPR,
@@ -188,6 +189,7 @@ def pep_code_check_hint(
     # "beartype._decor._code._pep._pepmagic" globals.
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT_ROOT=EXCEPTION_PREFIX_HINT_ROOT,
+    _EXCEPTION_PREFIX_HINT_ROOT_GENERIC=EXCEPTION_PREFIX_HINT_ROOT_GENERIC,
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
@@ -500,23 +502,42 @@ def pep_code_check_hint(
     pith_curr_assign_expr: str = None  # type: ignore[assignment]
 
     # ..................{ HINT ~ label                      }..................
-    # Human-readable label prefixing the machine-readable representation of the
-    # currently visited type hint if this hint is nested (i.e., any hint
-    # *except* the root type hint) in exception and warning messages.
+    # Human-readable substring prefixing the machine-readable representation of
+    # the currently visited type hint in exception and warning messages if this
+    # hint is nested (i.e., any hint *EXCEPT* the root type hint).
     #
-    # Note that "hint_curr_exception_prefix" should typically be used instead.
+    # Note that "hint_curr_exception_prefix" should typically be referenced
+    # instead.
     _EXCEPTION_PREFIX_HINT_CHILD = (
-        f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} nested ')
+        f'{_EXCEPTION_PREFIX_HINT_ROOT_GENERIC}{repr(hint_root)} nested ')
 
-    # Human-readable label prefixing the machine-readable representation of the
-    # currently visited type hint in exception and warning messages,
-    # initialized to the label describing the root type hint.
+    # Human-readable substring prefixing the machine-readable representation of
+    # the currently visited type hint in exception and warning messages if this
+    # hint is both nested (i.e., any hint *EXCEPT* the root type hint) *AND*
+    # being described generically (i.e., *WITHOUT* respect to the specific PEP
+    # to which this hint conforms).
     #
-    # Note that this label intentionally only describes the root and currently
-    # iterated child hints rather than the root hint, the currently iterated
-    # child hint, and all interim child hints leading from the former to the
-    # latter. The latter approach would be non-human-readable and insane.
+    # Note that "hint_curr_exception_prefix_generic" should typically be
+    # referenced instead.
+    _EXCEPTION_PREFIX_HINT_CHILD_GENERIC = (
+        f'{_EXCEPTION_PREFIX_HINT_CHILD}type hint ')
+
+    # Human-readable substring prefixing the machine-readable representation of
+    # the currently visited type hint in exception and warning messages,
+    # initialized to the string describing the root type hint.
+    #
+    # Note that this string intentionally only describes the root and currently
+    # iterated child hint rather than all of the root hint, the currently
+    # iterated child hint, and all interim child hints leading from the former
+    # to the latter. Although both feasible and less ambiguous, implementing
+    # the latter approach would be non-human-readable, complex, and insane.
     hint_curr_exception_prefix = _EXCEPTION_PREFIX_HINT_ROOT
+
+    # Human-readable substring prefixing the machine-readable representation of
+    # the currently visited type hint in exception and warning messages
+    # generically (i.e., *WITHOUT* respect to the specific PEP to which this
+    # hint conforms), initialized to the string describing the root type hint.
+    hint_curr_exception_prefix_generic = _EXCEPTION_PREFIX_HINT_ROOT_GENERIC
 
     # ..................{ METADATA                          }..................
     # Tuple of metadata describing the currently visited hint, appended by
@@ -886,7 +907,7 @@ def pep_code_check_hint(
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=hint_curr_exception_prefix,
+                        exception_prefix=hint_curr_exception_prefix_generic,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -912,7 +933,7 @@ def pep_code_check_hint(
                         forwardrefs_class_basename=(
                             hint_forwardrefs_class_basename),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=hint_curr_exception_prefix,
+                        exception_prefix=hint_curr_exception_prefix_generic,
                     ))
 
                 # Code type-checking the current pith against this class.
@@ -1302,7 +1323,7 @@ def pep_code_check_hint(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_locals,
                                     exception_prefix=(
-                                        hint_curr_exception_prefix),
+                                        hint_curr_exception_prefix_generic),
                                 ),
                             ))
 
@@ -1406,7 +1427,7 @@ def pep_code_check_hint(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=hint_curr_exception_prefix,
+                        exception_prefix=hint_curr_exception_prefix_generic,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
@@ -1694,7 +1715,7 @@ def pep_code_check_hint(
                             type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                hint_curr_exception_prefix),
+                                hint_curr_exception_prefix_generic),
                         )
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
@@ -1710,6 +1731,8 @@ def pep_code_check_hint(
                                 forwardrefs_class_basename=(
                                     hint_forwardrefs_class_basename),
                                 func_scope=func_wrapper_locals,
+                                exception_prefix=(
+                                    hint_curr_exception_prefix_generic),
                             ))
 
                     # Code type-checking this pith against this superclass.
@@ -1906,7 +1929,7 @@ def pep_code_check_hint(
                             cls=hint_curr,
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                hint_curr_exception_prefix),
+                                hint_curr_exception_prefix_generic),
                         ),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
@@ -1964,7 +1987,7 @@ def pep_code_check_hint(
                             },
                             func_scope=func_wrapper_locals,
                             exception_prefix=(
-                                hint_curr_exception_prefix),
+                                hint_curr_exception_prefix_generic),
                         ),
                     )
 
@@ -2007,7 +2030,7 @@ def pep_code_check_hint(
         # ................{ NON-PEP                           }................
         # Else, this hint is *NOT* PEP-compliant.
         #
-        # ................{ INSTANCES                         }................
+        # ................{ NON-PEP ~ type                    }................
         # If this hint is a non-"typing" class...
         #
         # Note that:
@@ -2034,10 +2057,10 @@ def pep_code_check_hint(
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     func_scope=func_wrapper_locals,
-                    exception_prefix=hint_curr_exception_prefix,
+                    exception_prefix=hint_curr_exception_prefix_generic,
                 ),
             )
-
+        # ................{ NON-PEP ~ bad                     }................
         # Else, this hint is neither PEP-compliant *NOR* a class. In this case,
         # raise an exception. Note that:
         # * This should *NEVER* happen, as the "typing" module goes to great
@@ -2051,8 +2074,8 @@ def pep_code_check_hint(
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{hint_curr_exception_prefix}type hint {repr(hint_curr)} '
-                f'not PEP-compliant.'
+                f'{hint_curr_exception_prefix_generic}{repr(hint_curr)} '
+                f'unrecognized (i.e., neither PEP-compliant nor class).'
             )
 
         # ................{ CLEANUP                           }................
@@ -2072,9 +2095,11 @@ def pep_code_check_hint(
         # these should be the last statements of this iteration:
         # * Increment the 0-based index of metadata describing the next visited
         #   hint in the "hints_meta" list.
-        # * Label prefixing the representation of the next visited hint.
+        # * Substrings prefixing the representation of the next visited hint.
         hints_meta_index_curr += 1
         hint_curr_exception_prefix = _EXCEPTION_PREFIX_HINT_CHILD
+        hint_curr_exception_prefix_generic = (
+            _EXCEPTION_PREFIX_HINT_CHILD_GENERIC)
 
     # ..................{ CLEANUP                           }..................
     # Release the fixed list of all such metadata.
@@ -2090,8 +2115,8 @@ def pep_code_check_hint(
     # which it should have... but may not have, which is why we're testing.
     if func_wrapper_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{_EXCEPTION_PREFIX_HINT_ROOT}{repr(hint_root)} '
-            f'not type-checked.'
+            f'{_EXCEPTION_PREFIX_HINT_ROOT_GENERIC}{repr(hint_root)} '
+            f'unchecked.'
         )
     # Else, the breadth-first search above successfully generated code.
 

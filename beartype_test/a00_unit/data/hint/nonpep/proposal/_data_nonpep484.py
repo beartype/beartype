@@ -17,6 +17,17 @@ PEP-noncompliant type hints include:
 '''
 
 # ....................{ IMPORTS                           }....................
+import sys
+from beartype._cave._cavefast import (
+    EllipsisType,
+    FunctionType,
+    FunctionOrMethodCType,
+    MethodBoundInstanceOrClassType,
+    ModuleType,
+    NoneType,
+    NotImplementedType,
+)
+from beartype_test.a00_unit.data.data_type import Class
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintNonpepMetadata,
     HintPithSatisfiedMetadata,
@@ -77,8 +88,205 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ COLLECTIONS ~ typeddict           }................
+        # ................{ TYPEDDICT                         }................
         # "TypedDict" instances transparently reduce to dicts.
-        #FIXME: Implement us up, but note when doing so that "TypedDict" was
-        #first introduced with Python 3.8.
+        #FIXME: Implement us up, but note when doing so that:
+        #* We currently unconditionally reduce "TypeDict" to "Mapping".
+        #* "TypedDict" was first introduced with Python 3.8.
+
+        # ................{ TYPE ~ builtin                    }................
+        # Integer.
+        HintNonpepMetadata(
+            hint=int,
+            piths_satisfied_meta=(
+                # Integer constant.
+                HintPithSatisfiedMetadata(42),  # <-- we went there, folks
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    pith='Introspectively ‘allein,’ dealigning consangui-',
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bint\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # Descriptive terms applied only to non-builtin types.
+                        r'\bprotocol\b',
+                        # The double-quoted name of this builtin type.
+                        r'"int"',
+                    ),
+                ),
+            ),
+        ),
+
+        # Unicode string.
+        HintNonpepMetadata(
+            hint=str,
+            piths_satisfied_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata('Glassily lassitudinal bȴood-'),
+            ),
+            piths_unsatisfied_meta=(
+                # Byte-string constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'Stains, disdain-fully ("...up-stairs!"),',
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bstr\b',
+                        # The representation of this object preserved as is.
+                        r'\sb\'Stains, disdain-fully \("...up-stairs!"\),\'\s',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # Descriptive terms applied only to non-builtin types.
+                        r'\bprotocol\b',
+                        # The double-quoted name of this builtin type.
+                        r'"str"',
+                    ),
+                ),
+
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=666,  # <-- number of the beast, yo
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bstr\b',
+                        # The representation of this object preserved as is.
+                        r'\s666\s',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # Descriptive terms applied only to non-builtin types.
+                        r'\bprotocol\b',
+                        # The double-quoted name of this builtin type.
+                        r'"str"',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ TYPE ~ builtin : fake             }................
+        # Fake builtin types (i.e., types that are *NOT* builtin but which
+        # nonetheless erroneously masquerade as being builtin), exercising edge
+        # cases in @beartype code generation. See also:
+        # * The "beartype._data.cls.datacls.TYPES_BUILTIN_FAKE" set.
+
+        # Fake builtin ellipsis type.
+        HintNonpepMetadata(
+            hint=EllipsisType,
+            piths_satisfied_meta=(
+                # Ellipsis singleton.
+                HintPithSatisfiedMetadata(...),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Masterless decree, venomless, which'),
+            ),
+        ),
+
+        # Fake builtin pure-Python function type.
+        HintNonpepMetadata(
+            hint=FunctionType,
+            piths_satisfied_meta=(
+                # Pure-Python function.
+                HintPithSatisfiedMetadata(add_data),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Nomenclature weather‐vanes of'),
+            ),
+        ),
+
+        # Fake builtin C-based function type.
+        HintNonpepMetadata(
+            hint=FunctionOrMethodCType,
+            piths_satisfied_meta=(
+                # C-based function.
+                HintPithSatisfiedMetadata(len),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Nominally unswain, autodidactic idiocracy, less a'),
+            ),
+        ),
+
+        # Fake builtin bound method type.
+        HintNonpepMetadata(
+            hint=MethodBoundInstanceOrClassType,
+            piths_satisfied_meta=(
+                # Bound method.
+                HintPithSatisfiedMetadata(Class().instance_method),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'ç‐omically gnomical whitebellied burden’s empathy of'),
+            ),
+        ),
+
+        # Fake builtin module type.
+        HintNonpepMetadata(
+            hint=ModuleType,
+            piths_satisfied_meta=(
+                # Imported module.
+                HintPithSatisfiedMetadata(sys),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Earpiece‐piecemealed, mealy straw headpiece-'),
+            ),
+        ),
+
+        # Fake builtin "None" singleton type.
+        HintNonpepMetadata(
+            hint=NoneType,
+            piths_satisfied_meta=(
+                # "None" singleton.
+                HintPithSatisfiedMetadata(None),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Earned peace appeasement easements'),
+            ),
+        ),
+
+        # Fake builtin "NotImplemented" type.
+        HintNonpepMetadata(
+            hint=NotImplementedType,
+            piths_satisfied_meta=(
+                # "NotImplemented" singleton.
+                HintPithSatisfiedMetadata(NotImplemented),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Than'),
+            ),
+        ),
     ))

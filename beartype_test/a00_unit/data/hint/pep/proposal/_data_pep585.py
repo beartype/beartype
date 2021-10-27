@@ -595,18 +595,19 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
-                # List containing exactly one integer. Since list items are only
-                # randomly type-checked, only a list of exactly one item enables us
-                # to match the explicit index at fault below.
+                # List containing exactly one integer. Since list items are
+                # only randomly type-checked, only a list of exactly one item
+                # enables us to match the explicit index at fault below.
                 HintPithUnsatisfiedMetadata(
                     pith=[73,],
-                    # Match that the exception message raised for this object...
+                    # Match that the exception message raised for this
+                    # object...
                     exception_str_match_regexes=(
                         # Declares the index of a random list item *NOT*
                         # satisfying this hint.
-                        r'\s[Ll]ist item \d+\s',
-                        # Double-quotes the value of this item.
-                        r'\s"73"\s',
+                        r'\b[Ll]ist index \d+ item\b',
+                        # Preserves the value of this item unquoted.
+                        r'\s73\s',
                     ),
                 ),
             ),
@@ -835,7 +836,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the raised exception message...
                     exception_str_match_regexes=(
                         # Compares this tuple's length to the expected length.
-                        r'\b1 not 2\b',
+                        r'\b1 != 2\b',
                     ),
                 ),
             ),
@@ -869,7 +870,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the raised exception message...
                     exception_str_match_regexes=(
                         # Compares this tuple's length to the expected length.
-                        r'\b2 not 3\b',
+                        r'\b2 != 3\b',
                     ),
                 ),
                 # Tuple containing a floating-point number, a string, and a
@@ -884,7 +885,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares the index and expected type of a fixed tuple
                         # item *NOT* satisfying this hint.
-                        r'\s[Tt]uple item 2\s',
+                        r'\b[Tt]uple index 2 item\b',
                         r'\bstr\b',
                     ),
                 ),
@@ -936,7 +937,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         # Declares the index and expected type of a random
                         # tuple item of a fixed tuple item *NOT* satisfying
                         # this hint.
-                        r'\s[Tt]uple item \d+ tuple item 2\s',
+                        r'\b[Tt]uple index \d+ item tuple index 2 item\b',
                         r'\bstr\b',
                     ),
                 ),
@@ -995,7 +996,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares the index and expected type of this tuple's
                         # problematic item.
-                        r'\s[Tt]uple item 0\s',
+                        r'\b[Tt]uple index 0 item\b',
                         r'\bstr\b',
                     ),
                 ),
@@ -1064,7 +1065,8 @@ def add_data(data_module: 'ModuleType') -> None:
                         b'Blamelessly Slur-chastened rights forthwith, affrighting',
                         b"Beauty's lurid, beleaguered knolls, eland-leagued and",
                     ],
-                    # Match that the exception message raised for this object...
+                    # Match that the exception message raised for this
+                    # object...
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random list item *NOT* satisfying this hint.
@@ -1072,7 +1074,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\bstr\b',
                         # Declares the index of the random list item *NOT*
                         # satisfying this hint.
-                        r'\b[Ll]ist item \d+\b',
+                        r'\b[Ll]ist index \d+ item\b',
                     ),
                 ),
             ),
@@ -1113,7 +1115,8 @@ def add_data(data_module: 'ModuleType') -> None:
                 # Sequence of integer items.
                 HintPithUnsatisfiedMetadata(
                     pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
-                    # Match that the exception message raised for this object...
+                    # Match that the exception message raised for this
+                    # object...
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random tuple item *NOT* satisfying this hint.
@@ -1121,7 +1124,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\bstr\b',
                         # Declares the index of the random tuple item *NOT*
                         # satisfying this hint.
-                        r'\b[Tt]uple item \d+\b',
+                        r'\b[Tt]uple index \d+ item\b',
                     ),
                 ),
             ),
@@ -1164,7 +1167,8 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Of genteel gentle‐folk — that that Ƹsper',
                         'At my brand‐defaced, landless side',
                     ],
-                    # Match that the exception message raised for this object...
+                    # Match that the exception message raised for this
+                    # object...
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random list item *NOT* satisfying this hint.
@@ -1172,7 +1176,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\bCallable\b',
                         # Declares the index of the random list item *NOT*
                         # satisfying this hint.
-                        r'\b[Ll]ist item \d+\b',
+                        r'\b[Ll]ist index \d+ item\b',
                     ),
                 ),
             ),

@@ -107,6 +107,25 @@ def label_callable(func: Callable) -> str:
     return f'{func_label_prefix}{get_object_basename_scoped(func)}()'
 
 # ....................{ LABELLERS ~ type                  }....................
+def label_obj_type(obj: object) -> str:
+    '''
+    Human-readable label describing the class of the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Object whose class is to be labelled.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing the class of this object.
+    '''
+
+    # Tell me why, why, why I curse the sky! ...no, srsly.
+    return label_type(type(obj))
+
+
 def label_type(cls: type) -> str:
     '''
     Human-readable label describing the passed class.

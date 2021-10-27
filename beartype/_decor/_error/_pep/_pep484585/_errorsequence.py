@@ -21,6 +21,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextlabel import label_obj_type
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
@@ -31,13 +32,13 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **PEP-compliant standard sequence type hint** (i.e.,
-    PEP-compliant type hint accepting exactly one subscripted type hint
-    argument constraining *all* items of this object, which necessarily
-    satisfies the :class:`collections.abc.Sequence` protocol with guaranteed
-    ``O(1)`` indexation across all sequence items) if this object actually
-    fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    to satisfy the passed **PEP-compliant single-argument variadic sequence
+    type hint** (i.e., PEP-compliant type hint accepting exactly one
+    subscripted argument constraining *all* items of this object, which
+    necessarily satisfies the :class:`collections.abc.Sequence` protocol with
+    guaranteed ``O(1)`` indexation across all sequence items) if this object
+    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
+    object satisfies this hint).
 
     Parameters
     ----------
@@ -73,13 +74,12 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
 def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **PEP-compliant standard sequence type hint** (i.e.,
-    PEP-compliant type hint accepting exactly one subscripted type hint
-    argument constraining *all* items of this object, which necessarily
-    satisfies the :class:`collections.abc.Sequence` protocol with guaranteed
-    ``O(1)`` indexation across all sequence items) if this object actually
-    fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    to satisfy the passed **PEP-compliant tuple type hint** (i.e.,
+    PEP-compliant type hint accepting either zero or more subscripted arguments
+    iteratively constraining each item of this fixed-length tuple *or* exactly
+    one subscripted arguments constraining *all* items of this variadic tuple)
+    if this object actually fails to satisfy this hint *or* ``None`` otherwise
+    (i.e., if this object satisfies this hint).
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
             # Return a substring describing this failure.
             return (
                 f'tuple {pith_repr} length '
-                f'{len(sleuth.pith)} not {len(sleuth.hint_childs)}'
+                f'{len(sleuth.pith)} != {len(sleuth.hint_childs)}'
             )
         # Else, this pith and hint are of the same length.
 
@@ -166,7 +166,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
             # intended to be embedded in a longer string).
             if pith_item_cause is not None:
                 # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
-                return f'tuple item {pith_item_index} {pith_item_cause}'
+                return f'tuple index {pith_item_index} item {pith_item_cause}'
             # Else, this item is *NOT* the cause of this failure. Silently
             # continue to the next.
 
@@ -179,12 +179,12 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant variadic sequence type hint** (i.e.,
-    PEP-compliant type hint accepting one or more subscripted type hint
-    arguments constraining *all* items of this object, which necessarily
-    satisfies the :class:`collections.abc.Sequence` protocol with guaranteed
-    ``O(1)`` indexation across all sequence items) if this object actually
-    fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    PEP-compliant type hint accepting one or more subscripted arguments
+    constraining *all* items of this object, which necessarily satisfies the
+    :class:`collections.abc.Sequence` protocol with guaranteed ``O(1)``
+    indexation across all sequence items) if this object actually fails to
+    satisfy this hint *or* ``None`` otherwise (i.e., if this object satisfies
+    this hint).
 
     Parameters
     ----------
@@ -271,8 +271,9 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
                 # intended to be embedded in a longer string).
                 if pith_item_cause is not None:
                     return (
-                        f'{sleuth.pith.__class__.__name__} item '
-                        f'{pith_item_index} {pith_item_cause}')
+                        f'{label_obj_type(sleuth.pith)} '
+                        f'index {pith_item_index} item {pith_item_cause}'
+                    )
                 # Else, this item is *NOT* the cause of this failure. Silently
                 # continue to the next.
         # Else, this child hint is ignorable.

@@ -213,7 +213,7 @@ def add_data(data_module: 'ModuleType') -> None:
             is_typevars=True,
             piths_satisfied_meta=(
                 # Integer constant.
-                HintPithSatisfiedMetadata(73),
+                HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
             ),
             piths_unsatisfied_meta=(
                 # String constant.
