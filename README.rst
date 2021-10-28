@@ -109,7 +109,7 @@ one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
-    Beartype powers `quality assurance across the Python ecosystem <beartype
+    Beartype `powers quality assurance across the Python ecosystem <beartype
     dependents_>`__.
 
     |icon-graspologic| |icon-pycrisp| |icon-sentipy|
@@ -726,7 +726,7 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 
 * `"Python Type Checking (Guide)" <RealPython_>`__, a comprehensive third-party
   introduction to the subject. Like most existing articles, this guide predates
-  `O(1)` runtime type checkers and thus discusses only static type checking.
+  ``O(1)`` runtime type checkers and thus discusses only static type checking.
   Thankfully, the underlying syntax and semantics cleanly translate to runtime
   type checking.
 * `"PEP 484 -- Type Hints" <PEP 484_>`__, the defining standard, holy grail,
@@ -1052,8 +1052,8 @@ Validator API
     See ``help(beartype.vale.IsSubclass)`` for further details.
 
 .. [#enum_type]
-   You don't want to know the type of enum.Enum_ members. No... seriously. You
-   don't. You do? Oh, very well. It's enum.Enum_. :superscript:`mic drop`
+   You don't want to know the type of enum.Enum_ members. No... srsly. You
+   don't. You do? Very well. It's enum.Enum_. :superscript:`mic drop`
 
 Validator Syntax
 ~~~~~~~~~~~~~~~~
@@ -1161,11 +1161,198 @@ Validator Caveats
 Validator Showcase
 ~~~~~~~~~~~~~~~~~~
 
-Let's unbox beartype validators with a sleazy slo-mo monetized click-bait
-YouTube live stream.
+Observe the disturbing (yet alluring) utility of beartype validators in action
+as they unshackle type hints from the fetters of PEP compliance. Begone,
+foulest standards!
 
-:superscript:`Just kidding! It's all real-world industrial-strength examples
-from here on out.`
+Type Hint Connectives
++++++++++++++++++++++
+
+    **Subtitle:** *From Set Theory They Shall Grow*
+
+`PEP 484`_ standardized the typing.Union_ factory `disjunctively
+<disjunction_>`__ matching any of several equally permissible type hints ala
+Python's builtin ``or`` operator or the overloaded ``|`` operator for sets.
+That's great, because set theory is the beating heart behind type theory.
+
+But that's just disjunction_. What about intersection_ (e.g., ``and``, ``&``),
+`complementation <relative set complement_>`__ (e.g., ``not``, ``~``), or any
+of the vast multitude of *other* set theoretic operations? Can we logically
+connect simple type hints validating trivial constraints into complex type
+hints validating non-trivial constraints via PEP-standardized analogues of
+unary and binary operators?
+
+**Nope.** They don't exist yet. But that's okay. You use beartype, which means
+you don't have to wait for official Python developers to get there first.
+You're already there. :superscript:`...woah`
+
+Type Hint Elision
+^^^^^^^^^^^^^^^^^
+
+Python's core type hierarchy conceals an ugly history of secretive backward
+compatibility. In this subsection, we uncover the two filthiest, flea-infested,
+backwater corners of the otherwise well-lit atrium that is the Python language
+– and how exactly you can finalize them. Both obstruct type-checking, readable
+APIs, and quality assurance in the post-Python 2.7 era.
+
+Guido doesn't want you to know. But you want to know, don't you? You are about
+to enter another dimension, a dimension not only of syntax and semantics but of
+shame. A journey into a hideous land of annotation wrangling. Next stop... *the
+Beartype Zone.* Because guess what?
+
+* **Booleans are integers.** They shouldn't be. Booleans aren't integers in
+  most high-level languages. Wait. Are you telling me booleans are
+  literally integers in Python? Surely you jest. That can't be. You can't *add*
+  booleans, can you? What would that even mean if you could? Observe and cower,
+  rigorous data engineers.
+
+  .. code-block:: python
+
+     >>> True + 3.1415
+     4.141500000000001    # <-- oh. by. god.
+     >>> isinstance(False, int)
+     True                 # <-- when nothing is true, everything is true
+
+* **Strings are infinitely recursive sequences of...** yup, it's strings. They
+  shouldn't be. Strings aren't infinitely recursive data structures in any
+  other language devised by incautious mortals – high-level or not. Wait. Are
+  you telling me strings are both indistinguishable from full-blown immutable
+  sequences containing arbitrary items *and* infinitely recurse into themselves
+  like that sickening non-Euclidean Hall of Mirrors I puked all over when I was
+  a kid? Surely you kid. That can't be. You can't infinitely index into strings
+  *and* pass and return the results to and from callables expecting either
+  ``Sequence[Any]`` or ``Sequence[str]`` type hints, can you? Witness and
+  tremble, stricter-than-thou QA evangelists.
+
+  .. code-block:: python
+
+     >>> 'yougottabekiddi—'[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0]
+     'y'                 # <-- pretty sure we just broke the world
+     >>> from collections.abc import Sequence
+     >>> isinstance("Ph'nglui mglw'nafh Cthu—"[0][0][0][0][0], Sequence)
+     True                # <-- ...curse you, curse you to heck and back
+
+When we annotate a callable as accepting an ``int``, we *never* want that
+callable to also silently accept a ``bool``. Likewise, when we annotate another
+callable as accepting a ``Sequence[Any]`` or ``Sequence[str]``, we *never* want
+that callable to also silently accept a ``str``. These are sensible
+expectations – just not in Python, where madness prevails.
+
+To resolve these counter-intuitive concerns, we need the equivalent of the
+`relative set complement (or difference) <relative set complement_>`__. We now
+call this thing... **type elision!** Sounds pretty hot, right? We know.
+
+Let's first validate **non-boolean integers** with a beartype validator
+effectively declaring a new ``int - bool`` class (i.e., the subclass of all
+integers that are *not* booleans):
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import Is
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching any non-boolean integer. This day all errata die.
+   IntNonbool = Annotated[int, Is[
+       lambda number: not isinstance(number, bool)]]
+
+   # Type-check a list of non-boolean integers summing to a non-boolean
+   # integer. Beartype wills it. So it shall be.
+   @beartype
+   def sum_intlist(my_list: list[IntNonbool]) -> IntNonbool:
+       '''
+       I cast thee out, mangy booleans!
+
+       You plague these shores no more.
+       '''
+
+       return sum(my_list)
+
+Let's next validate **non-string sequences** with beartype validators
+effectively declaring a new ``Sequence - str`` class (i.e., the subclass of all
+sequences that are *not* strings):
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import Is
+   from collections.abc import Sequence
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching any non-string sequence. Your day has finally come.
+   SequenceNonstr = Annotated[Sequence, Is[
+       lambda sequence: not isinstance(sequence, str)]]
+
+   # Type hint matching any non-string sequence *WHOSE ITEMS ARE ALL STRINGS.*
+   SequenceNonstrOfStr = Annotated[Sequence[str], Is[
+       lambda sequence: not isinstance(sequence, str)]]
+
+   # Type-check a non-string sequence of arbitrary items coerced into strings
+   # and then joined on newline to a new string. (Beartype got your back, bro.)
+   @beartype
+   def join_objects(my_sequence: SequenceNonstr) -> str:
+       '''
+       Your tide of disease ends here, "str" class!
+       '''
+
+       return '\n'.join(map(str, my_sequence))  # <-- no idea how that works
+
+   # Type-check a non-string sequence whose items are all strings joined on
+   # newline to a new string. It isn't much, but it's all you ask.
+   @beartype
+   def join_strs(my_sequence: SequenceNonstrOfStr) -> str:
+       '''
+       I expectorate thee up, sequence of strings.
+       '''
+
+       return '\n'.join(my_sequence)  # <-- do *NOT* do this to a string
+
+Full-Fat O(n) Matching
+++++++++++++++++++++++
+
+Let's validate **all integers in a list of integers in O(n) time**, because
+validators mean you no longer have to accept the QA scraps we feed you:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import Is
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching all integers in a list of integers in O(n) time. Please
+   # never do this. You now want to, don't you? Why? You know the price! Why?!?
+   IntList = Annotated[list[int], Is[lambda lst: all(
+       isinstance(item, int) for item in lst)]]
+
+   # Type-check all integers in a list of integers in O(n) time. How could you?
+   @beartype
+   def sum_intlist(my_list: IntList) -> int:
+       '''
+       The slowest possible integer summation over the passed list of integers.
+
+       There goes your whole data science pipeline. Yikes! So much cringe.
+       '''
+
+       return sum(my_list)  # oh, gods what have you done
+
+Welcome to **full-fat type-checking.** In `our disastrous roadmap to beartype
+1.0.0 <beartype 1.0.0_>`__, we reluctantly admit that we'd like to augment the
+``@beartype`` decorator with a new parameter enabling full-fat type-checking.
+But don't wait on us. Force the issue now by just doing it yourself and then
+mocking us all over Gitter! *Fight the bear, man.*
+
+There are good reasons to believe that `O(1) type-checking is preferable <What
+does beartype do?_>`__. Violating that core precept exposes your codebase to
+scalability and security concerns. But you're the Big Boss, you swear you know
+best, and (in any case) we can't stop you because we already let the unneutered
+tomcat out of his trash bin by `publishing this API into the badlands of PyPI
+<beartype PyPI_>`__.
 
 Tensor Property Matching
 ++++++++++++++++++++++++
@@ -1267,49 +1454,6 @@ suffixed by a period. Look, it doesn't matter. Just do it already,
        '''
 
        return text[:-1]  # this is frankly outrageous
-
-Full-Fat O(n) Matching
-++++++++++++++++++++++
-
-Let's validate **all integers in a list of integers in O(n) time**, because
-validators mean you no longer have to accept the QA scraps we feed you:
-
-.. code-block:: python
-
-   # Import the requisite machinery.
-   from beartype import beartype
-   from beartype.vale import Is
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
-
-   # Type hint matching all integers in a list of integers in O(n) time. Please
-   # never do this. You now want to, don't you? Why? You know the price! Why?!?
-   IntList = Annotated[list[int], Is[lambda lst: all(
-       isinstance(item, int) for item in lst)]]
-
-   # Type-check all integers in a list of integers in O(n) time. How could you?
-   @beartype
-   def sum_intlist(my_list: IntList) -> int:
-       '''
-       The slowest possible integer summation over the passed list of integers.
-
-       There goes your whole data science pipeline. Yikes! So much cringe.
-       '''
-
-       return sum(my_list)  # oh, gods what have you done
-
-Welcome to **full-fat type-checking.** In `our disastrous roadmap to beartype
-1.0.0 <beartype 1.0.0_>`__, we reluctantly admit that we'd like to augment the
-``@beartype`` decorator with a new parameter enabling full-fat type-checking.
-But don't wait on us. Force the issue now by just doing it yourself and then
-mocking us all over Gitter! *Fight the bear, man.*
-
-There are good reasons to believe that `O(1) type-checking is preferable <What
-does beartype do?_>`__. Violating that core precept exposes your codebase to
-scalability and security concerns. But you're the Big Boss, you swear you know
-best, and (in any case) we can't stop you because we already let the unneutered
-tomcat out of his trash bin by `publishing this API into the badlands of PyPI
-<beartype PyPI_>`__.
 
 Validator Alternatives
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -4247,6 +4391,18 @@ rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 .. _coupon collector's problem:
    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
+
+.. # ------------------( LINKS ~ math : set                 )------------------
+.. _conjunction:
+   https://en.wikipedia.org/wiki/Logical_conjunction
+.. _disjunction:
+   https://en.wikipedia.org/wiki/Logical_disjunction
+.. _intersection:
+   https://en.wikipedia.org/wiki/Intersection_(set_theory)
+.. _relative set complement:
+   https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement
+
+.. # ------------------( LINKS ~ math : type                )------------------
 .. _covariance:
    https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
