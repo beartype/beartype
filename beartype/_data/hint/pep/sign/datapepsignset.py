@@ -150,6 +150,68 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 :func:`beartype.beartype` decorator).
 '''
 
+# ....................{ SIGNS ~ return                    }....................
+HINT_SIGNS_RETURN_GENERATOR_ASYNC = frozenset((
+    # ..................{ PEP (484|585)                     }..................
+    HintSignAsyncGenerator,
+    HintSignAsyncIterable,
+    HintSignAsyncIterator,
+))
+'''
+Frozen set of all signs uniquely identifying **PEP-compliant asynchronous
+generator return type hints** (i.e., hints permissible as the return
+annotations of asynchronous generators).
+
+See Also
+----------
+:data:`HINT_SIGNS_RETURN_GENERATOR_SYNC`
+    Further discussion.
+'''
+
+
+HINT_SIGNS_RETURN_GENERATOR_SYNC = frozenset((
+    # ..................{ PEP (484|585)                     }..................
+    HintSignGenerator,
+    HintSignIterable,
+    HintSignIterator,
+))
+'''
+Frozen set of all signs uniquely identifying **PEP-compliant synchronous
+generator return type hints** (i.e., hints permissible as the return
+annotations of synchronous generators).
+
+Generator callables are simply syntactic sugar for non-generator callables
+returning generator objects. For this reason, generator callables *must* be
+annotated as returning a type compatible with generator objects -- including:
+
+* :data:`HintSignGenerator`, the narrowest abstract base class (ABC) to which
+  all generator objects necessarily conform.
+* :data:`HintSignIterator`, the immediate superclass of
+  :data:`HintSignGenerator`.
+* :data:`HintSignIterable`, the immediate superclass of
+  :data:`HintSignIterator`.
+
+Technically, :pep:`484` states that generator callables may only be annotated
+as only returning a subscription of the :attr:`typing.Generator` factory:
+
+    The return type of generator functions can be annotated by the generic type
+    ``Generator[yield_type, send_type, return_type]`` provided by ``typing.py``
+    module:
+
+Pragmatically, official documentation for the :mod:`typing` module seemingly
+*never* standardized by an existing PEP additionally states that generator
+callables may be annotated as also returning a subscription of either the
+:attr:`typing.Iterable` or :attr:`typing.Iterator` factories:
+
+    Alternatively, annotate your generator as having a return type of either
+    ``Iterable[YieldType]`` or ``Iterator[YieldType]``:
+
+See Also
+----------
+https://github.com/beartype/beartype/issues/65#issuecomment-954468111
+    Further discussion.
+'''
+
 # ....................{ SIGNS ~ type                      }....................
 HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     # ..................{ PEP (484|585)                     }..................

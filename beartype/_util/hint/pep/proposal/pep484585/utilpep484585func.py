@@ -14,10 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAsyncGenerator,
-    HintSignCoroutine,
-    HintSignGenerator,
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_RETURN_GENERATOR_ASYNC,
+    HINT_SIGNS_RETURN_GENERATOR_SYNC,
 )
 from beartype._util.func.utilfunctest import (
     is_func_async_coroutine,
@@ -35,8 +35,7 @@ from collections.abc import Callable
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS                           }....................
-#FIXME: Unit test us up, please.
+# ....................{ REDUCERS ~ return                 }....................
 def reduce_hint_pep484585_func_return(func: Callable) -> object:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the
@@ -62,9 +61,10 @@ def reduce_hint_pep484585_func_return(func: Callable) -> object:
     :exc:`BeartypeDecorHintPep484585Exception`
         If this callable is either:
 
-        * A generator *not* annotated by a :attr:`typing.Generator` type hint.
-        * An asynchronous generator *not* annotated by a
-          :attr:`typing.AsyncGenerator` type hint.
+        * A synchronous generator *not* annotated by a type hint identified by
+          a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_SYNC` set.
+        * An asynchronous generator *not* annotated by a type hint identified
+          by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
 
     # Type hint annotating this callable's return, which the caller has already
@@ -107,34 +107,46 @@ def reduce_hint_pep484585_func_return(func: Callable) -> object:
     #
     # If the decorated callable is an asynchronous generator...
     elif is_func_async_generator(func):
-        # If this hint is *NOT* "AsyncGenerator[...]", this type hint is
-        # invalid. In this case, raise an exception.
-        if hint_sign is not HintSignAsyncGenerator:
+        #FIXME: Unit test this up, please!
+        # If this hint is semantically invalid as the return annotation of this
+        # callable, raise an exception.
+        if hint_sign not in HINT_SIGNS_RETURN_GENERATOR_ASYNC:
             _die_of_hint_return_invalid(
                 func=func,
                 exception_suffix=(
                     ' (i.e., expected either '
-                    'collections.abc.AsyncGenerator[...] or '
-                    'typing.AsyncGenerator[...] type hint).'
+                    'collections.abc.AsyncGenerator[YieldType, SendType, ReturnType], '
+                    'collections.abc.AsyncIterable[YieldType], '
+                    'collections.abc.AsyncIterator[YieldType], '
+                    'typing.AsyncGenerator[YieldType, SendType, ReturnType], '
+                    'typing.AsyncIterable[YieldType], or '
+                    'typing.AsyncIterator[YieldType] '
+                    'type hint).'
                 ),
             )
-        # Else, this hint is "AsyncGenerator[...]".
+        # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is *NOT* an asynchronous generator.
     #
     # If the decorated callable is a synchronous generator...
     elif is_func_sync_generator(func):
-        # If this hint is *NOT* "Generator[...]", this type hint is invalid.
-        # In this case, raise an exception.
-        if hint_sign is not HintSignGenerator:
+        #FIXME: Unit test this up, please!
+        # If this hint is semantically invalid as the return annotation of this
+        # callable, raise an exception.
+        if hint_sign not in HINT_SIGNS_RETURN_GENERATOR_SYNC:
             _die_of_hint_return_invalid(
                 func=func,
                 exception_suffix=(
                     ' (i.e., expected either '
-                    'collections.abc.Generator[...] or '
-                    'typing.Generator[...] type hint).'
+                    'collections.abc.Generator[YieldType, SendType, ReturnType], '
+                    'collections.abc.Iterable[YieldType], '
+                    'collections.abc.Iterator[YieldType], '
+                    'typing.Generator[YieldType, SendType, ReturnType], '
+                    'typing.Iterable[YieldType], or '
+                    'typing.Iterator[YieldType] '
+                    'type hint).'
                 ),
             )
-        # Else, this hint is "Generator[...]".
+        # Else, this hint is valid as the return annotation of this callable.
     # Else, the decorated callable is none of the kinds detected above.
 
     # Return this possibly reduced hint.
