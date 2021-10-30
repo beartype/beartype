@@ -88,7 +88,8 @@ def get_hint_pep484585_args_1(
             f'{repr(exception_prefix)} not string.')
         raise BeartypeDecorHintPep585Exception(
             f'{exception_prefix}PEP 585 type hint {repr(hint)} '
-            f'not subscripted (indexed) by exactly one argument.'
+            f'not subscripted (indexed) by one argument (i.e., '
+            f'subscripted by {len(hint_args)} != 1 arguments).'
         )
     # Else, this hint is subscripted by one argument.
 
@@ -152,7 +153,8 @@ def get_hint_pep484585_args_3(
             f'{repr(exception_prefix)} not string.')
         raise BeartypeDecorHintPep585Exception(
             f'{exception_prefix}PEP 585 type hint {repr(hint)} '
-            f'not subscripted (indexed) by exactly three arguments.'
+            f'not subscripted (indexed) by three arguments (i.e., '
+            f'subscripted by {len(hint_args)} != 3 arguments).'
         )
     # Else, this hint is subscripted by one argument.
 

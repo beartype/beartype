@@ -115,10 +115,10 @@ def reduce_hint_pep484585_func_return(func: Callable) -> object:
                 func=func,
                 exception_suffix=(
                     ' (i.e., expected either '
-                    'collections.abc.AsyncGenerator[YieldType, SendType, ReturnType], '
+                    'collections.abc.AsyncGenerator[YieldType, SendType], '
                     'collections.abc.AsyncIterable[YieldType], '
                     'collections.abc.AsyncIterator[YieldType], '
-                    'typing.AsyncGenerator[YieldType, SendType, ReturnType], '
+                    'typing.AsyncGenerator[YieldType, SendType], '
                     'typing.AsyncIterable[YieldType], or '
                     'typing.AsyncIterator[YieldType] '
                     'type hint).'
