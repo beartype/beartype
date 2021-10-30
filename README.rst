@@ -112,7 +112,7 @@ developed Python versions <Python status_>`__, `all Python package managers
     Beartype `powers quality assurance across the Python ecosystem <beartype
     dependents_>`__.
 
-    |icon-graspologic| |icon-pycrisp| |icon-sentipy|
+    |icon-graspologic| |icon-hydrazen| |icon-pycrisp| |icon-sentipy|
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -4226,6 +4226,9 @@ rather than Python runtime) include:
 .. |icon-graspologic| image:: https://user-images.githubusercontent.com/217028/138580730-dcb3ee22-6372-4a2d-93bf-d1a3c97e67cf.png
    :target: https://github.com/microsoft/graspologic
    :alt: Graspologic: Python package for graph statistical algorithms
+.. |icon-hydrazen| image:: https://user-images.githubusercontent.com/217028/139522423-d987d484-425b-4e70-a0e7-7390593471f1.png
+   :target: https://github.com/mit-ll-responsible-ai/hydra-zen
+   :alt: Hydra-Zen: Reproducible Pythonic CLI<->config APIs via Hydra
 .. |icon-pycrisp| image:: https://user-images.githubusercontent.com/217028/138580797-1f09f0b4-bced-4651-82c9-6dae50afe883.png
    :target: https://gitlab.com/pycrisp/pycrisp
    :alt: PyCrisp: Typed Python interactions with the Crisp API
