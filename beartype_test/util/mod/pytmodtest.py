@@ -40,7 +40,43 @@ def is_package_beartype_vale_usable() -> bool:
     # the official "typing" or third-party "typing_extensions" modules.
     return is_module_typing_any_attr('Annotated')
 
-# ....................{ TESTERS ~ numpy                   }....................
+# ....................{ TESTERS ~ lib                     }....................
+@callable_cached
+def is_package_sphinx() -> bool:
+    '''
+    ``True`` only if a reasonably recent version of Sphinx is importable under
+    the active Python interpreter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.meta import _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX
+    from beartype._util.mod.utilmodtest import is_module_version_at_least
+
+    # Return true only if this version of this package is importable.
+    return is_module_version_at_least(
+        'sphinx', _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX)
+
+
+@callable_cached
+def is_package_typing_extensions() -> bool:
+    '''
+    ``True`` only if a reasonably recent version of the third-party
+    :mod:`typing_extensions` package is importable under the active Python
+    interpreter.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.meta import (
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
+    from beartype._util.mod.utilmodtest import is_module_version_at_least
+
+    # Return true only if this version of this package is importable.
+    return is_module_version_at_least(
+        'typing_extensions',
+        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
+    )
+
+# ....................{ TESTERS ~ lib : numpy             }....................
 @callable_cached
 def is_package_numpy() -> bool:
     '''
@@ -56,7 +92,7 @@ def is_package_numpy() -> bool:
     return is_module_version_at_least(
         'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
 
-# ....................{ TESTERS ~ numpy : ndarray         }....................
+
 @callable_cached
 def is_package_numpy_typing_ndarray_deep() -> bool:
     '''
@@ -79,24 +115,4 @@ def is_package_numpy_typing_ndarray_deep() -> bool:
         is_package_numpy() and
         # Beartype validators are usable under the active Python interpreter.
         is_package_beartype_vale_usable()
-    )
-
-# ....................{ TESTERS ~ typing                  }....................
-@callable_cached
-def is_package_typing_extensions() -> bool:
-    '''
-    ``True`` only if a reasonably recent version of the third-party
-    :mod:`typing_extensions` package is importable under the active Python
-    interpreter.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.meta import (
-        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
-    from beartype._util.mod.utilmodtest import is_module_version_at_least
-
-    # Return true only if this version of this package is importable.
-    return is_module_version_at_least(
-        'typing_extensions',
-        _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
     )

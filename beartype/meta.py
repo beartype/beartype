@@ -450,7 +450,7 @@ See Also
 '''
 
 # ....................{ METADATA ~ libs : doc             }....................
-_LIB_VERSION_MIN_SPHINX = '4.1.0'
+_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.1.0'
 '''
 Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
 required to build package documentation.
@@ -462,7 +462,7 @@ Specifically, this project requires:
 '''
 
 
-_LIB_VERSION_MIN_SPHINX_RTD_THEME = '0.5.1'
+_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX_RTD_THEME = '0.5.1'
 '''
 Human-readable minimum version as a ``.``-delimited string of the **Read The
 Docs (RTD)-flavoured Sphinx theme** (i.e., :mod:`sphinx_rtd_theme`) optionally
@@ -471,7 +471,7 @@ leveraged when building package documentation.
 
 
 LIBS_DOCTIME_MANDATORY = (
-    f'sphinx >={_LIB_VERSION_MIN_SPHINX}',
+    f'sphinx >={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
 )
 '''
 **Mandatory developer documentation build-time package dependencies** (i.e.,
@@ -495,8 +495,11 @@ See Also
 
 
 LIBS_DOCTIME_MANDATORY_RTD = (
-    f'sphinx =={_LIB_VERSION_MIN_SPHINX}',
-    f'sphinx-rtd-theme =={_LIB_VERSION_MIN_SPHINX_RTD_THEME}',
+    f'sphinx =={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
+    (
+        f'sphinx-rtd-theme '
+        f'=={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX_RTD_THEME}'
+    ),
 )
 '''
 **Mandatory Read The Docs (RTD) documentation build-time package dependencies**
