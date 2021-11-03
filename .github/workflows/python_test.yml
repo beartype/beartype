@@ -126,10 +126,8 @@ jobs:
             python-version: 3.8
           - tox-env: py39-coverage
             python-version: 3.9
-          #FIXME: Uncomment *AFTER* Python 3.10 is officially released.
-          # - tox-env: py310
-          #   python-version: 3.10
-          #   python-version: 3.10-dev
+          - tox-env: py310-coverage
+            python-version: 3.10
           - tox-env: pypy37-coverage
             python-version: pypy-3.7
 

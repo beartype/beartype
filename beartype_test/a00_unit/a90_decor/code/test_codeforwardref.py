@@ -108,22 +108,30 @@ def test_hint_forwardref_decor_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import (
-        BeartypeDecorHintForwardRefException,
-        BeartypeDecorHintPep563Exception,
-    )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from beartype.roar import BeartypeDecorHintForwardRefException
+
+    #FIXME: Uncomment if and when a future Python release unconditionally
+    #enables some variant of PEP 563... yet again.
+    # from beartype.roar import (
+    #     BeartypeDecorHintForwardRefException,
+    #     BeartypeDecorHintPep563Exception,
+    # )
+    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    #
+    # # Type of exception raised by @beartype when decorating callables annotated
+    # # by syntactically invalid forward reference type hints. Due to ambiguities
+    # # in PEP 563 unconditionally enabled under Python >= 3.10, @beartype is
+    # # unable to reliably differentiate forward references from non-forward
+    # # references and thus treats the former as the latter here.
+    # exception_cls = (
+    #     BeartypeDecorHintPep563Exception
+    #     if IS_PYTHON_AT_LEAST_3_10 else
+    #     BeartypeDecorHintForwardRefException
+    # )
 
     # Type of exception raised by @beartype when decorating callables annotated
-    # by syntactically invalid forward reference type hints. Due to ambiguities
-    # in PEP 563 unconditionally enabled under Python >= 3.10, @beartype is
-    # unable to reliably differentiate forward references from non-forward
-    # references and thus treats the former as the latter here.
-    exception_cls = (
-        BeartypeDecorHintPep563Exception
-        if IS_PYTHON_AT_LEAST_3_10 else
-        BeartypeDecorHintForwardRefException
-    )
+    # by syntactically invalid forward reference type hints.
+    exception_cls = BeartypeDecorHintForwardRefException
 
     # Assert @beartype raises the expected exception when decorating a callable
     # annotated by a syntactically invalid forward reference type hint.

@@ -88,7 +88,7 @@ def when_in_the_springtime_of_the_year():
 def test_is_func_nested() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncscope.is_func_nested` function.
+    :func:`beartype._util.func.utilfuncscope.is_func_nested` tester.
     '''
 
     # Defer heavyweight imports.

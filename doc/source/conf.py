@@ -70,6 +70,10 @@ extensions = [
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
+    #FIXME: Actually, we probably just want to use the third-party Sphinx
+    #AutoAPI extension instead at:
+    #    https://github.com/readthedocs/sphinx-autoapi
+    #...is what we'd be saying if AutoAPI was still actively maintained. *sigh*
     #FIXME: Almost certainly insufficient. Since this is Sphinx, the
     #"autodoc" extension requires additional non-trivial configuration. Note,
     #however, that the "autosummary" extension enabled below *SHOULD* automate
@@ -81,6 +85,8 @@ extensions = [
     # documenting this project's public (and optionally also private) API.
     'sphinx.ext.autodoc',
 
+    #FIXME: How does this compare with "viewcode"? Are the two at all
+    #comparable? Does merely one suffice? Research us up, please.
     #FIXME: Almost certainly insufficient. Since this is Sphinx, the
     #"autosummary" extension requires additional non-trivial configuration that
     #absolutely *SHOULD* come bundled with Sphinx but currently isn't for
