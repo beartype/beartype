@@ -45,7 +45,7 @@ def test_pep561_pytyped() -> None:
     # the "beartype.__init__" submodule.
     #
     # Note that we intentionally do *NOT* obtain this file via the
-    # test-specific "beartype_test._util.path.pytpathproject" submodule. Why?
+    # test-specific "beartype_test._util.path.pytpathmain" submodule. Why?
     # Because we want to test that the "py.typed" file is actually being
     # installed with the "beartype" package, wherever that package may
     # currently be installed (e.g., to a "tox"-isolated venv).

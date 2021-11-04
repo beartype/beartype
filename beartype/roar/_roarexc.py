@@ -609,20 +609,6 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     pass
 
 
-class _BeartypeUtilTypeException(_BeartypeUtilException):
-    '''
-    **Beartype class utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.cls.utilclstest` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
 class _BeartypeUtilModuleException(_BeartypeUtilException):
     '''
     **Beartype module utility exception.**
@@ -641,12 +627,40 @@ class _BeartypeUtilModuleException(_BeartypeUtilException):
     pass
 
 
+class _BeartypeUtilPathException(_BeartypeUtilException):
+    '''
+    **Beartype path utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.path` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeUtilTextException(_BeartypeUtilException):
     '''
     **Beartype text utility exception.**
 
     This exception is raised by public functions of the private
     :mod:`beartype._util.text` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTypeException(_BeartypeUtilException):
+    '''
+    **Beartype class utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.cls.utilclstest` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

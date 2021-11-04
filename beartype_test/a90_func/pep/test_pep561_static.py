@@ -61,9 +61,9 @@ def test_pep561_mypy() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.path.pytpathproject import (
-        get_project_mypy_config_file,
-        get_project_package_dir,
+    from beartype_test.util.path.pytpathmain import (
+        get_main_mypy_config_file,
+        get_main_package_dir,
     )
     from mypy import api
 
@@ -76,7 +76,7 @@ def test_pep561_mypy() -> None:
         # Absolute dirname of this project's top-level mypy configuration.
         # Since our "tox" configuration isolates testing to a temporary
         # directory, mypy is unable to find its configuration without help.
-        '--config-file', str(get_project_mypy_config_file()),
+        '--config-file', str(get_main_mypy_config_file()),
     ]
 
     # List of all command-line arguments (i.e., non-options) to be effectively
@@ -86,7 +86,7 @@ def test_pep561_mypy() -> None:
     # tuple, the function called below raises an exception. Steaming trash!
     MYPY_ARGUMENTS = [
         # Absolute dirname of this project's top-level package.
-        str(get_project_package_dir()),
+        str(get_main_package_dir()),
     ]
 
     # Tuple of all command-line options to be effectively passed to the

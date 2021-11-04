@@ -16,13 +16,13 @@ the third-party :mod:`sphinx` package.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import (
-    skip_if_python_version_less_than,
-    skip_if_pypy,
+    # skip_if_python_version_less_than,
+    # skip_if_pypy,
     skip_unless_package,
 )
 
 # ....................{ TESTS                             }....................
-#FIXME: Undocument once worky, please.
+# FIXME: Undocument once worky, please.
 # @skip_unless_package('sphinx')
 # def test_sphinx(tmp_path) -> None:
 #     '''
@@ -40,10 +40,8 @@ from beartype_test.util.mark.pytskip import (
 #
 #     # Defer heavyweight imports.
 #     from beartype_test.util.os.command.pytcmdexit import is_success
-#     # from beartype_test.util.path.pytpathproject import (
-#     #     get_project_mypy_config_file,
-#     #     get_project_package_dir,
-#     # )
+#     from beartype_test.util.path.pytpathtest import (
+#         get_test_func_data_lib_sphinx_dir)
 #
 #     # Entry-point (i.e., pure-Python function accepting a list of zero or more
 #     # command-line arguments) underlying the external "sphinx-build" command.
@@ -66,8 +64,9 @@ from beartype_test.util.mark.pytskip import (
 #     # Note this iterable *MUST* be defined as a list rather than tuple. If a
 #     # tuple, the function called below raises an exception. Steaming trash!
 #     SPHINX_ARGUMENTS = [
-#         # Absolute dirname of this project's top-level package.
-#         str(get_project_package_dir()),
+#         # Absolute dirname of a test-specific subdirectory containing a sample
+#         # Sphinx structure exercising edge cases in the @beartype decorator.
+#         str(get_test_func_data_lib_sphinx_dir()),
 #         # Absolute dirname of a test-specific temporary directory to which
 #         # Sphinx will emit ignorable rendered documentation files.
 #         str(tmp_path),

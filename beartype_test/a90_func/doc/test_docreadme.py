@@ -45,7 +45,7 @@ def test_doc_readme(monkeypatch) -> None:
     # Defer heavyweight imports.
     from docutils.core import publish_parts
     from docutils.utils import Reporter
-    from beartype_test.util.path.pytpathproject import get_project_readme_file
+    from beartype_test.util.path.pytpathmain import get_main_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
     #
@@ -55,7 +55,7 @@ def test_doc_readme(monkeypatch) -> None:
     # encoding here results in a non-human-readable test failure under Windows:
     #     UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in
     #     position 1495: character maps to <undefined>
-    README_CONTENTS = get_project_readme_file().read_text(encoding='utf-8')
+    README_CONTENTS = get_main_readme_file().read_text(encoding='utf-8')
 
     # List of all warning and error messages emitted by "docutils" during
     # parsing of this project's top-level "README.rst" file.
