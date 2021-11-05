@@ -118,19 +118,31 @@ jobs:
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
         # "actions/setup-python" GitHub Action run below.
+        #
+        # Note that Python version specifiers *MUST* be quoted: e.g.,
+        #     # Do this.
+        #     python-version: "3.10"
+        #     # Do *NOT* do this.
+        #     python-version: 3.10
+        # Why? Because YAML sensibly treats an unquoted literal satisfying
+        # floating-point syntax as a floating-point number and thus silently
+        # truncates *ALL* ignorable zeroes suffixing that number (e.g.,
+        # truncating 3.10 to 3.1). That then results in non-human-readable CI
+        # errors, as discussed upstream at:
+        #     https://github.com/actions/setup-python/issues/160#issuecomment-724485470
         include:
           - tox-env: py36-coverage
-            python-version: 3.6
+            python-version: "3.6"
           - tox-env: py37-coverage
-            python-version: 3.7
+            python-version: "3.7"
           - tox-env: py38-coverage
-            python-version: 3.8
+            python-version: "3.8"
           - tox-env: py39-coverage
-            python-version: 3.9
+            python-version: "3.9"
           - tox-env: py310-coverage
-            python-version: 3.10
+            python-version: "3.10"
           - tox-env: pypy37-coverage
-            python-version: pypy-3.7
+            python-version: "pypy-3.7"
 
     # ..................{ SETTINGS                          }..................
     # Arbitrary human-readable description.
