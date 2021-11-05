@@ -327,26 +327,49 @@ requirements strings of the format ``{project_name}
   ``2020.2.16``, ``0.75a2``).
 '''
 
-# ....................{ METADATA ~ libs : test            }....................
+# ....................{ METADATA ~ libs : test : optional }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Avoid constraining optional test-time dependencies to version
 # ranges, which commonly fail for edge-case test environments -- including:
 # * The oldest Python version still supported by @beartype, which typically is
 #   *NOT* supported by newer versions of these dependencies.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-LIBS_TESTTIME_OPTIONAL = (
-    'typing_extensions',
-) + (
+def _make_libs_testtime_optional() -> _Tuple[str, ...]:
+    '''
+    Create and return **optional test-time package dependencies** (i.e.,
+    dependencies recommended to test this package with :mod:`tox` as a
+    developer at the command line) as a tuple of :mod:`setuptools`-specific
+    requirements strings of the format ``{project_name} {comparison1}{version1},
+    ...,{comparisonN}{versionN}``.
+    '''
+
+    # List of unconditional optional test-time package dependencies.
+    libs_testtime_optional = [
+        # Required by our optional "test_sphinx" functional test.
+        'sphinx',
+
+        # Required to exercise beartype validators and thus functionality
+        # requiring beartype validators (e.g., "numpy.typing.NDArray" type
+        # hints) under Python < 3.9.
+        'typing_extensions',
+    ]
+
     # If the active Python interpreter is *NOT* PyPy...
-    (
-        # mypy >= 0.800, a reasonably recent version known to behave well. Even
-        # less reasonably recent versions of mypy are significantly deficient
-        # with respect to error reporting and *MUST* thus be blacklisted.
-        'mypy >=0.800' ,
+    if not _is_py_pypy():
+        # Require a reasonably recent version of mypy known to behave well.
+        # Less recent versions are significantly deficient with respect to
+        # error reporting and *MUST* thus be blacklisted.
+        #
+        # Note that PyPy currently fails to support mypy. See also this
+        # official documentation discussing this regrettable incompatibility:
+        #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+        libs_testtime_optional.append('mypy >=0.800')
+
         # If the current platform is *NOT* macOS...
-        (
-            # NumPy. NumPy has become *EXTREMELY* non-trivial to install under
-            # macOS with "pip", due to the conjunction of multiple issues:
+        if not _is_os_macos():
+            # Require NumPy. NumPy has become *EXTREMELY* non-trivial to
+            # install under macOS with "pip", due to the conjunction of
+            # multiple issues. These include:
             # * NumPy > 1.18.0, whose initial importation now implicitly
             #   detects whether the BLAS implementation NumPy was linked
             #   against is sane and raises a "RuntimeError" exception if that
@@ -368,18 +391,15 @@ LIBS_TESTTIME_OPTIONAL = (
             #
             # See also this upstream NumPy issue:
             #     https://github.com/numpy/numpy/issues/15947
-            'numpy',
-        ) if not _is_os_macos() else
-        # Else, the active Python interpreter is PyPy under macOS and thus
-        # fails to support NumPy. In this case, avoid requiring NumPy.
-        ()
-    ) if not _is_py_pypy() else
-    # Else, the active Python interpreter is PyPy and thus fails to support
-    # mypy. In this case, avoid requiring mypy. See also this official
-    # documentation discussing mypy's current incompatibility with PyPy:
-    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-    ()
-)
+            libs_testtime_optional.append('numpy')
+        # Else, the current platform is macOS.
+    # Else, the active Python interpreter is PyPy.
+
+    # Return a tuple coerced from this list.
+    return tuple(libs_testtime_optional)
+
+
+LIBS_TESTTIME_OPTIONAL = _make_libs_testtime_optional()
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
 recommended to test this package with :mod:`tox` as a developer at the command
@@ -392,7 +412,7 @@ See Also
     Further details.
 '''
 
-
+# ....................{ METADATA ~ libs : test : mandatory}....................
 LIBS_TESTTIME_MANDATORY_COVERAGE = (
     'coverage >=5.5',
 )

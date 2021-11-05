@@ -10,9 +10,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+# Note that this is mandatory. If absent, the "autodoc" extension enabled below
+# fails with the following build-time error:
+#     autodoc: failed to import module 'beartype_sphinx'; the following exception was raised:
+#     No module named 'beartype_sphinx'
+import os
+import sys
+sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------

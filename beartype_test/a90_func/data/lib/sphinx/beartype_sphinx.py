@@ -23,6 +23,9 @@ about classes used as annotations.
 # ....................{ IMPORTS                           }....................
 from beartype import beartype
 
+#FIXME: Uncomment to debug that this module is actually being imported.
+print('Some phantom, some faint image; till the breast')
+
 # ....................{ IMPORTS                           }....................
 def till_the_breast() -> str:
     '''

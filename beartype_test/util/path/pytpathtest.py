@@ -71,7 +71,7 @@ def get_test_func_data_lib_dir() -> Path:
     otherwise.
     '''
 
-    # Flamboyant buoyancy!
+    # Ejective bijection!
     return DirRelative(get_test_func_data_dir(), 'lib')
 
 
@@ -85,4 +85,4 @@ def get_test_func_data_lib_sphinx_dir() -> Path:
     '''
 
     # Flamboyant buoyancy!
-    return DirRelative(get_test_func_data_dir(), 'sphinx')
+    return DirRelative(get_test_func_data_lib_dir(), 'sphinx')
