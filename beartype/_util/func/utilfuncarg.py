@@ -25,7 +25,7 @@ from inspect import (
     CO_VARKEYWORDS,
     Parameter,
 )
-from typing import Any, Generator, Tuple, Type
+from typing import Any, Iterable, Tuple, Type
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -373,8 +373,8 @@ def get_func_args_len_flexible(
 #FIXME: Unit test us up, please.
 #FIXME: Replace all existing usage of inspect.signature() throughout the
 #codebase with usage of this supremely fast generator instead.
-def iter_func_args(func: CallableCodeObjable) -> Generator[
-    Tuple[str, EnumMemberType, Any], None, None]:
+def iter_func_args(func: CallableCodeObjable) -> Iterable[
+    Tuple[str, EnumMemberType, Any]]:
     '''
     Generator yielding one 3-tuple ``(arg_name, arg_kind, arg_default)`` for
     each parameter accepted by the passed pure-Python callable.

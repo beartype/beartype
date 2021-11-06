@@ -868,19 +868,19 @@ targets Python >= 3.9 *or* :class:`UnavailableType` otherwise.
 
 Subscripted generics include:
 
-* `PEP 585`_-compliant **builtin type hints** (i.e., C-based type hints
+* :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
   instantiated by subscripting either a concrete builtin container class like
   :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
   the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-  or :class:`collections.abc.Sequence`). Since *all* `PEP 585`_-compliant
+  or :class:`collections.abc.Sequence`). Since *all* :pep:`585`-compliant
   builtin type hints are classes, this C-based type is the class of those
   classes and thus effectively itself a metaclass. It's probably best not to
   think about that.
-* `PEP 484`_-compliant **subscripted generics** (i.e., user-defined classes
-  subclassing one or more `PEP 484`_-compliant type hints subsequently
+* :pep:`484`-compliant **subscripted generics** (i.e., user-defined classes
+  subclassing one or more :pep:`484`-compliant type hints subsequently
   subscripted by one or more PEP-compliant type hints).
-* `PEP 585`_-compliant **subscripted generics** (i.e., user-defined classes
-  subclassing one or more `PEP 585`_-compliant type hints subsequently
+* :pep:`585`-compliant **subscripted generics** (i.e., user-defined classes
+  subclassing one or more :pep:`585`-compliant type hints subsequently
   subscripted by one or more PEP-compliant type hints).
 
 Caveats
@@ -891,17 +891,12 @@ To distinguish between the various semantic types of hints ambiguously matched
 by this type, higher-level PEP-specific functions *must* be called instead.
 These include:
 
-* :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`.
-  detecting `PEP 484`_-compliant generic type hints.
-* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin`.
-  detecting `PEP 585`_-compliant builtin type hints.
-* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`.
-  detecting `PEP 585`_-compliant generic type hints.
-
-.. _PEP 484:
-    https://www.python.org/dev/peps/pep-0484
-.. _PEP 585:
-    https://www.python.org/dev/peps/pep-0585
+* :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`,
+  detecting :pep:`484`-compliant generic type hints.
+* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin`,
+  detecting :pep:`585`-compliant builtin type hints.
+* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`,
+  detecting :pep:`585`-compliant generic type hints.
 '''
 
 # ....................{ TYPES ~ scalar                    }....................

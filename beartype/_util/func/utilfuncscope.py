@@ -13,9 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.utilobject import get_object_basename_scoped
+from beartype._util.utiltyping import TypeException
 from collections.abc import Callable
 from types import CodeType
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -125,7 +126,7 @@ def get_func_globals(
     func: Callable,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CallableScope:
     '''
     **Global scope** (i.e., a dictionary mapping from the name to value of each
@@ -147,7 +148,7 @@ def get_func_globals(
         incremented past), such that the next non-ignored frame following the
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
-    exception_cls : type, optional
+    exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`_BeartypeUtilCallableException`.
 
@@ -191,7 +192,7 @@ def get_func_locals(
 
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CallableScope:
     '''
     **Local scope** for the passed callable.
@@ -253,7 +254,7 @@ def get_func_locals(
         incremented past), such that the next non-ignored frame following the
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
-    exception_cls : type, optional
+    exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`_BeartypeUtilCallableException`.
 
@@ -278,7 +279,7 @@ def get_func_locals(
     # ..................{ IMPORTS                           }..................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-    from beartype._util.func.utilfuncstack import get_func_stack_frame
+    from beartype._util.func.utilfuncstack import iter_func_stack_frames
 
     # ..................{ NOOP                              }..................
     # Fully-qualified name of the module declaring the passed callable if that
@@ -302,10 +303,7 @@ def get_func_locals(
         # The passed callable is dynamically declared in-memory...
         func_module_name is None or
         # The passed callable is unnested *OR*...
-        not is_func_nested(func) or
-        # The active Python interpreter fails to declare the private
-        # sys._getframe() getter...
-        get_func_stack_frame is None
+        not is_func_nested(func)
     ):
         # Then silently reduce to a noop by treating this nested callable as
         # module-scoped by preserving "func_locals" as the empty dictionary.
@@ -313,7 +311,6 @@ def get_func_locals(
     # Else, all of the following constraints hold:
     # * The passed callable is physically declared on-disk.
     # * The passed callable is nested.
-    # * The active Python interpreter declares the sys._getframe() getter.
 
     # ..................{ LOCALS ~ scope                    }..................
     # Local scope of the passed callable to be returned.
@@ -409,10 +406,6 @@ def get_func_locals(
     # print(f'Searching for parent {func_scope_name}() local scope...')
 
     # ..................{ LOCALS ~ frame                    }..................
-    # Next non-ignored frame following the last ignored frame, ignoring an
-    # additional frame embodying the current call to this getter.
-    func_frame = get_func_stack_frame(func_stack_frames_ignore + 1)
-
     # Code object underlying the parent callable associated with the current
     # stack frame if that callable is pure-Python *OR* "None".
     func_frame_codeobj: Optional[CodeType] = None
@@ -430,7 +423,8 @@ def get_func_locals(
     # runtime scope is returned as is.
     #
     # Note this also implicitly skips past all other decorators applied *AFTER*
-    # (i.e., lexically above) @beartype to this nested callable: e.g.,
+    # @beartype (and thus residing lexically above @beartype) in caller code to
+    # this nested callable: e.g.,
     #     @the_way_of_kings   <--- skipped past
     #     @words_of_radiance  <--- skipped past
     #     @oathbringer        <--- skipped past
@@ -438,88 +432,86 @@ def get_func_locals(
     #     @beartype
     #     def the_stormlight_archive(bruh: str) -> str:
     #         return bruh
-    while func_frame:
+    for func_frame in iter_func_stack_frames(
+        # 0-based index of the first non-ignored frame following the last
+        # ignored frame, ignoring an additional frame embodying the current
+        # call to this getter.
+        func_stack_frames_ignore=func_stack_frames_ignore + 1,
+    ):
         # Code object underlying this frame's scope if that scope is
         # pure-Python *OR* "None" otherwise.
         func_frame_codeobj = get_func_codeobj_or_none(func_frame)
 
-        # If that scope is pure-Python, that code object exists. In this
-        # case...
-        if func_frame_codeobj is not None:
-            # Fully-qualified name of that scope's module.
-            func_frame_module_name = func_frame.f_globals['__name__']
+        # If this code object does *NOT* exist, this scope is C-based. In this
+        # case, silently ignore this scope and proceed to the next frame.
+        if func_frame_codeobj is None:
+            continue
+        # Else, this code object exists, implying this scope is pure-Python.
 
-            # Unqualified name of that scope.
-            func_frame_name = func_frame_codeobj.co_name
+        # Fully-qualified name of that scope's module.
+        func_frame_module_name = func_frame.f_globals['__name__']
+
+        # Unqualified name of that scope.
+        func_frame_name = func_frame_codeobj.co_name
+        # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
+
+        # If that scope is the placeholder string assigned by the active Python
+        # interpreter to all scopes encapsulating the top-most lexical scope of
+        # a module in the current call stack, this search has just crossed a
+        # module boundary and is thus no longer searching within the module
+        # declaring this nested callable and has thus failed to find the
+        # lexical scope of the parent declaring this nested callable. Why?
+        # Because that scope *MUST* necessarily be in the same module as that
+        # of this nested callable. In this case, raise an exception.
+        if func_frame_name == '<module>':
+            raise exception_cls(
+                f'{get_object_basename_scoped(func)}() parent lexical scope '
+                f'{func_scope_name}() not found on call stack.'
+            )
+        # Else, that scope is *NOT* a module.
+        #
+        # If...
+        elif (
+            # That callable's name is that of the current lexical scope to be
+            # found *AND*...
+            func_frame_name == func_scope_name and
+            # That callable's module is that of this nested callable's and thus
+            # resides in the same lexical scope...
+            func_frame_module_name == func_module_name
+        ):
+        # Then that callable embodies the lexical scope to be found. In this
+        # case, that callable is the parent callable directly declaring this
+        # nested callable.
+        #
+        # Note that this scope *CANNOT* be validated to declare this nested
+        # callable. Why? Because this getter function is called by the
+        # @beartype decorator when decorating this nested callable, which has
+        # yet to be declared until @beartype creates and returns a new wrapper
+        # function and is thus unavailable from this scope: e.g.,
+        #     # This conditional *ALWAYS* raises an exception, because this
+        #     # nested callable has yet to be declared.
+        #     if func_name not in func_locals:
+        #         raise exception_cls(
+        #             f'{func_label} not declared by lexically scoped parent '
+        #             f'callable(s) that declared local variables:\n{repr(func_locals)}'
+        #         )
+        #
+        # Ergo, we have *NO* alternative but to blindly assume the above
+        # algorithm correctly collected this scope, which we only do because we
+        # have exhaustively tested this with *ALL* edge cases.
             # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
-            # If that scope is the placeholder string assigned by the active
-            # Python interpreter to all scopes encapsulating the top-most
-            # lexical scope of a module in the current call stack, halt
-            # searching.
-            #
-            # If that scope is a module, this search has just crossed a module
-            # boundary and is thus no longer searching within the module
-            # declaring this nested callable and has thus failed to find the
-            # lexical scope of the parent declaring this nested callable. Why?
-            # Because that scope *MUST* necessarily be in the same module as
-            # that of this nested callable. In this case, immediately break and
-            # raise an exception.
-            if func_frame_name == '<module>':
-                raise exception_cls(
-                    f'{get_object_basename_scoped(func)}() parent lexical scope '
-                    f'{func_scope_name}() not found on call stack.'
-                )
-            # Else, that scope is *NOT* a module.
-            #
-            # If...
-            elif (
-                # That callable's name is that of the current lexical scope to
-                # be found *AND*...
-                func_frame_name == func_scope_name and
-                # That callable's module is that of this nested callable's and
-                # thus resides in the same lexical scope...
-                func_frame_module_name == func_module_name
-            ):
-            # Then that callable embodies the lexical scope to be found. In
-            # this case, that callable is the parent callable directly
-            # declaring this nested callable.
-            #
-            # Note that this scope *CANNOT* be validated to declare this nested
-            # callable. Why? Because this getter function is called by the
-            # @beartype decorator when decorating this nested callable, which
-            # has yet to be declared until @beartype creates and returns a new
-            # wrapper function and is thus unavailable from this scope: e.g.,
-            #     # This conditional *ALWAYS* raises an exception, because this
-            #     # nested callable has yet to be declared.
-            #     if func_name not in func_locals:
-            #         raise exception_cls(
-            #             f'{func_label} not declared by lexically scoped parent '
-            #             f'callable(s) that declared local variables:\n{repr(func_locals)}'
-            #         )
-            #
-            # Ergo, we have *NO* alternative but to blindly assume the above
-            # algorithm correctly collected this scope, which we only do
-            # because we have exhaustively tested this with *ALL* edge cases.
-                # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
+            # Local scope of the passed callable. Since this nested callable is
+            # directly declared in the body of this parent callable, the local
+            # scope of this nested callable is *EXACTLY* the local scope of the
+            # body of this parent callable. Well, isn't that special?
+            func_scope = func_frame.f_locals
 
-                # Local scope of the passed callable. Since this nested
-                # callable is directly declared in the body of this parent
-                # callable, the local scope of this nested callable is
-                # *EXACTLY* the local scope of the body of this parent
-                # callable. Well, isn't that special?
-                func_scope = func_frame.f_locals
-
-                # Halt iteration.
-                break
-            # Else, that callable does *NOT* embody the current lexical scope
-            # to be found. In this case, silently ignore that callable and
-            # proceed to the next frame in the call stack.
-        # Else, that callable is C-based. In this case, silently ignore that
-        # callable and proceed to the next frame in the call stack.
-
-        # Iterate to the next frame on the call stack.
-        func_frame = func_frame.f_back
+            # Halt iteration.
+            break
+        # Else, that callable does *NOT* embody the current lexical scope to be
+        # found. In this case, silently ignore that callable and proceed to the
+        # next frame in the call stack.
 
     # Return the local scope of the passed callable.
     return func_scope

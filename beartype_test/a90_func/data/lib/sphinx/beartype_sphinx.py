@@ -24,9 +24,9 @@ about classes used as annotations.
 from beartype import beartype
 
 #FIXME: Uncomment to debug that this module is actually being imported.
-print('Some phantom, some faint image; till the breast')
+# print('Some phantom, some faint image; till the breast')
 
-# ....................{ IMPORTS                           }....................
+# ....................{ VALIDATION                        }....................
 def till_the_breast() -> str:
     '''
     Arbitrary callable *not* decorated by the :func:`beartype.beartype`
@@ -36,11 +36,11 @@ def till_the_breast() -> str:
 
     return 'Some phantom, some faint image;'
 
-# till_the_breast() decorated by @beartype.
+# That callable decorated by @beartype.
 till_the_breast_beartyped = beartype(till_the_breast)
 
-# If beartype did *NOT* correctly detected itself to be running during Sphinx
-# autodocumentation by preserving this callable as is, raise an exception.
+# If beartype did *NOT* correctly detect itself to be running during Sphinx
+# autodocumentation by preserving that callable as is, raise an exception.
 if till_the_breast_beartyped is not till_the_breast:
     raise ValueError(
         '@beartype failed to reduce to the identity decorator during '

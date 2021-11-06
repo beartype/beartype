@@ -39,10 +39,15 @@ def test_sphinx(tmp_path) -> None:
         test, created in the base temporary directory.
     '''
 
+    # ..................{ SPHINX-BUILD                      }..................
     # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype._util.mod.lib.utilsphinx import (
+        _SPHINX_AUTODOC_SUBPACKAGE_NAME)
     from beartype_test.util.os.command.pytcmdexit import is_success
     from beartype_test.util.path.pytpathtest import (
         get_test_func_data_lib_sphinx_dir)
+    from sys import modules as module_imported_names
 
     # Entry-point (i.e., pure-Python function accepting a list of zero or more
     # command-line arguments) underlying the external "sphinx-build" command.
@@ -94,3 +99,28 @@ def test_sphinx(tmp_path) -> None:
     # fake project *WITHOUT* raising an exception.
     assert is_success(sphinx_build_exit_code), (
         f'"sphinx-build" exit code {sphinx_build_exit_code} != 0.')
+
+    # ..................{ VALIDATION                        }..................
+    def thou_art_there() -> str:
+        '''
+        Arbitrary callable *not* decorated by the :func:`beartype.beartype`
+        decorator intentionally annotated by one or more arbitrary unignorable
+        type hints to prevent that decorator from silently reducing to a noop.
+        '''
+
+        return 'From which they fled recalls them'
+
+    # That callable decorated by @beartype.
+    thou_art_there_beartyped = beartype(thou_art_there)
+
+    # Assert @beartype decorated that callable with runtime type-checking
+    # rather than erroneously reducing to a noop.
+    assert thou_art_there_beartyped is not thou_art_there
+
+    # ..................{ OPTIMIZATION                      }..................
+    # Crudely unimport the Sphinx "autodoc" extension. Doing so optimizes
+    # subsequent invocations of the @beartype decorator by reducing the
+    # beartype._util.mod.lib.utilsphinx.is_sphinx_autodocing() tester
+    # internally called by that decorator from an O(n) test with non-negligible
+    # constants to an O(1) test with negligible constants.
+    del module_imported_names[_SPHINX_AUTODOC_SUBPACKAGE_NAME]
