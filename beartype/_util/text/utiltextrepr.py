@@ -18,11 +18,33 @@ from collections.abc import Callable
 from pprint import saferepr
 from re import (
     DOTALL,
+    compile as re_compile,
     sub as re_sub
 )
 from string import punctuation
+from typing import Dict
 
-# ....................{ PRIVATE                           }....................
+# ....................{ PRIVATE ~ cache                   }....................
+_MAX_LEN_TO_MAX_CHARS_REGEX: Dict[int, str] = {}
+'''
+Non-thread-safe global dictionary cache mapping from each **maximum length**
+(i.e., ``max_len`` parameter previously passed to the :func:`represent_object`
+function) to a compiled regular expression grouping zero or more leading
+characters preceding this maximum length *and* zero or more trailing
+delimiters.
+
+Caveats
+----------
+**This cache is intentionally non-thread-safe.** Although rendering this cache
+thread-safe would be trivial (e.g., via the
+:class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class), doing
+so would both reduce efficiency *and* be ineffectual. Since this cache is
+*only* used to amortize the costs of regular expression compilation, violating
+thread-safety has *no* harmful side effects (aside from recompiling a
+previously compiled regular expression in unlikely edge cases).
+'''
+
+# ....................{ PRIVATE ~ frozen                  }....................
 _CHARS_PUNCTUATION = frozenset(punctuation)
 '''
 Frozen set of all **ASCII punctuation characters** (i.e., non-Unicode
@@ -48,7 +70,6 @@ machine-readable representations all instances of these classes, typically due
 to these representations either being effectively quoted already *or*
 sufficiently terse as to not benefit from being quoted).
 '''
-
 
 # ....................{ REPRESENTERS                      }....................
 def represent_object(
@@ -156,43 +177,43 @@ def represent_object(
         # If this maximum length is long enough to at least allow truncation to
         # ellipses (i.e., a substring of length 3)...
         if max_len > 3:
-            #FIXME: Consider compiling and caching this regex into a module
-            #dictionary mapping from "max_len" values to compiled regexes.
+            # Compiled regular expression grouping zero or more leading
+            # characters preceding this maximum length and zero or more
+            # trailing delimiters if this function has previously entered this
+            # branch under the same maximum length *OR* "None" otherwise.
+            max_chars_regex: str = _MAX_LEN_TO_MAX_CHARS_REGEX.get(max_len)  # type: ignore[assignment]
 
-            # Uncompiled regular expression grouping zero or more leading
-            # characters preceding this maximum length *AND* zero or more
-            # trailing delimiters.
-            #
-            # Note that:
-            # * This expression conditionally depends on a passed parameter and
-            #   thus *CANNOT* be compiled as a module-scoped global.
-            # * Efficiency is *NOT* a consideration for this function, which is
-            #   only called in the edge-case event of a runtime error.
-            PRE_MAX_CHARS_LAST_DELIMITERS_REGEX = (
-                # Group anchored at the string start preserving a maximum
-                # number (excluding the length required to inject an ellipses)
-                # minus one to account for the fact that both bounds of the
-                # "{...,...}" range operator are inclusive) of any characters.
-                r'^(.{0,'
-                f'{max_len - 4}'
-                r'})'
-                # Ungrouped remainder to be truncated.
-                r'.*?'
-                # Group anchored at the string end preserving zero or more
-                # trailing delimiters.
-                r'([\'")}>\]]*)$'
-            )
+            # If *NO* such expression has been previously compiled...
+            if max_chars_regex is None:
+                # Compile this expression from...
+                max_chars_regex = re_compile(
+                    # Uncompiled regular expression matching...
+                    (
+                        # Group anchored at the string start preserving a
+                        # maximum number (excluding the length required to
+                        # inject an ellipses) minus one to account for the fact
+                        # that both bounds of the "{...,...}" range operator
+                        # are inclusive) of any characters.
+                        r'^(.{0,'
+                        f'{max_len - 4}'
+                        r'})'
+                        # Ungrouped remainder to be truncated.
+                        r'.*?'
+                        # Group anchored at the string end preserving zero or
+                        # more trailing delimiters.
+                        r'([\'")}>\]]*)$'
+                    ),
+                    flags=DOTALL,
+                )
 
-            # Replace the substring of this representation from whichever of the
-            # first character following this maximum length or the first newline
-            # occurs first to the string end (excluding any optional trailing
-            # delimiters) with a single ellipses.
-            obj_repr = re_sub(
-                PRE_MAX_CHARS_LAST_DELIMITERS_REGEX,
-                r'\1...\2',
-                obj_repr,
-                flags=DOTALL,
-            )
+                # Cache this expression against this maximum length.
+                _MAX_LEN_TO_MAX_CHARS_REGEX[max_len] = max_chars_regex
+
+            # Replace the substring of this representation from whichever of
+            # the first character following this maximum length or the first
+            # newline occurs first to the string end (excluding any optional
+            # trailing delimiters) with a single ellipses.
+            obj_repr = re_sub(max_chars_regex, r'\1...\2', obj_repr)
         # Else, this maximum length is *NOT* long enough to at least allow
         # truncation to ellipses (i.e., a substring of length 3). In this case,
         # truncate this string to this length *WITHOUT* ellipses.

@@ -18,7 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # bodies of callables declared below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from sys import modules as module_imported_names
-from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from beartype._util.func.utilfuncstack import iter_func_stack_frames
 
 # See the "beartype.cave" submodule for further commentary.
@@ -65,24 +64,18 @@ def is_sphinx_autodocing() -> bool:
 
     # For each stack frame on the call stack, ignoring the stack frame
     # encapsulating the call to this tester...
-    for func_frame in iter_func_stack_frames(func_stack_frames_ignore=1):
-        # Code object underlying this frame's scope if this scope is
-        # pure-Python *OR* "None" otherwise.
-        func_frame_codeobj = get_func_codeobj_or_none(func_frame)
-
-        # If this code object does *NOT* exist, this scope is C-based. In this
-        # case, silently ignore this scope and proceed to the next frame.
-        if func_frame_codeobj is None:
-            continue
-        # Else, this code object exists, implying this scope is pure-Python.
-
-        # Fully-qualified name of this scope's module.
-        func_frame_module_name = func_frame.f_globals['__name__']
+    for frame in iter_func_stack_frames(func_stack_frames_ignore=1):
+        # Fully-qualified name of this scope's module if this scope defines
+        # this name *OR* "None" otherwise.
+        frame_module_name = frame.f_globals.get('__name__')
         # print(f'Visiting frame (module: "{func_frame_module_name}")...')
 
         # If this scope's module is the "autodoc" extension, Sphinx is
         # currently autogenerating documentation. In this case, return true.
-        if func_frame_module_name == _SPHINX_AUTODOC_SUBPACKAGE_NAME:
+        if (
+            frame_module_name and
+            frame_module_name.startswith(_SPHINX_AUTODOC_SUBPACKAGE_NAME)
+        ):
             return True
         # Else, this scope's module is *NOT* the "autodoc" extension.
 

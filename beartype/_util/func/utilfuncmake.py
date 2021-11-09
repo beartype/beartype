@@ -146,7 +146,13 @@ def make_func(
     # Since doing so is both more verbose and obfuscatory for no tangible gain,
     # the current circumspect approach is preferred.
     try:
+        #FIXME: *UNCOMMENT THIS LINE TO SHOW @beartyped WRAPPER FUNCTION CODE.*
+        #FIXME: As time permits (so, maybe never), officially expose this
+        #extremely useful logic via a new optional
+        #"is_print_wrapper_code" parameter of the @beartype decorator,
+        #naturally defaulting to false.
         # print(f'\n@beartyped {func_name} wrapper:\n\n{number_lines(func_code)}\n')
+
         exec(func_code, func_globals, func_locals)
 
         #FIXME: See above.

@@ -44,6 +44,8 @@ from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_return,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._util.text.utiltextrepr import represent_object
+from collections.abc import Callable
 from inspect import Parameter, Signature
 from typing import NoReturn
 
@@ -81,7 +83,13 @@ _RETURN_HINT_EMPTY = Signature.empty
 '''
 
 # ....................{ GENERATORS                        }....................
-def generate_code(data: BeartypeData) -> str:
+def generate_code(
+    data: BeartypeData,
+
+    # "beartype._decor._code.codesnip" string globals required only for their
+    # bound "str.format" methods.
+    CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format,
+) -> str:
     '''
     Generate a Python code snippet dynamically defining the wrapper function
     type-checking the passed decorated callable.
@@ -170,6 +178,10 @@ def generate_code(data: BeartypeData) -> str:
     code_check_return = _code_check_return(data)
 
     # If the callable return requires *NO* type-checking...
+    #
+    # Note that this branch *CANNOT* be embedded in the prior call to the
+    # _code_check_return() function, as doing so would prevent us from
+    # efficiently reducing to a noop here.
     if not code_check_return:
         # If all callable parameters also require *NO* type-checking, this
         # callable itself requires *NO* type-checking. In this case, return the
@@ -181,47 +193,9 @@ def generate_code(data: BeartypeData) -> str:
 
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
-        code_check_return = CODE_RETURN_UNCHECKED.format(
+        code_check_return = CODE_RETURN_UNCHECKED_format(
             func_call_prefix=data.func_wrapper_code_call_prefix)
     # Else, the callable return requires type-checking.
-
-    # Python code snippet declaring all optional private beartype-specific
-    # parameters directly derived from the local scope established by the above
-    # calls to the _code_check_params() and _code_check_return() functions.
-    code_signature_params = ''.join(
-        # For the name of each such parameter...
-        (
-            f'{CODE_INDENT_1}'
-            # Default this parameter to the current value of the module-scoped
-            # attribute of the same name, passed to the make_func() function by
-            # the parent @beartype decorator. While awkward, this is the
-            # optimally efficient means of exposing arbitrary attributes to the
-            # body of this wrapper function.
-            f'{func_wrapper_param_name}={func_wrapper_param_name},\n'
-        )
-        for func_wrapper_param_name in data.func_wrapper_locals.keys()
-    )
-
-    # Python code snippet declaring the signature of this wrapper.
-    code_signature = CODE_SIGNATURE.format(
-        func_wrapper_prefix=data.func_wrapper_code_signature_prefix,
-        func_wrapper_name=data.func_wrapper_name,
-        func_wrapper_params=code_signature_params,
-    )
-
-    # Python code snippet of preliminary statements (e.g., local variable
-    # assignments) if any *AFTER* generating snippets type-checking parameters
-    # and return values, both of which modify instance variables of the
-    # dataclass tested below.
-    code_body_init = (
-        # If the body of this wrapper requires a pseudo-random integer, append
-        # code generating and localizing such an integer to this signature.
-        CODE_INIT_RANDOM_INT
-        if ARG_NAME_GETRANDBITS in data.func_wrapper_locals else
-        # Else, this body requires *NO* such integer. In this case, preserve
-        # this signature as is.
-        ''
-    )
 
     # Return Python code defining the wrapper type-checking this callable.
     # While there exist numerous alternatives to string formatting (e.g.,
@@ -234,8 +208,7 @@ def generate_code(data: BeartypeData) -> str:
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
     return (
-        f'{code_signature}'
-        f'{code_body_init}'
+        f'{_make_func_wrapper_signature(data)}'
         f'{code_check_params}'
         f'{code_check_return}'
     )
@@ -485,3 +458,77 @@ def _code_check_return(data: BeartypeData) -> str:
 
     # Return this code.
     return func_wrapper_code
+
+# ....................{ PRIVATE ~ return                  }....................
+def _make_func_wrapper_signature(
+    data: BeartypeData,
+
+    # "beartype._decor._code.codesnip" string globals required only for their
+    # bound "str.format" methods.
+    CODE_SIGNATURE_format: Callable = CODE_SIGNATURE.format,
+) -> str:
+    '''
+    Create and return the **signature** (i.e., callable declaration prefixing
+    the body of that callable) of the decorated callable.
+
+    Parameters
+    ----------
+    data : BeartypeData
+        Decorated callable to be inspected.
+
+    Yields
+    ----------
+    str
+        Signature of this callable.
+    '''
+    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
+
+    # Python code snippet declaring all optional private beartype-specific
+    # parameters directly derived from the local scope established by the above
+    # calls to the _code_check_params() and _code_check_return() functions.
+    code_signature_params = ''.join(
+        # For the name of each such parameter, compose the declaration of
+        # this parameter in the signature of this wrapper from...
+        (
+            # Indentation prefixing all wrapper parameters.
+            f'{CODE_INDENT_1}'
+            # Default this parameter to the current value of the module-scoped
+            # attribute of the same name, passed to the make_func() function by
+            # the parent @beartype decorator. While awkward, this is the
+            # optimally efficient means of exposing arbitrary attributes to the
+            # body of this wrapper function.
+            f'{param_name}={param_name}, '
+            # For debuggability, additionally suffix this parameter by a
+            # comment embedding the machine-readable representation of this
+            # value, stripped of newline and truncated to a reasonable length.
+            f'# is {represent_object(param_value)}\n'
+        )
+        for param_name, param_value in data.func_wrapper_locals.items()
+    )
+
+    # Python code snippet declaring the signature of this wrapper.
+    code_signature = CODE_SIGNATURE_format(
+        func_wrapper_prefix=data.func_wrapper_code_signature_prefix,
+        func_wrapper_name=data.func_wrapper_name,
+        func_wrapper_params=code_signature_params,
+    )
+
+    # Python code snippet of preliminary statements (e.g., local variable
+    # assignments) if any *AFTER* generating snippets type-checking parameters
+    # and return values, both of which modify instance variables of the
+    # dataclass tested below.
+    code_body_init = (
+        # If the body of this wrapper requires a pseudo-random integer, append
+        # code generating and localizing such an integer to this signature.
+        CODE_INIT_RANDOM_INT
+        if ARG_NAME_GETRANDBITS in data.func_wrapper_locals else
+        # Else, this body requires *NO* such integer. In this case, preserve
+        # this signature as is.
+        ''
+    )
+
+    # Return this signature suffixed by zero or more preliminary statements.
+    return (
+        f'{code_signature}'
+        f'{code_body_init}'
+    )

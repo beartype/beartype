@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_cacheunboundedstrong() -> None:
     """
     Test successful usage of the
-    :func:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class.
+    :class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class.
     """
 
     # Defer heavyweight imports.
