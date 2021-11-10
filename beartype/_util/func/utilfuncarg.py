@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.utiltyping import (
     CallableCodeObjable,
     TypeException,
@@ -25,10 +26,18 @@ from inspect import (
     CO_VARKEYWORDS,
     Parameter,
 )
-from typing import Any, Iterable, Tuple, Type
+from typing import Any, Dict, Iterable, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ PRIVATE                           }....................
+_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
+'''
+Empty dictionary suitable for use as the default dictionary mapping the name of
+each optional keyword-only parameter accepted by a callable to the default
+value assigned to that parameter.
+'''
 
 # ....................{ VALIDATORS                        }....................
 #FIXME: Uncomment as needed.
@@ -306,8 +315,7 @@ def is_func_arg_name(func: CallableCodeObjable, arg_name: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if the passed callable accepts an argument with this
-        name.
+        ``True`` only if that callable accepts an argument with this name.
 
     Raises
     ----------
@@ -316,15 +324,13 @@ def is_func_arg_name(func: CallableCodeObjable, arg_name: str) -> bool:
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'
 
-    # For the name of each parameter accepted by this callable...
-    for arg_name_curr, _, _ in iter_func_args(func):
-        # If this is the passed name, return true.
-        if arg_name_curr == arg_name:
-            return True
-
-    # Else, this callable accepts no such parameter. In this case, return
-    # false.
-    return False
+    # Return true only if...
+    return any(
+        # This is the passed name...
+        arg_name_curr == arg_name
+        # For the name of any parameter accepted by this callable.
+        for arg_name_curr, _, _ in iter_func_args(func)
+    )
 
 # ....................{ GETTERS                           }....................
 def get_func_args_len_flexible(
@@ -386,18 +392,40 @@ def iter_func_args(func: CallableCodeObjable) -> Iterable[
     #. ``arg_kind``, the kind of the currently iterated parameter, guaranteed
        to be one of the following enumeration members:
 
-       * :attr:`Parameter.POSITIONAL_OR_KEYWORD` for standard (i.e., positional
-         or keyword) parameters.
        * :attr:`Parameter.POSITIONAL_ONLY` for positional-only parameters.
-       * :attr:`Parameter.KEYWORD_ONLY` for keyword-only parameters.
+       * :attr:`Parameter.POSITIONAL_OR_KEYWORD` for **flexible parameters**
+         (i.e., parameters that may be passed as either positional or keyword
+         arguments).
        * :attr:`Parameter.VAR_POSITIONAL` for the variadic positional
          parameter.
+       * :attr:`Parameter.KEYWORD_ONLY` for keyword-only parameters.
        * :attr:`Parameter.VAR_KEYWORD` for the variadic keyword parameter.
 
     #. ``arg_default``, either:
 
        * If this parameter is mandatory, ``None``.
        * If this parameter is optional, the default value of this parameter.
+
+    For consistency with the official grammar for callable signatures
+    standardized by :pep:`570`, this generator is guaranteed to yield 3-tuples
+    whose ``arg_kind`` and ``arg_default`` items are ordered as follows:
+
+    * **Mandatory positional-only parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.POSITIONAL_ONLY, None)``).
+    * **Optional positional-only parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.POSITIONAL_ONLY, arg_default)``).
+    * **Mandatory flexible parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.POSITIONAL_OR_KEYWORD, None)``).
+    * **Optional flexible parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.POSITIONAL_OR_KEYWORD, arg_default)``).
+    * **Variadic positional parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.VAR_POSITIONAL, None)``).
+    * **Mandatory keyword-only parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.KEYWORD_ONLY, None)``).
+    * **Optional keyword-only parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.KEYWORD_ONLY, arg_default)``).
+    * **Variadic keyword parameters** (i.e., 3-tuples satisfying
+      ``(arg_name, Parameter.VAR_KEYWORD, None)``).
 
     Caveats
     ----------
@@ -426,105 +454,227 @@ def iter_func_args(func: CallableCodeObjable) -> Iterable[
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_unwrapped_codeobj(func)
 
-    # Tuple of the names of all variables localized to this callable.
+    # Tuple of the names of all variables localized to that callable.
     #
     # Note that this tuple contains the names of both:
-    # * All parameters accepted by this callable.
-    # * All local variables internally declared in this callable's body.
-    # * "func_codeobj.co_names" is incorrectly documented in the "inspect"
-    #   module as "tuple of names of local variables." That's a lie, of course.
-    #   That attribute is instead a largely useless tuple of the names of both
-    #   globals and object attributes accessed in this callable's body. *shrug*
+    # * All parameters accepted by that callable.
+    # * All local variables internally declared in that callable's body.
     #
     # Ergo, this tuple *CANNOT* be searched in full. Only the subset of this
-    # tuple containing only argument names may be safely searched.
+    # tuple containing argument names is relevant and may be safely searched.
+    #
+    # Lastly, note the "func_codeobj.co_names" attribute is incorrectly
+    # documented in the "inspect" module as the "tuple of names of local
+    # variables." That's a lie. That attribute is instead a mostly useless
+    # tuple of the names of both globals and object attributes accessed in the
+    # body of that callable. *shrug*
     args_name = func_codeobj.co_varnames
 
-    # Tuple of the default values assigned to all optional standard (i.e.,
-    # positional or keyword) parameters accepted by this callable if any *OR*
-    # the empty tuple otherwise.
-    args_defaults_std = getattr(func_codeobj, '__defaults__', ())
+    # Tuple of the default values assigned to all optional non-keyword-only
+    # parameters (i.e., all optional positional-only *AND* optional flexible
+    # (i.e., positional or keyword) parameters) accepted by that callable if
+    # any *OR* the empty tuple otherwise.
+    args_defaults_posonly_or_flex = getattr(func_codeobj, '__defaults__', ())
 
     # Dictionary mapping the name of each optional keyword-only parameter
-    # accepted by this callable to the default value assigned to that parameter
+    # accepted by that callable to the default value assigned to that parameter
     # if any *OR* the empty dictionary otherwise.
-    args_defaults_kwonly = getattr(func_codeobj, '__kwdefaults__', {})
+    #
+    # For both space and time efficiency, the empty dictionary is intentionally
+    # *NOT* accessed here as "{}". Whereas each instantiation of the empty
+    # tuple efficiently reduces to the same empty tuple, each instantiation of
+    # the empty dictionary inefficiently creates a new empty dictionary: e.g.,
+    #     >>> () is ()
+    #     True
+    #     >>> {} is {}
+    #     False
+    args_defaults_kwonly = getattr(
+        func_codeobj, '__kwdefaults__', _ARGS_DEFAULTS_KWONLY_EMPTY)
 
-    # Number of standard parameters accepted by this callable.
-    args_len_std = func_codeobj.co_argcount
+    # Number of both optional and mandatory positional-only parameters accepted
+    # by that callable, specified as either...
+    args_len_posonly = (
+        # If the active Python interpreter targets Python >= 3.8 and thus
+        # supports PEP 570 standardizing positional-only parameters, the number
+        # of these parameters;
+        func_codeobj.co_posonlyargcount  # type: ignore[attr-defined]
+        if IS_PYTHON_AT_LEAST_3_8 else
+        # Else, this interpreter targets Python < 3.8 and thus fails to
+        # support PEP 570. In this case, there are *NO* such parameters.
+        0
+    )
 
-    # Number of keyword-only parameters accepted by this callable.
+    # Number of both optional and mandatory flexible parameters accepted by
+    # that callable.
+    args_len_flex = func_codeobj.co_argcount
+
+    # Number of both optional and mandatory keyword-only parameters accepted by
+    # that callable.
     args_len_kwonly = func_codeobj.co_kwonlyargcount
 
-    # Number of optional standard parameters accepted by this callable.
-    args_len_std_optional = len(args_defaults_std)
+    # Number of optional non-keyword-only parameters accepted by that callable.
+    args_len_posonly_or_flex_optional = len(args_defaults_posonly_or_flex)
 
-    # Number of optional keyword-only parameters accepted by this callable.
+    # Number of optional flexible parameters accepted by that callable, defined
+    # as the number of optional non-keyword-only parameters capped to the total
+    # number of flexible parameters. Why? Because optional flexible parameters
+    # preferentially consume non-keyword-only default values first; optional
+    # positional-only parameters consume all remaining non-keyword-only default
+    # values. Why? Because:
+    # * Default values are *ALWAYS* assigned to positional parameters from
+    #   right-to-left.
+    # * Flexible parameters reside to the right of positional-only parameters.
+    #
+    # Specifically, this number is defined as...
+    args_len_flex_optional = (
+        # If the number of optional non-keyword-only parameters exceeds the
+        # total number of flexible parameters, the total number of flexible
+        # parameters. For obvious reasons, the number of optional flexible
+        # parameters *CANNOT* exceed the total number of flexible parameters;
+        args_len_flex
+        if args_len_posonly_or_flex_optional >= args_len_flex else
+        # Else, the total number of flexible parameters is strictly greater
+        # than the number of optional non-keyword-only parameters, implying
+        # optional flexible parameters consume all non-keyword-only default
+        # values. In this case, the number of optional flexible parameters is
+        # the number of optional non-keyword-only parameters.
+        args_len_posonly_or_flex_optional
+    )
+
+    # Number of optional positional-only parameters accepted by that callable,
+    # defined as all remaining optional non-keyword-only parameters *NOT*
+    # already consumed by positional parameters. Note that this number is
+    # guaranteed to be non-negative. Why? Because, it is the case that either:
+    # * "args_len_posonly_or_flex_optional >= args_len_flex", in which case
+    #   "args_len_flex_optional == args_len_flex", in which case
+    #   "args_len_posonly_or_flex_optional >= args_len_flex_optional".
+    # * "args_len_posonly_or_flex_optional < args_len_flex", in which case
+    #   "args_len_flex_optional == args_len_posonly_or_flex_optional", in which
+    #   case "args_len_posonly_or_flex_optional == args_len_flex_optional".
+    #
+    # Just roll with it, folks. It's best not to question the unfathomable.
+    args_len_posonly_optional = (
+        args_len_posonly_or_flex_optional - args_len_flex_optional)
+
+    # Number of optional keyword-only parameters accepted by that callable.
     args_len_kwonly_optional = len(args_defaults_kwonly)
 
-    # Number of mandatory standard parameters accepted by this callable.
-    args_len_std_mandatory = args_len_std - args_len_std_optional
+    # Number of mandatory positional-only parameters accepted by that callable.
+    args_len_posonly_mandatory = args_len_posonly - args_len_posonly_optional
 
-    # Number of mandatory keyword-only parameters accepted by this callable.
+    # Number of mandatory flexible parameters accepted by that callable.
+    args_len_flex_mandatory = args_len_flex - args_len_flex_optional
+
+    # Number of mandatory keyword-only parameters accepted by that callable.
     args_len_kwonly_mandatory = args_len_kwonly - args_len_kwonly_optional
 
-    # 0-based index of the first mandatory standard parameter accepted by this
-    # callable in the "args_name" tuple.
-    args_index_std_mandatory = 0
+    # 0-based index of the first mandatory positional-only parameter accepted
+    # by that callable in the "args_name" tuple.
+    args_index_posonly_mandatory = 0
 
-    # 0-based index of the first optional standard parameter accepted by this
+    # 0-based index of the first optional positional-only parameter accepted by
+    # that callable in the "args_name" tuple.
+    args_index_posonly_optional = args_len_posonly_mandatory
+
+    # 0-based index of the first mandatory flexible parameter accepted by that
     # callable in the "args_name" tuple.
-    args_index_std_optional = args_len_std_mandatory
+    args_index_flex_mandatory = (
+        args_index_posonly_optional + args_len_posonly_optional)
+
+    # 0-based index of the first optional flexible parameter accepted by that
+    # callable in the "args_name" tuple.
+    args_index_flex_optional = (
+        args_index_flex_mandatory + args_len_flex_mandatory)
 
     # 0-based index of the first mandatory keyword-only parameter accepted by
-    # this callable in the "args_name" tuple.
+    # that callable in the "args_name" tuple.
     args_index_kwonly_mandatory = (
-        args_index_std_optional + args_len_std_optional)
+        args_index_flex_optional + args_len_flex_optional)
 
     # 0-based index of the first optional keyword-only parameter accepted by
-    # this callable in the "args_name" tuple.
+    # that callable in the "args_name" tuple.
     args_index_kwonly_optional = (
         args_index_kwonly_mandatory + args_len_kwonly_mandatory)
 
-    # 0-based index of the variadic positional parameter accepted by this
+    # 0-based index of the variadic positional parameter accepted by that
     # callable in the "args_name" tuple if any *OR* a meaningless value
-    # otherwise (i.e., if this callable accepts nu such parameter).
+    # otherwise (i.e., if that callable accepts no such parameter).
     args_index_var_pos = (
         args_index_kwonly_optional + args_len_kwonly_optional)
 
-    # 0-based index of the variadic keyword parameter accepted by this
+    # 0-based index of the variadic keyword parameter accepted by that
     # callable in the "args_name" tuple if any *OR* a meaningless value
-    # otherwise (i.e., if this callable accepts nu such parameter).
+    # otherwise (i.e., if that callable accepts no such parameter).
     args_index_var_kw = args_index_var_pos + 1
 
-    # For each mandatory standard parameter accepted by this callable, yield a
-    # 3-tuple describing this parameter.
-    for arg_std_mandatory in args_name[
-        args_index_std_mandatory:args_index_std_optional]:
-        yield (arg_std_mandatory, Parameter.POSITIONAL_OR_KEYWORD, None,)
+    #FIXME: This can be trivially optimized even further. How? By avoiding
+    #the "Parameter.POSITIONAL_ONLY"-style dictionary lookups here and
+    #elsewhere. Indeed, accessing "Parameter" attributes is fragile, because
+    #various attributes aren't even portably defined under older Python
+    #versions (notably, "Parameter.POSITIONAL_ONLY"). Instead:
+    #* Define a new public "ParameterKind" enumeration at the top of this
+    #  submodule declaring members with the same names.
+    #* Refactor all references to "Parameter" attributes to reference these
+    #  enumeration members instead.
+    #FIXME: This can be significantly optimized even further. How? By
+    #compacting *ALL* of the following "for" loops into a single "for" loop.
+    #Each "for" loop incurs significant overhead thanks to the "StopException"
+    #implicitly raised at the end of each such loop.
 
-    # For the 0-based index each optional standard parameter accepted by this
-    # callable and that parameter, yield a 3-tuple describing this parameter.
-    for arg_std_optional_index, arg_std_optional in enumerate(args_name[
-        args_index_std_optional:args_index_kwonly_mandatory]):
-        assert arg_std_optional_index < args_len_std_optional, (
-            f'Optional standard parameter index {arg_std_optional_index} exceeds '
-            f'optional standard parameter count {args_len_std_optional}.')
+    # For each mandatory positional-only parameter accepted by that callable,
+    # yield a 3-tuple describing this parameter.
+    for arg_posonly_mandatory in args_name[
+        args_index_posonly_mandatory:args_index_posonly_optional]:
+        yield (arg_posonly_mandatory, Parameter.POSITIONAL_ONLY, None,)
 
+    # For the 0-based index of each optional flexible parameter accepted by
+    # this callable and that parameter, yield a 3-tuple describing this
+    # parameter.
+    for arg_posonly_optional_index, arg_posonly_optional in enumerate(
+        args_name[args_index_posonly_optional:args_index_flex_mandatory]):
+        assert arg_posonly_optional_index < args_len_posonly_optional, (
+            f'Optional positional-only parameter index {arg_posonly_optional_index} >= '
+            f'optional positional-only parameter count {args_len_posonly_optional}.')
         yield (
-            arg_std_optional,
-            Parameter.POSITIONAL_OR_KEYWORD,
-            args_defaults_std[arg_std_optional_index],
+            arg_posonly_optional,
+            Parameter.POSITIONAL_ONLY,
+            args_defaults_posonly_or_flex[arg_posonly_optional_index],
         )
 
-    # For each mandatory keyword-only parameter accepted by this callable,
+    # For each mandatory flexible parameter accepted by that callable, yield a
+    # 3-tuple describing this parameter.
+    for arg_flex_mandatory in args_name[
+        args_index_flex_mandatory:args_index_flex_optional]:
+        yield (arg_flex_mandatory, Parameter.POSITIONAL_OR_KEYWORD, None,)
+
+    # For the 0-based index of each optional flexible parameter accepted by
+    # this callable and that parameter, yield a 3-tuple describing this
+    # parameter.
+    for arg_flex_optional_index, arg_flex_optional in enumerate(
+        args_name[args_index_flex_optional:args_index_kwonly_mandatory]):
+        assert arg_flex_optional_index < args_len_flex_optional, (
+            f'Optional flexible parameter index {arg_flex_optional_index} >= '
+            f'optional flexible parameter count {args_len_flex_optional}.')
+        yield (
+            arg_flex_optional,
+            Parameter.POSITIONAL_OR_KEYWORD,
+            args_defaults_posonly_or_flex[
+                args_len_posonly_optional + arg_flex_optional_index],
+        )
+
+    # If that callable accepts a variadic positional parameter, yield a 3-tuple
+    # describing this parameter *BEFORE* yielding keyword-only parameters.
+    if is_func_arg_variadic_positional(func_codeobj):
+        yield (args_name[args_index_var_pos], Parameter.VAR_POSITIONAL, None,)
+
+    # For each mandatory keyword-only parameter accepted by that callable,
     # yield a 3-tuple describing this parameter.
     for arg_kwonly_mandatory in args_name[
         args_index_kwonly_mandatory:args_index_kwonly_optional]:
         yield (arg_kwonly_mandatory, Parameter.KEYWORD_ONLY, None,)
 
     # For the 0-based index each optional keyword-only parameter accepted by
-    # this callable and that parameter, yield a 3-tuple describing this
+    # that callable and that parameter, yield a 3-tuple describing this
     # parameter.
     for arg_kwonly_optional in args_name[
         args_index_kwonly_optional:args_index_var_pos]:
@@ -534,20 +684,7 @@ def iter_func_args(func: CallableCodeObjable) -> Iterable[
             args_defaults_kwonly[arg_kwonly_optional],
         )
 
-    # If this callable accepts a variadic positional parameter, yield a 3-tuple
-    # describing this parameter.
-    if is_func_arg_variadic_positional(func_codeobj):
-        yield (
-            args_name[args_index_var_pos],
-            Parameter.VAR_POSITIONAL,
-            None,
-        )
-
-    # If this callable accepts variadic keyword arguments, yield a 3-tuple
+    # If that callable accepts a variadic keyword parameter, yield a 3-tuple
     # describing this parameter.
     if is_func_arg_variadic_keyword(func_codeobj):
-        yield (
-            args_name[args_index_var_kw],
-            Parameter.VAR_KEYWORD,
-            None,
-        )
+        yield (args_name[args_index_var_kw], Parameter.VAR_KEYWORD, None,)
