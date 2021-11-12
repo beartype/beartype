@@ -27,7 +27,9 @@ from beartype.roar import (
 from beartype._decor._code.codemain import generate_code
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed, release_object_typed)
+    acquire_object_typed,
+    release_object_typed,
+)
 from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,

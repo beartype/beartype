@@ -15,10 +15,10 @@ the :pep:`570`-compliant ``/,`` pseudo-parameter).
 Caveats
 ----------
 **This submodule requires the active Python interpreter to target Python >=
-3.8.** If this is *not* the case, importing this submodule raises an :class:
-`SyntaxError` exception. In particular, this submodule *must* not be imported
-from module scope. If this submodule is imported from module scope *and* the
-active Python interpreter targets Python < 3.8, :mod:`pytest` raises
+3.8.** If this is *not* the case, importing this submodule raises an
+:class:`SyntaxError` exception. In particular, this submodule *must* not be
+imported from module scope. If this submodule is imported from module scope
+*and* the active Python interpreter targets Python < 3.8, :mod:`pytest` raises
 non-human-readable exceptions at test collection time resembling:
 
     /usr/lib64/python3.6/site-packages/_pytest/python.py:578: in _importtestmodule

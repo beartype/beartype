@@ -71,7 +71,16 @@ from beartype import meta
 _KEYWORDS = [
     'type checking',
     'type hints',
+    'PEP 483',
     'PEP 484',
+    'PEP 544',
+    'PEP 563',
+    'PEP 585',
+    'PEP 586',
+    'PEP 589',
+    'PEP 593',
+    'PEP 604',
+    'PEP 3141',
 ]
 '''
 List of all lowercase alphabetic keywords synopsising this package.

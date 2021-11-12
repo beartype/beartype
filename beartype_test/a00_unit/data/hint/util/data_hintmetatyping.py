@@ -84,7 +84,7 @@ def make_hints_metadata_typing(
     assert isinstance(hint_metadata, dict), f'{hint_metadata} not dictionary.'
 
     # Defer heavyweight imports.
-    from beartype._util.func.utilfuncarg import (
+    from beartype._util.func.arg.utilfuncargtest import (
         die_unless_func_args_len_flexible_equal)
 
     # If this hint factory does *NOT* accept exactly one argument, raise an

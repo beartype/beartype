@@ -39,7 +39,8 @@ def label_callable(func: Callable) -> str:
     assert callable(func), f'{repr(func)} uncallable.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncarg import get_func_args_len_flexible
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_args_len_flexible)
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import (

@@ -30,7 +30,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
-from beartype._util.func.utilfuncarg import (
+from beartype._util.func.arg.utilfuncargtest import (
     # is_func_argless,
     is_func_arg_variadic,
 )

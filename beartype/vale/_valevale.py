@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype._util.kind.utilkinddict import merge_mappings_two
-from beartype._util.func.utilfuncarg import (
+from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
     is_func_argless,
 )
