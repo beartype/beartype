@@ -568,6 +568,80 @@ check only a random integer nested in a single triply-nested list passed to
 each call of that function. This is the worst-case cost of a single call to a
 function decorated by an ``O(1)`` runtime type checker.
 
+How do I type-check...
+----------------------
+
+*...yes?*
+
+...Boto3 types?
+~~~~~~~~~~~~~~~
+
+Boto3_ is the official Amazon Web Services (AWS) Software Development Kit (SDK)
+for Python. Type-checking Boto3_ types is decidedly non-trivial, because Boto3_
+dynamically fabricates unimportable types from runtime service requests. These
+types *cannot* be externally accessed and thus *cannot* be used as type hints.
+
+**H-hey!** Put down the hot butter knife. Your Friday night may be up in
+flames, but we're gonna put out the fire. It's what we do here. Now, you have
+two competing solutions with concomitant tradeoffs. You can type-check Boto3_
+types against either:
+
+* **Static type checkers** (e.g., mypy_, pyright_) by importing Boto3_ stub
+  types from an external third-party dependency (e.g., mypy-boto3_), enabling
+  context-aware code completion across compliant IDEs (e.g., PyCharm_, `VSCode
+  Pylance`_). Those types are merely placeholder stubs; they do *not*
+  correspond to actual Boto3_ types and thus break runtime type checkers
+  (including ``beartype``) when used as type hints.
+* **Beartype** by fabricating your own `PEP-compliant beartype validators
+  <Beartype Validators_>`__, enabling ``beartype`` to validate arbitrary
+  objects against actual Boto3_ types at runtime when used as type hints. You
+  already require ``beartype``, so no additional third-party dependencies are
+  required. Those validators are silently ignored by static type checkers; they
+  do *not* enable context-aware code completion across compliant IDEs.
+
+"B-but that *sucks*! How can we have our salmon and devour it too?", you demand
+with a tremulous quaver. Excessive caffeine and inadequate gaming did you no
+favors tonight. You know this. Yet again you reach for the hot butter knife.
+
+**H-hey!** You can, okay? You can have everything that market forces demand.
+Bring to *bear* :superscript:`cough` the combined powers of `PEP 484-compliant
+type aliases <type aliases_>`__, the `PEP 484-compliant "typing.TYPE_CHECKING"
+boolean global <typing.TYPE_CHECKING_>`__, and `beartype validators <Beartype
+Validators_>`__ to satisfy both static and runtime type checkers:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from boto3 import resource
+   from typing import TYPE_CHECKING
+
+   # If performing static type-checking (e.g., mypy, pyright), import boto3
+   # stub types safely usable *ONLY* by static type checkers.
+   if TYPE_CHECKING:
+       from mypy_boto3_s3.service_resource import Bucket
+   # Else, @beartime-based runtime type-checking is being performed. Alias the
+   # same boto3 stub types imported above to their semantically equivalent
+   # beartype validators accessible *ONLY* to runtime type checkers.
+   else:
+       # Import even more requisite machinery. Can't have enough, I say!
+       from beartype.vale import IsAttr, IsEqual
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       # from typing_extensions import Annotated   # <-- if Python < 3.9.0
+
+       # Generalize this to other boto3 types by copy-and-pasting this and
+       # replacing "s3.Bucket" with the wonky runtime names of those types.
+       Bucket = Annotated[object,
+           IsAttr['__class__', IsAttr['__name__', IsEqual["s3.Bucket"]]]]
+
+   # Do this for the good of the gross domestic product, @beartype.
+   @beartype
+   def get_s3_bucket_example() -> Bucket:
+       s3 = resource('s3')
+       return s3.Bucket('example')
+
+You're welcome.
+
 Usage
 =====
 
@@ -2176,6 +2250,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 | re_                | re.Match_                               | **0.5.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | re.Pattern_                             | **0.5.0**\ —\ *current*       | *none*                    |
++--------------------+-----------------------------------------+-------------------------------+---------------------------+
+| sphinx_            | sphinx.ext.autodoc_                     | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | typing_            | typing.AbstractSet_                     | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -4460,6 +4536,12 @@ rather than Python runtime) include:
 .. _PYTHONOPTIMIZE:
    https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
 
+.. # ------------------( LINKS ~ py : ide                   )------------------
+.. _PyCharm:
+   https://en.wikipedia.org/wiki/PyCharm
+.. _VSCode Pylance:
+   https://github.com/microsoft/pylance-release
+
 .. # ------------------( LINKS ~ py : interpreter           )------------------
 .. _CPython:
    https://github.com/python/cpython
@@ -4497,14 +4579,18 @@ rather than Python runtime) include:
    https://pandas.pydata.org
 .. _PyTorch:
    https://pytorch.org
-.. _Sphinx:
-   https://www.sphinx-doc.org/en/master
 .. _SymPy:
    https://www.sympy.org
 .. _pyenv:
    https://operatingops.org/2020/10/24/tox-testing-multiple-python-versions-with-pyenv
 .. _typing_extensions:
    https://pypi.org/project/typing-extensions
+
+.. # ------------------( LINKS ~ py : package : boto3       )------------------
+.. _Boto3:
+   https://aws.amazon.com/sdk-for-python
+.. _mypy-boto3:
+   https://mypy-boto3.readthedocs.io
 
 .. # ------------------( LINKS ~ py : package : numpy       )------------------
 .. _NumPy:
@@ -4523,6 +4609,12 @@ rather than Python runtime) include:
    https://numpy.org/devdocs/reference/typing.html
 .. _numpy.typing.NDArray:
    https://numpy.org/devdocs/reference/typing.html#ndarray
+
+.. # ------------------( LINKS ~ py : package : sphinx      )------------------
+.. _Sphinx:
+   https://www.sphinx-doc.org
+.. _sphinx.ext.autodoc:
+   https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
 .. # ------------------( LINKS ~ py : package : test        )------------------
 .. _Codecov:
