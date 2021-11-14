@@ -614,6 +614,7 @@ Validators_>`__ to satisfy both static and runtime type checkers:
    # Import the requisite machinery.
    from beartype import beartype
    from boto3 import resource
+   from boto3.resources.base import ServiceResource
    from typing import TYPE_CHECKING
 
    # If performing static type-checking (e.g., mypy, pyright), import boto3
@@ -630,8 +631,15 @@ Validators_>`__ to satisfy both static and runtime type checkers:
        # from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
        # Generalize this to other boto3 types by copy-and-pasting this and
-       # replacing "s3.Bucket" with the wonky runtime names of those types.
-       Bucket = Annotated[object,
+       # replacing the base type and "s3.Bucket" with the wonky runtime names 
+       # of those types. Sadly, there is no one-size-fits all common base class,
+       # but you should find what you need in the following places:
+       # - boto3.resources.base.ServiceResource
+       # - boto3.resources.collection.ResourceCollection
+       # - botocore.client.BaseClient
+       # - botocore.waiter.Waiter
+       # - botocore.paginate.Paginator
+       Bucket = Annotated[ServiceResource,
            IsAttr['__class__', IsAttr['__name__', IsEqual["s3.Bucket"]]]]
 
    # Do this for the good of the gross domestic product, @beartype.
@@ -639,6 +647,9 @@ Validators_>`__ to satisfy both static and runtime type checkers:
    def get_s3_bucket_example() -> Bucket:
        s3 = resource('s3')
        return s3.Bucket('example')
+
+You can also check out the stupendous `bearboto3`_ project if you find yourself
+sliently raging at having to do this work yourself.
 
 You're welcome.
 
@@ -5045,3 +5056,7 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ soft : web                 )------------------
 .. _React:
    https://reactjs.org
+
+.. # ------------------( LINKS ~ soft : bearboto3                 )------------------
+.. _bearboto3:
+   https://github.com/paulhutchings/bearboto3
