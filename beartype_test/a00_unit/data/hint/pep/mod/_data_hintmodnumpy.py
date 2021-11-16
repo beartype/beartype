@@ -64,18 +64,84 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer NumPy-specific imports.
     from numpy import asarray, dtype, float32, float64, floating
     from numpy.typing import NDArray
+    from typing import Any
 
     # ..................{ TUPLES                            }..................
     # Add NumPy-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ NUMPY ~ array : dtype : equals    }................
-        # NumPy array subscripted by a true data type.
+        # ................{ NUMPY ~ array                     }................
+        # Untyped unsubscripted NumPy array.
         HintPepMetadata(
-            hint=NDArray[dtype(float64)],
+            hint=NDArray,
             pep_sign=HintSignNumpyArray,
             # "NDArray" is implemented as:
             # * Under Python >= 3.9, a PEP 585-compliant generic.
             # * Under Python >= 3.8, a pure-Python generic backport.
+            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_type_typing=False,
+            is_typing=False,
+            # Oddly, NumPy implicitly parametrizes the "NDArray[Any]" type hint
+            # by expanding that hint to "numpy.typing.NDArray[+ScalarType]",
+            # where "+ScalarType" is a public type variable declared by the
+            # "numpy" package bounded above by the "numpy.generic" abstract
+            # base class for NumPy scalars. *sigh*
+            is_typevars=True,
+            piths_satisfied_meta=(
+                # NumPy array containing only 64-bit integers.
+                HintPithSatisfiedMetadata(asarray((
+                    1, 0, 3, 5, 2, 6, 4, 9, 2, 3, 8, 4, 1, 3, 7, 7, 5, 0,))),
+
+                # NumPy array containing only 64-bit floats.
+                HintPithSatisfiedMetadata(asarray((
+                    1.3, 8.23, 70.222, 726.2431, 8294.28730, 100776.357238,))),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    pith='Ine Gerrymander‐consigned electorate sangu‐',
+                    # Match that the exception message raised for this object
+                    # embeds the representation of the expected class.
+                    exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
+                ),
+            ),
+        ),
+
+        # Untyped subscripted NumPy array.
+        HintPepMetadata(
+            hint=NDArray[Any],
+            pep_sign=HintSignNumpyArray,
+            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_type_typing=False,
+            is_typing=False,
+            piths_satisfied_meta=(
+                # NumPy array containing only 64-bit integers.
+                HintPithSatisfiedMetadata(asarray((
+                    1, 7, 39, 211, 1168, 6728, 40561, 256297, 1696707,))),
+
+                # NumPy array containing only 64-bit floats.
+                HintPithSatisfiedMetadata(asarray((
+                    1.1, 2.4, -4.4, 32.104, 400.5392, -3680.167936,))),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=(
+                        'Inity my guinea‐konsealed Ğuinness’ pint '
+                        'glockenspieled spells',
+                    ),
+                    # Match that the exception message raised for this object
+                    # embeds the representation of the expected class.
+                    exception_str_match_regexes=(r'\bnumpy\.ndarray\b',),
+                ),
+            ),
+        ),
+
+        # ................{ NUMPY ~ array : dtype : equals    }................
+        # Typed NumPy array subscripted by an actual data type (i.e., instance
+        # of the "numpy.dtype" class).
+        HintPepMetadata(
+            hint=NDArray[dtype(float64)],
+            pep_sign=HintSignNumpyArray,
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
@@ -103,8 +169,8 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # NumPy array subscripted by a scalar data type. Since scalar data
-        # types are *NOT* true data types, this constitutes an edge case.
+        # Typed NumPy array subscripted by a scalar data type. Since scalar
+        # data types are *NOT* actual data types, this exercises an edge case.
         HintPepMetadata(
             hint=NDArray[float64],
             pep_sign=HintSignNumpyArray,
@@ -135,7 +201,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ NUMPY ~ array : dtype : subclass  }................
-        # NumPy array subscripted by a data type superclass.
+        # Typed NumPy array subscripted by a data type superclass.
         HintPepMetadata(
             hint=NDArray[floating],
             pep_sign=HintSignNumpyArray,
@@ -181,7 +247,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Add NumPy-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
         # ................{ NUMPY ~ array : nested            }................
-        # 2-tuple of one-dimensional NumPy arrays of 64-bit floats.
+        # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
             hint=HINT_ATTR_TUPLE[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignTuple,

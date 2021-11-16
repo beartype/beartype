@@ -10,31 +10,6 @@ the third-party :mod:`numpy` package) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Reduce both the unsubscripted "numpy.typing.NDArray" class *AND* the
-#uselessly subscripted "numpy.typing.NDArray[typing.Any]" type hint to the
-#"numpy.ndarray" class. While detecting the latter below is trivial, detecting
-#the former is decidedly less trivial. The simplest approach might be to
-#augment the "datapeprepr" submodule to resemble:
-#    HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
-#        ...
-#        'numpy.typing.NDArray': HintSignNumpyArray,
-#    }
-#
-#Given that, the unsubscripted "numpy.typing.NDArray" class would then be
-#assigned the sign "HintSignNumpyArray", which would then cause the
-#reduce_hint_numpy_ndarray() function defined below to be called for both
-#subscripted and unsubscripted "numpy.typing.NDArray" type hints, which seems
-#more than reasonable.
-#
-#Alternately, we could probably leverage the same mechanism that we use to
-#shallowly handle PEP 484- and 585-compliant type hints. However, since that
-#still requires assigning the unsubscripted "numpy.typing.NDArray" class the
-#sign "HintSignNumpyArray", it's unclear whether that would be of any benefit.
-#Well... yes, we suppose it would. It's probably best to keep everything
-#concise and orthogonal. In that case, simply add "HintSignNumpyArray" to the
-#existing "HINT_SIGNS_ORIGIN_ISINSTANCEABLE" set. In theory, that should do it.
-
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: The top-level of this module should avoid importing from third-party
@@ -56,7 +31,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.utilobject import is_object_hashable
 from typing import Any, FrozenSet
 from warnings import warn
@@ -132,18 +106,7 @@ def reduce_hint_numpy_ndarray(
               :meth:`numpy.dtype.__init__` method.
     '''
 
-    # ..................{ IMPORTS                           }..................
-    # Defer heavyweight imports.
-    #
-    # Note that third-party packages should typically *ONLY* be imported via
-    # utility functions raising human-readable exceptions when those packages
-    # are either uninstalled or unimportable. In this case, however, NumPy will
-    # almost *ALWAYS* be importable. Why? Because this hint was externally
-    # instantiated by the user by first importing the "numpy.typing.NDArray"
-    # attribute passed to this getter.
-    from numpy import dtype, ndarray
-
-    # ..................{ VALIDATION                        }..................
+    # ..................{ SIGN                              }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -157,39 +120,60 @@ def reduce_hint_numpy_ndarray(
         )
     # Else, this hint is a typed NumPy array.
 
-    # "typing.Annotated" type hint factory safely imported from whichever of
-    # the "typing" or "typing_extensions" modules declares this attribute if
-    # one or more do *OR* "None" otherwise (i.e., if none do).
+    # ..................{ IMPORTS                           }..................
+    # Defer heavyweight imports until *AFTER* validating this hint to be a
+    # typed NumPy array. Why? Because these imports are *ONLY* safely
+    # importable if this hint is a typed NumPy array. Why? Because
+    # instantiating this hint required these imports. QED.
     #
-    # Note that this memoized function is intentionally passed positional
-    # rather than keyword arguments for minor efficiency gains.
-    typing_annotated = import_module_typing_any_attr_or_none(
-        'Annotated', BeartypeDecorHintNonpepNumpyException)
+    # Note that third-party packages should typically *ONLY* be imported via
+    # utility functions raising human-readable exceptions when those packages
+    # are either uninstalled or unimportable. In this case, however, NumPy will
+    # almost *ALWAYS* be importable. Why? Because this hint was externally
+    # instantiated by the user by first importing the "numpy.typing.NDArray"
+    # attribute passed to this getter.
+    from numpy import dtype, ndarray
+    from numpy.typing import NDArray
 
-    # If this factory is unimportable, this typed NumPy array *CANNOT* be
-    # reduced to a subscription of this factory by one or more semantically
-    # equivalent beartype validators. In this case...
-    if typing_annotated is None:
-        # Emit a non-fatal warning informing the user of this issue.
-        warn(
-            (
-                f'{exception_prefix}typed NumPy array {repr(hint)} '
-                f'reduced to untyped NumPy array {repr(ndarray)} '
-                f'(i.e., as neither "typing.Annotated" nor '
-                f'"typing_extensions.Annotated" importable).'
-            ),
-            BeartypeDecorHintNonpepNumpyWarning,
-        )
+    #FIXME: Consider submitting an upstream issue about this. We don't
+    #particularly feel like arguing tonight, because that's a lonely hill.
 
-        # Reduce this hint to the untyped "ndarray" class with apologies.
+    # If this hint is the unsubscripted "NDArray" type hint, this hint
+    # permissively matches *ALL* NumPy arrays rather than strictly matching
+    # *ONLY* appropriately typed NumPy arrays. In this case, reduce this hint
+    # to the untyped "numpy.ndarray" class.
+    #
+    # Note the similar test matching the subscripted "NDArray[Any]" hint below.
+    # Moreover, note this test *CANNOT* be performed elsewhere (e.g., by
+    # adding "HintSignNumpyArray" to the "HINT_SIGNS_ORIGIN_ISINSTANCEABLE"
+    # frozen set of all signs whose unsubscripted type hint factories are
+    # shallowly type-checkable). Why? Because the "NDArray" type hint factory
+    # violates type hinting standards. Specifically, this factory implicitly
+    # subscripts *AND* parametrizes itself with the "numpy.ScalarType" type
+    # variable bounded above by the "numpy.generic" abstract base class for
+    # NumPy scalars.
+    #
+    # We have *NO* idea why NumPy does this. This implicit behaviour is
+    # semantically lossy rather than lossless and thus arguably constitutes an
+    # upstream bug. Why? Because this behaviour violates:
+    # * The NumPy API. The "NDArray" type hint factory is subscriptable by more
+    #   than merely NumPy scalar types. Ergo, "NDArray" is semantically
+    #   inaccurate!
+    # * PEP 484, which explicitly standardizes an equivalence between
+    #   unsubscripted type hint factories and the same factories subscripted by
+    #   the "typing.Any" singleton. However, "NDArray" is *MUCH* semantically
+    #   narrower than and thus *NOT* equivalent to "NDArray[Any]"!
+    #
+    # Of course, upstream is unlikely to see it that way. We're *NOT* dying on
+    # an argumentative hill about semantics. Upstream makes the rules. Do it.
+    if hint is NDArray:
         return ndarray
-    # Else, this factory is importable.
 
     # ..................{ CONSTANTS                         }..................
     # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
     NUMPY_DTYPE_TYPE_ABCS = _get_numpy_dtype_type_abcs()
 
-    # ..................{ LOCALS                            }..................
+    # ..................{ ARGS                              }..................
     # Objects subscripting this hint if any *OR* the empty tuple otherwise.
     hint_args = get_hint_pep_args(hint)
 
@@ -224,7 +208,44 @@ def reduce_hint_numpy_ndarray(
     # Data type-like object subscripting this subhint. Look, just do it.
     hint_dtype_like = hint_dtype_subhint_args[0]
 
+    # If this dtype-like is "typing.Any", this hint permissively matches *ALL*
+    # NumPy arrays rather than strictly matching *ONLY* appropriately typed
+    # NumPy arrays. In this case, reduce this hint to the untyped
+    # "numpy.ndarray" class.
+    #
+    # Note the similar test matching the unsubscripted "NDArray" hint above.
+    if hint_dtype_like is Any:
+        return ndarray
+
     # ..................{ REDUCTION                         }..................
+    # "typing.Annotated" type hint factory safely imported from whichever of
+    # the "typing" or "typing_extensions" modules declares this attribute if
+    # one or more do *OR* "None" otherwise (i.e., if none do).
+    #
+    # Note that this memoized function is intentionally passed positional
+    # rather than keyword arguments for minor efficiency gains.
+    typing_annotated = import_module_typing_any_attr_or_none(
+        'Annotated', BeartypeDecorHintNonpepNumpyException)
+
+    # If this factory is unimportable, this typed NumPy array *CANNOT* be
+    # reduced to a subscription of this factory by one or more semantically
+    # equivalent beartype validators. In this case...
+    if typing_annotated is None:
+        # Emit a non-fatal warning informing the user of this issue.
+        warn(
+            (
+                f'{exception_prefix}typed NumPy array {repr(hint)} '
+                f'reduced to untyped NumPy array {repr(ndarray)} '
+                f'(i.e., as neither "typing.Annotated" nor '
+                f'"typing_extensions.Annotated" importable).'
+            ),
+            BeartypeDecorHintNonpepNumpyWarning,
+        )
+
+        # Reduce this hint to the untyped "ndarray" class with apologies.
+        return ndarray
+    # Else, this factory is importable.
+
     # Equivalent nested beartype validator reduced from this hint.
     hint_validator = None  # type: ignore[assignment]
 

@@ -642,6 +642,11 @@ Validators_>`__ to satisfy both static and runtime type checkers:
 
 You're welcome.
 
+...NumPy arrays?
+~~~~~~~~~~~~~~~~
+
+`Typed NumPy arrays <NumPy Type Hints_>`__. Because ``beartype`` cares.
+
 Usage
 =====
 
