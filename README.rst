@@ -571,10 +571,14 @@ function decorated by an ``O(1)`` runtime type checker.
 How do I type-check...
 ----------------------
 
-*...yes?*
+...yes? Go on.
 
 ...Boto3 types?
 ~~~~~~~~~~~~~~~
+
+**tl;dr:** You just want bearboto3_, a well-maintained third-party package
+cleanly integrating ``beartype`` **+** Boto3. But you're not doing that. You're
+reading on to find out why you want bearboto3_, aren't you? I knew it.
 
 Boto3_ is the official Amazon Web Services (AWS) Software Development Kit (SDK)
 for Python. Type-checking Boto3_ types is decidedly non-trivial, because Boto3_
@@ -634,11 +638,11 @@ Validators_>`__ to satisfy both static and runtime type checkers:
        # replacing the base type and "s3.Bucket" with the wonky runtime names 
        # of those types. Sadly, there is no one-size-fits all common base class,
        # but you should find what you need in the following places:
-       # - boto3.resources.base.ServiceResource
-       # - boto3.resources.collection.ResourceCollection
-       # - botocore.client.BaseClient
-       # - botocore.waiter.Waiter
-       # - botocore.paginate.Paginator
+       # * "boto3.resources.base.ServiceResource".
+       # * "boto3.resources.collection.ResourceCollection".
+       # * "botocore.client.BaseClient".
+       # * "botocore.paginate.Paginator".
+       # * "botocore.waiter.Waiter".
        Bucket = Annotated[ServiceResource,
            IsAttr['__class__', IsAttr['__name__', IsEqual["s3.Bucket"]]]]
 
@@ -648,15 +652,13 @@ Validators_>`__ to satisfy both static and runtime type checkers:
        s3 = resource('s3')
        return s3.Bucket('example')
 
-You can also check out the stupendous `bearboto3`_ project if you find yourself
-sliently raging at having to do this work yourself.
-
 You're welcome.
 
 ...NumPy arrays?
 ~~~~~~~~~~~~~~~~
 
-`Typed NumPy arrays <NumPy Type Hints_>`__. Because ``beartype`` cares.
+You just want `NumPy's official typed array API <NumPy Type Hints_>`__. Because
+you care, we care.
 
 Usage
 =====
@@ -4605,6 +4607,8 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : package : boto3       )------------------
 .. _Boto3:
    https://aws.amazon.com/sdk-for-python
+.. _bearboto3:
+   https://github.com/paulhutchings/bearboto3
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
 
@@ -5061,7 +5065,3 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ soft : web                 )------------------
 .. _React:
    https://reactjs.org
-
-.. # ------------------( LINKS ~ soft : bearboto3                 )------------------
-.. _bearboto3:
-   https://github.com/paulhutchings/bearboto3
