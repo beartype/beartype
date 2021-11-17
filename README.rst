@@ -657,8 +657,8 @@ You're welcome.
 ...NumPy arrays?
 ~~~~~~~~~~~~~~~~
 
-You just want `NumPy's official typed array API <NumPy Type Hints_>`__. Because
-you care, we care.
+Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
+beartype cares.
 
 Usage
 =====

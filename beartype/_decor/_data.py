@@ -10,37 +10,7 @@ currently being decorated by the :func:`beartype.beartype` decorator).**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Optimize away the call to the inspect.signature() function by
-#reimplementing this function to assign to instance variables of the current
-#"BeartypeData" object rather than instantiating a new "Signature" object and
-#then one new "Parameter" object for each parameter of the decorated callable.
-#Note, for example, that we don't need to replicate that function's copying of
-#parameter and return value annotations already trivially accessible via the
-#"self.func.__annotations__" dunder attribute. Indeed, we only require these
-#new "BeartypeData" instance variables:
-#
-#* "func_param_names", a tuple of all parameter names.
-#* "func_param_name_to_kind", a dictionary mapping from each parameter name
-#  (including the 'return' pseudo-parameter signifying the return value) to
-#  that parameter's kind (e.g., keyword-only, variadic positional). Naturally,
-#  parameter kinds should probably be defined as enumeration members of a
-#  global public "Enum" class defined in this submodule and accessed elsewhere.
-#
-#Doing so will be non-trivial but entirely feasible and absolutely worthwhile,
-#as the inspect.signature() function is *GUARANTEED* to be a performance
-#bottleneck for us. This is low-priority for the moment and may actually never
-#happen... but it really should.
-#FIXME: Bwaha! We actually did this and even more space- and time-efficiently
-#than the above scheme. See the new
-#beartype.util.func.utilfuncargs.iter_func_args() generator, called like so:
-#    for arg_name, arg_kind, _ in iter_func_args(func): ...
-#*AWESOME.* Note we simply ignore the third item of each 3-tuple yielded by
-#that generator, as we currently have *NO* need for default values. We will
-#elsewhere certainly, but not quite yet. *shrug*
-
 # ....................{ IMPORTS                           }....................
-import inspect
 from beartype._decor._code.codesnip import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
@@ -49,7 +19,6 @@ from beartype._decor._error.errormain import raise_pep_call_exception
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_async_coroutine
 from collections.abc import Callable
-from inspect import Signature
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -97,9 +66,6 @@ class BeartypeData(object):
         **Decorated callable** (i.e., callable currently being decorated by the
         :func:`beartype.beartype` decorator) if the :meth:`reinit` method has
         been called *or* ``None`` otherwise.
-    func_sig : Optional[inspect.Signature]
-        :class:`inspect.Signature` object describing this signature if the
-        :meth:`reinit` method has been called *or* ``None`` otherwise.
     func_wrapper_code_call_prefix : Optional[str]
         Code snippet prefixing all calls to the decorated callable in the body
         of the wrapper function wrapping that callable with type checking if
@@ -139,7 +105,6 @@ class BeartypeData(object):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'func',
-        'func_sig',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_signature_prefix',
         'func_wrapper_locals',
@@ -178,7 +143,6 @@ class BeartypeData(object):
 
         # Nullify all remaining instance variables.
         self.func: Callable = None  # type: ignore[assignment]
-        self.func_sig: Signature = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_locals: CallableScope = {}
@@ -230,17 +194,9 @@ class BeartypeData(object):
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
 
-        # Nullify all remaining attributes for safety *BEFORE* passing this
-        # object to any functions (e.g., resolve_hints_pep563_if_active()).
-        self.func_sig = None  # type: ignore[assignment]
-
         # Resolve all postponed hints on this callable if any *BEFORE* parsing
         # the actual hints these postponed hints refer to.
         resolve_hints_pep563_if_active(self)
-
-        # "Signature" instance encapsulating this callable's signature,
-        # dynamically parsed by the stdlib "inspect" module from this callable.
-        self.func_sig = inspect.signature(func)
 
         # If this callable is an asynchronous coroutine callable (i.e.,
         # callable declared with "async def" rather than merely "def" keywords

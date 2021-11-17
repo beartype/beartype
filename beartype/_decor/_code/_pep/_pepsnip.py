@@ -20,7 +20,7 @@ from beartype._decor._code.codesnip import (
     ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_RANDOM_INT,
 )
-from inspect import Parameter
+from beartype._util.func.arg.utilfuncargiter import ParameterKind
 
 # ....................{ PITH                              }....................
 PEP_CODE_PITH_ASSIGN_EXPR = (
@@ -66,7 +66,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     #   we could pass a "__beartype_sentinel" parameter to all wrapper
     #   functions defaulting to "object()" and then use that here instead,
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
-    Parameter.POSITIONAL_OR_KEYWORD: f'''
+    ParameterKind.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
     # sentinel value "__beartype_raise_exception" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = (
@@ -79,7 +79,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
 
     # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
-    Parameter.KEYWORD_ONLY: f'''
+    ParameterKind.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartype_raise_exception" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
@@ -88,7 +88,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
-    Parameter.VAR_POSITIONAL: f'''
+    ParameterKind.VAR_POSITIONAL: f'''
     # For all passed positional variadic parameters...
     for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
 }

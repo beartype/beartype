@@ -36,6 +36,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._decor._data import BeartypeData
 from beartype._util.cache.utilcacheerror import reraise_exception_cached
+from beartype._util.func.arg.utilfuncargiter import ParameterMeta
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.kind.utilkinddict import update_mapping
@@ -45,7 +46,6 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
-from inspect import Parameter
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -62,8 +62,8 @@ callables).
 def pep_code_check_param(
     data: BeartypeData,
     hint: object,
-    param: Parameter,
-    param_index: int,
+    arg: ParameterMeta,
+    arg_index: int,
 ) -> str:
     '''
     Generate a Python code snippet type-checking the parameter with the passed
@@ -77,9 +77,9 @@ def pep_code_check_param(
         Decorated callable to be type-checked.
     hint : object
         PEP-compliant type hint annotating this parameter.
-    param : Parameter
-        :mod:`inspect`-specific object describing this parameter.
-    param_index : int
+    arg : ParameterMeta
+        Metadata describing this parameter.
+    arg_index : int
         0-based index of this parameter in this callable's signature.
 
     Returns
@@ -91,15 +91,15 @@ def pep_code_check_param(
     # (e.g., by explicitly calling the die_if_hint_pep_unsupported()
     # function). By design, the caller already guarantees this to be the case.
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
-    assert isinstance(param, Parameter), (
-        f'{repr(param)} not parameter metadata.')
-    assert isinstance(param_index, int), (
-        f'{repr(param_index)} not integer.')
+    assert isinstance(arg, ParameterMeta), (
+        f'{repr(arg)} not parameter metadata.')
+    assert isinstance(arg_index, int), (
+        f'{repr(arg_index)} not integer.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(  # type: ignore
-        param.kind, None)
+        arg.kind, None)
 
     # If this kind of parameter is unsupported...
     #
@@ -112,11 +112,11 @@ def pep_code_check_param(
 
         # Human-readable label describing this parameter.
         exception_prefix = prefix_callable_decorated_param(
-            func=data.func, param_name=param.name)
+            func=data.func, param_name=arg.name)
 
         # Raise an exception embedding this label.
         raise BeartypeDecorHintPepException(
-            f'{exception_prefix}kind {repr(param.kind)} '
+            f'{exception_prefix}kind {repr(arg.kind)} '
             f'currently unsupported by @beartype.'
         )
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
@@ -139,7 +139,7 @@ def pep_code_check_param(
         code_param_check = _unmemoize_pep_code(
             data=data,
             func_wrapper_code=code_param_check_pith,
-            pith_repr=repr(param.name),
+            pith_repr=repr(arg.name),
             hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
         )
     # If the prior call to the memoized pep_code_check_hint() function raised a
@@ -149,12 +149,12 @@ def pep_code_check_param(
         reraise_exception_cached(
             exception=exception,
             target_str=prefix_callable_decorated_param(
-                func=data.func, param_name=param.name),
+                func=data.func, param_name=arg.name),
         )
 
     # Python code snippet localizing this parameter.
     code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
-        arg_name=param.name, arg_index=param_index)
+        arg_name=arg.name, arg_index=arg_index)
 
     # Return a Python code snippet localizing and type-checking this parameter.
     return f'{code_param_localize}{code_param_check}'

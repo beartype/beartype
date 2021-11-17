@@ -37,19 +37,8 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.text.utiltextlabel import prefix_callable
 from beartype._util.utilobject import SENTINEL, Iota
 from functools import wraps
-from inspect import Parameter
 from typing import Callable, Dict
 from warnings import warn
-
-# ....................{ CONSTANTS ~ private               }....................
-_PARAM_KINDS_UNSUPPORTED = {
-    Parameter.VAR_KEYWORD,
-    Parameter.VAR_POSITIONAL,
-}
-'''
-Set of all :attr:`Parameter.kind` constants signifying parameter types *not*
-currently supported by the :func:`callable_cached` decorator.
-'''
 
 # ....................{ CONSTANTS ~ private : sentinel    }....................
 _SENTINEL_KWARGS_KEYS = (Iota(),)

@@ -35,6 +35,10 @@ from beartype._decor._code._pep.pepcode import (
     pep_code_check_return,
 )
 from beartype._decor._data import BeartypeData
+from beartype._util.func.arg.utilfuncargiter import (
+    ParameterKind,
+    iter_func_args,
+)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.utilhintconv import sanify_hint_root
@@ -45,18 +49,23 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
+from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable
-from inspect import Parameter, Signature
 from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS ~ private               }....................
-_PARAM_KINDS_IGNORABLE = {Parameter.POSITIONAL_ONLY, Parameter.VAR_KEYWORD}
+#FIXME: Remove this set *AFTER* handling these kinds of parameters.
+_PARAM_KINDS_IGNORABLE = frozenset((
+    ParameterKind.POSITIONAL_ONLY,
+    ParameterKind.VAR_KEYWORD,
+))
 '''
-Set of all :attr:`Parameter.kind` constants to be ignored during
-annotation-based type checking in the :func:`beartype` decorator.
+Frozen set of all :attr:`ParameterKind` enumeration members to be ignored
+during annotation-based type checking in the :func:`beartype.beartype`
+decorator.
 
 This includes:
 
@@ -66,20 +75,6 @@ This includes:
   non-pure-Python callables (e.g., defined by C extensions). The
   :func:`beartype` decorator applies *only* to pure-Python callables, which
   provide no syntactic means for specifying positional-only parameters.
-'''
-
-# ....................{ CONSTANTS ~ private : empty       }....................
-_PARAM_HINT_EMPTY = Parameter.empty
-'''
-:mod:`inspect`-specific sentinel value indicating an **unannotated parameter**
-(i.e., parameter *not* annotated with a type hint).
-'''
-
-
-_RETURN_HINT_EMPTY = Signature.empty
-'''
-:mod:`inspect`-specific sentinel value indicating an **unannotated return**
-(i.e., return *not* annotated with a type hint).
 '''
 
 # ....................{ GENERATORS                        }....................
@@ -244,30 +239,56 @@ def _code_check_params(data: BeartypeData) -> str:
     assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
 
     # ..................{ LOCALS ~ func                     }..................
-    # Decorated callable.
+    # Callable currently being decorated by the @beartype decorator.
     func = data.func
 
-    #FIXME: Optimize everything below away for argless callables: e.g.,
-    #    func_params = data.func_sig.parameters
-    #    if not func_params:
-    #        return ''
-    #Obviously, we'll want to ensure that we're testing decoration of argless
-    #callables. Are we? Let's hope so, as we're tired!
+    # Dictionary mapping from the name of each annotated parameter accepted by
+    # that callable to the type hint annotating that parameter. By prior
+    # validation, this dictionary is guaranteed to exist *AND* be non-empty.
+    func_arg_name_to_hint = func.__annotations__
+
+    #FIXME: Unit test this up, please. Specifically, unit test:
+    #* A callable annotated with only a single return type hint accepting both:
+    #  * *NO* parameters.
+    #  * One or more parameters each of which is unannotated.
+    #
+    #We probably already do this, but let's be double-sure here. Safety first!
+
+    # If both...
+    #
+    # Note that this is purely an optimization short-circuit mildly improving
+    # efficiency for the common case of callables accepting either no
+    # parameters *OR* one or more parameters each of which is unannotated.
+    if (
+        # That callable is annotated by only one type hint *AND*...
+        len(func_arg_name_to_hint) == 1 and
+        # That type hint annotates that callable's return rather than a
+        # parameter accepted by that callable...
+        'return' in func_arg_name_to_hint
+    ):
+        # Then *NO* callable parameters are annotated. In this case, silently
+        # reduce to a noop.
+        return ''
+    # Else, one or more callable parameters are annotated.
+
+    # dict.get() method bound to the dictionary declared above, localized as a
+    # negligible microoptimization. (Look. It's not *OUR* fault. Blame Guido.)
+    func_arg_name_to_hint_get = func_arg_name_to_hint.get
 
     # Python code snippet to be returned.
     func_wrapper_code = ''
 
     # Python code snippet type-checking the current parameter.
-    func_wrapper_code_param = ''
+    func_wrapper_code_arg = ''
 
     # ..................{ LOCALS ~ param                    }..................
     # Name and kind of the current parameter.
-    param_name = None
-    param_kind = None
+    arg_name = None
+    arg_kind = None
 
     # True only if this callable possibly accepts one or more positional
     # parameters.
-    is_params_positional = False
+    is_args_positional = False
 
     # ..................{ LOCALS ~ other                    }..................
     # Human-readable label describing the current parameter.
@@ -279,33 +300,43 @@ def _code_check_params(data: BeartypeData) -> str:
 
     # ..................{ GENERATE                          }..................
     # For the name of each parameter accepted by this callable and the
-    # "Parameter" instance encapsulating this parameter (in signature order)...
-    for param_index, param in enumerate(data.func_sig.parameters.values()):
-        # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
-        # otherwise (i.e., if this parameter is unannotated).
-        hint = param.annotation
+    # "ParameterMeta" object describing this parameter (in declaration
+    # order)...
+
+    #FIXME: Locally remove the "arg_index" local variable (and thus avoid
+    #calling the enumerate() builtin here) AFTER* refactoring @beartype to
+    #generate callable-specific wrapper signatures.
+
+    for arg_index, arg in enumerate(iter_func_args(func)):
+        # Type hint annotating this parameter if any *OR* the sentinel
+        # placeholder otherwise (i.e., if this parameter is unannotated).
+        #
+        # Note that "None" is a semantically meaningful PEP 484-compliant type
+        # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
+        # distinguish between that type hint and unannotated parameters.
+        hint = func_arg_name_to_hint_get(arg.name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.
-        if hint is _PARAM_HINT_EMPTY:
+        if hint is SENTINEL:
             continue
         # Else, this parameter is annotated.
 
-        # Name and kind of the current parameter.
-        param_name = param.name
-        param_kind = param.kind
+        # Name and kind of this parameter, localized for efficiency.
+        arg_name = arg.name
+        arg_kind = arg.kind
 
         # Human-readable labels describing the current parameter and type
         # hint annotating this parameter.
-        exception_prefix = prefix_callable_decorated_param(func, param_name)
+        exception_prefix = prefix_callable_decorated_param(func, arg_name)
 
         # If this parameter's name is reserved for use by the @beartype
         # decorator, raise an exception.
-        if param_name.startswith('__bear'):
+        if arg_name.startswith('__bear'):
             raise BeartypeDecorParamNameException(
                 f'{exception_prefix}reserved by @beartype.')
         # If either the type of this parameter is silently ignorable, continue
         # to the next parameter.
-        elif param_kind in _PARAM_KINDS_IGNORABLE:
+        elif arg_kind in _PARAM_KINDS_IGNORABLE:
             continue
         # Else, this parameter is non-ignorable.
 
@@ -319,7 +350,7 @@ def _code_check_params(data: BeartypeData) -> str:
         hint = sanify_hint_root(
             hint=hint,
             func=func,
-            pith_name=param_name,
+            pith_name=arg_name,
             exception_prefix=f'{exception_prefix}type hint ',
         )
 
@@ -329,7 +360,7 @@ def _code_check_params(data: BeartypeData) -> str:
         # coerced into a PEP-compliant type hint to implicitly ignore
         # PEP-noncompliant type hints as well (e.g., "(object, int, str)").
         if is_hint_ignorable(hint):
-            # print(f'Ignoring {data.func_name} parameter {param_name} hint {repr(hint)}...')
+            # print(f'Ignoring {data.func_name} parameter {arg_name} hint {repr(hint)}...')
             continue
         # Else, this hint is unignorable.
         #
@@ -339,23 +370,23 @@ def _code_check_params(data: BeartypeData) -> str:
         # branch were instead nested *BEFORE* validating this parameter to be
         # unignorable, @beartype would fail to reduce to a noop for otherwise
         # ignorable callables -- which would be rather bad, really.
-        elif param_kind is Parameter.POSITIONAL_OR_KEYWORD:
-            is_params_positional = True
+        elif arg_kind is ParameterKind.POSITIONAL_OR_KEYWORD:
+            is_args_positional = True
 
         # Python code snippet type-checking this parameter against this hint.
-        func_wrapper_code_param = pep_code_check_param(
+        func_wrapper_code_arg = pep_code_check_param(
             data=data,
             hint=hint,
-            param=param,
-            param_index=param_index,
+            arg=arg,
+            arg_index=arg_index,
         )
 
         # Append code type-checking this parameter against this hint.
-        func_wrapper_code += func_wrapper_code_param
+        func_wrapper_code += func_wrapper_code_arg
 
     # If this callable accepts one or more positional type-checked parameters,
     # prefix this code by a snippet localizing the number of these parameters.
-    if is_params_positional:
+    if is_args_positional:
         func_wrapper_code = f'{CODE_INIT_ARGS_LEN}{func_wrapper_code}'
     # Else, this callable accepts *NO* positional type-checked parameters. In
     # this case, preserve this code as is.
@@ -403,12 +434,16 @@ def _code_check_return(data: BeartypeData) -> str:
     # Decorated callable.
     func = data.func
 
-    # Type hint annotating this callable's return if any *OR*
-    # "_RETURN_HINT_EMPTY" otherwise (i.e., if this return is unannotated).
-    hint = data.func_sig.return_annotation
+    # Type hint annotating this callable's return if any *OR* "SENTINEL"
+    # otherwise (i.e., if this return is unannotated).
+    #
+    # Note that "None" is a semantically meaningful PEP 484-compliant type hint
+    # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
+    # between that type hint and an unannotated return.
+    hint = func.__annotations__.get('return', SENTINEL)
 
     # If this return is unannotated, silently reduce to a noop.
-    if hint is _RETURN_HINT_EMPTY:
+    if hint is SENTINEL:
         return ''
     # Else, this return is annotated.
 
