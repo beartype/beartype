@@ -86,8 +86,8 @@ For both space and time efficiency, this metadata is intentionally stored as
      Separate:
      2000000 loops, best of 5: 199 nsec per loop
 
-  So, not only does there exist no performance benefit to smaller fixed lists,
-  there exists demonstrable performance costs.
+So, not only does there exist no performance benefit to flattened fixed lists,
+there exists demonstrable performance costs.
 '''
 
 

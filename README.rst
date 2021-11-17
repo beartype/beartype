@@ -577,8 +577,8 @@ How do I type-check...
 ~~~~~~~~~~~~~~~
 
 **tl;dr:** You just want bearboto3_, a well-maintained third-party package
-cleanly integrating ``beartype`` **+** Boto3. But you're not doing that. You're
-reading on to find out why you want bearboto3_, aren't you? I knew it.
+cleanly integrating ``beartype`` **+** Boto3_. But you're not doing that.
+You're reading on to find out why you want bearboto3_, aren't you? I *knew* it.
 
 Boto3_ is the official Amazon Web Services (AWS) Software Development Kit (SDK)
 for Python. Type-checking Boto3_ types is decidedly non-trivial, because Boto3_

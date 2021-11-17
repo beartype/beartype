@@ -325,7 +325,7 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     # Return true only if...
     return any(
         # This is the passed name...
-        arg_name_curr == arg_name
+        arg_meta.name == arg_name
         # For the name of any parameter accepted by this callable.
-        for arg_name_curr, _, _ in iter_func_args(func)
+        for arg_meta in iter_func_args(func)
     )
