@@ -12,6 +12,29 @@ callables on-the-fly.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Trivialize @beartype debugging. Currently, doing so is highly
+#non-trivial, requiring:
+#* Manually uncommenting the print() call below.
+#* Manually uncommenting an f-string embedding a represent_object() call in the
+#  external _make_func_wrapper_signature() function.
+#
+#Automate both with a new public "beartype.BEARTYPE_DEBUGGING" boolean global
+#or possibly a safer pair of public functions named:
+#* beartype.enable_beartype_debugging().
+#* beartype.disable_beartype_debugging().
+#Internally, of course, those functions would simply set a private
+#"beartype._debug.BEARTYPE_DEBUGGING" boolean global or *something*.
+#
+#Additionally, for usability, this global should *POSSIBLY* also be settable by
+#a shell environment variable of the same name. See this most exceedingly
+#wonderful pragmatic proposal by @posita for accomplishing just that:
+#    https://github.com/beartype/beartype/commit/8fd38b36b13f0e653785166dab3edc2892a03d6d#commitcomment-59708937
+#
+#Lastly, note that we might want to log with the "DEBUG" level rather than
+#print to stdout -- assuming we *CAN* even log in the absence of a default
+#logging configuration. Test us up extensively, please.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncscope import CallableScope

@@ -48,7 +48,7 @@ from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_return,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
-from beartype._util.text.utiltextrepr import represent_object
+# from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable
 from typing import NoReturn
@@ -532,11 +532,19 @@ def _make_func_wrapper_signature(
             # the parent @beartype decorator. While awkward, this is the
             # optimally efficient means of exposing arbitrary attributes to the
             # body of this wrapper function.
-            f'{param_name}={param_name}, '
-            # For debuggability, additionally suffix this parameter by a
-            # comment embedding the machine-readable representation of this
-            # value, stripped of newline and truncated to a reasonable length.
-            f'# is {represent_object(param_value)}\n'
+            f'{param_name}={param_name},'
+
+            #FIXME: *THIS IS CRITICAL.* Unfortunately, this is actually
+            #exceptionally expensive. The culprit is the represent_object()
+            #function, of course, which is sufficiently slow that it was only
+            #really intended to be called by error handlers. See "FIXME:"
+            #commentary preceding make_func() for prospective solutions
+            #(particularly, "beartype.BEARTYPE_DEBUGGING").
+
+            # # For debuggability, additionally suffix this parameter by a
+            # # comment embedding the machine-readable representation of this
+            # # value, stripped of newline and truncated to a reasonable length.
+            # f' # is {represent_object(param_value)}\n'
         )
         for param_name, param_value in data.func_wrapper_locals.items()
     )

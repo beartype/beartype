@@ -165,23 +165,25 @@ def test_listfixed_type_fail() -> None:
     with raises(_BeartypeUtilCachedFixedListException):
         fixed_list *= 0xDEADBEEF
 
-    # Assert that fixed lists refuse to support slicing to an iterable of
-    # differing length.
-    with raises(_BeartypeUtilCachedFixedListException):
-        fixed_list[0:2] = (
-            'Go with your love to the fields.',
-            'Lie down in the shade. Rest your head',
-            'in her lap. Swear allegiance',
-            'to what is nighest your thoughts.',
-            'As soon as the generals and the politicos',
-            'can predict the motions of your mind,',
-            'lose it. Leave it as a sign',
-            'to mark the false trail, the way',
-            'you didn’t go. Be like the fox',
-            'who makes more tracks than necessary,',
-            'some in the wrong direction.',
-            'Practice resurrection.',
-        )
+    #FIXME: Disabled. For efficiency, fixed lists currently permissively
+    #support slicing to an iterable of differing length. It is what it is.
+    # # Assert that fixed lists refuse to support slicing to an iterable of
+    # # differing length.
+    # with raises(_BeartypeUtilCachedFixedListException):
+    #     fixed_list[0:2] = (
+    #         'Go with your love to the fields.',
+    #         'Lie down in the shade. Rest your head',
+    #         'in her lap. Swear allegiance',
+    #         'to what is nighest your thoughts.',
+    #         'As soon as the generals and the politicos',
+    #         'can predict the motions of your mind,',
+    #         'lose it. Leave it as a sign',
+    #         'to mark the false trail, the way',
+    #         'you didn’t go. Be like the fox',
+    #         'who makes more tracks than necessary,',
+    #         'some in the wrong direction.',
+    #         'Practice resurrection.',
+    #     )
 
     # Assert that fixed lists refuse to support appending.
     with raises(_BeartypeUtilCachedFixedListException):

@@ -128,93 +128,103 @@ class FixedList(list):
 
     def __iadd__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not addable by '
-            f'{represent_object(value)}.')
+            f'{self._label} not addable by {represent_object(value)}.')
 
 
     def __imul__(self, value) -> NoReturn:  # type: ignore[misc]
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not multipliable by '
-            f'{represent_object(value)}.')
+            f'{self._label} not multipliable by {represent_object(value)}.')
 
     # ..................{ BAD ~ dunders : setitem           }..................
-    def __setitem__(self, index, value):
+    #FIXME: Great idea, if efficiency didn't particularly matter. Since
+    #efficiency is the entire raison d'etre of this class, however, this method
+    #has been temporarily and probably permanently disabled. Extensive
+    #profiling has shown this single method to substantially cost us elsewhere.
+    #Moreover, this method is only relevant in the context of preventing
+    #external callers who are *NOT* us from violating class constraints. No
+    #external callers exist, though! We are it. Since we know better, we won't
+    #violate class constraints by changing fixed list length with slicing.
+    #Moreover, it's unlikely we ever even assign list slices anywhere. *sigh*
 
-        # If these parameters indicate an external attempt to change the length
-        # of this fixed length with slicing, raise an exception.
-        self._die_if_slice_len_ne_value_len(index, value)
+    # def __setitem__(self, index, value):
+    #
+    #     # If these parameters indicate an external attempt to change the length
+    #     # of this fixed length with slicing, raise an exception.
+    #     self._die_if_slice_len_ne_value_len(index, value)
+    #
+    #     # If this index is a tuple of 0-based indices and slice objects...
+    #     if isinstance(index, Iterable):
+    #         # For each index or slice in this tuple...
+    #         for subindex in index:
+    #             # If these parameters indicate an external attempt to change
+    #             # the length of this fixed length with slicing, raise an
+    #             # exception.
+    #             self._die_if_slice_len_ne_value_len(subindex, value)
+    #
+    #     # Else, this list is either not being sliced or is but is being set to
+    #     # an iterable of the same length as that slice. In either case, this
+    #     # operation preserves the length of this list and is thus acceptable.
+    #     return super().__setitem__(index, value)
 
-        # If this index is a tuple of 0-based indices and slice objects...
-        if isinstance(index, Iterable):
-            # For each index or slice in this tuple...
-            for subindex in index:
-                # If these parameters indicate an external attempt to change
-                # the length of this fixed length with slicing, raise an
-                # exception.
-                self._die_if_slice_len_ne_value_len(subindex, value)
 
-        # Else, this list is either not being sliced or is but is being set to
-        # an iterable of the same length as that slice. In either case, this
-        # operation preserves the length of this list and is thus acceptable.
-        return super().__setitem__(index, value)
-
-
-    def _die_if_slice_len_ne_value_len(self, index, value) -> None:
-        '''
-        Raise an exception only if the passed parameters when passed to the
-        parent :meth:`__setitem__` dunder method signify an external attempt to
-        change the length of this fixed length with slicing.
-
-        This function is intended to be called by the :meth:`__setitem__`
-        dunder method to validate the passed parameters.
-
-        Parameters
-        ----------
-        index
-            0-based index, slice object, or tuple of 0-based indices and slice
-            objects to index this fixed list with.
-        value
-            Object to set this index(s) of this fixed list to.
-
-        Raises
-        ----------
-        _BeartypeUtilCachedFixedListException
-            If this index is a **slice object** (i.e., :class:`slice` instance
-            underlying slice syntax) and this value is either:
-
-            * **Unsized** (i.e., unsupported by the :func:`len` builtin).
-            * Sized but has a length differing from that of this fixed list.
-        '''
-
-        # If this index is *NOT* a slice, silently reduce to a noop.
-        if not isinstance(index, slice):
-            return
-        # Else, this index is a slice.
-
-        # If this value is *NOT* a sized container, raise an exception.
-        if not isinstance(value, Sized):
-            raise _BeartypeUtilCachedFixedListException(
-                f'{self._label} slice {repr(index)} not settable to unsized '
-                f'{represent_object(value)}.')
-        # Else, this value is a sized container.
-
-        # 0-based first and one-past-the-last indices sliced by this slice.
-        start, stop_plus_one, _ = index.indices(len(self))
-
-        # Number of items of this fixed list sliced by this slice. By
-        # definition, this is guaranteed to be a non-negative integer.
-        slice_len = stop_plus_one - start
-
-        # Number of items of this sized container to set this slice to.
-        value_len = len(value)
-
-        # If these two lengths differ, raise an exception.
-        if slice_len != value_len:
-            raise _BeartypeUtilCachedFixedListException(
-                f'{self._label} slice {repr(index)} of length {slice_len} not '
-                f'settable to {represent_object(value)} of differing '
-                f'length {value_len}.'
-            )
+    #FIXME: Disabled as currently only called by __setitem__(). *sigh*
+    # def _die_if_slice_len_ne_value_len(self, index, value) -> None:
+    #     '''
+    #     Raise an exception only if the passed parameters when passed to the
+    #     parent :meth:`__setitem__` dunder method signify an external attempt to
+    #     change the length of this fixed length with slicing.
+    #
+    #     This function is intended to be called by the :meth:`__setitem__`
+    #     dunder method to validate the passed parameters.
+    #
+    #     Parameters
+    #     ----------
+    #     index
+    #         0-based index, slice object, or tuple of 0-based indices and slice
+    #         objects to index this fixed list with.
+    #     value
+    #         Object to set this index(s) of this fixed list to.
+    #
+    #     Raises
+    #     ----------
+    #     _BeartypeUtilCachedFixedListException
+    #         If this index is a **slice object** (i.e., :class:`slice` instance
+    #         underlying slice syntax) and this value is either:
+    #
+    #         * **Unsized** (i.e., unsupported by the :func:`len` builtin).
+    #         * Sized but has a length differing from that of this fixed list.
+    #     '''
+    #
+    #     # If this index is *NOT* a slice, silently reduce to a noop.
+    #     if not isinstance(index, slice):
+    #         return
+    #     # Else, this index is a slice.
+    #     #
+    #     # If this value is *NOT* a sized container, raise an exception.
+    #     elif not isinstance(value, Sized):
+    #         raise _BeartypeUtilCachedFixedListException(
+    #             f'{self._label} slice {repr(index)} not settable to unsized '
+    #             f'{represent_object(value)}.'
+    #         )
+    #     # Else, this value is a sized container.
+    #
+    #     # 0-based first and one-past-the-last indices sliced by this slice.
+    #     start, stop_plus_one, _ = index.indices(len(self))
+    #
+    #     # Number of items of this fixed list sliced by this slice. By
+    #     # definition, this is guaranteed to be a non-negative integer.
+    #     slice_len = stop_plus_one - start
+    #
+    #     # Number of items of this sized container to set this slice to.
+    #     value_len = len(value)
+    #
+    #     # If these two lengths differ, raise an exception.
+    #     if slice_len != value_len:
+    #         raise _BeartypeUtilCachedFixedListException(
+    #             f'{self._label} slice {repr(index)} of length {slice_len} not '
+    #             f'settable to {represent_object(value)} of differing '
+    #             f'length {value_len}.'
+    #         )
 
     # ..................{ BAD ~ non-dunders                 }..................
     # Prohibit non-dunder methods modifying list length by overriding these
@@ -222,8 +232,7 @@ class FixedList(list):
 
     def append(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not appendable by '
-            f'{represent_object(obj)}.')
+            f'{self._label} not appendable by {represent_object(obj)}.')
 
 
     def clear(self) -> NoReturn:
@@ -233,8 +242,7 @@ class FixedList(list):
 
     def extend(self, obj) -> NoReturn:
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not extendable by '
-            f'{represent_object(obj)}.')
+            f'{self._label} not extendable by {represent_object(obj)}.')
 
 
     def pop(self, *args) -> NoReturn:
