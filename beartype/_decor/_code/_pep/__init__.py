@@ -183,7 +183,7 @@
 #Third, note that one approach would be to augment the breadth-first search
 #performed below to record the "hint_path" used to access the currently visited
 #and possibly nested hint from the universally accessible
-#"__beartype_func.__annotations__[{param_name}]". This is obviously *NOT* the
+#"__beartype_func.__annotations__[{arg_name}]". This is obviously *NOT* the
 #optimally efficient approach, as this will entail multiple dictionary lookups
 #to type-check each literal object. Nonetheless, this is absolutely the
 #simplest approach and thus probably the one we should at least initially
@@ -196,7 +196,7 @@
 #
 #The issue, of course, is that we currently do *NOT* record the "hint_path"
 #used to access the currently visited and possibly nested hint from the
-#universally accessible "__beartype_func.__annotations__[{param_name}]". Doing
+#universally accessible "__beartype_func.__annotations__[{arg_name}]". Doing
 #so will probably prove annoying and possibly non-trivial. Since we might need
 #to refactor quite a bit to do that and would increase the space complexity of
 #this algorithm by a little bit as well, we might consider alternatives.
@@ -396,8 +396,8 @@
 #
 #Clearly, we'll need to carefully consider how we might efficiently percolate
 #that metadata up from this breadth-first traversal to that top-level module.
-#Presumably, we'll want to add a new data structure to the "BeartypeData"
-#object -- say, a new "BeartypeData.param_name_to_value" dictionary mapping
+#Presumably, we'll want to add a new data structure to the "BeartypeCall"
+#object -- say, a new "BeartypeCall.param_name_to_value" dictionary mapping
 #private parameter names to values to be passed to the current wrapper.
 #
 #Note that we should still cache at least tuples in the "bear_typistry"
@@ -1405,9 +1405,9 @@
 #            # The following suffices and doesn't violate DRY, which is the
 #            # only important thing here.
 #            BeartypeConfigDecor.__dict__.update({
-#                param_name: param_value
-#                param_name, param_value in BEARTYPE_PARAM_NAME_TO_VALUE.items()
-#                if param_value is not None
+#                arg_name: arg_value
+#                arg_name, arg_value in BEARTYPE_PARAM_NAME_TO_VALUE.items()
+#                if arg_value is not None
 #            })
 #      * Dynamically *COPY* the beartype_template() function into a new
 #        function specific to that subclass, which means that function is
@@ -1472,7 +1472,7 @@
 #"config" parameter -- which will, of course, *ALWAYS* be non-"None" by the
 #logic above. Assert this, of course. We can then trivially expose that
 #"config" to lower-level beartype functions by just stuffing it into the
-#existing "BeartypeData" class: e.g.,
+#existing "BeartypeCall" class: e.g.,
 #    # Welp, that was trivial.
 #    func_data.config = config
 #

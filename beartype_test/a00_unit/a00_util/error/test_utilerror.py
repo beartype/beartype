@@ -7,7 +7,7 @@
 **Beartype exception caching utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cache.utilcacheerror` submodule.
+:mod:`beartype._util.error.utilerror` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,8 +22,7 @@ from random import getrandbits
 class CachedException(ValueError):
     '''
     Test-specific exception raised by unit tests exercising the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
-    function.
+    :func:`beartype._util.error.utilerror.reraise_exception_placeholder` function.
     '''
 
     pass
@@ -32,13 +31,13 @@ class CachedException(ValueError):
 def test_reraise_exception_cached() -> None:
     '''
     Test the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
     function.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype._util.cache.utilcacheerror import reraise_exception_cached
+    from beartype._util.error.utilerror import reraise_exception_placeholder
 
     # Source substring to be hard-coded into the messages of all exceptions
     # raised by the low-level memoized callable defined below.
@@ -50,7 +49,7 @@ def test_reraise_exception_cached() -> None:
     def portend_low_level_winter(is_winter_coming: bool) -> str:
         if is_winter_coming:
             raise CachedException(
-                '{} intimates that winter is coming.'.format(TEST_SOURCE_STR))
+                f'{TEST_SOURCE_STR} intimates that winter is coming.')
         else:
             return 'PRAISE THE SUN'
 
@@ -66,7 +65,7 @@ def test_reraise_exception_cached() -> None:
             print(portend_low_level_winter(True))
         except CachedException as exception:
             # print('exception.args: {!r} ({!r})'.format(exception.args, type(exception.args)))
-            reraise_exception_cached(
+            reraise_exception_placeholder(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
                 target_str=(
@@ -92,7 +91,7 @@ def test_reraise_exception_cached() -> None:
             "What's bravery without a dash of recklessness?")
     except Exception as exception:
         with raises(CachedException):
-            reraise_exception_cached(
+            reraise_exception_placeholder(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
                 target_str='and man sees not light,',
@@ -103,7 +102,7 @@ def test_reraise_exception_cached() -> None:
         raise CachedException()
     except Exception as exception:
         with raises(CachedException):
-            reraise_exception_cached(
+            reraise_exception_placeholder(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
                 target_str='but only endless nights.',
@@ -114,7 +113,7 @@ def test_reraise_exception_cached() -> None:
         raise CachedException(0xDEADBEEF)
     except Exception as exception:
         with raises(CachedException):
-            reraise_exception_cached(
+            reraise_exception_placeholder(
                 exception=exception,
                 source_str=TEST_SOURCE_STR,
                 target_str='Rise if you would, for that is our curse.',

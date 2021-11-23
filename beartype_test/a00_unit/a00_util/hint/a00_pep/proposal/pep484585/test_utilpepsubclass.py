@@ -42,48 +42,49 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a class.
-    assert get_hint_pep484585_subclass_superclass(Type[str]) is str
+    assert get_hint_pep484585_subclass_superclass(Type[str], '') is str
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a union of classes.
     hint_superclass = get_hint_pep484585_subclass_superclass(
-        Type[Union[dict, set]])
+        Type[Union[dict, set]], '')
     assert hint_superclass == (dict, set) or hint_superclass == (set, dict)
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a forward reference to a
     # class.
-    assert get_hint_pep484585_subclass_superclass(Type['bytes']) == (
+    assert get_hint_pep484585_subclass_superclass(Type['bytes'], '') == (
         HINT_PEP484_FORWARDREF_TYPE('bytes'))
 
     # Assert this getter raises the expected exception when passed a PEP
     # 484-compliant subclass type hint subscripted by a non-issubclassable
     # class.
     with raises(BeartypeDecorHintPep3119Exception):
-        get_hint_pep484585_subclass_superclass(Type[NonIssubclassableClass])
+        get_hint_pep484585_subclass_superclass(
+            Type[NonIssubclassableClass], '')
 
     # Assert this getter raises the expected exception when passed an arbitrary
     # object that is neither a PEP 484- nor 585-compliant subclass type hint.
     with raises(BeartypeDecorHintPep484585Exception):
-        get_hint_pep484585_subclass_superclass('Caustically')
+        get_hint_pep484585_subclass_superclass('Caustically', '')
 
     # If the active Python interpreter targets Python >= 3.9 and thus supports
     # PEP 585...
     if IS_PYTHON_AT_LEAST_3_9:
         # Assert this getter returns the expected object when passed a PEP
         # 585-compliant subclass type hint subscripted by a class.
-        assert get_hint_pep484585_subclass_superclass(type[bool]) is bool
+        assert get_hint_pep484585_subclass_superclass(type[bool], '') is bool
 
         # Assert this getter returns the expected object when passed a PEP
         # 585-compliant subclass type hint subscripted by a union of classes.
         hint_superclass = get_hint_pep484585_subclass_superclass(
-            type[Union[dict, set]])
+            type[Union[dict, set]], '')
         assert hint_superclass == (dict, set) or hint_superclass == (set, dict)
 
         # Assert this getter returns the expected object when passed a PEP
         # 585-compliant subclass type hint subscripted by a forward reference
         # to a class.
-        assert get_hint_pep484585_subclass_superclass(type['complex']) == (
+        assert get_hint_pep484585_subclass_superclass(type['complex'], '') == (
             'complex')
 
         # Assert this getter raises the expected exception when passed a PEP
@@ -91,7 +92,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         # class.
         with raises(BeartypeDecorHintPep3119Exception):
             get_hint_pep484585_subclass_superclass(
-                type[NonIssubclassableClass])
+                type[NonIssubclassableClass], '')
 
         # Assert this getter raises the expected exception when passed a PEP
         # 585-compliant subclass type hint subscripted by *NO* classes.
@@ -99,7 +100,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         # Note there intentionally exists *NO* corresponding PEP 484 test, as
         # the "typing.Type" factory already validates this to be the case.
         with raises(BeartypeDecorHintPep484585Exception):
-            get_hint_pep484585_subclass_superclass(type[()])
+            get_hint_pep484585_subclass_superclass(type[()], '')
 
         # Assert this getter raises the expected exception when passed a PEP
         # 585-compliant subclass type hint subscripted by two or more classes.
@@ -107,7 +108,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         # Note there intentionally exists *NO* corresponding PEP 484 test, as
         # the "typing.Type" factory already validates this to be the case.
         with raises(BeartypeDecorHintPep585Exception):
-            get_hint_pep484585_subclass_superclass(type[int, float])
+            get_hint_pep484585_subclass_superclass(type[int, float], '')
 
         # Assert this getter raises the expected exception when passed a PEP
         # 585-compliant subclass type hint subscripted by an object that is
@@ -117,4 +118,4 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         # the "typing.Type" factory already validates this to be the case.
         with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_subclass_superclass(type[
-                b'Counterrevolutionary'])
+                b'Counterrevolutionary'], '')

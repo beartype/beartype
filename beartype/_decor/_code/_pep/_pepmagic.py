@@ -4,45 +4,17 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-compliant type-checking code generator magic.**
-
-This private submodule declares read-only global attributes internally
-referenced by the :mod:`beartype._decor._hint._pep._pephint` submodule,
-improving the maintainability and readability of the latter.
+**Beartype decorator PEP-compliant code generator magic** (i.e., global
+constants simplifying PEP-compliant code generation but *not* themselves code).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.cache.utilcacheerror import EXCEPTION_CACHED_PLACEHOLDER
 from itertools import count
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS ~ exception             }....................
-EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
-    f'{EXCEPTION_CACHED_PLACEHOLDER} wrapper parameter ')
-'''
-Human-readable substring describing a new wrapper parameter required by the
-current root type hint in exception messages.
-'''
-
-
-EXCEPTION_PREFIX_HINT_ROOT = EXCEPTION_CACHED_PLACEHOLDER
-'''
-Human-readable substring describing the current root type hint in exception
-messages.
-'''
-
-
-EXCEPTION_PREFIX_HINT_ROOT_GENERIC = (
-    f'{EXCEPTION_CACHED_PLACEHOLDER} type hint ')
-'''
-Human-readable substring describing the current root type hint generically
-(i.e., *without* respect to the specific PEP to which this hint conforms) in
-exception messages.
-'''
 
 # ....................{ CONSTANTS ~ hint : meta           }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely

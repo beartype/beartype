@@ -92,7 +92,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
-    prefix_callable_decorated_param_value,
+    prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
@@ -251,10 +251,10 @@ def raise_pep_call_exception(
     # variables appropriately.
     else:
         exception_cls = BeartypeCallHintPepParamException
-        exception_prefix = prefix_callable_decorated_param_value(
+        exception_prefix = prefix_callable_decorated_arg_value(
             func=func,
-            param_name=pith_name,
-            param_value=pith_value,
+            arg_name=pith_name,
+            arg_value=pith_value,
         )
 
     # If this parameter or return value is unannotated, raise an exception.

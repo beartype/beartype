@@ -13,19 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
+from collections.abc import Callable
 from typing import Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-def get_hint_pep484585_args_1(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> object:
+def get_hint_pep484585_args_1(hint: object, exception_prefix: str) -> object:
     '''
     Argument subscripting the passed :pep:`484`- or :pep:`585`-compliant
     **single-argument type hint** (i.e., hint semantically subscriptable
@@ -58,9 +54,9 @@ def get_hint_pep484585_args_1(
     ----------
     hint : Any
         PEP-compliant type hint to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Returns
     ----------
@@ -98,12 +94,7 @@ def get_hint_pep484585_args_1(
 
 
 def get_hint_pep484585_args_3(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> Tuple[object, object, object]:
+    hint: object, exception_prefix: str) -> Tuple[object, object, object]:
     '''
     3-tuple of the three arguments subscripting the passed :pep:`484`- or
     :pep:`585`-compliant **three-argument type hint** (i.e., hint semantically
@@ -117,9 +108,9 @@ def get_hint_pep484585_args_3(
     ----------
     hint : Any
         PEP-compliant type hint to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Returns
     ----------

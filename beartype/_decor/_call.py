@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._code.codesnip import (
+from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
@@ -24,7 +24,7 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                           }....................
-class BeartypeData(object):
+class BeartypeCall(object):
     '''
     **Beartype data** (i.e., object aggregating *all* metadata for the callable
     currently being decorated by the :func:`beartype.beartype` decorator).**

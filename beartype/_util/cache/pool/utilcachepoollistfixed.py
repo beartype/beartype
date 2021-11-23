@@ -22,7 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import represent_object
 from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
-from collections.abc import Iterable, Sized
 from typing import NoReturn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -271,7 +270,7 @@ class FixedList(list):
         # One-liners for magnanimous pusillanimousness.
         return f'Fixed list {represent_object(self)}'
 
-# ....................{ SINGLETONS ~ private              }....................
+# ....................{ PRIVATE ~ factories               }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)
 '''
 Thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching

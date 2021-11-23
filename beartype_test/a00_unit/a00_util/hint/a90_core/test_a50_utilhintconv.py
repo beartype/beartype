@@ -62,7 +62,7 @@ def test_coerce_hint_any() -> None:
 
     # ..................{ CORE                              }..................
     # Assert this coercer preserves an isinstanceable type as is.
-    assert _coerce_hint_any(int, '') is int
+    assert _coerce_hint_any(int) is int
 
     # ..................{ PEP 585                           }..................
     # If the active Python interpreter targets Python >= 3.9 and thus supports
@@ -73,14 +73,14 @@ def test_coerce_hint_any() -> None:
 
         # Assert this coercer preserves the first passed instance of a PEP
         # 585-compliant type hint as is.
-        assert _coerce_hint_any(hint_pep585, '') is hint_pep585
+        assert _coerce_hint_any(hint_pep585) is hint_pep585
 
         # Assert this coercer returns the first passed instance of a PEP
         # 585-compliant type hint when passed a copy of that instance. PEP
         # 585-compliant type hints are *NOT* self-caching: e.g.,
         #     >>> list[int] is list[int]
         #     False
-        assert _coerce_hint_any(list[int], '') is hint_pep585
+        assert _coerce_hint_any(list[int]) is hint_pep585
 
 # ....................{ TESTS ~ reducers                  }....................
 def test_reduce_hint() -> None:

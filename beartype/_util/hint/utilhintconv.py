@@ -117,11 +117,6 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
 '''
 
 # ....................{ SANIFIERS                         }....................
-#FIXME: Define a new sanify_hint_child() function internally
-#calling both coerce_hint_child() and _reduce_hint().
-#FIXME: Replace *ALL* external calls to _reduce_hint() with calls to
-#coerce_hint_child() instead.
-
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
 def sanify_hint_root(
@@ -198,8 +193,6 @@ def sanify_hint_root(
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
-    assert isinstance(pith_name, str), f'{pith_name} not string.'
 
     # PEP-compliant type hint coerced (i.e., permanently converted in the
     # annotations dunder dictionary of the passed callable) from this possibly
@@ -273,8 +266,7 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     # Return this hint first coerced and then reduced, intentionally covering
     # the subset of the logic performed by the sanify_hint_root() sanifier
     # specifically applicable to child type hints.
-    return _reduce_hint(
-        _coerce_hint_any(hint, exception_prefix), exception_prefix)
+    return _reduce_hint(_coerce_hint_any(hint), exception_prefix)
 
 # ....................{ COERCERS                          }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
@@ -414,10 +406,10 @@ def _coerce_hint_root(
     # position relative to other type hints.
     #
     # Return this hint, possibly coerced as a context-agnostic type hint.
-    return _coerce_hint_any(hint=hint, exception_prefix=exception_prefix)
+    return _coerce_hint_any(hint)
 
 
-def _coerce_hint_any(hint: object, exception_prefix: str) -> Any:
+def _coerce_hint_any(hint: object) -> Any:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed
     PEP-compliant type hint if this hint is coercible *or* this hint as is
@@ -530,9 +522,6 @@ def _coerce_hint_any(hint: object, exception_prefix: str) -> Any:
     ----------
     hint : object
         Type hint to be possibly coerced.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
 
     Returns
     ----------
@@ -557,8 +546,6 @@ def _coerce_hint_any(hint: object, exception_prefix: str) -> Any:
     # * Else, one or more prior copies of this hint have already been passed to
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
-
-    #FIXME: *UNIT TEST US UP, PLEASE.* This requires significant testing.
     if is_hint_pep585_builtin(hint):
         return _HINT_REPR_TO_HINT.get_value_static(
             key=repr(hint), value=hint)
@@ -569,10 +556,7 @@ def _coerce_hint_any(hint: object, exception_prefix: str) -> Any:
 
 # ....................{ REDUCERS                          }....................
 @callable_cached
-def _reduce_hint(
-    hint: Any,
-    exception_prefix: str,
-) -> object:
+def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed
     higher-level type hint if this hint is reducible *or* this hint as is

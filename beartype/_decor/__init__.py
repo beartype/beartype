@@ -16,13 +16,13 @@
 #  thus never be the default.
 #
 #To differentiate between these three strategies, consider:
-#* Declare an enumeration in "beartype._decor._data" resembling:
+#* Declare an enumeration in "beartype._decor._call" resembling:
 #    from enum import Enum
 #    BeartypeStrategyKind = Enum('BeartypeStrategyKind ('O1', 'Ologn', 'On',))
-#* Define a new "BeartypeData.strategy_kind" instance variable.
+#* Define a new "BeartypeCall.strategy_kind" instance variable.
 #* Set this variable to the corresponding "BeartypeStrategyKind" enumeration
 #  member based on which of the three decorators listed above was called.
-#* Explicitly pass the value of the "BeartypeData.strategy_kind" instance
+#* Explicitly pass the value of the "BeartypeCall.strategy_kind" instance
 #  variable to the beartype._decor._code._pep._pephint.pep_code_check_hint()
 #  function as a new memoized "strategy_kind" parameter.
 #* Conditionally generate type-checking code throughout that function depending

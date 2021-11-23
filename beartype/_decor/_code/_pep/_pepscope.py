@@ -19,7 +19,7 @@ from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
-from beartype._decor._code.codesnip import ARG_NAME_TYPISTRY
+from beartype._decor._code.codemagic import ARG_NAME_TYPISTRY
 from beartype._decor._code._pep._pepsnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
@@ -401,7 +401,7 @@ def express_func_scope_type_forwardref(
     class that typically has yet to be declared) as a Python expression
     evaluating to this forward reference when accessed via the beartypistry
     singleton added as a new key-value pair of the passed dictionary, whose
-    key is the string :attr:`beartype._decor._code.codesnip.ARG_NAME_TYPISTRY`
+    key is the string :attr:`beartype._decor._code.codemagic.ARG_NAME_TYPISTRY`
     and whose value is the beartypistry singleton.
 
     Parameters

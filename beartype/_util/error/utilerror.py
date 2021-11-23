@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype cached exception handling utilities.**
+**Beartype exception handling utilities.**
 
 This private submodule implements supplementary exception-handling utility
 functions required by various :mod:`beartype` facilities, including callables
@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ CONSTANTS                         }....................
-EXCEPTION_CACHED_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
+EXCEPTION_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
 '''
 Default non-human-readable source substring to be globally replaced by the
 target substring in the generic messages of memoized exceptions passed to the
@@ -54,7 +54,7 @@ human readability from those lower-level memoized callables onto higher-level
 non-memoized callables -- which are then required to explicitly (in order):
 
 #. Catch exceptions raised by those lower-level memoized callables.
-#. Call the :func:`reraise_exception_cached` function with those exceptions and
+#. Call the :func:`reraise_exception_placeholder` function with those exceptions and
    the desired human-readable substring fragments. That function then:
 
    #. Replaces this magic substring hard-coded into those exception messages
@@ -73,13 +73,13 @@ streamlining the implementations of all callables involved. Phew!
 '''
 
 # ....................{ RAISERS                           }....................
-def reraise_exception_cached(
+def reraise_exception_placeholder(
     # Mandatory parameters.
     exception: Exception,
     target_str: str,
 
     # Optional parameters.
-    source_str: str = EXCEPTION_CACHED_PLACEHOLDER,
+    source_str: str = EXCEPTION_PLACEHOLDER,
 ) -> None:
     '''
     Reraise the passed exception in a safe manner preserving both this
@@ -98,7 +98,7 @@ def reraise_exception_cached(
     source_str : Optional[str]
         Source non-human-readable substring previously hard-coded into this
         exception's message to be replaced by the passed target substring.
-        Defaults to :data:`EXCEPTION_CACHED_PLACEHOLDER`.
+        Defaults to :data:`EXCEPTION_PLACEHOLDER`.
 
     Raises
     ----------
@@ -109,7 +109,7 @@ def reraise_exception_cached(
 
     See Also
     ----------
-    :data:`EXCEPTION_CACHED_PLACEHOLDER`
+    :data:`EXCEPTION_PLACEHOLDER`
         Further commentary on usage and motivation.
     https://stackoverflow.com/a/62662138/2809027
         StackOverflow answer mildly inspiring this implementation.
@@ -118,15 +118,15 @@ def reraise_exception_cached(
     ----------
         >>> from beartype.roar import BeartypeDecorHintPepException
         >>> from beartype._util.cache.utilcachecall import callable_cached
-        >>> from beartype._util.cache.utilcacheerror import (
-        ...     reraise_exception_cached, EXCEPTION_CACHED_PLACEHOLDER)
+        >>> from beartype._util.error.utilerror import (
+        ...     reraise_exception_placeholder, EXCEPTION_PLACEHOLDER)
         >>> from random import getrandbits
         >>> @callable_cached
         ... def portend_low_level_winter(is_winter_coming: bool) -> str:
         ...     if is_winter_coming:
         ...         raise BeartypeDecorHintPepException(
         ...             '{} intimates that winter is coming.'.format(
-        ...                 EXCEPTION_CACHED_PLACEHOLDER))
+        ...                 EXCEPTION_PLACEHOLDER))
         ...     else:
         ...         return 'PRAISE THE SUN'
         >>> def portend_high_level_winter() -> None:
@@ -134,7 +134,7 @@ def reraise_exception_cached(
         ...         print(portend_low_level_winter(is_winter_coming=False))
         ...         print(portend_low_level_winter(is_winter_coming=True))
         ...     except BeartypeDecorHintPepException as exception:
-        ...         reraise_exception_cached(
+        ...         reraise_exception_placeholder(
         ...             exception=exception,
         ...             target_str=(
         ...                 'Random "Song of Fire and Ice" spoiler' if getrandbits(1) else
@@ -147,7 +147,7 @@ def reraise_exception_cached(
             portend_high_level_winter()
           File "<input>", line 27, in portend_high_level_winter
             'Random "Dark Souls" plaintext meme'
-          File "/home/leycec/py/beartype/beartype/_util/cache/utilcacheerror.py", line 225, in reraise_exception_cached
+          File "/home/leycec/py/beartype/beartype._util.error.utilerror.py", line 225, in reraise_exception_placeholder
             raise exception.with_traceback(exception.__traceback__)
           File "<input>", line 20, in portend_high_level_winter
             print(portend_low_level_winter(is_winter_coming=True))
@@ -156,7 +156,7 @@ def reraise_exception_cached(
           File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
             *args, **kwargs)
           File "<input>", line 13, in portend_low_level_winter
-            EXCEPTION_CACHED_PLACEHOLDER))
+            EXCEPTION_PLACEHOLDER))
         beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (

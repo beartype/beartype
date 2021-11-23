@@ -6,7 +6,7 @@
 '''
 **Beartype decorator dataclass unit tests.**
 
-This submodule unit tests the :func:`beartype._decor._data` submodule.
+This submodule unit tests the :func:`beartype._decor._call` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -19,14 +19,14 @@ from pytest import raises
 # ....................{ TESTS                             }....................
 def test_decor_data() -> None:
     '''
-    Test usage of the :func:`beartype._decor._data.BeartypeData` dataclass.
+    Test usage of the :func:`beartype._decor._call.BeartypeCall` dataclass.
     '''
 
     # Defer heavyweight imports.
-    from beartype._decor._data import BeartypeData
+    from beartype._decor._call import BeartypeCall
 
     # Beartype decorator dataclass.
-    beartype_data = BeartypeData()
+    beartype_data = BeartypeCall()
 
     # Assert that instances of this dataclass are unhashable.
     with raises(TypeError):

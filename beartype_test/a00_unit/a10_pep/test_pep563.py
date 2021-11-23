@@ -131,7 +131,7 @@ def test_pep563_module() -> None:
     # are postponed under PEP 563 as expected.
     assert all(
         isinstance(param_hint, str)
-        for param_name, param_hint in (
+        for arg_name, param_hint in (
             GET_MINECRAFT_END_TXT_ANNOTATIONS.items())
     )
 
@@ -139,7 +139,7 @@ def test_pep563_module() -> None:
     # postponed, as @beartype implicitly resolves all annotations.
     assert all(
         not isinstance(param_hint, str)
-        for param_name, param_hint in (
+        for arg_name, param_hint in (
             GET_MINECRAFT_END_TXT_STANZA_ANNOTATIONS.items())
     )
 
@@ -153,8 +153,8 @@ def test_pep563_module() -> None:
     #
     # Manually resolve all postponed annotations on a callable.
     get_minecraft_end_txt.__annotations__ = {
-        param_name: eval(param_hint, get_minecraft_end_txt.__globals__)
-        for param_name, param_hint in (
+        arg_name: eval(param_hint, get_minecraft_end_txt.__globals__)
+        for arg_name, param_hint in (
             get_minecraft_end_txt.__annotations__.items())
     }
 

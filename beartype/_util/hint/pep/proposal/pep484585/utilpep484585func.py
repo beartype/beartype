@@ -36,20 +36,20 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ REDUCERS ~ return                 }....................
-def reduce_hint_pep484585_func_return(func: Callable) -> object:
+def reduce_hint_pep484585_func_return(
+    func: Callable, exception_prefix: str) -> object:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the
-    passed callable if any to a simpler form to generate
-    optimally efficient type-checking by the :func:`beartype.beartype`
-    decorator.
+    passed callable if any to a simpler form to generate optimally efficient
+    type-checking by the :func:`beartype.beartype` decorator.
 
     Parameters
     ----------
     func : Callable
         Currently decorated callable to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Returns
     ----------
@@ -81,7 +81,8 @@ def reduce_hint_pep484585_func_return(func: Callable) -> object:
         if hint_sign is HintSignCoroutine:
             # 3-tuple of all child type hints subscripting this hint if
             # subscripted by three such hints *OR* raise an exception.
-            hint_args = get_hint_pep484585_args_3(hint)
+            hint_args = get_hint_pep484585_args_3(
+                hint=hint, exception_prefix=exception_prefix)
 
             # Reduce this hint to the last child type hint subscripting this
             # hint, whose value is the return type hint for this coroutine.

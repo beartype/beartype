@@ -52,11 +52,8 @@ subscripting (indexing) a subclass type hint).
 
 # ....................{ GETTERS                           }....................
 def get_hint_pep484585_subclass_superclass(
-    # Mandatory parameters.
     hint: object,
-
-    # Optional parameters.
-    exception_prefix: str = '',
+    exception_prefix: str,
 ) -> _HINT_PEP484585_SUBCLASS_ARGS_1_UNION:
     '''
     **Issubclassable superclass(es)** (i.e., class whose metaclass does *not*
@@ -73,9 +70,9 @@ def get_hint_pep484585_subclass_superclass(
     ----------
     hint : object
         Object to be inspected.
-    exception_prefix : Optional[str]
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Returns
     ----------
@@ -154,7 +151,6 @@ def get_hint_pep484585_subclass_superclass(
     #
     # If this superclass is a class...
     elif isinstance(hint_superclass, type):
-        # If this superclass is *NOT* issubclassable, raise an exception.
         die_unless_type_issubclassable(
             cls=hint_superclass, exception_prefix=exception_prefix)
         # Else, this superclass is issubclassable.
@@ -171,8 +167,8 @@ def get_hint_pep484585_subclass_superclass(
     #     ()   # <---- thanks fer nuthin
     else:
         raise BeartypeDecorHintPep484585Exception(
-            f'{exception_prefix}subclass type hint {repr(hint)} '
-            f'child type hint {repr(hint_superclass)} neither '
+            f'{exception_prefix}PEP 484 or 585 subclass type hint '
+            f'{repr(hint)} child type hint {repr(hint_superclass)} neither '
             f'class, union of classes, nor forward reference to class.'
         )
 
@@ -182,11 +178,8 @@ def get_hint_pep484585_subclass_superclass(
 # ....................{ REDUCERS                          }....................
 #FIXME: Unit test us up.
 def reduce_hint_pep484585_subclass_superclass_if_ignorable(
-    # Mandatory parameters.
     hint: Any,
-
-    # Optional parameters.
-    exception_prefix: str = '',
+    exception_prefix: str,
 ) -> Any:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass type
@@ -204,9 +197,9 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     ----------
     hint : object
         Subclass type hint to be reduced.
-    exception_prefix : Optional[str]
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Raises
     ----------
@@ -267,12 +260,7 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
 
 # ....................{ PRIVATE ~ validators              }....................
 def _die_unless_hint_pep484585_subclass(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> None:
+    hint: object, exception_prefix: str) -> None:
     '''
     Raise an exception unless the passed object is a :pep:`484`- or
     :pep:`585`-compliant **subclass type hint** (i.e., hint constraining
@@ -282,9 +270,9 @@ def _die_unless_hint_pep484585_subclass(
     ----------
     hint : object
         Object to be validated.
-    exception_prefix : Optional[str]
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
 
     Raises
     ----------

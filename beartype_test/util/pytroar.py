@@ -33,9 +33,9 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     Context manager validating that the block exercised by this manager raises
     a **cached exception** (i.e., whose message previously containing one or
     more instances of the magic
-    :data:`beartype._util.cache.utilcacheerror.EXCEPTION_CACHED_PLACEHOLDER`
+    :data:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER`
     substring since replaced by the
-    :func:`beartype._util.cache.utilcacheerror.reraise_exception_cached`
+    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
     function) of the passed type.
 
     Parameters
@@ -56,8 +56,8 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.cache.utilcacheerror import (
-        EXCEPTION_CACHED_PLACEHOLDER)
+    from beartype._util.error.utilerror import (
+        EXCEPTION_PLACEHOLDER)
 
     # Within a "pytest"-specific context manager validating this contextual
     # block to raise an exception of this type, perform the body of that block.
@@ -68,7 +68,7 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     exception_message = str(exception_info.value)
 
     # Assert this exception message does *NOT* contain this magic substring.
-    assert EXCEPTION_CACHED_PLACEHOLDER not in exception_message
+    assert EXCEPTION_PLACEHOLDER not in exception_message
 
     #FIXME: Inadvisable in the general case, but preserved for posterity.
     # Assert this exception message does *NOT* contain two concurrent spaces,

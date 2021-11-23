@@ -382,21 +382,21 @@ class CauseSleuth(object):
         '''
 
         # For the name of each passed keyword argument...
-        for param_name in kwargs.keys():
+        for arg_name in kwargs.keys():
             # If this name is *NOT* that of a parameter accepted by the
             # __init__() method, raise an exception.
-            if param_name not in self._INIT_PARAM_NAMES:
+            if arg_name not in self._INIT_PARAM_NAMES:
                 raise _BeartypeCallHintPepRaiseException(
                     f'{self.__class__}.__init__() parameter '
-                    f'{param_name} unrecognized.'
+                    f'{arg_name} unrecognized.'
                 )
 
         # For the name of each parameter accepted by the __init__() method...
-        for param_name in self._INIT_PARAM_NAMES:
+        for arg_name in self._INIT_PARAM_NAMES:
             # If this parameter was *NOT* explicitly passed by the caller,
             # default this parameter to its current value from this object.
-            if param_name not in kwargs:
-                kwargs[param_name] = getattr(self, param_name)
+            if arg_name not in kwargs:
+                kwargs[arg_name] = getattr(self, arg_name)
 
         # Return a new instance of this class initialized with these arguments.
         return CauseSleuth(**kwargs)

@@ -20,7 +20,6 @@ from beartype.roar import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
@@ -31,8 +30,6 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
 )
 from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilpep585 import (
-    is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
 from beartype._util.mod.utilmodule import (
@@ -168,10 +165,9 @@ def die_unless_hint_pep(
             f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
 
 # ....................{ EXCEPTIONS ~ supported            }....................
-#FIXME: *DANGER.* This and the die_if_hint_pep_sign_unsupported() function make
-#beartype more fragile. Instead, refactor all or most calls to this and the
-#die_if_hint_pep_sign_unsupported() functions into calls to the
-#warn_if_hint_pep_unsupported() function; then, consider excising these as well
+#FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
+#all or most calls to this function into calls to the
+#warn_if_hint_pep_unsupported() function; then, consider excising this as well
 #as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
 def die_if_hint_pep_unsupported(
     # Mandatory parameters.
@@ -191,15 +187,6 @@ def die_if_hint_pep_unsupported(
 
     Caveats
     ----------
-    **This function should never be called to validate either signs or
-    unsubscripted** :mod:`typing` **objects** (e.g., those returned by the
-    :func:`beartype._util.hint.pep.get_hint_pep_sign` function). The
-    :func:`die_if_hint_pep_sign_unsupported` function should be called
-    instead. Why? Because the :mod:`typing` module implicitly parametrizes
-    these attributes by one or more type variables. Since this decorator
-    currently fails to support type variables, this function unconditionally
-    raises an exception when passed these attributes.
-
     **This validator only shallowly validates this object.** If this object is
     a subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``),
     this validator ignores all subscripted arguments (e.g., ``List[int]``) on
@@ -264,49 +251,6 @@ def die_if_hint_pep_unsupported(
     else:
         raise BeartypeDecorHintPepUnsupportedException(
             f'{exception_prefix}type hint {repr(hint)} '
-            f'currently unsupported by @beartype.'
-        )
-
-
-def die_if_hint_pep_sign_unsupported(
-    # Mandatory parameters.
-    hint_sign: HintSign,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> None:
-    '''
-    Raise an exception unless the passed object is a **supported PEP-compliant
-    sign** (i.e., arbitrary object uniquely identifying PEP-compliant type
-    hints currently supported by the :func:`beartype.beartype` decorator).
-
-    This validator is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : HintSign
-        Sign to be validated.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Raises
-    ----------
-    BeartypeDecorHintPepException
-        If this object is *not* a PEP-compliant type hint.
-    BeartypeDecorHintPepUnsupportedException
-        If this object is a PEP-compliant type hint but is currently
-        unsupported by the :func:`beartype.beartype` decorator.
-    '''
-
-    # If this hint is *NOT* a supported sign, raise an exception.
-    if hint_sign not in HINT_SIGNS_SUPPORTED:
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-        raise BeartypeDecorHintPepUnsupportedException(
-            f'{exception_prefix}type hint sign {repr(hint_sign)} '
             f'currently unsupported by @beartype.'
         )
 

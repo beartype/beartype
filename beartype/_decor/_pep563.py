@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
-from beartype._decor._data import BeartypeData
+from beartype._decor._call import BeartypeCall
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     get_func_globals,
@@ -40,7 +40,7 @@ Empty frozen set, globalized as a mild optimization for the body of the
 '''
 
 # ....................{ RESOLVERS                         }....................
-def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
+def resolve_hints_pep563_if_active(data: BeartypeCall) -> None:
     '''
     Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
@@ -75,13 +75,13 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
     Caveats
     ----------
     **This function must be called only directly by the**
-    :meth:`beartype._decor._data.BeartypeData.reinit` **method**, due to
+    :meth:`beartype._decor._call.BeartypeCall.reinit` **method**, due to
     unavoidably introspecting the current call stack and making fixed
     assumptions about the structure and height of that stack.
 
     Parameters
     ----------
-    data : BeartypeData
+    data : BeartypeCall
         Decorated callable to be resolved.
 
     Raises
@@ -91,7 +91,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
         exception (e.g., due to that annotation referring to local state
         inaccessible in this deferred context).
     '''
-    assert data.__class__ is BeartypeData, f'{repr(data)} not @beartype data.'
+    assert data.__class__ is BeartypeCall, f'{repr(data)} not @beartype data.'
 
     # ..................{ DETECTION                         }..................
     # Localize attributes of this metadata for negligible efficiency gains.
@@ -320,7 +320,7 @@ def resolve_hints_pep563_if_active(data: BeartypeData) -> None:
                         # Ignore additional frames on the call stack embodying:
                         # * The current call to this function.
                         # * The call to the parent
-                        #   beartype._decor._data.BeartypeData.reinit() method.
+                        #   beartype._decor._call.BeartypeCall.reinit() method.
                         # * The call to the parent @beartype.beartype()
                         #   decorator.
                         func_stack_frames_ignore=3,

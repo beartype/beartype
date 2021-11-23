@@ -19,13 +19,94 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
+#FIXME: Refactor to support options as follows (mostly ignoring comments
+#elsewhere to this effect):
+#* Define a new "beartype._decor._config" submodule defining:
+#  * A new "BeartypeConfig" class resembling:
+#        # Export this, please.
+#        @unique
+#        class BeartypeStrategy(Enum):
+#            O0 = auto()
+#            O1 = auto()
+#            Ologn = auto()
+#            On = auto()
+#
+#        # Export this, please.
+#        class BeartypeConfig(object):
+#            is_debug: bool
+#            strategy: BeartypeStrategy
+#
+#            def __init__(
+#               self,
+#               is_debug: bool = False,
+#               strategy: BeartypeStrategy = BeartypeStrategy.O1,
+#            ) -> None:
+#
+#               if not isinstance(is_debug, bool):
+#                   raise SomeException()
+#               if not isinstance(strategy, BeartypeStrategy):
+#                   raise SomeException()
+#
+#               self.is_debug = is_debug
+#               self.strategy = strategy
+#
+#        # Don't bother exporting this, please.
+#        BEAR_CONFIG_DEFAULT = BeartypeConfig()
+#* Rename "beartype._decor._call" to "beartype._decor._call" and:
+#  * Rename the "BeartypeCall" class to "BeartypeCall".
+#  * Add a new "config: BeartypeConfig" instance variable to that class.
+#* Define a new "beartype._decor._cache.cachedecor" submodule defining:
+#  * A new "bear_config_to_decor: Dict[BeartypeConfig, Callable] = {}" global
+#    cache or something. Note that this cache need *NOT* be thread-safe,
+#    because we're only caching as an optimization efficiency.
+#* Define a new "beartype._decor._beartype" submodule defining:
+#  * Our existing @beartype decorator below renamed to @beartype_mandatory (or
+#    something). The "_mandatory" suffix implies that *ALL* parameters to this
+#    decorator are mandatory rather than optional.
+#  * Refactor the signature of that decorator to resemble:
+#        def beartype_mandatory(func: T, bear_config: BeartypeConfig) -> T:
+#* Retain this submodule, which will instead now define:
+#  * A new public @beartype decorator with implementation resembling:
+#        from typing import overload
+#
+#        @overload
+#        def beartype(func: T) -> T: ...
+#        @overload
+#        def beartype(bear_config: BeartypeConfig) -> Callable[[T,], T]: ...
+#
+#        @overload
+#        def beartype(
+#            func: Optional[T] = None,
+#            bear_config: BeartypeConfig = BEAR_CONFIG_DEFAULT,
+#        ) -> T:
+#
+#            if func is not None:
+#                return beartype_mandatory(func, bear_config)
+#
+#            beartype_configured = bear_config_to_decor.get(bear_config)
+#
+#            if beartype_configured:
+#                return beartype_configured
+#
+#            def _beartype_configured(func: T) -> T:
+#                return beartype_mandatory(func, bear_config)
+#
+#            bear_config_to_decor[bear_config] = _beartype_configured
+#
+#            #FIXME: We'll have to ignore a mypy complaint here. Maybe? This
+#            #decorator now either returns a decorator or "T". We can either
+#            #lie about this or type this decorator correctly. Unfortunately,
+#            #that will probably break everyone's downstream usage.
+#            #FIXME: Ah-ha! The answer is to use "typing.overload". See above.
+#            return _beartype_configured
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
 from beartype._decor._code.codemain import generate_code
-from beartype._decor._data import BeartypeData
+from beartype._decor._call import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
@@ -144,7 +225,7 @@ def beartype(func: T) -> T:
         return func
 
     # Previously cached callable metadata reinitialized from this callable.
-    func_data = acquire_object_typed(BeartypeData)
+    func_data = acquire_object_typed(BeartypeCall)
     func_data.reinit(func)
 
     # Generate the raw string of Python statements implementing this wrapper.

@@ -292,12 +292,12 @@ def prefix_callable_decorated_pith(
         prefix_callable_decorated_return(func)
         if pith_name == 'return' else
         # Else, the parameter with this name of this callable.
-        prefix_callable_decorated_param(func=func, param_name=pith_name)
+        prefix_callable_decorated_arg(func=func, arg_name=pith_name)
     )
 
 # ....................{ PREFIXERS ~ callable : param      }....................
-def prefix_callable_decorated_param(
-    func: Callable, param_name: str) -> str:
+def prefix_callable_decorated_arg(
+    func: Callable, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     passed **decorated callable** (i.e., callable wrapped by the
@@ -308,7 +308,7 @@ def prefix_callable_decorated_param(
     ----------
     func : Callable
         Decorated callable to be labelled.
-    param_name : str
+    arg_name : str
         Name of the parameter of this callable to be labelled.
 
     Returns
@@ -316,14 +316,14 @@ def prefix_callable_decorated_param(
     str
         Human-readable label describing this parameter's name.
     '''
-    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter "{param_name}" '
+    return f'{prefix_callable_decorated(func)}parameter "{arg_name}" '
 
 
-def prefix_callable_decorated_param_value(
-    func: Callable, param_name: str, param_value: object) -> str:
+def prefix_callable_decorated_arg_value(
+    func: Callable, arg_name: str, arg_value: object) -> str:
     '''
     Human-readable label describing the parameter with the passed name and
     trimmed value of the passed **decorated callable** (i.e., callable wrapped
@@ -334,9 +334,9 @@ def prefix_callable_decorated_param_value(
     ----------
     func : Callable
         Decorated callable to be labelled.
-    param_name : str
+    arg_name : str
         Name of the parameter of this callable to be labelled.
-    param_value : object
+    arg_value : object
         Value of the parameter of this callable to be labelled.
 
     Returns
@@ -344,7 +344,7 @@ def prefix_callable_decorated_param_value(
     str
         Human-readable label describing this parameter's name and value.
     '''
-    assert isinstance(param_name, str), f'{repr(param_name)} not string.'
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextrepr import represent_object
@@ -352,7 +352,7 @@ def prefix_callable_decorated_param_value(
     # Create and return this label.
     return (
         f'{prefix_callable_decorated(func)}parameter '
-        f'{param_name}={represent_object(param_value)} '
+        f'{arg_name}={represent_object(arg_value)} '
     )
 
 # ....................{ PREFIXERS ~ callable : return     }....................
@@ -407,4 +407,3 @@ def prefix_callable_decorated_return_value(
         f'{prefix_callable_decorated_return(func)}'
         f'{represent_object(return_value)} '
     )
-
