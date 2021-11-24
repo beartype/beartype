@@ -250,7 +250,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
 
     # ..................{ LOCALS ~ func                     }..................
     # Callable currently being decorated by the @beartype decorator.
-    func = bear_call.func
+    func = bear_call.func_wrappee
 
     # Dictionary mapping from the name of each annotated parameter accepted by
     # that callable to the type hint annotating that parameter. By prior
@@ -450,7 +450,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         f'{repr(bear_call)} not @beartype call.')
 
     # Decorated callable.
-    func = bear_call.func
+    func = bear_call.func_wrappee
 
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).

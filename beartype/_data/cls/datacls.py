@@ -58,7 +58,7 @@ We're *not* dying on that lonely hill. We obey the Iron Law of Guido.
 
 See Also
 ----------
-:data:`beartype_test.a00_unit.data..TYPES_BUILTIN_FAKE`
+:data:`beartype_test.a00_unit.data.TYPES_BUILTIN_FAKE`
     Related test-time set. Whereas this runtime-specific set is efficiently
     defined explicitly by listing all non-builtin builtin mimic types, that
     test-specific set is inefficiently defined implicitly by introspecting the

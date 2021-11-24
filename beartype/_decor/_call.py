@@ -11,14 +11,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar import BeartypeDecorWrappeeException
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
 from beartype._decor._error.errormain import raise_pep_call_exception
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_async_coroutine
+from beartype._util.func.utilfuncwrap import unwrap_func
 from collections.abc import Callable
+from types import CodeType
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -62,10 +66,30 @@ class BeartypeCall(object):
 
     Attributes
     ----------
-    func : Optional[Callable]
-        **Decorated callable** (i.e., callable currently being decorated by the
-        :func:`beartype.beartype` decorator) if the :meth:`reinit` method has
-        been called *or* ``None`` otherwise.
+    func_codeobj : CodeType
+        Possibly unwrapped **decorated callable wrappee code object** (i.e.,
+        code object underlying the low-level :attr:`func_wrappee_wrappee`
+        callable wrapped by the high-level :attr:`func_wrappee` callable
+        currently being decorated by the :func:`beartype.beartype` decorator).
+        For efficiency, this code object should *always* be accessed in lieu of
+        inefficiently calling the comparatively slower
+        :func:`beartype._util.func.utilfunccodeobj.get_func_unwrapped_codeobj`
+        getter.
+    func_wrappee : Optional[Callable]
+        Possibly wrapped **decorated callable** (i.e., callable currently being
+        decorated by the :func:`beartype.beartype` decorator) if the
+        :meth:`reinit` method has been called *or* ``None`` otherwise. Note the
+        lower-level :attr:`func_wrappee_wrappee` callable should *usually* be
+        accessed instead; although higher-level, this callable may only be a
+        wrapper function and hence yield inaccurate or even erroneous metadata
+        (especially the code object) for the callable being wrapped.
+    func_wrappee_wrappee : Optional[Callable]
+        Possibly unwrapped **decorated callable wrappee** (i.e., low-level
+        callable wrapped by the high-level :attr:`func_wrappee` callable
+        currently being decorated by the :func:`beartype.beartype` decorator)
+        if the :meth:`reinit` method has been called *or* ``None`` otherwise.
+        If the higher-level :attr:`func_wrappee` callable does *not* actually
+        wrap another callable, this callable is identical to that callable.
     func_wrapper_code_call_prefix : Optional[str]
         Code snippet prefixing all calls to the decorated callable in the body
         of the wrapper function wrapping that callable with type checking if
@@ -104,7 +128,9 @@ class BeartypeCall(object):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'func',
+        'func_codeobj',
+        'func_wrappee',
+        'func_wrappee_wrappee',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_signature_prefix',
         'func_wrapper_locals',
@@ -142,7 +168,9 @@ class BeartypeCall(object):
         '''
 
         # Nullify all remaining instance variables.
-        self.func: Callable = None  # type: ignore[assignment]
+        self.func_codeobj: CodeType = None  # type: ignore[assignment]
+        self.func_wrappee: Callable = None  # type: ignore[assignment]
+        self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_locals: CallableScope = {}
@@ -181,8 +209,22 @@ class BeartypeCall(object):
         # Avoid circular import dependencies.
         from beartype._decor._pep563 import resolve_hints_pep563_if_active
 
-        # Callable currently being decorated.
-        self.func = func
+        # Possibly wrapped callable currently being decorated.
+        self.func_wrappee = func
+
+        # Possibly unwrapped callable unwrapped from that callable.
+        self.func_wrappee_wrappee = func_wrappee_wrappee = unwrap_func(func)
+
+        # Possibly unwrapped callable code object.
+        #
+        # Note that the code object of the possibly wrapped callable is largely
+        # useless for our purposes, as the latter typically fails to convey the
+        # same metadata conveyed by the former -- including the names and kinds
+        # of parameters accepted by the possibly unwrapped callable.
+        self.func_codeobj = get_func_codeobj(
+            func=func_wrappee_wrappee,
+            exception_cls=BeartypeDecorWrappeeException,
+        )
 
         # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.

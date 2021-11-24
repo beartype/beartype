@@ -40,7 +40,7 @@ Empty frozen set, globalized as a mild optimization for the body of the
 '''
 
 # ....................{ RESOLVERS                         }....................
-def resolve_hints_pep563_if_active(data: BeartypeCall) -> None:
+def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     '''
     Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
@@ -81,7 +81,7 @@ def resolve_hints_pep563_if_active(data: BeartypeCall) -> None:
 
     Parameters
     ----------
-    data : BeartypeCall
+    bear_call : BeartypeCall
         Decorated callable to be resolved.
 
     Raises
@@ -91,11 +91,12 @@ def resolve_hints_pep563_if_active(data: BeartypeCall) -> None:
         exception (e.g., due to that annotation referring to local state
         inaccessible in this deferred context).
     '''
-    assert data.__class__ is BeartypeCall, f'{repr(data)} not @beartype data.'
+    assert bear_call.__class__ is BeartypeCall, (
+        f'{repr(bear_call)} not @beartype call.')
 
     # ..................{ DETECTION                         }..................
     # Localize attributes of this metadata for negligible efficiency gains.
-    func = data.func
+    func = bear_call.func_wrappee
 
     # If it is *NOT* the case that...
     if not (

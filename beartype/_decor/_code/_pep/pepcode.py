@@ -268,6 +268,9 @@ def _unmemoize_pep_code(
     # substrings memoized into this code, unmemoize this code by globally
     # resolving these placeholders relative to the decorated callable.
     if hint_forwardrefs_class_basename:
+        # Callable currently being decorated by @beartype.
+        func = bear_call.func_wrappee
+
         # Pass the beartypistry singleton as a private "__beartypistry"
         # parameter to this wrapper function.
         bear_call.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
@@ -292,10 +295,7 @@ def _unmemoize_pep_code(
                     # Fully-qualified classname referred to by this forward
                     # reference relative to the decorated callable.
                     get_hint_pep484585_forwardref_classname_relative_to_object(
-                        hint=hint_forwardref_class_basename,
-                        obj=bear_call.func,
-                    )
-                ),
+                        hint=hint_forwardref_class_basename, obj=func,)),
             )
 
     # Return this unmemoized callable-specific code snippet.
