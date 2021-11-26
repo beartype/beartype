@@ -210,7 +210,6 @@ class BeartypeValidator(object):
         die_unless_func_args_len_flexible_equal(
             func=is_valid,
             func_args_len_flexible=1,
-            func_label=f'Validator callable {repr(is_valid)}',
             exception_cls=BeartypeValeSubscriptionException,
         )
         # Else, this validator is a pure-Python callable accepting exactly one
@@ -338,10 +337,7 @@ class BeartypeValidator(object):
         # If this representer is *NOT* a pure-Python callable accepting one
         # argument, raise an exception.
         elif not is_func_argless(
-            func=get_repr,
-            func_label='Representer',
-            exception_cls=BeartypeValeSubscriptionException,
-        ):
+            func=get_repr, exception_cls=BeartypeValeSubscriptionException):
             raise BeartypeValeSubscriptionException(
                 f'Representer {repr(get_repr)} neither string nor '
                 f'argument-less pure-Python callable.'

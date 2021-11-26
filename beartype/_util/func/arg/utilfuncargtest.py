@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
-from beartype._util.utiltyping import CallableCodeObjable, TypeException
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.utiltyping import Codeobjable, TypeException
 from collections.abc import Callable
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 from typing import Dict
@@ -34,7 +34,7 @@ value assigned to that parameter.
 #FIXME: Uncomment as needed.
 # def die_unless_func_argless(
 #     # Mandatory parameters.
-#     func: CallableCodeObjable,
+#     func: Codeobjable,
 #
 #     # Optional parameters.
 #     func_label: str = 'Callable',
@@ -46,7 +46,7 @@ value assigned to that parameter.
 #
 #     Parameters
 #     ----------
-#     func : CallableCodeObjable
+#     func : Codeobjable
 #         Pure-Python callable, frame, or code object to be inspected.
 #     func_label : str, optional
 #         Human-readable label describing this callable in exception messages
@@ -81,11 +81,10 @@ value assigned to that parameter.
 
 def die_unless_func_args_len_flexible_equal(
     # Mandatory parameters.
-    func: CallableCodeObjable,
+    func: Codeobjable,
     func_args_len_flexible: int,
 
     # Optional parameters.
-    func_label: str = 'Callable',
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> None:
     '''
@@ -95,13 +94,10 @@ def die_unless_func_args_len_flexible_equal(
 
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
-    func_label : str, optional
-        Human-readable label describing this callable in exception messages
-        raised by this validator. Defaults to ``'Callable'``.
     exception_cls : type, optional
         Type of exception to be raised if this callable is neither a
         pure-Python function nor method. Defaults to
@@ -125,27 +121,24 @@ def die_unless_func_args_len_flexible_equal(
 
     # Number of flexible parameters accepted by this callable.
     func_args_len_flexible_actual = get_func_args_len_flexible(
-        func=func, func_label=func_label, exception_cls=exception_cls)
+        func=func, exception_cls=exception_cls)
 
     # If this callable accepts more or less than this number of flexible
     # parameters, raise an exception.
     if func_args_len_flexible_actual != func_args_len_flexible:
-        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
-
         raise exception_cls(
-            f'{func_label} {repr(func)} flexible argument count '
+            f'Callable {repr(func)} flexible argument count '
             f'{func_args_len_flexible_actual} != {func_args_len_flexible}.'
         )
 
 # ....................{ TESTERS ~ kind                    }....................
 def is_func_argless(
     # Mandatory parameters.
-    func: CallableCodeObjable,
+    func: Codeobjable,
 
     # Optional parameters.
-    func_label: str = 'Callable',
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> bool:
     '''
@@ -154,11 +147,8 @@ def is_func_argless(
 
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
-    func_label : str, optional
-        Human-readable label describing this callable in exception messages
-        raised by this tester. Defaults to ``'Callable'``.
     exception_cls : type, optional
         Type of exception to be raised in the event of fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -175,8 +165,8 @@ def is_func_argless(
     '''
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(
-        func=func, func_label=func_label, exception_cls=exception_cls)
+    func_codeobj = get_func_codeobj(
+        func=func, is_unwrapping=True, exception_cls=exception_cls)
 
     # Return true only if this callable accepts neither...
     return not (
@@ -193,7 +183,7 @@ def is_func_argless(
     )
 
 # ....................{ TESTERS ~ kind : variadic         }....................
-def is_func_arg_variadic(func: CallableCodeObjable) -> bool:
+def is_func_arg_variadic(func: Codeobjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts any **variadic
     parameters** and thus either variadic positional arguments (e.g.,
@@ -229,7 +219,7 @@ def is_func_arg_variadic(func: CallableCodeObjable) -> bool:
     )
 
 
-def is_func_arg_variadic_positional(func: CallableCodeObjable) -> bool:
+def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts variadic
     positional arguments (e.g., "*args").
@@ -251,14 +241,18 @@ def is_func_arg_variadic_positional(func: CallableCodeObjable) -> bool:
          If the passed callable is *not* pure-Python.
     '''
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the iter_func_args() iterator.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(func)
+    func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
 
     # Return true only if this callable declares variadic positional arguments.
     return func_codeobj.co_flags & CO_VARARGS != 0
 
 
-def is_func_arg_variadic_keyword(func: CallableCodeObjable) -> bool:
+def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts variadic
     keyword arguments (e.g., "**kwargs").
@@ -280,13 +274,28 @@ def is_func_arg_variadic_keyword(func: CallableCodeObjable) -> bool:
          If the passed callable is *not* pure-Python.
     '''
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the iter_func_args() iterator.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(func)
+    func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
 
     # Return true only if this callable declares variadic keyword arguments.
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
 
 # ....................{ TESTERS ~ name                    }....................
+#FIXME: *THIS TESTER IS HORRIFYINGLY SLOW*, thanks to a naive implementation
+#deferring to the slow iter_func_args() iterator. A substantially faster
+#get_func_arg_names() getter should be implemented instead and this tester
+#refactored to call that getter. How? Simple:
+#    def get_func_arg_names(func: Callable) -> Tuple[str]:
+#        # A trivial algorithm for deciding the number of arguments can be
+#        # found at the head of the iter_func_args() iterator.
+#        args_len = ...
+#
+#        # One-liners for great glory.
+#        return func.__code__.co_varnames[:args_len] # <-- BOOM
 def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts an argument with
@@ -294,11 +303,11 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
 
     Caveats
     ----------
-    **This tester is** ``O(n)`` **for** ``n`` **the total number of arguments
-    accepted by this callable,** due to unavoidably performing a linear search
-    for an argument with this name is this callable's argument list. This
-    tester should thus be called sparingly and certainly *not* repeatedly for
-    the same callable.
+    **This tester exhibits worst-case time complexity** ``O(n)`` **for** ``n``
+    **the total number of arguments accepted by this callable,** due to
+    unavoidably performing a linear search for an argument with this name is
+    this callable's argument list. This tester should thus be called sparingly
+    and certainly *not* repeatedly for the same callable.
 
     Parameters
     ----------

@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable wrapper** utilities.
-
-This private submodule implements utility functions dynamically introspecting
-callables wrapped by other callables.
+Project-wide **callable wrapper** (i.e., higher-level callable, typically
+implemented as a decorator, wrapping a lower-level callable) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -55,6 +53,5 @@ def unwrap_func(func: Any) -> Callable:
     while hasattr(func, '__wrapped__'):
         func = func.__wrapped__  # type: ignore[attr-defined]
 
-    # Return this lowest-level wrappee, which is now guaranteed to *NOT* itself
-    # be a wrapper.
+    # Return this wrappee, which is now guaranteed to *NOT* be a wrapper.
     return func

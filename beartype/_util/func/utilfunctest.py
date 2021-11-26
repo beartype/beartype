@@ -16,9 +16,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
-    get_func_unwrapped_codeobj_or_none)
+    get_func_codeobj_or_none)
 from beartype._util.utiltyping import (
-    CallableCodeObjable,
+    Codeobjable,
     TypeException,
 )
 from inspect import (
@@ -95,7 +95,7 @@ edge cases, and false positives. If you must pick your poison, pick this one.
 
 def die_unless_func_python(
     # Mandatory parameters.
-    func: CallableCodeObjable,
+    func: Codeobjable,
 
     # Optional parameters.
     func_label: str = 'Callable',
@@ -112,7 +112,7 @@ def die_unless_func_python(
 
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Callable to be inspected.
     func_label : str, optional
         Human-readable label describing this callable in exception messages
@@ -207,7 +207,7 @@ def is_func_python(func: object) -> bool:
 
     # Return true only if a pure-Python code object underlies this object.
     # C-based callables are associated with *NO* code objects.
-    return get_func_unwrapped_codeobj_or_none(func) is not None
+    return get_func_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ async                   }....................
 def is_func_async(func: object) -> bool:
@@ -236,10 +236,22 @@ def is_func_async(func: object) -> bool:
 
     # Code object underlying this pure-Python callable if any *OR* "None".
     #
-    # Note this tester intentionally inlines the tests performed by the
-    # is_func_async_coroutine() and
-    # is_func_async_generator() testers for efficiency.
-    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+    # Note this tester intentionally:
+    # * Inlines the tests performed by the is_func_async_coroutine() and
+    #   is_func_async_generator() testers for efficiency.
+    # * Calls the get_func_codeobj_or_none() with "is_unwrapping" disabled
+    #   rather than enabled. Why? Because the asynchronicity of this possibly
+    #   higher-level wrapper has *NO* relation to that of the possibly
+    #   lower-level wrappee wrapped by this wrapper. Notably, it is both
+    #   feasible and commonplace for third-party decorators to enable:
+    #   * Synchronous callables to be called asynchronously by wrapping
+    #     synchronous callables with asynchronous closures.
+    #   * Asynchronous callables to be called synchronously by wrapping
+    #     asynchronous callables with synchronous closures. Indeed, our
+    #     top-level "conftest.py" pytest plugin does exactly this -- enabling
+    #     asynchronous tests to be safely called by pytest's currently
+    #     synchronous framework.
+    func_codeobj = get_func_codeobj_or_none(func)
 
     # If this object is *NOT* a pure-Python callable, immediately return false.
     if func_codeobj is None:
@@ -283,7 +295,7 @@ def is_func_async_coroutine(func: object) -> bool:
     '''
 
     # Code object underlying this pure-Python callable if any *OR* "None".
-    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+    func_codeobj = get_func_codeobj_or_none(func)
 
     # Return true only if...
     return (
@@ -320,7 +332,7 @@ def is_func_async_generator(func: object) -> bool:
     '''
 
     # Code object underlying this pure-Python callable if any *OR* "None".
-    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+    func_codeobj = get_func_codeobj_or_none(func)
 
     # Return true only if...
     return (
@@ -371,7 +383,7 @@ def is_func_sync_generator(func: object) -> bool:
     # Else, this object is callable.
 
     # Code object underlying this pure-Python callable if any *OR* "None".
-    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
+    func_codeobj = get_func_codeobj_or_none(func)
 
     # Return true only if...
     return (

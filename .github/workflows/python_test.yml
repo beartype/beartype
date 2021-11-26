@@ -111,10 +111,6 @@ jobs:
           - py310-coverage
           - pypy37-coverage
 
-          #FIXME: Uncomment *AFTER* Python 3.10 is officially released. Sadly,
-          #the development version now fails to build wheels. *shrug*
-          # - py310-coverage
-
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
         # "actions/setup-python" GitHub Action run below.

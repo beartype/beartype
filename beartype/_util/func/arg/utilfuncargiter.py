@@ -19,15 +19,18 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfuncwrap import unwrap_func
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from collections.abc import Callable
 from enum import (
     Enum,
     auto as next_enum_member_value,
 )
+from inspect import CO_VARARGS, CO_VARKEYWORDS
 from itertools import count
-from typing import Dict, Iterable
+from types import CodeType
+from typing import Dict, Iterable, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -101,6 +104,9 @@ class ParameterMeta(object):
     name : str
         **Parameter name** (i.e., syntactically valid Python identifier
         uniquely identifying this parameter in its parameter list).
+    index : int
+        **Parameter index** (i.e., 0-based index of this parameter in its
+        parameter list).
     kind : ParameterKind
         **Parameter kind** (i.e., syntactic category constraining how the
         callable declaring this parameter requires this parameter to be
@@ -121,12 +127,14 @@ class ParameterMeta(object):
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'name',
+        'index',
         'kind',
         'default_value_or_mandatory',
     )
 
     # Satisfy static type-checkers. Your time came and then went, mypy.
     name: str
+    index: int
     kind: ParameterKind
     default_value_or_mandatory: object
 
@@ -139,6 +147,7 @@ class ParameterMeta(object):
         return (
             f'ParameterMeta('
             f'name={self.name}, '
+            f'index={self.index}, '
             f'kind={self.kind}, '
             f'default_value_or_mandatory={self.default_value_or_mandatory},'
             f')'
@@ -184,9 +193,11 @@ This magic number derives from the trivial equation
   non-variadic parameters (i.e., flexible, positional-only, and keyword-only).
 '''
 
+
 # Iterator yielding the next integer incrementation starting at 0, to be safely
 # deleted *AFTER* defining the following 0-based indices via this iterator.
 __args_state_index_counter = count(start=0, step=1)
+
 
 _ARGS_STATE_NAME_INDEX_FIRST = next(__args_state_index_counter)
 '''
@@ -270,14 +281,19 @@ Either:
   * If this kind of parameter is keyword-only, 0.
 '''
 
+
 # Delete the above counter for safety and sanity in equal measure.
 del __args_state_index_counter
 
 # ....................{ GENERATORS                        }....................
-#FIXME: Replace all existing usage of inspect.signature() throughout the
-#codebase with usage of this supremely fast generator instead.
+def iter_func_args(
+    # Mandatory parameters.
+    func: Callable,
 
-def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
+    # Optional parameters.
+    func_codeobj: Optional[CodeType] = None,
+    is_unwrapping: bool = True,
+) -> Iterable[ParameterMeta]:
     '''
     Generator yielding one **parameter metadata** (i.e., :class:`ParameterMeta`
     instance describing a single parameter accepted by an arbitrary pure-Python
@@ -330,6 +346,26 @@ def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
     ----------
     func : Callable
         Pure-Python callable to be inspected.
+    func_codeobj: CodeType, optional
+        Code object underlying that callable unwrapped. Defaults to ``None``,
+        in which case this iterator internally defers to the comparatively
+        slower :func:`get_func_codeobj` function.
+    is_unwrapping: bool, optional
+        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
+        function to unwrap this possibly higher-level wrapper into its possibly
+        lowest-level wrappee *before* returning the code object of that
+        wrappee. Note that doing so incurs worst-case time complexity ``O(n)``
+        for ``n`` the number of lower-level wrappees wrapped by this wrapper.
+        Defaults to ``True`` for robustness. Why? Because this generator *must*
+        always introspect lowest-level wrappees rather than higher-level
+        wrappers. The latter typically do *not* wrap the default values of the
+        latter, since this is the default behaviour of the
+        :func:`functools.update_wrapper` function underlying the
+        :func:`functools.wrap` decorator underlying all sane decorators. If
+        this boolean is set to ``False`` while that callable is actually a
+        wrapper, this generator will erroneously misidentify optional as
+        mandatory parameters and fail to yield their default values. Only set
+        this boolean to ``False`` if you pretend to know what you're doing.
 
     Returns
     ----------
@@ -343,16 +379,22 @@ def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
          If that callable is *not* pure-Python.
     '''
 
-    # ..................{ IMPORTS                           }..................
-    # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargtest import (
-        is_func_arg_variadic_keyword,
-        is_func_arg_variadic_positional,
-    )
-
     # ..................{ LOCALS ~ noop                     }..................
-    # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(func)
+    # If unwrapping this callable, do so *BEFORE* querying this callable for
+    # its code object to avoid desynchronization between the two.
+    if is_unwrapping:
+        func = unwrap_func(func)
+    # Else, this callable is assumed to have already been unwrapped by the
+    # caller. We should probably assert that, but doing so requires an
+    # expensive call to hasattr(). What you gonna do?
+
+    # If passed *NO* code object, query this callable for its code object.
+    if func_codeobj is None:
+        func_codeobj = get_func_codeobj(func)
+    # In any case, this code object is now defined.
+
+    # Bit field of OR-ed binary flags describing this callable.
+    func_codeobj_flags = func_codeobj.co_flags
 
     # Number of both optional and mandatory non-keyword-only parameters (i.e.,
     # positional-only *AND* flexible (i.e., positional or keyword) parameters)
@@ -363,10 +405,18 @@ def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
     # that callable.
     args_len_kwonly = func_codeobj.co_kwonlyargcount
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the is_func_arg_variadic_positional() and
+    # is_func_arg_variadic_keyword() testers.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # True only if that callable accepts variadic positional or keyword
-    # parameters.
-    is_arg_var_pos = is_func_arg_variadic_positional(func_codeobj)
-    is_arg_var_kw  = is_func_arg_variadic_keyword(func_codeobj)
+    # parameters. For efficiency:
+    # * These tests are inlined from the is_func_arg_variadic_positional() and
+    #   is_func_arg_variadic_keyword() testers.
+    # * We intentionally preserve these booleans as integers. This is so dumb.
+    #   We just can't help ourselves. /shootmefam/
+    is_arg_var_pos = func_codeobj_flags & CO_VARARGS
+    is_arg_var_kw  = func_codeobj_flags & CO_VARKEYWORDS
 
     # If that callable accepts *NO* parameters, silently reduce to the empty
     # generator (i.e., noop) for both space and time efficiency. Just. Do. It.
@@ -377,8 +427,6 @@ def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
     if (
         args_len_posonly_or_flex +
         args_len_kwonly +
-        # OMG. Beartype is actually adding booleans as integers for efficiency.
-        # This is *SO* dumb, but we just can't help ourselves. /shootmefam/
         is_arg_var_pos +
         is_arg_var_kw
     ) == 0:
@@ -840,8 +888,9 @@ def iter_func_args(func: Callable) -> Iterable[ParameterMeta]:
             # conditional below will set this default value for each parameter
             # of this kind.
 
-        # Set this parameter's name.
+        # Set this parameter's name and index.
         param_meta.name = args_name[args_name_index_curr]
+        param_meta.index = args_name_index_curr
 
         # If this parameter is optional...
         if args_defaults:

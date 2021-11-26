@@ -914,6 +914,9 @@
 #come first. Unfortunately, there are two types: standard and keyword-only.
 #Altogether, an expression yielding a tuple of the names of all parameters
 #(excluding local variables) is given by:
+#
+#    #FIXME: Insufficient. Variadic parameters also exist. Also, note that this
+#    #has already been efficiently implemented as get_func_arg_names()!
 #    func_codeobj = get_func_unwrapped_codeobj(func)
 #
 #    # Tuple of the names of all parameters accepted by this callable.

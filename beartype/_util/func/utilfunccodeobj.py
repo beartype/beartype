@@ -16,136 +16,20 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncwrap import unwrap_func
-from beartype._util.utiltyping import (
-    CallableCodeObjable,
-    TypeException,
-)
+from beartype._util.utiltyping import Codeobjable, TypeException
 from types import CodeType, FrameType, FunctionType, GeneratorType, MethodType
 from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS ~ unwrap                  }....................
-def get_func_unwrapped_codeobj(
-    # Mandatory parameters.
-    func: CallableCodeObjable,
-
-    # Optional parameters.
-    func_label: str = 'Callable',
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-) -> CodeType:
-    '''
-    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the **wrappee** (i.e., callable proxied by the passed callable by either
-    the :func:`functools.wrap` decorator or :func:`functools.update_wrapper`
-    function) wrapped by the passed callable if the latter is a pure-Python
-    wrapper or underlying the passed callable if the latter is pure-Python but
-    not a wrapper *or* raise an exception otherwise (e.g., if that callable is
-    C-based or a class or object defining the ``__call__()`` dunder method).
-
-    Specifically, if the passed object is a:
-
-    * Pure-Python wrapper wrapping a pure-Python wrappee, this getter returns
-      the code object of that wrappee.
-    * Pure-Python non-wrapper callable, this getter returns the code object of
-      that callable.
-    * Pure-Python call stack frame, this getter returns the code object of the
-      pure-Python callable encapsulated by that frame.
-    * Code object, this getter returns that code object.
-    * Any other object, this getter raises an exception.
-
-    Parameters
-    ----------
-    func : CallableCodeObjable
-        Codeobjable to be inspected.
-    func_label : str, optional
-        Human-readable label describing this callable in exception messages
-        raised by this validator. Defaults to ``'Callable'``.
-    exception_cls : type, optional
-        Type of exception in the event of a fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
-
-    Returns
-    ----------
-    CodeType
-        Code object underlying the passed callable unwrapped.
-
-    Raises
-    ----------
-    exception_cls
-         If passed callable unwrapped has *no* code object and is thus *not*
-         pure-Python.
-
-    See Also
-    ----------
-    :func:`get_func_codeobj`
-        Further details.
-    '''
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize changes with get_func_codeobj().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Code object underlying this unwrapped callable if this unwrapped callable
-    # is pure-Python *OR* "None" otherwise.
-    func_codeobj = get_func_unwrapped_codeobj_or_none(func)
-
-    # If this unwrapped callable is *NOT* pure-Python...
-    if func_codeobj is None:
-        # Avoid circular import dependencies.
-        from beartype._util.func.utilfunctest import die_unless_func_python
-
-        # Raise an exception.
-        die_unless_func_python(
-            func=func, func_label=func_label, exception_cls=exception_cls)
-    # Else, this unwrapped callable is pure-Python and this code object exists.
-
-    # Return this code object.
-    return func_codeobj  # type: ignore[return-value]
-
-
-def get_func_unwrapped_codeobj_or_none(func: object) -> Optional[CodeType]:
-    '''
-    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the **wrappee** (i.e., callable proxied by the passed callable by either
-    the :func:`functools.wrap` decorator or :func:`functools.update_wrapper`
-    function) wrapped by the passed callable if the latter is a pure-Python
-    wrapper or underlying the passed callable if the latter is pure-Python but
-    not a wrapper *or* ``None`` otherwise (e.g., if that callable is C-based or
-    a class or object defining the ``__call__()`` dunder method).
-
-    Parameters
-    ----------
-    func : CallableCodeObjable
-        Codeobjable to be inspected.
-
-    Returns
-    ----------
-    Optional[CodeType]
-        Either:
-
-        * If passed callable unwrapped is pure-Python, that callable's code
-          object.
-        * Else, ``None``.
-
-    See Also
-    ----------
-    :func:`get_func_unwrapped_codeobj`
-        Further details.
-    '''
-
-    # Return the code object underlying lowest-level wrappee callable wrapped
-    # by the passed  wrapper callable if that wrappee is pure-Python *OR*
-    # "None" otherwise.
-    return get_func_codeobj_or_none(unwrap_func(func))
-
 # ....................{ GETTERS                           }....................
 def get_func_codeobj(
     # Mandatory parameters.
-    func: CallableCodeObjable,
+    func: Codeobjable,
 
     # Optional parameters.
+    is_unwrapping: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
@@ -186,22 +70,17 @@ def get_func_codeobj(
            co_stacksize        virtual machine stack space required
            co_varnames         tuple of names of arguments and local variables
 
-    Caveats
-    ----------
-    **The higher-level** :func:`get_func_unwrapped_codeobj` **getter should
-    typically be called in lieu of this lower-level getter.** Given a
-    **wrappee** (e.g., callable proxied by another callable by either the
-    :func:`functools.wrap` decorator or :func:`functools.update_wrapper`
-    function):
-
-    * The :func:`get_func_unwrapped_codeobj` getter correctly returns the
-      underlying code object of the proxied wrappee.
-    * This getter incorrectly returns the code object of the proxying wrapper.
-
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Codeobjable to be inspected.
+    is_unwrapping: bool, optional
+        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
+        function to unwrap this possibly higher-level wrapper into a possibly
+        lower-level wrappee *before* returning the code object of that wrappee.
+        Note that doing so incurs worst-case time complexity ``O(n)`` for ``n``
+        the number of lower-level wrappees wrapped by this wrapper. Defaults to
+        ``False`` for efficiency.
     exception_cls : type, optional
         Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -215,20 +94,12 @@ def get_func_codeobj(
     ----------
     exception_cls
          If this callable has *no* code object and is thus *not* pure-Python.
-
-    See Also
-    ----------
-    :func:`get_func_unwrapped_codeobj`
-        Higher-level and thus safer alternative.
     '''
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize changes with get_func_unwrapped_codeobj().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying this callable if this callable is pure-Python *OR*
     # "None" otherwise.
-    func_codeobj = get_func_codeobj_or_none(func)
+    func_codeobj = get_func_codeobj_or_none(
+        func=func, is_unwrapping=is_unwrapping)
 
     # If this callable is *NOT* pure-Python...
     if func_codeobj is None:
@@ -243,22 +114,50 @@ def get_func_codeobj(
     return func_codeobj  # type: ignore[return-value]
 
 
-def get_func_codeobj_or_none(func: Any) -> Optional[CodeType]:
+def get_func_codeobj_or_none(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    is_unwrapping: bool = False,
+) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
     the passed **codeobjable** (i.e., pure-Python object directly associated
     with a code object) if this object is codeobjable *or* ``None`` otherwise
     (e.g., if this object is *not* codeobjable).
 
+    Specifically, if the passed object is a:
+
+    * Pure-Python function, this getter returns the code object of that
+      function.
+    * Pure-Python bound method wrapping a pure-Python unbound function, this
+      getter returns the code object of the latter.
+    * Pure-Python call stack frame, this getter returns the code object of the
+      pure-Python callable encapsulated by that frame.
+    * Code object, this getter returns that code object.
+    * Any other object, this getter raises an exception.
+
     Caveats
-    ----------
-    **The higher-level** :func:`get_func_unwrapped_codeobj_or_none` **getter
-    should typically be called in lieu of this lower-level getter.**
+    -------
+    If ``is_unwrapping``, **this callable has worst-case time complexity**
+    ``O(n)`` **for** ``n`` **the number of lower-level wrappees wrapped by this
+    higher-level wrapper.** That parameter should thus be disabled in
+    time-critical code paths; instead, the lowest-level wrappee returned by the
+    :func:``beartype._util.func.utilfuncwrap.unwrap_func` function should be
+    temporarily stored and then repeatedly passed.
 
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Codeobjable to be inspected.
+    is_unwrapping: bool, optional
+        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
+        function to unwrap this possibly higher-level wrapper into a possibly
+        lower-level wrappee *before* returning the code object of that wrappee.
+        Note that doing so incurs worst-case time complexity ``O(n)`` for ``n``
+        the number of lower-level wrappees wrapped by this wrapper. Defaults to
+        ``False`` for efficiency.
 
     Returns
     ----------
@@ -272,52 +171,84 @@ def get_func_codeobj_or_none(func: Any) -> Optional[CodeType]:
     ----------
     :func:`get_func_codeobj`
         Further details.
-    :func:`get_func_unwrapped_codeobj_or_none`
-        Higher-level and thus safer alternative.
     '''
+    assert is_unwrapping.__class__ is bool, f'{is_unwrapping} not boolean.'
 
-    # If the passed object is already a code object, return this object as is.
+    # Note that:
+    # * For efficiency, tests are intentionally ordered in decreasing
+    #   likelihood of a successful match.
+    # * An equivalent algorithm could also technically be written as a chain of
+    #   "getattr(func, '__code__', None)" calls, but that doing so would both
+    #   be less efficient *AND* render this getter less robust. Why? Because
+    #   the getattr() builtin internally calls the __getattr__() and
+    #   __getattribute__() dunder methods (either of which could raise
+    #   arbitrary exceptions) and is thus considerably less safe.
+    #
+    # If this object is already a code object, return this object as is.
     if isinstance(func, CodeType):
         return func
     # Else, this object is *NOT* already a code object.
     #
-    # If this object is a generator, return this generator's code object.
+    # If this object is a pure-Python function...
+    #
+    # Note that this test intentionally leverages the standard
+    # "types.FunctionType" class rather than our equivalent
+    # "beartype.cave.FunctionType" class to avoid circular import issues.
+    elif isinstance(func, FunctionType):
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize this with the same test below (for methods).
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Return the code object of either:
+        # * If unwrapping this function, the lowest-level wrappee wrapped by
+        #   this function.
+        # * Else, this function as is.
+        return (unwrap_func(func) if is_unwrapping else func).__code__  # type: ignore[attr-defined]
+    # Else, this object is *NOT* a pure-Python function.
+    #
+    # If this callable is a bound method, return this method's code object.
+    #
+    # Note this test intentionally tests the standard "types.MethodType" class
+    # rather than our equivalent "beartype.cave.MethodBoundInstanceOrClassType"
+    # class to avoid circular import issues.
+    elif isinstance(func, MethodType):
+        # Unbound function underlying this bound method.
+        func = func.__func__
+
+        #FIXME: Can "MethodType" objects actually bind lower-level C-based
+        #rather than pure-Python functions? We kinda doubt it -- but maybe they
+        #can. If they can't, then this test is superfluous and should be
+        #removed with all haste.
+
+        # If this unbound function is pure-Python...
+        if isinstance(func, FunctionType):
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAUTION: Synchronize this with the same test above.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # Return the code object of either:
+            # * If unwrapping this function, the lowest-level wrappee wrapped
+            #   by this function.
+            # * Else, this function as is.
+            return (unwrap_func(func) if is_unwrapping else func).__code__  # type: ignore[attr-defined]
+    # Else, this callable is *NOT* a pure-Python bound method.
+    #
+    # If this object is a pure-Python generator, return this generator's code
+    # object.
     elif isinstance(func, GeneratorType):
         return func.gi_code
-    # Else, this object is *NOT* a generator.
+    # Else, this object is *NOT* a pure-Python generator.
     #
     # If this object is a call stack frame, return this frame's code object.
     elif isinstance(func, FrameType):
+        #FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for
+        #frames encapsulating pure-Python callables. For frames encapsulating
+        #C-based callables, this is likely to fail with an "AttributeError"
+        #exception. That said, we have *NO* idea how to test this short of
+        #defining our own C-based callable accepting a pure-Python callable as
+        #a callback parameter and calling that callback. Are there even C-based
+        #callables like that in the wild?
         return func.f_code
-    # Else, this object is *NOT* a call stack frame and is thus a callable.
-    #
-    # If this callable is a pure-Python bound method, reduce this callable to
-    # the pure-Python unbound function encapsulated by this method.
-    #
-    # Note this test intentionally tests the "types.MethodType" class rather
-    # than our equivalent "beartype.cave.MethodBoundInstanceOrClassType" class
-    # to avoid circular import issues.
-    elif isinstance(func, MethodType):
-        func = func.__func__
-    # Else, this callable is *NOT* a pure-Python bound method.
-    #
-    # In either case, this callable is now a pure-Python unbound function.
+    # Else, this object is *NOT* a call stack frame. Since none of the above
+    # tests matched, this object *MUST* be a C-based callable.
 
-    # Return either...
-    #
-    # Note that the equivalent could also technically be written as
-    # "getattr(func, '__code__', None)", but that doing so would both be less
-    # efficient *AND* render this getter less robust. Why? Because the
-    # getattr() builtin internally calls the __getattr__() and
-    # __getattribute__() dunder methods, either of which could raise arbitrary
-    # exceptions, and is thus considerably less safe.
-    #
-    # Note that this test intentionally leverages the stdlib
-    # "types.FunctionType" class rather than our equivalent
-    # "beartype.cave.FunctionType" class to avoid circular import issues.
-    return (
-        # If this function is pure-Python, this function's code object.
-        func.__code__ if isinstance(func, FunctionType) else
-        # Else, "None".
-        None
-    )
+    # Fallback to returning "None".
+    return None

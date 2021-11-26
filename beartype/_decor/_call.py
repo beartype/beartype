@@ -21,8 +21,8 @@ from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_async_coroutine
 from beartype._util.func.utilfuncwrap import unwrap_func
-from collections.abc import Callable
 from types import CodeType
+from typing import Callable, Dict
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -66,23 +66,27 @@ class BeartypeCall(object):
 
     Attributes
     ----------
-    func_codeobj : CodeType
-        Possibly unwrapped **decorated callable wrappee code object** (i.e.,
-        code object underlying the low-level :attr:`func_wrappee_wrappee`
-        callable wrapped by the high-level :attr:`func_wrappee` callable
+    func_arg_name_to_hint : dict[str, object]
+        Dictionary mapping from the name of each annotated parameter accepted
+        by the decorated callable to the type hint annotating that parameter.
+    func_arg_name_to_hint_get : Callable[[str, object], object]
+        :meth:`dict.get` method bound to the :attr:`func_arg_name_to_hint`
+        dictionary, localized as a negligible microoptimization. Blame Guido.
+    func_wrappee : Optional[Callable]
+        Possibly wrapped **decorated callable** (i.e., high-level callable
+        currently being decorated by the :func:`beartype.beartype` decorator)
+        if the :meth:`reinit` method has been called *or* ``None`` otherwise.
+        Note the lower-level :attr:`func_wrappee_wrappee` callable should
+        *usually* be accessed instead; although higher-level, this callable may
+        only be a wrapper function and hence yield inaccurate or even erroneous
+        metadata (especially the code object) for the callable being wrapped.
+    func_wrappee_codeobj : CodeType
+        Possibly wrapped **decorated callable wrappee code object** (i.e.,
+        code object underlying the high-level :attr:`func_wrappee` callable
         currently being decorated by the :func:`beartype.beartype` decorator).
         For efficiency, this code object should *always* be accessed in lieu of
         inefficiently calling the comparatively slower
-        :func:`beartype._util.func.utilfunccodeobj.get_func_unwrapped_codeobj`
-        getter.
-    func_wrappee : Optional[Callable]
-        Possibly wrapped **decorated callable** (i.e., callable currently being
-        decorated by the :func:`beartype.beartype` decorator) if the
-        :meth:`reinit` method has been called *or* ``None`` otherwise. Note the
-        lower-level :attr:`func_wrappee_wrappee` callable should *usually* be
-        accessed instead; although higher-level, this callable may only be a
-        wrapper function and hence yield inaccurate or even erroneous metadata
-        (especially the code object) for the callable being wrapped.
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
     func_wrappee_wrappee : Optional[Callable]
         Possibly unwrapped **decorated callable wrappee** (i.e., low-level
         callable wrapped by the high-level :attr:`func_wrappee` callable
@@ -90,6 +94,14 @@ class BeartypeCall(object):
         if the :meth:`reinit` method has been called *or* ``None`` otherwise.
         If the higher-level :attr:`func_wrappee` callable does *not* actually
         wrap another callable, this callable is identical to that callable.
+    func_wrappee_wrappee_codeobj : CodeType
+        Possibly unwrapped **decorated callable wrappee code object** (i.e.,
+        code object underlying the low-level :attr:`func_wrappee_wrappee`
+        callable wrapped by the high-level :attr:`func_wrappee` callable
+        currently being decorated by the :func:`beartype.beartype` decorator).
+        For efficiency, this code object should *always* be accessed in lieu of
+        inefficiently calling the comparatively slower
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
     func_wrapper_code_call_prefix : Optional[str]
         Code snippet prefixing all calls to the decorated callable in the body
         of the wrapper function wrapping that callable with type checking if
@@ -128,7 +140,10 @@ class BeartypeCall(object):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'func_codeobj',
+        'func_arg_name_to_hint',
+        'func_arg_name_to_hint_get',
+        'func_wrappee_codeobj',
+        'func_wrappee_wrappee_codeobj',
         'func_wrappee',
         'func_wrappee_wrappee',
         'func_wrapper_code_call_prefix',
@@ -168,9 +183,12 @@ class BeartypeCall(object):
         '''
 
         # Nullify all remaining instance variables.
-        self.func_codeobj: CodeType = None  # type: ignore[assignment]
+        self.func_arg_name_to_hint: Dict[str, object] = None  # type: ignore[assignment]
+        self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
         self.func_wrappee: Callable = None  # type: ignore[assignment]
+        self.func_wrappee_codeobj: CodeType = None  # type: ignore[assignment]
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
+        self.func_wrappee_wrappee_codeobj: CodeType = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_locals: CallableScope = {}
@@ -213,16 +231,15 @@ class BeartypeCall(object):
         self.func_wrappee = func
 
         # Possibly unwrapped callable unwrapped from that callable.
-        self.func_wrappee_wrappee = func_wrappee_wrappee = unwrap_func(func)
+        self.func_wrappee_wrappee = unwrap_func(func)
+
+        # Possibly wrapped callable code object.
+        self.func_wrappee_codeobj = get_func_codeobj(
+            func=func, exception_cls=BeartypeDecorWrappeeException)
 
         # Possibly unwrapped callable code object.
-        #
-        # Note that the code object of the possibly wrapped callable is largely
-        # useless for our purposes, as the latter typically fails to convey the
-        # same metadata conveyed by the former -- including the names and kinds
-        # of parameters accepted by the possibly unwrapped callable.
-        self.func_codeobj = get_func_codeobj(
-            func=func_wrappee_wrappee,
+        self.func_wrappee_wrappee_codeobj = get_func_codeobj(
+            func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
         )
 
@@ -240,21 +257,52 @@ class BeartypeCall(object):
         # the actual hints these postponed hints refer to.
         resolve_hints_pep563_if_active(self)
 
+        #FIXME: Globally replace all references to "__annotations__" throughout
+        #the "beartype._decor" subpackage with references to this instead.
+        #Since doing so is a negligible optimization, this is fine... for now.
+
+        # Annotations dictionary *AFTER* resolving all postponed hints.
+        #
+        # The functools.update_wrapper() function underlying the
+        # @functools.wrap decorator underlying all sane decorators propagates
+        # this dictionary by default from lower-level wrappees to higher-level
+        # wrappers. We intentionally classify the annotations dictionary of
+        # this higher-level wrapper, which *SHOULD* be the superset of that of
+        # this lower-level wrappee (and thus more reflective of reality).
+        self.func_arg_name_to_hint = func.__annotations__
+
+        # dict.get() method bound to this dictionary.
+        self.func_arg_name_to_hint_get = self.func_arg_name_to_hint.get
+
         # If this callable is an asynchronous coroutine callable (i.e.,
         # callable declared with "async def" rather than merely "def" keywords
         # containing *NO* "yield" expressions)...
         #
-        # Note that the higher-level is_func_async() tester is intentionally
-        # *NOT* called here, as doing so would also implicitly prefix all calls
-        # to asynchronous generator callables (i.e., callables also declared
-        # with the "async def" rather than merely "def" keywords but containing
-        # one or more "yield" expressions) with the "await" keyword. Whereas
-        # asynchronous coroutine objects implicitly returned by all
-        # asynchronous coroutine callables return a single awaitable value,
-        # asynchronous generator objects implicitly returned by all
-        # asynchronous generator callables *NEVER* return any awaitable value;
-        # they instead yield one or more values to external "async for" loops.
-        if is_func_async_coroutine(func):
+        # Note that:
+        # * The code object of the higher-level wrapper rather than lower-level
+        #   wrappee is passed. Why? Because @beartype directly decorates *ONLY*
+        #   the former, whose asynchronicity has *NO* relation to that of the
+        #   latter. Notably, it is both feasible and (relatively) commonplace
+        #   for third-party decorators to enable:
+        #   * Synchronous callables to be called asynchronously by wrapping
+        #     synchronous callables with asynchronous closures.
+        #   * Asynchronous callables to be called synchronously by wrapping
+        #     asynchronous callables with synchronous closures. Indeed, our
+        #     top-level "conftest.py" pytest plugin does exactly this --
+        #     enabling asynchronous tests to be safely called by pytest's
+        #     currently synchronous framework.
+        # * The higher-level is_func_async() tester is intentionally *NOT*
+        #   called here, as doing so would also implicitly prefix all calls to
+        #   asynchronous generator callables (i.e., callables also declared
+        #   with the "async def" rather than merely "def" keywords but
+        #   containing one or more "yield" expressions) with the "await"
+        #   keyword. Whereas asynchronous coroutine objects implicitly returned
+        #   by all asynchronous coroutine callables return a single awaitable
+        #   value, asynchronous generator objects implicitly returned by all
+        #   asynchronous generator callables *NEVER* return any awaitable
+        #   value; they instead yield one or more values to external "async
+        #   for" loops.
+        if is_func_async_coroutine(self.func_wrappee_codeobj):
             # Code snippet prefixing all calls to this callable.
             self.func_wrapper_code_call_prefix = 'await '
 

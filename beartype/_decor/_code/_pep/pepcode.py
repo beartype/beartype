@@ -60,8 +60,7 @@ callables).
 def pep_code_check_arg(
     bear_call: BeartypeCall,
     hint: object,
-    arg: ParameterMeta,
-    arg_index: int,
+    arg_meta: ParameterMeta,
 ) -> str:
     '''
     Generate a Python code snippet type-checking the parameter with the passed
@@ -75,10 +74,8 @@ def pep_code_check_arg(
         Decorated callable to be type-checked.
     hint : object
         PEP-compliant type hint annotating this parameter.
-    arg : ParameterMeta
+    arg_meta : ParameterMeta
         Metadata describing this parameter.
-    arg_index : int
-        0-based index of this parameter in this callable's signature.
 
     Returns
     ----------
@@ -90,14 +87,13 @@ def pep_code_check_arg(
     # function). By design, the caller already guarantees this to be the case.
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
-    assert isinstance(arg, ParameterMeta), (
-        f'{repr(arg)} not parameter metadata.')
-    assert isinstance(arg_index, int), f'{repr(arg_index)} not integer.'
+    assert arg_meta.__class__ is ParameterMeta, (
+        f'{repr(arg_meta)} not parameter metadata.')
 
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(  # type: ignore
-        arg.kind, None)
+        arg_meta.kind, None)
 
     # If this kind of parameter is unsupported, raise an exception.
     #
@@ -105,7 +101,7 @@ def pep_code_check_arg(
     # have simply ignored this parameter.
     if PARAM_LOCALIZE_TEMPLATE is None:
         raise BeartypeDecorHintPepException(
-            f'{EXCEPTION_PREFIX}kind {repr(arg.kind)} '
+            f'{EXCEPTION_PREFIX}kind {repr(arg_meta.kind)} '
             f'currently unsupported by @beartype.'
         )
     # Else, this kind of parameter is supported. Ergo, this code is non-"None".
@@ -126,13 +122,13 @@ def pep_code_check_arg(
     code_param_check = _unmemoize_pep_code(
         bear_call=bear_call,
         func_wrapper_code=code_param_check_pith,
-        pith_repr=repr(arg.name),
+        pith_repr=repr(arg_meta.name),
         hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
     )
 
     # Python code snippet localizing this parameter.
     code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
-        arg_name=arg.name, arg_index=arg_index)
+        arg_name=arg_meta.name, arg_index=arg_meta.index)
 
     # Return a Python code snippet localizing and type-checking this parameter.
     return f'{code_param_localize}{code_param_check}'

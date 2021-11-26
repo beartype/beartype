@@ -56,6 +56,7 @@ def test_get_func_codeobj() -> None:
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from pytest import raises
 
+    # ..................{ UNWRAPPING ~ false                }..................
     # Instance of that class.
     fireside = OfStagnantWaters()
 
@@ -79,6 +80,36 @@ def test_get_func_codeobj() -> None:
     with raises(_BeartypeUtilCallableException):
         get_func_codeobj(iter)
 
+    # ..................{ UNWRAPPING ~ true                 }..................
+    # Assert this tester accepts pure-Python wrappee callables.
+    the_heroic_wealth_of_hall_and_bower = get_func_codeobj(
+        func=england_hath_need, is_unwrapping=True)
+    have_forfeited_their_ancient_english_dower = get_func_codeobj(
+        func=fireside.altar, is_unwrapping=True)
+    assert isinstance(
+        the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
+    assert isinstance(
+        have_forfeited_their_ancient_english_dower, CallableCodeObjectType)
+
+    # Assert this tester accepts pure-Python wrapper callables.
+    assert (
+        get_func_codeobj(func=we_are_selfish_men, is_unwrapping=True) is
+        get_func_codeobj(func=england_hath_need, is_unwrapping=False)
+    )
+    assert get_func_codeobj(
+        func=fireside.and_give_us_manners_virtue_freedom_power,
+        is_unwrapping=True
+    ) is get_func_codeobj(func=fireside.altar, is_unwrapping=False)
+
+    # Assert this tester also accepts code objects.
+    assert get_func_codeobj(
+        the_heroic_wealth_of_hall_and_bower, is_unwrapping=True) is (
+        the_heroic_wealth_of_hall_and_bower)
+
+    # Assert this tester rejects C-based callables.
+    with raises(_BeartypeUtilCallableException):
+        get_func_codeobj(iter, is_unwrapping=True)
+
 
 def test_get_func_codeobj_or_none() -> None:
     '''
@@ -92,6 +123,7 @@ def test_get_func_codeobj_or_none() -> None:
     from beartype._cave._cavefast import CallableCodeObjectType
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 
+    # ..................{ UNWRAPPING ~ false                }..................
     # Instance of that class.
     fireside = OfStagnantWaters()
 
@@ -115,31 +147,12 @@ def test_get_func_codeobj_or_none() -> None:
     # Assert this tester rejects C-based builtins.
     assert get_func_codeobj_or_none(iter) is None
 
-# ....................{ TESTS ~ unwrapped                 }....................
-def test_get_func_unwrapped_codeobj() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.utilfunccodeobj.get_func_unwrapped_codeobj`
-    function.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccodeobj import (
-        get_func_codeobj,
-        get_func_unwrapped_codeobj,
-    )
-    from beartype._cave._cavefast import CallableCodeObjectType
-    from pytest import raises
-
-    # Instance of that class.
-    fireside = OfStagnantWaters()
-
+    # ..................{ UNWRAPPING ~ true                 }..................
     # Assert this tester accepts pure-Python wrappee callables.
-    the_heroic_wealth_of_hall_and_bower = get_func_unwrapped_codeobj(
-        england_hath_need)
-    have_forfeited_their_ancient_english_dower = get_func_unwrapped_codeobj(
-        fireside.altar)
+    the_heroic_wealth_of_hall_and_bower = get_func_codeobj_or_none(
+        func=england_hath_need, is_unwrapping=True)
+    have_forfeited_their_ancient_english_dower = get_func_codeobj_or_none(
+        func=fireside.altar, is_unwrapping=True)
     assert isinstance(
         the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
     assert isinstance(
@@ -147,68 +160,18 @@ def test_get_func_unwrapped_codeobj() -> None:
 
     # Assert this tester accepts pure-Python wrapper callables.
     assert (
-        get_func_unwrapped_codeobj(we_are_selfish_men) is
-        get_func_codeobj(england_hath_need)
+        get_func_codeobj_or_none(we_are_selfish_men, is_unwrapping=True) is
+        get_func_codeobj_or_none(england_hath_need, is_unwrapping=False)
     )
-    assert (
-        get_func_unwrapped_codeobj(
-            fireside.and_give_us_manners_virtue_freedom_power) is
-        get_func_codeobj(fireside.altar)
-    )
+    assert get_func_codeobj_or_none(
+        func=fireside.and_give_us_manners_virtue_freedom_power,
+        is_unwrapping=True,
+    ) is get_func_codeobj_or_none(fireside.altar, is_unwrapping=False)
 
     # Assert this tester also accepts code objects.
-    assert get_func_unwrapped_codeobj(
-        the_heroic_wealth_of_hall_and_bower) is (
-        the_heroic_wealth_of_hall_and_bower)
-
-    # Assert this tester rejects C-based callables.
-    with raises(_BeartypeUtilCallableException):
-        get_func_unwrapped_codeobj(iter)
-
-
-def test_get_func_unwrapped_codeobj_or_none() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.utilfunccodeobj.get_func_unwrapped_codeobj_or_none`
-    function.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccodeobj import (
-        get_func_codeobj_or_none,
-        get_func_unwrapped_codeobj_or_none,
-    )
-    from beartype._cave._cavefast import CallableCodeObjectType
-
-    # Instance of that class.
-    fireside = OfStagnantWaters()
-
-    # Assert this tester accepts pure-Python wrappee callables.
-    the_heroic_wealth_of_hall_and_bower = get_func_unwrapped_codeobj_or_none(
-        england_hath_need)
-    have_forfeited_their_ancient_english_dower = (
-        get_func_unwrapped_codeobj_or_none(fireside.altar))
-    assert isinstance(
-        the_heroic_wealth_of_hall_and_bower, CallableCodeObjectType)
-    assert isinstance(
-        have_forfeited_their_ancient_english_dower, CallableCodeObjectType)
-
-    # Assert this tester accepts pure-Python wrapper callables.
-    assert (
-        get_func_unwrapped_codeobj_or_none(we_are_selfish_men) is
-        get_func_codeobj_or_none(england_hath_need)
-    )
-    assert (
-        get_func_unwrapped_codeobj_or_none(
-            fireside.and_give_us_manners_virtue_freedom_power) is
-        get_func_codeobj_or_none(fireside.altar)
-    )
-
-    # Assert this tester also accepts code objects.
-    assert get_func_unwrapped_codeobj_or_none(
-        the_heroic_wealth_of_hall_and_bower) is (
+    assert get_func_codeobj_or_none(
+        func=the_heroic_wealth_of_hall_and_bower, is_unwrapping=True) is (
         the_heroic_wealth_of_hall_and_bower)
 
     # Assert this tester rejects C-based builtins.
-    assert get_func_unwrapped_codeobj_or_none(iter) is None
+    assert get_func_codeobj_or_none(iter, is_unwrapping=True) is None

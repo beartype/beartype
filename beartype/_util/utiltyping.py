@@ -17,7 +17,7 @@ from types import CodeType, FrameType, GeneratorType
 from typing import Iterable, Tuple, Type, Union
 
 # ....................{ HINTS ~ callable                  }....................
-CallableCodeObjable = Union[Callable, CodeType, FrameType, GeneratorType]
+Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
 directly associated with a code object and thus safely passable as the first

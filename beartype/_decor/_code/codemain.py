@@ -249,14 +249,6 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         f'{repr(bear_call)} not @beartype call.')
 
     # ..................{ LOCALS ~ func                     }..................
-    # Callable currently being decorated by the @beartype decorator.
-    func = bear_call.func_wrappee
-
-    # Dictionary mapping from the name of each annotated parameter accepted by
-    # that callable to the type hint annotating that parameter. By prior
-    # validation, this dictionary is guaranteed to exist *AND* be non-empty.
-    func_arg_name_to_hint = func.__annotations__
-
     #FIXME: Unit test this up, please. Specifically, unit test:
     #* A callable annotated with only a single return type hint accepting both:
     #  * *NO* parameters.
@@ -271,19 +263,15 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     # parameters *OR* one or more parameters each of which is unannotated.
     if (
         # That callable is annotated by only one type hint *AND*...
-        len(func_arg_name_to_hint) == 1 and
+        len(bear_call.func_arg_name_to_hint) == 1 and
         # That type hint annotates that callable's return rather than a
         # parameter accepted by that callable...
-        'return' in func_arg_name_to_hint
+        'return' in bear_call.func_arg_name_to_hint
     ):
         # Then *NO* callable parameters are annotated. In this case, silently
         # reduce to a noop.
         return ''
     # Else, one or more callable parameters are annotated.
-
-    # dict.get() method bound to the dictionary declared above, localized as a
-    # negligible microoptimization. (Look. It's not *OUR* fault. Blame Guido.)
-    func_arg_name_to_hint_get = func_arg_name_to_hint.get
 
     # Python code snippet to be returned.
     func_wrapper_code = ''
@@ -292,10 +280,6 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     func_wrapper_code_arg = ''
 
     # ..................{ LOCALS ~ parameter                }..................
-    # Name and kind of the current parameter.
-    arg_name = None
-    arg_kind = None
-
     # True only if this callable possibly accepts one or more positional
     # parameters.
     is_args_positional = False
@@ -315,46 +299,52 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         # For the name of each parameter accepted by this callable and the
         # "ParameterMeta" object describing this parameter (in declaration
         # order)...
-        for arg_index, arg in enumerate(iter_func_args(func)):
+        for arg_meta in iter_func_args(
+            # Possibly lowest-level wrappee underlying the possibly
+            # higher-level wrapper currently being decorated by the @beartype
+            # decorator. The latter typically fails to convey the same callable
+            # metadata conveyed by the former -- including the names and kinds
+            # of parameters accepted by the possibly unwrapped callable. This
+            # renders the latter mostly useless for our purposes.
+            func=bear_call.func_wrappee_wrappee,
+            func_codeobj=bear_call.func_wrappee_wrappee_codeobj,
+            is_unwrapping=False,
+        ):
             # Type hint annotating this parameter if any *OR* the sentinel
             # placeholder otherwise (i.e., if this parameter is unannotated).
             #
             # Note that "None" is a semantically meaningful PEP 484-compliant
             # type hint equivalent to "type(None)". Ergo, we *MUST* explicitly
             # distinguish between that type hint and unannotated parameters.
-            hint = func_arg_name_to_hint_get(arg.name, SENTINEL)
+            hint = bear_call.func_arg_name_to_hint_get(arg_meta.name, SENTINEL)
 
             # If this parameter is unannotated, continue to the next parameter.
             if hint is SENTINEL:
                 continue
             # Else, this parameter is annotated.
 
-            # Name and kind of this parameter, localized for efficiency.
-            arg_name = arg.name
-            arg_kind = arg.kind
-
             # If this parameter's name is reserved for use by the @beartype
             # decorator, raise an exception.
-            if arg_name.startswith('__bear'):
+            if arg_meta.name.startswith('__bear'):
                 raise BeartypeDecorParamNameException(
                     f'{EXCEPTION_PREFIX}reserved by @beartype.')
             # If either the type of this parameter is silently ignorable, continue
             # to the next parameter.
-            elif arg_kind in _PARAM_KINDS_IGNORABLE:
+            elif arg_meta.kind in _PARAM_KINDS_IGNORABLE:
                 continue
             # Else, this parameter is non-ignorable.
 
             # PEP-compliant type hint converted from this PEP-noncompliant type
-            # hint if this hint is PEP-noncompliant, this hint as is if this hint
-            # is both PEP-compliant and supported, *OR* raise an exception
+            # hint if this hint is PEP-noncompliant, this hint as is if this
+            # hint is both PEP-compliant and supported, *OR* raise an exception
             # otherwise (i.e., if this hint is neither PEP-noncompliant nor a
             # supported PEP-compliant hint).
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root(
                 hint=hint,
-                func=func,
-                pith_name=arg_name,
+                func=bear_call.func_wrappee,
+                pith_name=arg_meta.name,
                 exception_prefix=EXCEPTION_PREFIX_HINT_GENERIC,
             )
 
@@ -374,16 +364,12 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # branch were instead nested *BEFORE* validating this parameter to be
             # unignorable, @beartype would fail to reduce to a noop for otherwise
             # ignorable callables -- which would be rather bad, really.
-            elif arg_kind is ParameterKind.POSITIONAL_OR_KEYWORD:
+            elif arg_meta.kind is ParameterKind.POSITIONAL_OR_KEYWORD:
                 is_args_positional = True
 
             # Python code snippet type-checking this parameter against this hint.
             func_wrapper_code_arg = pep_code_check_arg(
-                bear_call=bear_call,
-                hint=hint,
-                arg=arg,
-                arg_index=arg_index,
-            )
+                bear_call=bear_call, hint=hint, arg_meta=arg_meta)
 
             # Append code type-checking this parameter against this hint.
             func_wrapper_code += func_wrapper_code_arg
@@ -398,7 +384,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             #by improving the existing prefix_callable_decorated_arg()
             #function to introspect this kind from that callable's code object.
             target_str=prefix_callable_decorated_arg(
-                func=func, arg_name=arg.name),
+                func=bear_call.func_wrappee, arg_name=arg_meta.name),
         )
 
     # If this callable accepts one or more positional type-checked parameters,
@@ -449,16 +435,13 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    # Decorated callable.
-    func = bear_call.func_wrappee
-
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).
     #
     # Note that "None" is a semantically meaningful PEP 484-compliant type hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
     # between that type hint and an unannotated return.
-    hint = func.__annotations__.get('return', SENTINEL)
+    hint = bear_call.func_arg_name_to_hint_get('return', SENTINEL)
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:
@@ -476,7 +459,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
         # accept "Coroutine[None, None, typing.NoReturn]" as expected).
         hint = reduce_hint_pep484585_func_return(
-            func=func, exception_prefix=EXCEPTION_PREFIX)
+            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PREFIX)
 
         # Python code snippet to be returned, defaulting to the empty string
         # implying this callable's return to either be unannotated *OR*
@@ -499,7 +482,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # supported PEP-compliant hint).
             hint = sanify_hint_root(
                 hint=hint,
-                func=func,
+                func=bear_call.func_wrappee,
                 pith_name='return',
                 exception_prefix=EXCEPTION_PREFIX_HINT_GENERIC,
             )
@@ -517,7 +500,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
-            target_str=prefix_callable_decorated_return(func),
+            target_str=prefix_callable_decorated_return(
+                bear_call.func_wrappee),
         )
 
     # Return this code.

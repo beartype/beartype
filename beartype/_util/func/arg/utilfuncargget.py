@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype._util.func.utilfunccodeobj import get_func_unwrapped_codeobj
-from beartype._util.utiltyping import CallableCodeObjable, TypeException
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.utiltyping import Codeobjable, TypeException
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -22,10 +22,9 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ GETTERS                           }....................
 def get_func_args_len_flexible(
     # Mandatory parameters.
-    func: CallableCodeObjable,
+    func: Codeobjable,
 
     # Optional parameters.
-    func_label: str = 'Callable',
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> int:
     '''
@@ -35,11 +34,8 @@ def get_func_args_len_flexible(
 
     Parameters
     ----------
-    func : CallableCodeObjable
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
-    func_label : str, optional
-        Human-readable label describing this callable in exception messages
-        raised by this validator. Defaults to ``'Callable'``.
     exception_cls : type, optional
         Type of exception in the event of a fatal error. Defaults to
         :class:`_BeartypeUtilCallableException`.
@@ -56,8 +52,7 @@ def get_func_args_len_flexible(
     '''
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_unwrapped_codeobj(
-        func=func, func_label=func_label, exception_cls=exception_cls)
+    func_codeobj = get_func_codeobj(func=func, exception_cls=exception_cls)
 
     # Return the number of flexible parameters accepted by this callable.
     return func_codeobj.co_argcount
