@@ -27,9 +27,9 @@ from beartype.roar import (
 )
 from beartype._cave._cavefast import TestableTypes
 from beartype._decor._code.codemagic import (
+    EXCEPTION_PREFIX,
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
-    EXCEPTION_PREFIX_HINT_GENERIC,
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PREFIX_PITH,
     VAR_NAME_PITH_ROOT as PITH_ROOT_VAR_NAME,
@@ -184,9 +184,9 @@ def pep_code_check_hint(
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
+    _EXCEPTION_PREFIX=EXCEPTION_PREFIX,
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
-    _EXCEPTION_PREFIX_HINT_GENERIC=EXCEPTION_PREFIX_HINT_GENERIC,
 
     # "beartype._decor._code._pep._pepmagic" globals.
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
@@ -661,7 +661,7 @@ def pep_code_check_hint(
         # *NOT* be inefficiently resanified here.
         if hints_meta_index_curr:
             hint_curr = sanify_hint_child(
-                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX_HINT)
+                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -696,7 +696,7 @@ def pep_code_check_hint(
             # the above call to the same function, this call is guaranteed to
             # *NEVER* raise an exception for that hint.
             die_if_hint_pep_unsupported(
-                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX_HINT)
+                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
             # Else, this hint is supported.
 
             # Assert that this hint is unignorable. Iteration below generating
@@ -706,7 +706,7 @@ def pep_code_check_hint(
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                f'{_EXCEPTION_PREFIX_HINT}ignorable type hint '
+                f'{_EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.')
 
             # Sign uniquely identifying this hint.
@@ -716,7 +716,7 @@ def pep_code_check_hint(
             # If this hint is deprecated, emit a non-fatal warning.
             # print(f'Testing {hint_curr_exception_prefix} hint {repr(hint_curr)} for deprecation...')
             warn_if_hint_pep_deprecated(
-                hint=hint_curr, warning_prefix=_EXCEPTION_PREFIX_HINT)
+                hint=hint_curr, warning_prefix=_EXCEPTION_PREFIX)
 
             # Tuple of all arguments subscripting this hint if any *OR* the
             # empty tuple otherwise (e.g., if this hint is its own unsubscripted
@@ -831,7 +831,7 @@ def pep_code_check_hint(
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT_GENERIC,
+                        exception_prefix=_EXCEPTION_PREFIX_HINT,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -857,7 +857,7 @@ def pep_code_check_hint(
                         forwardrefs_class_basename=(
                             hint_forwardrefs_class_basename),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT_GENERIC,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     ))
 
                 # Code type-checking the current pith against this class.
@@ -1127,7 +1127,7 @@ def pep_code_check_hint(
                     #       >>> typing.Union[()]
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
-                        f'{_EXCEPTION_PREFIX_HINT}union type hint '
+                        f'{_EXCEPTION_PREFIX}union type hint '
                         f'{repr(hint_curr)} unsubscripted.')
                     # Else, this union is subscripted by two or more arguments.
                     # Why two rather than one? Because the "typing" module
@@ -1246,8 +1246,7 @@ def pep_code_check_hint(
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_locals,
-                                    exception_prefix=(
-                                        _EXCEPTION_PREFIX_HINT_GENERIC),
+                                    exception_prefix=_EXCEPTION_PREFIX_HINT,
                                 ),
                             ))
 
@@ -1351,7 +1350,7 @@ def pep_code_check_hint(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_locals,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT_GENERIC,
+                        exception_prefix=_EXCEPTION_PREFIX_HINT,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
@@ -1368,7 +1367,7 @@ def pep_code_check_hint(
                     else:
                         hint_child = get_hint_pep484585_args_1(
                             hint=hint_curr,
-                            exception_prefix=_EXCEPTION_PREFIX_HINT,
+                            exception_prefix=_EXCEPTION_PREFIX,
                         )
 
                     # If this child hint is *NOT* ignorable, deeply type-check
@@ -1448,7 +1447,7 @@ def pep_code_check_hint(
                     assert (
                         hint_childs_len <= 1 or
                         hint_childs[1] is not Ellipsis
-                    ), (f'{_EXCEPTION_PREFIX_HINT}variadic tuple type hint '
+                    ), (f'{_EXCEPTION_PREFIX}variadic tuple type hint '
                         f'{repr(hint_curr)} unhandled.')
 
                     # Initialize the code type-checking the current pith
@@ -1571,7 +1570,7 @@ def pep_code_check_hint(
                         # safety.
                         if not isinstance(hint_child, BeartypeValidator):
                             raise BeartypeDecorHintPep593Exception(
-                                f'{_EXCEPTION_PREFIX_HINT}PEP 593 type hint '
+                                f'{_EXCEPTION_PREFIX}PEP 593 type hint '
                                 f'{repr(hint_curr)} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
@@ -1629,7 +1628,7 @@ def pep_code_check_hint(
                     # Superclass this pith is required to be a subclass of.
                     hint_child = get_hint_pep484585_subclass_superclass(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     )
 
                     # If this superclass is either a class *OR* tuple of
@@ -1639,7 +1638,7 @@ def pep_code_check_hint(
                         hint_curr_expr = add_func_scope_type_or_types(
                             type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_locals,
-                            exception_prefix=_EXCEPTION_PREFIX_HINT_GENERIC,
+                            exception_prefix=_EXCEPTION_PREFIX_HINT,
                         )
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
@@ -1655,8 +1654,7 @@ def pep_code_check_hint(
                                 forwardrefs_class_basename=(
                                     hint_forwardrefs_class_basename),
                                 func_scope=func_wrapper_locals,
-                                exception_prefix=(
-                                    _EXCEPTION_PREFIX_HINT_GENERIC),
+                                exception_prefix=_EXCEPTION_PREFIX,
                             ))
 
                     # Code type-checking this pith against this superclass.
@@ -1708,7 +1706,7 @@ def pep_code_check_hint(
                     # you're not alone.
                     hint_curr = get_hint_pep484585_generic_type(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     )
 
                     # Tuple of the one or more unerased pseudo-superclasses
@@ -1716,7 +1714,7 @@ def pep_code_check_hint(
                     # erasure by this generic.
                     hint_childs = get_hint_pep484585_generic_bases_unerased(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     )
 
                     # Initialize the code type-checking this pith against this
@@ -1854,8 +1852,7 @@ def pep_code_check_hint(
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
                             func_scope=func_wrapper_locals,
-                            exception_prefix=(
-                                _EXCEPTION_PREFIX_HINT_GENERIC),
+                            exception_prefix=_EXCEPTION_PREFIX_HINT,
                         ),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
@@ -1875,7 +1872,7 @@ def pep_code_check_hint(
                     # a "typing.Literal" subscription, raise an exception.
                     die_unless_hint_pep586(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     )
                     # Else, this hint complies with PEP 586 and is thus
                     # subscripted by one or more compliant literal objects.
@@ -1886,7 +1883,7 @@ def pep_code_check_hint(
                     # "typing_extensions.Literal" type hint factory.
                     hint_childs = get_hint_pep586_literals(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=_EXCEPTION_PREFIX,
                     )
 
                     # Initialize the code type-checking this pith against this
@@ -1912,8 +1909,7 @@ def pep_code_check_hint(
                                 for hint_child in hint_childs
                             },
                             func_scope=func_wrapper_locals,
-                            exception_prefix=(
-                                _EXCEPTION_PREFIX_HINT_GENERIC),
+                            exception_prefix=_EXCEPTION_PREFIX_HINT,
                         ),
                     )
 
@@ -1949,7 +1945,7 @@ def pep_code_check_hint(
                 # *NEVER* be triggered. Nonetheless, raise an exception.
                 else:
                     raise BeartypeDecorHintPepUnsupportedException(
-                        f'{_EXCEPTION_PREFIX_HINT_GENERIC}'
+                        f'{_EXCEPTION_PREFIX_HINT}'
                         f'{repr(hint_curr)} unsupported but '
                         f'erroneously detected as supported.'
                     )
@@ -1984,7 +1980,7 @@ def pep_code_check_hint(
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     func_scope=func_wrapper_locals,
-                    exception_prefix=_EXCEPTION_PREFIX_HINT_GENERIC,
+                    exception_prefix=_EXCEPTION_PREFIX_HINT,
                 ),
             )
         # ................{ NON-PEP ~ bad                     }................
@@ -2001,8 +1997,8 @@ def pep_code_check_hint(
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{_EXCEPTION_PREFIX_HINT_GENERIC}{repr(hint_curr)} '
-                f'unrecognized (i.e., neither PEP-compliant nor class).'
+                f'{_EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+                f'not PEP-compliant.'
             )
 
         # ................{ CLEANUP                           }................
@@ -2039,7 +2035,7 @@ def pep_code_check_hint(
     # which it should have... but may not have, which is why we're testing.
     if func_wrapper_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{_EXCEPTION_PREFIX_HINT_GENERIC}{repr(hint_root)} unchecked.')
+            f'{_EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.')
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ locals                     }..................

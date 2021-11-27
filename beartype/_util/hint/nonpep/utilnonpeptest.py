@@ -172,6 +172,10 @@ def die_unless_hint_nonpep(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not type.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # If this object is a class...
     if isinstance(hint, type):
@@ -195,30 +199,32 @@ def die_unless_hint_nonpep(
             is_str_valid=is_str_valid,
             exception_cls=exception_cls,
         )
-    # Else, this object is neither a forward reference, class, nor tuple. Ergo,
-    # this object is *NOT* a PEP-noncompliant type hint.
-    #
-    # If forward references are supported, raise an exception noting that.
-    elif is_str_valid:
-        assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+    # Else, this object is neither a type nor type tuple.
 
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'neither PEP-compliant nor -noncompliant '
-            f'(e.g., isinstanceable class, forward reference, or '
-            f'tuple of isinstanceable classes and forward references).'
-        )
-    # Else, forward references are unsupported. In this case, raise an
-    # exception noting that.
-    else:
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'neither PEP-compliant nor -noncompliant '
-            f'(e.g., isinstanceable class or tuple of isinstanceable classes).'
-        )
+    # Raise a generic exception.
+    raise exception_cls(
+        f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
+
+    #FIXME: Temporarily preserved in case we want to restore this. *shrug*
+    # # Else, this object is neither a forward reference, class, nor tuple. Ergo,
+    # # this object is *NOT* a PEP-noncompliant type hint.
+    # #
+    # # If forward references are supported, raise an exception noting that.
+    # elif is_str_valid:
+    #     raise exception_cls(
+    #         f'{exception_prefix}type hint {repr(hint)} '
+    #         f'neither PEP-compliant nor -noncompliant '
+    #         f'(e.g., neither PEP-compliant, isinstanceable class, forward reference, or '
+    #         f'tuple of isinstanceable classes and forward references).'
+    #     )
+    # # Else, forward references are unsupported. In this case, raise an
+    # # exception noting that.
+    # else:
+    #     raise exception_cls(
+    #         f'{exception_prefix}type hint {repr(hint)} '
+    #         f'neither PEP-compliant nor -noncompliant '
+    #         f'(e.g., isinstanceable class or tuple of isinstanceable classes).'
+    #     )
 
 # ....................{ VALIDATORS ~ kind                 }....................
 #FIXME: Unit test us up.

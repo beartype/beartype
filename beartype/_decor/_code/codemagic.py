@@ -17,13 +17,17 @@ from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ EXCEPTIONS                        }....................
-EXCEPTION_PREFIX = f'{EXCEPTION_PLACEHOLDER} '
+EXCEPTION_PREFIX = EXCEPTION_PLACEHOLDER
 '''
 Human-readable substring unconditionally prefixing *all* exception messages
 transitively across this subpackage, which the
 :func:`beartype._util.error.utilerror.reraise_exception_placeholder` function
 dynamically replaces with the name of both the currently decorated callable
 *and* the currently iterated parameter or return of that callable.
+
+Note that the :mod:`beartype._decor._code.codemain` submodule guarantees the
+substring replacing this placeholder to be suffixed by a single space. Ergo, we
+intentionally avoid doing so here.
 '''
 
 
@@ -34,14 +38,7 @@ current root type hint in exception messages.
 '''
 
 
-EXCEPTION_PREFIX_HINT = EXCEPTION_PREFIX
-'''
-Human-readable substring describing the current root type hint in exception
-messages.
-'''
-
-
-EXCEPTION_PREFIX_HINT_GENERIC = f'{EXCEPTION_PREFIX_HINT}type hint '
+EXCEPTION_PREFIX_HINT = f'{EXCEPTION_PREFIX}type hint '
 '''
 Human-readable substring describing the current root type hint generically
 (i.e., *without* respect to the specific PEP to which this hint conforms) in

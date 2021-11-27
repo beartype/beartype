@@ -547,8 +547,7 @@ def _coerce_hint_any(hint: object) -> Any:
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_pep585_builtin(hint):
-        return _HINT_REPR_TO_HINT.get_value_static(
-            key=repr(hint), value=hint)
+        return _HINT_REPR_TO_HINT.get_value_static(key=repr(hint), value=hint)
     # Else, this hint is *NOT* PEP 585-compliant.
 
     # Return this uncoerced hint as is.

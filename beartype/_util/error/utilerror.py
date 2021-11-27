@@ -54,8 +54,8 @@ human readability from those lower-level memoized callables onto higher-level
 non-memoized callables -- which are then required to explicitly (in order):
 
 #. Catch exceptions raised by those lower-level memoized callables.
-#. Call the :func:`reraise_exception_placeholder` function with those exceptions and
-   the desired human-readable substring fragments. That function then:
+#. Call the :func:`reraise_exception_placeholder` function with those
+   exceptions and desired human-readable substrings. That function then:
 
    #. Replaces this magic substring hard-coded into those exception messages
       with those human-readable substring fragments.
@@ -195,6 +195,8 @@ def reraise_exception_placeholder(
             # "exception.args[1:]" safely yields the empty tuple. Go, Python!
             exception.args = (exception_message,) + exception.args[1:]
         # Else, this message remains preserved as is.
+    # Else, this is an unconventional exception. In this case, preserve this
+    # exception as is.
 
     # Re-raise this exception while preserving its original traceback.
     raise exception.with_traceback(exception.__traceback__)

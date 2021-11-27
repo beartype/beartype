@@ -29,7 +29,6 @@ from beartype.roar import BeartypeDecorParamNameException
 from beartype._decor._code.codemagic import (
     ARG_NAME_GETRANDBITS,
     EXCEPTION_PREFIX,
-    EXCEPTION_PREFIX_HINT_GENERIC,
 )
 from beartype._decor._code.codesnip import (
     CODE_INIT_ARGS_LEN,
@@ -345,7 +344,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name=arg_meta.name,
-                exception_prefix=EXCEPTION_PREFIX_HINT_GENERIC,
+                exception_prefix=EXCEPTION_PREFIX,
             )
 
             # If this hint is ignorable, continue to the next parameter.
@@ -484,7 +483,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name='return',
-                exception_prefix=EXCEPTION_PREFIX_HINT_GENERIC,
+                exception_prefix=EXCEPTION_PREFIX,
             )
 
             # If this PEP-compliant hint is unignorable, generate and return a

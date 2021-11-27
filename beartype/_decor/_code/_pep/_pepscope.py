@@ -45,7 +45,7 @@ from beartype._util.utiltyping import (
 from collections.abc import Set
 from typing import AbstractSet, Optional, Tuple, Union
 
-# ....................{ CONSTANTS ~ private               }....................
+# ....................{ PRIVATE                           }....................
 _SET_OR_TUPLE = (Set, tuple)
 '''
 2-tuple containing the superclasses of all frozen sets and tuples.
@@ -324,7 +324,7 @@ def add_func_scope_types(
         generate name collisions. This exception is thus intentionally raised
         as a private rather than public exception.
     '''
-    assert isinstance(is_unique, bool), f'{repr(is_unique)} not bool.'
+    assert is_unique.__class__ is bool, f'{repr(is_unique)} not bool.'
 
     # If this object is neither a set nor tuple, raise an exception.
     if not isinstance(types, _SET_OR_TUPLE):
@@ -337,12 +337,13 @@ def add_func_scope_types(
         raise BeartypeDecorHintNonpepException(f'{exception_prefix}empty.')
     # Else, this collection is non-empty.
 
+    #FIXME: *EXCEPTIONALLY INEFFICIENT.* Let's optimize this sometime, please.
     # If any item in this collection is *NOT* an isinstanceable class, raise an
     # exception.
     for cls in types:
         die_unless_hint_nonpep_type(
             hint=cls, exception_prefix=exception_prefix)
-    # Else, all items of this collection are standard classes.
+    # Else, all items of this collection are isinstanceable classes.
 
     # If this tuple only contains one type, register only this type.
     if len(types) == 1:
@@ -453,8 +454,7 @@ def express_func_scope_type_forwardref(
     # Else, this object is a forward reference.
 
     # Fully-qualified or unqualified classname referred to by this reference.
-    forwardref_classname = get_hint_pep484585_forwardref_classname(
-        forwardref)
+    forwardref_classname = get_hint_pep484585_forwardref_classname(forwardref)
 
     # If this classname contains one or more "." characters, this classname is
     # fully-qualified. In this case...
