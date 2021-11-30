@@ -203,7 +203,9 @@ def die_unless_hint_nonpep(
 
     # Raise a generic exception.
     raise exception_cls(
-        f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
+        f'{exception_prefix}type hint {repr(hint)} either '
+        f'PEP-noncompliant or currently unsupported by @beartype.'
+    )
 
     #FIXME: Temporarily preserved in case we want to restore this. *shrug*
     # # Else, this object is neither a forward reference, class, nor tuple. Ergo,

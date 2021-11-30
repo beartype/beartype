@@ -44,7 +44,7 @@ def test_sphinx(tmp_path) -> None:
     from beartype import beartype
     from beartype._util.mod.lib.utilsphinx import (
         _SPHINX_AUTODOC_SUBPACKAGE_NAME)
-    from beartype_test.util.os.command.pytcmdexit import is_success
+    from beartype_test.util.cmd.pytcmdexit import is_success
     from beartype_test.util.path.pytpathtest import (
         get_test_func_data_lib_sphinx_dir)
     from sys import modules as module_imported_names

@@ -35,6 +35,7 @@ def is_success(exit_status: int) -> bool:
     '''
     ``True`` only if the passed exit status signifies success.
     '''
+
     assert isinstance(exit_status, int), f'{exit_status} not integer.'
     return exit_status == SUCCESS
 
@@ -43,5 +44,6 @@ def is_failure(exit_status: int) -> bool:
     '''
     ``True`` only if the passed exit status signifies failure.
     '''
+
     assert isinstance(exit_status, int), f'{exit_status} not integer.'
     return exit_status != SUCCESS

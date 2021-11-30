@@ -641,6 +641,20 @@ class _BeartypeUtilPathException(_BeartypeUtilException):
     pass
 
 
+class _BeartypeUtilPythonException(_BeartypeUtilException):
+    '''
+    **Beartype Python utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.py` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeUtilTextException(_BeartypeUtilException):
     '''
     **Beartype text utility exception.**

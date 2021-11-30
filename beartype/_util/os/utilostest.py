@@ -12,7 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.cache.utilcachecall import callable_cached
-from platform import system
+from platform import system as platform_system
+# from sys import platform as sys_platform
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -27,4 +28,17 @@ def is_os_macos() -> bool:
     This tester is memoized for efficiency.
     '''
 
-    return system() == 'Darwin'
+    return platform_system() == 'Darwin'
+
+
+#FIXME: Uncomment if we ever want this.
+# @callable_cached
+# def is_os_windows_vanilla() -> bool:
+#     '''
+#     ``True`` only if the current platform is **vanilla Microsoft Windows**
+#     (i.e., *not* running the Cygwin POSIX compatibility layer).
+#
+#     This tester is memoized for efficiency.
+#     '''
+#
+#     return sys_platform == 'win32'
