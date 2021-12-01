@@ -50,13 +50,14 @@ Most runners accept the same optional keyword arguments accepted by the
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.util.cmd.pytcmdexit import FAILURE_DEFAULT, is_failure
+# from beartype_test.util.cmd.pytcmdexit import FAILURE_DEFAULT, is_failure
 from collections.abc import Iterable, Mapping
 from os import environ
 from subprocess import (
-    CalledProcessError,
-    TimeoutExpired,
-    call as subprocess_call,
+    # CalledProcessError,
+    # TimeoutExpired,
+    # call as subprocess_call,
+    check_output as subprocess_check_output,
 )
 from typing import Optional
 
@@ -116,7 +117,8 @@ callables declared by this submodule.
 '''
 
 # ....................{ RUNNERS                           }....................
-def run_python_forward_output(
+#FIXME: Unit test us up, please.
+def run_python_forward_stderr_return_stdout(
     # Mandatory parameters.
     python_args: _HINT_COMMAND_WORDS,
 
@@ -125,9 +127,10 @@ def run_python_forward_output(
 ) -> None:
     '''
     Run a new Python subprocess of the active Python process passed the passed
-    arguments, raising an exception on subprocess failure while forwarding all
-    standard output and error output by this subprocess to the standard output
-    and error file handles of the active Python process.
+    arguments, raising an exception on subprocess failure while both forwarding
+    all standard error output by this subprocess to the standard error file
+    handle of the active Python process *and* capturing and returning all
+    stdout output by this subprocess.
 
     This exception contains the exit status of this subprocess.
 
@@ -147,7 +150,7 @@ def run_python_forward_output(
         If the subprocess running this command report non-zero exit status.
     '''
 
-    # Defer heavyweight imports.
+    # Avoid circular import dependencies.
     from beartype._util.py.utilpyinterpreter import get_interpreter_filename
 
     # Absolute filename of the executable binary for the active Python process.
@@ -156,23 +159,25 @@ def run_python_forward_output(
     # Tuple of one or more shell words running a new Python subprocess.
     command_words = (interpreter_filename,) + tuple(python_args)
 
-    # Run this new Python subprocess.
-    return run_command_forward_output(
+    # Run that subprocess, capturing and returning all output stdout.
+    return run_command_forward_stderr_return_stdout(
         command_words=command_words, popen_kwargs=popen_kwargs)
 
 
-def run_command_forward_output(
+#FIXME: Unit test us up, please.
+def run_command_forward_stderr_return_stdout(
     # Mandatory parameters.
     command_words: _HINT_COMMAND_WORDS,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
-) -> None:
+    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+) -> str:
     '''
     Run the passed command as a subprocess of the active Python process,
-    raising an exception on subprocess failure while forwarding all standard
-    output and error output by this subprocess to the standard output and error
-    file handles of the active Python process.
+    raising an exception on subprocess failure while both forwarding all
+    standard error output by this subprocess to the standard error file handle
+    of the active Python process *and* capturing and returning all stdout
+    output by this subprocess.
 
     This exception contains the exit status of this subprocess.
 
@@ -185,73 +190,170 @@ def run_command_forward_output(
         :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
         which case the empty dictionary is assumed.
 
+    Returns
+    ----------
+    str
+        All stdout captured from this subprocess, stripped of all trailing
+        newlines (as under most POSIX shells) *and* decoded with the current
+        locale's preferred encoding (e.g., UTF-8).
+
     Raises
     ----------
     CalledProcessError
         If the subprocess running this command report non-zero exit status.
     '''
 
-    # Run this command.
-    exit_status = run_command_forward_output_return_status(
-        command_words=command_words, popen_kwargs=popen_kwargs)
-
-    # If this command failed, raising an exception on command failure. For
-    # reusability, we reimplement the subprocess.check_call() function here
-    # rather than explicitly call that function. The latter approach would
-    # require duplicating logic between this and the
-    # run_command_forward_output_return_status() runner called above.
-    if is_failure(exit_status):
-        raise CalledProcessError(exit_status, command_words)
-
-# ....................{ GETTERS                           }....................
-def run_command_forward_output_return_status(
-    # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
-
-    # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
-) -> int:
-    '''
-    Run the passed command as a subprocess of the active Python process,
-    returning only the exit status of this subprocess while forwarding all
-    standard output and error output by this subprocess to the standard output
-    and error file handles of the active Python process.
-
-    Caveats
-    ----------
-    **This function raises no exceptions on subprocess failure.** To do so,
-    consider calling the :func:`run_command_forward_output` function instead.
-
-    Parameters
-    ----------
-    command_words : _HINT_COMMAND_WORDS
-        Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
-        Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
-        which case the empty dictionary is assumed.
-
-    Returns
-    ----------
-    int
-        Exit status returned by this subprocess.
-    '''
-
     # Sanitize these arguments.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
 
-    # Run this command *WITHOUT* raising an exception on command failure.
-    try:
-        exit_status = subprocess_call(command_words, **popen_kwargs)
-    # If this command failed to halt before triggering a timeout, the "timeout"
-    # keyword argument was passed *AND* this command has effectively failed.
-    # Since the prior call has already guaranteeably terminated this command,
-    # this exception is safely convertible into failure exit status.
-    except TimeoutExpired:
-        exit_status = FAILURE_DEFAULT
+    # Capture this command's stdout, raising an exception on command failure
+    # (including failure due to an expired timeout).
+    command_stdout = subprocess_check_output(command_words, **popen_kwargs)
 
-    # Return this exit status.
-    return exit_status
+    # Return this stdout, stripped of all trailing newlines.
+    return command_stdout.rstrip('\n')
+
+
+#FIXME: Uncomment as needed. *sigh*
+# #FIXME: Unit test us up, please.
+# def run_python_forward_output(
+#     # Mandatory parameters.
+#     python_args: _HINT_COMMAND_WORDS,
+#
+#     # Optional parameters.
+#     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
+# ) -> None:
+#     '''
+#     Run a new Python subprocess of the active Python process passed the passed
+#     arguments, raising an exception on subprocess failure while forwarding all
+#     standard output and error output by this subprocess to the standard output
+#     and error file handles of the active Python process.
+#
+#     This exception contains the exit status of this subprocess.
+#
+#     Parameters
+#     ----------
+#     python_args : _HINT_COMMAND_WORDS
+#         Iterable of zero or more shell words to passed to this new Python
+#         subprocess.
+#     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+#         Dictionary of all keyword arguments to be passed to the
+#         :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+#         which case the empty dictionary is assumed.
+#
+#     Raises
+#     ----------
+#     CalledProcessError
+#         If the subprocess running this command report non-zero exit status.
+#     '''
+#
+#     # Defer heavyweight imports.
+#     from beartype._util.py.utilpyinterpreter import get_interpreter_filename
+#
+#     # Absolute filename of the executable binary for the active Python process.
+#     interpreter_filename = get_interpreter_filename()
+#
+#     # Tuple of one or more shell words running a new Python subprocess.
+#     command_words = (interpreter_filename,) + tuple(python_args)
+#
+#     # Run this new Python subprocess.
+#     return run_command_forward_output(
+#         command_words=command_words, popen_kwargs=popen_kwargs)
+#
+#
+# #FIXME: Unit test us up, please.
+# def run_command_forward_output(
+#     # Mandatory parameters.
+#     command_words: _HINT_COMMAND_WORDS,
+#
+#     # Optional parameters.
+#     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+# ) -> None:
+#     '''
+#     Run the passed command as a subprocess of the active Python process,
+#     raising an exception on subprocess failure while forwarding all standard
+#     output and error output by this subprocess to the standard output and error
+#     file handles of the active Python process.
+#
+#     This exception contains the exit status of this subprocess.
+#
+#     Parameters
+#     ----------
+#     command_words : _HINT_COMMAND_WORDS
+#         Iterable of one or more shell words comprising this command.
+#     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+#         Dictionary of all keyword arguments to be passed to the
+#         :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+#         which case the empty dictionary is assumed.
+#
+#     Raises
+#     ----------
+#     CalledProcessError
+#         If the subprocess running this command report non-zero exit status.
+#     '''
+#
+#     # Run this command.
+#     exit_status = run_command_forward_output_return_status(
+#         command_words=command_words, popen_kwargs=popen_kwargs)
+#
+#     # If this command failed, raising an exception on command failure. For
+#     # reusability, we reimplement the subprocess.check_call() function here
+#     # rather than explicitly call that function. The latter approach would
+#     # require duplicating logic between this and the
+#     # run_command_forward_output_return_status() runner called above.
+#     if is_failure(exit_status):
+#         raise CalledProcessError(exit_status, command_words)
+#
+# # ....................{ GETTERS                           }....................
+# #FIXME: Unit test us up, please.
+# def run_command_forward_output_return_status(
+#     # Mandatory parameters.
+#     command_words: _HINT_COMMAND_WORDS,
+#
+#     # Optional parameters.
+#     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
+# ) -> int:
+#     '''
+#     Run the passed command as a subprocess of the active Python process,
+#     returning only the exit status of this subprocess while forwarding all
+#     standard output and error output by this subprocess to the standard output
+#     and error file handles of the active Python process.
+#
+#     Caveats
+#     ----------
+#     **This function raises no exceptions on subprocess failure.** To do so,
+#     consider calling the :func:`run_command_forward_output` function instead.
+#
+#     Parameters
+#     ----------
+#     command_words : _HINT_COMMAND_WORDS
+#         Iterable of one or more shell words comprising this command.
+#     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+#         Dictionary of all keyword arguments to be passed to the
+#         :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+#         which case the empty dictionary is assumed.
+#
+#     Returns
+#     ----------
+#     int
+#         Exit status returned by this subprocess.
+#     '''
+#
+#     # Sanitize these arguments.
+#     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
+#
+#     # Run this command *WITHOUT* raising an exception on command failure.
+#     try:
+#         exit_status = subprocess_call(command_words, **popen_kwargs)
+#     # If this command failed to halt before triggering a timeout, the "timeout"
+#     # keyword argument was passed *AND* this command has effectively failed.
+#     # Since the prior call has already guaranteeably terminated this command,
+#     # this exception is safely convertible into failure exit status.
+#     except TimeoutExpired:
+#         exit_status = FAILURE_DEFAULT
+#
+#     # Return this exit status.
+#     return exit_status
 
 # ....................{ PRIVATE                           }....................
 def _init_popen_kwargs(
@@ -314,10 +416,6 @@ def _init_popen_kwargs(
     _HINT_POPEN_KWARGS
         This dictionary of keyword arguments sanitized.
     '''
-    assert isinstance(command_words, Iterable), (
-        f'{repr(command_words)} not iterable.')
-    assert isinstance(popen_kwargs, Mapping), (
-        f'{repr(popen_kwargs)} not mapping.')
 
     # If this iterable of shell words is empty, raise an exception.
     if not command_words:
@@ -327,6 +425,12 @@ def _init_popen_kwargs(
     # If these keyword arguments are empty, default to the empty dictionary.
     elif popen_kwargs is None:
         popen_kwargs = {}
+
+    # Validate these parameters *AFTER* defaulting them above if needed.
+    assert isinstance(command_words, Iterable), (
+        f'{repr(command_words)} not iterable.')
+    assert isinstance(popen_kwargs, Mapping), (
+        f'{repr(popen_kwargs)} not mapping.')
 
     #FIXME: Uncomment if we ever feel like implementing this additional
     #validation. For the moment, we simply let lower-level functionality in the

@@ -204,6 +204,8 @@ def beartype(func: T) -> T:
         ever see this. (Thanks and abstruse apologies!)
     '''
 
+    #FIXME: *UGH.* Doesn't this logic permit callable classes? Woopsie. *sigh*
+
     # Validate the type of the decorated object *BEFORE* performing any work
     # assuming this object to define attributes (e.g., "func.__name__").
     #
