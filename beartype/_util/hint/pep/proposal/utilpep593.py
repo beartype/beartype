@@ -15,7 +15,6 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utiltyping import TypeException
-from beartype.vale._valevale import BeartypeValidator
 from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -144,6 +143,9 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     BeartypeDecorHintPep593Exception
         If this object is *not* a :pep:`593`-compliant type metahint.
     '''
+
+    # Defer heavyweight imports.
+    from beartype.vale._valevale import BeartypeValidator
 
     # If this object is *NOT* a PEP 593-compliant type metahint, raise an
     # exception.

@@ -22,7 +22,6 @@ from beartype.roar import (
     BeartypeDecorHintNonpepNumpyException,
     BeartypeDecorHintNonpepNumpyWarning,
 )
-from beartype.vale import IsAttr, IsEqual, IsSubclass
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.mod.utilmodimport import (
@@ -132,6 +131,7 @@ def reduce_hint_numpy_ndarray(
     # almost *ALWAYS* be importable. Why? Because this hint was externally
     # instantiated by the user by first importing the "numpy.typing.NDArray"
     # attribute passed to this getter.
+    from beartype.vale import IsAttr, IsEqual, IsSubclass
     from numpy import dtype, ndarray
     from numpy.typing import NDArray
 

@@ -153,7 +153,6 @@ from beartype._util.text.utiltextmagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
-from beartype.vale._valevale import BeartypeValidator
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
@@ -1522,6 +1521,9 @@ def pep_code_check_hint(
                 # beartype validator produced by subscripting a beartype
                 # validator factory). In this case...
                 elif hint_curr_sign is HintSignAnnotated:
+                    # Defer heavyweight imports.
+                    from beartype.vale._valevale import BeartypeValidator
+
                     # PEP-compliant type hint annotated by this metahint,
                     # localized to the "hint_child" local variable to satisfy
                     # the public API of the _enqueue_hint_child() closure

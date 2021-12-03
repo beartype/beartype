@@ -15,14 +15,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
+from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype.vale._valevale import BeartypeValidator
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -47,6 +46,9 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignAnnotated, (
         f'{sleuth.hint_sign} not HintSignAnnotated.')
+
+    # Defer heavyweight imports.
+    from beartype.vale._valevale import BeartypeValidator
 
     # PEP-compliant type hint annotated by this metahint.
     metahint = get_hint_pep593_metahint(sleuth.hint)
