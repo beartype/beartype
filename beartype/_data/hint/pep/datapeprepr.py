@@ -72,7 +72,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
     HintSignTypeVar,
     # HintSignTypedDict,
-    # HintSignUnion,
+    HintSignUnion,
     HintSignValuesView,
 )
 from beartype._util.py.utilpyversion import (
@@ -209,7 +209,7 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 484                           }..................
     # PEP 484-compliant forward reference type hints may be annotated either:
     # * Explicitly as "typing.ForwardRef" instances, which automated inspection
-    #   below in the _init() function detects.
+    #   performed by the _init() function below already handles.
     # * Implicitly as strings, which this key-value pair here detects. Note
     #   this unconditionally matches *ALL* strings, including both:
     #   * Invalid Python identifiers (e.g., "0d@yw@r3z").
@@ -229,6 +229,15 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # intentionally omit "typing_extensions.NewType" here. See also:
     #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
     'typing.NewType': HintSignNewType,
+
+    # ..................{ PEP 604                           }..................
+    # PEP 604-compliant |-style unions (e.g., "int | float") are internally
+    # implemented as instances of the low-level C-based "types.UnionType" type.
+    # Thankfully, these unions are semantically interchangeable with comparable
+    # PEP 484-compliant unions (e.g., "typing.Union[int, float]"); both kinds
+    # expose equivalent dunder attributes (e.g., "__args__", "__parameters__"),
+    # enabling subsequent code generation to conflate the two without issue.
+    'types.UnionType': HintSignUnion,
 }
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
@@ -291,6 +300,26 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     #     True
     "<class 'typing.Protocol'>",
     "<class 'typing_extensions.Protocol'>",
+
+    # ..................{ PEP 604                           }..................
+    # The low-level C-based "types.UnionType" class underlying PEP
+    # 604-compliant |-style unions (e.g., "int | float") imposes no constraints
+    # and is thus also semantically synonymous with the ignorable
+    # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
+    # Nonetheless, this class *CANNOT* be instantiated from Python code:
+    #     >>> import types
+    #     >>> types.UnionType(int, bool)
+    #     TypeError: cannot create 'types.UnionType' instances
+    #
+    # Likewise, this class *CANNOT* be subscripted. It follows that there
+    # exists no meaningful equivalent of shallow type-checking for these
+    # unions. While trivially feasible, listing "<class 'types.UnionType'>"
+    # here would only prevent callers from meaningfully type-checking these
+    # unions passed as valid parameters or returned as valid returns: e.g.,
+    #     @beartype
+    #     def muh_union_printer(muh_union: UnionType) -> None: print(muh_union)
+    #
+    # Ergo, we intentionally omit this type from consideration here.
 }
 '''
 Frozen set of all **shallowly ignorable PEP-compliant type hint

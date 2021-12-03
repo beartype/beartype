@@ -72,9 +72,9 @@ from beartype_test.a00_unit.data.data_type import (
     context_manager_factory,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+    HintPepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
-    HintPepMetadata,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetatyping import (
     make_hints_metadata_typing)
@@ -322,7 +322,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Generic,
     ))
 
-    # Add PEP 484-specific deeply ignorable test type hints to that set global.
+    # Add PEP 484-specific deeply ignorable test type hints to this set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # Parametrizations of the "typing.Generic" abstract base class (ABC).
         Generic[S, T],
@@ -1617,6 +1617,8 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        #FIXME: Actually list various "piths_satisfied_meta" and
+        #"piths_unsatisfied_meta" here, please.
         # Union of one non-"typing" type and one concrete generic.
         HintPepMetadata(
             hint=Union[str, Iterable[Tuple[S, T]]],
@@ -1803,6 +1805,8 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=(
                 HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
             piths_satisfied_meta=(
+                # None singleton.
+                HintPithSatisfiedMetadata(None),
                 # Sequence of string items.
                 HintPithSatisfiedMetadata((
                     'Of cuticular currents (...wide, wildly articulate,',

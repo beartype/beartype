@@ -139,7 +139,7 @@ def represent_object(
     """
     assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
 
-    # String describing the passed object. Note that:
+    # String describing this object. Note that:
     # * This representation quote-protects all newlines in this representation.
     #   Ergo, "\n" *MUST* be matched as r"\n" instead below.
     # * For debuggability, the verbose (albeit less readable) output of repr()

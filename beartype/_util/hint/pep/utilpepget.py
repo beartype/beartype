@@ -505,6 +505,14 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #     >>> bad_guy_type_hint.__module__ = 'typing'
     #     >>> repr(bad_guy_type_hint)
     #     typing.List   # <---- this is genuine bollocks
+    #
+    # Likewise, some of these classes define __repr__() methods prefixed by the
+    # machine-readable representations of their children. Again, to avoid false
+    # positives, this phase *MUST* thus be performed before repr()-based tests
+    # regardless of efficiency concerns: e.g.,
+    #     # Under Python >= 3.10:
+    #     >>> repr(tuple[str, ...] | bool)
+    #     tuple[str, ...] | bool  # <---- this is fine but *NOT* a tuple!
 
     # Class of this hint.
     hint_type = hint.__class__

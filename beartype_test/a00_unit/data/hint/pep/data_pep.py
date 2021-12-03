@@ -94,6 +94,7 @@ def _init() -> None:
         _data_pep586,
         _data_pep589,
         _data_pep593,
+        _data_pep604,
     )
 
     # Submodule globals to be redefined below.
@@ -116,6 +117,7 @@ def _init() -> None:
         _data_pep586,
         _data_pep589,
         _data_pep593,
+        _data_pep604,
     )
 
     # Initialize all private submodules of this subpackage.

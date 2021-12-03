@@ -4,6 +4,80 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                              }....................
+#FIXME: [FEATURE] Plugin architecture. The NumPy type hints use case will come
+#up again and again. So, let's get out ahead of that use case rather than
+#continuing to reinvent the wheel. Let's begin by defining a trivial plugin API
+#enabling users to define their own arbitrary type hint *REDUCTIONS.* Because
+#it's capitalized, we know the term "REDUCTIONS" is critical here. We are *NOT*
+#(at least, *NOT* initially) defining a full-blown plugin API. We're only
+#enabling users to reduce arbitrary type hints:
+#* From domain-specific objects they implement and annotate their code with...
+#* Into PEP-compliant type hints @beartype already supports.
+#Due to their versatility, the standard use case is reducing PEP-noncompliant
+#type hints to PEP 593-compliant beartype validators. To do so, consider:
+#* Defining a new public "beartype.plug" subpackage, defining:
+#  * A private "_PLUGIN_NAME_TO_SIGN" dictionary mapping from each "name"
+#    parameter passed to each prior call of the plug_beartype() function to the
+#    "HintSign" object that function dynamically creates to represent
+#    PEP-noncompliant type hints handled by that plugin. This dictionary
+#    effectively maps from the thing our users care about but we don't (i.e.,
+#    plugin names) to the thing our users don't care about but we do (i.e.,
+#    hint signs).
+#  * A public plug_beartype() function with signature resembling:
+#       def plug_beartype(
+#           # Mandatory parameters.
+#           name: str,
+#           hint_reduce: Callable[[object,], object],
+#
+#           # Optional parameters.
+#           hint_detect_from_repr_prefix_args_1_or_more: Optional[str] = None,
+#           hint_detect_from_type_name: Optional[str] = None,
+#       ) -> None:
+#    ...where:
+#    * The "name" parameter is an arbitrary non-empty string (e.g., "Numpy").
+#      This function will then synthesize a new hint sign suffixed by this
+#      substring (e.g., f'HintSign{name}') and map this name to that sign in
+#      the "_PLUGIN_NAME_TO_SIGN" dictionary.
+#    * The "hint_detect_from_repr_prefix_args_1_or_more" parameter is an
+#      arbitrary non-empty string typically corresponding to the
+#      fully-qualified name of a subclass of "types.GenericAlias" serving as a
+#      PEP 585-compliant type hint factory(e.g.,
+#      "muh_package.MuhTypeHintFactory"), corresponding exactly to the items
+#      of the "HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN" set.
+#    * The "hint_detect_from_type_name" parameter is the fully-qualified name
+#      of a caller-defined class (e.g., "muh_package.MuhTypeHintFactoryType"),
+#      corresponding exactly to the items of the "HINT_TYPE_NAME_TO_SIGN" set.
+#    * The "hint_reduce" parameter is an arbitrary caller-defined callable
+#      reducing all type hints identified by one or more of the detection
+#      schemes below to another arbitrary (but hopefully PEP-compliant and
+#      beartype-supported) type hint. Again, that will typically be a
+#      PEP 593-compliant beartype validator.
+#  * A public unplug_beartype() function with signature resembling:
+#       def unplug_beartype(name: str) -> None:
+#    This function simply looks up the passed name in various internal data
+#    structures (e.g.,"_PLUGIN_NAME_TO_SIGN") to undo the effects of the prior
+#    plug_beartype() call passed that name.
+#
+#Given that, we should then entirely reimplement our current strategy for
+#handling NumPy type hints into a single call to plug_beartype(): e.g.,
+#    # Pretty boss, ain't it? Note we intentionally pass
+#    # "hint_detect_from_repr_prefix_args_1_or_more" here, despite the fact
+#    # that the unsubscripted "numpy.typing.NDArray" factory is a valid type
+#    # hint. Yes, this actually works. Why? Because that factory implicitly
+#    # subscripts itself when unsubscripted. In other words, there is *NO* such
+#    # thing as an unsubscripted typed NumPy array. O_o
+#    def plug_beartype(
+#        name='NumpyArray',
+#        hint_reduce=reduce_hint_numpy_ndarray,
+#        hint_detect_from_repr_prefix_args_1_or_more='numpy.ndarray',
+#    )
+#
+#Yes, this would then permit us to break backward compatibility by bundling
+#that logic into a new external "beartype_numpy" plugin for @beartype -- but we
+#absolutely should *NOT* do that, both because it would severely break backward
+#compatibility *AND* because everyone (including us) wants NumPy support
+#out-of-the-box. We're all data scientists here. Do the right thing.
+
 #FIXME: [FEATURE] Define the following supplementary decorators:
 #* @beartype.beartype_O1(), identical to the current @beartype.beartype()
 #  decorator but provided for disambiguity. This decorator only type-checks
@@ -27,77 +101,6 @@
 #  function as a new memoized "strategy_kind" parameter.
 #* Conditionally generate type-checking code throughout that function depending
 #  on the value of that parameter.
-
-#FIXME: [SAFETY] @beartype should raise exceptions when decorating callables
-#that are actually generators, asynchronous generators, or coroutines whose
-#returns are annotated with any type hint whose sign is *NOT*
-#"HintSignGenerator", "HintSignAsyncGenerator", or "HintSignCoroutine"
-#respectively. Since detecting generator callables, asynchronous generator
-#callables, and coroutine callables is trivial, this should be trivial.
-
-#FIXME: Ensure that *ALL* calls to memoized callables throughout the codebase
-#are called with purely positional rather than keyword arguments. Currently, we
-#suspect the inverse is the case. To do so, we'll probably want to augment the
-#wrapper closure returned by the @callable_cached decorator to emit non-fatal
-#warnings when called with non-empty keyword arguments.
-#
-#Alternately, we might simply want to prohibit keyword arguments altogether by
-#defining a new @callable_cached_positional decorator restricted to positional
-#arguments. Right... That probably makes more sense. Make it so, ensign!
-#
-#Then, for generality:
-#
-#* Preserve the existing @callable_cached decorator as is. We won't be using
-#  it, but there's little sense in destroying something beautiful.
-#* Globally replace all existing "@callable_cached" substrings with
-#  "@callable_cached_positional". Voila!
-
-#FIXME: *CRITICAL EDGE CASE:* If the passed "func" is a coroutine, that
-#coroutine *MUST* be called preceded by the "await" keyword rather than merely
-#called as is. Detecting coroutines is trivial, thanks to our newly defined
-#beartype._util.func.utilfunctest.is_func_async_coroutine() tester. Note that
-#*ONLY* non-generator callables explicitly declared with "async def" should be
-#subject to this logic, which is why we'll intentionally call
-#is_func_async_coroutine() rather than is_func_async() to discriminate.
-#Asynchronous generator callables are actually factories that only *RETURN* an
-#asynchronous generator; they aren't actually asynchronous themselves. So:
-#* Modify the "CODE_CALL_CHECKED" and "CODE_CALL_UNCHECKED" snippets to
-#  conditionally precede the function call with the substring "await ": e.g.,
-#      CODE_CALL_UNCHECKED = '''
-#          return {func_await}__beartype_func(*args, **kwargs)
-#      '''
-#  Note the absence of delimiting space. This is, of course, intentional.
-#* Unconditionally format the "func_await" substring into both of those
-#  snippets, defined ala:
-#      format_await = 'await ' if inspect.iscoroutinefunction(func) else ''
-#* Oh, and note that our defined wrapper function must also be preceded by the
-#  "async " keyword. So, we'll also need to augment "CODE_SIGNATURE".
-#FIXME: Unit test this extensively, please. The only sane way to do so will be
-#to generalize the dynamic loop over all type hints declaring a synchronous
-#closure iteratively type-hinted by each to *ALSO* declare an asynchronous
-#closure. Actually... that sounds like overkill, frankly. We really only need
-#to test these notable edge cases:
-#* Asynchronous callable with an unannotated return.
-#* Asynchronous callable with a return annotated by "typing.NoReturn", which
-#  generates different return (and thus awaitable) semantics.
-#* Asynchronous callable with a return annotated by *ANY* PEP-compliant type
-#  hint other than "typing.NoReturn", which also generates different return
-#  (and thus awaitable) semantics.
-
-#FIXME: Non-critical optimization: if the active Python interpreter is already
-#performing static type checking (e.g., with Pyre or mypy), @beartype should
-#unconditionally reduce to a noop for the current process. Note that:
-#
-#* Detecting static type checking is trivial, as PEP 563 standardizes the newly
-#  declared "typing.TYPE_CHECKING" boolean constant to be true only if static
-#  type checking is currently occurring. Note that @beartype supports this now.
-#* Detecting whether static type checking just occurred is clearly less
-#  trivial and possibly even infeasible. We're unclear what exactly separates
-#  the "static type checking" phase from the runtime phase performed by static
-#  type checkers, but something clearly does. If all else fails, we can
-#  probably attempt to detect whether the basename of the command invoked by
-#  the parent process matches "(Pyre|mypy|pyright|pytype)" or... something. Of
-#  course, that itself is non-trivial due to Windows, so here we are. *sigh*
 
 #FIXME: Emit one non-fatal warning for each annotated type that is either:
 #
