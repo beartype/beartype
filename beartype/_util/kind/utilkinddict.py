@@ -14,7 +14,7 @@ from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Sequence, Mapping, MutableMapping
-from threading import Lock
+# from threading import Lock
 from typing import Sequence as SequenceHint
 
 # ....................{ VALIDATORS                        }....................
@@ -46,7 +46,7 @@ def die_if_mappings_two_items_collide(
     assert isinstance(mapping_a, Mapping), f'{repr(mapping_a)} not mapping.'
     assert isinstance(mapping_b, Mapping), f'{repr(mapping_b)} not mapping.'
 
-    # Set of all keys of the first mapping.
+    # Set of all keys of the first mapping, localized for efficiency.
     mapping_a_keys = mapping_a.keys()
 
     # Set of all key collisions (i.e., keys residing in both mappings). Since
@@ -74,29 +74,25 @@ def die_if_mappings_two_items_collide(
     # throughout this codebase. Ergo, we fallback to a less efficient but
     # considerably more robust alternative supporting unhashable values.
     mapping_keys_shared_safe = {
-        # For each key-value pair of the second mapping, this key...
-        mapping_b_key
-        for mapping_b_key, mapping_b_value in mapping_b.items()
-        # If...
-        if (
-            # This key also resides in the first mapping *AND*...
-            mapping_b_key in mapping_a_keys and
-            # This key also maps to the same value in the first mapping.
-            mapping_a[mapping_b_key] is mapping_b_value
-        )
+        # For each possibly unsafe key collision (i.e., shared key associated
+        # with possibly different values in both mappings), this key...
+        mapping_key_shared
+        for mapping_key_shared in mapping_keys_shared
+        # If this key maps to the same value in both mappings and is thus safe.
+        if mapping_a[mapping_key_shared] is mapping_b[mapping_key_shared]
     }
 
-    # If the number of key and item collisions differ, then one or more
-    # keys residing in both mappings have differing values. Since merging
-    # these mappings as is would silently and thus unsafely override the
-    # values associated with these keys in the former mapping with the
-    # values associated with these keys in the latter mapping, raise an
-    # exception to notify the caller.
+    # If the number of key and item collisions differ, then one or more keys
+    # residing in both mappings have differing values. Since merging these
+    # mappings as is would silently and thus unsafely override the values
+    # associated with these keys in the former mapping with the values
+    # associated with these keys in the latter mapping, raise an exception to
+    # notify the caller.
     if len(mapping_keys_shared) != len(mapping_keys_shared_safe):
         # Dictionary of all unsafe key-value pairs (i.e., pairs such that
-        # merging these keys would silently override the values associated
-        # with these keys in either the first or second mappings) from the
-        # first and second mappings.
+        # merging these keys would silently override the values associated with
+        # these keys in either the first or second mappings) from the first and
+        # second mappings.
         mapping_a_unsafe = dict(
             (key_shared_unsafe, mapping_a[key_shared_unsafe])
             for key_shared_unsafe in mapping_keys_shared
@@ -116,12 +112,11 @@ def die_if_mappings_two_items_collide(
         )
         # print(exception_message)
         raise _BeartypeUtilMappingException(exception_message)
-    # Else, the number of key and item collisions are the same, implying
-    # that all colliding keys are associated with the same values in both
-    # mappings, implying that both mappings contain the same colliding
-    # key-value pairs. Since merging these mappings as is will *NOT*
-    # silently and thus unsafely override any values of either mapping,
-    # merge these mappings as is.
+    # Else, the number of key and item collisions are the same, implying that
+    # all colliding keys are associated with the same values in both mappings,
+    # implying that both mappings contain the same colliding key-value pairs.
+    # Since merging these mappings as is will *NOT* silently and thus unsafely
+    # override any values of either mapping, merge these mappings as is.
 
 # ....................{ MERGERS                           }....................
 def merge_mappings(*mappings: Mapping) -> Mapping:
@@ -301,7 +296,6 @@ def merge_mappings_two_or_more(mappings: SequenceHint[Mapping]) -> Mapping:
     return mapping_merged
 
 # ....................{ UPDATERS                          }....................
-#FIXME: Unit test us up.
 def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     '''
     Safely update in-place the first passed mapping with all key-value pairs of

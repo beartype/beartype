@@ -33,10 +33,10 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
-    :class:`BeartypeValidator` objects, each produced by subscripting the
-    :class:`beartype.vale.Is` class or a subclass of that class) if this object
-    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
-    object satisfies this hint).
+    :class:`beartype.vale._valevale.BeartypeValidator` objects, each produced
+    by subscripting the :class:`beartype.vale.Is` class or a subclass of that
+    class) if this object actually fails to satisfy this hint *or* ``None``
+    otherwise (i.e., if this object satisfies this hint).
 
     Parameters
     ----------
@@ -74,7 +74,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
                 f'{sleuth.exception_prefix}PEP 593 type hint '
                 f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} '
                 f'not beartype validator '
-                f'(i.e., subscripted "beartype.vale.Is*" factory).'
+                f'(i.e., "beartype.vale.Is*[...]" object).'
             )
         # Else, this object is beartype-specific.
 

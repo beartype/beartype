@@ -24,6 +24,7 @@ from beartype._util.func.arg.utilfuncargtest import (
 )
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextrepr import represent_object
+# from collections.abc import Tuple
 from typing import Any, Callable, Union
 
 # See the "beartype.cave" submodule for further commentary.
@@ -281,9 +282,9 @@ class BeartypeValidator(object):
     @property
     def is_valid(self) -> BeartypeValidatorTester:
         '''
-        **Validator** (i.e., caller-defined callable accepting a single
-        arbitrary object and returning either ``True`` if that object satisfies
-        an arbitrary constraint *or* ``False`` otherwise).
+        **Validator callable** (i.e., caller-defined callable accepting a
+        single arbitrary object and returning either ``True`` if that object
+        satisfies an arbitrary constraint *or* ``False`` otherwise).
         '''
 
         return self._is_valid
@@ -296,8 +297,8 @@ class BeartypeValidator(object):
         '''
         **Representer** (i.e., either a string *or* caller-defined callable
         accepting no arguments returning a machine-readable representation of
-        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
-        further details.
+        this validator). See the :data:`BeartypeValidatorRepresenter` type hint
+        for further details.
         '''
 
         return self._get_repr
@@ -313,8 +314,8 @@ class BeartypeValidator(object):
         get_repr : BeartypeValidatorRepresenter
             **Representer** (i.e., either a string *or* caller-defined callable
             accepting no arguments returning a machine-readable representation
-            of this validator). See the :data:`BeartypeValidatorRepresenter` type
-            hint for further details.
+            of this validator). See the :data:`BeartypeValidatorRepresenter`
+            type hint for further details.
 
         Raises
         ----------
@@ -347,11 +348,74 @@ class BeartypeValidator(object):
         # Set this representer.
         self._get_repr = get_repr
 
+    # ..................{ GETTERS                           }..................
+    #FIXME: Implement us up, please. The output should probably resemble that
+    #of "repr(self)", except that the "repr(...)" for each subvalidator of this
+    #validator in this output should be prefixed by a substring denoting the
+    #truthiness of the passed object against that subvalidator: e.g.,
+    #    # The most Pythonic and thus probably the most readable and best.
+    #     True == Is[lambda foo: foo.x + foo.y >= 0] &
+    #    False == Is[lambda foo: foo.x + foo.y <= 10]
+    #    # Or...
+    #     True --> Is[lambda foo: foo.x + foo.y >= 0] &
+    #    False --> Is[lambda foo: foo.x + foo.y <= 10]
+    #    # Or...
+    #     True <-- Is[lambda foo: foo.x + foo.y >= 0] &
+    #    False <-- Is[lambda foo: foo.x + foo.y <= 10]
+    #    # Or...
+    #    { True} Is[lambda foo: foo.x + foo.y >= 0] &
+    #    {False} Is[lambda foo: foo.x + foo.y <= 10]
+    #Note this output also implies a pretty printing regimen for readability.
+    #Implementing pretty printing will probably require extending this method
+    #to accept an optional nesting level: e.g.,
+    #    def get_diagnosis(
+    #        self,
+    #
+    #        # Mandatory parameters.
+    #        obj: object,
+    #
+    #        # Optional parameters.
+    #        indent_level: str = CODE_INDENT_1
+    #    ) -> str:
+    #FIXME: Should this method be marked @abstract? Contemplate.
+    #FIXME: Call this method from get_cause_or_none_annotated(), please.
+    #FIXME: Unit test us up, please -- particularly with respect to non-trivial
+    #nested subvalidators.
+    def get_diagnosis(self, obj: object) -> str:
+        '''
+        Human-readable **validation failure diagnosis** (i.e., substring
+        describing how the passed object either satisfies *or* fails to satisfy
+        this validator).
+
+        This method is typically called by high-level error-handling logic to
+        unambiguously describe the failure of an arbitrary object to satisfy an
+        arbitrary validator. Since this validator may be synthesized from one
+        or more lower-level validators (e.g., via the :meth:`__and__`,
+        :meth:`__or__`, and :meth:`__invert__` dunder methods), the simple
+        machine-readable representation of this validator does *not* adequately
+        describe how the passed object satisfies or fails to satisfy this
+        validator.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be described with respect to this validator.
+
+        Returns
+        ----------
+        str
+            Truthy representation of this object against this validator.
+        '''
+
+        # For now, do the wrong (but simple) thing.
+        return repr(self)
+
     # ..................{ DUNDERS ~ operator                }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
-    # combine and Override
-    def __and__(self, other: 'BeartypeValidator') -> (
-        'BeartypeValidator'):
+    # synthesize higher-level validators from lower-level validators via
+    # overloaded set theoretic operators.
+
+    def __and__(self, other: 'BeartypeValidator') -> 'BeartypeValidator':
         '''
         **Conjunction** (i.e., ``self & other``), synthesizing a new
         :class:`BeartypeValidator` object whose validator returns ``True`` only
@@ -401,8 +465,7 @@ class BeartypeValidator(object):
         )
 
 
-    def __or__(self, other: 'BeartypeValidator') -> (
-        'BeartypeValidator'):
+    def __or__(self, other: 'BeartypeValidator') -> 'BeartypeValidator':
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
         :class:`BeartypeValidator` object whose validator returns ``True`` only
