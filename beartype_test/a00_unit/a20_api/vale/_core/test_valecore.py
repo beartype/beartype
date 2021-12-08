@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable-based data validation unit tests.**
+**Beartype validator unit tests.**
 
-This submodule unit tests the private :mod:`beartype.vale._valevale` submodule.
+This submodule unit tests the private :mod:`beartype.vale._core._valecore`
+submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -19,11 +20,11 @@ This submodule unit tests the private :mod:`beartype.vale._valevale` submodule.
 def test_api_vale_subscriptedis_pass() -> None:
     '''
     Test successful usage of the private
-    :mod:`beartype.vale._valevale.BeartypeValidator` class.
+    :class:`beartype.vale._core._valecore.BeartypeValidator` class.
     '''
 
     # Defer heavyweight imports.
-    from beartype.vale._valevale import BeartypeValidator
+    from beartype.vale._core._valecore import BeartypeValidator
 
     # Arbitrary valid data validator.
     not_though_the_soldier_knew = lambda text: bool('Someone had blundered.')
@@ -47,12 +48,18 @@ def test_api_vale_subscriptedis_pass() -> None:
     # Code *NOT* already prefixed by "(" and suffixed by ")".
     is_valid_code_undelimited = "{obj} == 'All in the valley of Death'"
 
-    # Assert the "BeartypeValidator" class preserves delimited code as is.
+    # Assert that a beartype validator preserves delimited code as is.
     subscriptedis_delimited = BeartypeValidator(
         is_valid_code=is_valid_code_delimited, **kwargs)
     assert subscriptedis_delimited._is_valid_code is is_valid_code_delimited
 
-    # Assert the "BeartypeValidator" class delimits undelimited code.
+    # Assert that this validator reports the expected diagnosis.
+    subscriptedis_delimited_diagnosis = subscriptedis_delimited.get_diagnosis(
+        obj='Flashed all their sabres bare,')
+    assert 'True' in subscriptedis_delimited_diagnosis
+    assert 'Someone had blundered.' in subscriptedis_delimited_diagnosis
+
+    # Assert that a beartype validator delimits undelimited code.
     subscriptedis_undelimited = BeartypeValidator(
         is_valid_code=is_valid_code_undelimited, **kwargs)
     assert (
@@ -60,7 +67,7 @@ def test_api_vale_subscriptedis_pass() -> None:
         f'({is_valid_code_undelimited})'
     )
 
-    # Assert that the "BeartypeValidator" class also accepts a string representer.
+    # Assert that a beartype validator also accepts a string representer.
     subscriptedis_repr_str = BeartypeValidator(
         is_valid_code=is_valid_code_delimited,
         get_repr='All that was left of them,',
@@ -72,16 +79,15 @@ def test_api_vale_subscriptedis_pass() -> None:
     assert repr(subscriptedis_repr_str) == 'All that was left of them,'
 
 
-
 def test_api_vale_subscriptedis_fail() -> None:
     '''
     Test unsuccessful usage of the private
-    :mod:`beartype.vale._valevale.BeartypeValidator` class.
+    :class:`beartype.vale._core._valecore.BeartypeValidator` class.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeValeSubscriptionException
-    from beartype.vale._valevale import BeartypeValidator
+    from beartype.vale._core._valecore import BeartypeValidator
     from pytest import raises
 
     # Arbitrary valid data validator.

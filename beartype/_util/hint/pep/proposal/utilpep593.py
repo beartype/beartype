@@ -145,7 +145,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
 
     # Defer heavyweight imports.
-    from beartype.vale._valevale import BeartypeValidator
+    from beartype.vale._core._valecore import BeartypeValidator
 
     # If this object is *NOT* a PEP 593-compliant type metahint, raise an
     # exception.

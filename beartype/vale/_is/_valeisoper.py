@@ -61,10 +61,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISEQUAL_TEST_format)
-from beartype.vale._valevale import BeartypeValidator
+from beartype.vale._core._valecore import BeartypeValidator
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import (
     CallableScope,

@@ -1522,7 +1522,7 @@ def pep_code_check_hint(
                 # validator factory). In this case...
                 elif hint_curr_sign is HintSignAnnotated:
                     # Defer heavyweight imports.
-                    from beartype.vale._valevale import BeartypeValidator
+                    from beartype.vale._core._valecore import BeartypeValidator
 
                     # PEP-compliant type hint annotated by this metahint,
                     # localized to the "hint_child" local variable to satisfy

@@ -23,7 +23,9 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_argless,
 )
 from beartype._util.func.utilfuncscope import CallableScope
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
+from beartype.vale._util._valeutiltext import format_diagnosis_line
 # from collections.abc import Tuple
 from typing import Any, Callable, Union
 
@@ -349,39 +351,19 @@ class BeartypeValidator(object):
         self._get_repr = get_repr
 
     # ..................{ GETTERS                           }..................
-    #FIXME: Implement us up, please. The output should probably resemble that
-    #of "repr(self)", except that the "repr(...)" for each subvalidator of this
-    #validator in this output should be prefixed by a substring denoting the
-    #truthiness of the passed object against that subvalidator: e.g.,
-    #    # The most Pythonic and thus probably the most readable and best.
-    #     True == Is[lambda foo: foo.x + foo.y >= 0] &
-    #    False == Is[lambda foo: foo.x + foo.y <= 10]
-    #    # Or...
-    #     True --> Is[lambda foo: foo.x + foo.y >= 0] &
-    #    False --> Is[lambda foo: foo.x + foo.y <= 10]
-    #    # Or...
-    #     True <-- Is[lambda foo: foo.x + foo.y >= 0] &
-    #    False <-- Is[lambda foo: foo.x + foo.y <= 10]
-    #    # Or...
-    #    { True} Is[lambda foo: foo.x + foo.y >= 0] &
-    #    {False} Is[lambda foo: foo.x + foo.y <= 10]
-    #Note this output also implies a pretty printing regimen for readability.
-    #Implementing pretty printing will probably require extending this method
-    #to accept an optional nesting level: e.g.,
-    #    def get_diagnosis(
-    #        self,
-    #
-    #        # Mandatory parameters.
-    #        obj: object,
-    #
-    #        # Optional parameters.
-    #        indent_level: str = CODE_INDENT_1
-    #    ) -> str:
     #FIXME: Should this method be marked @abstract? Contemplate.
     #FIXME: Call this method from get_cause_or_none_annotated(), please.
     #FIXME: Unit test us up, please -- particularly with respect to non-trivial
     #nested subvalidators.
-    def get_diagnosis(self, obj: object) -> str:
+    def get_diagnosis(
+        self,
+
+        # Mandatory parameters.
+        obj: object,
+
+        # Optional parameters.
+        indent_level: str = CODE_INDENT_1,
+    ) -> str:
         '''
         Human-readable **validation failure diagnosis** (i.e., substring
         describing how the passed object either satisfies *or* fails to satisfy
@@ -393,22 +375,33 @@ class BeartypeValidator(object):
         or more lower-level validators (e.g., via the :meth:`__and__`,
         :meth:`__or__`, and :meth:`__invert__` dunder methods), the simple
         machine-readable representation of this validator does *not* adequately
-        describe how the passed object satisfies or fails to satisfy this
-        validator.
+        describe how exactly the passed object satisfies or fails to satisfy
+        this validator. Only an exhaustive description suffices.
 
         Parameters
         ----------
         obj : object
-            Arbitrary object to be described with respect to this validator.
+            Arbitrary object to be diagnosed against this validator.
+        indent_level : str, optional
+            **Indentation level** (i.e., zero or more adjacent spaces prefixing
+            each line of the returned substring for readability). Defaults to
+            one level of indentation (i.e., :data:`CODE_INDENT_1`).
 
         Returns
         ----------
         str
-            Truthy representation of this object against this validator.
+            Substring diagnosing this object against this validator.
         '''
 
-        # For now, do the wrong (but simple) thing.
-        return repr(self)
+        # Format the validity of this object against this validator for the
+        # typical case of a lowest-level beartype validator *NOT* wrapping one
+        # or more other even lower-level beartype validators (e.g., via a set
+        # theoretic operator).
+        return format_diagnosis_line(
+            validator_repr=repr(self),
+            is_obj_valid=self._is_valid(obj),
+            indent_level=indent_level,
+        )
 
     # ..................{ DUNDERS ~ operator                }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically

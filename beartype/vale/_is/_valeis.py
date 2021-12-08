@@ -16,8 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeLambdaWarning
-from beartype.vale._factory._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._valevale import (
+from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._core._valecore import (
     BeartypeValidator,
     BeartypeValidatorTester,
 )

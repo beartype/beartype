@@ -566,7 +566,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     * *Not* PEP-compliant, this hint is returned as is unmodified.
     * PEP 593-compliant (i.e., :class:`typing.Annotated`) but beartype-agnostic
       (i.e., its second argument is *not* an instance of the
-      :class:`beartype.vale._valevale.BeartypeValidator` class produced by
+      :class:`beartype.vale._core._valecore.BeartypeValidator` class produced by
       subscripting the :class:`beartype.vale.Is` class), this hint is reduced
       to the first argument subscripting this hint. Doing so ignores *all*
       irrelevant annotations on this hint (e.g., reducing

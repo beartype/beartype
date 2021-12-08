@@ -4,6 +4,12 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                              }....................
+#FIXME: [OPTIMIZATION] As a useful microoptimization, unroll *ALL* calls to
+#the any() and all() builtins into equivalent "for" loops in our critical path.
+#Since we typically pass these builtins generator comprehensions created and
+#destroyed on-the-fly, we've profiled these builtins to incur substantially
+#higher runtime costs than equivalent "for" loops. Thanks alot, CPython. *sigh*
+
 #FIXME: [FEATURE] Plugin architecture. The NumPy type hints use case will come
 #up again and again. So, let's get out ahead of that use case rather than
 #continuing to reinvent the wheel. Let's begin by defining a trivial plugin API

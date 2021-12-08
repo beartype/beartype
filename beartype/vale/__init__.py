@@ -33,10 +33,10 @@ Instead, callers are expected to (in order):
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.vale._factory._valeis import _IsFactory
-from beartype.vale._factory._valeiscls import _IsSubclassFactory
-from beartype.vale._factory._valeisobj import _IsAttrFactory
-from beartype.vale._factory._valeisoper import _IsEqualFactory
+from beartype.vale._is._valeis import _IsFactory
+from beartype.vale._is._valeiscls import _IsSubclassFactory
+from beartype.vale._is._valeisobj import _IsAttrFactory
+from beartype.vale._is._valeisoper import _IsEqualFactory
 
 # ....................{ SINGLETONS                        }....................
 # Public factory singletons instantiating these private factory classes.

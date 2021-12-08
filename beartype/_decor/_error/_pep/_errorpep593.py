@@ -33,7 +33,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
-    :class:`beartype.vale._valevale.BeartypeValidator` objects, each produced
+    :class:`beartype.vale._core._valecore.BeartypeValidator` objects, each produced
     by subscripting the :class:`beartype.vale.Is` class or a subclass of that
     class) if this object actually fails to satisfy this hint *or* ``None``
     otherwise (i.e., if this object satisfies this hint).
@@ -48,7 +48,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
         f'{sleuth.hint_sign} not HintSignAnnotated.')
 
     # Defer heavyweight imports.
-    from beartype.vale._valevale import BeartypeValidator
+    from beartype.vale._core._valecore import BeartypeValidator
 
     # PEP-compliant type hint annotated by this metahint.
     metahint = get_hint_pep593_metahint(sleuth.hint)

@@ -46,8 +46,45 @@ def die_if_mappings_two_items_collide(
     assert isinstance(mapping_a, Mapping), f'{repr(mapping_a)} not mapping.'
     assert isinstance(mapping_b, Mapping), f'{repr(mapping_b)} not mapping.'
 
-    # Set of all keys of the first mapping, localized for efficiency.
-    mapping_a_keys = mapping_a.keys()
+    # For each key of the first mapping...
+    for mapping_a_key in mapping_a:
+        # If...
+        #
+        # Note this simplistic detection logic has been exhaustively optimized
+        # with iterative profiling to be the most performant solution. Notably,
+        # alternative solutions calling dictionary methods (e.g., dict.items(),
+        # dict.get()) are *DRAMATICALLY* slower -- which is really fascinating.
+        # CPython appears to have internally optimized pure dictionary syntax.
+        if (
+            # This key resides in the second mapping as well *AND*...
+            mapping_a_key in mapping_b and
+            # This key unsafely maps to a different value in the second
+            # mapping...
+            mapping_a[mapping_a_key] is not mapping_b[mapping_a_key]
+        ):
+        # Immediately short-circuit this iteration to raise an exception below.
+        # Merging these mappings would silently and thus unsafely override the
+        # values associated with these keys in the first mapping with the
+        # values associated with these keys in the second mapping.
+            break
+    # Else, all key collisions are safe (i.e., all shared keys are associated
+    # with the same values in both mappings). Since merging these mappings as
+    # is will *NOT* silently and thus unsafely override any values of either
+    # mapping, accept these mappings as is.
+    #
+    # Note that this awkward branching structure has been profiled to be
+    # optimally efficient, for reasons that honestly elude us. Notably, this
+    # structure is faster than:
+    # * The equivalent "any(...)" generator comprehension -- suggesting we
+    #   should similarly unroll *ALL* calls to the any() and all() builtins in
+    #   our critical path. Thanks, CPython.
+    # * The equivalent test against items intersection, which has the
+    #   additional caveat of raising an exception when one or more mapping
+    #   items are unhashable and is thus substantially more fragile: e.g.,
+    #       if len(mapping_keys_shared) == len(mapping_a.items() & mapping_b.items()):
+    #           return
+    else:
+        return
 
     # Set of all key collisions (i.e., keys residing in both mappings). Since
     # keys are necessarily hashable, this set intersection is guaranteed to be
@@ -55,17 +92,11 @@ def die_if_mappings_two_items_collide(
     #
     # Note that omitting the keys() method call on the latter but *NOT* former
     # mapping behaves as expected and offers a helpful microoptimization.
-    mapping_keys_shared = mapping_a_keys & mapping_b  # type: ignore[operator]
-
-    # If one or more keys do *NOT* collide, silently reduce to a noop.
-    if not mapping_keys_shared:
-        return
-    # Else, one or more keys collide.
-    # print('Key-value collisions!')
+    mapping_keys_shared = mapping_a.keys() & mapping_b  # type: ignore[operator]
 
     # Set of all keys in all item collisions (i.e., items residing in both
-    # mappings). Equivalently, this is the set of all safe key collisions
-    # (i.e., all shared keys associated with the same values in both mappings).
+    # mappings). Equivalently, this is the set of all safe key collisions (i.e.,
+    # all shared keys associated with the same values in both mappings).
     #
     # Ideally, we would efficiently intersect these items as follows:
     #     mapping_items_shared = mapping_a.items() & mapping_b.items()
@@ -79,44 +110,34 @@ def die_if_mappings_two_items_collide(
         mapping_key_shared
         for mapping_key_shared in mapping_keys_shared
         # If this key maps to the same value in both mappings and is thus safe.
-        if mapping_a[mapping_key_shared] is mapping_b[mapping_key_shared]
+        if (
+            mapping_a[mapping_key_shared] is
+            mapping_b[mapping_key_shared]
+        )
     }
 
-    # If the number of key and item collisions differ, then one or more keys
-    # residing in both mappings have differing values. Since merging these
-    # mappings as is would silently and thus unsafely override the values
-    # associated with these keys in the former mapping with the values
-    # associated with these keys in the latter mapping, raise an exception to
-    # notify the caller.
-    if len(mapping_keys_shared) != len(mapping_keys_shared_safe):
-        # Dictionary of all unsafe key-value pairs (i.e., pairs such that
-        # merging these keys would silently override the values associated with
-        # these keys in either the first or second mappings) from the first and
-        # second mappings.
-        mapping_a_unsafe = dict(
-            (key_shared_unsafe, mapping_a[key_shared_unsafe])
-            for key_shared_unsafe in mapping_keys_shared
-            if key_shared_unsafe not in mapping_keys_shared_safe
-        )
-        mapping_b_unsafe = dict(
-            (key_shared_unsafe, mapping_b[key_shared_unsafe])
-            for key_shared_unsafe in mapping_keys_shared
-            if key_shared_unsafe not in mapping_keys_shared_safe
-        )
+    # Dictionary of all unsafe key-value pairs (i.e., pairs such that merging
+    # these keys would silently override the values associated with these keys
+    # in either the first or second mappings) from these mappings.
+    mapping_a_unsafe = dict(
+        (key_shared_unsafe, mapping_a[key_shared_unsafe])
+        for key_shared_unsafe in mapping_keys_shared
+        if key_shared_unsafe not in mapping_keys_shared_safe
+    )
+    mapping_b_unsafe = dict(
+        (key_shared_unsafe, mapping_b[key_shared_unsafe])
+        for key_shared_unsafe in mapping_keys_shared
+        if key_shared_unsafe not in mapping_keys_shared_safe
+    )
 
-        # Raise a human-readable exception.
-        exception_message = (
-            f'Mappings not safely mergeable due to key-value collisions:\n'
-            f'~~~~[ mapping_a collisions ]~~~~\n{repr(mapping_a_unsafe)}\n'
-            f'~~~~[ mapping_b collisions ]~~~~\n{repr(mapping_b_unsafe)}'
-        )
-        # print(exception_message)
-        raise _BeartypeUtilMappingException(exception_message)
-    # Else, the number of key and item collisions are the same, implying that
-    # all colliding keys are associated with the same values in both mappings,
-    # implying that both mappings contain the same colliding key-value pairs.
-    # Since merging these mappings as is will *NOT* silently and thus unsafely
-    # override any values of either mapping, merge these mappings as is.
+    # Raise a human-readable exception.
+    exception_message = (
+        f'Mappings not safely mergeable due to key-value collisions:\n'
+        f'~~~~[ mapping_a collisions ]~~~~\n{repr(mapping_a_unsafe)}\n'
+        f'~~~~[ mapping_b collisions ]~~~~\n{repr(mapping_b_unsafe)}'
+    )
+    # print(exception_message)
+    raise _BeartypeUtilMappingException(exception_message)
 
 # ....................{ MERGERS                           }....................
 def merge_mappings(*mappings: Mapping) -> Mapping:

@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._factory._valeis` submodule.
+:mod:`beartype.vale._is._valeis` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,7 +25,7 @@ def test_api_vale_is_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.vale import Is
-    from beartype.vale._valevale import BeartypeValidator
+    from beartype.vale._core._valecore import BeartypeValidator
     from collections.abc import Mapping
 
     def _is_quoted(text):
