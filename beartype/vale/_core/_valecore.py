@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype validators.**
+**Core beartype validator.**
 
 This private submodule defines the core private :class:`BeartypeValidator`
 class instantiated by public **beartype validator factories** (i.e., instances
@@ -17,6 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
+from beartype.vale._util._valeutiltext import format_diagnosis_line
 from beartype._util.kind.utilkinddict import merge_mappings_two
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
@@ -25,8 +26,6 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
-from beartype.vale._util._valeutiltext import format_diagnosis_line
-# from collections.abc import Tuple
 from typing import Any, Callable, Union
 
 # See the "beartype.cave" submodule for further commentary.
@@ -69,7 +68,7 @@ representations are particularly slow to generate include:
   declaring that lambda.
 '''
 
-# ....................{ CLASSES ~ subscripted             }....................
+# ....................{ CLASSES                           }....................
 class BeartypeValidator(object):
     '''
     **Beartype validator** (i.e., object encapsulating a caller-defined
@@ -351,19 +350,10 @@ class BeartypeValidator(object):
         self._get_repr = get_repr
 
     # ..................{ GETTERS                           }..................
-    #FIXME: Should this method be marked @abstract? Contemplate.
     #FIXME: Call this method from get_cause_or_none_annotated(), please.
     #FIXME: Unit test us up, please -- particularly with respect to non-trivial
     #nested subvalidators.
-    def get_diagnosis(
-        self,
-
-        # Mandatory parameters.
-        obj: object,
-
-        # Optional parameters.
-        indent_level: str = CODE_INDENT_1,
-    ) -> str:
+    def get_diagnosis(self, obj: object, indent_level: str) -> str:
         '''
         Human-readable **validation failure diagnosis** (i.e., substring
         describing how the passed object either satisfies *or* fails to satisfy
@@ -384,8 +374,7 @@ class BeartypeValidator(object):
             Arbitrary object to be diagnosed against this validator.
         indent_level : str, optional
             **Indentation level** (i.e., zero or more adjacent spaces prefixing
-            each line of the returned substring for readability). Defaults to
-            one level of indentation (i.e., :data:`CODE_INDENT_1`).
+            each line of the returned substring for readability).
 
         Returns
         ----------
@@ -399,7 +388,7 @@ class BeartypeValidator(object):
         # theoretic operator).
         return format_diagnosis_line(
             validator_repr=repr(self),
-            is_obj_valid=self._is_valid(obj),
+            is_obj_valid=self.is_valid(obj),
             indent_level=indent_level,
         )
 
@@ -431,13 +420,14 @@ class BeartypeValidator(object):
             If the passed object is *not* also an instance of the same class.
         '''
 
+        #FIXME: Avoid violating DRY between this and methods defined below.
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
         if not isinstance(other, BeartypeValidator):
             raise BeartypeValeSubscriptionException(
-                f'Subscripted "beartype.vale.Is*" class & operand '
-                f'{represent_object(other)} not '
-                f'subscripted "beartype.vale.Is*" class.'
+                f'Beartype validator {repr(self)} second "&" operand '
+                f'{represent_object(other)} not beartype validator '
+                f'(i.e., "beartype.vale.Is*[...]" object).'
             )
         # Else, the passed object is also an instance of this class.
 
@@ -476,13 +466,14 @@ class BeartypeValidator(object):
             New object disjunctively synthesized with this object.
         '''
 
+        #FIXME: Avoid violating DRY between this and methods defined above.
         # If the passed object is *NOT* also an instance of this class, raise
         # an exception.
         if not isinstance(other, BeartypeValidator):
             raise BeartypeValeSubscriptionException(
-                f'Subscripted "beartype.vale.Is*" class | operand '
-                f'{represent_object(other)} not '
-                f'subscripted "beartype.vale.Is*" class.'
+                f'Beartype validator {repr(self)} second "|" operand '
+                f'{represent_object(other)} not beartype validator '
+                f'(i.e., "beartype.vale.Is*[...]" object).'
             )
         # Else, the passed object is also an instance of this class.
 
@@ -518,9 +509,54 @@ class BeartypeValidator(object):
             New object negating this object.
         '''
 
+        # Lambda function negating this validator.
+        is_not_valid = lambda obj: not self.is_valid(obj)
+
+        #FIXME: Refactor as follows:
+        #* Declare a new slotted "_get_diagnosis" instance variable.
+        #* Generalize the BeartypeValidator.__init__() method to accept an
+        #  additional optional "get_diagnosis" parameter classified as
+        #  "_get_diagnosis". If unpassed, that parameter defaults to "None".
+        #* Generalize the BeartypeValidator.get_diagnosis() method to:
+        #  * If "self._get_diagnosis" is non-"None", call that variable.
+        #  * Else, perform the current default logic.
+        #* Pass "get_diagnosis=get_diagnosis," below.
+        def get_diagnosis(self, obj: object, indent_level: str) -> str:
+            '''
+            Closure diagnosing an arbitrary object against this negation.
+            '''
+
+            # Line diagnosing this object against this negated parent
+            # validator.
+            line_outer_prefix = format_diagnosis_line(
+                validator_repr='~(',
+                is_obj_valid=is_not_valid(obj),
+                indent_level=indent_level,
+            )
+
+            # Line diagnosing this object against this non-negated child
+            # validator.
+            line_inner_operand = format_diagnosis_line(
+                validator_repr='~',
+                is_obj_valid=is_not_valid(obj),
+                # Increase the indentation level of this "("- and ")"-delimited
+                # nested validator for readability.
+                indent_level=indent_level + CODE_INDENT_1,
+            )
+
+            # Line providing the suffixing ")" delimiter for readability.
+            line_outer_suffix = format_diagnosis_line(
+                validator_repr=')',
+                indent_level=indent_level,
+            )
+
+            # Return these lines concatenated.
+            return (
+                f'{line_outer_prefix}{line_inner_operand}{line_outer_suffix}')
+
         # Closures for profound lore.
         return BeartypeValidator(
-            is_valid=lambda obj: not self.is_valid(obj),
+            is_valid=is_not_valid,
             # Inverted validator code, defined as the trivial boolean negation
             # of this validator.
             is_valid_code=f'(not {self._is_valid_code})',

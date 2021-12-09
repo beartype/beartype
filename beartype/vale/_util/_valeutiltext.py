@@ -11,32 +11,48 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from typing import Optional
+
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ FORMATTERS                        }....................
 def format_diagnosis_line(
+    # Mandatory parameters.
     validator_repr: str,
-    is_obj_valid: bool,
     indent_level: str,
+
+    # Optional parameters.
+    is_obj_valid: Optional[bool] = None,
 ) -> str:
     '''
     Single line of a larger human-readable **validation failure diagnosis**
     (i.e., substring describing how an arbitrary object either satisfies *or*
-    fails to satisfy an arbitrary validator), formatted with the passed
-    indentation level and boolean value.
+    violates an arbitrary validator), formatted with the passed indentation
+    level and boolean value.
 
     Parameters
     ----------
     validator_repr : str
         **Diagnosis line** (i.e., unformatted single line of a larger diagnosis
         report to be formatted by this function).
-    is_obj_valid : bool
-        ``True`` only if that arbitrary object satisfies the beartype validator
-        described by this specific line.
     indent_level : str
         **Indentation level** (i.e., zero or more adjacent spaces prefixing
         each line of the returned substring for readability).
+    is_obj_valid : Optional[bool]
+        Tri-state boolean such that:
+
+        * If ``True``, that arbitrary object satisfies the beartype validator
+          described by this specific line.
+        * If ``False``, that arbitrary object violates the beartype validator
+          described by this specific line.
+        * If ``None``, this specific line is entirely syntactic (e.g., a
+          suffixing ")" delimiter) isolated to its own discrete line for
+          readability. In this case, this line does *not* describe how an
+          arbitrary object either satisfies *or* violates an arbitrary
+          validator.
+
+        Defaults to ``None``.
 
     Returns
     ----------
@@ -45,17 +61,20 @@ def format_diagnosis_line(
     '''
     assert isinstance(validator_repr, str), (
         f'{repr(validator_repr)} not string.')
-    assert isinstance(is_obj_valid, bool), f'{repr(is_obj_valid)} not boolean.'
     assert isinstance(indent_level, str), f'{repr(indent_level)} not string.'
+    assert isinstance(is_obj_valid, (bool, type(None))), (
+        f'{repr(is_obj_valid)} not tri-state boolean.')
 
     # String representing this boolean value, padded with spaces on the left as
     # needed to produce a column-aligned line diagnosis resembling:
-    #      True == Is[lambda foo: foo.x + foo.y >= 0] &
-    #     False == Is[lambda foo: foo.x + foo.y <= 10]
-    is_obj_valid_str = (
-        ' True == ' if is_obj_valid else
-        'False == '
-    )
+    #     False == (
+    #      True ==     Is[lambda foo: foo.x + foo.y >= 0] &
+    #     False ==     Is[lambda foo: foo.x + foo.y <= 10]
+    #              )
+    is_obj_valid_str = ''
+    if   is_obj_valid is True:  is_obj_valid_str = ' True == '
+    elif is_obj_valid is False: is_obj_valid_str = 'False == '
+    else:                       is_obj_valid_str = '         '
 
     # Do one thing and do it well.
-    return f'{indent_level}{is_obj_valid_str}{validator_repr}'
+    return f'{is_obj_valid_str}{indent_level}{validator_repr}'

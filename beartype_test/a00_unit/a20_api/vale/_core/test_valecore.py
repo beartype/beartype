@@ -55,7 +55,9 @@ def test_api_vale_subscriptedis_pass() -> None:
 
     # Assert that this validator reports the expected diagnosis.
     subscriptedis_delimited_diagnosis = subscriptedis_delimited.get_diagnosis(
-        obj='Flashed all their sabres bare,')
+        obj='Flashed all their sabres bare,',
+        indent_level='',
+    )
     assert 'True' in subscriptedis_delimited_diagnosis
     assert 'Someone had blundered.' in subscriptedis_delimited_diagnosis
 

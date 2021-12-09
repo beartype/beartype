@@ -39,8 +39,17 @@ def test_api_vale_format_diagnosis_line() -> None:
     that_death_is_slumber = format_diagnosis_line(
         validator_repr='And that its shapes the busy thoughts outnumber',
         is_obj_valid=False,
-        indent_level='    ',
+        indent_level='',
     )
     assert 'And that its shapes the busy thoughts outnumber' in (
         that_death_is_slumber)
     assert 'False' in that_death_is_slumber
+
+    # Assert this formatter accepts *NO* boolean value.
+    i_look_on_high = format_diagnosis_line(
+        validator_repr='Of those who wake and live.',
+        indent_level='  ',
+    )
+    assert 'Of those who wake and live.' in i_look_on_high
+    assert 'True'  not in i_look_on_high
+    assert 'False' not in i_look_on_high
