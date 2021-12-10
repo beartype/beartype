@@ -26,20 +26,29 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Any, Callable, Union
+from typing import Callable, Optional, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-BeartypeValidatorTester = Callable[[Any,], bool]
+BeartypeValidatorDiagnoser = Callable[['BeartypeValidator', object, str], str]
+'''
+PEP-compliant type hint matching a **beartype validator diagnoser** (i.e.,
+caller-defined callable accepting a beartype validator, an arbitrary object,
+and an indentation level and returning a human-readable string describing how
+that object either satisfies *or* violates that validator).
+'''
+
+
+BeartypeValidatorTester = Callable[[object], bool]
 '''
 PEP-compliant type hint matching a **beartype validator tester** (i.e.,
 caller-defined callable accepting a single arbitrary object and returning
 either ``True`` if that object satisfies an arbitrary constraint *or* ``False``
 otherwise).
 
-Beartype validator testers are suitable for subscripting various beartype
+Beartype validator testers are suitable for subscripting functional beartype
 validator factories (e.g., :attr:`beartype.vale.Is`).
 '''
 
@@ -87,6 +96,21 @@ class BeartypeValidator(object):
 
     Attributes
     ----------
+    _get_diagnosis : Optional[BeartypeValidatorDiagnoser]
+        Either:
+
+        * A custom **diagnoser** (i.e., caller-defined callable accepting an
+          arbitrary object and indentation level and returning a human-readable
+          string describing how that object either satisfies *or* violates this
+          validator) if the default diagnoser is insufficient to diagnose this
+          validator.
+        * ``None`` if the default diagnoser suffices to diagnose this
+          validator.
+    _get_repr : BeartypeValidatorRepresenter
+        **Representer** (i.e., either a string *or* caller-defined callable
+        accepting no arguments returning a machine-readable representation of
+        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
+        further details.
     _is_valid : BeartypeValidatorTester
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
@@ -106,11 +130,6 @@ class BeartypeValidator(object):
         **Validator code local scope** (i.e., dictionary mapping from the name
         to value of each local attribute referenced in :attr:`code`) required
         to dynamically compile this validator code into byte code at runtime.
-    _get_repr : BeartypeValidatorRepresenter
-        **Representer** (i.e., either a string *or* caller-defined callable
-        accepting no arguments returning a machine-readable representation of
-        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
-        further details.
 
     See Also
     ----------
@@ -124,19 +143,25 @@ class BeartypeValidator(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_get_diagnosis',
+        '_get_repr',
         '_is_valid',
         '_is_valid_code',
         '_is_valid_code_locals',
-        '_get_repr',
     )
 
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
+
+        # Mandatory parameters.
         is_valid: BeartypeValidatorTester,
         is_valid_code: str,
         is_valid_code_locals: CallableScope,
         get_repr: BeartypeValidatorRepresenter,
+
+        # Optional parameters.
+        get_diagnosis: Optional[BeartypeValidatorDiagnoser] = None,
     ) -> None:
         '''
         Initialize this object with the passed validation callable, code, and
@@ -166,7 +191,7 @@ class BeartypeValidator(object):
               :pep:`8`-compliant and well-established Python style guides, any
               additional indentation hard-coded into this code should be
               aligned to **four-space indentation.**
-        is_valid_code_locals : Optional[CallableScope]
+        is_valid_code_locals : CallableScope
             **Validator code local scope** (i.e., dictionary mapping from the
             name to value of each local attribute referenced in
             :attr:`is_valid_code` code) required to dynamically compile this
@@ -174,8 +199,18 @@ class BeartypeValidator(object):
         get_repr : BeartypeValidatorRepresenter
             **Representer** (i.e., either a string *or* caller-defined callable
             accepting no arguments returning a machine-readable representation
-            of this validator). See the :data:`BeartypeValidatorRepresenter` type
-            hint for further details.
+            of this validator). See the :data:`BeartypeValidatorRepresenter`
+            type hint for further details.
+        get_diagnosis : Optional[BeartypeValidatorDiagnoser]
+            Either:
+
+            * A custom **diagnoser** (i.e., caller-defined callable accepting
+              a beartype validator, an arbitrary object, and an indentation
+              level and returning a human-readable string describing how that
+              object either satisfies *or* violates this validator) if the
+              default diagnoser is insufficient to diagnose this validator.
+            * ``None`` if the default diagnoser suffices to diagnose this
+              validator.
 
         Raises
         ----------
@@ -204,6 +239,11 @@ class BeartypeValidator(object):
               * A C-based rather than pure-Python callable.
               * A pure-Python callable accepting one or more arguments.
               * The empty string.
+            * ``get_diagnosis`` is either:
+
+              * Neither callable *nor* ``None``.
+              * A C-based rather than pure-Python callable.
+              * A pure-Python callable *not* accepting exactly two arguments.
         '''
 
         # If this validator is either uncallable, a C-based callable, *OR* a
@@ -215,13 +255,26 @@ class BeartypeValidator(object):
             exception_cls=BeartypeValeSubscriptionException,
         )
         # Else, this validator is a pure-Python callable accepting exactly one
-        # argument. Since no further validation can be performed on this
+        # parameter. Since no further validation can be performed on this
         # callable without unsafely calling that callable, we accept this
         # callable as is for now.
         #
         # Note that we *COULD* technically inspect annotations if defined on
         # this callable as well. Since this callable is typically defined as a
         # lambda, annotations are typically *NOT* defined on this callable.
+
+        # If this diagnoser is *NOT* "None"...
+        if get_diagnosis is not None:
+            # If this diagnoser is either uncallable, a C-based callable, *OR*
+            # a pure-Python callable accepting more or less than three
+            # parameters, raise an exception.
+            die_unless_func_args_len_flexible_equal(
+                func=get_diagnosis,
+                func_args_len_flexible=3,
+                exception_cls=BeartypeValeSubscriptionException,
+            )
+        # Else, this diagnoser is either "None" *OR* a pure-Python callable
+        # accepting exactly three parameters.
 
         # If this code is *NOT* a string, raise an exception.
         if not isinstance(is_valid_code, str):
@@ -270,10 +323,11 @@ class BeartypeValidator(object):
         self._is_valid = is_valid
 
         # Classify this representer via a writeable property internally
-        # validating this representer. (This is magical, people.)
+        # validating this representer. (Embrace the magical, people.)
         self.get_repr = get_repr
 
         # Classify all remaining parameters.
+        self._get_diagnosis = get_diagnosis
         self._is_valid_code = is_valid_code
         self._is_valid_code_locals = is_valid_code_locals
 
@@ -349,6 +403,32 @@ class BeartypeValidator(object):
         # Set this representer.
         self._get_repr = get_repr
 
+    # ..................{ DUNDERS ~ str                     }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this validator.
+
+        This function is memoized for efficiency.
+
+        Warns
+        ----------
+        BeartypeValeLambdaWarning
+            If this validator is implemented as a pure-Python lambda function
+            whose definition is *not* parsable from the script or module
+            defining that lambda.
+        '''
+
+        # If the instance variable underlying this dunder method is a callable,
+        # reduce this variable to the string returned by this callable.
+        if callable(self._get_repr):
+            self._get_repr = self._get_repr()
+
+        # In either case, this variable is now a string. Guarantee this.
+        assert isinstance(self._get_repr, str), f'{self._get_repr} not string.'
+
+        # Return this string as is.
+        return self._get_repr
+
     # ..................{ GETTERS                           }..................
     #FIXME: Call this method from get_cause_or_none_annotated(), please.
     #FIXME: Unit test us up, please -- particularly with respect to non-trivial
@@ -356,8 +436,8 @@ class BeartypeValidator(object):
     def get_diagnosis(self, obj: object, indent_level: str) -> str:
         '''
         Human-readable **validation failure diagnosis** (i.e., substring
-        describing how the passed object either satisfies *or* fails to satisfy
-        this validator).
+        describing how the passed object either satisfies *or* violates this
+        validator).
 
         This method is typically called by high-level error-handling logic to
         unambiguously describe the failure of an arbitrary object to satisfy an
@@ -372,7 +452,7 @@ class BeartypeValidator(object):
         ----------
         obj : object
             Arbitrary object to be diagnosed against this validator.
-        indent_level : str, optional
+        indent_level : str
             **Indentation level** (i.e., zero or more adjacent spaces prefixing
             each line of the returned substring for readability).
 
@@ -381,6 +461,12 @@ class BeartypeValidator(object):
         str
             Substring diagnosing this object against this validator.
         '''
+
+        # If this validator leverages a custom diagnoser, defer to that.
+        if self._get_diagnosis is not None:
+            return self._get_diagnosis(  # type: ignore[call-arg]
+                self, obj=obj, indent_level=indent_level)  # type: ignore[call-arg]
+        # Else, this validator leverages the default diagnoser. In this case...
 
         # Format the validity of this object against this validator for the
         # typical case of a lowest-level beartype validator *NOT* wrapping one
@@ -431,6 +517,9 @@ class BeartypeValidator(object):
             )
         # Else, the passed object is also an instance of this class.
 
+        # Lambda function conjunctively performing both validations.
+        is_valid = lambda obj: self.is_valid(obj) and other.is_valid(obj)
+
         # Generate code conjunctively performing both validations.
         is_valid_code = f'({self._is_valid_code} and {other._is_valid_code})'
 
@@ -439,12 +528,75 @@ class BeartypeValidator(object):
         is_valid_code_locals = merge_mappings_two(
             self._is_valid_code_locals, other._is_valid_code_locals)
 
+        #FIXME: Overly verbose for conjunctions involving three or more
+        #beartype validators. Contemplate compaction schemes, please. Note that
+        #doing so will *PROBABLY* require creating a new
+        #"BeartypeValidatorConjunction(BeartypeValidator)" subclass. Why?
+        #Because that's the *ONLY* sane way to detect that "other" is itself a
+        #conjunction. Specifically, we need to detect this condition here
+        #before we can even begin compacting diagnoses:
+        #    # If this other validator is itself a conjunction...
+        #    if isinstance(other, BeartypeValidatorConjunction):
+        #       ...
+        def _get_diagnosis_conjunction(
+            self, obj: object, indent_level: str) -> str:
+            '''
+            Closure diagnosing an arbitrary object against this conjunction.
+            '''
+
+            # Indentation level indented one level deeper than the passed
+            # indentation level.
+            indent_level_nested = indent_level + CODE_INDENT_1
+
+            # Line diagnosing this object against this conjunctive parent
+            # validator.
+            line_outer_prefix = format_diagnosis_line(
+                validator_repr='(',
+                is_obj_valid=is_valid(obj),
+                indent_level=indent_level,
+            )
+
+            # Line diagnosing this object against this original first child
+            # validator.
+            line_inner_operand_1 = format_diagnosis_line(
+                validator_repr=f'{repr(self)} &',
+                is_obj_valid=self.is_valid(obj),
+                # Increase the indentation level of this "("- and ")"-delimited
+                # nested validator for readability.
+                indent_level=indent_level_nested,
+            )
+
+            # Line diagnosing this object against this passed second child
+            # validator.
+            line_inner_operand_2 = format_diagnosis_line(
+                validator_repr=repr(self),
+                is_obj_valid=other.is_valid(obj),
+                # Increase the indentation level of this "("- and ")"-delimited
+                # nested validator for readability.
+                indent_level=indent_level_nested,
+            )
+
+            # Line providing the suffixing ")" delimiter for readability.
+            line_outer_suffix = format_diagnosis_line(
+                validator_repr=')',
+                indent_level=indent_level,
+            )
+
+            # Return these lines concatenated.
+            return (
+                f'{line_outer_prefix}'
+                f'{line_inner_operand_1}'
+                f'{line_inner_operand_2}'
+                f'{line_outer_suffix}'
+            )
+
         # Closures for great justice.
         return BeartypeValidator(
-            is_valid=lambda obj: self.is_valid(obj) and other.is_valid(obj),
+            is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
             get_repr=lambda: f'{repr(self)} & {repr(other)}',
+            get_diagnosis=_get_diagnosis_conjunction,
         )
 
 
@@ -477,6 +629,9 @@ class BeartypeValidator(object):
             )
         # Else, the passed object is also an instance of this class.
 
+        # Lambda function disjunctively performing both validations.
+        is_valid = lambda obj: self.is_valid(obj) or other.is_valid(obj)
+
         # Generate code disjunctively performing both validations.
         is_valid_code = f'({self._is_valid_code} or {other._is_valid_code})'
 
@@ -485,9 +640,71 @@ class BeartypeValidator(object):
         is_valid_code_locals = merge_mappings_two(
             self._is_valid_code_locals, other._is_valid_code_locals)
 
+        #FIXME: Overly verbose for disjunctions involving three or more
+        #beartype validators. Contemplate compaction schemes, please. Note that
+        #doing so will *PROBABLY* require creating a new
+        #"BeartypeValidatorDisjunction(BeartypeValidator)" subclass. Why?
+        #Because that's the *ONLY* sane way to detect that "other" is itself a
+        #conjunction. Specifically, we need to detect this condition here
+        #before we can even begin compacting diagnoses:
+        #    # If this other validator is itself a disjunction...
+        #    if isinstance(other, BeartypeValidatorDisjunction):
+        #       ...
+        def _get_diagnosis_disjunction(
+            self, obj: object, indent_level: str) -> str:
+            '''
+            Closure diagnosing an arbitrary object against this disjunction.
+            '''
+
+            # Indentation level indented one level deeper than the passed
+            # indentation level.
+            indent_level_nested = indent_level + CODE_INDENT_1
+
+            # Line diagnosing this object against this conjunctive parent
+            # validator.
+            line_outer_prefix = format_diagnosis_line(
+                validator_repr='(',
+                is_obj_valid=is_valid(obj),
+                indent_level=indent_level,
+            )
+
+            # Line diagnosing this object against this original first child
+            # validator.
+            line_inner_operand_1 = format_diagnosis_line(
+                validator_repr=f'{repr(self)} |',
+                is_obj_valid=self.is_valid(obj),
+                # Increase the indentation level of this "("- and ")"-delimited
+                # nested validator for readability.
+                indent_level=indent_level_nested,
+            )
+
+            # Line diagnosing this object against this passed second child
+            # validator.
+            line_inner_operand_2 = format_diagnosis_line(
+                validator_repr=repr(self),
+                is_obj_valid=other.is_valid(obj),
+                # Increase the indentation level of this "("- and ")"-delimited
+                # nested validator for readability.
+                indent_level=indent_level_nested,
+            )
+
+            # Line providing the suffixing ")" delimiter for readability.
+            line_outer_suffix = format_diagnosis_line(
+                validator_repr=')',
+                indent_level=indent_level,
+            )
+
+            # Return these lines concatenated.
+            return (
+                f'{line_outer_prefix}'
+                f'{line_inner_operand_1}'
+                f'{line_inner_operand_2}'
+                f'{line_outer_suffix}'
+            )
+
         # Closures for great justice.
         return BeartypeValidator(
-            is_valid=lambda obj: self.is_valid(obj) or other.is_valid(obj),
+            is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
             get_repr=lambda: f'{repr(self)} | {repr(other)}',
@@ -510,18 +727,10 @@ class BeartypeValidator(object):
         '''
 
         # Lambda function negating this validator.
-        is_not_valid = lambda obj: not self.is_valid(obj)
+        is_valid = lambda obj: not self.is_valid(obj)
 
-        #FIXME: Refactor as follows:
-        #* Declare a new slotted "_get_diagnosis" instance variable.
-        #* Generalize the BeartypeValidator.__init__() method to accept an
-        #  additional optional "get_diagnosis" parameter classified as
-        #  "_get_diagnosis". If unpassed, that parameter defaults to "None".
-        #* Generalize the BeartypeValidator.get_diagnosis() method to:
-        #  * If "self._get_diagnosis" is non-"None", call that variable.
-        #  * Else, perform the current default logic.
-        #* Pass "get_diagnosis=get_diagnosis," below.
-        def get_diagnosis(self, obj: object, indent_level: str) -> str:
+        def _get_diagnosis_negation(
+            self, obj: object, indent_level: str) -> str:
             '''
             Closure diagnosing an arbitrary object against this negation.
             '''
@@ -530,15 +739,15 @@ class BeartypeValidator(object):
             # validator.
             line_outer_prefix = format_diagnosis_line(
                 validator_repr='~(',
-                is_obj_valid=is_not_valid(obj),
+                is_obj_valid=is_valid(obj),
                 indent_level=indent_level,
             )
 
             # Line diagnosing this object against this non-negated child
             # validator.
             line_inner_operand = format_diagnosis_line(
-                validator_repr='~',
-                is_obj_valid=is_not_valid(obj),
+                validator_repr=repr(self),
+                is_obj_valid=self.is_valid(obj),
                 # Increase the indentation level of this "("- and ")"-delimited
                 # nested validator for readability.
                 indent_level=indent_level + CODE_INDENT_1,
@@ -556,36 +765,11 @@ class BeartypeValidator(object):
 
         # Closures for profound lore.
         return BeartypeValidator(
-            is_valid=is_not_valid,
+            is_valid=is_valid,
             # Inverted validator code, defined as the trivial boolean negation
             # of this validator.
             is_valid_code=f'(not {self._is_valid_code})',
             is_valid_code_locals=self._is_valid_code_locals,
             get_repr=lambda: f'~{repr(self)}',
+            get_diagnosis=_get_diagnosis_negation,
         )
-
-    # ..................{ DUNDERS ~ str                     }..................
-    def __repr__(self) -> str:
-        '''
-        Machine-readable representation of this validator.
-
-        This function is memoized for efficiency.
-
-        Warns
-        ----------
-        BeartypeValeLambdaWarning
-            If this validator is implemented as a pure-Python lambda function
-            whose definition is *not* parsable from the script or module
-            defining that lambda.
-        '''
-
-        # If the instance variable underlying this dunder method is a callable,
-        # reduce this variable to the string returned by this callable.
-        if callable(self._get_repr):
-            self._get_repr = self._get_repr()
-
-        # In either case, this variable is now a string. Guarantee this.
-        assert isinstance(self._get_repr, str), f'{self._get_repr} not string.'
-
-        # Return this string as is.
-        return self._get_repr

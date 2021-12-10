@@ -16,8 +16,8 @@ submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ class : subscriptedis     }....................
-def test_api_vale_subscriptedis_pass() -> None:
+# ....................{ TESTS ~ class : validator     }....................
+def test_api_vale_validator_pass() -> None:
     '''
     Test successful usage of the private
     :class:`beartype.vale._core._valecore.BeartypeValidator` class.
@@ -48,40 +48,65 @@ def test_api_vale_subscriptedis_pass() -> None:
     # Code *NOT* already prefixed by "(" and suffixed by ")".
     is_valid_code_undelimited = "{obj} == 'All in the valley of Death'"
 
+    def get_diagnosis_custom(self, obj: object, indent_level: str) -> str:
+        '''
+        Closure diagnosing an arbitrary object against an arbitrary validator
+        in a custom (i.e., non-default) manner.
+        '''
+
+        # Return a custom diagnosis guaranteed to be non-standard.
+        return (
+            f'{indent_level}{repr(obj)} is valid: {repr(self.is_valid(obj))}')
+
     # Assert that a beartype validator preserves delimited code as is.
-    subscriptedis_delimited = BeartypeValidator(
+    validator_delimited = BeartypeValidator(
         is_valid_code=is_valid_code_delimited, **kwargs)
-    assert subscriptedis_delimited._is_valid_code is is_valid_code_delimited
+    assert validator_delimited._is_valid_code is is_valid_code_delimited
 
     # Assert that this validator reports the expected diagnosis.
-    subscriptedis_delimited_diagnosis = subscriptedis_delimited.get_diagnosis(
+    validator_delimited_diagnosis = validator_delimited.get_diagnosis(
         obj='Flashed all their sabres bare,',
         indent_level='',
     )
-    assert 'True' in subscriptedis_delimited_diagnosis
-    assert 'Someone had blundered.' in subscriptedis_delimited_diagnosis
+    assert 'True' in validator_delimited_diagnosis
+    assert 'Someone had blundered.' in validator_delimited_diagnosis
 
-    # Assert that a beartype validator delimits undelimited code.
-    subscriptedis_undelimited = BeartypeValidator(
-        is_valid_code=is_valid_code_undelimited, **kwargs)
+    # Assert that a beartype validator delimits undelimited code as well as
+    # providing non-default validation diagnoses.
+    validator_undelimited = BeartypeValidator(
+        is_valid_code=is_valid_code_undelimited,
+        get_diagnosis=get_diagnosis_custom,
+        **kwargs
+    )
     assert (
-        subscriptedis_undelimited._is_valid_code ==
+        validator_undelimited._is_valid_code ==
         f'({is_valid_code_undelimited})'
     )
 
+    # Assert that this validator reports the expected diagnosis.
+    validator_undelimited_diagnosis = (
+        validator_undelimited.get_diagnosis(
+            obj="Has some unknown omnipotence unfurl'd",
+            indent_level='',
+        )
+    )
+    assert 'is valid: True' in validator_undelimited_diagnosis
+    assert "Has some unknown omnipotence unfurl'd" in (
+        validator_undelimited_diagnosis)
+
     # Assert that a beartype validator also accepts a string representer.
-    subscriptedis_repr_str = BeartypeValidator(
+    validator_repr_str = BeartypeValidator(
         is_valid_code=is_valid_code_delimited,
         get_repr='All that was left of them,',
         **kwargs_sans_get_repr
     )
 
     # Assert these objects have the expected representations.
-    assert 'Someone had blundered.' in repr(subscriptedis_delimited)
-    assert repr(subscriptedis_repr_str) == 'All that was left of them,'
+    assert 'Someone had blundered.' in repr(validator_delimited)
+    assert repr(validator_repr_str) == 'All that was left of them,'
 
 
-def test_api_vale_subscriptedis_fail() -> None:
+def test_api_vale_validator_fail() -> None:
     '''
     Test unsuccessful usage of the private
     :class:`beartype.vale._core._valecore.BeartypeValidator` class.
@@ -137,7 +162,7 @@ def test_api_vale_subscriptedis_fail() -> None:
         )
 
     # Keyword arguments passing valid code and non-dictionary code locals.
-    kwargs_good = dict(
+    kwargs_is_valid = dict(
         is_valid=into_the_jaws_of_death,
         is_valid_code="{obj} == 'Back from the mouth of hell,'",
         is_valid_code_locals={'yum': into_the_jaws_of_death},
@@ -147,26 +172,59 @@ def test_api_vale_subscriptedis_fail() -> None:
     # valid code and code locals but a representer of an invalid type raises
     # the expected exception.
     with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(get_repr=b'All that was left of them,', **kwargs_good)
+        BeartypeValidator(
+            get_repr=b'All that was left of them,', **kwargs_is_valid)
 
     # Assert that attempting to instantiate the "BeartypeValidator" class with
     # valid code and code locals but an empty-string representer raises the
     # expected exception.
     with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(get_repr='', **kwargs_good)
+        BeartypeValidator(get_repr='', **kwargs_is_valid)
 
     # Assert that attempting to instantiate the "BeartypeValidator" class with
     # valid code and code locals but a C-based representer raises the expected
     # exception.
     with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(get_repr=iter, **kwargs_good)
+        BeartypeValidator(get_repr=iter, **kwargs_is_valid)
 
     # Assert that attempting to instantiate the "BeartypeValidator" class with
     # valid code and code locals but a pure-Python representer accepting one or
-    # more arguments raises the expected exception.
+    # more parameters raises the expected exception.
     with raises(BeartypeValeSubscriptionException):
         BeartypeValidator(
             get_repr=lambda rode, the, six, hundred:
                 'Into the valley of Death',
-            **kwargs_good
+            **kwargs_is_valid
+        )
+
+    # Keyword arguments passing valid code, non-dictionary code locals, and a
+    # representer.
+    kwargs_is_valid_get_repr = dict(
+        get_repr='Spread far around and inaccessibly',
+        **kwargs_is_valid
+    )
+
+    # Assert that attempting to instantiate the "BeartypeValidator" class with
+    # valid code and code locals but a diagnoser of an invalid type raises
+    # the expected exception.
+    with raises(BeartypeValeSubscriptionException):
+        BeartypeValidator(
+            get_diagnosis='The veil of life and death? or do I lie',
+            **kwargs_is_valid_get_repr
+        )
+
+    # Assert that attempting to instantiate the "BeartypeValidator" class with
+    # valid code and code locals but a C-based diagnoser raises the expected
+    # exception.
+    with raises(BeartypeValeSubscriptionException):
+        BeartypeValidator(get_diagnosis=next, **kwargs_is_valid_get_repr)
+
+    # Assert that attempting to instantiate the "BeartypeValidator" class with
+    # valid code and code locals but a pure-Python diagnoser accepting no
+    # parameters raises the expected exception.
+    with raises(BeartypeValeSubscriptionException):
+        BeartypeValidator(
+            get_diagnosis=lambda: (
+                'In dream, and does the mightier world of sleep'),
+            **kwargs_is_valid_get_repr
         )

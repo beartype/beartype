@@ -302,15 +302,15 @@ def reduce_hint_numpy_ndarray(
             raise BeartypeDecorHintNonpepNumpyException(
                 f'{exception_prefix}typed NumPy array {repr(hint)} '
                 f'data type {repr(hint_dtype_like)} invalid '
-                f'(i.e., neither data type nor coercible to data type).'
+                f'(i.e., neither data type nor coercible into data type).'
             ) from exception
         # Else, this object is now a proper dtype.
 
         # Equivalent nested beartype validator reduced from this hint.
         hint_validator = IsAttr['dtype', IsEqual[hint_dtype]]
 
-    # Replace the usually less readable representation of this validator to the
-    # usually more readable representation of this hint (e.g.,
+    # Replace the usually less readable representation of this validator with
+    # the usually more readable representation of this hint (e.g.,
     # "numpy.ndarray[typing.Any, numpy.float64]").
     hint_validator.get_repr = repr(hint)
 
