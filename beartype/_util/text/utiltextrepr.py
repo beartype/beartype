@@ -264,16 +264,17 @@ def represent_func(
     from beartype._util.func.utilfunccode import get_func_code_or_none
     from beartype._util.func.utilfunctest import is_func_lambda
 
-    # Return either...
-    return (
-        # If this callable is a pure-Python lambda function, either:
-        # * If this lambda is defined by an on-disk script or module source
-        #   file, the exact substring of that file defining this lambda.
-        # * Else (e.g., if this lambda is dynamically defined in-memory), a
-        #   placeholder string.
-        get_func_code_or_none(func=func, warning_cls=warning_cls) or '<lambda>'
-        if is_func_lambda(func) else
-        # Else, this callable is *NOT* a pure-Python lambda function. In this
-        # case, the fully-qualified name of this non-lambda function.
-        f'{get_object_basename_scoped(func)}()'
-    )
+    # If this callable is a pure-Python lambda function, return either:
+    # * If this lambda is defined by an on-disk script or module source file,
+    #   the exact substring of that file defining this lambda.
+    # * Else (e.g., if this lambda is dynamically defined in-memory), a
+    #   placeholder string.
+    if is_func_lambda(func):
+        return (
+            get_func_code_or_none(func=func, warning_cls=warning_cls) or
+            '<lambda>'
+        )
+    # Else, this callable is *NOT* a pure-Python lambda function.
+
+    # Return the fully-qualified name of this non-lambda function.
+    return get_object_basename_scoped(func)

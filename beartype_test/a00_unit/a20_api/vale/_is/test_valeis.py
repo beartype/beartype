@@ -30,7 +30,8 @@ def test_api_vale_is_pass() -> None:
 
     def _is_quoted(text):
         '''
-        Non-lambda function satisfying the data validator API.
+        Non-lambda function suitable for subscripting the
+        :mod:`beartype.vale.Is` factory with.
         '''
 
         return '"' in text or "'" in text
@@ -94,10 +95,25 @@ def test_api_vale_is_pass() -> None:
         'Into the valley of Death') is False
 
     # Assert this validator provides the expected representation.
-    IsLengthyOrUnquotedSentenceRepr = repr(IsLengthyOrUnquotedSentence)
-    assert '|' in IsLengthyOrUnquotedSentenceRepr
-    assert '&' in IsLengthyOrUnquotedSentenceRepr
-    assert '~' in IsLengthyOrUnquotedSentenceRepr
+    IsLengthyOrUnquotedSentence_repr = repr(IsLengthyOrUnquotedSentence)
+    assert '|' in IsLengthyOrUnquotedSentence_repr
+    assert '&' in IsLengthyOrUnquotedSentence_repr
+    assert '~' in IsLengthyOrUnquotedSentence_repr
+
+    # Assert that this validator reports the expected diagnosis for a string
+    # violating exactly one of the subvalidators composing this validator.
+    IsLengthyOrUnquotedSentence_diagnosis = (
+        IsLengthyOrUnquotedSentence.get_diagnosis(
+            obj='For "the very spirit" fails.',
+            indent_level_outer='    ',
+            indent_level_inner='',
+        ))
+    assert IsLengthyOrUnquotedSentence_diagnosis.count('False') == 4
+    assert IsLengthyOrUnquotedSentence_diagnosis.count('True') == 2
+    assert '|' in IsLengthyOrUnquotedSentence_diagnosis
+    assert '&' in IsLengthyOrUnquotedSentence_diagnosis
+    assert '~' in IsLengthyOrUnquotedSentence_diagnosis
+
 
 
 def test_api_vale_is_fail() -> None:

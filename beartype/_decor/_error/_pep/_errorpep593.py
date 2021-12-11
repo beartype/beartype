@@ -21,6 +21,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
+from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
@@ -64,26 +65,36 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     # Else, this pith satisfies this hint.
 
     # For each arbitrary object annotating this metahint...
-    for hint_metadatum in get_hint_pep593_metadata(sleuth.hint):
+    for hint_validator in get_hint_pep593_metadata(sleuth.hint):
         # If this object is *NOT* beartype-specific, raise an exception.
         #
         # Note that this object should already be beartype-specific, as the
         # @beartype decorator enforces this constraint at decoration time.
-        if not isinstance(hint_metadatum, BeartypeValidator):
+        if not isinstance(hint_validator, BeartypeValidator):
             raise _BeartypeCallHintPepRaiseException(
                 f'{sleuth.exception_prefix}PEP 593 type hint '
-                f'{repr(sleuth.hint)} argument {repr(hint_metadatum)} '
+                f'{repr(sleuth.hint)} argument {repr(hint_validator)} '
                 f'not beartype validator '
                 f'(i.e., "beartype.vale.Is*[...]" object).'
             )
         # Else, this object is beartype-specific.
 
         # If this pith fails to satisfy this validator and is thus the cause of
-        # this failure, return a human-readable string describing this failure.
-        if not hint_metadatum.is_valid(sleuth.pith):
+        # this failure...
+        if not hint_validator.is_valid(sleuth.pith):
+            #FIXME: Unit test this up, please.
+            # Human-readable string diagnosing this failure.
+            hint_diagnosis = hint_validator.get_diagnosis(
+                obj=sleuth.pith,
+                indent_level_outer=CODE_INDENT_1,
+                indent_level_inner='',
+            )
+
+            # Return a human-readable string describing this failure.
             return (
                 f'{represent_object(sleuth.pith)} violates '
-                f'validator {repr(hint_metadatum)}.'
+                f'validator {repr(hint_validator)}:\n'
+                f'{hint_diagnosis}'
             )
         # Else, this pith satisfies this validator. Ergo, this validator is
         # *NOT* the cause of this failure. Silently continue to the next.

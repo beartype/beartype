@@ -48,16 +48,6 @@ def test_api_vale_validator_pass() -> None:
     # Code *NOT* already prefixed by "(" and suffixed by ")".
     is_valid_code_undelimited = "{obj} == 'All in the valley of Death'"
 
-    def get_diagnosis_custom(self, obj: object, indent_level: str) -> str:
-        '''
-        Closure diagnosing an arbitrary object against an arbitrary validator
-        in a custom (i.e., non-default) manner.
-        '''
-
-        # Return a custom diagnosis guaranteed to be non-standard.
-        return (
-            f'{indent_level}{repr(obj)} is valid: {repr(self.is_valid(obj))}')
-
     # Assert that a beartype validator preserves delimited code as is.
     validator_delimited = BeartypeValidator(
         is_valid_code=is_valid_code_delimited, **kwargs)
@@ -66,7 +56,8 @@ def test_api_vale_validator_pass() -> None:
     # Assert that this validator reports the expected diagnosis.
     validator_delimited_diagnosis = validator_delimited.get_diagnosis(
         obj='Flashed all their sabres bare,',
-        indent_level='',
+        indent_level_outer='    ',
+        indent_level_inner='',
     )
     assert 'True' in validator_delimited_diagnosis
     assert 'Someone had blundered.' in validator_delimited_diagnosis
@@ -74,25 +65,11 @@ def test_api_vale_validator_pass() -> None:
     # Assert that a beartype validator delimits undelimited code as well as
     # providing non-default validation diagnoses.
     validator_undelimited = BeartypeValidator(
-        is_valid_code=is_valid_code_undelimited,
-        get_diagnosis=get_diagnosis_custom,
-        **kwargs
-    )
+        is_valid_code=is_valid_code_undelimited, **kwargs)
     assert (
         validator_undelimited._is_valid_code ==
         f'({is_valid_code_undelimited})'
     )
-
-    # Assert that this validator reports the expected diagnosis.
-    validator_undelimited_diagnosis = (
-        validator_undelimited.get_diagnosis(
-            obj="Has some unknown omnipotence unfurl'd",
-            indent_level='',
-        )
-    )
-    assert 'is valid: True' in validator_undelimited_diagnosis
-    assert "Has some unknown omnipotence unfurl'd" in (
-        validator_undelimited_diagnosis)
 
     # Assert that a beartype validator also accepts a string representer.
     validator_repr_str = BeartypeValidator(
@@ -197,34 +174,10 @@ def test_api_vale_validator_fail() -> None:
             **kwargs_is_valid
         )
 
-    # Keyword arguments passing valid code, non-dictionary code locals, and a
-    # representer.
-    kwargs_is_valid_get_repr = dict(
-        get_repr='Spread far around and inaccessibly',
-        **kwargs_is_valid
-    )
-
-    # Assert that attempting to instantiate the "BeartypeValidator" class with
-    # valid code and code locals but a diagnoser of an invalid type raises
-    # the expected exception.
-    with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(
-            get_diagnosis='The veil of life and death? or do I lie',
-            **kwargs_is_valid_get_repr
-        )
-
-    # Assert that attempting to instantiate the "BeartypeValidator" class with
-    # valid code and code locals but a C-based diagnoser raises the expected
-    # exception.
-    with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(get_diagnosis=next, **kwargs_is_valid_get_repr)
-
-    # Assert that attempting to instantiate the "BeartypeValidator" class with
-    # valid code and code locals but a pure-Python diagnoser accepting no
-    # parameters raises the expected exception.
-    with raises(BeartypeValeSubscriptionException):
-        BeartypeValidator(
-            get_diagnosis=lambda: (
-                'In dream, and does the mightier world of sleep'),
-            **kwargs_is_valid_get_repr
-        )
+    #FIXME: Uncomment when inevitably needed again. *sigh*
+    # # Keyword arguments passing valid code, non-dictionary code locals, and a
+    # # representer.
+    # kwargs_is_valid_get_repr = dict(
+    #     get_repr='Spread far around and inaccessibly',
+    #     **kwargs_is_valid
+    # )

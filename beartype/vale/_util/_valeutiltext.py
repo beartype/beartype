@@ -20,7 +20,8 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 def format_diagnosis_line(
     # Mandatory parameters.
     validator_repr: str,
-    indent_level: str,
+    indent_level_outer: str,
+    indent_level_inner: str,
 
     # Optional parameters.
     is_obj_valid: Optional[bool] = None,
@@ -34,11 +35,15 @@ def format_diagnosis_line(
     Parameters
     ----------
     validator_repr : str
-        **Diagnosis line** (i.e., unformatted single line of a larger diagnosis
-        report to be formatted by this function).
-    indent_level : str
-        **Indentation level** (i.e., zero or more adjacent spaces prefixing
-        each line of the returned substring for readability).
+        **Validator representation** (i.e., unformatted single line of a larger
+        diagnosis report to be formatted by this function).
+    indent_level_outer : str
+        **Outermost indentation level** (i.e., zero or more adjacent spaces
+        prefixing each line of the returned substring).
+    indent_level_inner : str
+        **Innermost indentation level** (i.e., zero or more adjacent spaces
+        delimiting the human-readable representation of the tri-state boolean
+        and validator representation in the returned substring).
     is_obj_valid : Optional[bool]
         Tri-state boolean such that:
 
@@ -61,7 +66,10 @@ def format_diagnosis_line(
     '''
     assert isinstance(validator_repr, str), (
         f'{repr(validator_repr)} not string.')
-    assert isinstance(indent_level, str), f'{repr(indent_level)} not string.'
+    assert isinstance(indent_level_outer, str), (
+        f'{repr(indent_level_outer)} not string.')
+    assert isinstance(indent_level_inner, str), (
+        f'{repr(indent_level_inner)} not string.')
     assert isinstance(is_obj_valid, (bool, type(None))), (
         f'{repr(is_obj_valid)} not tri-state boolean.')
 
@@ -77,4 +85,9 @@ def format_diagnosis_line(
     else:                       is_obj_valid_str = '         '
 
     # Do one thing and do it well.
-    return f'{is_obj_valid_str}{indent_level}{validator_repr}'
+    return (
+        f'{indent_level_outer}'
+        f'{is_obj_valid_str}'
+        f'{indent_level_inner}'
+        f'{validator_repr}'
+    )

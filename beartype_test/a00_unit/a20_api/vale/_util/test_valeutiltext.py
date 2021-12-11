@@ -29,8 +29,9 @@ def test_api_vale_format_diagnosis_line() -> None:
     # Assert this formatter accepts a true boolean value.
     visit_the_soul_in_sleep = format_diagnosis_line(
         validator_repr='Some say that gleams of a remoter world',
+        indent_level_outer='    ',
+        indent_level_inner='',
         is_obj_valid=True,
-        indent_level='    ',
     )
     assert 'Some say that gleams of a remoter world' in visit_the_soul_in_sleep
     assert 'True' in visit_the_soul_in_sleep
@@ -38,8 +39,9 @@ def test_api_vale_format_diagnosis_line() -> None:
     # Assert this formatter accepts a true boolean value.
     that_death_is_slumber = format_diagnosis_line(
         validator_repr='And that its shapes the busy thoughts outnumber',
+        indent_level_outer='    ',
+        indent_level_inner='',
         is_obj_valid=False,
-        indent_level='',
     )
     assert 'And that its shapes the busy thoughts outnumber' in (
         that_death_is_slumber)
@@ -48,7 +50,8 @@ def test_api_vale_format_diagnosis_line() -> None:
     # Assert this formatter accepts *NO* boolean value.
     i_look_on_high = format_diagnosis_line(
         validator_repr='Of those who wake and live.',
-        indent_level='  ',
+        indent_level_outer='    ',
+        indent_level_inner='',
     )
     assert 'Of those who wake and live.' in i_look_on_high
     assert 'True'  not in i_look_on_high
