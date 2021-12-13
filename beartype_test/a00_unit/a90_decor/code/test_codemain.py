@@ -57,6 +57,7 @@ def test_codemain() -> None:
     from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
         HINTS_NONPEP_META)
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+    from beartype_test.util.pytcontext import noop_context_manager
     from beartype_test.util.pytroar import raises_uncached
     from re import search
 
@@ -120,11 +121,19 @@ def test_codemain() -> None:
             # @beartype-generated wrapper function type-checking this callable.
             func_typed = beartype(func_untyped)
 
-            # For each pith satisfying this hint...
-            for pith_satisfied_meta in hint_meta.piths_satisfied_meta:
+            #FIXME: *COMPACT "hint_meta.piths_satisfied_meta" AND
+            #"hint_meta.piths_unsatisfied_meta" INTO A SINGLE
+            #"hint_meta.piths_meta" TUPLE.* The fact that we're now treating
+            #the contents of these two tuples homogenously means we should have
+            #*NEVER* separated them; doing so is both overkill and useless.
+
+            # For each pith either satisfying or *NOT* satisfying this hint...
+            for pith_meta in (
+                hint_meta.piths_satisfied_meta +
+                hint_meta.piths_unsatisfied_meta
+            ):
                 # Assert this metadata is an instance of the desired dataclass.
-                assert isinstance(
-                    pith_satisfied_meta, HintPithSatisfiedMetadata)
+                assert isinstance(pith_meta, HintPithSatisfiedMetadata)
 
                 # Pith to be type-checked against this hint, defined as...
                 pith = (
@@ -132,92 +141,103 @@ def test_codemain() -> None:
                     # accepting *NO* parameters and dynamically creating and
                     # returning the value to be used as the desired pith), call
                     # this factory and localize its return value.
-                    pith_satisfied_meta.pith()
-                    if pith_satisfied_meta.is_pith_factory else
+                    pith_meta.pith()
+                    if pith_meta.is_pith_factory else
                     # Else, localize this pith as is.
-                    pith_satisfied_meta.pith
+                    pith_meta.pith
                 )
                 # print(f'Type-checking PEP type hint {repr(hint_meta.hint)} against {repr(pith)}...')
 
-                # If...
-                if (
-                    # This pith is a context manager *AND*...
-                    is_object_context_manager(pith) and
-                    # This pith should be safely opened and closed as a
-                    # context rather than preserved as a context manager...
-                    not pith_satisfied_meta.is_context_manager
-                # Then with this pith safely opened and closed as a context...
-                ):
-                    with pith as pith_context:
+                # Context manager under which to validate this pith against
+                # this hint, defined as either...
+                pith_context_manager = (
+                    # This pith itself if both...
+                    pith
+                    if (
+                        # This pith is a context manager *AND*...
+                        is_object_context_manager(pith) and
+                        # This pith should be safely opened and closed as a
+                        # context rather than preserved as a context manager...
+                        not pith_meta.is_context_manager
+                    ) else
+                    # Else, the noop context manager yielding this pith.
+                    noop_context_manager(pith)
+                )
+
+                # With this pith safely opened and closed as a context...
+                with pith_context_manager as pith_context:
+                    # If this pith does *NOT* satisfy this hint...
+                    if isinstance(pith_meta, HintPithUnsatisfiedMetadata):
+                        # Assert that iterables of uncompiled regular
+                        # expression expected to match and *NOT* match this
+                        # message are *NOT* strings, as commonly occurs when
+                        # accidentally omitting a trailing comma in tuples
+                        # containing only one string: e.g.,
+                        # * "('This is a tuple, yo.',)" is a 1-tuple containing
+                        #   one string.
+                        # * "('This is a string, bro.')" is a string *NOT*
+                        #   contained in a 1-tuple.
+                        assert not isinstance(
+                            pith_meta.exception_str_match_regexes, str)
+                        assert not isinstance(
+                            pith_meta.exception_str_not_match_regexes, str)
+
+                        # Assert this wrapper function raises the expected
+                        # exception when type-checking this pith against this
+                        # hint.
+                        with raises_uncached(BeartypeCallHintPepException) as (
+                            exception_info):
+                            func_typed(pith_context)
+
+                        # Exception message raised by this wrapper function.
+                        exception_str = str(exception_info.value)
+                        # print('exception message: {}'.format(exception_str))
+
+                        # Exception type localized for debuggability. Sadly,
+                        # the pytest.ExceptionInfo.__repr__() dunder method
+                        # fails to usefully describe its exception metadata.
+                        exception_type = exception_info.type
+
+                        # Assert this exception metadata describes the expected
+                        # exception as a sanity check against upstream pytest
+                        # issues and/or issues with our raises_uncached()
+                        # context manager.
+                        assert issubclass(
+                            exception_type, BeartypeCallHintPepException)
+
+                        # Assert this exception to be public rather than
+                        # private. The @beartype decorator should *NEVER* raise
+                        # a private exception for obvious reasons.
+                        assert exception_type.__name__[0] != '_'
+
+                        # For each uncompiled regular expression expected to
+                        # match this message, assert this expression actually
+                        # does so.
+                        #
+                        # Note that the re.search() rather than re.match()
+                        # function is called. The latter is rooted at the start
+                        # of the string and thus *ONLY* matches prefixes, while
+                        # the former is *NOT* rooted at any string position and
+                        # thus matches arbitrary substrings as desired.
+                        for exception_str_match_regex in (
+                            pith_meta.exception_str_match_regexes):
+                            assert search(
+                                exception_str_match_regex,
+                                exception_str,
+                            ) is not None
+
+                        # For each uncompiled regular expression expected to
+                        # *NOT* match this message, assert this expression
+                        # actually does so.
+                        for exception_str_not_match_regex in (
+                            pith_meta.exception_str_not_match_regexes):
+                            assert search(
+                                exception_str_not_match_regex,
+                                exception_str,
+                            ) is None
+                    # Else, this pith satisfies this hint. In this case...
+                    else:
                         # Assert this wrapper function successfully type-checks
                         # this context against this hint *WITHOUT* modifying
                         # this context.
                         assert func_typed(pith_context) is pith_context
-                # Else, this object is *NOT* a context manager and thus safely
-                # passable and returnable as is.
-                else:
-                    # Assert this wrapper function successfully type-checks
-                    # this object against this hint *WITHOUT* modifying this
-                    # object.
-                    assert func_typed(pith) is pith
-
-            # For each pith *NOT* satisfying this hint...
-            for pith_unsatisfied_meta in hint_meta.piths_unsatisfied_meta:
-                # Assert this metadata is an instance of the desired dataclass.
-                assert isinstance(
-                    pith_unsatisfied_meta, HintPithUnsatisfiedMetadata)
-
-                # Assert that iterables of uncompiled regular expression
-                # expected to match and *NOT* match this message are *NOT*
-                # strings, as commonly occurs when accidentally omitting a
-                # trailing comma in tuples containing only one string: e.g.,
-                # * "('This is a tuple, yo.',)" is a 1-tuple containing one
-                #   string.
-                # * "('This is a string, bro.')" is a string *NOT* contained in
-                #   a 1-tuple.
-                assert not isinstance(
-                    pith_unsatisfied_meta.exception_str_match_regexes, str)
-                assert not isinstance(
-                    pith_unsatisfied_meta.exception_str_not_match_regexes, str)
-
-                # Assert this wrapper function raises the expected exception
-                # when type-checking this pith against this hint.
-                with raises_uncached(BeartypeCallHintPepException) as (
-                    exception_info):
-                    func_typed(pith_unsatisfied_meta.pith)
-
-                # Exception message raised by this wrapper function.
-                exception_str = str(exception_info.value)
-                # print('exception message: {}'.format(exception_str))
-
-                # Exception type localized for debuggability. Sadly, the
-                # pytest.ExceptionInfo.__repr__() dunder method fails to
-                # usefully describe its exception metadata.
-                exception_type = exception_info.type
-
-                # Assert this exception metadata describes the expected
-                # exception as a sanity check against upstream pytest issues
-                # and/or issues with our raises_uncached() context manager.
-                assert issubclass(exception_type, BeartypeCallHintPepException)
-
-                # For each uncompiled regular expression expected to match this
-                # message, assert this expression actually does so.
-                #
-                # Note that the re.search() rather than re.match() function is
-                # called. The latter is rooted at the start of the string and
-                # thus *ONLY* matches prefixes, while the former is *NOT*
-                # rooted at any string position and thus matches arbitrary
-                # substrings as desired.
-                for exception_str_match_regex in (
-                    pith_unsatisfied_meta.exception_str_match_regexes):
-                    assert search(
-                        exception_str_match_regex, exception_str) is not None
-
-                # For each uncompiled regular expression expected to *NOT*
-                # match this message, assert this expression actually does so.
-                for exception_str_not_match_regex in (
-                    pith_unsatisfied_meta.exception_str_not_match_regexes):
-                    assert search(
-                        exception_str_not_match_regex, exception_str) is None
-
-            # assert False is True

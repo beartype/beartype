@@ -70,6 +70,20 @@ def add_data(data_module: 'ModuleType') -> None:
     S = TypeVar('S')
     T = TypeVar('T')
 
+    # ..................{ CALLABLES                         }..................
+    def open_file_text():
+        '''
+        Function returning an open read-only file handle in text mode.
+        '''
+        return open(_DATA_HINTPEP544_FILENAME, 'r', encoding='utf8')
+
+
+    def open_file_binary():
+        '''
+        Function returning an open read-only file handle in binary mode.
+        '''
+        return open(_DATA_HINTPEP544_FILENAME, 'rb')
+
     # ..................{ PROTOCOLS                         }..................
     # User-defined protocol parametrized by *NO* type variables declaring
     # arbitrary concrete and abstract methods.
@@ -143,7 +157,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ TUPLES                            }..................
     # Add PEP 544-specific test type hints to this dictionary global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ GENERICS ~ io                     }................
+        # ................{ GENERICS ~ io : unsubscripted     }................
         # Unsubscripted "IO" abstract base class (ABC).
         HintPepMetadata(
             hint=IO,
@@ -151,11 +165,12 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=IO,
             is_typevars=True,
             piths_satisfied_meta=(
-                # Open read-only file handle to this submodule.
+                # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
-                    pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'r'),
-                    is_pith_factory=True,
-                ),
+                    pith=open_file_text, is_pith_factory=True),
+                # Open read-only binary file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
@@ -172,14 +187,17 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Open read-only binary file handle to this submodule.
                 HintPithSatisfiedMetadata(
-                    pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'rb'),
-                    is_pith_factory=True,
-                ),
+                    pith=open_file_binary, is_pith_factory=True),
             ),
             piths_unsatisfied_meta=(
                 # Bytestring constant.
                 HintPithUnsatisfiedMetadata(
                     b"Of a thieved imagination's reveries"),
+
+                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
+                # # Open read-only text file handle to this submodule.
+                # HintPithUnsatisfiedMetadata(
+                #     pith=open_file_text, is_pith_factory=True),
             ),
         ),
 
@@ -191,16 +209,45 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_satisfied_meta=(
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
-                    pith=lambda: open(_DATA_HINTPEP544_FILENAME, 'r'),
-                    is_pith_factory=True,
-                ),
+                    pith=open_file_text, is_pith_factory=True),
             ),
             piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Statistician’s anthemed meme athame'),
+
+                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
+                # # Open read-only binary file handle to this submodule.
+                # HintPithUnsatisfiedMetadata(
+                #     pith=open_file_binary, is_pith_factory=True),
             ),
         ),
+
+        # ................{ GENERICS ~ io : subscripted       }................
+        #FIXME: Uncomment *AFTER* resolving this lamentable issue.
+        # # Subscripted "IO" abstract base class (ABC).
+        # HintPepMetadata(
+        #     hint=IO[str],
+        #     pep_sign=HintSignGeneric,
+        #     generic_type=IO,
+        #     piths_satisfied_meta=(
+        #         # Open read-only text file handle to this submodule.
+        #         HintPithSatisfiedMetadata(
+        #             pith=open_file_text, is_pith_factory=True),
+        #     ),
+        #     piths_unsatisfied_meta=(
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             'Thism‐predestined City’s pestilentially '
+        #             'celestial dark of'
+        #         ),
+        #
+        #         #FIXME: Uncomment *AFTER* actually detecting this as invalid.
+        #         # # Open read-only binary file handle to this submodule.
+        #         # HintPithUnsatisfiedMetadata(
+        #         #     pith=open_file_binary, is_pith_factory=True),
+        #     ),
+        # ),
 
         # ................{ PROTOCOLS ~ supports              }................
         # Unsubscripted "SupportsAbs" abstract base class (ABC).

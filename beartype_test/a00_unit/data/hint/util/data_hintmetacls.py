@@ -14,12 +14,6 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from typing import Optional, Tuple
 
 # ....................{ PRIVATE                           }....................
-_NoneTypeOrType = (type, type(None))
-'''
-2-tuple matching both classes and the ``None`` singleton.
-'''
-
-
 _EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
     # Ensure *ALL* exception messages contain the substring "type hint".
     # Exception messages *NOT* containing this substring are overly ambiguous
@@ -31,6 +25,12 @@ Tuple of all **mandatory exception matching regexes** (i.e., r''-style
 uncompiled regular expression strings, each unconditionally matching a
 substring of the exception message expected to be raised by wrapper functions
 when either passed or returning *any* possible pith).
+'''
+
+
+_NoneTypeOrType = (type, type(None))
+'''
+2-tuple matching both classes and the ``None`` singleton.
 '''
 
 # ....................{ CLASSES ~ hint : [un]satisfied    }....................
@@ -97,7 +97,7 @@ class HintPithSatisfiedMetadata(object):
         ))
 
 
-class HintPithUnsatisfiedMetadata(object):
+class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
     '''
     **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
     variables describe an object *not* satisfying a type hint when either
@@ -105,9 +105,6 @@ class HintPithUnsatisfiedMetadata(object):
 
     Attributes
     ----------
-    pith : object
-        Arbitrary object *not* satisfying this hint when either passed as a
-        parameter *or* returned as a value annotated by this hint.
     exception_str_match_regexes : Tuple[str]
         Tuple of zero or more r''-style uncompiled regular expression strings,
         each matching a substring of the exception message expected to be
@@ -123,13 +120,12 @@ class HintPithUnsatisfiedMetadata(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
-
-        # Mandatory parameters.
-        pith: object,
+        *args,
 
         # Optional parameters.
         exception_str_match_regexes: Tuple[str] = (),
         exception_str_not_match_regexes: Tuple[str] = (),
+        **kwargs
     ) -> None:
         assert isinstance(exception_str_match_regexes, tuple), (
             f'{repr(exception_str_match_regexes)} not tuple.')
@@ -145,8 +141,10 @@ class HintPithUnsatisfiedMetadata(object):
                 exception_str_not_match_regexes)
         ), f'{repr(exception_str_not_match_regexes)} not tuple of regexes.'
 
+        # Initialize our superclass with all variadic parameters.
+        super().__init__(*args, **kwargs)
+
         # Classify all remaining passed parameters.
-        self.pith = pith
         self.exception_str_not_match_regexes = exception_str_not_match_regexes
 
         # Classify the tuple of all r''-style uncompiled regular expression
@@ -161,6 +159,8 @@ class HintPithUnsatisfiedMetadata(object):
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    pith={repr(self.pith)},',
+            f'    is_context_manager={repr(self.is_context_manager)},',
+            f'    is_pith_factory={repr(self.is_pith_factory)},',
             f'    exception_str_match_regexes={repr(self.exception_str_match_regexes)},',
             f'    exception_str_not_match_regexes={repr(self.exception_str_not_match_regexes)},',
             f')',
