@@ -52,6 +52,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
     from typing import (
+        Any,
         BinaryIO,
         IO,
         Protocol,
@@ -215,6 +216,60 @@ def add_data(data_module: 'ModuleType') -> None:
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Statistician’s anthemed meme athame'),
+                # Open read-only binary file handle to this submodule.
+                HintPithUnsatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
+            ),
+        ),
+
+        # ................{ GENERICS ~ io : subscripted       }................
+        # All possible subscriptions of the "IO" abstract base class (ABC).
+        HintPepMetadata(
+            hint=IO[Any],
+            pep_sign=HintSignGeneric,
+            generic_type=IO,
+            piths_satisfied_meta=(
+                # Open read-only binary file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
+                # Open read-only text file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_text, is_pith_factory=True),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Stoicly Anti‐heroic, synthetic'),
+            ),
+        ),
+        HintPepMetadata(
+            hint=IO[bytes],
+            pep_sign=HintSignGeneric,
+            generic_type=IO,
+            piths_satisfied_meta=(
+                # Open read-only binary file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Starkness'),
+            ),
+        ),
+        HintPepMetadata(
+            hint=IO[str],
+            pep_sign=HintSignGeneric,
+            generic_type=IO,
+            piths_satisfied_meta=(
+                # Open read-only text file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_text, is_pith_factory=True),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Thism‐predestined City’s pestilentially '
+                    'celestial dark of'
+                ),
 
                 #FIXME: Uncomment *AFTER* actually detecting this as invalid.
                 # # Open read-only binary file handle to this submodule.
@@ -223,29 +278,24 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ GENERICS ~ io : subscripted       }................
-        #FIXME: Uncomment *AFTER* resolving this lamentable issue.
-        # # Subscripted "IO" abstract base class (ABC).
+        #FIXME: Uncomment after worky, please.
+        # # Parametrized "IO" abstract base class (ABC).
         # HintPepMetadata(
-        #     hint=IO[str],
+        #     hint=IO[T],
         #     pep_sign=HintSignGeneric,
         #     generic_type=IO,
+        #     is_typevars=True,
         #     piths_satisfied_meta=(
+        #         # Open read-only binary file handle to this submodule.
+        #         HintPithSatisfiedMetadata(
+        #             pith=open_file_binary, is_pith_factory=True),
         #         # Open read-only text file handle to this submodule.
         #         HintPithSatisfiedMetadata(
         #             pith=open_file_text, is_pith_factory=True),
         #     ),
         #     piths_unsatisfied_meta=(
         #         # String constant.
-        #         HintPithUnsatisfiedMetadata(
-        #             'Thism‐predestined City’s pestilentially '
-        #             'celestial dark of'
-        #         ),
-        #
-        #         #FIXME: Uncomment *AFTER* actually detecting this as invalid.
-        #         # # Open read-only binary file handle to this submodule.
-        #         # HintPithUnsatisfiedMetadata(
-        #         #     pith=open_file_binary, is_pith_factory=True),
+        #         HintPithUnsatisfiedMetadata('Architecting'),
         #     ),
         # ),
 

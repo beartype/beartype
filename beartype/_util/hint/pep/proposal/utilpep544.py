@@ -116,6 +116,27 @@ if IS_PYTHON_AT_LEAST_3_8:
         return repr(hint).startswith('typing.Protocol[') or None
 
 
+    #FIXME: Support parametrization as well. The simplistic
+    #"_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL" fixed-length dictionary fails
+    #to generalize to parametrizations of "typing.{Binary,Text,}IO" (e.g.,
+    #"typing.IO[T]"). To do so, we'll need to generalize this to something
+    #resembling:
+    #    # Attempt to...
+    #    try:
+    #        # Return true only if this hint is either...
+    #        return (
+    #            # An unparametrized PEP 484-compliant IO generic base class
+    #            # (e.g., "typing.IO") *OR*...
+    #            hint in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL or
+    #            # A parametrized PEP 484-compliant IO generic base class
+    #            # (e.g., "typing.IO[T]") *OR*...
+    #            #FIXME: ...maybe this? This *SHOULD* work, but...
+    #            hint.__origin__ in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL
+    #            #FIXME: ...or maybe this? Nope. That's not gonna work.
+    #            hint.__class__ in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL
+    #        )
+    #Under Python >= 3.9, that should probably work. Under Python <= 3.8,
+    #probably not. No idea if either of those works, but they're worth a try.
     def is_hint_pep484_generic_io(hint: object) -> bool:
 
         # Attempt to...
@@ -173,8 +194,8 @@ else:
 is_hint_pep544_ignorable_or_none.__doc__ = '''
     ``True`` only if the passed object is a :pep:`544`-compliant **ignorable
     type hint,** ``False`` only if this object is a :pep:`544`-compliant
-    unignorable type hint, and ``None`` if this object is *not* `PEP
-    544`_-compliant.
+    unignorable type hint, and ``None`` if this object is *not*
+    :pep:`544`-compliant.
 
     Specifically, this tester function returns ``True`` only if this object is
     a deeply ignorable :pep:`544`-compliant type hint, including:
@@ -302,11 +323,6 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
     ----------
     BeartypeDecorHintPep544Exception
         If this object is *not* a :pep:`484`-compliant IO generic base class.
-
-    See Also
-    ----------
-    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
-        Further commentary.
     '''
 
     # If this object is *NOT* a PEP 484-compliant "typing" IO generic,
@@ -358,6 +374,10 @@ def _init() -> None:
         _Pep544TextIO
 
     # ..................{ PROTOCOLS                         }..................
+    # Note that these classes are intentionally *NOT* declared at global scope;
+    # instead, these classes are declared *ONLY* if the active Python
+    # interpreter targets Python >= 3.8.
+
     @runtime_checkable
     class _Pep544IO(Protocol[AnyStr]):
         # The body of this class is copied wholesale from the existing
@@ -511,9 +531,30 @@ def _init() -> None:
     # Dictionary mapping from each "typing" IO generic base class to the
     # associated IO protocol defined above.
     _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL = {
-        IO:       _Pep544IO,
-        BinaryIO: _Pep544BinaryIO,
-        TextIO:   _Pep544TextIO,
+        # Unsubscripted mappings.
+        IO:        _Pep544IO,
+        BinaryIO:  _Pep544BinaryIO,
+        TextIO:    _Pep544TextIO,
+
+        # Subscripted mappings, leveraging the useful observation that these
+        # classes all self-cache by design: e.g.,
+        #     >>> import typing
+        #     >>> typing.IO[str] is typing.IO[str]
+        #     True
+        #
+        # Note that we intentionally map:
+        # * "IO[Any]" to the unsubscripted "_Pep544IO" rather than the
+        #   subscripted "_Pep544IO[Any]". Although the two are semantically
+        #   equivalent, the latter is marginally more space- and time-efficient
+        #   to generate code for and thus preferable.
+        # * "IO[bytes]" to the unsubscripted "_Pep544Binary" rather than the
+        #   subscripted "_Pep544IO[bytes]". Why? Because the former applies
+        #   meaningful runtime constraints, whereas the latter does *NOT*.
+        # * "IO[str]" to the unsubscripted "_Pep544Text" rather than the
+        #   subscripted "_Pep544IO[str]" -- for the same reason.
+        IO[Any]:   _Pep544IO,
+        IO[bytes]: _Pep544BinaryIO,
+        IO[str]:   _Pep544TextIO,
     }
 
 
