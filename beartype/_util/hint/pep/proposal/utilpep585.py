@@ -15,7 +15,7 @@ from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
-from beartype._util.utiltyping import TupleTypes
+from beartype._data.datatyping import TupleTypes
 from typing import Any, Set
 
 # See the "beartype.cave" submodule for further commentary.

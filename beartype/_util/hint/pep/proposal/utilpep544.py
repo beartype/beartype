@@ -15,14 +15,29 @@ from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from typing import Any, Dict, Optional
+from typing import (
+    Any,
+    BinaryIO,
+    Dict,
+    IO,
+    Optional,
+    TextIO,
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ PRIVATE ~ mappings                }....................
+_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
+'''
+Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
+:class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by the
+:mod:`typing` module).
+'''
+
+
 # Conditionally initialized by the _init() function below.
-_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, type] = {}
+_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, Any] = {}
 '''
 Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
 either :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined
@@ -116,38 +131,21 @@ if IS_PYTHON_AT_LEAST_3_8:
         return repr(hint).startswith('typing.Protocol[') or None
 
 
-    #FIXME: Support parametrization as well. The simplistic
-    #"_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL" fixed-length dictionary fails
-    #to generalize to parametrizations of "typing.{Binary,Text,}IO" (e.g.,
-    #"typing.IO[T]"). To do so, we'll need to generalize this to something
-    #resembling:
-    #    # Attempt to...
-    #    try:
-    #        # Return true only if this hint is either...
-    #        return (
-    #            # An unparametrized PEP 484-compliant IO generic base class
-    #            # (e.g., "typing.IO") *OR*...
-    #            hint in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL or
-    #            # A parametrized PEP 484-compliant IO generic base class
-    #            # (e.g., "typing.IO[T]") *OR*...
-    #            #FIXME: ...maybe this? This *SHOULD* work, but...
-    #            hint.__origin__ in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL
-    #            #FIXME: ...or maybe this? Nope. That's not gonna work.
-    #            hint.__class__ in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL
-    #        )
-    #Under Python >= 3.9, that should probably work. Under Python <= 3.8,
-    #probably not. No idea if either of those works, but they're worth a try.
     def is_hint_pep484_generic_io(hint: object) -> bool:
 
-        # Attempt to...
-        try:
-            # Return true only if this hint is a PEP 484-compliant IO generic
-            # base class.
-            return hint in _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL
-        # If this hint is unhashable, this hint is by definition *NOT* a PEP
-        # 484-compliant IO generic base class. In this case, return false.
-        except TypeError:
-            return False
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import (
+            get_hint_pep_origin_or_none)
+
+        # Return true only if this hint is either...
+        return (
+            # An unsubscripted PEP 484-compliant IO generic base class
+            # (e.g., "typing.IO") *OR*....
+            (isinstance(hint, type) and hint in _HINTS_PEP484_IO_GENERIC) or
+            # A subscripted PEP 484-compliant IO generic base class
+            # (e.g., "typing.IO[str]") *OR*....
+            get_hint_pep_origin_or_none(hint) in _HINTS_PEP484_IO_GENERIC
+        )
 
 
     def is_hint_pep544_protocol(hint: object) -> bool:
@@ -246,7 +244,7 @@ is_hint_pep484_generic_io.__doc__ = '''
     the :mod:`typing` module effectively unusable at runtime due to botched
     implementation details) that is losslessly replaceable with a useful
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO` itself
+    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO` itself
     *or* a subclass of that class defined by this submodule intentionally
     designed to be usable at runtime).
 
@@ -267,7 +265,7 @@ is_hint_pep484_generic_io.__doc__ = '''
 
     See Also
     ----------
-    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
+    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO`
         Further commentary.
     '''
 
@@ -292,10 +290,13 @@ is_hint_pep544_protocol.__doc__ = '''
     '''
 
 # ....................{ REDUCERS                          }....................
-def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
+def reduce_hint_pep484_generic_io_to_pep544_protocol(
+    hint: Any,
+    exception_prefix: str,
+) -> Any:
     '''
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._data.hint.pep.proposal.datapep544._Pep544IO`
+    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO`
     itself *or* a subclass of that class defined by this submodule
     intentionally designed to be usable at runtime) corresponding to the passed
     :pep:`484`-compliant :mod:`typing` **IO generic base class** (i.e., either
@@ -312,6 +313,9 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
     hint : type
         :pep:`484`-compliant :mod:`typing` IO generic base class to be replaced
         by the corresponding :pep:`544`-compliant :mod:`beartype` IO protocol.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
 
     Returns
     ----------
@@ -329,14 +333,65 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(hint: type) -> type:
     # raise an exception.
     if not is_hint_pep484_generic_io(hint):
         raise BeartypeDecorHintPep544Exception(
-            f'Type hint {repr(hint)} not '
-            f'PEP 484-compliant "typing" IO generic base class '
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 IO generic base class '
             f'(i.e., "typing.IO", "typing.BinaryIO", or "typing.TextIO").'
         )
     # Else, this object is *NOT* a PEP 484-compliant "typing" IO generic.
+    #
+    # If this dictionary has yet to be initialized, this submodule has yet to
+    # be initialized. In this case, do so.
+    #
+    # Note that this initialization is intentionally deferred until required.
+    # Why? Because this initialization performs somewhat space- and
+    # time-intensive work -- including importation of the "beartype.vale"
+    # subpackage, which we strictly prohibit importing from global scope.
+    elif not _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL:
+        _init()
+    # In any case, this dictionary is now initialized.
 
-    # Return the corresponding PEP 544-compliant IO protocol.
-    return _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint]
+    # PEP 544-compliant IO protocol implementing this PEP 484-compliant IO
+    # generic if any *OR* "None" otherwise.
+    pep544_protocol = _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL.get(hint)
+
+    # If *NO* such protocol implements this generic...
+    if pep544_protocol is None:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import (
+            get_hint_pep_origin_or_none,
+            get_hint_pep_typevars,
+        )
+
+        # Tuple of zero or more type variables parametrizing this hint.
+        hint_typevars = get_hint_pep_typevars(hint)
+
+        #FIXME: Unit test us up, please.
+        # If this hint is unparametrized, raise an exception.
+        if not hint_typevars:
+            raise BeartypeDecorHintPep544Exception(
+                f'{exception_prefix}PEP 484 IO generic base class '
+                f'{repr(hint)} invalid (i.e., not subscripted (indexed) by '
+                f'either "str", "bytes", "typing.Any", or "typing.AnyStr").'
+            )
+        # Else, this hint is parametrized and thus defines the "__origin__"
+        # dunder attribute whose value is the type originating this hint.
+
+        #FIXME: Attempt to actually handle this type variable, please.
+        # Reduce this parametrized hint (e.g., "typing.IO[typing.AnyStr]") to
+        # the equivalent unparametrized hint (e.g., "typing.IO"), effectively
+        # ignoring the type variable parametrizing this hint.
+        hint_unparametrized: type = get_hint_pep_origin_or_none(hint)  # type: ignore[assignment]
+
+        # PEP 544-compliant IO protocol implementing this unparametrized PEP
+        # 484-compliant IO generic. For efficiency, we additionally cache this
+        # mapping under the original parametrized hint to minimize the cost of
+        # similar reductions under subsequent annotations.
+        pep544_protocol = \
+            _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint] = \
+            _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint_unparametrized]
+
+    # Return this protocol.
+    return pep544_protocol
 
 # ....................{ INITIALIZERS                      }....................
 def _init() -> None:
@@ -355,29 +410,27 @@ def _init() -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
     from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
+    from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
     from typing import (
         AnyStr,
-        BinaryIO,
-        IO,
         Protocol,
-        Union,
-        TextIO,
         runtime_checkable,
     )
 
     # ..................{ GLOBALS                           }..................
     # Global attributes to be redefined below.
     global \
-        _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL, \
         _Pep544BinaryIO, \
         _Pep544IO, \
         _Pep544TextIO
 
-    # ..................{ PROTOCOLS                         }..................
+    # ..................{ PROTOCOLS ~ protocol              }..................
     # Note that these classes are intentionally *NOT* declared at global scope;
     # instead, these classes are declared *ONLY* if the active Python
     # interpreter targets Python >= 3.8.
 
+    # PEP-compliant type hint matching file handles opened in either text or
+    # binary mode.
     @runtime_checkable
     class _Pep544IO(Protocol[AnyStr]):
         # The body of this class is copied wholesale from the existing
@@ -469,25 +522,9 @@ def _init() -> None:
             pass
 
 
-    # Note that PEP 544 explicitly requires *ALL* protocols (including
-    # protocols subclassing protocols) to explicitly subclass the "Protocol"
-    # superclass, in violation of both sanity and usability. (Thanks, guys.)
-    @runtime_checkable
-    class _Pep544BinaryIO(_Pep544IO[bytes], Protocol):
-        # The body of this class is copied wholesale from the existing
-        # non-functional "typing.BinaryIO" class.
-
-        __slots__: tuple = ()
-
-        @abstractmethod
-        def write(self, s: Union[bytes, bytearray]) -> int:
-            pass
-
-        @abstractmethod
-        def __enter__(self) -> '_Pep544BinaryIO':
-            pass
-
-
+    # PEP-compliant type hint matching file handles opened in text rather than
+    # binary mode.
+    #
     # Note that PEP 544 explicitly requires *ALL* protocols (including
     # protocols subclassing protocols) to explicitly subclass the "Protocol"
     # superclass, in violation of both sanity and usability. (Thanks, guys.)
@@ -527,10 +564,83 @@ def _init() -> None:
         def __enter__(self) -> '_Pep544TextIO':
             pass
 
+    # ..................{ PROTOCOLS ~ validator             }..................
+    # PEP-compliant type hint matching file handles opened in binary rather
+    # than text mode.
+    #
+    # If PEP 593 (e.g., "typing.Annotated") and thus beartype validators are
+    # unusable, this hint falls back to ambiguously matching the abstract
+    # "typing.IO" protocol ABC. This will yield false positives (i.e., fail to
+    # raise exceptions) for @beartype-decorated callables annotated as
+    # accepting binary file handles erroneously passed text file handles, which
+    # is non-ideal but certainly preferable to raising exceptions at decoration
+    # time on each such callable.
+    #
+    # If PEP 593 (e.g., "typing.Annotated") and thus beartype validators are
+    # usable, this hint matches the abstract "typing.IO" protocol ABC but *NOT*
+    # the concrete "typing.TextIO" subprotocol subclassing that ABC. Whereas
+    # the concrete "typing.TextIO" subprotocol unambiguously matches *ONLY*
+    # file handles opened in text mode, the concrete "typing.BinaryIO"
+    # subprotocol ambiguously matches file handles opened in both text *AND*
+    # binary mode. As the following hypothetical "_Pep544BinaryIO" subclass
+    # demonstrates, the "typing.IO" and "typing.BinaryIO" APIs are identical
+    # except for method annotations:
+    #     class _Pep544BinaryIO(_Pep544IO[bytes], Protocol):
+    #         # The body of this class is copied wholesale from the existing
+    #         # non-functional "typing.BinaryIO" class.
+    #
+    #         __slots__: tuple = ()
+    #
+    #         @abstractmethod
+    #         def write(self, s: Union[bytes, bytearray]) -> int:
+    #             pass
+    #
+    #         @abstractmethod
+    #         def __enter__(self) -> '_Pep544BinaryIO':
+    #             pass
+    #
+    # Sadly, the method annotations that differ between these APIs are
+    # insufficient to disambiguate file handles at runtime. Why? Because most
+    # file handles are C-based and thus lack *ANY* annotations whatsoever. With
+    # respect to C-based file handles, these APIs are therefore identical.
+    # Ergo, the "typing.BinaryIO" subprotocol is mostly useless at runtime.
+    #
+    # Note, however, that file handles are necessarily *ALWAYS* opened in
+    # either text or binary mode. This strict dichotomy implies that any file
+    # handle (i.e., object matching the "typing.IO" protocol) *NOT* opened in
+    # text mode (i.e., not matching the "typing.TextIO" protocol) must
+    # necessarily be opened in binary mode instead.
+    _Pep544BinaryIO = _Pep544IO
+
+    #FIXME: Safely replace this with "from typing import Annotated" after
+    #dropping Python 3.8 support.
+    # "typing.Annotated" type hint factory safely imported from whichever of
+    # the "typing" or "typing_extensions" modules declares this attribute if
+    # one or more do *OR* "None" otherwise (i.e., if none do).
+    typing_annotated = import_typing_attr_or_none('Annotated')
+
+    #FIXME: Uncomment *AFTER* implementing "beartype.vale.IsInstance".
+    # # If this factory is importable.
+    # if typing_annotated is not None:
+    #     # Defer heavyweight imports.
+    #     from beartype.vale import IsInstance
+    #
+    #     # Expand this hint to unambiguously match binary file handles by
+    #     # subscripting this factory with a beartype validator doing so.
+    #     _Pep544BinaryIO = typing_annotated[
+    #         _Pep544IO, ~IsInstance[_Pep544TextIO]]
+    # # Else, this factory is unimportable. In this case, accept this hint's
+    # # default ambiguously matching both binary and text files.
+
     # ..................{ MAPPINGS                          }..................
     # Dictionary mapping from each "typing" IO generic base class to the
     # associated IO protocol defined above.
-    _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL = {
+    #
+    # Note this global is intentionally modified in-place rather than
+    # reassigned to a new dictionary. Why? Because the higher-level
+    # reduce_hint_pep484_generic_io_to_pep544_protocol() function calling this
+    # lower-level initializer has already imported this global.
+    _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL.update({
         # Unsubscripted mappings.
         IO:        _Pep544IO,
         BinaryIO:  _Pep544BinaryIO,
@@ -552,11 +662,13 @@ def _init() -> None:
         #   meaningful runtime constraints, whereas the latter does *NOT*.
         # * "IO[str]" to the unsubscripted "_Pep544Text" rather than the
         #   subscripted "_Pep544IO[str]" -- for the same reason.
+        #
+        # Note that we intentionally avoid mapping parametrizations of "IO" by
+        # type variables. Since there exist a countably infinite number of
+        # such parametrizations, the parent
+        # reduce_hint_pep484_generic_io_to_pep544_protocol() function calling
+        # this function handles such parametrizations mostly intelligently.
         IO[Any]:   _Pep544IO,
         IO[bytes]: _Pep544BinaryIO,
         IO[str]:   _Pep544TextIO,
-    }
-
-
-# Initialize this submodule.
-_init()
+    })

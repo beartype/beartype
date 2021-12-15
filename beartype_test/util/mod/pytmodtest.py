@@ -34,11 +34,11 @@ def is_package_beartype_vale_usable() -> bool:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.mod.utilmodtest import is_module_typing_any_attr
+    from beartype._util.mod.lib.utiltyping import is_typing_attr
 
     # Return true only if the "Annotated" type hint is importable from either
     # the official "typing" or third-party "typing_extensions" modules.
-    return is_module_typing_any_attr('Annotated')
+    return is_typing_attr('Annotated')
 
 # ....................{ TESTERS ~ lib                     }....................
 @callable_cached

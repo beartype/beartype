@@ -97,7 +97,7 @@ from beartype._util.text.utiltextlabel import (
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from typing import Callable, Dict, NoReturn, Optional
 
 # See the "beartype.cave" submodule for further commentary.

@@ -15,7 +15,8 @@ Test-specific **Python module importation** utilities.
 from typing import Any
 
 # ....................{ IMPORTERS ~ typing                }....................
-def import_module_typing_any_attr_or_none_safe(*args, **kwargs) -> Any:
+def import_module_typing_any_attr_or_none_safe(
+    typing_attr_basename: str) -> Any:
     '''
     Dynamically import and return the **typing attribute** (i.e., object
     declared at module scope by either the :mod:`typing` or
@@ -47,10 +48,8 @@ def import_module_typing_any_attr_or_none_safe(*args, **kwargs) -> Any:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.mod.utilmodimport import (
-        import_module_typing_any_attr_or_none,
-        import_module_typing_attr_or_none,
-    )
+    from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
+    from beartype._util.mod.utilmodimport import import_module_attr_or_none
     from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
     # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')
 
@@ -60,11 +59,11 @@ def import_module_typing_any_attr_or_none_safe(*args, **kwargs) -> Any:
         # package is importable under the active Python interpreter, defer to
         # the higher-level import_module_typing_any_attr_or_none() importer
         # possibly returning an attribute from that package;
-        import_module_typing_any_attr_or_none(*args, **kwargs)
+        import_typing_attr_or_none(typing_attr_basename)
         if is_package_typing_extensions() else
         # Else, either "typing_extensions" is unimportable or only an obsolete
         # version of "typing_extensions" is importable; in either case, avoid
         # possibly returning a possibly broken attribute from that package by
         # importing only from the official "typing" module.
-        import_module_typing_attr_or_none(*args, **kwargs)
+        import_module_attr_or_none(f'typing.{typing_attr_basename}')
     )

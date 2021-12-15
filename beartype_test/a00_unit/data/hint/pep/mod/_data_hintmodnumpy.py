@@ -53,7 +53,7 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._util.hint.pep.utilpepattr import (
         HINT_ATTR_TUPLE,
     )
-    from beartype._util.mod.utilmodimport import import_module_typing_any_attr
+    from beartype._util.mod.lib.utiltyping import import_typing_attr
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -234,8 +234,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise. By prior
     # validation, this factory *MUST* be non-"None" here.
-    Annotated = import_module_typing_any_attr('Annotated')
-    assert Annotated is not None, 'Typing "Annotated" attribute not found.'
+    Annotated = import_typing_attr('Annotated')
 
     # Validator matching one-dimensional NumPy arrays of floats of 64-bit
     # precision, combining both validator and NumPy type hinting syntax. This

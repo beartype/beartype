@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.utilobject import get_object_basename_scoped
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from collections.abc import Callable
 from types import CodeType
 from typing import Any, Dict, Optional

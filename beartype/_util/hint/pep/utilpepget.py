@@ -46,7 +46,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_7,
 )
-from beartype._util.utiltyping import TupleTypes
+from beartype._data.datatyping import TupleTypes
 from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -724,11 +724,11 @@ get_hint_pep_origin_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_type_isinstanceable_or_none` function should
-    always be called in lieu of this low-level function.** Whereas the former
-    is guaranteed to return either a class or ``None``, this function enjoys no
-    such guarantees and instead returns what the caller can only safely assume
-    to be an arbitrary object.
+    **The high-level** :func:`get_hint_pep_type_isinstanceable_or_none`
+    function should always be called in lieu of this low-level function.**
+    Whereas the former is guaranteed to return either a class or ``None``, this
+    function enjoys no such guarantees and instead returns what the caller can
+    only safely assume to be an arbitrary object.
 
     If this function *must* be called, **this function should always be called
     in lieu of attempting to directly access the low-level** ``__origin__``

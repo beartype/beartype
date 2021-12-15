@@ -29,7 +29,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_return)
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from collections.abc import Callable
 
 # See the "beartype.cave" submodule for further commentary.

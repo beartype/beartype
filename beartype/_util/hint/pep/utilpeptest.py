@@ -38,7 +38,7 @@ from beartype._util.mod.utilmodule import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.utilobject import get_object_type_unless_type
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from typing import NoReturn
 from warnings import warn
 

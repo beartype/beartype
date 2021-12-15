@@ -64,8 +64,8 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
 from beartype._util.hint.pep.proposal.utilpep544 import (
-    reduce_hint_pep484_generic_io_to_pep544_protocol,
     is_hint_pep484_generic_io,
+    reduce_hint_pep484_generic_io_to_pep544_protocol,
 )
 from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
@@ -748,7 +748,8 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     # from third-party classes). Ergo, we can neither safely emit warnings nor
     # raise exceptions on visiting these classes under *ANY* Python version.
     elif is_hint_pep484_generic_io(hint):
-        hint = reduce_hint_pep484_generic_io_to_pep544_protocol(hint)
+        hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
+            hint=hint, exception_prefix=exception_prefix)
 
     # Return this possibly reduced hint.
     return hint

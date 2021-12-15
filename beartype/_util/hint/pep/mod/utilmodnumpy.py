@@ -24,8 +24,7 @@ from beartype.roar import (
 )
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.mod.utilmodimport import (
-    import_module_typing_any_attr_or_none)
+from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
@@ -218,14 +217,12 @@ def reduce_hint_numpy_ndarray(
         return ndarray
 
     # ..................{ REDUCTION                         }..................
+    #FIXME: Safely replace this with "from typing import Annotated" after
+    #dropping Python 3.8 support.
     # "typing.Annotated" type hint factory safely imported from whichever of
     # the "typing" or "typing_extensions" modules declares this attribute if
     # one or more do *OR* "None" otherwise (i.e., if none do).
-    #
-    # Note that this memoized function is intentionally passed positional
-    # rather than keyword arguments for minor efficiency gains.
-    typing_annotated = import_module_typing_any_attr_or_none(
-        'Annotated', BeartypeDecorHintNonpepNumpyException)
+    typing_annotated = import_typing_attr_or_none('Annotated')
 
     # If this factory is unimportable, this typed NumPy array *CANNOT* be
     # reduced to a subscription of this factory by one or more semantically

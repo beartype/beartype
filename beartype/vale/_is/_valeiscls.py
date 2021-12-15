@@ -29,7 +29,7 @@ from beartype._util.func.utilfuncscope import (
     add_func_scope_attr,
 )
 from beartype._util.utilobject import get_object_name
-from beartype._util.utiltyping import TypeOrTupleTypes
+from beartype._data.datatyping import TypeOrTupleTypes
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

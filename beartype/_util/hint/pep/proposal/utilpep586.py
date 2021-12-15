@@ -15,7 +15,7 @@ from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.

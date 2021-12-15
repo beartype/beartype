@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from typing import Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.

@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none)
-from beartype._util.utiltyping import (
+from beartype._data.datatyping import (
     Codeobjable,
     TypeException,
 )

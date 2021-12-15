@@ -9,21 +9,15 @@ instantiation of objects encapsulating sample type hints).
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.mod.utilmodimport import (
-    import_module_typing_attr_or_none,
-    import_module_typingextensions_attr_or_none,
-)
+from beartype._util.mod.utilmodimport import import_module_attr_or_none
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintPepMetadata)
 from typing import Any, Callable, Dict, Tuple
 
-# ....................{ CONSTANTS                         }....................
-_TYPING_ATTR_IMPORTERS = (
-    import_module_typing_attr_or_none,
-    import_module_typingextensions_attr_or_none,
-)
+# ....................{ PRIVATE                           }....................
+_TYPING_MODULE_NAMES = ('typing', 'typing_extensions',)
 '''
-Tuple of all functions importing typing attributes from a given typing module.
+Tuple of the fully-qualified names of all quasi-standard typing modules.
 '''
 
 # ....................{ FACTORIES                         }....................
@@ -97,10 +91,13 @@ def make_hints_metadata_typing(
     hints_metadata_typing = []
 
     # For each function importing typing attributes from a given module...
-    for typing_attr_importer in _TYPING_ATTR_IMPORTERS:
+    for typing_module_name in _TYPING_MODULE_NAMES:
         # Attribute with this name imported from that module if that module
         # declares this attribute *OR* "None" otherwise.
-        typing_attr = typing_attr_importer(typing_attr_basename)
+        typing_attr = import_module_attr_or_none(
+            module_attr_name=f'{typing_module_name}.{typing_attr_basename}',
+            exception_prefix='Typing attribute ',
+        )
 
         # If that module declares this attribute...
         if typing_attr is not None:

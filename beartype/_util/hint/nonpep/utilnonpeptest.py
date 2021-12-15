@@ -23,7 +23,7 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']

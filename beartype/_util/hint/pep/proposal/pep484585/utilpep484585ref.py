@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodule import get_object_module_name
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from beartype._util.utiltyping import TypeException
+from beartype._data.datatyping import TypeException
 from typing import Any, Union
 
 # See the "beartype.cave" submodule for further commentary.

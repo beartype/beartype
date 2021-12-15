@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.utiltyping import IterableStrs
+from beartype._data.datatyping import IterableStrs
 from collections.abc import Iterable, Sequence
 from typing import Iterable as typing_Iterable
 

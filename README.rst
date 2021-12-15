@@ -635,7 +635,7 @@ Validators_>`__ to satisfy both static and runtime type checkers:
        # from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
        # Generalize this to other boto3 types by copy-and-pasting this and
-       # replacing the base type and "s3.Bucket" with the wonky runtime names 
+       # replacing the base type and "s3.Bucket" with the wonky runtime names
        # of those types. Sadly, there is no one-size-fits all common base class,
        # but you should find what you need in the following places:
        # * "boto3.resources.base.ServiceResource".
@@ -4137,6 +4137,11 @@ existed*) include:
 
 Authors
 =======
+
+.. # FIXME: Consider replacing this hand-rolled list that we've predictably
+.. # failed to properly maintain with an automated avatar-heavy list
+.. # synthesized by the @all-contributors bot. See also:
+.. #     https://github.com/all-contributors/all-contributors
 
 ``beartype`` is developed with the grateful assistance of a volunteer community
 of enthusiasts, including (*in chronological order of issue or pull request*):

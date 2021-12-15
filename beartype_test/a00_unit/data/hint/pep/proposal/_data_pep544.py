@@ -53,6 +53,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.8-specific imports.
     from typing import (
         Any,
+        AnyStr,
         BinaryIO,
         IO,
         Protocol,
@@ -195,7 +196,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPithUnsatisfiedMetadata(
                     b"Of a thieved imagination's reveries"),
 
-                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
+                #FIXME: Uncomment *AFTER* resolving this in "utilpep544".
                 # # Open read-only text file handle to this submodule.
                 # HintPithUnsatisfiedMetadata(
                 #     pith=open_file_text, is_pith_factory=True),
@@ -253,6 +254,12 @@ def add_data(data_module: 'ModuleType') -> None:
             piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Starkness'),
+
+                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
+                #See above for detailed commentary.
+                # # Open read-only text file handle to this submodule.
+                # HintPithUnsatisfiedMetadata(
+                #     pith=open_file_binary, is_pith_factory=True),
             ),
         ),
         HintPepMetadata(
@@ -270,34 +277,31 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Thism‐predestined City’s pestilentially '
                     'celestial dark of'
                 ),
-
-                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
-                # # Open read-only binary file handle to this submodule.
-                # HintPithUnsatisfiedMetadata(
-                #     pith=open_file_binary, is_pith_factory=True),
+                # Open read-only binary file handle to this submodule.
+                HintPithUnsatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
             ),
         ),
 
-        #FIXME: Uncomment after worky, please.
-        # # Parametrized "IO" abstract base class (ABC).
-        # HintPepMetadata(
-        #     hint=IO[T],
-        #     pep_sign=HintSignGeneric,
-        #     generic_type=IO,
-        #     is_typevars=True,
-        #     piths_satisfied_meta=(
-        #         # Open read-only binary file handle to this submodule.
-        #         HintPithSatisfiedMetadata(
-        #             pith=open_file_binary, is_pith_factory=True),
-        #         # Open read-only text file handle to this submodule.
-        #         HintPithSatisfiedMetadata(
-        #             pith=open_file_text, is_pith_factory=True),
-        #     ),
-        #     piths_unsatisfied_meta=(
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Architecting'),
-        #     ),
-        # ),
+        # Parametrization of the "IO" abstract base class (ABC).
+        HintPepMetadata(
+            hint=IO[AnyStr],
+            pep_sign=HintSignGeneric,
+            generic_type=IO,
+            is_typevars=True,
+            piths_satisfied_meta=(
+                # Open read-only binary file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_binary, is_pith_factory=True),
+                # Open read-only text file handle to this submodule.
+                HintPithSatisfiedMetadata(
+                    pith=open_file_text, is_pith_factory=True),
+            ),
+            piths_unsatisfied_meta=(
+                # String constant.
+                HintPithUnsatisfiedMetadata('Starkness'),
+            ),
+        ),
 
         # ................{ PROTOCOLS ~ supports              }................
         # Unsubscripted "SupportsAbs" abstract base class (ABC).

@@ -38,7 +38,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname,
 )
 from beartype._util.utilobject import get_object_type_basename
-from beartype._util.utiltyping import (
+from beartype._data.datatyping import (
     TypeOrTupleTypes,
     TupleTypes,
 )
