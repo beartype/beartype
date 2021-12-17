@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable-based data validation classes** (i.e.,
-:mod:`beartype`-specific classes enabling callers to define PEP-compliant data
-validators from arbitrary caller-defined callables *not* efficiently generating
-stack-free code).
+**Beartype validation superclasses** (i.e., :mod:`beartype`-specific abstract
+base classes (ABCs) from all concrete beartype validation subclasses derive).
 
 This private submodule defines the core low-level class hierarchy driving the
 entire :mod:`beartype` data validation ecosystem.

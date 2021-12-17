@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype code-based object validation classes** (i.e.,
+**Beartype declarative object validation classes** (i.e.,
 :mod:`beartype`-specific classes enabling callers to define PEP-compliant
 validators from arbitrary caller-defined objects tested via explicitly
 supported object introspectors efficiently generating stack-free code).
@@ -39,7 +39,7 @@ from typing import Any, Tuple
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CLASSES ~ attr                    }....................
+# ....................{ SUBCLASSES ~ attr                 }....................
 class _IsAttrFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object attribute validator factory** (i.e., object creating and

@@ -19,7 +19,7 @@ annotations.
 Instead, callers are expected to (in order):
 
 #. Annotate callable parameters and returns to be validated with
-   :pep:`593`_-compliant :attr:`typing.Annotated` type hints.
+   :pep:`593`-compliant :attr:`typing.Annotated` type hints.
 #. Subscript those hints with (in order):
 
    #. The type of those parameters and returns.
@@ -34,7 +34,10 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._is._valeis import _IsFactory
-from beartype.vale._is._valeiscls import _IsSubclassFactory
+from beartype.vale._is._valeiscls import (
+    _IsInstanceFactory,
+    _IsSubclassFactory,
+)
 from beartype.vale._is._valeisobj import _IsAttrFactory
 from beartype.vale._is._valeisoper import _IsEqualFactory
 
@@ -43,6 +46,7 @@ from beartype.vale._is._valeisoper import _IsEqualFactory
 Is = _IsFactory(basename='Is')
 IsAttr = _IsAttrFactory(basename='IsAttr')
 IsEqual = _IsEqualFactory(basename='IsEqual')
+IsInstance = _IsInstanceFactory(basename='IsInstance')
 IsSubclass = _IsSubclassFactory(basename='IsSubclass')
 
 # Delete all private factory classes imported above for safety.
@@ -50,6 +54,7 @@ del (
     _IsFactory,
     _IsAttrFactory,
     _IsEqualFactory,
+    _IsInstanceFactory,
     _IsSubclassFactory,
 )
 

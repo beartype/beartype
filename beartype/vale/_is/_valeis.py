@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable-based validation classes** (i.e., :mod:`beartype`-specific
+**Beartype functional validation classes** (i.e., :mod:`beartype`-specific
 classes enabling callers to define PEP-compliant validators from arbitrary
 caller-defined callables *not* efficiently generating stack-free code).
 
@@ -30,7 +30,7 @@ from beartype._util.text.utiltextrepr import represent_func
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CLASSES ~ subscriptable           }....................
+# ....................{ SUBCLASSES                        }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype callable validator factory** (i.e., class that, when subscripted

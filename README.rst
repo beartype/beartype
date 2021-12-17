@@ -1342,13 +1342,12 @@ integers that are *not* booleans):
 
    # Import the requisite machinery.
    from beartype import beartype
-   from beartype.vale import Is
+   from beartype.vale import IsInstance
    from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Type hint matching any non-boolean integer. This day all errata die.
-   IntNonbool = Annotated[int, Is[
-       lambda number: not isinstance(number, bool)]]
+   IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
 
    # Type-check a list of non-boolean integers summing to a non-boolean
    # integer. Beartype wills it. So it shall be.
@@ -1370,25 +1369,23 @@ sequences that are *not* strings):
 
    # Import the requisite machinery.
    from beartype import beartype
-   from beartype.vale import Is
+   from beartype.vale import IsInstance
    from collections.abc import Sequence
    from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
    # Type hint matching any non-string sequence. Your day has finally come.
-   SequenceNonstr = Annotated[Sequence, Is[
-       lambda sequence: not isinstance(sequence, str)]]
+   SequenceNonstr = Annotated[Sequence, ~IsInstance[str]]   # <--- we doin this
 
    # Type hint matching any non-string sequence *WHOSE ITEMS ARE ALL STRINGS.*
-   SequenceNonstrOfStr = Annotated[Sequence[str], Is[
-       lambda sequence: not isinstance(sequence, str)]]
+   SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
 
    # Type-check a non-string sequence of arbitrary items coerced into strings
    # and then joined on newline to a new string. (Beartype got your back, bro.)
    @beartype
    def join_objects(my_sequence: SequenceNonstr) -> str:
        '''
-       Your tide of disease ends here, "str" class!
+       Your tide of disease ends here, :class:`str` class!
        '''
 
        return '\n'.join(map(str, my_sequence))  # <-- no idea how that works
@@ -1458,7 +1455,7 @@ the functional validator in that example:
 
    # Import the requisite machinery.
    from beartype import beartype
-   from beartype.vale import IsAttr, IsEqual
+   from beartype.vale import IsAttr, IsEqual, IsSubclass
    from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
@@ -1468,8 +1465,7 @@ the functional validator in that example:
    import numpy as np
    Numpy2DFloatArray = Annotated[np.ndarray,
        IsAttr['ndim', IsEqual[2]] &
-       IsAttr['dtype',
-           IsAttr['type', IsEqual[np.float32] | IsEqual[np.float64]]]
+       IsAttr['dtype', IsAttr['type', IsSubclass[np.floating]]]
    ]
 
    # Annotate @beartype-decorated callables with beartype validators.
@@ -2289,7 +2285,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Awaitable_                       | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | typing.BinaryIO_                        | **0.4.0**\ —\ *current*       | *none*                    |
+|                    | typing.BinaryIO_                        | **0.4.0**\ —\ *current*       | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.ByteString_                      | **0.2.0**\ —\ *current*       | **0.2.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2329,7 +2325,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Hashable_                        | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | typing.IO_                              | **0.4.0**\ —\ *current*       | *none*                    |
+|                    | typing.IO_                              | **0.4.0**\ —\ *current*       | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.ItemsView_                       | **0.2.0**\ —\ *current*       | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -2399,7 +2395,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Text_                            | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | typing.TextIO_                          | **0.4.0**\ —\ *current*       | *none*                    |
+|                    | typing.TextIO_                          | **0.4.0**\ —\ *current*       | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | typing.Tuple_                           | **0.2.0**\ —\ *current*       | **0.4.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype code-based operator validation classes** (i.e.,
+**Beartype declarative operator validation classes** (i.e.,
 :mod:`beartype`-specific classes enabling callers to define PEP-compliant
 validators from arbitrary caller-defined objects tested via explicitly
 supported operators efficiently generating stack-free code).
@@ -75,7 +75,7 @@ from typing import Any
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CLASSES ~ equal                   }....................
+# ....................{ SUBCLASSES ~ equal                }....................
 class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object equality validator factory** (i.e., object creating and

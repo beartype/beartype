@@ -38,9 +38,18 @@ object to be equal to another arbitrary object.
 '''
 
 
+VALE_CODE_CHECK_ISINSTANCE_TEST = '''
+{{indent}}# True only if this pith is an object instancing this superclass.
+{{indent}}isinstance({{obj}}, {param_name_types})'''
+'''
+:attr:`beartype.vale.IsInstance`-specific code snippet validating an arbitrary
+object to instance an arbitrary type.
+'''
+
+
 VALE_CODE_CHECK_ISSUBCLASS_TEST = '''
 {{indent}}# True only if this pith is a class subclassing this superclass.
-{{indent}}(isinstance({{obj}}, type) and issubclass({{obj}}, {param_name_base_cls}))'''
+{{indent}}(isinstance({{obj}}, type) and issubclass({{obj}}, {param_name_types}))'''
 '''
 :attr:`beartype.vale.IsSubclass`-specific code snippet validating an arbitrary
 type to subclass another arbitrary type.
@@ -97,4 +106,5 @@ VALE_CODE_CHECK_ISATTR_TEST_format = VALE_CODE_CHECK_ISATTR_TEST.format
 VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format = (
     VALE_CODE_CHECK_ISATTR_VALUE_EXPR.format)
 VALE_CODE_CHECK_ISEQUAL_TEST_format = VALE_CODE_CHECK_ISEQUAL_TEST.format
+VALE_CODE_CHECK_ISINSTANCE_TEST_format = VALE_CODE_CHECK_ISINSTANCE_TEST.format
 VALE_CODE_CHECK_ISSUBCLASS_TEST_format = VALE_CODE_CHECK_ISSUBCLASS_TEST.format
