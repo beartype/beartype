@@ -39,7 +39,7 @@ def die_unless_hint_pep593(
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        Type hint to be inspected.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep593Exception`.
@@ -53,20 +53,42 @@ def die_unless_hint_pep593(
         If this object is *not* a :pep:`593`-compliant type metahint.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_sign_or_none)
-
     # If this hint is *NOT* PEP 593-compliant, raise an exception.
-    if get_hint_pep_sign_or_none(hint) is not HintSignAnnotated:
+    if not is_hint_pep593(hint):
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
         raise exception_cls(
-            f'{exception_prefix}PEP 593 type hint {repr(hint)} '
-            f'neither "typing.Annotated" nor "typing_extensions.Annotated".'
+            f'{exception_prefix}type hint {repr(hint)} not PEP 593-compliant '
+            f'(e.g., "typing.Annotated[...]", '
+            f'"typing_extensions.Annotated[...]").'
         )
 
 # ....................{ TESTERS                           }....................
+#FIXME: Unit test us up.
+def is_hint_pep593(hint: Any) -> bool:
+    '''
+    ``True`` only if the passed object is a :pep:`593`-compliant **type
+    metahint** (i.e., subscription of either the :attr:`typing.Annotated` or
+    :attr:`typing_extensions.Annotated` type hint factories).
+
+    Parameters
+    ----------
+    hint : Any
+        Type hint to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a :pep:`593`-compliant type metahint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+
+    # Return true only if this hint is PEP 593-compliant.
+    return get_hint_pep_sign_or_none(hint) is HintSignAnnotated
+
+
 def is_hint_pep593_ignorable_or_none(
     hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''
@@ -129,8 +151,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     Parameters
     ----------
     hint : Any
-        :pep:`593`-compliant :attr:`typing.Annotated` type hint to be
-        inspected.
+        :pep:`593`-compliant type hint to be inspected.
 
     Returns
     ----------

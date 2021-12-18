@@ -76,7 +76,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=int | list[str],
             pep_sign=HintSignUnion,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(87),
                 # List of string items.
@@ -84,8 +84,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Into, my myopic mandrake‐manhandling, panhandling slakes of',
                     'Televisual, dis‐informative Lakes, unsaintly, of',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # Floating-point constant.
                 HintPithUnsatisfiedMetadata(
                     pith=10100.00101,
@@ -130,14 +128,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_pep585_builtin=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List containing a mixture of integer and string constants.
                 HintPithSatisfiedMetadata([
                     'Telemarketing affirmative‐mined Ketamine’s',
                     470,
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Apolitically',
@@ -189,7 +185,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # "None" singleton signifying an optional type hint. Go figure.
             pep_sign=HintSignUnion,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # None singleton.
                 HintPithSatisfiedMetadata(None),
                 # Tuple of string items.
@@ -197,8 +193,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Stentorian tenor of',
                     'Stunted numbness (in',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Floating-point constant.
                 HintPithUnsatisfiedMetadata(
                     pith=2397.7932,

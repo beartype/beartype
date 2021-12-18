@@ -140,17 +140,8 @@ def _test_hint_code(hint_meta: HintPepMetadata) -> None:
     # @beartype-generated wrapper function type-checking this callable.
     func_typed = beartype(func_untyped)
 
-    #FIXME: *COMPACT "hint_meta.piths_satisfied_meta" AND
-    #"hint_meta.piths_unsatisfied_meta" INTO A SINGLE
-    #"hint_meta.piths_meta" TUPLE.* The fact that we're now treating
-    #the contents of these two tuples homogenously means we should have
-    #*NEVER* separated them; doing so is both overkill and useless.
-
-    # For each pith either satisfying or *NOT* satisfying this hint...
-    for pith_meta in (
-        hint_meta.piths_satisfied_meta +
-        hint_meta.piths_unsatisfied_meta
-    ):
+    # For each pith either satisfying or violating this hint...
+    for pith_meta in hint_meta.piths_meta:
         # Assert this metadata is an instance of the desired dataclass.
         assert isinstance(pith_meta, HintPithSatisfiedMetadata)
 

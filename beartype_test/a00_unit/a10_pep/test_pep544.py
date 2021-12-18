@@ -183,34 +183,39 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
+    from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-    from beartype._util.cls.utilclstest import is_type_subclass
-    from typing import BinaryIO, IO, TextIO, Union
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        PEP484_GENERICS_IO)
+    from typing import Union
 
-    # Set of all PEP 484-compliant "typing" IO generic base classes.
-    TYPING_IO_GENERICS = {BinaryIO, IO, TextIO}
-
-    for typing_io_generic in TYPING_IO_GENERICS:
+    # For each PEP 484-compliant "typing" IO generic base class...
+    for pep484_generic_io in PEP484_GENERICS_IO:
         # If the active Python interpreter targets at least Python >= 3.8 and
         # thus supports PEP 544...
         if IS_PYTHON_AT_LEAST_3_8:
             # Defer version-dependent imports.
             from typing import Protocol
 
-            # Beartype-specific PEP 544-compliant protocol implementing this
-            # PEP 484-compliant "typing" IO generic base class.
-            io_protocol = reduce_hint_pep484_generic_io_to_pep544_protocol(
-                hint=typing_io_generic, exception_prefix='')
+            # Equivalent protocol reduced from this generic.
+            pep544_protocol_io = (
+                reduce_hint_pep484_generic_io_to_pep544_protocol(
+                    pep484_generic_io, ''))
 
-            # Assert this function returns a protocol.
-            assert is_type_subclass(io_protocol, Protocol)
+            # Assert this protocol is either...
+            assert (
+                # A PEP 593-compliant type metahint generalizing a protocol
+                # *OR*...
+                is_hint_pep593(pep544_protocol_io) or
+                # A PEP 544-compliant protocol.
+                issubclass(pep544_protocol_io, Protocol)
+            )
         # Else, assert this function raises an exception.
         else:
             with raises(BeartypeDecorHintPep544Exception):
                 reduce_hint_pep484_generic_io_to_pep544_protocol(
-                    hint=typing_io_generic, exception_prefix='')
+                    pep484_generic_io, '')
 
     # Assert this function rejects standard type hints in either case.
     with raises(BeartypeDecorHintPep544Exception):
-        reduce_hint_pep484_generic_io_to_pep544_protocol(
-            hint=Union[int, str], exception_prefix='')
+        reduce_hint_pep484_generic_io_to_pep544_protocol(Union[int, str], '')

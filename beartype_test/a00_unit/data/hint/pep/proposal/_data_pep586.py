@@ -71,15 +71,13 @@ def add_data(data_module: 'ModuleType') -> None:
             # "__values__" rather than standard "__args__" dunder tuple under
             # Python 3.6 – for unknown and presumably indefensible reasons.
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # "None" singleton defined by the same syntax.
                 HintPithSatisfiedMetadata(None),
                 # "None" singleton defined by different syntax but semantically
                 # equal to the "None" singleton.
                 HintPithSatisfiedMetadata(
                     {}.get('Looting Uncouth, ruddy Bȴood and')),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Worthily untrust-',
@@ -95,14 +93,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Literal[True],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Boolean constant defined by the same syntax.
                 HintPithSatisfiedMetadata(True),
                 # Boolean constant defined by different syntax but semantically
                 # equal to the same boolean.
                 HintPithSatisfiedMetadata(data_module is data_module),
-            ),
-            piths_unsatisfied_meta=(
                 # Boolean constant *NOT* equal to the same boolean.
                 HintPithUnsatisfiedMetadata(
                     pith=False,
@@ -126,14 +122,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Literal[0x2a],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant defined by the same syntax.
                 HintPithSatisfiedMetadata(0x2a),
                 # Integer constant defined by different syntax but semantically
                 # equal to the same integer.
                 HintPithSatisfiedMetadata(42),
-            ),
-            piths_unsatisfied_meta=(
                 # Integer constant *NOT* equal to the same integer.
                 HintPithUnsatisfiedMetadata(
                     pith=41,
@@ -158,7 +152,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 b"Worthy, 'vain truthiness of (very invective-elected)"],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Byte string constant defined by the same syntax.
                 HintPithSatisfiedMetadata(
                     b"Worthy, 'vain truthiness of (very invective-elected)"),
@@ -168,8 +162,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     b"Worthy, 'vain truthiness of "
                     b"(very invective-elected)"
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte string constant *NOT* equal to the same byte string.
                 HintPithUnsatisfiedMetadata(
                     pith=b"Thanes within",
@@ -196,7 +188,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Literal['Thanklessly classed, nominal'],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Unicode string constant defined by the same syntax.
                 HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
                 # Unicode string constant defined by different syntax but
@@ -205,8 +197,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Thanklessly classed, '
                     'nominal'
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # Unicode string constant *NOT* equal to the same string.
                 HintPithUnsatisfiedMetadata(
                     pith='Mass and',
@@ -231,7 +221,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Enumeration member accessed by the same syntax.
                 HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich.
@@ -240,8 +230,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 # semantically equal to the same enumeration member.
                 HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich(0)),
-            ),
-            piths_unsatisfied_meta=(
                 # Enumeration member *NOT* equal to the same member.
                 HintPithUnsatisfiedMetadata(
                     pith=(
@@ -271,7 +259,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 'ç‐omically gnomical whitebellied burden’s empathy of']],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List of Unicode string constants semantically equal to the
                 # same Unicode string.
                 HintPithSatisfiedMetadata([
@@ -282,8 +270,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'empathy of'
                     ),
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # List of Unicode string constants *NOT* equal to the same
                 # Unicode string.
                 HintPithUnsatisfiedMetadata(
@@ -321,7 +307,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ],
             pep_sign=HintSignLiteral,
             is_args=IS_PYTHON_AT_LEAST_3_7,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Literal objects subscripting this literal union.
                 HintPithSatisfiedMetadata(None),
                 HintPithSatisfiedMetadata(True),
@@ -331,8 +317,6 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
                 HintPithSatisfiedMetadata(
                     _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF),
-            ),
-            piths_unsatisfied_meta=(
                 # Arbitrary object of the same type as one or more literal
                 # objects subscripting this literal union but unequal to any
                 # objects subscripting this literal union.

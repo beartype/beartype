@@ -40,7 +40,6 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUBCLASSES ~ instance             }....................
 #FIXME: Document us up in our top-level "README.rst", please.
-#FIXME: Unit test us up, please.
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype type instance validator factory** (i.e., object creating and
@@ -57,13 +56,15 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
     beartype.vale.IsInstance[{cls}]]`` for any class ``{cls}``)
     validates that parameter or return value to be a subclass of that class.
 
-    This factory is a generalization of :pep:`484`-compliant covariant type
-    hints, because this factory does everything those hints do and
-    substantially more. Superficially, those hints also validate that callable
-    parameters and returns are instances of the classes subscripting those
-    hints. The similarity ends there, however. Those hints only narrowly apply
-    to callable parameters and returns; meanwhile, this factory produces
-    beartype validators universally applying to both:
+    This factory generalizes :pep:`484`-compliant **isinstanceable types**
+    (i.e., normal pure-Python and C-based classes that may be passed as the
+    second parameter to the :func:`isinstance` builtin), because this factory
+    does everything those types do and considerably more. Superficially,
+    isinstanceable types also validate that callable parameters and returns are
+    instances of those types. The similarity ends there, however.
+    Isinstanceable types only narrowly apply to callable parameters and
+    returns; meanwhile, this factory produces beartype validators universally
+    applicable to both:
 
     * Callable parameters and returns.
     * **Attributes** of callable parameters and returns via the
@@ -246,15 +247,14 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
     beartype.vale.IsSubclass[{cls}]]`` for any class ``{cls}``)
     validates that parameter or return value to be a subclass of that class.
 
-    This factory is a generalization of the :pep:`484`-compliant
-    :attr:`typing.Type` and :pep:`585`-compliant :class:`type` type hint
-    factories, because this factory does everything those factories do and
-    substantially more. Superficially, :attr:`typing.Type` and :class:`type`
-    type hints also validate that callable parameters and returns are
-    subclasses of the classes subscripting those hints. The similarity ends
-    there, however. Those hints only narrowly apply to callable parameters and
-    returns; meanwhile, this factory produces beartype validators universally
-    applying to both:
+    This factory generalizes the :pep:`484`-compliant :attr:`typing.Type` and :
+    pep:`585`-compliant :class:`type` type hint factories, because this factory
+    does everything those factories do and substantially more. Superficially, :
+    attr:`typing.Type` and :class:`type` type hints also validate that callable
+    parameters and returns are subclasses of the classes subscripting those
+    hints. The similarity ends there, however. Those hints only narrowly apply
+    to callable parameters and returns; meanwhile, this factory produces
+    beartype validators universally applicable to both:
 
     * Callable parameters and returns.
     * **Attributes** of callable parameters and returns via the

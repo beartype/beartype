@@ -51,6 +51,8 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
+    from beartype_test.util.mod.pytmodtest import (
+        is_package_beartype_vale_usable)
     from typing import (
         Any,
         AnyStr,
@@ -85,6 +87,31 @@ def add_data(data_module: 'ModuleType') -> None:
         Function returning an open read-only file handle in binary mode.
         '''
         return open(_DATA_HINTPEP544_FILENAME, 'rb')
+
+    # List of one or more "HintPithUnsatisfiedMetadata" instances validating
+    # objects *NOT* satisfied by either "typing.BinaryIO" *OR*
+    # "typing.IO[bytes]". This list conditionally depends on the active Python
+    # interpreter and thus *CANNOT* be defined as a standard tuple.
+    binaryio_piths_meta = [
+        # Open read-only binary file handle to this submodule.
+        HintPithSatisfiedMetadata(
+            pith=open_file_binary, is_pith_factory=True),
+        # Bytestring constant.
+        HintPithUnsatisfiedMetadata(
+            b"Of a thieved imagination's reveries"),
+    ]
+
+    # If beartype validators are usable under the active Python interpreter...
+    if is_package_beartype_vale_usable():
+        # Add a "HintPithUnsatisfiedMetadata" instance validating open
+        # read-only text file handles to violate both "typing.BinaryIO" *AND*
+        # "typing.IO[bytes]" type hints. This validation requires beartype
+        # validators, as the only means of differentiating objects satisfying
+        # the "typing.BinaryIO" protocol from those satisfying the "typing.IO"
+        # protocol is with an inverted instance check. Cue beartype validators.
+        binaryio_piths_meta.append(
+            HintPithUnsatisfiedMetadata(
+                pith=open_file_text, is_pith_factory=True))
 
     # ..................{ PROTOCOLS                         }..................
     # User-defined protocol parametrized by *NO* type variables declaring
@@ -166,15 +193,13 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=IO,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_text, is_pith_factory=True),
                 # Open read-only binary file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_binary, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'To piously magistrate, dis‐empower, and'),
@@ -186,21 +211,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=BinaryIO,
             pep_sign=HintSignGeneric,
             generic_type=BinaryIO,
-            piths_satisfied_meta=(
-                # Open read-only binary file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
-                # Bytestring constant.
-                HintPithUnsatisfiedMetadata(
-                    b"Of a thieved imagination's reveries"),
-
-                #FIXME: Uncomment *AFTER* resolving this in "utilpep544".
-                # # Open read-only text file handle to this submodule.
-                # HintPithUnsatisfiedMetadata(
-                #     pith=open_file_text, is_pith_factory=True),
-            ),
+            piths_meta=binaryio_piths_meta,
         ),
 
         # Unsubscripted "TextIO" abstract base class (ABC).
@@ -208,12 +219,10 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=TextIO,
             pep_sign=HintSignGeneric,
             generic_type=TextIO,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_text, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Statistician’s anthemed meme athame'),
@@ -229,15 +238,13 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=IO[Any],
             pep_sign=HintSignGeneric,
             generic_type=IO,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Open read-only binary file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_binary, is_pith_factory=True),
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_text, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Stoicly Anti‐heroic, synthetic'),
             ),
@@ -246,32 +253,16 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=IO[bytes],
             pep_sign=HintSignGeneric,
             generic_type=IO,
-            piths_satisfied_meta=(
-                # Open read-only binary file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
-                # String constant.
-                HintPithUnsatisfiedMetadata('Starkness'),
-
-                #FIXME: Uncomment *AFTER* actually detecting this as invalid.
-                #See above for detailed commentary.
-                # # Open read-only text file handle to this submodule.
-                # HintPithUnsatisfiedMetadata(
-                #     pith=open_file_binary, is_pith_factory=True),
-            ),
+            piths_meta=binaryio_piths_meta,
         ),
         HintPepMetadata(
             hint=IO[str],
             pep_sign=HintSignGeneric,
             generic_type=IO,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_text, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Thism‐predestined City’s pestilentially '
@@ -289,15 +280,13 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=IO,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Open read-only binary file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_binary, is_pith_factory=True),
                 # Open read-only text file handle to this submodule.
                 HintPithSatisfiedMetadata(
                     pith=open_file_text, is_pith_factory=True),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Starkness'),
             ),
@@ -312,11 +301,9 @@ def add_data(data_module: 'ModuleType') -> None:
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Scour Our flowering'),
             ),
@@ -327,7 +314,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsBytes,
             pep_sign=HintSignGeneric,
             generic_type=SupportsBytes,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Platform-agnostic filesystem path object constant.
                 #
                 # Note that exceedingly few stdlib types actually define the
@@ -340,8 +327,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     is_context_manager=True,
                     is_pith_factory=True,
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Fond suburb’s gibbet‐ribbed castrati'),
@@ -356,11 +341,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # # Unsubscripted "SupportsComplex" abstract base class (ABC).
         # SupportsComplex: HintPepMetadata(
         #     pep_sign=Generic,
-        #     piths_satisfied_meta=(
+        #     piths_meta=(
         #         # Integer constant.
         #         108,
-        #     ),
-        #     piths_unsatisfied_meta=(
         #         # String constant.
         #         HintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
         #     ),
@@ -371,11 +354,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsFloat,
             pep_sign=HintSignGeneric,
             generic_type=SupportsFloat,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(92),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Be’yond a'),
             ),
@@ -387,11 +368,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsIndex,
             pep_sign=HintSignGeneric,
             generic_type=SupportsIndex,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(29),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Self-ishly'),
             ),
@@ -402,13 +381,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=SupportsInt,
             pep_sign=HintSignGeneric,
             generic_type=SupportsInt,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Floating-point number constant.
                 HintPithSatisfiedMetadata(25.78),
                 # Structurally subtyped instance.
                 HintPithSatisfiedMetadata(ProtocolSupportsInt()),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Ungentlemanly self‐righteously, and'),
@@ -423,14 +400,11 @@ def add_data(data_module: 'ModuleType') -> None:
             # Oddly, some but *NOT* all "typing.Supports*" ABCs are
             # parametrized by type variables. *shrug*
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Floating-point number constant.
                 HintPithSatisfiedMetadata(87.52),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Our Fathers vowed, indulgently,'),
+                HintPithUnsatisfiedMetadata('Our Fathers vowed, indulgently,'),
             ),
         ),
 
@@ -449,10 +423,8 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=ProtocolCustomUntypevared,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('For durance needs.'),
             ),
@@ -465,10 +437,8 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=ProtocolCustomTypevared,
             is_typevars=True,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Machist-'),
             ),
@@ -482,10 +452,8 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=ProtocolCustomTypevared,
             is_typevars=True,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 HintPithSatisfiedMetadata(protocol_custom_structural),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Black and white‐bit, bilinear linaements'),

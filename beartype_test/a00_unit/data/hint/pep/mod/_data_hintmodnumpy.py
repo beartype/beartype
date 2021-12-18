@@ -86,16 +86,13 @@ def add_data(data_module: 'ModuleType') -> None:
             # "numpy" package bounded above by the "numpy.generic" abstract
             # base class for NumPy scalars. *sigh*
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # NumPy array containing only 64-bit integers.
                 HintPithSatisfiedMetadata(asarray((
                     1, 0, 3, 5, 2, 6, 4, 9, 2, 3, 8, 4, 1, 3, 7, 7, 5, 0,))),
-
                 # NumPy array containing only 64-bit floats.
                 HintPithSatisfiedMetadata(asarray((
                     1.3, 8.23, 70.222, 726.2431, 8294.28730, 100776.357238,))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Ine Gerrymander‐consigned electorate sangu‐',
@@ -113,16 +110,13 @@ def add_data(data_module: 'ModuleType') -> None:
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # NumPy array containing only 64-bit integers.
                 HintPithSatisfiedMetadata(asarray((
                     1, 7, 39, 211, 1168, 6728, 40561, 256297, 1696707,))),
-
                 # NumPy array containing only 64-bit floats.
                 HintPithSatisfiedMetadata(asarray((
                     1.1, 2.4, -4.4, 32.104, 400.5392, -3680.167936,))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith=(
@@ -145,13 +139,11 @@ def add_data(data_module: 'ModuleType') -> None:
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # NumPy array containing only 64-bit floats.
                 HintPithSatisfiedMetadata(
                     asarray((1.0, 1.5, 1.8333, 2.08333, 2.28333, 2.45,)),
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Aggrandizing strifes with‐in',
@@ -177,12 +169,10 @@ def add_data(data_module: 'ModuleType') -> None:
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # NumPy array containing only 64-bit floats.
                 HintPithSatisfiedMetadata(asarray(
                     (2.0, 2.5, 2.6, 2.7083, 2.716, 2.71805,))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Silver, ore, and almost dazedly aggro‐',
@@ -208,7 +198,7 @@ def add_data(data_module: 'ModuleType') -> None:
             is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # NumPy array containing only 32-bit floats.
                 HintPithSatisfiedMetadata(asarray(
                     (1.2, 2.4, 3.0, 3.6, 4.0, 4.5, 4.8, 5.6, 6.0, 6.3, 7.0,),
@@ -219,8 +209,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     (3.2, 5, 1, 2, 1, 8, 2, 5, 1, 3, 1, 2.8, 1, 1.5, 1, 1, 4,),
                     dtype=float64,
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Then, and'),
                 # NumPy array containing only 64-bit integers.
@@ -252,14 +240,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
             is_pep585_builtin=HINT_ATTR_TUPLE is tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 HintPithSatisfiedMetadata((
                     asarray((0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375)),
                     asarray((1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5)),
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith=(

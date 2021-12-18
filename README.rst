@@ -949,8 +949,8 @@ Validator API
 *class* beartype.vale.\ **Is**\ [collections.abc.Callable[[typing.Any], bool]]
 
     **Functional validator.** A PEP-compliant type hint enforcing any arbitrary
-    runtime constraint, created by subscripting (indexing) the ``Is`` class
-    with a function accepting a single parameter and returning either:
+    runtime constraint, created by subscripting (indexing) the ``Is`` type hint
+    factory with a function accepting a single parameter and returning either:
 
     * ``True`` if that parameter satisfies that constraint.
     * ``False`` otherwise.
@@ -976,7 +976,8 @@ Validator API
 
     **Declarative attribute validator.** A PEP-compliant type hint
     enforcing any arbitrary runtime constraint on any named object attribute,
-    created by subscripting (indexing) the ``IsAttr`` class with (in order):
+    created by subscripting (indexing) the ``IsAttr`` type hint factory with
+    (in order):
 
     #. The unqualified name of that attribute.
     #. Any other beartype validator enforcing that constraint.
@@ -1028,7 +1029,7 @@ Validator API
 
     **Declarative equality validator.** A PEP-compliant type hint enforcing
     equality against any object, created by subscripting (indexing) the
-    ``IsEqual`` class with that object:
+    ``IsEqual`` type hint factory with that object:
 
     .. code-block:: python
 
@@ -1082,16 +1083,95 @@ Validator API
 
     See ``help(beartype.vale.IsEqual)`` for further details.
 
-*class* beartype.vale.\ **IsSubclass**\ [type, ...]
+*class* beartype.vale.\ **IsInstance**\ [type, ...]
 
-    **Declarative inheritance validator.** A PEP-compliant type hint enforcing
-    subclassing of one or more superclasses (base classes), created by
-    subscripting (indexing) the ``IsSubclass`` class with those superclasses:
+    **Declarative instance validator.** A PEP-compliant type hint enforcing
+    instancing of one or more classes, created by subscripting (indexing) the
+    ``IsInstance`` type hint factory with those classes:
 
     .. code-block:: python
 
        # Import the requisite machinery.
-       from beartype.vale import IsEqual
+       from beartype.vale import IsInstance
+       from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+       #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+       # Type hint matching only string and byte strings, equivalent to:
+       #     StrOrBytesInstance = Union[str, bytes]
+       StrOrBytesInstance = Annotated[object, IsInstance[str, bytes]]
+
+    ``beartype.vale.IsInstance`` generalizes **isinstanceable type hints**
+    (i.e., normal pure-Python or C-based classes that can be passed as the
+    second parameter to the ``isinstance()`` builtin). Both check instancing of
+    classes. Despite the differing syntax, these hints enforce the same
+    semantics:
+
+    .. code-block:: python
+
+       # This beartype validator enforces the same semantics as...
+       IsUnicodeStrWithBeartype = Annotated[object, IsInstance[str]]
+
+       # ...this PEP 484-compliant type hint.
+       IsUnicodeStrWithPep484 = str
+
+       # Likewise, this beartype validator enforces the same semantics as...
+       IsStrWithWithBeartype = Annotated[object, IsInstance[str, bytes]]
+
+       # ...this PEP 484-compliant type hint.
+       IsStrWithWithPep484 = Union[str, bytes]
+
+    The similarities end there, of course:
+
+    * ``beartype.vale.IsInstance`` permissively validates type instancing of
+      **arbitrary objects** (including possibly nested attributes of parameters
+      and returns when combined with ``beartype.vale.IsAttr``) against **one or
+      more classes.**
+    * Isinstanceable classes rigidly validate type instancing of only
+      **parameters and returns** against only **one class.**
+    
+    Unlike isinstanceable type hints, instance validators support various `set
+    theoretic operators <Validator Syntax_>`__. Critically, this includes
+    negation. Instance validators prefixed by the negation operator ``~``
+    match all objects that are *not* instances of the classes subscripting
+    those validators. Wait. Wait just a hot minute there. Doesn't a
+    typing.Annotated_ type hint necessarily match instances of the class
+    subscripting that type hint? Yup. This means type hints of the form
+    ``typing.Annotated[{superclass}, ~IsInstance[{subclass}]`` match all
+    instances of a superclass that are *not* also instances of a subclass.
+    And... pretty sure we just invented `type hint arithmetic <Type Hint
+    Elision_>`__ right there.
+
+    That sounded intellectual and thus boring. Yet, the disturbing fact that
+    Python booleans are integers :superscript:`yup` while Python strings are
+    infinitely recursive sequences of strings :superscript:`yup` means that
+    `type hint arithmetic <Type Hint Elision_>`__ can save your codebase from
+    Guido's younger self. Consider this instance validator matching only
+    non-boolean integers, which *cannot* be expressed with any isinstanceable
+    type hint (e.g., ``int``) or other combination of standard off-the-shelf
+    type hints (e.g., unions):
+
+    .. code-block:: python
+
+       # Type hint matching any non-boolean integer. Never fear integers again.
+       IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
+
+    Wherever you can, prefer isinstanceable type hints. Sure, they're
+    inflexible, but they're inflexibly standardized across type checkers.
+    Everywhere else, default to ``beartype.vale.IsInstance``.
+
+    See ``help(beartype.vale.IsInstance)`` for further details.
+
+*class* beartype.vale.\ **IsSubclass**\ [type, ...]
+
+    **Declarative inheritance validator.** A PEP-compliant type hint enforcing
+    subclassing of one or more superclasses (base classes), created by
+    subscripting (indexing) the ``IsSubclass`` type hint factory with those
+    superclasses:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype.vale import IsSubclass
        from typing import Annotated   # <--------------- if Python ≥ 3.9.0
        #from typing_extensions import Annotated   # <--- if Python < 3.9.0
 
@@ -1101,17 +1181,17 @@ Validator API
     ``beartype.vale.IsSubclass`` generalizes the comparable `PEP
     484`_-compliant typing.Type_ and `PEP 585`_-compliant type_ type hints. All
     three check subclassing of arbitrary superclasses. Despite the differing
-    syntax, these type hints enforce the same semantics:
+    syntax, these hints enforce the same semantics:
 
     .. code-block:: python
 
        # This beartype validator enforces the same semantics as...
        IsStringSubclassWithBeartype = Annotated[type, IsSubclass[str]]
 
-       # This PEP 484-compliant type hint.
+       # ...this PEP 484-compliant type hint as well as...
        IsStringSubclassWithPep484 = Type[str]
 
-       # This PEP 585-compliant type hint.
+       # ...this PEP 585-compliant type hint.
        IsStringSubclassWithPep585 = type[str]
 
     The similarities end there, of course:
@@ -1257,8 +1337,8 @@ Observe the disturbing (yet alluring) utility of beartype validators in action
 as they unshackle type hints from the fetters of PEP compliance. Begone,
 foulest standards!
 
-Type Hint Connectives
-+++++++++++++++++++++
+Type Hint Arithmetic
+++++++++++++++++++++
 
     **Subtitle:** *From Set Theory They Shall Grow*
 
@@ -2180,6 +2260,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 |                    | IsAttr                                  | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | IsEqual                                 | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
++--------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                    | IsInstance                              | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | IsSubclass                              | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+

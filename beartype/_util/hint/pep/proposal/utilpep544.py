@@ -291,9 +291,7 @@ is_hint_pep544_protocol.__doc__ = '''
 
 # ....................{ REDUCERS                          }....................
 def reduce_hint_pep484_generic_io_to_pep544_protocol(
-    hint: Any,
-    exception_prefix: str,
-) -> Any:
+    hint: Any, exception_prefix: str) -> Any:
     '''
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
     :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO`
@@ -619,18 +617,17 @@ def _init() -> None:
     # one or more do *OR* "None" otherwise (i.e., if none do).
     typing_annotated = import_typing_attr_or_none('Annotated')
 
-    #FIXME: Uncomment *AFTER* implementing "beartype.vale.IsInstance".
-    # # If this factory is importable.
-    # if typing_annotated is not None:
-    #     # Defer heavyweight imports.
-    #     from beartype.vale import IsInstance
-    #
-    #     # Expand this hint to unambiguously match binary file handles by
-    #     # subscripting this factory with a beartype validator doing so.
-    #     _Pep544BinaryIO = typing_annotated[
-    #         _Pep544IO, ~IsInstance[_Pep544TextIO]]
-    # # Else, this factory is unimportable. In this case, accept this hint's
-    # # default ambiguously matching both binary and text files.
+    # If this factory is importable.
+    if typing_annotated is not None:
+        # Defer heavyweight imports.
+        from beartype.vale import IsInstance
+
+        # Expand this hint to unambiguously match binary file handles by
+        # subscripting this factory with a beartype validator doing so.
+        _Pep544BinaryIO = typing_annotated[
+            _Pep544IO, ~IsInstance[_Pep544TextIO]]
+    # Else, this factory is unimportable. In this case, accept this hint's
+    # default ambiguously matching both binary and text files.
 
     # ..................{ MAPPINGS                          }..................
     # Dictionary mapping from each "typing" IO generic base class to the

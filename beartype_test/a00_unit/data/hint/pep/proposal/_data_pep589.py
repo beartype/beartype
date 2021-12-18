@@ -114,13 +114,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ISeemAsInATranceSublimeAndStrange,
             pep_sign=HintSignTypedDict,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty dictionary instantiated with standard Python syntax.
                 HintPithSatisfiedMetadata({}),
                 # Empty dictionary instantiated from this typed dictionary.
                 HintPithSatisfiedMetadata(ISeemAsInATranceSublimeAndStrange()),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Hadithian bodies kindle Bodkin deathbeds',
@@ -142,7 +140,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=DizzyRavine,
             pep_sign=HintSignTypedDict,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Non-empty dictionary of the expected keys and values.
                 HintPithSatisfiedMetadata({
                     'and_when': 'Corrigible‐ragged gun corruptions within',
@@ -155,8 +153,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Machiavellian‐costumed, tumid stock fonts of a'),
                     I_gaze_on_thee=RuntimeError,
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Matross‐elevated elven velvet atrocities of',
@@ -198,7 +194,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ToMuse,
             pep_sign=HintSignTypedDict,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty dictionary.
                 HintPithSatisfiedMetadata({}),
                 # Non-empty dictionary defining only one of the expected keys.
@@ -214,8 +210,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Sepulchral epic‐âpostatizing home tombs metem‐'),
                     separate_fantasy=b'Macroglia relics',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith=(
@@ -255,7 +249,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[DizzyRavine],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List of dictionaries of the expected keys and values.
                 HintPithSatisfiedMetadata([
                     {
@@ -273,8 +267,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'I_gaze_on_thee': b"Strand our under-",
                     },
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # List of string constants.
                 HintPithUnsatisfiedMetadata(
                     pith=[

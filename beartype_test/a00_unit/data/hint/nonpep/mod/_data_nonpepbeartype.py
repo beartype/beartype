@@ -45,11 +45,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Tuple union of one isinstanceable class.
         HintNonpepMetadata(
             hint=(str,),
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Pinioned coin tokens'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Murkily',
@@ -71,13 +69,11 @@ def add_data(data_module: 'ModuleType') -> None:
         # Tuple union of two or more isinstanceable classes.
         HintNonpepMetadata(
             hint=(int, str),
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(12),
                 # String constant.
                 HintPithSatisfiedMetadata('Smirk‐opined — openly'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Betokening',

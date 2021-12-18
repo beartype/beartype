@@ -81,7 +81,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
             get_hint_pep484585_generic_type_or_none)
 
-        # If this hint is *NOT* a class, reduce this hint to the object
+        # If this hint is *NOT* a type, reduce this hint to the object
         # originating this hint if any. See the comparable
         # is_hint_pep484_generic() tester for further details.
         hint = get_hint_pep484585_generic_type_or_none(hint)
@@ -90,13 +90,16 @@ if IS_PYTHON_AT_LEAST_3_9:
         # hint if this hint is a generic *OR* false otherwise.
         hint_bases_erased = getattr(hint, '__orig_bases__', False)
 
+        # Return true only if this hint satisfies *ALL* of the conditions
+        # delineated below. Specifically, return true only if one or more
+        # pseudo-superclasses originally subclassed by this hint are themselves
+        # PEP 585-compliant type hints.
+        #
         # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
         # commonality with PEP 484-compliant generics. While the latter are
         # trivially detectable as subclassing "typing.Generic" after type
         # erasure, the former are *NOT*. The only means of deterministically
-        # deciding whether or not any given class is a PEP 585-compliant
-        # generic is as follows:
-        #
+        # deciding whether or not a hint is a PEP 585-compliant generic is if:
         # * That class defines both the __class_getitem__() dunder method *AND*
         #   the "__orig_bases__" instance variable. Note that this condition in
         #   and of itself is insufficient to decide PEP 585-compliance as a
@@ -107,18 +110,18 @@ if IS_PYTHON_AT_LEAST_3_9:
         # * One or more objects listed in that tuple are PEP 585-compliant
         #   objects.
         #
-        # Return true only if this hint satisfies *ALL* of the above conditions.
-        # Specifically, return true only if one or more pseudo-superclasses
-        # originally subclassed by this hint are themselves PEP 585-compliant
-        # type hints.
-        #
         # Note we could technically also test that this hint defines the
         # __class_getitem__() dunder method. Since this condition suffices to
         # ensure that this hint is a PEP 585-compliant generic, however, there
         # exists little benefit to doing so.
         return hint_bases_erased and any(
             is_hint_pep585_builtin(hint_base_erased)
-            for hint_base_erased in hint_bases_erased
+
+            #FIXME: Remove the "type: ignore[union-attr]" comment and debug why
+            #mypy 0.920 is failing *WITHOUT* that comment. We're currently on
+            #mypy 0.910 locally and thus *CANNOT* debug this yet. We've only
+            #temporarily squelched this mypy error to get CI worky again. O{}
+            for hint_base_erased in hint_bases_erased  # type: ignore[union-attr]
         )
 
 # Else, the active Python interpreter targets at most Python < 3.9 and thus
@@ -279,7 +282,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
 
     Raises
     ----------
-    BeartypeDecorHintPep585Exception
+    :exc:`BeartypeDecorHintPep585Exception`
         If this hint is *not* a :pep:`585`-compliant generic.
     '''
 

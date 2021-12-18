@@ -11,7 +11,8 @@ classes encapsulating sample type hints instantiated by the
 
 # ....................{ IMPORTS                           }....................
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from typing import Optional, Tuple
+from collections.abc import Iterable
+from typing import Optional
 
 # ....................{ PRIVATE                           }....................
 _EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
@@ -105,16 +106,16 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
 
     Attributes
     ----------
-    exception_str_match_regexes : Tuple[str]
-        Tuple of zero or more r''-style uncompiled regular expression strings,
-        each matching a substring of the exception message expected to be
-        raised by wrapper functions when either passed or returning this
+    exception_str_match_regexes : Iterable[str]
+        Iterable of zero or more r''-style uncompiled regular expression
+        strings, each matching a substring of the exception message expected to
+        be raised by wrapper functions when either passed or returning this
         ``pith``. Defaults to the empty tuple.
-    exception_str_not_match_regexes : Tuple[str]
-        Tuple of zero or more r''-style uncompiled regular expression strings,
-        each *not* matching a substring of the exception message expected to be
-        raised by wrapper functions when either passed or returning this
-        ``pith``. Defaults to the empty tuple.
+    exception_str_not_match_regexes : Iterable[str]
+        Iterable of zero or more r''-style uncompiled regular expression
+        strings, each *not* matching a substring of the exception message
+        expected to be raised by wrapper functions when either passed or
+        returning this ``pith``. Defaults to the empty tuple.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -123,23 +124,23 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
         *args,
 
         # Optional parameters.
-        exception_str_match_regexes: Tuple[str] = (),
-        exception_str_not_match_regexes: Tuple[str] = (),
+        exception_str_match_regexes: 'Iterable[str]' = (),
+        exception_str_not_match_regexes: 'Iterable[str]' = (),
         **kwargs
     ) -> None:
-        assert isinstance(exception_str_match_regexes, tuple), (
-            f'{repr(exception_str_match_regexes)} not tuple.')
-        assert isinstance(exception_str_not_match_regexes, tuple), (
-            f'{repr(exception_str_not_match_regexes)} not tuple.')
+        assert isinstance(exception_str_match_regexes, Iterable), (
+            f'{repr(exception_str_match_regexes)} not iterable.')
+        assert isinstance(exception_str_not_match_regexes, Iterable), (
+            f'{repr(exception_str_not_match_regexes)} not iterable.')
         assert all(
             isinstance(exception_str_match_regex, str)
             for exception_str_match_regex in exception_str_match_regexes
-        ), f'{repr(exception_str_match_regexes)} not tuple of regexes.'
+        ), f'{repr(exception_str_match_regexes)} not iterable of regexes.'
         assert all(
             isinstance(exception_str_not_match_regex, str)
             for exception_str_not_match_regex in (
                 exception_str_not_match_regexes)
-        ), f'{repr(exception_str_not_match_regexes)} not tuple of regexes.'
+        ), f'{repr(exception_str_not_match_regexes)} not iterable of regexes.'
 
         # Initialize our superclass with all variadic parameters.
         super().__init__(*args, **kwargs)
@@ -193,16 +194,13 @@ class HintNonpepMetadata(object):
     is_supported : bool
         ``True`` only if this hint is currently supported by
         the :func:`beartype.beartype` decorator. Defaults to ``True``.
-    piths_satisfied_meta : Tuple[HintPithSatisfiedMetadata]
-        Tuple of zero or more :class:`HintPithSatisfiedMetadata` instances,
-        each describing an object satisfying this hint when either passed as a
-        parameter *or* returned as a value annotated by this hint. Defaults to
-        the empty tuple.
-    piths_unsatisfied_meta : Tuple[HintPithUnsatisfiedMetadata]
-        Tuple of zero or more :class:`HintPithUnsatisfiedMetadata`
-        instances, each describing an object *not* satisfying this hint when
-        either passed as a parameter *or* returned as a value annotated by this
-        hint. Defaults to the empty tuple.
+    piths_meta : Iterable[HintPithSatisfiedMetadata]
+        Iterable of zero or more **(un)satisfied metadata objects** (i.e.,
+        :class:`HintPithSatisfiedMetadata` and
+        :class:`HintPithUnsatisfiedMetadata` instances), each describing an
+        arbitrary object either satisfying or violating this hint when passed
+        as a parameter *or* returned as a value annotated by this hint.
+        Defaults to the empty tuple.
     '''
 
     # ..................{ INITIALIZERS                      }..................
@@ -215,34 +213,27 @@ class HintNonpepMetadata(object):
         # Optional parameters.
         is_ignorable: bool = False,
         is_supported: bool = True,
-        piths_satisfied_meta: Tuple[HintPithSatisfiedMetadata] = (),
-        piths_unsatisfied_meta: Tuple[HintPithUnsatisfiedMetadata] = (),
+        piths_meta: 'Iterable[HintPithSatisfiedMetadata]' = (),
     ) -> None:
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(piths_unsatisfied_meta, tuple), (
-            f'{repr(piths_unsatisfied_meta)} not tuple.')
+        assert isinstance(piths_meta, Iterable), (
+            f'{repr(piths_meta)} not iterable.')
         assert all(
-            isinstance(pith_satisfied_meta, HintPithSatisfiedMetadata)
-            for pith_satisfied_meta in piths_satisfied_meta
+            isinstance(piths_meta, HintPithSatisfiedMetadata)
+            for piths_meta in piths_meta
         ), (
-            f'{repr(piths_satisfied_meta)} not tuple of '
-            f'"HintPithSatisfiedMetadata" instances.')
-        assert all(
-            isinstance(pith_unsatisfied_meta, HintPithUnsatisfiedMetadata)
-            for pith_unsatisfied_meta in piths_unsatisfied_meta
-        ), (
-            f'{repr(piths_unsatisfied_meta)} not tuple of '
+            f'{repr(piths_meta)} not iterable of '
+            f'"HintPithSatisfiedMetadata" and '
             f'"HintPithUnsatisfiedMetadata" instances.')
 
         # Classify all passed parameters.
         self.hint = hint
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
-        self.piths_satisfied_meta = piths_satisfied_meta
-        self.piths_unsatisfied_meta = piths_unsatisfied_meta
+        self.piths_meta = piths_meta
 
     # ..................{ STRINGIFIERS                      }..................
     def __repr__(self) -> str:
@@ -251,8 +242,7 @@ class HintNonpepMetadata(object):
             f'    hint={repr(self.hint)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_supported={repr(self.is_supported)},',
-            f'    piths_satisfied_meta={repr(self.piths_satisfied_meta)},',
-            f'    piths_unsatisfied_meta={repr(self.piths_unsatisfied_meta)},',
+            f'    piths_meta={repr(self.piths_meta)},',
             f')',
         ))
 
@@ -441,7 +431,6 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_typevars={repr(self.is_typevars)},',
             f'    is_type_typing={repr(self.is_type_typing)},',
             f'    is_typing={repr(self.is_typing)},',
-            f'    piths_satisfied_meta={repr(self.piths_satisfied_meta)},',
-            f'    piths_unsatisfied_meta={repr(self.piths_unsatisfied_meta)},',
+            f'    piths_meta={repr(self.piths_meta)},',
             f')',
         ))

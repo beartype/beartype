@@ -39,6 +39,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Is,
         IsAttr,
         IsEqual,
+        IsInstance,
         IsSubclass,
     )
     from beartype._data.hint.pep.sign.datapepsigns import (
@@ -49,7 +50,11 @@ def add_data(data_module: 'ModuleType') -> None:
         HINT_ATTR_LIST,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-    from beartype_test.a00_unit.data.data_type import Class, Subclass
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        Subclass,
+        SubclassSubclass,
+    )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -92,12 +97,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[str, int],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
                     'Towards a timely, wines‐enticing gate'),
-            ),
-            piths_unsatisfied_meta=(
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
                     'Of languished anger’s sap‐spated rushings',]),
@@ -108,14 +111,12 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[HINT_ATTR_LIST[str], int],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List of string constants.
                 HintPithSatisfiedMetadata([
                     'MINERVA‐unnerving, verve‐sapping enervations',
                     'Of a magik-stoned Shinto rivery',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Of a Spicily sated',),
             ),
@@ -180,12 +181,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=AnnotatedStrIsLength,
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant satisfying this validator.
                 HintPithSatisfiedMetadata(
                     'To Ɯṙaith‐like‐upwreathed ligaments'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Down-bound',
@@ -205,12 +204,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant satisfying these validators.
                 HintPithSatisfiedMetadata(
                     '"Into piezo‐electrical, dun‐dappled lights" and...'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Joy.',
@@ -240,12 +237,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant satisfying these validators.
                 HintPithSatisfiedMetadata(
                     '"Into piezo‐electrical, dun‐dappled lights" and...'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Joy.',
@@ -274,12 +269,10 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[str, IsLengthyOrUnquotedSentence],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant satisfying these validators.
                 HintPithSatisfiedMetadata(
                     'Dialectical, eclectic mind‐toys'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Of Cycladic impoverishment, cyclically unreeling',
@@ -309,16 +302,14 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[Annotated[str, IsLengthy], IsSentence],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant satisfying these validators.
                 HintPithSatisfiedMetadata(
                     'Antisatellite‐dendroidal, Θṙbital Cemetery orbs — '
                     'of Moab.'
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant *NOT* an instance of the expected type.
-                HintPithUnsatisfiedMetadata(pith=b'Then, and'),
+                HintPithUnsatisfiedMetadata(b'Then, and'),
                 # String constant violating only the first of these validators.
                 HintPithUnsatisfiedMetadata('Though a...'),
             ),
@@ -331,14 +322,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_pep585_builtin=HINT_ATTR_LIST is list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List of string constants satisfying this validator.
                 HintPithSatisfiedMetadata([
                     'An‐atomically Island‐stranded, adrift land)',
                     'That You randily are That worm‐tossed crabapple of',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith="Our Sturm‐sapped disorder's convolution of",
@@ -363,11 +352,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Annotated[
                 CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Instance of this class satisfying this validator.
                 HintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of this class.
                 HintPithUnsatisfiedMetadata(
                     pith='An atoll nuclear broilers newly cleared of',
@@ -387,14 +374,12 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Annotated[HINT_ATTR_LIST[str], IsEqual[AMPLY_IMPISH]],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Exact object subscripting this validator.
                 HintPithSatisfiedMetadata(AMPLY_IMPISH),
                 # Object *NOT* subscripting this validator but equal to this
                 # object.
                 HintPithSatisfiedMetadata(AMPLY_IMPISH[:]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith='May Your coarsest, Incessantly cast‐off jobs of a',
@@ -411,19 +396,50 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        # ................{ ANNOTATED ~ beartype : isinstance }................
+        # Annotated of an isinstanceable type annotated by one
+        # beartype-specific type instance validator.
+        HintPepMetadata(
+            hint=Annotated[Class, ~IsInstance[SubclassSubclass]],
+            pep_sign=HintSignAnnotated,
+            piths_meta=(
+                # Instance of the class subscripting this validator.
+                HintPithSatisfiedMetadata(Class()),
+                # Instance of the subclass subclassing the class subscripting
+                # this validator.
+                HintPithSatisfiedMetadata(Subclass()),
+                # Instance of the subsubclass subclassing the subclass
+                # subclassing the class subscripting this validator.
+                HintPithUnsatisfiedMetadata(SubclassSubclass()),
+                # Class subscripting this validator.
+                HintPithUnsatisfiedMetadata(Class),
+                # String constant *NOT* an instance of the expected type.
+                HintPithUnsatisfiedMetadata(
+                    pith=(
+                        'Architrave‐contravening, '
+                        'indigenously chitinous tactilities) of'
+                    ),
+                    # Match that the exception message raised for this object
+                    # embeds a classname in the expected list.
+                    exception_str_match_regexes=(r'\bClass\b',),
+                ),
+            ),
+        ),
+
         # ................{ ANNOTATED ~ beartype : issubclass }................
         # Annotated of an isinstanceable type annotated by one
-        # beartype-specific equality validator.
+        # beartype-specific type inheritance validator.
         HintPepMetadata(
             hint=Annotated[type, IsSubclass[Class]],
             pep_sign=HintSignAnnotated,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Class subscripting this validator.
                 HintPithSatisfiedMetadata(Class),
                 # Class subclassing the class subscripting this validator.
                 HintPithSatisfiedMetadata(Subclass),
-            ),
-            piths_unsatisfied_meta=(
+                # Class *NOT* subclassing the class subscripting this
+                # validator.
+                HintPithUnsatisfiedMetadata(str),
                 # String constant *NOT* an instance of the expected type.
                 HintPithUnsatisfiedMetadata(
                     pith='May Your coarsest, Incessantly cast‐off jobs of a',
@@ -431,9 +447,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     # embeds a classname in the expected list.
                     exception_str_match_regexes=(r'\bClass\b',),
                 ),
-                # Class *NOT* subclassing the class subscripting this
-                # validator.
-                HintPithUnsatisfiedMetadata(str),
             ),
         ),
     ))
@@ -451,12 +464,10 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPepMetadata(
                 hint=Annotated[str, []],
                 pep_sign=HintSignAnnotated,
-                piths_satisfied_meta=(
+                piths_meta=(
                     # String constant.
                     HintPithSatisfiedMetadata(
                         'Papally Ľust‐besmirched Merchet laws'),
-                ),
-                piths_unsatisfied_meta=(
                     # List of string constants.
                     HintPithUnsatisfiedMetadata([
                         "Of our ôver‐crowdedly cowed crowd's opinion‐",]),

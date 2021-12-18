@@ -34,7 +34,7 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._is._valeis import _IsFactory
-from beartype.vale._is._valeiscls import (
+from beartype.vale._is._valeistype import (
     _IsInstanceFactory,
     _IsSubclassFactory,
 )

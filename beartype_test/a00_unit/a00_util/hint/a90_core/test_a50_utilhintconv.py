@@ -96,11 +96,10 @@ def test_reduce_hint() -> None:
     )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
-    from beartype._data.hint.pep.sign.datapepsigns import (
-        HintSignAnnotated,
-    )
-    from beartype._util.hint.utilhintconv import _reduce_hint
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
+    from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.utilhintconv import _reduce_hint
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO,
@@ -148,11 +147,17 @@ def test_reduce_hint() -> None:
 
         # For each PEP 484-compliant "typing" IO generic superclass...
         for pep484_generic_io in PEP484_GENERICS_IO:
-            # Equivalent PEP 544-compliant protocol reduced from this generic.
+            # Equivalent protocol reduced from this generic.
             pep544_protocol_io = _reduce_hint(pep484_generic_io, '')
 
-            # Assert this protocol actually is a protocol.
-            assert issubclass(pep544_protocol_io, Protocol)
+            # Assert this protocol is either...
+            assert (
+                # A PEP 593-compliant type metahint generalizing a protocol
+                # *OR*...
+                is_hint_pep593(pep544_protocol_io) or
+                # A PEP 544-compliant protocol.
+                issubclass(pep544_protocol_io, Protocol)
+            )
 
     # ..................{ PEP 593                           }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or

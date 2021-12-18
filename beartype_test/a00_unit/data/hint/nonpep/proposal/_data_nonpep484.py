@@ -66,15 +66,12 @@ def add_data(data_module: 'ModuleType') -> None:
         # *MUST* thus be handled as non-"typing" type hints.
         HintNonpepMetadata(
             hint=NamedTupleType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Named tuple containing correctly typed items.
                 HintPithSatisfiedMetadata(
                     NamedTupleType(fumarole='Leviathan', enrolled=37)),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Of ͼarthen concordance that'),
-
                 #FIXME: Uncomment after implementing "NamedTuple" support.
                 # # Named tuple containing incorrectly typed items.
                 # HintPithUnsatisfiedMetadata(
@@ -98,11 +95,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Integer.
         HintNonpepMetadata(
             hint=int,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(42),  # <-- we went there, folks
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Introspectively ‘allein,’ dealigning consangui-',
@@ -131,11 +126,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unicode string.
         HintNonpepMetadata(
             hint=str,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Glassily lassitudinal bȴood-'),
-            ),
-            piths_unsatisfied_meta=(
                 # Byte-string constant.
                 HintPithUnsatisfiedMetadata(
                     pith=b'Stains, disdain-fully ("...up-stairs!"),',
@@ -160,7 +153,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'"str"',
                     ),
                 ),
-
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(
                     pith=666,  # <-- number of the beast, yo
@@ -197,11 +189,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin ellipsis type.
         HintNonpepMetadata(
             hint=EllipsisType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Ellipsis singleton.
                 HintPithSatisfiedMetadata(...),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Masterless decree, venomless, which'),
@@ -211,11 +201,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin pure-Python function type.
         HintNonpepMetadata(
             hint=FunctionType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Pure-Python function.
                 HintPithSatisfiedMetadata(add_data),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Nomenclature weather‐vanes of'),
             ),
@@ -224,11 +212,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin C-based function type.
         HintNonpepMetadata(
             hint=FunctionOrMethodCType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # C-based function.
                 HintPithSatisfiedMetadata(len),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Nominally unswain, autodidactic idiocracy, less a'),
@@ -238,11 +224,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin bound method type.
         HintNonpepMetadata(
             hint=MethodBoundInstanceOrClassType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Bound method.
                 HintPithSatisfiedMetadata(Class().instance_method),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'ç‐omically gnomical whitebellied burden’s empathy of'),
@@ -252,11 +236,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin module type.
         HintNonpepMetadata(
             hint=ModuleType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Imported module.
                 HintPithSatisfiedMetadata(sys),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Earpiece‐piecemealed, mealy straw headpiece-'),
@@ -266,11 +248,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin "None" singleton type.
         HintNonpepMetadata(
             hint=NoneType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # "None" singleton.
                 HintPithSatisfiedMetadata(None),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Earned peace appeasement easements'),
@@ -280,11 +260,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # Fake builtin "NotImplemented" type.
         HintNonpepMetadata(
             hint=NotImplementedType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # "NotImplemented" singleton.
                 HintPithSatisfiedMetadata(NotImplemented),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Than'),
             ),

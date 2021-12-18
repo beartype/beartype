@@ -366,15 +366,13 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ByteString,
             pep_sign=HintSignByteString,
             isinstanceable_type=collections_abc.ByteString,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Byte string constant.
                 HintPithSatisfiedMetadata(
                     b'By nautical/particle consciousness'),
                 # Byte array initialized from a byte string constant.
                 HintPithSatisfiedMetadata(
                     bytearray(b"Hour's straight fates, (distemperate-ly)")),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'At that atom-nestled canticle'),
@@ -390,11 +388,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=None,
             pep_sign=HintSignNone,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # "None" singleton.
                 HintPithSatisfiedMetadata(None),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
             ),
@@ -413,11 +409,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=_TEST_PEP484_FORWARDREF_CLASSNAME,
             pep_sign=HintSignForwardRef,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Instance of the class referred to by this reference.
                 HintPithSatisfiedMetadata(_TEST_PEP484_FORWARDREF_TYPE()),
-            ),
-            piths_unsatisfied_meta=(
                 # String object.
                 HintPithUnsatisfiedMetadata(
                     'Empirical Ṗath after‐mathematically harvesting agro‐'),
@@ -429,11 +423,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=HINT_PEP484_FORWARDREF_TYPE(
                 _TEST_PEP484_FORWARDREF_CLASSNAME),
             pep_sign=HintSignForwardRef,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Instance of the class referred to by this reference.
                 HintPithSatisfiedMetadata(_TEST_PEP484_FORWARDREF_TYPE()),
-            ),
-            piths_unsatisfied_meta=(
                 # String object.
                 HintPithUnsatisfiedMetadata('Silvicultures of'),
             ),
@@ -449,14 +441,15 @@ def add_data(data_module: 'ModuleType') -> None:
             # Type variable instances are directly declared by the "typing"
             # module *ONLY* under Python 3.6.
             is_typing=IS_PYTHON_3_6,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Builtin "int" class itself.
                 HintPithSatisfiedMetadata(int),
                 # String constant.
                 HintPithSatisfiedMetadata('Oblate weapon Stacks (actually'),
+                # By definition, all objects satisfy all unbounded type
+                # variables. Ergo, we define *NO* "HintPithSatisfiedMetadata"
+                # objects here.
             ),
-            # By definition, all objects satisfy all unbounded type variables.
-            piths_unsatisfied_meta=(),
         ),
 
         # ................{ UNSUBSCRIPTED ~ typevar : bound   }................
@@ -466,13 +459,11 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('We were mysteries, unwon'),
                 # Byte string constant.
                 HintPithSatisfiedMetadata(b'We donned apportionments'),
-            ),
-            piths_unsatisfied_meta=(
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(0x8BADF00D),  # <-- 2343432205
                 # List of string constants.
@@ -490,14 +481,12 @@ def add_data(data_module: 'ModuleType') -> None:
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_typing=IS_PYTHON_3_6,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Prim (or'),
                 # Byte string constant.
                 HintPithSatisfiedMetadata(
                     b'Primely positional) Quality inducements'),
-            ),
-            piths_unsatisfied_meta=(
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(0xABADBABE),  # <-- 2880289470
                 # List of string constants.
@@ -515,11 +504,9 @@ def add_data(data_module: 'ModuleType') -> None:
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_typing=IS_PYTHON_3_6,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(0x0B00B135),  # <-- 184594741
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Light‐expectorating, aspectant '
@@ -536,11 +523,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
             isinstanceable_type=collections_abc.Callable,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Lambda function returning a string constant.
                 HintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('...grant we heal'),
             ),
@@ -552,7 +537,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=ContextManager[str],
             pep_sign=HintSignContextManager,
             isinstanceable_type=contextlib.AbstractContextManager,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Context manager.
                 HintPithSatisfiedMetadata(
                     pith=lambda: context_manager_factory(
@@ -560,8 +545,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     is_context_manager=True,
                     is_pith_factory=True,
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('We donned apportionments'),
             ),
@@ -575,14 +558,12 @@ def add_data(data_module: 'ModuleType') -> None:
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
             isinstanceable_type=dict,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Dictionary containing arbitrary key-value pairs.
                 HintPithSatisfiedMetadata({
                     'Of':         'our disappointment’s purse‐anointed ire',
                     'Offloading': '1. Coffer‐bursed statehood ointments;',
                 }),
-            ),
-            piths_unsatisfied_meta=(
                 # Set containing arbitrary items.
                 HintPithUnsatisfiedMetadata({
                     '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
@@ -596,14 +577,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Dict[int, str],
             pep_sign=HintSignDict,
             isinstanceable_type=dict,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Dictionary mapping integer keys to string values.
                 HintPithSatisfiedMetadata({
                     1: 'For taxing',
                     2: "To a lax and golden‐rendered crucifixion, affix'd",
                 }),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'To that beep‐prattling, LED‐ and lead-rattling crux'),
@@ -616,14 +595,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignDict,
             isinstanceable_type=dict,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Dictionary mapping string keys to integer values.
                 HintPithSatisfiedMetadata({
                     'Less-ons"-chastened': 2,
                     'Chanson': 1,
                 }),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Swansong.'),
             ),
@@ -642,14 +619,12 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=Pep484GenericUnsubscriptedSingle,
             # is_args=False,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(Pep484GenericUnsubscriptedSingle((
                     'Ibid., incredibly indelible, edible craws a',
                     'Of a liturgically upsurging, Θṙgiast‐ic holiness, and',
                 ))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'To pare their geognostic screeds'),
@@ -668,14 +643,12 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=Pep484GenericUntypevaredSingle,
             # is_args=True,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(Pep484GenericUntypevaredSingle((
                     'Forgive our Vocation’s vociferous publications',
                     'Of',
                 ))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Hourly sybaritical, pub sabbaticals'),
@@ -694,11 +667,9 @@ def add_data(data_module: 'ModuleType') -> None:
             generic_type=Pep484GenericTypevaredSingle,
             is_typevars=True,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic.
                 HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'An arterially giving, triage nature — '
@@ -720,11 +691,9 @@ def add_data(data_module: 'ModuleType') -> None:
             # There's not much we can or should do about this, so we accept it.
             is_type_typing=IS_PYTHON_AT_LEAST_3_7,
             is_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic.
                 HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Token welfare’s malformed keening fare, keenly despaired'
@@ -740,14 +709,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericUntypevaredMultiple,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
                 HintPithSatisfiedMetadata(Pep484GenericUntypevaredMultiple((
                     'Into a viscerally Eviscerated eras’ meditative hallways',
                     'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                 ))),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Initiations'),
                 # 2-tuple of string constants.
@@ -766,7 +733,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # is_args=False,
             is_typevars=True,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic iterable of string constants.
                 HintPithSatisfiedMetadata(
                     Pep484GenericTypevaredShallowMultiple((
@@ -774,8 +741,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'In us, Leviticus‐confusedly drunk',
                     )),
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata("In Usufructose truth's"),
             ),
@@ -790,7 +755,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # is_args=False,
             is_typevars=True,
             is_type_typing=False,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata(
@@ -805,8 +770,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         ),
                     )),
                 ),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Invitations'),
             ),
@@ -817,7 +780,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[Pep484GenericUntypevaredMultiple],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
@@ -830,8 +793,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Power-with)',
                     )),
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'that forced triforced, farcically carcinogenic Obelisks'),
@@ -853,7 +814,7 @@ def add_data(data_module: 'ModuleType') -> None:
             isinstanceable_type=list,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
                 # Listing containing arbitrary items.
@@ -862,8 +823,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Laxity, and taxonomic attainment',
                     3,
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Of acceptance.'),
                 # Tuple containing arbitrary items.
@@ -880,7 +839,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[object],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
                 # List of arbitrary objects.
@@ -889,8 +848,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Of actuarial postponement',
                     23.75,
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Of actual change elevating alleviation — that'),
@@ -902,7 +859,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[str],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
                 # List of strings.
@@ -910,8 +867,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Ously overmoist, ov‐ertly',
                     'Deverginating vertigo‐originating',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
                 # List containing exactly one integer. Since list items are
@@ -938,7 +893,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
                 # List of strings.
@@ -946,8 +901,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Lesion this ice-scioned',
                     'Legion',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Lest we succumb, indelicately, to'),
@@ -969,11 +922,9 @@ def add_data(data_module: 'ModuleType') -> None:
             #   closures of the pure-Python function type -- which is *NOT*
             #   declared by the "typing" module.
             is_type_typing=IS_PYTHON_AT_LEAST_3_10,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Ishmælite‐ish, aberrant control'),
-            ),
-            piths_unsatisfied_meta=(
                 # Tuple of string constants.
                 HintPithUnsatisfiedMetadata((
                     'Of Common Street‐harrying barrens',
@@ -990,14 +941,12 @@ def add_data(data_module: 'ModuleType') -> None:
             isinstanceable_type=RegexMatchType,
             is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
             is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Regular expression match of one or more string constants.
                 HintPithSatisfiedMetadata(re.search(
                     r'\b[a-z]+ance[a-z]+\b',
                     'æriferous Elements’ dance, entranced',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Formless, demiurgic offerings, preliminarily,'),
@@ -1009,14 +958,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Match[str],
             pep_sign=HintSignMatch,
             isinstanceable_type=RegexMatchType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Regular expression match of one or more string constants.
                 HintPithSatisfiedMetadata(re.search(
                     r'\b[a-z]+itiat[a-z]+\b',
                     'Vitiating novitiate Succubæ – a',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Into Elitistly'),
             ),
@@ -1030,12 +977,10 @@ def add_data(data_module: 'ModuleType') -> None:
             isinstanceable_type=RegexCompiledType,
             is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
             is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Regular expression string pattern.
                 HintPithSatisfiedMetadata(
                     re.compile(r'\b[A-Z]+ANCE[A-Z]+\b')),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Legal indiscretions'),
             ),
@@ -1046,12 +991,10 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pattern[str],
             pep_sign=HintSignPattern,
             isinstanceable_type=RegexCompiledType,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Regular expression string pattern.
                 HintPithSatisfiedMetadata(
                     re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Obsessing men'),
             ),
@@ -1065,13 +1008,11 @@ def add_data(data_module: 'ModuleType') -> None:
             isinstanceable_type=type,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Transitive superclass of all superclasses.
                 HintPithSatisfiedMetadata(object),
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(str),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Samely:'),
             ),
@@ -1083,11 +1024,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[Any],
             pep_sign=HintSignType,
             isinstanceable_type=type,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(bool),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
             ),
@@ -1099,11 +1038,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[type],
             pep_sign=HintSignType,
             isinstanceable_type=type,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(complex),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Had al-'),
             ),
@@ -1114,11 +1051,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[Class],
             pep_sign=HintSignType,
             isinstanceable_type=type,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass of this class.
                 HintPithSatisfiedMetadata(Subclass),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Namely,'),
                 # Non-subclass of this class.
@@ -1131,11 +1066,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[_TEST_PEP484_FORWARDREF_CLASSNAME],
             pep_sign=HintSignType,
             isinstanceable_type=type,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Subclass of this class.
                 HintPithSatisfiedMetadata(SubclassSubclass),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
                 # Non-subclass of this class.
@@ -1148,13 +1081,11 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Type[Union[Class, OtherClass,]],
             pep_sign=HintSignType,
             isinstanceable_type=type,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Arbitrary subclass of one class subscripting this hint.
                 HintPithSatisfiedMetadata(Subclass),
                 # Arbitrary subclass of another class subscripting this hint.
                 HintPithSatisfiedMetadata(OtherSubclass),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Jabberings'),
                 # Non-subclass of any classes subscripting this hint.
@@ -1168,11 +1099,9 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignType,
             isinstanceable_type=type,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(int),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Obligation, and'),
             ),
@@ -1187,14 +1116,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple,
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing arbitrary items.
                 HintPithSatisfiedMetadata((
                     'a Steely dittied',
                     'Steel ‘phallus’ ballast',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # List containing arbitrary items.
                 HintPithUnsatisfiedMetadata([
                     'In this Tellus‐cloistered, pre‐mature pop nomenclature',
@@ -1216,11 +1143,9 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[()],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty tuple.
                 HintPithSatisfiedMetadata(()),
-            ),
-            piths_unsatisfied_meta=(
                 # Non-empty tuple containing arbitrary items.
                 HintPithUnsatisfiedMetadata(
                     pith=(
@@ -1241,14 +1166,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[Any, object,],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing arbitrary items.
                 HintPithSatisfiedMetadata((
                     'Surseance',
                     'Of sky, the God, the surly',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Tuple containing fewer items than required.
                 HintPithUnsatisfiedMetadata(
                     pith=('Obeisance',),
@@ -1266,7 +1189,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[float, Any, str,],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing a floating-point number, string, and integer
                 # (in that exact order).
                 HintPithSatisfiedMetadata((
@@ -1274,8 +1197,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Of an apoptosic T.A.R.P.’s torporific‐riven ecocide',
                     "Nightly tolled, pindololy, ol'",
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Jangling (brinkmanship “Ironside”) jingoisms'),
@@ -1315,7 +1236,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[Tuple[float, Any, str,], ...],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing tuples containing a floating-point number,
                 # string, and integer (in that exact order).
                 HintPithSatisfiedMetadata((
@@ -1330,8 +1251,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Towards a timely, wines‐enticing gate',
                     ),
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Tuple containing a tuple containing fewer items than
                 # required.
                 HintPithUnsatisfiedMetadata((
@@ -1369,15 +1288,13 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
                 HintPithSatisfiedMetadata((
                     33.77,
                     'Legal indiscretions',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata('Leisurely excreted by'),
                 # Tuple containing fewer items than required.
@@ -1393,14 +1310,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Tuple[str, ...],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
                     'Of a scantly raptured Overture,'
                     'Ur‐churlishly',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Of Toll‐descanted grant money'),
@@ -1427,14 +1342,12 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
             is_typevars=True,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
                     'Loquacious s‐age, salaciously,',
                     'Of regal‐seeming, freemen‐sucking Hovels, a',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Concubine enthralling contractually novel'),
@@ -1474,7 +1387,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Union[int, Sequence[str]],
             pep_sign=HintSignUnion,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(21),
                 # Sequence of string items.
@@ -1482,8 +1395,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'To claim all ͼarth a number, penumbraed'
                     'By blessed Pendragon’s flagon‐bedraggling constancies',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Floating-point constant.
                 #
                 # Note that a string constant is intentionally *NOT* listed
@@ -1532,7 +1443,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Union[dict, float, int,
                 Sequence[Union[dict, float, int, MutableSequence[str]]]],
             pep_sign=HintSignUnion,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Empty dictionary.
                 HintPithSatisfiedMetadata({}),
                 # Floating-point number constant.
@@ -1557,8 +1468,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Denuded hierography, professedly, to emulate ascen-',
                     ],
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Complex number constant.
                 HintPithUnsatisfiedMetadata(
                     pith=356+260j,
@@ -1617,8 +1526,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        #FIXME: Actually list various "piths_satisfied_meta" and
-        #"piths_unsatisfied_meta" here, please.
+        #FIXME: Actually list two or more "piths_meta" here, please.
         # Union of one non-"typing" type and one concrete generic.
         HintPepMetadata(
             hint=Union[str, Iterable[Tuple[S, T]]],
@@ -1635,14 +1543,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=List[Union[int, str,]],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # List containing a mixture of integer and string constants.
                 HintPithSatisfiedMetadata([
                     'Un‐seemly preening, pliant templar curs; and',
                     272,
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Un‐seemly preening, pliant templar curs; and',
@@ -1686,15 +1592,13 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Sequence[Union[str, ByteString]],
             pep_sign=HintSignSequence,
             isinstanceable_type=collections_abc.Sequence,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata((
                     b'For laconically formulaic, knavish,',
                     u'Or sordidly sellsword‐',
                     f'Horded temerities, bravely unmerited',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(
                     pith=7898797,
@@ -1734,14 +1638,12 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=MutableSequence[Union[ByteString, Callable]],
             pep_sign=HintSignMutableSequence,
             isinstanceable_type=collections_abc.MutableSequence,
-            piths_satisfied_meta=(
+            piths_meta=(
                 # Mutable sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata([
                     b"Canonizing Afrikaans-kennelled Mine canaries,",
                     lambda: 'Of a floridly torrid, hasty love — that league',
                 ]),
-            ),
-            piths_unsatisfied_meta=(
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     pith='Effaced.',
@@ -1804,7 +1706,7 @@ def add_data(data_module: 'ModuleType') -> None:
             #   "Optional" attribute under older Python versions.
             pep_sign=(
                 HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
-            piths_satisfied_meta=(
+            piths_meta=(
                 # None singleton.
                 HintPithSatisfiedMetadata(None),
                 # Sequence of string items.
@@ -1812,8 +1714,6 @@ def add_data(data_module: 'ModuleType') -> None:
                     'Of cuticular currents (...wide, wildly articulate,',
                     'And canting free, physico-stipulatingly) -',
                 )),
-            ),
-            piths_unsatisfied_meta=(
                 # Floating-point constant.
                 #
                 # Note that a string constant is intentionally *NOT* listed
@@ -1849,7 +1749,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 hint=Hashable,
                 pep_sign=HintSignHashable,
                 isinstanceable_type=collections_abc.Hashable,
-                piths_satisfied_meta=(
+                piths_meta=(
                     # String constant.
                     HintPithSatisfiedMetadata(
                         "Oh, importunate Θ Fortuna'd afforded"),
@@ -1858,8 +1758,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Us vis‐a‐vis conduit fjords',
                         'Of weal‐th, and well‐heeled,',
                     )),
-                ),
-                piths_unsatisfied_meta=(
                     # List of string constants.
                     HintPithUnsatisfiedMetadata([
                         'Oboes‐obsoleting tines',
@@ -1873,7 +1771,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 hint=Sized,
                 pep_sign=HintSignSized,
                 isinstanceable_type=collections_abc.Sized,
-                piths_satisfied_meta=(
+                piths_meta=(
                     # String constant.
                     HintPithSatisfiedMetadata('Faire, a'),
                     # Tuple of string constants.
@@ -1881,8 +1779,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Farthing scrap',
                         'Of comfort’s ‘om’‐Enwrapped, rapt appeal — that',
                     )),
-                ),
-                piths_unsatisfied_meta=(
                     # Boolean constant.
                     HintPithUnsatisfiedMetadata(False),
                 ),
@@ -1902,7 +1798,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     pep_sign=HintSignGeneric,
                     generic_type=Pep484GenericUnsubscriptedSingle,
                     is_type_typing=False,
-                    piths_satisfied_meta=(
+                    piths_meta=(
                         # Subclass-specific generic list of string constants.
                         HintPithSatisfiedMetadata(
                             Pep484GenericUnsubscriptedSingle((
@@ -1910,8 +1806,6 @@ def add_data(data_module: 'ModuleType') -> None:
                                 'To blubber‐lubed Bacchus — hustling',
                             ))
                         ),
-                    ),
-                    piths_unsatisfied_meta=(
                         # String constant.
                         HintPithUnsatisfiedMetadata('O’ the frock'),
                         # List of string constants.
