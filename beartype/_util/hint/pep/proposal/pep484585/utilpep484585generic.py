@@ -127,10 +127,10 @@ def get_hint_pep484585_generic_bases_unerased(
 
     **This function returns tuples possibly containing a mixture of actual
     superclasses and pseudo-superclasses superficially masquerading as actual
-    superclasses subscripted by one or more PEP-compliant child hints,**
-    including type variables (e.g., ``(typing.Iterable[T], typing.Sized[T])``).
-    In particular, most public attributes of the :mod:`typing` module used as
-    superclasses are *not* actually types but singleton objects devilishly
+    superclasses subscripted by one or more PEP-compliant child hints or type
+    variables** (e.g., ``(typing.Iterable[T], typing.Sized[T])``). Indeed, most
+    type hints used as superclasses produced by subscripting PEP-compliant type
+    hint factories are *not* actually types but singleton objects devilishly
     masquerading as types. Most actual :mod:`typing` superclasses are private,
     fragile, and prone to alteration or even removal between Python versions.
 
@@ -260,9 +260,6 @@ def get_hint_pep484585_generic_bases_unerased(
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep484585_generic_bases_unerased)
-        >>> get_hint_pep484585_generic_bases_unerased(
-        ...     typing.Union[str, typing.List[int]])
-        ()
         >>> T = typing.TypeVar('T')
         >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
         >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
@@ -335,8 +332,7 @@ def get_hint_pep484585_generic_type(
 
     * If this hint originates from an **origin type** (i.e., isinstanceable
       class such that *all* objects satisfying this hint are instances of that
-      class), regardless of whether this hint is already a class, this origin
-      type.
+      class), this type regardless of whether this hint is already a class.
     * Else if this hint is already a class, this hint as is.
     * Else, raise an exception.
 
@@ -410,8 +406,7 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
 
     * If this hint originates from an **origin type** (i.e., isinstanceable
       class such that *all* objects satisfying this hint are instances of that
-      class), regardless of whether this hint is already a class, this origin
-      type.
+      class), this type regardless of whether this hint is already a class.
     * Else if this hint is already a class, this hint as is.
     * Else, ``None``.
 

@@ -116,12 +116,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         # exists little benefit to doing so.
         return hint_bases_erased and any(
             is_hint_pep585_builtin(hint_base_erased)
-
-            #FIXME: Remove the "type: ignore[union-attr]" comment and debug why
-            #mypy 0.920 is failing *WITHOUT* that comment. We're currently on
-            #mypy 0.910 locally and thus *CANNOT* debug this yet. We've only
-            #temporarily squelched this mypy error to get CI worky again. O{}
-            for hint_base_erased in hint_bases_erased  # type: ignore[union-attr]
+            for hint_base_erased in hint_bases_erased
         )
 
 # Else, the active Python interpreter targets at most Python < 3.9 and thus

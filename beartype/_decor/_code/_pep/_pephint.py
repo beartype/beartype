@@ -1696,28 +1696,27 @@ def pep_code_check_hint(
                     #we just need this to work. So it goes, uneasy code
                     #bedfellows.
 
-                    # If this hint is *NOT* a class, this hint is *NOT* an
-                    # unsubscripted generic but could still be a generic
-                    # subscripted by one or more PEP-compliant child hints.
-                    #
-                    # To decide, reduce this hint to the object originating
-                    # this hint if any, enabling the subsequent assertion to
-                    # assert whether this origin object is an unsubscripted
-                    # generic, which would then imply this hint to be a
-                    # subscripted generic. If this strikes you as insane,
-                    # you're not alone.
+                    # Reduce this hint to the object originating this generic
+                    # if any. Specifically:
+                    # * If this hint is an unsubscripted generic (e.g.,
+                    #   "typing.IO"), preserve this hint as is. In this case,
+                    #   this hint is a standard isinstanceable class.
+                    # * If this hint is a subscripted generic (e.g.,
+                    #   "typing.IO[str]"), reduce this hint to the object
+                    #   originating this generic (e.g., "typing.IO"). Note that
+                    #   that object is typically but *NOT* necessarily a
+                    #   standard isinstanceable class. If that object is itself
+                    #   an unsubscripted generic, then this hint must have been
+                    #   a subscripted generic. If that strikes you as insane,
+                    #   you're not alone.
                     hint_curr = get_hint_pep484585_generic_type(
-                        hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX,
-                    )
+                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
                     # Tuple of the one or more unerased pseudo-superclasses
                     # originally listed as superclasses prior to their type
                     # erasure by this generic.
                     hint_childs = get_hint_pep484585_generic_bases_unerased(
-                        hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX,
-                    )
+                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.
@@ -1738,31 +1737,38 @@ def pep_code_check_hint(
                             continue
                         # Else, this pseudo-superclass is *NOT* a class.
                         #
-                        # If this pseudo-superclass is neither a PEP
-                        # 585-compliant type hint *NOR* a PEP-compliant type
-                        # hint defined by the "typing" module, this
-                        # pseudo-superclass *MUST* be a user-defined
-                        # pseudo-superclass *NOT* compliant with PEP
-                        # 585. In this case, reduce this pseudo-superclass to
-                        # the corresponding actual superclass originating
-                        # this pseudo-superclass. Note that:
-                        # * This horrible, irrational, and unintuitive edge
-                        #   case arises *ONLY* for user-defined PEP
-                        #   484-compliant generics and PEP 544-compliant
-                        #   protocols subclassing another user-defined generic
-                        #   or protocol superclass subscripted by one or more
-                        #   type variables: e.g.,
+                        # If this pseudo-superclass is a user-defined PEP 484-
+                        # or 544-compliant object that is neither...
+                        elif not (
+                            # A PEP 585-compliant pseudo-superclass *NOR*...
+                            is_hint_pep585_builtin(hint_child) and
+                            # A PEP 484- nor 544-compliant pseudo-superclass
+                            # defined by the "typing" module...
+                            is_hint_pep_typing(hint_child)
+                        ):
+                        # Then this pseudo-superclass *MUST* be a user-defined
+                        # pseudo-superclass *NOT* compliant with PEP 585. In
+                        # this case, reduce this pseudo-superclass to the
+                        # corresponding actual superclass originating this
+                        # pseudo-superclass.
+                        #
+                        # Note that this horrible, irrational, and unintuitive
+                        # edge case arises *ONLY* for user-defined PEP
+                        # 484-compliant generics and PEP 544-compliant
+                        # protocols subclassing another user-defined generic or
+                        # protocol superclass subscripted by type variables:
                         #     >>> import typing as t
                         #     >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
                         #     >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
                         #     >>> UserSubprotocol.__orig_bases__
-                        #     (UserProtocol[bytes], typing.Protocol)
+                        #     (UserProtocol[str], typing.Protocol)
                         #     >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
                         #     >>> UserProtocolUnerased is UserProtocol
                         #     False
                         #     >>> isinstance(UserProtocolUnerased, type)
                         #     False
-                        # * PEP 585-compliant generics suffer no such issues:
+                        #
+                        # PEP 585-compliant generics suffer no such issues:
                         #     >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
                         #     >>> class UserGeneric(list[int]): pass
                         #     >>> class UserSubgeneric(UserGeneric[int]): pass
@@ -1776,19 +1782,19 @@ def pep_code_check_hint(
                         #     >>> is_hint_pep585_builtin(UserGenericUnerased)
                         #     True
                         #
-                        # Walking up the unerased inheritance hierarchy for
-                        # this generic or protocol iteratively visits the
-                        # user-defined generic or protocol pseudo-superclass
-                        # subscripted by one or more type variable. Due to
-                        # poorly defined obscurities in the "typing"
-                        # implementation, this pseudo-superclass is *NOT*
+                        # Iteratively walking up the unerased inheritance
+                        # hierarchy for this generic or protocol subclass will
+                        # visit its user-defined generic or protocol
+                        # pseudo-superclass subscripted by type variables. Due
+                        # to poorly defined obscurities in the "typing"
+                        # implementation, that pseudo-superclass is *NOT*
                         # actually a class but rather an instance of a private
                         # "typing" class (e.g., "typing._SpecialForm").
                         #
-                        # Ergo, this pseudo-superclass will be subsequently
-                        # detected as neither a generic nor "typing" object and
-                        # thus raise exceptions. Our only recourse is to
-                        # silently reduce this hint into the erased superclass
+                        # Ergo, that pseudo-superclass will be subsequently
+                        # detected as neither a generic nor a "typing" object
+                        # and thus raise exceptions. Our only recourse is to
+                        # silently reduce this hint to the erased superclass
                         # to which the "typing" module previously transformed
                         # this hint (e.g., "UserProtocol" above). This is
                         # slightly non-ideal, as this erased superclass is an
@@ -1805,21 +1811,78 @@ def pep_code_check_hint(
                         # current approach only introduces mild runtime
                         # inefficiencies while preserving sanity throughout
                         # this algorithm.
+
+                        #FIXME: *RIGHTY.* So, we clearly need to stop doing
+                        #this -- because the "mild runtime inefficiencies"
+                        #introduced by this approach unsurprisingly turn out to
+                        #be not so mild but certainly inefficient in the
+                        #aggregate. We're absolutely *NOT* deeply refactoring
+                        #"...this whole algorithm to support the notion of
+                        #child hints that should be ignored for purposes of
+                        #type-checking but nonetheless recursed into" as
+                        #suggested above, because that would be needlessly dumb
+                        #and introduce even *MORE* inefficiency at decoration
+                        #time. Instead, we probably want to embed the above
+                        #calls to get_hint_pep484585_generic_type() and
+                        #get_hint_pep484585_generic_bases_unerased() in an
+                        #efficient recursion-by-iteration for loop deeply
+                        #iteratively visiting all objects visitable from
+                        #repeated calls to
+                        #get_hint_pep484585_generic_bases_unerased() until
+                        #eventually hitting ignorable superclasses (e.g.,
+                        #"typing.Generic", "typing.Protocol", "object"). Doing
+                        #so will require:
+                        #* Conditionally acquiring a new fixed list of
+                        #  reasonably small length (say, between [64, 256]
+                        #  items) containing *ALL* non-ignorable
+                        #  pseudo-superclasses of the current generic -- all
+                        #  the way up the inheritance hierarchy.
+                        #* Initializing that list to the contents of
+                        #  get_hint_pep484585_generic_bases_unerased(hint_curr).
+                        #* In a "while" loop:
+                        #  * Visit each item of this list.
+                        #  * If that item is an isinstanceable class, *IGNORE
+                        #    THAT ITEM.*
+                        #  * If that item is itself an erased PEP 484 or 585
+                        #    generic:
+                        #    * Append the contents of
+                        #      get_hint_pep484585_generic_bases_unerased(hint_child)
+                        #      to this list.
+                        #    * Additionally, if that item satisfies this
+                        #      condition we are currently commenting in here
+                        #      (i.e., is a user-defined pseudo-superclass *NOT*
+                        #      compliant with PEP 585), *IGNORE THAT ITEM.*
+                        #  Note that "*IGNORE THAT ITEM*" means remove that
+                        #  item from this list. Of course, the easiest way to
+                        #  remove an item is to never add that item to this
+                        #  list in the first place, which suggests we really
+                        #  need *TWO* lists to implement this:
+                        #  * An input list of objects to visit enabling us to
+                        #    non-recursively implement this search.
+                        #  * An output list of all non-ignorable objects
+                        #    visited during this search. Note this list should
+                        #    contain *NO* subscripted or unsubscripted generics
+                        #    or protocols, because those objects and classes
+                        #    convey *NO* meaningful semantics with respect to
+                        #    type-checking and are thus entirely ignorable
+                        #    here.
+                        #  Look. Just do it, eh? This just needs to work. O_o
+                        #* Releasing this list.
                         #
-                        # Specifically, perform this awful reduction *ONLY* if
-                        # this pseudo-superclass is a PEP 484- or 544-compliant
-                        # user-defined pseudo-superclass that is neither...
-                        elif not (
-                            # A PEP 585-compliant pseudo-superclass *NOR*...
-                            is_hint_pep585_builtin(hint_child) and
-                            # A PEP 484- or 544-compliant pseudo-superclass
-                            # defined by the "typing" module.
-                            is_hint_pep_typing(hint_child)
-                        ):
+                        #That logic sounds fairly intense, so... we probably
+                        #want to offload that to a new memoized getter in the
+                        #"utilpep484585generic" submodule. The advantage of
+                        #that approach, of course, is that we could then
+                        #trivially unit test that getter first to make sure
+                        #everything behaves soundly *BEFORE* attempting to
+                        #integrate that logic here. *RIGHTY.* Let's do this!
+                        #FIXME: Consider removing the
+                        #get_hint_pep484_generic_base_erased_from_unerased()
+                        #getter entirely if no longer required.
                             hint_child = get_hint_pep484_generic_base_erased_from_unerased(
                                 hint_child)
-                        # Else, this pseudo-superclass is defined by the "typing"
-                        # module.
+                        # Else, this pseudo-superclass is defined by the
+                        # "typing" module.
 
                         # If this superclass is ignorable, do so.
                         if is_hint_ignorable(hint_child):
