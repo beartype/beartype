@@ -531,6 +531,8 @@ def _make_func_wrapper_signature(
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
+    from beartype._util.text.utiltextrepr import represent_object
+
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above
     # calls to the _code_check_args() and _code_check_return() functions.
@@ -557,7 +559,10 @@ def _make_func_wrapper_signature(
             # # For debuggability, additionally suffix this parameter by a
             # # comment embedding the machine-readable representation of this
             # # value, stripped of newline and truncated to a reasonable length.
-            # f' # is {represent_object(arg_value)}\n'
+            # f' # is {represent_object(arg_value)}'
+
+            # Newline for readability.
+            f'\n'
         )
         for arg_name, arg_value in bear_call.func_wrapper_locals.items()
     )

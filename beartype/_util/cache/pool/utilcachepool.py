@@ -227,7 +227,7 @@ class KeyPool(object):
             # If this item was *NOT* previously acquired, raise an exception.
             if not self._pool_item_id_to_is_acquired.get(item_id, False):
                 raise _BeartypeUtilCachedKeyPoolException(
-                    f'Key pool unacquired item {repr(item)} not releasable.')
+                    f'Unacquired key pool item {repr(item)} not releasable.')
 
             # Record this item to have now been released.
             self._pool_item_id_to_is_acquired[item_id] = False
