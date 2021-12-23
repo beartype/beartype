@@ -15,8 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from io import StringIO
-from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_key_pool_pass() -> None:
@@ -28,6 +26,8 @@ def test_key_pool_pass() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
     from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
+    from io import StringIO
+    from pytest import raises
 
     # Key pool to be tested, seeding empty pools keyed on the "newline"
     # parameter passed to the StringIO.__init__() method with a new "StringIO"
@@ -42,7 +42,7 @@ def test_key_pool_pass() -> None:
     key_pool = KeyPool(item_maker=lambda newline: StringIO(newline=newline))
 
     # Acquire a new "StringIO" buffer writing Windows-style newlines.
-    windows_stringio = key_pool.acquire(key='\r\n')
+    windows_stringio = key_pool.acquire(key='\r\n', is_debug=True)
 
     # Stanzas delimited by Windows-style newlines to be tested below.
     THE_DEAD_SHALL_BE_RAISED_INCORRUPTIBLE = '\r\n'.join((
@@ -71,18 +71,18 @@ def test_key_pool_pass() -> None:
     # newlines in the resulting string.
     assert (
         windows_stringio.getvalue() == THE_DEAD_SHALL_BE_RAISED_INCORRUPTIBLE)
-    
+
     # Release this buffer back to its parent pool.
-    key_pool.release(key='\r\n', item=windows_stringio)
+    key_pool.release(key='\r\n', item=windows_stringio, is_debug=True)
 
     # Reacquire the same buffer.
-    windows_stringio_too = key_pool.acquire(key='\r\n')
+    windows_stringio_too = key_pool.acquire(key='\r\n', is_debug=True)
 
     # Confirm the release-require cycle returns the same object
     assert windows_stringio is windows_stringio_too
 
     # Acquire another new "StringIO" buffer writing Windows-style newlines.
-    windows_stringio_new = key_pool.acquire(key='\r\n')
+    windows_stringio_new = key_pool.acquire(key='\r\n', is_debug=True)
 
     # Assert this to *NOT* be the same buffer.
     assert windows_stringio is not windows_stringio_new
@@ -99,13 +99,14 @@ def test_key_pool_pass() -> None:
     assert windows_stringio_new.getvalue() == BOOK_OF_NIGHTMARES
 
     # Release these buffers back to their parent pools (in acquisition order).
-    key_pool.release(key='\r\n', item=windows_stringio)
-    key_pool.release(key='\r\n', item=windows_stringio_new)
-    
+    key_pool.release(key='\r\n', item=windows_stringio, is_debug=True)
+    key_pool.release(key='\r\n', item=windows_stringio_new, is_debug=True)
+
     # Confirm the above object is released AND that releasing an already
-	# released object elicits a roar. 
+    # released object with debugging logic enabled elicits a roar.
     with raises(_BeartypeUtilCachedKeyPoolException):
-        key_pool.release(key='\r\n', item=windows_stringio_new)
+        key_pool.release(key='\r\n', item=windows_stringio_new, is_debug=True)
+
 
 def test_key_pool_fail() -> None:
     '''
@@ -116,15 +117,18 @@ def test_key_pool_fail() -> None:
     # Defer heavyweight imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
     from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
-    
+    from pytest import raises
+
     # Key pool to be tested, seeding empty pools with the identity function.
     key_pool = KeyPool(item_maker=lambda key: key)
 
     # Verify using an unhashable key to acquire a new object throws a TypeError
     with raises(TypeError):
-        key_pool.acquire(['Lieutenant!', 'This corpse will not stop burning!'])
-        
+        key_pool.acquire(
+            ['Lieutenant!', 'This corpse will not stop burning!'],
+            is_debug=True,
+        )
+
     # Verify releasing a non-existent object elicits a roar
     with raises(_BeartypeUtilCachedKeyPoolException):
-        key_pool.release(key="I should roar", item=object())
-
+        key_pool.release(key='I should roar', item=object(), is_debug=True)

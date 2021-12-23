@@ -11,6 +11,16 @@ the same list are typically of the same type).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Conditionally pass "is_debug=True" to the KeyPool.{acquire,release}()
+#methods defined below when the "BeartypeConfig.is_debug" parameter is "True"
+#for the current call to the @beartype decorator, please.
+
+#FIXME: Optimize the KeyPool.{acquire,release}() methods defined below. Rather
+#than unconditionally wrapping the bodies of each in a thread-safe
+#"self._thread_lock" context manager, we might be able to leverage the GIL by
+#only doing so "if threading.active_count():". Profile us up, please.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
 from collections import defaultdict
@@ -119,7 +129,13 @@ class KeyPool(object):
         self._thread_lock = Lock()
 
     # ..................{ METHODS                           }..................
-    def acquire(self, key: Hashable = None) -> object:
+    def acquire(
+        self,
+
+        # Optional parameters.
+        key: Hashable = None,
+        is_debug: bool = False,
+    ) -> object:
         '''
         Acquire an arbitrary object associated with the passed **arbitrary
         key** (i.e., hashable object).
@@ -143,6 +159,10 @@ class KeyPool(object):
         key : Optional[HashableType]
             Hashable object associated with the pool item to be acquired.
             Defaults to ``None``.
+        is_debug : bool, optional
+            ``True`` only if enabling inefficient debugging logic. Notably,
+            enabling this option notes this item to have now been acquired.
+            Defaults to ``False``.
 
         Returns
         ----------
@@ -151,12 +171,33 @@ class KeyPool(object):
 
         Raises
         ----------
-        TypeError
+        :exc:`TypeError`
             If this key is unhashable and thus *not* a key.
         '''
 
         # In a thread-safe manner...
         with self._thread_lock:
+            #FIXME: This logic can *PROBABLY* be optimized into:
+            #    if not is_debug:
+            #        try:
+            #            return self._key_to_pool[key].pop()
+            #        except IndexError:
+            #            return self._pool_item_maker(key)
+            #    else:
+            #        try:
+            #            pool_item = self._key_to_pool[key].pop()
+            #        except IndexError:
+            #            pool_item = self._pool_item_maker(key)
+            #
+            #        # Record this item to have now been acquired.
+            #        self._pool_item_id_to_is_acquired[id(pool_item)] = True
+            #
+            #        return pool_item
+            #
+            #That said, this introduces additional complexity that will require
+            #unit testing. So, only do so if the above is actually profiled as
+            #being faster. It almost certainly is, but let's be certain please.
+
             # List associated with this key.
             #
             # If this is the first access of this key, this "defaultdict"
@@ -176,21 +217,31 @@ class KeyPool(object):
                 # method has been called less frequently than the corresponding
                 # release() method for this key);
                 if pool else
-                # Else, the list associated with this key is empty (i.e.,
-                # this method has been called more frequently than the
-                # corresponding release() method for this key). In this case,
-                # an arbitrary object associated with this key.
+                # Else, the list associated with this key is empty (i.e., this
+                # method has been called more frequently than the release()
+                # method for this key). In this case, an arbitrary object
+                # associated with this key.
                 self._pool_item_maker(key)
             )
 
-            # Record this item to have now been acquired.
-            self._pool_item_id_to_is_acquired[id(pool_item)] = True
+            # If debugging, record this item to have now been acquired.
+            if is_debug:
+                self._pool_item_id_to_is_acquired[id(pool_item)] = True
 
             # Return this item.
             return pool_item
 
 
-    def release(self, item: object, key: Hashable = None) -> None:
+    def release(
+        self,
+
+        # Mandatory parameters.
+        item: object,
+
+        # Optional parameters.
+        key: Hashable = None,
+        is_debug: bool = False,
+    ) -> None:
         '''
         Release the passed object acquired by a prior call to the
         :meth:`acquire` method passed the same passed **arbitrary key** (i.e.,
@@ -208,29 +259,39 @@ class KeyPool(object):
         key : Optional[HashableType]
             Hashable object previously associated with this pool item. Defaults
             to ``None``.
+        is_debug : bool, optional
+            ``True`` only if enabling inefficient debugging logic. Notably,
+            enabling this option raises an exception if this item was *not*
+            previously acquired. Defaults to ``False``.
 
         Raises
         ----------
-        TypeError
+        :exc:`TypeError`
             If this key is unhashable (i.e. *not* a key).
-        _BeartypeUtilCachedKeyPoolException
-            If this pool item was *not* acquired (i.e., returned by a prior
-            call to the :meth:`acquire` method) and thus ineligible for
-            release.
+        :exc:`_BeartypeUtilCachedKeyPoolException`
+            If debugging *and* this pool item was not acquired (i.e., returned
+            by a prior call to the :meth:`acquire` method), in which case this
+            item is ineligible for release.
         '''
 
         # In a thread-safe manner...
         with self._thread_lock:
-            # Integer uniquely identifying this previously acquired pool item.
-            item_id = id(item)
+            # If debugging...
+            if is_debug:
+                # Integer uniquely identifying this previously acquired pool
+                # item.
+                item_id = id(item)
 
-            # If this item was *NOT* previously acquired, raise an exception.
-            if not self._pool_item_id_to_is_acquired.get(item_id, False):
-                raise _BeartypeUtilCachedKeyPoolException(
-                    f'Unacquired key pool item {repr(item)} not releasable.')
+                # If this item was *NOT* previously acquired, raise an
+                # exception.
+                if not self._pool_item_id_to_is_acquired.get(item_id, False):
+                    raise _BeartypeUtilCachedKeyPoolException(
+                        f'Unacquired key pool item {repr(item)} '
+                        f'not releasable.'
+                    )
 
-            # Record this item to have now been released.
-            self._pool_item_id_to_is_acquired[item_id] = False
+                # Record this item to have now been released.
+                self._pool_item_id_to_is_acquired[item_id] = False
 
             # Append this item to the pool associated with this key.
             self._key_to_pool[key].append(item)

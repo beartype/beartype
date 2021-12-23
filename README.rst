@@ -1429,17 +1429,17 @@ integers that are *not* booleans):
    # Type hint matching any non-boolean integer. This day all errata die.
    IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
 
-   # Type-check a list of non-boolean integers summing to a non-boolean
+   # Type-check zero or more non-boolean integers summing to a non-boolean
    # integer. Beartype wills it. So it shall be.
    @beartype
-   def sum_intlist(my_list: list[IntNonbool]) -> IntNonbool:
+   def sum_ints(*args: IntNonbool) -> IntNonbool:
        '''
        I cast thee out, mangy booleans!
 
        You plague these shores no more.
        '''
 
-       return sum(my_list)
+       return sum(args)
 
 Let's next validate **non-string sequences** with beartype validators
 effectively declaring a new ``Sequence - str`` class (i.e., the subclass of all

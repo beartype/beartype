@@ -1835,8 +1835,8 @@ def pep_code_check_hint(
                         hint_child = hint_bases[hint_bases_index_curr]
                         # print(f'generic pseudo-superclass: {repr(hint_child)}')
 
-                        # If this pseudo-superclass is either...
-                        if (
+                        # If this pseudo-superclass is neither...
+                        if not (
                             # A class *OR*...
                             #
                             # This class is effectively ignorable. Why? Because
@@ -1849,12 +1849,9 @@ def pep_code_check_hint(
                             isinstance(hint_child, type) or
                             # An ignorable PEP-compliant type hint...
                             is_hint_ignorable(hint_child)
-                        # Then this pseudo-superclass is ignorable. So, do so.
-                        ):
-                            pass
-                        # Else, this pseudo-superclass is unignorable. In this
+                        # Then this pseudo-superclass is unignorable. In this
                         # case...
-                        else:
+                        ):
                             #FIXME: Unit test up this branch, please.
                             #If this pseudo-superclass is...
                             if (

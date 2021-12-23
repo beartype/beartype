@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-compliant type hint unit tests.**
+**Beartype decorator parameter kind unit tests.**
 
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
-to **PEP-compliant type hints** (i.e., :mod:`beartype`-agnostic annotations
-generically compliant with annotation-centric PEPs).
+all explicitly supported **parameter kinds** (e.g., keyword-only,
+positional-only, variadic positional, variadic keyword).
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -18,7 +18,7 @@ generically compliant with annotation-centric PEPs).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ pass : param : kind       }....................
-def test_pep_param_kind_positional_or_keyword_pass() -> None:
+def test_arg_kind_positional_or_keyword_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     function call passed non-variadic positional and/or keyword parameters
@@ -49,7 +49,7 @@ def test_pep_param_kind_positional_or_keyword_pass() -> None:
     )
 
 
-def test_pep_param_kind_variadic_and_keyword_only_pass() -> None:
+def test_arg_kind_variadic_and_keyword_only_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     function call passed variadic positional parameters followed by a
@@ -94,7 +94,7 @@ def test_pep_param_kind_variadic_and_keyword_only_pass() -> None:
     ))
 
 
-def test_pep_param_kind_variadic_fail() -> None:
+def test_arg_kind_variadic_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for a
     function call passed variadic positional parameters annotated with

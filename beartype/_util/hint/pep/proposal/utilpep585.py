@@ -90,10 +90,13 @@ if IS_PYTHON_AT_LEAST_3_9:
         # hint if this hint is a generic *OR* false otherwise.
         hint_bases_erased = getattr(hint, '__orig_bases__', False)
 
-        # Return true only if this hint satisfies *ALL* of the conditions
-        # delineated below. Specifically, return true only if one or more
-        # pseudo-superclasses originally subclassed by this hint are themselves
-        # PEP 585-compliant type hints.
+        # If this hint subclasses *NO* pseudo-superclasses, this hint *CANNOT*
+        # be a generic. In this case, immediately return false.
+        if not hint_bases_erased:
+            return False
+        # Else, this hint subclasses one or more pseudo-superclasses.
+
+        # For each such pseudo-superclass...
         #
         # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
         # commonality with PEP 484-compliant generics. While the latter are
@@ -114,10 +117,17 @@ if IS_PYTHON_AT_LEAST_3_9:
         # __class_getitem__() dunder method. Since this condition suffices to
         # ensure that this hint is a PEP 585-compliant generic, however, there
         # exists little benefit to doing so.
-        return hint_bases_erased and any(
-            is_hint_pep585_builtin(hint_base_erased)
-            for hint_base_erased in hint_bases_erased
-        )
+        for hint_base_erased in hint_bases_erased:  # type: ignore[union-attr]
+            # If this pseudo-superclass is itself a PEP 585-compliant type
+            # hint, return true.
+            if is_hint_pep585_builtin(hint_base_erased):
+                return True
+            # Else, this pseudo-superclass is *NOT* PEP 585-compliant. In this
+            # case, continue to the next pseudo-superclass.
+
+        # Since *NO* such pseudo-superclasses are PEP 585-compliant, this hint
+        # is *NOT* a PEP 585-compliant generic. In this case, return false.
+        return False
 
 # Else, the active Python interpreter targets at most Python < 3.9 and thus
 # fails to support PEP 585. In this case, fallback to declaring this function
