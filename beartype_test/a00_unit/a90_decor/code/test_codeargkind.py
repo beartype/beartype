@@ -21,8 +21,8 @@ positional-only, variadic positional, variadic keyword).
 def test_arg_kind_positional_or_keyword_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
-    function call passed non-variadic positional and/or keyword parameters
-    annotated with PEP-compliant type hints.
+    callable passed non-variadic positional and/or keyword parameters annotated
+    with PEP-compliant type hints.
     '''
 
     # Defer heavyweight imports.
@@ -37,8 +37,7 @@ def test_arg_kind_positional_or_keyword_pass() -> None:
     ) -> Union[bool, int, str]:
         return ''.join(finally_gone) + finally_done
 
-    # Assert that calling this callable with both positional and keyword
-    # arguments returns the expected return value.
+    # Assert this callable returns the expected value.
     assert special_plan(
         ['When everyone ', 'you have ever loved ', 'is finally gone,'],
         finally_done=(
@@ -52,8 +51,8 @@ def test_arg_kind_positional_or_keyword_pass() -> None:
 def test_arg_kind_variadic_and_keyword_only_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
-    function call passed variadic positional parameters followed by a
-    keyword-only parameter, all annotated with PEP-compliant type hints.
+    callable passed a variadic positional parameter followed by a keyword-only
+    parameter, all annotated with PEP-compliant type hints.
     '''
 
     # Defer heavyweight imports.
@@ -73,8 +72,7 @@ def test_arg_kind_variadic_and_keyword_only_pass() -> None:
             your_special_plan
         )
 
-    # Assert that calling this callable with variadic positional parameters
-    # followed by a keyword-only parameter returns the expected return value.
+    # Assert this callable returns the expected value.
     assert shining_brainless_beacon(
         'When all of your nightmares are for a time obscured',
         'As by a shining brainless beacon',
@@ -94,10 +92,49 @@ def test_arg_kind_variadic_and_keyword_only_pass() -> None:
     ))
 
 
+def test_arg_kind_flexible_and_variadic_keyword_pass() -> None:
+    '''
+    Test successful usage of the :func:`beartype.beartype` decorator for a
+    callable passed one or more mandatory flexible parameters, one or more
+    optional flexible parameters, and a variadic keyword parameter, all
+    annotated with PEP-compliant type hints.
+
+    This test exercises a recent failure in our pre-0.10.0 release cycle:
+        https://github.com/beartype/beartype/issues/78
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from typing import Union
+
+    # Decorated callable to be exercised.
+    @beartype
+    def one_needs_to_have_a_plan(
+        someone_said_who_was_turned: Union[bool, str],
+        away_into_the_shadows: Union[float, str] = 'and who i had believed',
+        **was_sleeping_or_dead,
+    ) -> Union[list, str]:
+        return (
+            someone_said_who_was_turned + '\n' +
+            away_into_the_shadows + '\n' +
+            '\n'.join(was_sleeping_or_dead.values())
+        )
+
+    # Assert this callable returns the expected value.
+    assert one_needs_to_have_a_plan(
+        someone_said_who_was_turned='imagine he said',
+        all_the_flesh_that_is_eaten='the teeth tearing into it',
+    ) == '\n'.join((
+        'imagine he said',
+        'and who i had believed',
+        'the teeth tearing into it',
+    ))
+
+
 def test_arg_kind_variadic_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for a
-    function call passed variadic positional parameters annotated with
+    function call passed a variadic positional parameter annotated with
     PEP-compliant type hints.
     '''
 

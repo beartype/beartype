@@ -53,6 +53,19 @@ def func_args_2_flex_mandatory(
     return 'For here between the man and beast we die.'
 
 
+def func_args_3_flex_mandatory_optional_varkw(
+    and_the_wolf_tracks_her_there: str,
+    how_hideously: str = "Its shapes are heap'd around!",
+    **rude_bare_and_high
+) -> str:
+    '''
+    Arbitrary callable accepting one mandatory flexible parameter, one optional
+    flexible parameter, and one variadic keyword parameter.
+    '''
+
+    return "Ghastly, and scarr'd, and riven.—Is this the scene"
+
+
 def func_args_5_flex_mandatory_varpos_varkw(
     we_are_selfish_men,
     oh_raise_us_up,

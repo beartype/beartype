@@ -410,13 +410,12 @@ def iter_func_args(
     # is_func_arg_variadic_keyword() testers.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # True only if that callable accepts variadic positional or keyword
-    # parameters. For efficiency:
-    # * These tests are inlined from the is_func_arg_variadic_positional() and
-    #   is_func_arg_variadic_keyword() testers.
-    # * We intentionally preserve these booleans as integers. This is so dumb.
-    #   We just can't help ourselves. /shootmefam/
-    is_arg_var_pos = func_codeobj_flags & CO_VARARGS
-    is_arg_var_kw  = func_codeobj_flags & CO_VARKEYWORDS
+    # parameters. For efficiency, these tests are inlined from the
+    # is_func_arg_variadic_positional() and is_func_arg_variadic_keyword()
+    # testers. Yes, this optimization has been profiled to yield joy.
+    is_arg_var_pos = bool(func_codeobj_flags & CO_VARARGS)
+    is_arg_var_kw  = bool(func_codeobj_flags & CO_VARKEYWORDS)
+    # print(f'func.__name__ = {func.__name__}\nis_arg_var_pos = {is_arg_var_pos}\nis_arg_var_kw = {is_arg_var_kw}')
 
     # If that callable accepts *NO* parameters, silently reduce to the empty
     # generator (i.e., noop) for both space and time efficiency. Just. Do. It.
@@ -471,8 +470,7 @@ def iter_func_args(
     #     True
     #     >>> {} is {}
     #     False
-    args_defaults_kwonly = (
-        func.__kwdefaults__ or _ARGS_DEFAULTS_KWONLY_EMPTY)  # type: ignore[attr-defined]
+    args_defaults_kwonly = func.__kwdefaults__ or _ARGS_DEFAULTS_KWONLY_EMPTY  # type: ignore[attr-defined]
 
     # ..................{ LOCALS ~ len                      }..................
     # Number of both optional and mandatory positional-only parameters accepted
@@ -483,8 +481,8 @@ def iter_func_args(
         # of these parameters;
         func_codeobj.co_posonlyargcount  # type: ignore[attr-defined]
         if IS_PYTHON_AT_LEAST_3_8 else
-        # Else, this interpreter targets Python < 3.8 and thus fails to
-        # support PEP 570. In this case, there are *NO* such parameters.
+        # Else, this interpreter targets Python < 3.8 and thus fails to support
+        # PEP 570. In this case, there are *NO* such parameters.
         0
     )
     assert args_len_posonly_or_flex >= args_len_posonly, (
@@ -588,7 +586,16 @@ def iter_func_args(
     # 0-based index of the variadic keyword parameter accepted by that
     # callable in the "args_name" tuple if any *OR* a meaningless value
     # otherwise (i.e., if that callable accepts no such parameter).
-    args_index_var_kw = args_index_var_pos + 1
+    #
+    # Note that we are actually adding a boolean as if it were an integer as a
+    # ridiculously negligible optimization here, *BECAUSE WE CAN.* Notably:
+    # * If that callable accepts *NO* variadic positional parameter, then:
+    #       is_arg_var_pos == 0
+    #       args_index_var_kw == args_index_var_pos
+    # * If that callable accepts a variadic positional parameter, then:
+    #       is_arg_var_pos == 1
+    #       args_index_var_kw == args_index_var_pos + 1
+    args_index_var_kw = args_index_var_pos + is_arg_var_pos
 
     # ..................{ STARTUP                           }..................
     # Parameter state machine enabling the introspection below to efficiently
@@ -637,11 +644,11 @@ def iter_func_args(
     # below to be compacted into a single efficient "while" loop rather than
     # distributed across multiple inefficient "for" loops, each implicitly
     # raising a "StopException" on successful termination. In short, SPEED!
-    args_states = acquire_fixed_list(size=_ARGS_STATES_LEN)
+    args_states = acquire_fixed_list(_ARGS_STATES_LEN)
 
     # Parameter metadata to be yielded by each iteration of the introspection
     # performed below to the caller.
-    param_meta = acquire_object_typed(cls=ParameterMeta)
+    param_meta = acquire_object_typed(ParameterMeta)
 
     # 0-based index of the currently visited item of the "args_states" list.
     args_states_index_curr = 0

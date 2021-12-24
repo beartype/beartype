@@ -37,6 +37,7 @@ def test_iter_func_args() -> None:
         func_args_1_varpos,
         func_args_1_kwonly_mandatory,
         func_args_2_flex_mandatory,
+        func_args_3_flex_mandatory_optional_varkw,
         func_args_5_flex_mandatory_varpos_varkw,
     )
     from pytest import raises
@@ -60,6 +61,11 @@ def test_iter_func_args() -> None:
     assert _iter_func_args_tuple(func_args_2_flex_mandatory) == (
         ('thick_with_wet_woods', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
         ('and_many_a_beast_therein', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
+    )
+    assert _iter_func_args_tuple(func_args_3_flex_mandatory_optional_varkw) == (
+        ('and_the_wolf_tracks_her_there', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
+        ('how_hideously', ParameterKind.POSITIONAL_OR_KEYWORD, "Its shapes are heap'd around!",),
+        ('rude_bare_and_high', ParameterKind.VAR_KEYWORD, ParameterMandatory,),
     )
     assert _iter_func_args_tuple(func_args_5_flex_mandatory_varpos_varkw) == (
         ('we_are_selfish_men', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
