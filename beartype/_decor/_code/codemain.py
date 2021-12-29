@@ -66,7 +66,6 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ CONSTANTS ~ private               }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
 _PARAM_KINDS_IGNORABLE = frozenset((
-    ParameterKind.POSITIONAL_ONLY,
     ParameterKind.VAR_KEYWORD,
 ))
 '''
@@ -255,11 +254,11 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     #
     #We probably already do this, but let's be double-sure here. Safety first!
 
-    # If both...
+    # If *NO* callable parameters are annotated, silently reduce to a noop.
     #
     # Note that this is purely an optimization short-circuit mildly improving
     # efficiency for the common case of callables accepting either no
-    # parameters *OR* one or more parameters each of which is unannotated.
+    # parameters *OR* one or more parameters, all of which are unannotated.
     if (
         # That callable is annotated by only one type hint *AND*...
         len(bear_call.func_arg_name_to_hint) == 1 and
@@ -267,8 +266,6 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         # parameter accepted by that callable...
         'return' in bear_call.func_arg_name_to_hint
     ):
-        # Then *NO* callable parameters are annotated. In this case, silently
-        # reduce to a noop.
         return ''
     # Else, one or more callable parameters are annotated.
 
@@ -279,6 +276,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     func_wrapper_code_arg = ''
 
     # ..................{ LOCALS ~ parameter                }..................
+    #FIXME: Remove this *AFTER* optimizing signature generation, please.
     # True only if this callable possibly accepts one or more positional
     # parameters.
     is_args_positional = False
@@ -358,11 +356,12 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Else, this hint is unignorable.
             #
             # If this unignorable parameter either may *OR* must be passed
-            # positionally, record this fact. Note this conditional branch must be
-            # tested after validating this parameter to be unignorable; if this
-            # branch were instead nested *BEFORE* validating this parameter to be
-            # unignorable, @beartype would fail to reduce to a noop for otherwise
-            # ignorable callables -- which would be rather bad, really.
+            # positionally, record this fact. Note this conditional branch must
+            # be tested after validating this parameter to be unignorable; if
+            # this branch were instead nested *BEFORE* validating this
+            # parameter to be unignorable, @beartype would fail to reduce to a
+            # noop for otherwise ignorable callables -- which would be rather
+            # bad, really.
             elif arg_meta.kind is ParameterKind.POSITIONAL_OR_KEYWORD:
                 is_args_positional = True
 
@@ -531,7 +530,7 @@ def _make_func_wrapper_signature(
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    from beartype._util.text.utiltextrepr import represent_object
+    # from beartype._util.text.utiltextrepr import represent_object
 
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above

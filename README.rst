@@ -1128,7 +1128,7 @@ Validator API
       more classes.**
     * Isinstanceable classes rigidly validate type instancing of only
       **parameters and returns** against only **one class.**
-    
+
     Unlike isinstanceable type hints, instance validators support various `set
     theoretic operators <Validator Syntax_>`__. Critically, this includes
     negation. Instance validators prefixed by the negation operator ``~``

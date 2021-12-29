@@ -61,6 +61,9 @@ def func_args_3_flex_mandatory_optional_varkw(
     '''
     Arbitrary callable accepting one mandatory flexible parameter, one optional
     flexible parameter, and one variadic keyword parameter.
+
+    This test exercises a recent failure in our pre-0.10.0 release cycle:
+        https://github.com/beartype/beartype/issues/78
     '''
 
     return "Ghastly, and scarr'd, and riven.—Is this the scene"

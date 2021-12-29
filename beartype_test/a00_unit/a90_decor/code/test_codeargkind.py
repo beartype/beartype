@@ -16,13 +16,14 @@ positional-only, variadic positional, variadic keyword).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
-# ....................{ TESTS ~ pass : param : kind       }....................
-def test_arg_kind_positional_or_keyword_pass() -> None:
+# ....................{ TESTS                             }....................
+def test_arg_kind_flex() -> None:
     '''
-    Test successful usage of the :func:`beartype.beartype` decorator for a
-    callable passed non-variadic positional and/or keyword parameters annotated
-    with PEP-compliant type hints.
+    Test the :func:`beartype.beartype` decorator on a callable passed two
+    **flexible parameters** (i.e., non-variadic positional or keyword
+    parameters) annotated with PEP-compliant type hints.
     '''
 
     # Defer heavyweight imports.
@@ -48,56 +49,11 @@ def test_arg_kind_positional_or_keyword_pass() -> None:
     )
 
 
-def test_arg_kind_variadic_and_keyword_only_pass() -> None:
+def test_arg_kind_flex_varkw() -> None:
     '''
-    Test successful usage of the :func:`beartype.beartype` decorator for a
-    callable passed a variadic positional parameter followed by a keyword-only
-    parameter, all annotated with PEP-compliant type hints.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype import beartype
-    from typing import Union
-
-    # Decorated callable to be exercised.
-    @beartype
-    def shining_brainless_beacon(
-        a_time_obscured: Union[bool, str],
-        *all_of_your_nightmares: Union[float, str],
-        your_special_plan: Union[int, str]
-    ) -> Union[list, str]:
-        return (
-            a_time_obscured + '\n' +
-            '\n'.join(all_of_your_nightmares) + '\n' +
-            your_special_plan
-        )
-
-    # Assert this callable returns the expected value.
-    assert shining_brainless_beacon(
-        'When all of your nightmares are for a time obscured',
-        'As by a shining brainless beacon',
-        'Or a blinding eclipse of the many terrible shapes of this world,',
-        'When you are calm and joyful',
-        'And finally entirely alone,',
-        'Then in a great new darkness',
-        your_special_plan='You will finally execute your special plan',
-    ) == '\n'.join((
-        'When all of your nightmares are for a time obscured',
-        'As by a shining brainless beacon',
-        'Or a blinding eclipse of the many terrible shapes of this world,',
-        'When you are calm and joyful',
-        'And finally entirely alone,',
-        'Then in a great new darkness',
-        'You will finally execute your special plan',
-    ))
-
-
-def test_arg_kind_flexible_and_variadic_keyword_pass() -> None:
-    '''
-    Test successful usage of the :func:`beartype.beartype` decorator for a
-    callable passed one or more mandatory flexible parameters, one or more
-    optional flexible parameters, and a variadic keyword parameter, all
-    annotated with PEP-compliant type hints.
+    Test the :func:`beartype.beartype` decorator on a callable passed a
+    mandatory flexible parameter, an optional flexible parameter, and a
+    variadic keyword parameter, all annotated with PEP-compliant type hints.
 
     This test exercises a recent failure in our pre-0.10.0 release cycle:
         https://github.com/beartype/beartype/issues/78
@@ -131,11 +87,11 @@ def test_arg_kind_flexible_and_variadic_keyword_pass() -> None:
     ))
 
 
-def test_arg_kind_variadic_fail() -> None:
+def test_arg_kind_flex_varpos_kwonly() -> None:
     '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for a
-    function call passed a variadic positional parameter annotated with
-    PEP-compliant type hints.
+    Test the :func:`beartype.beartype` decorator on a callable passed a
+    flexible parameter, a variadic positional parameter, and a keyword-only
+    parameter, all annotated with PEP-compliant type hints.
     '''
 
     # Defer heavyweight imports.
@@ -157,6 +113,25 @@ def test_arg_kind_variadic_fail() -> None:
             teeth_tearing_into_it
         )
 
+    # Assert this callable returns the expected value.
+    assert tongue_tasting_its_savour(
+        'When all of your nightmares are for a time obscured',
+        'As by a shining brainless beacon',
+        'Or a blinding eclipse of the many terrible shapes of this world,',
+        'When you are calm and joyful',
+        'And finally entirely alone,',
+        'Then in a great new darkness',
+        teeth_tearing_into_it='You will finally execute your special plan',
+    ) == '\n'.join((
+        'When all of your nightmares are for a time obscured',
+        'As by a shining brainless beacon',
+        'Or a blinding eclipse of the many terrible shapes of this world,',
+        'When you are calm and joyful',
+        'And finally entirely alone,',
+        'Then in a great new darkness',
+        'You will finally execute your special plan',
+    ))
+
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
     with raises_uncached(BeartypeCallHintPepException):
@@ -168,3 +143,37 @@ def test_arg_kind_variadic_fail() -> None:
             'The teeth tearing into it',
             'The tongue tasting its savour',
             teeth_tearing_into_it='And the hunger for that taste')
+
+
+# Positional-only keywords require PEP 570 compliance and thus Python >= 3.8.
+@skip_if_python_version_less_than('3.8.0')
+def test_arg_kind_posonly_flex_varpos_kwonly() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on a callable passed a
+    mandatory positional-only parameter, optional positional-only parameter,
+    flexible parameter, variadic positional parameter, and keyword-only
+    parameter, all annotated with PEP-compliant type hints.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype_test.a00_unit.data.pep.data_pep570 import (
+        pep570_posonly_flex_varpos_kwonly)
+
+    # Wrapper function type-checking this unchecked function.
+    shining_brainless_beacon = beartype(pep570_posonly_flex_varpos_kwonly)
+
+    # Assert this function returns the expected value.
+    assert shining_brainless_beacon(
+        'When all of your nightmares are for a time obscured',
+        'When you are calm and joyful',
+        'And finally entirely alone,',
+        'Then in a great new darkness',
+        your_special_plan='You will finally execute your special plan',
+    ) == '\n'.join((
+        'When all of your nightmares are for a time obscured',
+        'When you are calm and joyful',
+        'And finally entirely alone,',
+        'Then in a great new darkness',
+        'You will finally execute your special plan',
+    ))

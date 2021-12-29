@@ -90,6 +90,13 @@ def pep_code_check_arg(
     assert arg_meta.__class__ is ParameterMeta, (
         f'{repr(arg_meta)} not parameter metadata.')
 
+    # Python code template localizing this parameter.
+    #
+    # Since @beartype now supports *ALL* parameter kinds, we safely assume this
+    # behaves as expected without additional validation.
+    # PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE[arg_meta.kind]
+
+    #FIXME: Preserved in the event of a new future unsupported parameter kind.
     # Python code template localizing this parameter if this kind of parameter
     # is supported *OR* "None" otherwise.
     PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(  # type: ignore
@@ -118,6 +125,10 @@ def pep_code_check_arg(
     # local scope currently required by the current wrapper function.
     update_mapping(bear_call.func_wrapper_locals, func_wrapper_locals)
 
+    # Python code snippet localizing this parameter.
+    code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
+        arg_name=arg_meta.name, arg_index=arg_meta.index)
+
     # Unmemoize this snippet against the current parameter.
     code_param_check = _unmemoize_pep_code(
         bear_call=bear_call,
@@ -125,10 +136,6 @@ def pep_code_check_arg(
         pith_repr=repr(arg_meta.name),
         hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
     )
-
-    # Python code snippet localizing this parameter.
-    code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
-        arg_name=arg_meta.name, arg_index=arg_meta.index)
 
     # Return a Python code snippet localizing and type-checking this parameter.
     return f'{code_param_localize}{code_param_check}'
@@ -173,30 +180,27 @@ def pep_code_check_return(bear_call: BeartypeCall, hint: object) -> str:
     # local scope currently required by the current wrapper function.
     update_mapping(bear_call.func_wrapper_locals, func_wrapper_locals)
 
-    # Python code snippet type-checking this return.
-    code_return_check_prefix = PEP_CODE_CHECK_RETURN_PREFIX.format(
-        func_call_prefix=bear_call.func_wrapper_code_call_prefix)
-
-    # Extend this snippet to:
-    # * Call the decorated callable and localize its return *AND*...
-    # * Type-check this return *AND*...
-    # * Return this return from this wrapper function.
-    code_return_check_memoized = (
-        f'{code_return_check_prefix}'
-        f'{code_return_check_pith}'
-        f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
-    )
-
     # Unmemoize this snippet against this return.
-    code_return_check = _unmemoize_pep_code(
+    code_return_check_pith_unmemoized = _unmemoize_pep_code(
         bear_call=bear_call,
-        func_wrapper_code=code_return_check_memoized,
+        func_wrapper_code=code_return_check_pith,
         pith_repr=_RETURN_REPR,
         hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
     )
 
-    # Return this code.
-    return code_return_check
+    # Python code snippet type-checking this return.
+    code_return_check_prefix = PEP_CODE_CHECK_RETURN_PREFIX.format(
+        func_call_prefix=bear_call.func_wrapper_code_call_prefix)
+
+    # Return a Python code snippet:
+    # * Calling the decorated callable and localize its return *AND*...
+    # * Type-checking this return *AND*...
+    # * Returning this return from this wrapper function.
+    return (
+        f'{code_return_check_prefix}'
+        f'{code_return_check_pith_unmemoized}'
+        f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
+    )
 
 # ....................{ PRIVATE ~ unmemoize               }....................
 def _unmemoize_pep_code(

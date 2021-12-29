@@ -49,6 +49,14 @@ See Also
 
 # ....................{ PARAM                             }....................
 PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
+    # Snippet localizing any positional-only parameter (e.g.,
+    # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
+    ParameterKind.POSITIONAL_ONLY: f'''
+    # If this positional-only parameter was passed...
+    if {VAR_NAME_ARGS_LEN} > {{arg_index}}:
+        # Localize this positional-only parameter.
+        {VAR_NAME_PITH_ROOT} = args[{{arg_index}}]''',
+
     # Snippet localizing any positional or keyword parameter as follows:
     #
     # * If this parameter's 0-based index (in the parameter list of the
@@ -67,7 +75,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
     ParameterKind.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
-    # sentinel value "__beartype_raise_exception" guaranteed to never be passed.
+    # sentinel "__beartype_raise_exception" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = (
         args[{{arg_index}}] if {VAR_NAME_ARGS_LEN} > {{arg_index}} else
         kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
@@ -76,7 +84,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     # If this parameter was passed...
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
-    # Snippet localizing any keyword-only parameter (e.g., "*, kwarg") by
+    # Snippet localizing any keyword-only parameter (e.g., "*, {kwarg}") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
     ParameterKind.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
@@ -88,8 +96,16 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
 
     # Snippet iteratively localizing all variadic positional parameters.
     ParameterKind.VAR_POSITIONAL: f'''
-    # For all passed positional variadic parameters...
+    # For all passed variadic positional parameters...
     for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
+
+    #FIXME: Probably impossible to implement under the standard decorator
+    #paradigm, sadly. This will have to wait for us to fundamentally revise
+    #our signature generation algorithm.
+    # # Snippet iteratively localizing all variadic keyword parameters.
+    # ParameterKind.VAR_KEYWORD: f'''
+    # # For all passed variadic keyword parameters...
+    # for {VAR_NAME_PITH_ROOT} in kwargs[{{arg_index!r}}:]:''',
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the
