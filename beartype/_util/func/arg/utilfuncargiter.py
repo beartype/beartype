@@ -26,6 +26,7 @@ from collections.abc import Callable
 from enum import (
     Enum,
     auto as next_enum_member_value,
+    unique as die_unless_enum_member_values_unique,
 )
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 from itertools import count
@@ -36,6 +37,7 @@ from typing import Dict, Iterable, Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ ENUMERATIONS                      }....................
+@die_unless_enum_member_values_unique
 class ParameterKind(Enum):
     '''
     Enumeration of all kinds of **callable parameters** (i.e., arguments passed

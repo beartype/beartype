@@ -21,50 +21,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 #FIXME: Refactor to support options as follows (mostly ignoring comments
 #elsewhere to this effect):
-#* Define a new "beartype._decor._config" submodule defining:
-#  * A new "BeartypeConfig" class resembling:
-#        # Export this, please.
-#        @unique
-#        class BeartypeStrategy(Enum):
-#            O0 = auto()
-#            O1 = auto()
-#            Ologn = auto()
-#            On = auto()
-#
-#        # Export this, please.
-#        class BeartypeConfig(object):
-#            is_debug: bool
-#            strategy: BeartypeStrategy
-#
-#            def __init__(
-#               self,
-#               is_debug: bool = False,
-#               strategy: BeartypeStrategy = BeartypeStrategy.O1,
-#            ) -> None:
-#
-#               if not isinstance(is_debug, bool):
-#                   raise SomeException()
-#               if not isinstance(strategy, BeartypeStrategy):
-#                   raise SomeException()
-#
-#               self.is_debug = is_debug
-#               self.strategy = strategy
-#
-#        # Don't bother exporting this, please.
-#        BEAR_CONFIG_DEFAULT = BeartypeConfig()
-#* Rename "beartype._decor._call" to "beartype._decor._call" and:
-#  * Rename the "BeartypeCall" class to "BeartypeCall".
-#  * Add a new "config: BeartypeConfig" instance variable to that class.
+#* Add a new "config: BeartypeConfiguration" instance variable to the
+#  "beartype._decor._call.BeartypeCall" class.
 #* Define a new "beartype._decor._cache.cachedecor" submodule defining:
-#  * A new "bear_config_to_decor: Dict[BeartypeConfig, Callable] = {}" global
-#    cache or something. Note that this cache need *NOT* be thread-safe,
+#    BeartypeConfiguredDecorator = Callable[[T], T]]
+#
+#    bear_conf_to_decor: Dict[BeartypeConfiguration, BeartypeConfiguredDecorator] = {}
+#    '''
+#    Global cache or something. Note that this cache need *NOT* be thread-safe,
 #    because we're only caching as an optimization efficiency.
+#    '''
 #* Define a new "beartype._decor._beartype" submodule defining:
 #  * Our existing @beartype decorator below renamed to @beartype_mandatory (or
 #    something). The "_mandatory" suffix implies that *ALL* parameters to this
 #    decorator are mandatory rather than optional.
 #  * Refactor the signature of that decorator to resemble:
-#        def beartype_mandatory(func: T, bear_config: BeartypeConfig) -> T:
+#        def beartype_func_with_configuration(func: T, conf: BeartypeConfiguration) -> T:
 #* Retain this submodule, which will instead now define:
 #  * A new public @beartype decorator with implementation resembling:
 #        from typing import overload
@@ -72,33 +44,29 @@ This private submodule is *not* intended for importation by downstream callers.
 #        @overload
 #        def beartype(func: T) -> T: ...
 #        @overload
-#        def beartype(bear_config: BeartypeConfig) -> Callable[[T,], T]: ...
+#        def beartype(conf: BeartypeConfiguration) -> BeartypeConfiguredDecorator: ...
 #
-#        @overload
 #        def beartype(
 #            func: Optional[T] = None,
-#            bear_config: BeartypeConfig = BEAR_CONFIG_DEFAULT,
-#        ) -> T:
+#            conf: BeartypeConfiguration = BEAR_CONF_DEFAULT,
+#        ) -> Union[T, BeartypeConfiguredDecorator]:
+#            #FIXME: Validate passed arguments here: e.g.,
+#            #   assert isinstance(func, (Callable, None)), (...)
 #
 #            if func is not None:
-#                return beartype_mandatory(func, bear_config)
+#                return beartype_func_conf(func, conf)
 #
-#            beartype_configured = bear_config_to_decor.get(bear_config)
+#            beartype_func_confed_cached = bear_conf_to_decor.get(conf)
 #
-#            if beartype_configured:
-#                return beartype_configured
+#            if beartype_func_confed_cached:
+#                return beartype_func_confed_cached
 #
-#            def _beartype_configured(func: T) -> T:
-#                return beartype_mandatory(func, bear_config)
+#            def beartype_func_confed(func: T) -> T:
+#                return beartype_func_conf(func, conf)
 #
-#            bear_config_to_decor[bear_config] = _beartype_configured
+#            bear_conf_to_decor[conf] = beartype_func_confed
 #
-#            #FIXME: We'll have to ignore a mypy complaint here. Maybe? This
-#            #decorator now either returns a decorator or "T". We can either
-#            #lie about this or type this decorator correctly. Unfortunately,
-#            #that will probably break everyone's downstream usage.
-#            #FIXME: Ah-ha! The answer is to use "typing.overload". See above.
-#            return _beartype_configured
+#            return beartype_func_configured
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import (

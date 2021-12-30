@@ -102,23 +102,34 @@ constants are commonly inspected (and thus expected) by external automation.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To avoid race conditions during setuptools-based installation, this
+# CAUTION: Explicitly list *ALL* public attributes imported below in the
+# "__all__" list global declared below to avoid linter complaints.
+# CAUTION: To avoid race conditions during setuptools-based installation, this
 # module may import *ONLY* from modules guaranteed to exist at the start of
 # installation. This includes all standard Python and package submodules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation. Likewise, to avoid circular
 # import dependencies, the top-level of this module should avoid importing
 # package submodules where feasible.
-# WARNING: To avoid polluting the public module namespace, external attributes
+# CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ IMPORTS                           }....................
 # Publicize the private @beartype._decor.beartype decorator as
 # @beartype.beartype, preserving all implementation details as private.
 from beartype._decor.main import beartype
+
+#FIXME: Unit test the existence of:
+#* "beartype.BeartypeStrategy".
+#* "beartype.BeartypeConfiguration".
+# Publicize all top-level configuration attributes required to configure the
+# @beartype.beartype decorator.
+from beartype._decor.conf import (
+    BeartypeConfiguration,
+    BeartypeStrategy,
+)
 
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.
@@ -147,7 +158,13 @@ For PEP 8 compliance, this specifier has the canonical name
 '''
 
 
-__all__ = ['beartype',]
+__all__ = [
+    'BeartypeConfiguration',
+    'BeartypeStrategy',
+    'beartype',
+    '__version__',
+    '__version_info__',
+]
 '''
 Special list global of the unqualified names of all public package attributes
 explicitly exported by and thus safely importable from this package.
@@ -155,7 +172,7 @@ explicitly exported by and thus safely importable from this package.
 Caveats
 -------
 **This global is defined only for conformance with static type checkers,** a
-necessary prerequisite for `PEP 561`_-compliance. This global is *not* intended
+necessary prerequisite for :pep:`561`-compliance. This global is *not* intended
 to enable star imports of the form ``from beartype import *`` (now largely
 considered a harmful anti-pattern by the Python community), although it
 technically does the latter as well.
@@ -164,9 +181,8 @@ This global would ideally instead reference *only* a single package attribute
 guaranteed *not* to exist (e.g., ``'STAR_IMPORTS_CONSIDERED_HARMFUL'``),
 effectively disabling star imports. Since doing so induces spurious static
 type-checking failures, we reluctantly embrace the standard approach. For
-example, :mod:`mypy` emits an error resembling ``"error: Module 'beartype' does
-not explicitly export attribute 'beartype'; implicit reexport disabled."``
+example, :mod:`mypy` emits an error resembling:
 
-.. _PEP 561:
-   https://www.python.org/dev/peps/pep-0561
+    error: Module 'beartype' does not explicitly export attribute 'beartype';
+    implicit reexport disabled.
 '''
