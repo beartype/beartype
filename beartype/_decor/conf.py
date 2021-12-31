@@ -24,31 +24,62 @@ from enum import (
 
 # ....................{ ENUMERATIONS                      }....................
 #FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
 @die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):
     '''
-    * `BeartypeStrategy.O0`, disabling type-checking for a callable by
-      reducing `@beartype` to the identity decorator for that callable.
-      Although currently useless, this strategy will usefully allow end
-      users to selectively prevent callables from being type-checked by
-      our as-yet-unimplemented import hook. When implemented, that hook
-      will type-check *all* callables in a given package by default.
-      Some means is needed to prevent that from happening for select
-      callables. This is that means.
-    * `BeartypeStrategy.O1`, our default `O(1)` constant-time strategy
-      type-checking a single randomly selected item of a container that
-      you currently enjoy. Since this is the default, this strategy need
-      *not* be explicitly configured.
-    * `BeartypeStrategy.Ologn`, a new `O(lgn)` logarithmic strategy
-      type-checking a randomly selected number of items `j` of a
-      container `obj` such that `j = len(obj)`. This strategy is
-      **currently unimplemented.** (*To be implemented by a future
-      beartype release.*)
-    * `BeartypeStrategy.On`, a new `O(n)` linear strategy type-checking
-      *all* items of a container. This strategy is **currently
-      unimplemented.** (*To be implemented by a future beartype
-      release.*)
+    Enumeration of all kinds of **container type-checking strategies** (i.e.,
+    competing procedures for type-checking items of containers passed to or
+    returned from :func:`beartype.beartype`-decorated callables, each with
+    concomitant benefits and disadvantages with respect to runtime complexity
+    and quality assurance).
+
+    Strategies are intentionally named according to `conventional Big O
+    notation <Big O_>`__ (e.g., :attr:`BeartypeStrategy.On` enables the
+    ``O(n)`` strategy). Strategies are established per-decoration at the
+    fine-grained level of callables decorated by the :func: `beartype.beartype`
+    decorator by either:
+
+    * Calling a high-level convenience decorator establishing that strategy
+      (e.g., :func:`beartype.conf.beartype_On`, enabling the ``O(n)`` strategy
+      for all callables decorated by that decorator).
+    * Setting the :attr:`BeartypeConfiguration.strategy` variable of the
+      :attr:`BeartypeConfiguration` object passed as the optional ``conf``
+      parameter to the lower-level core :func: `beartype.beartype` decorator.
+
+    Strategies enforce and guarantee their corresponding runtime complexities
+    (e.g., ``O(n)``) across all type checks performed for all callables
+    enabling those strategies. For example, a callable decorated with the
+    :attr:`BeartypeStrategy.On` strategy will exhibit linear runtime complexity
+    as its type-checking overhead.
+
+    .. _Big O:
+       https://en.wikipedia.org/wiki/Big_O_notation
+
+    Attributes
+    ----------
+    O0 : EnumMemberType
+        **No-time strategy** (i.e, disabling type-checking for a callable by
+        reducing :func:`beartype.beartype` to the identity decorator for that
+        callable). Although currently useless, this strategy will usefully
+        allow end users to selectively prevent callables from being
+        type-checked by our as-yet-unimplemented import hook. When implemented,
+        that hook will type-check *all* callables in a given package by
+        default. Some means is needed to prevent that from happening for select
+        callables. This is that means.
+    O1 : EnumMemberType
+        **Constant-time strategy** (i.e., our default ``O(1)`` strategy
+        type-checking a single randomly selected item of a container that you
+        currently enjoy). Since this is the default, this strategy need *not*
+        be explicitly configured.
+    Ologn : EnumMemberType
+        **Logarithmic-time strategy** (i.e., an ``O(lgn)` strategy
+        type-checking a randomly selected number of items ``j`` of a container
+        ``obj`` such that ``j = len(obj)``. This strategy is **currently
+        unimplemented.** (*To be implemented by a future beartype release.*)
+    On : EnumMemberType
+        **Linear-time strategy** (i.e., an ``O(n)`` strategy type-checking
+        *all* items of a container. This strategy is **currently
+        unimplemented.** (*To be implemented by a future beartype release.*)
     '''
 
     O0 = next_enum_member_value()
