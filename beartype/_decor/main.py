@@ -41,13 +41,21 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * A new public @beartype decorator with implementation resembling:
 #        from typing import overload
 #
+#        # We need these overloads to avoid breaking downstream code when
+#        # checked by mypy. The single concrete @beartype decorator declared
+#        # below is annotated as returning a union of multiple type hints
+#        # rather than a single type hint and thus fails to suffice.
 #        @overload
 #        def beartype(func: T) -> T: ...
 #        @overload
 #        def beartype(conf: BeartypeConfiguration) -> BeartypeConfiguredDecorator: ...
 #
 #        def beartype(
+#            # Optional positional or keyword parameters.
 #            func: Optional[T] = None,
+#            *,
+#
+#            # Optional keyword-only parameters.
 #            conf: BeartypeConfiguration = BEAR_CONF_DEFAULT,
 #        ) -> Union[T, BeartypeConfiguredDecorator]:
 #            #FIXME: Validate passed arguments here: e.g.,

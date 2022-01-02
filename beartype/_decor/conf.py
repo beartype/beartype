@@ -88,6 +88,24 @@ class BeartypeStrategy(Enum):
     On = next_enum_member_value()
 
 # ....................{ CLASSES                           }....................
+#FIXME: *INSUFFICIENT.* Critically, we also *MUST* declare a __new__() method
+#to enforce memoization. A new "BeartypeConfiguration" instance is instantiated
+#*ONLY* if no existing instance with the same settings has been previously
+#instantiated; else, an existing cached instance is reused. This is essential,
+#as the @beartype decorator itself memoizes on the basis of this instance. See
+#the following StackOverflow post for the standard design pattern:
+#    https://stackoverflow.com/a/13054570/2809027
+#
+#Note, however, that there's an intriguing gotcha:
+#    "When you define __new__, you usually do all the initialization work in
+#     __new__; just don't define __init__ at all."
+#
+#Why? Because if you define both __new__() and __init__() then Python
+#implicitly invokes *BOTH*, even if the object returned by __new__() has
+#already been previously initialized with __init__(). This is a facepalm
+#moment, although the rationale does indeed make sense. Ergo, we *ONLY* want to
+#define __new__(); the existing __init__() should simply be renamed __new__()
+#and generalized from there to support caching.
 #FIXME: Unit test us up, please.
 #FIXME: Document us up, please.
 class BeartypeConfiguration(object):

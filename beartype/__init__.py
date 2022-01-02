@@ -15,7 +15,7 @@ constants are commonly inspected (and thus expected) by external automation.
 #FIXME: Consider significantly expanding the above module docstring, assuming
 #Sphinx presents this module in its generated frontmatter.
 
-#FIXME: [NEW PROJECT] Consider creating a new private "beartype._bearable"
+#FIXME: [NEW PROJECT] Consider creating a new public "beartype.abby"
 #subpackage to enable arbitrary O(1) runtime type checking. By "arbitrary," we
 #mean just that: O(1) runtime type checking that anyone can perform in any
 #arbitrary expression without having to isolate that checking to a callable
@@ -23,7 +23,7 @@ constants are commonly inspected (and thus expected) by external automation.
 #
 #First, let's spec the public API. Fortunately, that's trivial. Just as with
 #"beartype", we define only a single public turbo-charged function:
-#* Define a private "beartype._bearable" submodule *OR SOMETHING.*
+#* Define a public "beartype.abby._abbytest" submodule *OR SOMETHING.*
 #* In that submodule:
 #  * Define a public is_bearable() tester with the signature:
 #
@@ -99,6 +99,11 @@ constants are commonly inspected (and thus expected) by external automation.
 #in this issue comment. See the fragment leading with 'The simple answer is:
 #"Nope, but a related package called bearcall will let you do that soon!"':
 #    https://github.com/beartype/beartype/issues/30#issuecomment-792176571
+#FIXME: Also define a related beartype.abby.die_if_unbearable() validator
+#raising an exception unless the passed object satisfies the passed type hint.
+#In sum, we thus want to define:
+#* beartype.abby.is_unbearable().
+#* beartype.abby.die_if_unbearable().
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

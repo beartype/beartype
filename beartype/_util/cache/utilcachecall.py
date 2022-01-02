@@ -131,13 +131,13 @@ def callable_cached(func: Callable) -> Callable:
       PEP-noncompliant and *most* PEP-compliant type hints are hashable, some
       sadly are not. These include:
 
-      * `PEP 585`_-compliant type hints subscripted by one or more unhashable
+      * :pep:`585`-compliant type hints subscripted by one or more unhashable
         objects (e.g., ``collections.abc.Callable[[], str]``, the `PEP
         585`_-compliant type hint annotating piths accepting callables
         accepting no parameters and returning strings).
-      * `PEP 586`_-compliant type hints subscripted by an unhashable object
+      * :pep:`586`-compliant type hints subscripted by an unhashable object
         (e.g., ``typing.Literal[[]]``, a literal empty list).
-      * `PEP 593`_-compliant type hints subscripted by one or more unhashable
+      * :pep:`593`-compliant type hints subscripted by one or more unhashable
         objects (e.g., ``typing.Annotated[typing.Any, []]``, the
         :attr:`typing.Any` singleton annotated by an empty list).
 
@@ -179,13 +179,6 @@ def callable_cached(func: Callable) -> Callable:
 
         * A variadic positional argument resembling ``*args``.
         * A variadic keyword argument resembling ``**kwargs``.
-
-    .. _PEP 585:
-       https://www.python.org/dev/peps/pep-0585
-    .. _PEP 586:
-       https://www.python.org/dev/peps/pep-0586
-    .. _PEP 593:
-       https://www.python.org/dev/peps/pep-0593
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -297,6 +290,16 @@ def callable_cached(func: Callable) -> Callable:
 
         # Attempt to...
         try:
+            #FIXME: Optimize the params_flat_to_exception_get() case, please.
+            #Since "None" is *NOT* a valid exception, we shouldn't need a
+            #sentinel for safety here. Instead, this should suffice:
+            #    exception = params_flat_to_exception_get(params_flat)
+
+            #    # If this callable previously raised an exception when called with
+            #    # these parameters, re-raise the same exception.
+            #    if exception:
+            #        raise exception
+
             # Exception raised by a prior call to the decorated callable when
             # passed these parameters *OR* the sentinel placeholder otherwise
             # (i.e., if this callable either has yet to be called with these
