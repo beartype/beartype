@@ -18,61 +18,6 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TODO                              }....................
-#FIXME: Validate that generator-based coroutines behave as expected, given the
-#following snippet in the documentation for this third-party utility:
-#    https://smarie.github.io/python-makefun
-#
-#    @beartype
-#    def my_gencoroutine_impl(first_msg):
-#        second_msg = (yield first_msg)
-#        yield second_msg
-#
-#    # Verify that the new func is a correct generator-based coroutine.
-#    cor = my_gencoroutine_impl('hi')
-#    assert next(cor) == 'hi'
-#    assert cor.send('chaps') == 'chaps'
-#    cor.send('ola')  # raises StopIteration
-#FIXME: Likewise, for async-based coroutines:
-#    import asyncio
-#
-#    @beartype
-#    async def my_native_coroutine_impl(what, sleep_time):
-#        await asyncio.sleep(sleep_time)
-#        return what
-#
-#    # verify that the new function is a native coroutine and behaves correctly
-#    event_loop = asyncio.get_event_loop()
-#    event_loop.run_until_complete(my_native_coroutine_impl('yum', 5))
-#    assert out == 'yum'
-#
-#In the latter case, note that the usage of an asynchronous event loop
-#justifiably complicates matters. Simple unit testing methodology fails here.
-#Instead, we need to leverage an asyncio-aware approach. The most popular are:
-#
-#* "pytest-asyncio", a third-party pytest plugin providing a
-#  @pytest.mark.asyncio decorator facilitating trivial asynchronous testing.
-#  We'd rather not add yet another testing dependency merely to test one or two
-#  asynchronous edge cases, however. Instead...
-#* See this extremely well-written blog post:
-#  https://medium.com/ideas-at-igenius/testing-asyncio-python-code-with-pytest-a2f3628f82bc
-#  The core idea here is that we define a custom pytest fixture instantiating
-#  an "asyncio" event loop enabling downstream unit tests to run asynchronous
-#  callables under that loop: e.g.,
-#      import asyncio
-#
-#      @pytest.fixture
-#      def event_loop():
-#          loop = asyncio.get_event_loop()
-#          yield loop
-#          loop.close()
-#
-#      def test_muh_async_func(event_loop):
-#          assert 'nope' == event_loop.run_until_complete(muh_async_func('wut', 0))
-#
-#Self-obviously, the latter is the way to go for us. A trivial five-line
-#fixture dominates a non-trivial third-party dependency any asynchronous day.
-
 # ....................{ TESTS                             }....................
 def test_decor_wrappee_type_fail() -> None:
     '''
@@ -83,16 +28,59 @@ def test_decor_wrappee_type_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorWrappeeException
+    from beartype_test.a00_unit.data.data_type import (
+        CallableClass,
+        Class,
+    )
 
-    # Assert that decorating uncallable objects raises the expected exception.
+    # Assert that decorating an uncallable class raises the expected exception.
+    with raises(BeartypeDecorWrappeeException):
+        beartype(Class)
+
+    # Assert that decorating a callable class raises the expected exception.
+    with raises(BeartypeDecorWrappeeException):
+        beartype(CallableClass)
+
+    # Assert that decorating an uncallable object raises the expected
+    # exception.
     with raises(BeartypeDecorWrappeeException):
         beartype(('Book of the Astronomican', 'Slaves to Darkness',))
 
-    # Assert that decorating callable classes raises the expected exception.
-    with raises(BeartypeDecorWrappeeException):
-        @beartype
-        class ImperiumNihilus(object):
-            pass
+    # Substring embedded in the messages of exceptions raised by @beartype when
+    # passed uncallable descriptors created by builtin decorators.
+    EXCEPTION_DESCRIPTOR_SUBSTR = 'descriptor'
+
+    # Assert that decorating a property descriptor raises the expected
+    # exception.
+    with raises(BeartypeDecorWrappeeException) as exception_info:
+        class WhereTheOldEarthquakeDaemon(object):
+            @beartype
+            @property
+            def taught_her_young_ruin(self) -> str:
+                return 'Ruin? Were these their toys? or did a sea'
+    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+
+    # Assert that decorating a class method descriptor raises the expected
+    # exception.
+    with raises(BeartypeDecorWrappeeException) as exception_info:
+        class OrDidASeaOfFire(object):
+            @beartype
+            @classmethod
+            def envelop_once_this_silent_snow(self) -> str:
+                return 'None can reply—all seems eternal now.'
+    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+
+    # Assert that decorating a static method descriptor raises the expected
+    # exception.
+    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+    with raises(BeartypeDecorWrappeeException) as exception_info:
+        class TheWildernessHasAMysteriousTongue(object):
+            @beartype
+            @staticmethod
+            def which_teaches_awful_doubt() -> str:
+                return 'Which teaches awful doubt, or faith so mild,'
+    # print(f'Ugh: {exception_info.value.args[0]}')
+    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
 
 # ....................{ TESTS ~ param                     }....................
 def test_decor_param_name_fail() -> None:

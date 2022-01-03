@@ -81,6 +81,8 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
+from beartype._data.cls.datacls import (
+    TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
 from beartype._decor._code.codemain import generate_code
 from beartype._decor._call import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
@@ -180,27 +182,60 @@ def beartype(func: T) -> T:
         ever see this. (Thanks and abstruse apologies!)
     '''
 
-    #FIXME: *UGH.* Doesn't this logic permit callable classes? Woopsie. *sigh*
-
     # Validate the type of the decorated object *BEFORE* performing any work
     # assuming this object to define attributes (e.g., "func.__name__").
     #
+    # If this object is an unusable descriptor created by a builtin type
+    # masquerading as a decorator (e.g., @property), @beartype was erroneously
+    # listed above rather than below this decorator in the chain of decorators
+    # decorating an underlying callable. @beartype typically *MUST* decorate a
+    # callable directly. In this case, raise a human-readable exception
+    # instructing the end user to reverse the order of decoration.
+    #
+    # Note that most but *NOT* all of these objects are uncallable. Regardless,
+    # *ALL* of these objects are unsuitable for decoration. Specifically:
+    # * Under Python < 3.10, *ALL* of these objects are uncallable.
+    # * Under Python >= 3.10:
+    #   * Descriptors created by @classmethod and @property are uncallable.
+    #   * Descriptors created by @staticmethod are technically callable but
+    #     C-based and thus unsuitable for decoration.
+    if isinstance(func, TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY):
+        # Human-readable name of this type masquerading as a decorator.
+        DECORATOR_NAME = f'@{func.__class__.__name__}'
+
+        # Raise an exception embedding this name.
+        raise BeartypeDecorWrappeeException(
+            f'Uncallable descriptor created by builtin decorator '
+            f'{DECORATOR_NAME} not decoratable by @beartype. '
+            f'Consider listing @beartype below rather than above '
+            f'{DECORATOR_NAME} in the decorator chain for this method: '
+            f'e.g.,\n'
+            f'\t{DECORATOR_NAME}\n'
+            f'\t@beartype      # <-- this is the Way of the Bear\n'
+            f'\tdef ...'
+        )
+    # Else, this is object is *NOT* such an unusable descriptor.
+    #
     # If this object is uncallable, raise an exception.
-    if not callable(func):
-        raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
-    # Else if this object is a class, raise an exception.
+    elif not callable(func):
+        raise BeartypeDecorWrappeeException(
+            f'Uncallable {repr(func)} not decoratable by @beartype.')
+    # Else, this object is callable.
+    #
+    # If this object is a class, raise an exception.
     elif isinstance(func, type):
         raise BeartypeDecorWrappeeException(
-            f'{repr(func)} unsupported, '
-            f'as classes currently unsupported by @beartype.'
+            f'{repr(func)} not decoratable by @beartype, as '
+            f'classes currently unsupported by @beartype.'
         )
-    # Else, this object is a non-class callable. Let's do this, folks.
-
+    # Else, this object is a non-class callable.
+    #
     # If that callable is unbeartypeable (i.e., if this decorator should
     # preserve that callable as is rather than wrap that callable with
     # constant-time type-checking), silently reduce to the identity decorator.
-    if is_func_unbeartypeable(func):
+    elif is_func_unbeartypeable(func):
         return func
+    # Else, that callable is beartypeable. Let's do this, folks.
 
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeCall)

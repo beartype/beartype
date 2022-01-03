@@ -23,6 +23,21 @@ from typing import (
     Generator,
 )
 
+# ....................{ CLASSES                           }....................
+class CallableClass(object):
+    '''
+    Arbitrary pure-Python **callable class** (i.e., class defining the
+    :meth:`__call__` dunder method implicitly called by Python when instances
+    of this class are called using the standard calling convention).
+    '''
+
+    def __call__(self, *args, **kwargs) -> int:
+        '''
+        Dunder method implicitly called when this object is called.
+        '''
+
+        return len(args) + len(kwargs)
+
 # ....................{ CLASSES ~ hierarchy : 1           }....................
 # Arbitrary class hierarchy.
 

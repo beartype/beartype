@@ -65,3 +65,19 @@ See Also
     :mod:`builtins` module. While less efficient, that test-specific set serves
     as an essential sanity check on that runtime-specific set.
 '''
+
+# ....................{ TUPLES                            }....................
+TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY = (
+    property,
+    classmethod,
+    staticmethod,
+)
+'''
+Tuple of all **builtin descriptor factory decorators** (i.e., builtin types
+which, when invoked as decorators on callables, wrap those callables in
+uncallable descriptors).
+
+These decorators are intentionally contained in a tuple rather than frozen set,
+enabling descriptors created by these decorators to be efficiently detected via
+the :func:`isinstance` builtin.
+'''
