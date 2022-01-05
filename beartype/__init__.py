@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Beartype authors.
+# Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -12,6 +12,8 @@ constants are commonly inspected (and thus expected) by external automation.
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: *DROP PYTHON 3.6 SUPPORT.* Seriously. It's dead, people. Code goes on.
+
 #FIXME: Consider significantly expanding the above module docstring, assuming
 #Sphinx presents this module in its generated frontmatter.
 

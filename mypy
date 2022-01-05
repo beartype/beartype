@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2021 Beartype authors.
+# Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                          )--------------------
