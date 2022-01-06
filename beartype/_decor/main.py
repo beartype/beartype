@@ -89,42 +89,64 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
+from beartype._util.cls.pep.utilpep557 import is_type_pep557
 from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
 from beartype._util.func.utilfuncmake import make_func
-from typing import Any, Callable, TypeVar, TYPE_CHECKING
+from typing import Any, Callable, TypeVar, Union, TYPE_CHECKING
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GLOBALS                           }....................
-T = TypeVar('T', bound=Callable[..., Any])
+# ....................{ PRIVATE ~ hints                   }....................
+_HINT_BEARTYPE_CALLABLE = Callable[..., Any]
 '''
-:pep:`484`-compliant **generic callable type variable** (i.e., type hint
-matching any arbitrary function or method).
+PEP-compliant type hint matching any callable in a manner explicitly matching
+all possible callable signatures.
+'''
+
+
+_T = TypeVar('_T', bound=Union[type, _HINT_BEARTYPE_CALLABLE])
+'''
+:pep:`484`-compliant **generic beartypeable type variable** (i.e., type hint
+matching any arbitrary callable or class).
 
 This type variable notifies static analysis performed by both static type
 checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
-:mod:`beartype` decorator preserves callable signatures by creating and
-returning callables with the same signatures as the passed callables.
+:mod:`beartype` decorator preserves:
+
+* Callable signatures by creating and returning callables with the same
+  signatures as passed callables.
+* Class hierarchies by preserving passed classes with respect to inheritance,
+  including metaclasses and method-resolution orders (MRO) of those classes.
 '''
 
 # ....................{ DECORATORS                        }....................
-def beartype(func: T) -> T:
+def beartype(obj: _T) -> _T:
     '''
-    Dynamically create and return a **constant-time runtime type-checker**
-    (i.e., pure-Python function validating all parameters and returns of all
-    calls to the passed pure-Python callable against all PEP-compliant type
-    hints annotating those parameters and returns).
+    Decorate the passed **beartypeable** (i.e., pure-Python callable or class)
+    with dynamically generated type-checking.
 
-    The type-checker returned by this decorator is:
+    Specifically:
 
-    * Optimized uniquely for the passed callable.
-    * Guaranteed to run in O(1) constant-time with negligible constant factors.
-    * Type-check effectively instantaneously.
-    * Add effectively no runtime overhead to the passed callable.
+    * If the passed object is a callable, this decorator dynamically generates
+      and returns a **runtime type-checker** (i.e., pure-Python function
+      validating all parameters and returns of all calls to the passed
+      pure-Python callable against all PEP-compliant type hints annotating
+      those parameters and returns). The type-checker returned by this
+      decorator is:
+
+      * Optimized uniquely for the passed callable.
+      * Guaranteed to run in ``O(1)`` constant-time with negligible constant
+        factors.
+      * Type-check effectively instantaneously.
+      * Add effectively no runtime overhead to the passed callable.
+
+    * If the passed object is a class, this decorator iteratively applies
+      itself to all annotated methods of this class by dynamically wrapping
+      each such method with a runtime type-checker (as described above).
 
     If optimizations are enabled by the active Python interpreter (e.g., due to
     option ``-O`` passed to this interpreter), this decorator silently reduces
@@ -132,16 +154,18 @@ def beartype(func: T) -> T:
 
     Parameters
     ----------
-    func : Callable
-        **Non-class callable** (i.e., callable object that is *not* a class) to
-        be decorated by a dynamically generated new callable wrapping this
-        original callable with pure-Python type-checking.
+    obj : _T
+        **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
 
     Returns
     ----------
-    Callable
-        Dynamically generated new callable wrapping this original callable with
-        pure-Python type-checking.
+    _T
+        Either:
+
+        * If the passed object is a class, this existing class embellished with
+          dynamically generated type-checking.
+        * If the passed object is a callable, a new callable wrapping that
+          callable with dynamically generated type-checking.
 
     Raises
     ----------
@@ -199,9 +223,9 @@ def beartype(func: T) -> T:
     #   * Descriptors created by @classmethod and @property are uncallable.
     #   * Descriptors created by @staticmethod are technically callable but
     #     C-based and thus unsuitable for decoration.
-    if isinstance(func, TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY):
+    if isinstance(obj, TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY):
         # Human-readable name of this type masquerading as a decorator.
-        DECORATOR_NAME = f'@{func.__class__.__name__}'
+        DECORATOR_NAME = f'@{obj.__class__.__name__}'
 
         # Raise an exception embedding this name.
         raise BeartypeDecorWrappeeException(
@@ -216,26 +240,40 @@ def beartype(func: T) -> T:
         )
     # Else, this is object is *NOT* such an unusable descriptor.
     #
-    # If this object is uncallable, raise an exception.
-    elif not callable(func):
-        raise BeartypeDecorWrappeeException(
-            f'Uncallable {repr(func)} not decoratable by @beartype.')
-    # Else, this object is callable.
+    # If this object is a class, return this class decorated with
+    # type-checking.
+    elif isinstance(obj, type):
+        #FIXME: Mypy currently erroneously emits a false negative resembling
+        #the following if the "# type: ignore..." pragma is omitted below:
+        #    beartype/_decor/main.py:246: error: Incompatible return value type
+        #    (got "type", expected "_T")  [return-value]
+        #This is almost certainly a mypy issue, as _beartype_type() is
+        #explicitly annotated as both accepting and returning "_T". Until
+        #upstream resolves this, we squelch mypy with regret in our hearts.
+        return _beartype_type(obj)  # type: ignore[return-value]
+    # Else, this object is a non-class.
     #
-    # If this object is a class, raise an exception.
-    elif isinstance(func, type):
+    # If this object is uncallable, raise an exception.
+    elif not callable(obj):
         raise BeartypeDecorWrappeeException(
-            f'{repr(func)} not decoratable by @beartype, as '
-            f'classes currently unsupported by @beartype.'
-        )
-    # Else, this object is a non-class callable.
+            f'Uncallable {repr(obj)} not decoratable by @beartype.')
+    # Else, this object is callable.
     #
     # If that callable is unbeartypeable (i.e., if this decorator should
     # preserve that callable as is rather than wrap that callable with
     # constant-time type-checking), silently reduce to the identity decorator.
-    elif is_func_unbeartypeable(func):
-        return func
+    elif is_func_unbeartypeable(obj):
+        return obj
     # Else, that callable is beartypeable. Let's do this, folks.
+
+    # Return a new callable decorating that callable with type-checking.
+    return _beartype_func(obj)
+
+# ....................{ PRIVATE ~ beartypers              }....................
+def _beartype_func(func: _T) -> _T:
+    '''
+    Decorate the passed callable with dynamically generated type-checking.
+    '''
 
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeCall)
@@ -347,6 +385,31 @@ def beartype(func: T) -> T:
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
 
+
+def _beartype_type(cls: _T) -> _T:
+    '''
+    Decorate the passed class with dynamically generated type-checking.
+    '''
+
+    #FIXME: Unit test us up, please.
+    # If this class is a dataclass...
+    if is_type_pep557(cls):  # type: ignore[arg-type]
+        # Wrap the implicit __init__() method generated by the @dataclass
+        # decorator with a recursively generated wrapper function type-checking
+        # all fields annotated by PEP-compliant type hints implicitly passed as
+        # parameters of the same name to this method by that decorator. Phew!
+        cls.__init__ = beartype(cls.__init__)  # type: ignore[misc]
+        return cls
+
+    #FIXME: Generalize to support non-dataclass classes, please.
+    # Else, this class is *NOT* a dataclass. In this case, raise an
+    # exception.
+    raise BeartypeDecorWrappeeException(
+        f'{repr(cls)} not decoratable by @beartype, as '
+        f'non-dataclasses (i.e., types not decorated by '
+        f'@dataclasses.dataclass) currently unsupported by @beartype.'
+    )
+
 # ....................{ OPTIMIZATION                      }....................
 # If the active Python interpreter is either...
 if (
@@ -372,7 +435,7 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-    def beartype(func: T) -> T:
+    def beartype(obj: _T) -> _T:
         '''
         Identity decorator.
 
@@ -381,4 +444,4 @@ if (
         interpreter at execution time).
         '''
 
-        return func
+        return obj
