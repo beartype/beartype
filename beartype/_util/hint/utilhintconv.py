@@ -55,6 +55,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignNewType,
     HintSignNumpyArray,
+    HintSignDataclassInitVar,
     HintSignType,
     HintSignTypeVar,
     HintSignTypedDict,
@@ -67,6 +68,8 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep484_generic_io,
     reduce_hint_pep484_generic_io_to_pep544_protocol,
 )
+from beartype._util.hint.pep.proposal.utilpep557 import (
+    get_hint_pep557_initvar_arg)
 from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
@@ -554,6 +557,8 @@ def _coerce_hint_any(hint: object) -> Any:
     return hint
 
 # ....................{ REDUCERS                          }....................
+#FIXME: Improve documentation to list all reductions performed by this reducer.
+#Sadly, this documentation is currently quite out-of-date. What? It happens!
 @callable_cached
 def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     '''
@@ -749,6 +754,16 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     # raise exceptions on visiting these classes under *ANY* Python version.
     elif is_hint_pep484_generic_io(hint):
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
+            hint=hint, exception_prefix=exception_prefix)
+    # ..................{ PEP 557                           }..................
+    # If this hint is a dataclass-specific initialization-only instance
+    # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
+    # class introduced by Python 3.8.0), reduce this functionally useless hint
+    # to the functionally useful child type hint subscripting this parent hint.
+    #
+    # "InitVar" instances are stupefyingly rare and thus detected even later.
+    elif hint_sign is HintSignDataclassInitVar:
+        hint = get_hint_pep557_initvar_arg(
             hint=hint, exception_prefix=exception_prefix)
 
     # Return this possibly reduced hint.

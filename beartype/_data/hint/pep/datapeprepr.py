@@ -19,6 +19,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     # HintSignAnnotated,
     # HintSignAny,
     HintSignAsyncContextManager,
+    HintSignDataclassInitVar,
     HintSignAsyncIterable,
     HintSignAsyncIterator,
     HintSignAsyncGenerator,
@@ -229,6 +230,10 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # intentionally omit "typing_extensions.NewType" here. See also:
     #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
     'typing.NewType': HintSignNewType,
+
+    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
+    # hints as instances of that class.
+    'dataclasses.InitVar': HintSignDataclassInitVar,
 
     # ..................{ PEP 604                           }..................
     # PEP 604-compliant |-style unions (e.g., "int | float") are internally

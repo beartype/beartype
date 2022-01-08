@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises, warns
 
 # ....................{ TESTS ~ tester                    }....................
 def test_is_hint_pep593_beartype() -> None:
@@ -34,10 +33,12 @@ def test_is_hint_pep593_beartype() -> None:
     from beartype._util.hint.pep.proposal.utilpep593 import (
         is_hint_pep593_beartype)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from pytest import raises, warns
 
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 593...
     if IS_PYTHON_AT_LEAST_3_9:
+        # Defer version-specific imports.
         from typing import Annotated
 
         # Assert this tester accepts beartype-specific metahints.

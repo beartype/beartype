@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype._data.hint.pep.sign.datapepsigns import (
+    # PEP-agnostic signs.
     HintSignAbstractSet,
     HintSignAnnotated,
     HintSignAny,
@@ -68,6 +69,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignUnion,
     HintSignValuesView,
+
+    # PEP-specific signs.
+    HintSignDataclassInitVar,
 )
 
 # See the "beartype.cave" submodule for further commentary.
@@ -373,6 +377,9 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
 
     # ..................{ PEP 544                           }..................
     HintSignProtocol,
+
+    # ..................{ PEP 557                           }..................
+    HintSignDataclassInitVar,
 
     # ..................{ PEP 586                           }..................
     HintSignLiteral,

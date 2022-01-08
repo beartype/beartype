@@ -17,11 +17,13 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 # If the active Python interpreter targets Python >= 3.8 and thus supports PEP
 # 557-compliant dataclasses, define this tester properly.
 if IS_PYTHON_AT_LEAST_3_8:
+    # Defer version-specific imports.
+    from dataclasses import is_dataclass
+
     def is_type_pep557(cls: type) -> bool:
 
         # Avoid circular import dependencies.
         from beartype._util.cls.utilclstest import die_unless_type
-        from dataclasses import is_dataclass
 
         # If this object is *NOT* a type, raise an exception.
         die_unless_type(cls)

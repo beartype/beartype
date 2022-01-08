@@ -255,8 +255,7 @@ else:
         return hint.__args__[0]
 
 
-get_hint_pep593_metadata.__doc__ = (
-    '''
+get_hint_pep593_metadata.__doc__ = '''
     Tuple of one or more arbitrary objects annotating the passed
     :pep:`593`-compliant **type metahint** (i.e., subscription of the
     :attr:`typing.Annotated` singleton).
@@ -288,11 +287,10 @@ get_hint_pep593_metadata.__doc__ = (
     ----------
     :func:`get_hint_pep593_metahint`
         Related getter.
-    ''')
-
-
-get_hint_pep593_metahint.__doc__ = (
     '''
+
+
+get_hint_pep593_metahint.__doc__ = '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
@@ -324,4 +322,4 @@ get_hint_pep593_metahint.__doc__ = (
     ----------
     :func:`get_hint_pep593_metadata`
         Related getter.
-    ''')
+    '''

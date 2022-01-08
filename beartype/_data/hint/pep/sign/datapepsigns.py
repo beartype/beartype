@@ -175,6 +175,10 @@ HintSignPattern = _HintSign(name='Pattern')
 #     type(None).
 HintSignNone = _HintSign(name='None')
 
+# PEP 557 defines the "dataclasses.InitVar" type hint factory for annotating
+# class-scoped variable annotations of @dataclass.dataclass-decorated classes.
+HintSignDataclassInitVar = _HintSign(name='DataclassInitVar')
+
 # ....................{ SIGNS ~ implicit : lib            }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #

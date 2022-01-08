@@ -159,13 +159,23 @@ def test_reduce_hint() -> None:
                 issubclass(pep544_protocol_io, Protocol)
             )
 
+    # ..................{ PEP 557                           }..................
+    # If the active Python interpreter targets Python >= 3.8 and thus supports
+    # PEP 557...
+    if IS_PYTHON_AT_LEAST_3_8:
+        # Defer version-specific imports.
+        from dataclasses import InitVar
+
+        # Assert this reducer reduces an "InitVar" to its subscripted argument.
+        assert _reduce_hint(InitVar[str], '') is str
+
     # ..................{ PEP 593                           }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
     Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
 
-    # If this factory is importable, the active Python interpreter supports PEP
-    # 593. In this case...
+    # If the "typing.Annotated" type hint factory is importable, the active
+    # Python interpreter supports PEP 593. In this case...
     if Annotated is not None:
         # Assert this reducer reduces a beartype-agnostic metahint to the
         # lower-level hint it annotates.

@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# --------------------( LICENSE                           )--------------------
+# Copyright (c) 2014-2022 Beartype authors.
+# See "LICENSE" for further details.
+
+'''
+**Beartype** :pep:`577` **unit tests.**
+
+This submodule unit tests :pep:`577` support implemented in the
+:func:`beartype.beartype` decorator.
+'''
+
+# ....................{ IMPORTS                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To raise human-readable test errors, avoid importing from
+# package-specific submodules at module scope.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+
+# ....................{ TESTS ~ validators                }....................
+@skip_if_python_version_less_than('3.8.0')
+def test_is_hint_pep577() -> None:
+    '''
+    Test :pep:`557` support implemented in the :func:`beartype.beartype`
+    decorator if the active Python interpreter targets Python >= 3.8 *or* skip
+    otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from dataclasses import (
+        InitVar,
+        dataclass,
+        field,
+    )
+    from typing import (
+        ClassVar,
+        Optional,
+    )
+
+
+    @beartype
+    @dataclass
+    class SoSolemnSoSerene(object):
+        '''
+        Arbitrary dataclass type-checked by :func:`beartype.beartype`.
+        '''
+
+        # Non-field instance variable passed by the @dataclass decorator to
+        # both this __init__() method *AND* the explicit __post_init__() method
+        # defined below.
+        #
+        # Note this mandatory parameter *MUST* be declared before all optional
+        # parameters due to inscrutable issues in the @dataclass decorator.
+        # Notably, @dataclass refuses to correctly reorder parameters. *sigh*
+        but_for_such_faith: InitVar[str]
+
+        # Standard instance variable passed by the @dataclass decorator to the
+        # the implicit __init__() method synthesized for this class.
+        that_man_may_be: Optional[str] = None
+
+        # Uninitialized instance variable *NOT* passed by the @dataclass
+        # decorator to this __init__() method.
+        thou_hast_a_voice: int = field(default=0xBABE, init=False)
+
+        # Class variable ignored by the @dataclass decorator and thus *NOT*
+        # passed to this __init__() method.
+        with_nature_reconciled: ClassVar[bool] = True
+
+        @beartype
+        def __post_init__(self, but_for_such_faith: str) -> None:
+            '''
+            :func:`dataclasses.dataclass`-specific dunder method implicitly
+            called by the :meth:`__init__` method synthesized for this class,
+            explicitly type-checked by :func:`beartype.beartype` for testing.
+            '''
+
+            if self.that_man_may_be is None:
+                self.that_man_may_be = but_for_such_faith
+
+    # Arbitrary instance of this dataclass exercising all edge cases.
+    great_mountain = SoSolemnSoSerene(
+        but_for_such_faith='So solemn, so serene, that man may be,')
+
+    # Assert this dataclass defines the expected attributes.
+    assert great_mountain.that_man_may_be == (
+        'So solemn, so serene, that man may be,')
+    assert great_mountain.thou_hast_a_voice == 0xBABE
+    assert great_mountain.with_nature_reconciled == True
+
+    # Assert this dataclass defines *NO* unexpected attributes.
+    assert not hasattr(great_mountain, 'but_for_such_faith')
