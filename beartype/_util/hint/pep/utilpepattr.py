@@ -11,6 +11,10 @@ Python version targeted by the active Python interpreter) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: This submodule is now *HORRIBLE.* Replace all usage of this submodule
+#with equivalents imports from "beartype.typing", please.
+
 # ....................{ IMPORTS                           }....................
 from beartype._util.utilobject import SENTINEL
 from typing import Any

@@ -21,7 +21,7 @@ def test_api_meta() -> None:
     Test the public API of the :mod:`beartype.meta` submodule.
     '''
 
-    # Import this submodule and relevant types from the beartype cave.
+    # Defer heavyweight imports.
     from beartype import meta
 
     # Assert this submodule's public attributes to be of the expected types.

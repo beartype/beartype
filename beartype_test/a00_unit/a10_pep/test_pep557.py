@@ -15,7 +15,6 @@ This submodule unit tests :pep:`577` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ validators                }....................
@@ -29,6 +28,7 @@ def test_is_hint_pep577() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from beartype.roar import BeartypeCallHintPepParamException
     from dataclasses import (
         InitVar,
         dataclass,
@@ -38,7 +38,7 @@ def test_is_hint_pep577() -> None:
         ClassVar,
         Optional,
     )
-
+    from pytest import raises
 
     @beartype
     @dataclass
@@ -91,3 +91,9 @@ def test_is_hint_pep577() -> None:
 
     # Assert this dataclass defines *NO* unexpected attributes.
     assert not hasattr(great_mountain, 'but_for_such_faith')
+
+    # Assert that attempting to instantiate an instance of this dataclass with
+    # a parameter violating the corresponding type hint annotating the field of
+    # the same name raises the expected exception.
+    with raises(BeartypeCallHintPepParamException):
+        SoSolemnSoSerene(but_for_such_faith=0xBEEFBABE)
