@@ -35,6 +35,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer attribute-dependent imports.
+    from beartype.typing import List
     from beartype.vale import (
         Is,
         IsAttr,
@@ -45,9 +46,6 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
         HintSignList,
-    )
-    from beartype._util.hint.pep.utilpepattr import (
-        HINT_ATTR_LIST,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     from beartype_test.a00_unit.data.data_type import (
@@ -84,8 +82,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
         # exercising numerous edge cases broken under prior releases.
-        Union[str, HINT_ATTR_LIST[int], NewType(
-            'MetaType', Annotated[object, 53])],
+        Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
     ))
 
     # ..................{ TUPLES                            }..................
@@ -109,7 +106,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Annotated of a "typing" type.
         HintPepMetadata(
-            hint=Annotated[HINT_ATTR_LIST[str], int],
+            hint=Annotated[List[str], int],
             pep_sign=HintSignAnnotated,
             piths_meta=(
                 # List of string constants.
@@ -318,10 +315,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # List of annotateds of isinstanceable types annotated by one
         # beartype-specific validator defined as a lambda function.
         HintPepMetadata(
-            hint=HINT_ATTR_LIST[AnnotatedStrIsLength],
+            hint=List[AnnotatedStrIsLength],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            is_pep585_builtin=HINT_ATTR_LIST is list,
+            is_pep585_builtin=List is list,
             piths_meta=(
                 # List of string constants satisfying this validator.
                 HintPithSatisfiedMetadata([
@@ -372,7 +369,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Annotated of an isinstanceable type annotated by one
         # beartype-specific equality validator.
         HintPepMetadata(
-            hint=Annotated[HINT_ATTR_LIST[str], IsEqual[AMPLY_IMPISH]],
+            hint=Annotated[List[str], IsEqual[AMPLY_IMPISH]],
             pep_sign=HintSignAnnotated,
             piths_meta=(
                 # Exact object subscripting this validator.

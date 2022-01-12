@@ -88,7 +88,15 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "from typing import Annotated" rather than
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_7   as _IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
+    IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
+)
 
+# ....................{ IMPORTS ~ all                     }....................
 # Import all public attributes of the "typing" module both available under all
 # supported Python versions and *NOT* deprecated by a subsequent Python version
 # under their original names.
@@ -100,7 +108,6 @@ from typing import (
     Text,
     BinaryIO,
     ClassVar,
-    ForwardRef,
     Generic,
     Hashable,
     IO,
@@ -115,7 +122,6 @@ from typing import (
     SupportsBytes,
     SupportsComplex,
     SupportsFloat,
-    SupportsIndex,
     SupportsInt,
     SupportsRound,
     Text,
@@ -128,116 +134,140 @@ from typing import (
     overload,
 )
 
-# ....................{ IMPORTS ~ private                 }....................
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_8 as _IS_PYTHON_AT_LEAST_3_8,
-    IS_PYTHON_AT_LEAST_3_9 as _IS_PYTHON_AT_LEAST_3_9,
-)
+# ....................{ IMPORTS ~ version                 }....................
+# Import all public attributes of the "typing" module both available under a
+# subset of supported Python versions and *NOT* deprecated by a subsequent
+# Python version under their original names.
 
-# ....................{ ALIASES                           }....................
-# If the active Python interpreter targets Python >= 3.8...
-if _IS_PYTHON_AT_LEAST_3_8:
-    from typing import (  # type: ignore[attr-defined]
-        Final,
-        Literal,
-        Protocol,
-        Reversible,
-        TypedDict,
-        final,
-        runtime_checkable,
+# If the active Python interpreter targets Python >= 3.7...
+if _IS_PYTHON_AT_LEAST_3_7:
+    from typing import (
+        ForwardRef,
     )
 
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585, alias *ALL* public attributes of the "typing" module deprecated
-    # by PEP 585 to their equivalent values elsewhere in the standard library.
-    if _IS_PYTHON_AT_LEAST_3_9:
-        from collections import (
-            ChainMap,
-            Counter,
-            OrderedDict,
-            defaultdict as DefaultDict,
-            deque as Deque,
-        )
-        from collections.abc import (
-            AsyncIterable,
-            AsyncIterator,
-            AsyncGenerator,
-            Awaitable,
-            ByteString,
-            Callable,
-            Collection,
-            Container,
-            Coroutine,
-            Generator,
-            ItemsView,
-            Iterable,
-            Iterator,
-            KeysView,
-            Mapping,
-            MappingView,
-            MutableMapping,
-            MutableSequence,
-            MutableSet,
-            Reversible,
-            Sequence,
-            ValuesView,
-            Set as AbstractSet,
-        )
-        from contextlib import (
-            AbstractContextManager as ContextManager,
-            AbstractAsyncContextManager as AsyncContextManager,
-        )
+    # If the active Python interpreter targets Python >= 3.8...
+    if _IS_PYTHON_AT_LEAST_3_8:
         from typing import (  # type: ignore[attr-defined]
-            Annotated,
+            Final,
+            Literal,
+            Protocol,
+            Reversible,
+            SupportsIndex,
+            TypedDict,
+            final,
+            runtime_checkable,
         )
 
-        Dict = dict
-        FrozenSet = frozenset
-        List = list
-        Set = set
-        Tuple = tuple
-        Type = type
-    # Else, the active Python interpreter targets Python < 3.9 and thus fails
-    # to support PEP 585. In this case, import *ALL* public attributes of the
-    # "typing" module deprecated by PEP 585 as their original values.
-    else:
-        from typing import (  # type: ignore[misc]
-            AbstractSet,
-            AsyncContextManager,
-            AsyncGenerator,
-            AsyncIterable,
-            AsyncIterator,
-            Awaitable,
-            ByteString,
-            Callable,
-            ChainMap,
-            Collection,
-            Container,
-            ContextManager,
-            Coroutine,
-            Counter,
-            DefaultDict,
-            Deque,
-            Dict,
-            FrozenSet,
-            Generator,
-            ItemsView,
-            Iterable,
-            Iterator,
-            KeysView,
-            List,
-            Mapping,
-            MappingView,
-            Match,
-            MutableMapping,
-            MutableSequence,
-            MutableSet,
+        # If the active Python interpreter targets Python >= 3.10...
+        if _IS_PYTHON_AT_LEAST_3_10:
+            from typing import (  # type: ignore[attr-defined]
+                Concatenate,
+                ParamSpec,
+                ParamSpecArgs,
+                ParamSpecKwargs,
+                TypeAlias,
+                TypeGuard,
+            )
+
+# ....................{ PEP ~ 585                         }....................
+# If the active Python interpreter targets Python >= 3.9 and thus supports PEP
+# 585, alias *ALL* public attributes of the "typing" module deprecated by PEP
+# 585 to their equivalent values elsewhere in the standard library.
+if _IS_PYTHON_AT_LEAST_3_9:
+    from collections import (
+        ChainMap,
+        Counter,
+        OrderedDict,
+        defaultdict as DefaultDict,
+        deque as Deque,
+    )
+    from collections.abc import (
+        AsyncIterable,
+        AsyncIterator,
+        AsyncGenerator,
+        Awaitable,
+        ByteString,
+        Callable,
+        Collection,
+        Container,
+        Coroutine,
+        Generator,
+        ItemsView,
+        Iterable,
+        Iterator,
+        KeysView,
+        Mapping,
+        MappingView,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
+        Reversible,
+        Sequence,
+        ValuesView,
+        Set as AbstractSet,
+    )
+    from contextlib import (
+        AbstractContextManager as ContextManager,
+        AbstractAsyncContextManager as AsyncContextManager,
+    )
+    from typing import (  # type: ignore[attr-defined]
+        Annotated,
+    )
+
+    Dict = dict
+    FrozenSet = frozenset
+    List = list
+    Set = set
+    Tuple = tuple
+    Type = type
+# Else, the active Python interpreter targets Python < 3.9 and thus fails to
+# support PEP 585. In this case, import *ALL* public attributes of the "typing"
+# module deprecated by PEP 585 as their original values.
+else:
+    from typing import (  # type: ignore[misc]
+        AbstractSet,
+        AsyncContextManager,
+        AsyncGenerator,
+        AsyncIterable,
+        AsyncIterator,
+        Awaitable,
+        ByteString,
+        Callable,
+        ChainMap,
+        Collection,
+        Container,
+        ContextManager,
+        Coroutine,
+        Counter,
+        DefaultDict,
+        Deque,
+        Dict,
+        FrozenSet,
+        Generator,
+        ItemsView,
+        Iterable,
+        Iterator,
+        KeysView,
+        List,
+        Mapping,
+        MappingView,
+        Match,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
+        Pattern,
+        Reversible,
+        Set,
+        Tuple,
+        Type,
+        Sequence,
+        ValuesView,
+    )
+
+    # If the active Python interpreter targets Python >= 3.7.2, import *ALL*
+    # public attributes of the "typing" module introduced by Python 3.7.2
+    # deprecated by PEP 585 as their original values.
+    if _IS_PYTHON_AT_LEAST_3_7_2:
+        from typing import (
             OrderedDict,
-            Pattern,
-            Reversible,
-            Set,
-            Tuple,
-            Type,
-            Sequence,
-            ValuesView,
         )

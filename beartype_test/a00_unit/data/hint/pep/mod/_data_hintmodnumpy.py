@@ -45,13 +45,11 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer attribute-dependent imports.
+    from beartype.typing import Tuple
     from beartype.vale import Is
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignNumpyArray,
         HintSignTuple,
-    )
-    from beartype._util.hint.pep.utilpepattr import (
-        HINT_ATTR_TUPLE,
     )
     from beartype._util.mod.lib.utiltyping import import_typing_attr
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -236,10 +234,10 @@ def add_data(data_module: 'ModuleType') -> None:
         # ................{ NUMPY ~ array : nested            }................
         # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
-            hint=HINT_ATTR_TUPLE[Numpy1DFloat64Array, Numpy1DFloat64Array],
+            hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            is_pep585_builtin=HINT_ATTR_TUPLE is tuple,
+            is_pep585_builtin=Tuple is tuple,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 HintPithSatisfiedMetadata((

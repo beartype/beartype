@@ -23,8 +23,8 @@ Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 # ....................{ IMPORTS                           }....................
 from __future__ import annotations
 from beartype import beartype
+from beartype.typing import List
 from beartype._cave._cavefast import IntType
-from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
 from beartype_test.a00_unit.data.data_type import decorator
 from collections.abc import Callable
 from typing import Union
@@ -149,7 +149,7 @@ def get_minecraft_end_txt_closure(player_name: str) -> Callable:
     # PEP-compliant type hints accessible only as local variables to the
     # following closure, exercising a significant edge case in PEP 563 support.
     StringLike = Union[str, int, bytes]
-    ListOfStrings = HINT_ATTR_LIST[str]
+    ListOfStrings = List[str]
 
     # Intentionally delimited by one layer of decoration to exercise edges.
     @decorator
@@ -189,7 +189,7 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     # following closure, exercising a significant edge case in PEP 563 support.
     IntLike = Union[float, int]
     ReturnType = Callable
-    InnerReturnType = HINT_ATTR_LIST[str]
+    InnerReturnType = List[str]
 
     # Intentionally delimited by two layers of decoration to exercise edges.
     @decorator

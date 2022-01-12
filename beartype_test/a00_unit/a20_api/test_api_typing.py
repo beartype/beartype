@@ -46,19 +46,27 @@ def test_api_typing() -> None:
         'V_co',
         'VT',
         'VT_co',
+        'CallableMeta',
+        'GenericAlias',
+        'GenericMeta',
+        'TupleMeta',
+        'TypingMeta',
         'MethodDescriptorType',
         'MethodWrapperType',
         'NamedTupleMeta',
         'WrapperDescriptorType',
         'abc',
         'abstractmethod',
+        'abstractproperty',
         'collections',
+        'collections_abc',
         'contextlib',
         'functools',
         'get_args',
         'get_origin',
         'get_type_hints',
         'io',
+        'is_typeddict',
         'operator',
         're',
         'stdlib_re',
@@ -112,10 +120,13 @@ def test_api_typing() -> None:
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose values differ from those declared by the "beartype.typing"
     # submodule.
-    TYPING_ATTR_UNEQUAL_NAMES = {}
+    TYPING_ATTR_UNEQUAL_NAMES = set()
 
     # If the active Python interpreter targets Python >= 3.9 and thus supports
     # PEP 585, add all "typing" attributes deprecated by PEP 585 to this set.
+    # Note that the following deprecated attributes are intentionally omitted:
+    # * "Match", as "typing.Match is re.Match". Yes, it is a compatible alias.
+    # * "Pattern", as "typing.Pattern is re.Pattern". Ditto.
     if IS_PYTHON_AT_LEAST_3_9:
         TYPING_ATTR_UNEQUAL_NAMES.update({
             'AbstractSet',
@@ -144,12 +155,10 @@ def test_api_typing() -> None:
             'List',
             'Mapping',
             'MappingView',
-            'Match',
             'MutableMapping',
             'MutableSequence',
             'MutableSet',
             'OrderedDict',
-            'Pattern',
             'Reversible',
             'Set',
             'Tuple',
@@ -175,9 +184,9 @@ def test_api_typing() -> None:
 
     # For the basename of each typing attribute whose values differ across
     # these two modules...
-    for typing_attr_equal_name in TYPING_ATTR_UNEQUAL_NAMES:
+    for typing_attr_unequal_name in TYPING_ATTR_UNEQUAL_NAMES:
         # Assert these values are indeed different.
         assert (
-            beartype_typing_attr_name_to_value[typing_attr_equal_name] is not
-            official_typing_attr_name_to_value[typing_attr_equal_name]
+            beartype_typing_attr_name_to_value[typing_attr_unequal_name] is not
+            official_typing_attr_name_to_value[typing_attr_unequal_name]
         )

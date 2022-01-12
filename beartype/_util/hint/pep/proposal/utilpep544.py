@@ -407,8 +407,8 @@ def _init() -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
-    from beartype._util.hint.pep.utilpepattr import HINT_ATTR_LIST
     from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
+    from beartype.typing import List
     from typing import (
         AnyStr,
         Protocol,
@@ -480,7 +480,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def readlines(self, hint: int = -1) -> HINT_ATTR_LIST[AnyStr]:
+        def readlines(self, hint: int = -1) -> List[AnyStr]:
             pass
 
         @abstractmethod
@@ -508,7 +508,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def writelines(self, lines: HINT_ATTR_LIST[AnyStr]) -> None:
+        def writelines(self, lines: List[AnyStr]) -> None:
             pass
 
         @abstractmethod
