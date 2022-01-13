@@ -72,9 +72,6 @@ this submodule rather than from :mod:`typing` directly: e.g.,
    from beartype.typing import Tuple, List, Dict, Set, FrozenSet, Type
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Document us in "README.rst", please.
-
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
@@ -129,6 +126,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    get_type_hints,
     no_type_check,
     no_type_check_decorator,
     overload,
@@ -155,6 +153,8 @@ if _IS_PYTHON_AT_LEAST_3_7:
             SupportsIndex,
             TypedDict,
             final,
+            get_args,
+            get_origin,
             runtime_checkable,
         )
 
@@ -167,6 +167,7 @@ if _IS_PYTHON_AT_LEAST_3_7:
                 ParamSpecKwargs,
                 TypeAlias,
                 TypeGuard,
+                is_typeddict,
             )
 
 # ....................{ PEP ~ 585                         }....................

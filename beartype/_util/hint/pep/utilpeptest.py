@@ -318,12 +318,10 @@ def warn_if_hint_pep_deprecated(
             (
                 f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 '
                 f'scheduled for removal in the first Python version '
-                f'released after October 5th, 2025. To resolve this, '
-                f'either drop Python < 3.9 support and globally replace this '
-                f'hint by the equivalent PEP 585 type hint '
-                f'(e.g., "typing.List[int]" by "list[int]") or see this '
-                f'discussion topic for saner and more portable solutions:\n'
-                f'    https://github.com/beartype/beartype#pep-484-deprecations'
+                f'released after October 5th, 2025. To resolve this, import '
+                f'this hint from "beartype.typing" rather than "typing". '
+                f'See this discussion for further details and alternatives:\n'
+                f'    https://github.com/beartype/beartype#pep-585-deprecations'
             ),
             BeartypeDecorHintPep585DeprecationWarning,
         )

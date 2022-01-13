@@ -1785,22 +1785,21 @@ are self-explanatory, more than a few assume prior knowledge of arcane
 type-hinting standards *or* require non-trivial resolutions warranting further
 discussion. Let's ELI5 this for the good of the common... good.
 
-PEP 484 Deprecations
+PEP 585 Deprecations
 ~~~~~~~~~~~~~~~~~~~~
 
-Beartype may occasionally emit non-fatal `PEP 484`_ deprecation warnings under
+Beartype may occasionally emit non-fatal `PEP 585`_ deprecation warnings under
 Python ≥ 3.9 resembling:
 
 .. code-block::
 
    /home/kumamon/beartype/_util/hint/pep/utilpeptest.py:377:
-   BeartypeDecorHintPep484DeprecationWarning: PEP 484 type hint
+   BeartypeDecorHintPep585DeprecationWarning: PEP 484 type hint
    typing.List[int] deprecated by PEP 585 scheduled for removal in the first
-   Python version released after October 5th, 2025. To resolve this, either
-   drop Python < 3.9 support and globally replace this hint by the equivalent
-   PEP 585 type hint (e.g., "typing.List[int]" by "list[int]") or see this
-   discussion topic for saner and more portable solutions:
-       https://github.com/beartype/beartype#pep-484-deprecations
+   Python version released after October 5th, 2025. To resolve this, import
+   this hint from "beartype.typing" rather than "typing". See this discussion
+   for further details and alternatives:
+       https://github.com/beartype/beartype#pep-585-deprecations
 
 This is that discussion topic. Let's dissect this like a mantis shrimp
 repeatedly punching out giant kraken.
@@ -1830,15 +1829,43 @@ Season Eight of *Game of Thrones* previously answered this question, but let's
 try again. You have three options to avert the looming disaster that threatens
 to destroy everything you hold dear (in ascending order of justice):
 
-#. **Drop Python < 3.9.** The easiest (but worst) solution is to unilaterally
+#. **Import from** ``beartype.typing`` **instead.** The easiest (and best)
+   solution is to globally replace all imports from the standard typing_ module
+   with equivalent imports from our ``beartype.typing`` module. So:
+
+   .. code-block:: python
+
+      # Just do this...
+      from beartype import typing
+
+      # ...instead of this.
+      #import typing
+
+      # Likewise, just do this...
+      from beartype.typing import Dict, FrozenSet, List, Set, Tuple, Type
+
+      # ...instead of this.
+      #from typing import Dict, FrozenSet, List, Set, Tuple, Type
+
+   The public ``beartype.typing`` API is a mypy_-compliant replacement for
+   the typing_ API offering improved forward compatibility with future Python
+   releases. For example:
+
+   * ``beartype.typing.Set is set`` under Python ≥ 3.9 for `PEP 585`_
+     compliance.
+   * ``beartype.typing.Set is typing.Set`` under Python < 3.9 for `PEP 484`_
+     compliance.
+
+#. **Drop Python < 3.9.** The next easiest (but worst) solution is to brutally
    drop support for Python < 3.9 by globally replacing all deprecated `PEP
    484`_-compliant type hints with equivalent `PEP 585`_-compliant type hints
    (e.g., ``typing.List[int]`` with ``list[int]``). This is really only ideal
    for closed-source proprietary projects with a limited userbase. All other
    projects should prefer saner solutions outlined below.
-#. **Hide warnings.** The middle-finger way is to just squelch all deprecation
-   warnings with an ignore warning filter targeting the
-   ``BeartypeDecorHintPep484DeprecationWarning`` category. On the one hand,
+#. **Hide warnings.** The reprehensible (but understandable) middle-finger
+   way is to just squelch all deprecation warnings with an ignore warning
+   filter targeting the
+   ``BeartypeDecorHintPep585DeprecationWarning`` category. On the one hand,
    this will still fail in 2025 or 2026 with fiery explosions and thus only
    constitutes a temporary workaround at best. On the other hand, this has the
    obvious advantage of preserving Python < 3.9 support with minimal to no
@@ -1849,18 +1876,18 @@ to destroy everything you hold dear (in ascending order of justice):
 
       # Do it globally for everyone, whether they want you to or not!
       # This is the "Make Users Suffer" option.
-      from beartype.roar import BeartypeDecorHintPep484DeprecationWarning
+      from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
       from warnings import filterwarnings
-      filterwarnings("ignore", category=BeartypeDecorHintPep484DeprecationWarning)
+      filterwarnings("ignore", category=BeartypeDecorHintPep585DeprecationWarning)
       ...
       
       # Do it locally only for you! (Hope you like increasing your
       # indentation level in every single codebase module.)
       # This is the "Make Yourself Suffer" option.
-      from beartype.roar import BeartypeDecorHintPep484DeprecationWarning
+      from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
       from warnings import catch_warnings, filterwarnings
       with catch_warnings():
-          filterwarnings("ignore", category=BeartypeDecorHintPep484DeprecationWarning)
+          filterwarnings("ignore", category=BeartypeDecorHintPep585DeprecationWarning)
           ...
 
 #. **Type aliases.** The hardest (but best) solution is to use `type aliases`_
@@ -1911,18 +1938,26 @@ Let's type-check like `greased lightning`_:
    # Import the core @beartype decorator.
    from beartype import beartype
 
-   # Import PEP 585-compliant type hints. Note this requires Python ≥ 3.9.
+   # Import PEP-agnostic type hints from "beartype.typing", a stand-in
+   # replacement for the standard "typing" module providing improved forward
+   # compatibility with future Python releases. For example:
+   # * "beartype.typing.Set is set" under Python ≥ 3.9 to satisfy PEP 585.
+   # * "beartype.typing.Set is typing.Set" under Python < 3.9 to satisfy PEP 484.
+   from beartype import typing
+
+   # Alternately, directly import PEP 484-compliant type hints. Note PEP 585
+   # deprecated many hints under Python ≥ 3.9, where @beartype now emits
+   # non-fatal deprecation warnings at decoration time. See also:
+   #     https://docs.python.org/3/library/typing.html
+   #import typing
+
+   # Alternately, directly import PEP 585-compliant type hints. Note this
+   # requires Python ≥ 3.9.
    from collections import abc
 
-   # Import PEP 484-compliant type hints, too. Note that many of these types
-   # have been deprecated by PEP 585-compliant type hints under Python ≥ 3.9,
-   # where @beartype emits non-fatal deprecation warnings at decoration time.
-   # See also: https://docs.python.org/3/library/typing.html
-   import typing
-
    # Import backported PEP-compliant type hints from "typing_extensions",
-   # improving portability across Python versions. "typing.Literal" requires
-   # Python ≥ 3.9; "typing_extensions.Literal" only requires Python ≥ 3.6.
+   # improving portability across Python versions (e.g., "typing.Literal" needs
+   # Python ≥ 3.9 but "typing_extensions.Literal" only needs Python ≥ 3.6).
    import typing_extensions
 
    # Import beartype-specific types to annotate callables with.
@@ -1969,7 +2004,8 @@ Let's type-check like `greased lightning`_:
 
        # Annotate PEP 593-compliant metatypes, indexed by a PEP-compliant type
        # hint followed by zero or more arbitrary objects.
-       param_must_satisfy_pep593: typing.Annotated[set[int], range(5), True],
+       param_must_satisfy_pep593: typing.Annotated[
+           typing.set[int], range(5), True],
 
        # Annotate PEP 586-compliant literals, indexed by either a boolean, byte
        # string, integer, string, "enum.Enum" member, or "None".
@@ -2905,6 +2941,7 @@ Beartype is fully compliant with these `Python Enhancement Proposals (PEPs)
   <Partial Compliance_>`__.
 * `PEP 544 -- Protocols: Structural subtyping (static duck typing) <PEP
   544_>`_.
+* `PEP 557 -- Data Classes <PEP 557_>`_.
 * `PEP 560 -- Core support for typing module and generic types <PEP 560_>`_.
 * `PEP 561 -- Distributing and Packaging Type Information <PEP 561_>`_.
 * `PEP 563 -- Postponed Evaluation of Annotations <PEP 563_>`__.
@@ -2939,6 +2976,7 @@ values annotated by these typing_ types:
 * collections.abc.ByteString_.
 * collections.abc.MutableSequence_.
 * collections.abc.Sequence_.
+* dataclasses.InitVar_.
 * typing.Annotated_.
 * typing.Any_.
 * typing.ByteString_.
