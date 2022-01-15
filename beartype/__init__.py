@@ -134,7 +134,7 @@ from beartype._decor.main import beartype
 # Publicize all top-level configuration attributes required to configure the
 # @beartype.beartype decorator.
 from beartype._decor.conf import (
-    BeartypeConfiguration,
+    BeartypeConf,
     BeartypeStrategy,
 )
 
@@ -166,7 +166,7 @@ For PEP 8 compliance, this specifier has the canonical name
 
 
 __all__ = [
-    'BeartypeConfiguration',
+    'BeartypeConf',
     'BeartypeStrategy',
     'beartype',
     '__version__',

@@ -16,6 +16,11 @@ downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.roar import BeartypeConfException
+from beartype.typing import (
+    TYPE_CHECKING,
+    Dict,
+)
 from enum import (
     Enum,
     auto as next_enum_member_value,
@@ -23,15 +28,16 @@ from enum import (
 )
 
 # ....................{ ENUMERATIONS                      }....................
+#FIXME: Implement support for the "O0" strategy, please.
 #FIXME: Unit test us up, please.
+#FIXME: Document us up, please.
 @die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):
     '''
-    Enumeration of all kinds of **container type-checking strategies** (i.e.,
-    competing procedures for type-checking items of containers passed to or
-    returned from :func:`beartype.beartype`-decorated callables, each with
-    concomitant benefits and disadvantages with respect to runtime complexity
-    and quality assurance).
+    Enumeration of all kinds of **type-checking strategies** (i.e., competing
+    procedures for type-checking objects passed to or returned from
+    :func:`beartype.beartype`-decorated callables, each with concomitant
+    tradeoffs with respect to runtime complexity and quality assurance).
 
     Strategies are intentionally named according to `conventional Big O
     notation <Big O_>`__ (e.g., :attr:`BeartypeStrategy.On` enables the
@@ -58,27 +64,25 @@ class BeartypeStrategy(Enum):
     Attributes
     ----------
     O0 : EnumMemberType
-        **No-time strategy** (i.e, disabling type-checking for a callable by
-        reducing :func:`beartype.beartype` to the identity decorator for that
-        callable). Although currently useless, this strategy will usefully
-        allow end users to selectively prevent callables from being
+        **No-time strategy** (i.e, disabling type-checking for a decorated
+        callable by reducing :func:`beartype.beartype` to the identity
+        decorator for that callable). Although seemingly useless, this strategy
+        enables users to selectively blacklist (prevent) callables from being
         type-checked by our as-yet-unimplemented import hook. When implemented,
-        that hook will type-check *all* callables in a given package by
-        default. Some means is needed to prevent that from happening for select
-        callables. This is that means.
+        that hook will type-check all callables within a package or module
+        *except* those callables explicitly decorated by this strategy.
     O1 : EnumMemberType
-        **Constant-time strategy** (i.e., our default ``O(1)`` strategy
-        type-checking a single randomly selected item of a container that you
-        currently enjoy). Since this is the default, this strategy need *not*
-        be explicitly configured.
+        **Constant-time strategy** (i.e., the default ``O(1)`` strategy,
+        type-checking a single randomly selected item of each container). As
+        the default, this strategy need *not* be explicitly enabled.
     Ologn : EnumMemberType
-        **Logarithmic-time strategy** (i.e., an ``O(lgn)` strategy
-        type-checking a randomly selected number of items ``j`` of a container
-        ``obj`` such that ``j = len(obj)``. This strategy is **currently
-        unimplemented.** (*To be implemented by a future beartype release.*)
+        **Logarithmic-time strategy** (i.e., the ``O(log n)` strategy,
+        type-checking a randomly selected number of items ``log(len(obj))`` of
+        each container ``obj``). This strategy is **currently unimplemented.**
+        (*To be implemented by a future beartype release.*)
     On : EnumMemberType
-        **Linear-time strategy** (i.e., an ``O(n)`` strategy type-checking
-        *all* items of a container. This strategy is **currently
+        **Linear-time strategy** (i.e., an ``O(n)`` strategy, type-checking
+        *all* items of a container). This strategy is **currently
         unimplemented.** (*To be implemented by a future beartype release.*)
     '''
 
@@ -88,57 +92,303 @@ class BeartypeStrategy(Enum):
     On = next_enum_member_value()
 
 # ....................{ CLASSES                           }....................
-#FIXME: *INSUFFICIENT.* Critically, we also *MUST* declare a __new__() method
-#to enforce memoization. A new "BeartypeConfiguration" instance is instantiated
-#*ONLY* if no existing instance with the same settings has been previously
-#instantiated; else, an existing cached instance is reused. This is essential,
-#as the @beartype decorator itself memoizes on the basis of this instance. See
-#the following StackOverflow post for the standard design pattern:
-#    https://stackoverflow.com/a/13054570/2809027
-#
-#Note, however, that there's an intriguing gotcha:
-#    "When you define __new__, you usually do all the initialization work in
-#     __new__; just don't define __init__ at all."
-#
-#Why? Because if you define both __new__() and __init__() then Python
-#implicitly invokes *BOTH*, even if the object returned by __new__() has
-#already been previously initialized with __init__(). This is a facepalm
-#moment, although the rationale does indeed make sense. Ergo, we *ONLY* want to
-#define __new__(); the existing __init__() should simply be renamed __new__()
-#and generalized from there to support caching.
+#FIXME: Implement support for the "is_print_wrapper_code" option, please.
 #FIXME: Unit test us up, please.
 #FIXME: Document us up, please.
-class BeartypeConfiguration(object):
+#FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
+class BeartypeConf(object):
     '''
-    * An `is_debug` boolean instance variable. When enabled, `@beartype`
-      emits debugging information for the decorated callable – including
-      the code for the wrapper function dynamically generated by
-      `@beartype` that type-checks that callable.
-    * A `strategy` instance variable whose value must be a
-      `BeartypeStrategy` enumeration member. This is how you notify
-      `@beartype` of which strategy to apply to each callable.
+    **Beartype configuration** (i.e., self-caching dataclass encapsulating all
+    flags, options, settings, and other metadata configuring each granular
+    decoration of a callable or class by the :func:`beartype.beartype`
+    decorator).
+
+    Attributes
+    ----------
+    _is_print_wrapper_code : bool, optional
+        ``True`` only if printing to stdout (i.e., standard output) the
+        definition of the wrapper function dynamically generated by the
+        :func:`beartype.beartype` decorator for the decorated callable.
+        Defaults to ``False``.
+    _strategy : BeartypeStrategy, optional
+        **Type-checking strategy** (i.e., :class:`BeartypeStrategy` enumeration
+        member) with which to implement all type-checks in the wrapper function
+        dynamically generated by the :func:`beartype.beartype` decorator for
+        the decorated callable. Defaults to :attr: `BeartypeStrategy.O1`, the
+        constant-time strategy.
     '''
 
-    is_debug: bool
-    strategy: BeartypeStrategy
+    # ..................{ CLASS VARIABLES                   }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize this slots list with the implementations of:
+    # * The __new__() dunder method.
+    # * The __eq__() dunder method.
+    # * The __hash__() dunder method.
+    # * The __repr__() dunder method.
+    # CAUTION: Subclasses declaring uniquely subclass-specific instance
+    # variables *MUST* additionally slot those variables. Subclasses violating
+    # this constraint will be usable but unslotted, which defeats our purposes.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    def __init__(
-       self,
-       is_debug: bool = False,
-       strategy: BeartypeStrategy = BeartypeStrategy.O1,
-    ) -> None:
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # cache dunder methods. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_is_print_wrapper_code',
+        '_strategy',
+    )
 
-        #FIXME: Implement actual validation, please.
-        if not isinstance(is_debug, bool):
-            raise ValueError()
-        if not isinstance(strategy, BeartypeStrategy):
-            raise ValueError()
+    # Squelch false negatives from mypy. This is absurd. This is typing. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        _is_print_wrapper_code: bool
+        _strategy: BeartypeStrategy
 
-        self.is_debug = is_debug
-        self.strategy = strategy
+    # ..................{ INSTANTIATORS                     }..................
+    # Note that this __new__() dunder method implements the superset of the
+    # functionality typically implemented by the __init__() dunder method. Due
+    # to Python instantiation semantics, the __init__() dunder method is
+    # intentionally left undefined. Why? Because Python unconditionally invokes
+    # __init__() if defined, even when the initialization performed by that
+    # __init__() has already been performed for the cached instance returned by
+    # __new__(). In short, __init__() and __new__() are largely mutually
+    # exclusive; one typically defines one or the other but *NOT* both.
 
-# ....................{ SINGLETONS                        }....................
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please. Note this attribute is intentionally *NOT*
-#exported from "beartype.__init__".
-BEAR_CONF_DEFAULT = BeartypeConfiguration()
+    def __new__(
+        cls,
+
+        # Optional keyword-only parameters.
+        *,
+        is_print_wrapper_code: bool = False,
+        strategy: BeartypeStrategy = BeartypeStrategy.O1,
+    ) -> 'BeartypeConf':
+        '''
+        Instantiate this configuration if needed (i.e., if *no* prior
+        configuration with these same parameters was previously instantiated)
+        *or* reuse that previously instantiated configuration otherwise.
+
+        This dunder methods guarantees beartype configurations to be memoized:
+
+        .. code-block:: python
+
+           >>> from beartype import BeartypeConf
+           >>> BeartypeConf() is BeartypeConf()
+           True
+
+        This memoization is *not* merely an optimization. The
+        :func:`beartype.beartype` decorator internally memoizes the private
+        closure it creates and returns on the basis of this configuration,
+        which *must* thus also be memoized.
+
+        Parameters
+        ----------
+        is_print_wrapper_code : bool, optional
+            ``True`` only if printing to stdout (i.e., standard output) the
+            definition of the wrapper function dynamically generated by the
+            :func:`beartype.beartype` decorator for the decorated callable.
+            Defaults to ``False``.
+        strategy : BeartypeStrategy, optional
+            **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
+            enumeration member) with which to implement all type-checks in the
+            wrapper function dynamically generated by the :func:
+            `beartype.beartype` decorator for the decorated callable. Defaults
+            to :attr: `BeartypeStrategy.O1`, the constant-time strategy.
+
+        Returns
+        ----------
+        BeartypeConf
+            Beartype configuration memoized with these parameters.
+
+        Raises
+        ----------
+        :exc:`BeartypeConfException`
+            If either:
+
+            * ``is_print_wrapper_code`` is *not* a boolean.
+            * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
+              member.
+        '''
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize this logic with BeartypeConf.__hash__().
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Hash of these parameters.
+        #
+        # Note this logic inlines the body of the BeartypeConf.__hash__()
+        # dunder method, maximizing efficiency (the entire point of caching) by
+        # avoiding the cost of an additional method call both here and (more
+        # importantly) in BeartypeConf.__hash__(). See that method for details.
+        BEARTYPE_CONF_HASH = hash((
+            is_print_wrapper_code,
+            strategy,
+        ))
+
+        # If this method has already instantiated a configuration with these
+        # parameters, return that configuration for consistency and efficiency.
+        if BEARTYPE_CONF_HASH in _BEARTYPE_CONF_HASH_TO_CONF:
+            return _BEARTYPE_CONF_HASH_TO_CONF[BEARTYPE_CONF_HASH]
+        # Else, this method has yet to instantiate a configuration with these
+        # parameters. In this case, do so below (and cache that configuration).
+
+        # If this boolean is *NOT* actually a boolean, raise an exception.
+        if not isinstance(is_print_wrapper_code, bool):
+            raise BeartypeConfException(
+                f'Beartype configuration setting "is_print_wrapper_code" '
+                f'value {repr(is_print_wrapper_code)} not boolean.'
+            )
+        # Else, this boolean is actually a boolean.
+        #
+        # If this enumeration member is *NOT* actually an enumeration member,
+        # raise an exception.
+        elif not isinstance(strategy, BeartypeStrategy):
+            raise BeartypeConfException(
+                f'Beartype configuration setting "strategy" value '
+                f'{repr(strategy)} not "BeartypeStrategy" enumeration member.'
+            )
+        # Else, this enumeration member is actually an enumeration member.
+
+        # Instantiate a new configuration of this type.
+        self = super().__new__(cls)
+
+        # Classify all passed parameters with this configuration.
+        self._is_print_wrapper_code = is_print_wrapper_code
+        self._strategy = strategy
+
+        # Cache this configuration.
+        _BEARTYPE_CONF_HASH_TO_CONF[BEARTYPE_CONF_HASH] = self
+
+        # Return this configuration.
+        return self
+
+    # ..................{ PROPERTIES                        }..................
+    # Read-only public properties effectively prohibiting mutation of their
+    # underlying private attributes.
+
+    @property
+    def is_print_wrapper_code(self) -> bool:
+        '''
+        ``True`` only if printing to stdout (i.e., standard output) the
+        definition of the wrapper function dynamically generated by the
+        :func:`beartype.beartype` decorator for the decorated callable.
+        '''
+
+        return self._is_print_wrapper_code
+
+
+    @property
+    def strategy(self) -> BeartypeStrategy:
+        '''
+        **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
+        enumeration member) with which to implement all type-checks in the
+        wrapper function dynamically generated by the :func:
+        `beartype.beartype` decorator for the decorated callable.
+        '''
+
+        return self._strategy
+
+    # ..................{ DUNDERS                           }..................
+    def __eq__(self, other: object) -> bool:
+        '''
+        **Beartype configuration equality comparator.**
+
+        Parameters
+        ----------
+        other : object
+            Arbitrary object to be compared for equality against this
+            configuration.
+
+        Returns
+        ----------
+        Union[bool, type(NotImplemented)]
+            Either:
+
+            * If this other object is also a beartype configuration, either:
+
+              * If these configurations share the same settings, ``True``.
+              * Else, ``False``.
+
+            * Else, ``NotImplemented``.
+
+        See Also
+        ----------
+        :func:`_hash_beartype_conf`
+            Further details.
+        '''
+
+        # If this other object is also a beartype configuration...
+        if isinstance(other, BeartypeConf):
+            # Return true only if these configurations share the same settings.
+            return (
+                self._is_print_wrapper_code == other._is_print_wrapper_code and
+                self._strategy == other._strategy
+            )
+        # Else, this other object is *NOT* also a beartype configuration.
+
+        # In this case, return the standard singleton informing Python that
+        # this equality comparator fails to support this comparison.
+        return NotImplemented
+
+
+    def __hash__(self) -> int:
+        '''
+        **Hash** (i.e., non-negative integer quasi-uniquely identifying this
+        beartype configuration with respect to hashable container membership).
+
+        Returns
+        ----------
+        int
+            Hash of this configuration.
+        '''
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize this logic with BeartypeConf.__new__().
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Return the hash of a tuple containing these parameters in an
+        # arbitrary (albeit well-defined) order.
+        #
+        # Note this has been profiled to be the optimal means of hashing object
+        # attributes in Python, where "optimal" means:
+        # * Optimally fast. CPython in particular optimizes the creation and
+        #   garbage collection of "small" tuples, where "small" is ill-defined
+        #   but almost certainly applies here.
+        # * Optimally uniformly distributed, thus minimizing the likelihood of
+        #   expensive hash collisions.
+        return hash((
+            self._is_print_wrapper_code,
+            self._strategy,
+        ))
+
+
+    def __repr__(self) -> str:
+        '''
+        **Beartype configuration representation** (i.e., machine-readable
+        string which, when dynamically evaluated as code, restores access to
+        this exact configuration object).
+
+        Returns
+        ----------
+        str
+            Representation of this configuration.
+        '''
+
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'    is_print_wrapper_code={repr(self._is_print_wrapper_code)},\n'
+            f'    strategy={repr(self._strategy)},\n'
+            f')'
+        )
+
+# ....................{ PRIVATE ~ globals                 }....................
+_BEARTYPE_CONF_HASH_TO_CONF: Dict[int, BeartypeConf] = {}
+'''
+Non-thread-safe **beartype configuration cache** (i.e., dictionary mapping from
+the hash of each set of parameters accepted by a prior call of the
+:meth:`BeartypeConf.__new__` instantiator to the unique :class:`BeartypeConf`
+instance instantiated by that call).
+
+Note that this cache is technically non-thread-safe. Since this cache is only
+used as a memoization optimization, the only harmful consequences of a race
+condition between threads contending over this cache is a mildly inefficient
+(but otherwise harmless) repeated re-memoization of duplicate configurations.
+'''

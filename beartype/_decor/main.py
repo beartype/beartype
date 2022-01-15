@@ -21,12 +21,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 #FIXME: Refactor to support options as follows (mostly ignoring comments
 #elsewhere to this effect):
-#* Add a new "config: BeartypeConfiguration" instance variable to the
+#* Add a new "config: BeartypeConf" instance variable to the
 #  "beartype._decor._call.BeartypeCall" class.
 #* Define a new "beartype._decor._cache.cachedecor" submodule defining:
-#    BeartypeConfiguredDecorator = Callable[[T], T]]
+#    BeartypeConfedDecorator = Callable[[T], T]]
 #
-#    bear_conf_to_decor: Dict[BeartypeConfiguration, BeartypeConfiguredDecorator] = {}
+#    bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
 #    '''
 #    Global cache or something. Note that this cache need *NOT* be thread-safe,
 #    because we're only caching as an optimization efficiency.
@@ -36,7 +36,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    something). The "_mandatory" suffix implies that *ALL* parameters to this
 #    decorator are mandatory rather than optional.
 #  * Refactor the signature of that decorator to resemble:
-#        def beartype_func_with_configuration(func: T, conf: BeartypeConfiguration) -> T:
+#        def beartype_func_with_configuration(func: T, conf: BeartypeConf) -> T:
 #* Retain this submodule, which will instead now define:
 #  * A new public @beartype decorator with implementation resembling:
 #        from typing import overload
@@ -48,7 +48,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        @overload
 #        def beartype(func: T) -> T: ...
 #        @overload
-#        def beartype(conf: BeartypeConfiguration) -> BeartypeConfiguredDecorator: ...
+#        def beartype(conf: BeartypeConf) -> BeartypeConfedDecorator: ...
 #
 #        def beartype(
 #            # Optional positional or keyword parameters.
@@ -56,8 +56,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #            *,
 #
 #            # Optional keyword-only parameters.
-#            conf: BeartypeConfiguration = BEAR_CONF_DEFAULT,
-#        ) -> Union[T, BeartypeConfiguredDecorator]:
+#            conf: BeartypeConf = BeartypeConf(),
+#        ) -> Union[T, BeartypeConfedDecorator]:
 #            #FIXME: Validate passed arguments here: e.g.,
 #            #   assert isinstance(func, (Callable, None)), (...)
 #

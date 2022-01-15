@@ -93,8 +93,8 @@ class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
     '''
     **Beartype cave** ``None`` **tuple factory key exception.**
 
-    This exception is raised when indexing the :func:`beartype.cave.NoneTypeOr`
-    dictionary with an invalid key, including:
+    Instances of this exception are raised when indexing the :func:
+    `beartype.cave.NoneTypeOr` dictionary with an invalid key, including:
 
     * The empty tuple.
     * Arbitrary objects that are neither:
@@ -112,8 +112,19 @@ class BeartypeCaveNoneTypeOrMutabilityException(
     '''
     **Beartype cave** ``None`` **tuple factory mutability exception.**
 
-    This exception is raised when attempting to explicitly set a key on the
-    :func:`beartype.cave.NoneTypeOr` dictionary.
+    Instances of this exception are raised when attempting to explicitly set a
+    key on the :func:`beartype.cave.NoneTypeOr` dictionary.
+    '''
+
+    pass
+
+# ....................{ CONF                              }....................
+class BeartypeConfException(BeartypeException):
+    '''
+    **Beartype configuration exception.**
+
+    Instances of this exception are raised on erroneously instantiating the
+    :class:`beartype.BeartypeConf` class.
     '''
 
     pass

@@ -2005,7 +2005,7 @@ Let's type-check like `greased lightning`_:
        # Annotate PEP 593-compliant metatypes, indexed by a PEP-compliant type
        # hint followed by zero or more arbitrary objects.
        param_must_satisfy_pep593: typing.Annotated[
-           typing.set[int], range(5), True],
+           typing.Set[int], range(5), True],
 
        # Annotate PEP 586-compliant literals, indexed by either a boolean, byte
        # string, integer, string, "enum.Enum" member, or "None".
