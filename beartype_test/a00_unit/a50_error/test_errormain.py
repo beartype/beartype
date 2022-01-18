@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_raise_pep_call_exception() -> None:
@@ -38,6 +37,7 @@ def test_raise_pep_call_exception() -> None:
         List,
         Tuple,
     )
+    from pytest import raises
     from typing import Union
 
     def forest_unknown(

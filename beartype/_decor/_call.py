@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorWrappeeException
+from beartype._decor.conf import BeartypeConf
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
@@ -72,6 +73,10 @@ class BeartypeCall(object):
     func_arg_name_to_hint_get : Callable[[str, object], object]
         :meth:`dict.get` method bound to the :attr:`func_arg_name_to_hint`
         dictionary, localized as a negligible microoptimization. Blame Guido.
+    func_conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all flags, options, settings, and other metadata configuring the
+        current decoration of the decorated callable).
     func_wrappee : Optional[Callable]
         Possibly wrapped **decorated callable** (i.e., high-level callable
         currently being decorated by the :func:`beartype.beartype` decorator)
@@ -142,6 +147,7 @@ class BeartypeCall(object):
     __slots__ = (
         'func_arg_name_to_hint',
         'func_arg_name_to_hint_get',
+        'func_conf',
         'func_wrappee_codeobj',
         'func_wrappee_wrappee_codeobj',
         'func_wrappee',
@@ -185,6 +191,7 @@ class BeartypeCall(object):
         # Nullify all remaining instance variables.
         self.func_arg_name_to_hint: Dict[str, object] = None  # type: ignore[assignment]
         self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
+        self.func_conf: BeartypeConf = None  # type: ignore[assignment]
         self.func_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_codeobj: CodeType = None  # type: ignore[assignment]
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
@@ -195,7 +202,7 @@ class BeartypeCall(object):
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
-    def reinit(self, func: Callable) -> None:
+    def reinit(self, func: Callable, func_conf: BeartypeConf) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
         acquisition of a previously cached instance of this class from the
@@ -210,22 +217,42 @@ class BeartypeCall(object):
         ----------
         func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
+        func_conf : BeartypeConf
+            Beartype configuration configuring :func:`beartype.beartype`
+            specific to this callable.
 
         Raises
         ----------
-        BeartypeDecorHintPep563Exception
+        :exc:`BeartypeDecorHintPep563Exception`
             If evaluating a postponed annotation on this callable raises an
             exception (e.g., due to that annotation referring to local state no
             longer accessible from this deferred evaluation).
-        BeartypeDecorWrappeeException
-            If this callable is neither a pure-Python function *nor* method;
-            equivalently, if this callable is either C-based *or* a class or
-            object defining the ``__call__()`` dunder method.
+        :exc:`BeartypeDecorWrappeeException`
+            If either:
+
+            * This callable is uncallable.
+            * This callable is neither a pure-Python function *nor* method;
+              equivalently, if this callable is either C-based *or* a class or
+              object defining the ``__call__()`` dunder method.
+            * This configuration is *not* actually a configuration.
         '''
-        assert callable(func), f'{repr(func)} uncallable.'
 
         # Avoid circular import dependencies.
         from beartype._decor._pep563 import resolve_hints_pep563_if_active
+
+        # If this callable is uncallable, raise an exception.
+        if not callable(func):
+            raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
+        # Else, this callable is callable.
+        #
+        # If this configuration is *NOT* a configuration, raise an exception.
+        elif not isinstance(func_conf, BeartypeConf):
+            raise BeartypeDecorWrappeeException(
+                f'{repr(func_conf)} not beartype configuration.')
+        # Else, this configuration is a configuration.
+
+        # Classify this configuration as is.
+        self.func_conf = func_conf
 
         # Possibly wrapped callable currently being decorated.
         self.func_wrappee = func

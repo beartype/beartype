@@ -29,8 +29,7 @@ from enum import (
 
 # ....................{ ENUMERATIONS                      }....................
 #FIXME: Implement support for the "O0" strategy, please.
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
+#FIXME: Document us up in "README.rst", please.
 @die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):
     '''
@@ -93,8 +92,7 @@ class BeartypeStrategy(Enum):
 
 # ....................{ CLASSES                           }....................
 #FIXME: Implement support for the "is_print_wrapper_code" option, please.
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
+#FIXME: Document us up in "README.rst", please.
 #FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
 class BeartypeConf(object):
     '''
@@ -139,7 +137,7 @@ class BeartypeConf(object):
         '_strategy',
     )
 
-    # Squelch false negatives from mypy. This is absurd. This is typing. See:
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         _is_print_wrapper_code: bool
@@ -158,10 +156,12 @@ class BeartypeConf(object):
     def __new__(
         cls,
 
+        # Optional flexible parameters.
+        strategy: BeartypeStrategy = BeartypeStrategy.O1,
+
         # Optional keyword-only parameters.
         *,
         is_print_wrapper_code: bool = False,
-        strategy: BeartypeStrategy = BeartypeStrategy.O1,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior

@@ -14,7 +14,6 @@ This submodule unit tests the :func:`beartype._decor._call` submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
 
 # ....................{ TESTS                             }....................
 def test_decor_data() -> None:
@@ -23,11 +22,29 @@ def test_decor_data() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype import BeartypeConf
+    from beartype.roar import BeartypeDecorWrappeeException
     from beartype._decor._call import BeartypeCall
+    from pytest import raises
 
-    # Beartype decorator dataclass.
-    beartype_data = BeartypeCall()
+    # Arbitrary beartype metadata.
+    bear_data = BeartypeCall()
 
-    # Assert that instances of this dataclass are unhashable.
+    # Assert this metadata to be unhashable.
     with raises(TypeError):
-        hash(beartype_data)
+        hash(bear_data)
+
+    # Assert that reinitializing this metadata with invalid parameters raises
+    # the expected exceptions.
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(
+            func='The fields, the lakes, the forests, and the streams,',
+            func_conf=BeartypeConf(),
+        )
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(
+            func=lambda: ...,
+            func_conf='Ocean, and all the living things that dwell',
+        )
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(func=iter, func_conf=BeartypeConf())
