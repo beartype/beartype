@@ -181,61 +181,17 @@ if _IS_PYTHON_AT_LEAST_3_7:
             )
 
 # ....................{ PEP ~ 585                         }....................
-# If the active Python interpreter targets Python >= 3.9 and thus supports PEP
-# 585, alias *ALL* public attributes of the "typing" module deprecated by PEP
-# 585 to their equivalent values elsewhere in the standard library.
-if _IS_PYTHON_AT_LEAST_3_9:
-    from collections import (
-        ChainMap as ChainMap,
-        Counter as Counter,
-        OrderedDict as OrderedDict,
-        defaultdict as DefaultDict,
-        deque as Deque,
-    )
-    from collections.abc import (
-        AsyncIterable as AsyncIterable,
-        AsyncIterator as AsyncIterator,
-        AsyncGenerator as AsyncGenerator,
-        Awaitable as Awaitable,
-        ByteString as ByteString,
-        Callable as Callable,
-        Collection as Collection,
-        Container as Container,
-        Coroutine as Coroutine,
-        Generator as Generator,
-        ItemsView as ItemsView,
-        Iterable as Iterable,
-        Iterator as Iterator,
-        KeysView as KeysView,
-        Mapping as Mapping,
-        MappingView as MappingView,
-        MutableMapping as MutableMapping,
-        MutableSequence as MutableSequence,
-        MutableSet as MutableSet,
-        Reversible as Reversible,
-        Sequence as Sequence,
-        ValuesView as ValuesView,
-        Set as AbstractSet,
-    )
-    from contextlib import (
-        AbstractContextManager as ContextManager,
-        AbstractAsyncContextManager as AsyncContextManager,
-    )
-    from typing import (  # type: ignore[attr-defined]
-        Annotated,
-    )
-
-    Dict = dict
-    FrozenSet = frozenset
-    List = list
-    Set = set
-    Tuple = tuple
-    Type = type
-# Else, the active Python interpreter targets Python < 3.9 and thus fails to
-# support PEP 585. In this case, import *ALL* public attributes of the "typing"
-# module deprecated by PEP 585 as their original values.
-else:
-    from typing import (  # type: ignore[misc]
+# If the active Python interpreter targets Python < 3.9 and thus fails to
+# support PEP 585, import *ALL* public attributes of the "typing" module
+# deprecated by PEP 585 as their original values.
+#
+# This is intentionally performed *BEFORE* the corresponding "else:" branch
+# below handling the Python >= 3.9 case. Why? Because mypy. If the order of
+# these two branches is reversed, mypy emits errors under Python < 3.9 when
+# attempting to subscript any of the builtin types (e.g., "Tuple"): e.g.,
+#     error: "tuple" is not subscriptable  [misc]
+if not _IS_PYTHON_AT_LEAST_3_9:
+    from typing import (
         AbstractSet as AbstractSet,
         AsyncContextManager as AsyncContextManager,
         AsyncGenerator as AsyncGenerator,
@@ -279,6 +235,56 @@ else:
     # public attributes of the "typing" module introduced by Python 3.7.2
     # deprecated by PEP 585 as their original values.
     if _IS_PYTHON_AT_LEAST_3_7_2:
-        from typing import (
+        from typing import (  # type: ignore[attr-defined]
             OrderedDict as OrderedDict,
         )
+# If the active Python interpreter targets Python >= 3.9 and thus supports PEP
+# 585, alias *ALL* public attributes of the "typing" module deprecated by PEP
+# 585 to their equivalent values elsewhere in the standard library.
+else:
+    from collections import (
+        ChainMap as ChainMap,
+        Counter as Counter,
+        OrderedDict as OrderedDict,
+        defaultdict as DefaultDict,
+        deque as Deque,
+    )
+    from collections.abc import (
+        AsyncIterable as AsyncIterable,
+        AsyncIterator as AsyncIterator,
+        AsyncGenerator as AsyncGenerator,
+        Awaitable as Awaitable,
+        ByteString as ByteString,
+        Callable as Callable,
+        Collection as Collection,
+        Container as Container,
+        Coroutine as Coroutine,
+        Generator as Generator,
+        ItemsView as ItemsView,
+        Iterable as Iterable,
+        Iterator as Iterator,
+        KeysView as KeysView,
+        Mapping as Mapping,
+        MappingView as MappingView,
+        MutableMapping as MutableMapping,
+        MutableSequence as MutableSequence,
+        MutableSet as MutableSet,
+        Reversible as Reversible,
+        Sequence as Sequence,
+        ValuesView as ValuesView,
+        Set as AbstractSet,
+    )
+    from contextlib import (
+        AbstractContextManager as ContextManager,
+        AbstractAsyncContextManager as AsyncContextManager,
+    )
+    from typing import (  # type: ignore[attr-defined]
+        Annotated,
+    )
+
+    Dict = dict  # type: ignore[misc]
+    FrozenSet = frozenset  # type: ignore[misc]
+    List = list  # type: ignore[misc]
+    Set = set  # type: ignore[misc]
+    Tuple = tuple  # type: ignore[assignment]
+    Type = type  # type: ignore[assignment]

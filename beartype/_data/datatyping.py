@@ -12,11 +12,60 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from collections.abc import Callable
-from types import CodeType, FrameType, GeneratorType
-from typing import Iterable, Tuple, Type, Union
+from beartype.typing import (
+    Any,
+    Callable,
+    Iterable,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+from types import (
+    CodeType,
+    FrameType,
+    GeneratorType,
+)
 
-# ....................{ HINTS ~ callable                  }....................
+# ....................{ HINTS ~ callable ~ early          }....................
+# Callable-specific type hints required by subsequent type hints below.
+
+CallableAny = Callable[..., Any]
+'''
+PEP-compliant type hint matching any callable in a manner explicitly matching
+all possible callable signatures.
+'''
+
+# ....................{ HINTS ~ typevar                   }....................
+# Type variables required by subsequent type hints below.
+
+BeartypeableT = TypeVar('BeartypeableT', bound=Union[type, CallableAny])
+'''
+:pep:`484`-compliant **generic beartypeable type variable** (i.e., type hint
+matching any arbitrary callable or class).
+
+This type variable notifies static analysis performed by both static type
+checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
+:mod:`beartype` decorator preserves:
+
+* Callable signatures by creating and returning callables with the same
+  signatures as passed callables.
+* Class hierarchies by preserving passed classes with respect to inheritance,
+  including metaclasses and method-resolution orders (MRO) of those classes.
+'''
+
+# ....................{ HINTS ~ callable ~ late           }....................
+# Callable-specific type hints *NOT* required by subsequent type hints below.
+
+BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
+'''
+PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
+closure created and returned from the :func:`beartype.beartype` decorator when
+passed a beartype configuration via the optional ``conf`` parameter rather than
+an arbitrary object to be decorated via the optional ``obj`` parameter).
+'''
+
+
 Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object

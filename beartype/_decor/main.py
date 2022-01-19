@@ -21,14 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 #FIXME: Refactor to support options as follows (mostly ignoring comments
 #elsewhere to this effect):
-#* Define a new "beartype._decor._cache.cachedecor" submodule defining:
-#    BeartypeConfedDecorator = Callable[[T], T]]
-#
-#    bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
-#    '''
-#    Global cache or something. Note that this cache need *NOT* be thread-safe,
-#    because we're only caching as an optimization efficiency.
-#    '''
 #* Define a new "beartype._decor._beartype" submodule defining:
 #  * Our existing @beartype decorator below renamed to @beartype_mandatory (or
 #    something). The "_mandatory" suffix implies that *ALL* parameters to this
@@ -85,8 +77,10 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
+from beartype.typing import TYPE_CHECKING
 from beartype._data.cls.datacls import (
     TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
+from beartype._data.datatyping import BeartypeableT
 from beartype._decor.conf import BeartypeConf
 from beartype._decor._code.codemain import generate_code
 from beartype._decor._call import BeartypeCall
@@ -100,33 +94,9 @@ from beartype._util.func.lib.utilbeartypefunc import (
     set_func_beartyped,
 )
 from beartype._util.func.utilfuncmake import make_func
-from typing import Any, Callable, TypeVar, Union, TYPE_CHECKING
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ PRIVATE ~ hints                   }....................
-_HINT_BEARTYPE_CALLABLE = Callable[..., Any]
-'''
-PEP-compliant type hint matching any callable in a manner explicitly matching
-all possible callable signatures.
-'''
-
-
-_T = TypeVar('_T', bound=Union[type, _HINT_BEARTYPE_CALLABLE])
-'''
-:pep:`484`-compliant **generic beartypeable type variable** (i.e., type hint
-matching any arbitrary callable or class).
-
-This type variable notifies static analysis performed by both static type
-checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
-:mod:`beartype` decorator preserves:
-
-* Callable signatures by creating and returning callables with the same
-  signatures as passed callables.
-* Class hierarchies by preserving passed classes with respect to inheritance,
-  including metaclasses and method-resolution orders (MRO) of those classes.
-'''
 
 # ....................{ DECORATORS                        }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -134,12 +104,12 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
 # identity decorator redeclared below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def beartype(
-    obj: _T,
+    obj: BeartypeableT,
 
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BeartypeConf(),
-) -> _T:
+) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., pure-Python callable or class)
     with dynamically generated type-checking.
@@ -169,7 +139,7 @@ def beartype(
 
     Parameters
     ----------
-    obj : _T
+    obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -179,7 +149,7 @@ def beartype(
 
     Returns
     ----------
-    _T
+    BeartypeableT
         Either:
 
         * If the passed object is a class, this existing class embellished with
@@ -266,9 +236,9 @@ def beartype(
         #FIXME: Mypy currently erroneously emits a false negative resembling
         #the following if the "# type: ignore..." pragma is omitted below:
         #    beartype/_decor/main.py:246: error: Incompatible return value type
-        #    (got "type", expected "_T")  [return-value]
+        #    (got "type", expected "BeartypeableT")  [return-value]
         #This is almost certainly a mypy issue, as _beartype_type() is
-        #explicitly annotated as both accepting and returning "_T". Until
+        #explicitly annotated as both accepting and returning "BeartypeableT". Until
         #upstream resolves this, we squelch mypy with regret in our hearts.
         return _beartype_type(cls=obj, conf=conf)  # type: ignore[return-value]
     # Else, this object is a non-class.
@@ -290,13 +260,13 @@ def beartype(
     return _beartype_func(func=obj, conf=conf)
 
 # ....................{ PRIVATE ~ beartypers              }....................
-def _beartype_func(func: _T, conf: BeartypeConf) -> _T:
+def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     Decorate the passed callable with dynamically generated type-checking.
 
     Parameters
     ----------
-    func : _T
+    func : BeartypeableT
         Callable to be decorated by :func:`beartype.beartype`.
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
@@ -304,7 +274,7 @@ def _beartype_func(func: _T, conf: BeartypeConf) -> _T:
 
     Returns
     ----------
-    _T
+    BeartypeableT
         New pure-Python callable wrapping this callable with type-checking.
     '''
     assert callable(func), f'{repr(func)} uncallable.'
@@ -424,13 +394,13 @@ def _beartype_func(func: _T, conf: BeartypeConf) -> _T:
     return func_wrapper  # type: ignore[return-value]
 
 
-def _beartype_type(cls: _T, conf: BeartypeConf) -> _T:
+def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     Decorate the passed class with dynamically generated type-checking.
 
     Parameters
     ----------
-    cls : _T
+    cls : BeartypeableT
         Class to be decorated by :func:`beartype.beartype`.
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
@@ -438,7 +408,7 @@ def _beartype_type(cls: _T, conf: BeartypeConf) -> _T:
 
     Returns
     ----------
-    _T
+    BeartypeableT
         This class decorated by :func:`beartype.beartype`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
@@ -494,12 +464,12 @@ if (
 # actual decorator declared above.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def beartype(
-        obj: _T,
+        obj: BeartypeableT,
 
         # Optional keyword-only parameters.
         *,
         conf: BeartypeConf = BeartypeConf(),
-    ) -> _T:
+    ) -> BeartypeableT:
         '''
         Identity decorator.
 
