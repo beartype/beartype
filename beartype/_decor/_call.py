@@ -238,7 +238,7 @@ class BeartypeCall(object):
         '''
 
         # Avoid circular import dependencies.
-        from beartype._decor._pep563 import resolve_hints_pep563_if_active
+        from beartype._decor._pep.pep563 import resolve_hints_pep563_if_active
 
         # If this callable is uncallable, raise an exception.
         if not callable(func):

@@ -295,7 +295,7 @@ class MinecraftEndTxtUnscrambler(object):
 
 # ....................{ CALLABLES ~ limit                 }....................
 #FIXME: Hilariously, we can't even unit test whether the
-#beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
+#beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. Why not? Because some combination of the "typing" module
 #and/or PEP 563 were implemented so space-inefficiently than even attempting to
 #instantiate a PEP-compliant type hint that would violate the child limit
@@ -324,7 +324,7 @@ class MinecraftEndTxtUnscrambler(object):
 # _HINT_BIG = None
 # '''
 # PEP-compliant type hint guaranteed to raise an exception from the private
-# :func:`beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit`
+# :func:`beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit`
 # function, which imposes strict limits on the number of child hints permitted to
 # be transitively nested in any top-level PEP-compliant type hint.
 # '''

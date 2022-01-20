@@ -290,7 +290,7 @@ def test_pep563_class() -> None:
 
 # ....................{ TESTS ~ limit                     }....................
 #FIXME: Hilariously, we can't even unit test whether the
-#beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit() function
+#beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. See commentary in the
 #"beartype_test.a00_unit.data.pep.pep563.data_pep563_poem" submodule for all the appalling details.
 
@@ -298,7 +298,7 @@ def test_pep563_class() -> None:
 # def test_die_if_hint_repr_exceeds_child_limit() -> None:
 #     '''
 #     Test the private
-#     :func:`beartype._decor._pep563._die_if_hint_repr_exceeds_child_limit`
+#     :func:`beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit`
 #     function if the active Python interpreter targets at least Python 3.7.0
 #     (i.e., the first major Python version to support PEP 563) *or* skip
 #     otherwise.
