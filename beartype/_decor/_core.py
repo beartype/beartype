@@ -44,7 +44,7 @@ from beartype._util.func.utilfuncmake import make_func
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ DECORATORS                        }....................
-def beartype_unmemoized(
+def beartype_args_mandatory(
     obj: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., pure-Python callable or class)
