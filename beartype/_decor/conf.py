@@ -28,7 +28,6 @@ from enum import (
 )
 
 # ....................{ ENUMERATIONS                      }....................
-#FIXME: Implement support for the "O0" strategy, please.
 #FIXME: Document us up in "README.rst", please.
 @die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):

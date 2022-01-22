@@ -30,7 +30,10 @@ from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeableT,
 )
-from beartype._decor.conf import BeartypeConf
+from beartype._decor.conf import (
+    BeartypeConf,
+    BeartypeStrategy,
+)
 from beartype._decor._core import beartype_args_mandatory
 
 # Intentionally import the standard mypy-friendly @typing.overload decorator
@@ -158,7 +161,6 @@ def beartype(
         ever see this. (Thanks and abstruse apologies!)
     '''
 
-    #FIXME: Unit test us up, please.
     # If this configuration is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
         raise BeartypeDecorWrappeeException(
@@ -168,6 +170,15 @@ def beartype(
     # If passed an object to be decorated, this decorator is in decoration
     # rather than configuration mode. In this case, decorate this object with
     # type-checking configured by this configuration.
+    #
+    # Note this branch is typically *ONLY* entered when the "conf" parameter
+    # is *NOT* explicitly passed and thus defaults to the default
+    # configuration. While callers may technically run this decorator in
+    # decoration mode with a non-default configuration, doing so would be both
+    # highly irregular *AND* violate PEP 561-compliance by violating the
+    # decorator overloads declared above. Nonetheless, we're largely permissive
+    # here; callers that are doing this are sufficiently intelligent to be
+    # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
     if obj is not None:
         return beartype_args_mandatory(obj, conf)
     # Else, we were passed *NO* object to be decorated. In this case, this
@@ -182,7 +193,6 @@ def beartype(
     # decorator passed this configuration in configuration mode). Phew!
     beartype_confed_cached = _bear_conf_to_decor.get(conf)
 
-    #FIXME: Unit test us up, please.
     # If a prior call to this public decorator has already been passed the same
     # configuration (and thus generated and cached this private decorator),
     # return this private decorator for subsequent use in decoration mode.
@@ -191,39 +201,70 @@ def beartype(
     # Else, this is the first call to this public decorator passed this
     # configuration in configuration mode.
 
-    # Private decorator generically applying this configuration to any
-    # beartypeable object passed to this decorator.
-    def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
-        '''
-        Decorate the passed **beartypeable** (i.e., pure-Python callable or
-        class) with optimal type-checking dynamically generated unique to that
-        beartypeable under the beartype configuration passed to a prior call to
-        the :func:`beartype.beartype` decorator.
+    # If this configuration enables the no-time strategy performing *NO*
+    # type-checking, define only the identity decorator reducing to a noop.
+    if conf.strategy is BeartypeStrategy.O0:
+        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
+            '''
+            Return the passed **beartypeable** (i.e., pure-Python callable or
+            class) as is *without* type-checking that beartypeable under a
+            beartype configuration enabling the **no-time strategy** (i.e.,
+            :attr:`beartype.BeartypeStrategy.O0`) passed to a prior call to the
+            :func:`beartype.beartype` decorator.
 
-        Parameters
-        ----------
-        obj : BeartypeableT
-            Beartypeable to be decorated.
+            Parameters
+            ----------
+            obj : BeartypeableT
+                Beartypeable to be preserved as is.
 
-        Returns
-        ----------
-        BeartypeableT
-            Either:
+            Returns
+            ----------
+            BeartypeableT
+                This beartypeable unmodified.
 
-            * If the passed object is a class, this existing class embellished
-              with dynamically generated type-checking.
-            * If the passed object is a callable, a new callable wrapping that
-              callable with dynamically generated type-checking.
+            See Also
+            ----------
+            :func:`beartype.beartype`
+                Further details.
+            '''
 
-        See Also
-        ----------
-        :func:`beartype.beartype`
-            Further details.
-        '''
+            return obj
+    # Else, this configuration enables a positive-time strategy performing at
+    # least the minimal amount of type-checking. In this case, define a private
+    # decorator generically applying this configuration to any beartypeable
+    # object passed to this decorator.
+    else:
+        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
+            '''
+            Decorate the passed **beartypeable** (i.e., pure-Python callable or
+            class) with optimal type-checking dynamically generated unique to
+            that beartypeable under the beartype configuration passed to a
+            prior call to the :func:`beartype.beartype` decorator.
 
-        # Decorate this object with type-checking configured by this
-        # configuration.
-        return beartype_args_mandatory(obj, conf)
+            Parameters
+            ----------
+            obj : BeartypeableT
+                Beartypeable to be decorated.
+
+            Returns
+            ----------
+            BeartypeableT
+                Either:
+
+                * If the passed object is a class, this existing class
+                  embellished with dynamically generated type-checking.
+                * If the passed object is a callable, a new callable wrapping
+                  that callable with dynamically generated type-checking.
+
+            See Also
+            ----------
+            :func:`beartype.beartype`
+                Further details.
+            '''
+
+            # Decorate this object with type-checking configured by this
+            # configuration.
+            return beartype_args_mandatory(obj, conf)
 
     # Cache this private decorator against this configuration.
     _bear_conf_to_decor[conf] = beartype_confed
