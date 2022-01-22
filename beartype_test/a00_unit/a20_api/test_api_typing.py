@@ -186,3 +186,128 @@ def test_api_typing() -> None:
             beartype_typing_attr_name_to_value[typing_attr_unequal_name] is not
             official_typing_attr_name_to_value[typing_attr_unequal_name]
         )
+
+def test_caching_protocol_validation() -> None:
+    import pytest
+    from beartype import typing
+
+    if not hasattr(typing, "Protocol"):
+        pytest.skip("Protocol not available")
+
+    from abc import abstractmethod
+    from typing import Protocol as _Protocol
+    from beartype import beartype, roar
+
+    class SupportsFish(typing.Protocol):
+        @abstractmethod
+        def fish(self) -> int: pass
+
+    class OneFish:
+        def fish(self) -> int: return 1
+
+    class TwoFish:
+        def fish(self) -> int: return 2
+
+    class RedSnapper:
+        def oh(self) -> str: return "snap"
+
+    @beartype
+    def _real_like_identity(arg: SupportsFish) -> SupportsFish:
+        return arg
+
+    _real_like_identity(OneFish())
+    _real_like_identity(TwoFish())
+
+    with pytest.raises(roar.BeartypeException):
+        _real_like_identity(RedSnapper())  # type: ignore [arg-type]
+
+    @beartype
+    def _lies_all_lies(arg: SupportsFish) -> typing.Tuple[str]:
+        return (arg.fish(),)  # type: ignore [return-value]
+
+    with pytest.raises(roar.BeartypeException):
+        _lies_all_lies(OneFish())
+
+def test_protocols_in_annotation_validators() -> None:
+    import pytest
+    from beartype import typing
+
+    if not hasattr(typing, "Annotated"):
+        pytest.skip("Annotations not available")
+
+    from abc import abstractmethod
+    from typing import Protocol as _Protocol
+    from beartype import beartype, roar
+    from beartype.typing import Annotated  # type: ignore [attr-defined]
+    from beartype.vale import Is
+
+    class SupportsOne(typing.Protocol):
+        @abstractmethod
+        def one(self) -> int: pass
+
+    class TallCoolOne:
+        def one(self) -> int: return 1
+
+    class FalseOne:
+        def one(self) -> int: return 0
+
+    class NotEvenOne:
+        def two(self) -> str: return "two"
+
+    @beartype
+    def _there_can_be_only_one(
+        n: Annotated[SupportsOne, Is[lambda x: x.one() == 1]],
+    ) -> int:
+        val = n.one()
+        assert val == 1  # <-- should never fail because it's caught by beartype first
+        return val
+
+    _there_can_be_only_one(TallCoolOne())
+
+    with pytest.raises(roar.BeartypeException):
+        _there_can_be_only_one(FalseOne())
+
+    with pytest.raises(roar.BeartypeException):
+        _there_can_be_only_one(NotEvenOne())  # type: ignore [arg-type]
+
+def test_caching_supports_protocols() -> None:
+    import pytest
+    from beartype import typing
+
+    if not hasattr(typing, "_CachingProtocolMeta"):
+        pytest.skip("_CachingProtocolMeta not available")
+
+    from decimal import Decimal
+    from email.message import EmailMessage
+    from fractions import Fraction
+    from wsgiref.headers import Headers
+    from beartype.typing import (
+        SupportsAbs,
+        SupportsBytes,
+        SupportsComplex,
+        SupportsFloat,
+        SupportsIndex,
+        SupportsInt,
+        SupportsRound
+    )
+
+    def _assert_isinstance(*types: type, target_t: type) -> None:
+        assert issubclass(
+            target_t.__class__, typing._CachingProtocolMeta
+        ), f"{target_t.__class__} is not subclass of {typing._CachingProtocolMeta}"
+
+        for t in types:
+            assert isinstance(t(0), target_t), f"{t!r}, {target_t!r}"
+
+    supports_abs: SupportsAbs = 0
+    _assert_isinstance(int, float, bool, Decimal, Fraction, target_t=SupportsAbs)
+    supports_complex: SupportsComplex = Fraction(0, 1)
+    _assert_isinstance(Decimal, Fraction, target_t=SupportsComplex)
+    supports_float: SupportsFloat = 0
+    _assert_isinstance(int, float, bool, Decimal, Fraction, target_t=SupportsFloat)
+    supports_int: SupportsInt = 0
+    _assert_isinstance(int, float, bool, target_t=SupportsInt)
+    supports_index: SupportsIndex = 0
+    _assert_isinstance(int, bool, target_t=SupportsIndex)
+    supports_round: SupportsRound = 0
+    _assert_isinstance(int, float, bool, Decimal, Fraction, target_t=SupportsRound)
