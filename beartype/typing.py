@@ -473,7 +473,7 @@ if _IS_PYTHON_AT_LEAST_3_8:
         "A caching version of :class:`typing.SupportsAbs`."
         __slots__: Union[str, Iterable[str]] = ()
 
-    class SupportsBytes(_SupportsAbs, Protocol):  # type: ignore [no-redef]
+    class SupportsBytes(_SupportsBytes, Protocol):  # type: ignore [no-redef]
         "A caching version of :class:`typing.SupportsBytes`."
         __slots__: Union[str, Iterable[str]] = ()
 
