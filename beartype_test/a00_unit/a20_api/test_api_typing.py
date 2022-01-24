@@ -272,9 +272,9 @@ def test_protocols_in_annotation_validators() -> None:
 
 def test_caching_supports_protocols() -> None:
     import pytest
-    from beartype import typing
+    from beartype import _protocol
 
-    if not hasattr(typing, "_CachingProtocolMeta"):
+    if not hasattr(_protocol, "_CachingProtocolMeta"):
         pytest.skip("_CachingProtocolMeta not available")
 
     from decimal import Decimal
@@ -293,8 +293,8 @@ def test_caching_supports_protocols() -> None:
 
     def _assert_isinstance(*types: type, target_t: type) -> None:
         assert issubclass(
-            target_t.__class__, typing._CachingProtocolMeta
-        ), f"{target_t.__class__} is not subclass of {typing._CachingProtocolMeta}"
+            target_t.__class__, _protocol._CachingProtocolMeta
+        ), f"{target_t.__class__} is not subclass of {_protocol._CachingProtocolMeta}"
 
         for t in types:
             assert isinstance(t(0), target_t), f"{t!r}, {target_t!r}"
