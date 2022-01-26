@@ -98,8 +98,8 @@ if IS_PYTHON_AT_LEAST_3_8:
           True
 
         The easy way to ensure your protocol caches checks and is
-         ``@runtime_checkable`` is to inherit from
-         :class:`beartype.typing.Protocol` instead:
+        ``@runtime_checkable`` is to inherit from
+        :class:`beartype.typing.Protocol` instead:
 
         .. code-block:: python
           :linenos:
@@ -127,11 +127,17 @@ if IS_PYTHON_AT_LEAST_3_8:
         ) -> _TT:
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore [misc]
+
+            # This is required because, despite deriving from typing.Protocol,
+            # our redefinition below gets its _is_protocol class member set to
+            # False. It being True is required for compatibility with
+            # @runtime_checkable. So we lie to tell the truth.
+            cls._is_protocol = True
+
             # Prefixing this class member with "_abc_" is necessary to prevent
             # it from being considered part of the Protocol. (See
             # <https://github.com/python/cpython/blob/main/Lib/typing.py>.)
             cls._abc_inst_check_cache = {}
-
             return cls
 
         def __instancecheck__(cls, inst: Any) -> bool:
@@ -144,7 +150,6 @@ if IS_PYTHON_AT_LEAST_3_8:
                 # expand the rest of this method if you can avoid it.
                 inst_t = type(inst)
                 bases_pass_muster = True
-
                 for base in cls.__bases__:
                     if base is cls or base.__name__ in (
                         "Protocol",
@@ -152,28 +157,23 @@ if IS_PYTHON_AT_LEAST_3_8:
                         "object",
                     ):
                         continue
-
                     if not isinstance(inst, base):
                         bases_pass_muster = False
                         break
-
                 cls._abc_inst_check_cache[
                     inst_t
                 ] = bases_pass_muster and cls._check_only_my_attrs(inst)
-
                 return cls._abc_inst_check_cache[inst_t]
 
         def _check_only_my_attrs(cls, inst: Any) -> bool:
             attrs = set(cls.__dict__)
             attrs.update(cls.__dict__.get("__annotations__", {}))
             attrs.intersection_update(_get_protocol_attrs(cls))
-
             for attr in attrs:
                 if not hasattr(inst, attr):
                     return False
                 elif callable(getattr(cls, attr, None)) and getattr(inst, attr) is None:
                     return False
-
             return True
 
     @runtime_checkable
@@ -206,6 +206,15 @@ if IS_PYTHON_AT_LEAST_3_8:
         """
 
         __slots__: Union[str, Iterable[str]] = ()
+
+        def __class_getitem__(cls, params):
+            gen_alias = _Protocol.__class_getitem__(params)
+
+            # I'm pretty sure we need this nudge. Otherwise our inheritors end
+            # up with the wrong metaclass (i.e., type(typing.Protocol) instead
+            # of the desired _CachingProtocolMeta). Luddite alert: I don't
+            # fully understand the mechanics here.
+            return type(gen_alias)(cls, *gen_alias.__args__)
 
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
         "A caching version of :class:`typing.SupportsAbs`."
