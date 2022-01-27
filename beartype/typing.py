@@ -158,6 +158,7 @@ if _IS_PYTHON_AT_LEAST_3_7:
             final as final,
             get_args as get_args,
             get_origin as get_origin,
+            runtime_checkable as runtime_checkable,
         )
 
         # If the active Python interpreter targets Python >= 3.10...
@@ -293,10 +294,9 @@ if TYPE_CHECKING:
     )
 
     if _IS_PYTHON_AT_LEAST_3_8:
-        from typing import (
+        from typing import (  # type: ignore[attr-defined]
             Protocol as Protocol,
             SupportsIndex as SupportsIndex,
-            runtime_checkable as runtime_checkable,
         )
 else:  # not TYPE_CHECKING
     if _IS_PYTHON_AT_LEAST_3_8:
@@ -310,10 +310,6 @@ else:  # not TYPE_CHECKING
             SupportsIndex as SupportsIndex,
             SupportsInt as SupportsInt,
             SupportsRound as SupportsRound,
-        )
-
-        from typing import (
-             runtime_checkable as runtime_checkable,
         )
     else:  # not _IS_PYTHON_AT_LEAST_3_8
         # Fall back to the standard library versions

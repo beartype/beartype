@@ -26,6 +26,7 @@ def test_api_typing() -> None:
     import typing as official_typing
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_8,
         IS_PYTHON_AT_LEAST_3_9,
     )
 
@@ -79,8 +80,10 @@ def test_api_typing() -> None:
         # For the basename of each attribute declared by this submodule...
         for beartype_typing_attr_name in dir(beartype_typing)
         # If this basename is prefixed by "_", this is a private rather than
-        # public attribute. In this case, ignore this attribute.
-        if beartype_typing_attr_name[0] != '_'
+        # public attribute. If this basename is prefixed by "@", it is most
+        # likely either "@pytest_ar" or "@py_builtins" inserted from pytest
+        # during test execution. In either case, ignore this attribute.
+        if beartype_typing_attr_name[0] not in '@_'
         # Else, this attribute is public and thus unignorable.
     }
     official_typing_attr_name_to_value = {
@@ -117,6 +120,18 @@ def test_api_typing() -> None:
     # module whose values differ from those declared by the "beartype.typing"
     # submodule.
     TYPING_ATTR_UNEQUAL_NAMES = set()
+
+    if IS_PYTHON_AT_LEAST_3_8:
+        TYPING_ATTR_UNEQUAL_NAMES.update({
+            'Protocol',
+            'SupportsAbs',
+            'SupportsBytes',
+            'SupportsComplex',
+            'SupportsFloat',
+            'SupportsIndex',
+            'SupportsInt',
+            'SupportsRound',
+        })
 
     # If the active Python interpreter targets Python >= 3.9 and thus supports
     # PEP 585, add all "typing" attributes deprecated by PEP 585 to this set.

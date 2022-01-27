@@ -21,7 +21,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     )
 
     # Stuff we're going to override herein
-    from typing import (
+    from typing import (  # type: ignore[attr-defined]
         Protocol as _Protocol,
         SupportsAbs as _SupportsAbs,
         SupportsBytes as _SupportsBytes,
