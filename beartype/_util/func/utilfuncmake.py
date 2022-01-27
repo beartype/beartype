@@ -12,29 +12,6 @@ callables on-the-fly.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Trivialize @beartype debugging. Currently, doing so is highly
-#non-trivial, requiring:
-#* Manually uncommenting the print() call below.
-#* Manually uncommenting an f-string embedding a represent_object() call in the
-#  external _make_func_wrapper_signature() function.
-#
-#Automate both with a new public "beartype.BEARTYPE_DEBUGGING" boolean global
-#or possibly a safer pair of public functions named:
-#* beartype.enable_beartype_debugging().
-#* beartype.disable_beartype_debugging().
-#Internally, of course, those functions would simply set a private
-#"beartype._debug.BEARTYPE_DEBUGGING" boolean global or *something*.
-#
-#Additionally, for usability, this global should *POSSIBLY* also be settable by
-#a shell environment variable of the same name. See this most exceedingly
-#wonderful pragmatic proposal by @posita for accomplishing just that:
-#    https://github.com/beartype/beartype/commit/8fd38b36b13f0e653785166dab3edc2892a03d6d#commitcomment-59708937
-#
-#Lastly, note that we might want to log with the "DEBUG" level rather than
-#print to stdout -- assuming we *CAN* even log in the absence of a default
-#logging configuration. Test us up extensively, please.
-
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncscope import CallableScope
@@ -59,6 +36,9 @@ def make_func(
     func_doc: Optional[str] = None,
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
+
+    #FIXME: Unit test us up, please.
+    is_print_code: bool = False,
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Callable:
     '''
@@ -71,7 +51,7 @@ def make_func(
     func_name : str
         Name of the function to be created.
     func_code : str
-        Code snippet declaring this function, including both this function's
+        Code snippet defining this function, including both this function's
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
@@ -102,6 +82,9 @@ def make_func(
         * ``__module__``, the fully-qualified name of this function's module.
 
         Defaults to ``None``.
+    is_print_code: bool, optional
+        ``True`` only if this factory prints to standard output the definition
+        (including signature and body) of this function. Defaults to ``False``.
     exception_cls : type, optional
         Type of exception to raise in the event of a fatal error. Defaults to
         :exc:`_BeartypeUtilCallableException`.
@@ -125,8 +108,9 @@ def make_func(
     '''
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
-    assert func_name, '"func_name" empty.'
-    assert func_code, '"func_code" empty.'
+    assert isinstance(is_print_code, bool), f'{repr(is_print_code)} not bool.'
+    assert func_name, 'Parameter "func_name" empty.'
+    assert func_code, 'Parameter "func_code" empty.'
 
     # Default all unpassed parameters.
     if func_globals is None:
@@ -141,41 +125,46 @@ def make_func(
         f'{repr(func_locals)} not dictionary.')
     assert isinstance(func_label, str), f'{repr(func_label)} not string.'
 
-    # If this function's name is already in this local scope, the caller
-    # already declared a local attribute whose name collides with this
-    # function's. For safety, raise an exception.
+    # If that function's name is already in this local scope, the caller
+    # already declared a local attribute whose name collides with that
+    # function's. In this case, raise an exception for safety.
     if func_name in func_locals:
         raise exception_cls(
             f'{func_label} already defined by caller locals:\n'
             f'{repr(func_locals)}'
         )
+    # Else, that function's name is *NOT* already in this local scope.
 
-    # Attempt to declare this function as a closure of this factory. For
-    # obscure and presumably uninteresting reasons, Python fails to locally
-    # declare this closure when the locals() dictionary is passed; to capture
-    # this closure, a local dictionary must be passed instead.
-    #
-    # Note that the same result may also be achieved via the compile() builtin
-    # and "types.FunctionType" class: e.g.,
-    #
-    #     func_code_compiled = compile(
-    #         func_code, "<string>", "exec").co_consts[0]
-    #     return types.FunctionType(
-    #         code=func_code_compiled,
-    #         globals=_GLOBAL_ATTRS,
-    #         argdefs=('__beartype_func', func)
-    #     )
-    #
-    # Since doing so is both more verbose and obfuscatory for no tangible gain,
-    # the current circumspect approach is preferred.
+    # Code snippet defining this function, stripped of all leading and trailing
+    # whitespace to improve both readability and disambiguity. Since this
+    # whitespace is safely ignorable, the original snippet is safely
+    # replaceable by this stripped snippet.
+    func_code = func_code.strip()
+
+    # If printing the definition of that function, do so.
+    if is_print_code:
+        print(f'{number_lines(func_code)}')
+    # Else, that definition is left obscured by voracious bitbuckets of time.
+
+    # Attempt to...
     try:
-        #FIXME: *UNCOMMENT THIS LINE TO SHOW @beartyped WRAPPER FUNCTION CODE.*
-        #FIXME: As time permits (so, maybe never), officially expose this
-        #extremely useful logic via a new optional
-        #"is_print_wrapper_code" parameter of the @beartype decorator,
-        #naturally defaulting to false.
-        # print(f'\n@beartyped {func_name} wrapper:\n\n{number_lines(func_code)}\n')
-
+        # Declare that function. For obscure and likely uninteresting reasons,
+        # Python fails to capture that function (i.e., expose that function to
+        # this function) when the locals() dictionary is passed; instead, a
+        # unique local dictionary *MUST* be passed.
+        #
+        # Note that the same result may also be achieved via the compile()
+        # builtin and "types.FunctionType" class: e.g.,
+        #     func_code_compiled = compile(
+        #         func_code, "<string>", "exec").co_consts[0]
+        #     return types.FunctionType(
+        #         code=func_code_compiled,
+        #         globals=_GLOBAL_ATTRS,
+        #         argdefs=('__beartype_func', func)
+        #     )
+        #
+        # Since doing so is both more verbose and obfuscatory for no tangible
+        # gain, the current circumspect approach is preferred.
         exec(func_code, func_globals, func_locals)
 
         #FIXME: See above.
@@ -213,6 +202,7 @@ def make_func(
             f'{func_label} undefined by code snippet:\n\n'
             f'{number_lines(func_code)}'
         )
+    # Else, that function's name is in this local scope.
 
     # Function declared by this code snippet.
     func: Callable = func_locals[func_name]  # type: ignore[assignment]
@@ -230,6 +220,7 @@ def make_func(
     if func_wrapped is not None:
         assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
+    # Else, that function is *NOT* such a wrapper.
 
     # If that function is documented...
     #
@@ -242,6 +233,7 @@ def make_func(
 
         # Document that function.
         func.__doc__ = func_doc
+    # Else, that function is undocumented.
 
     # Return that function.
     return func

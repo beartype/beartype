@@ -202,7 +202,7 @@ class BeartypeCall(object):
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
-    def reinit(self, func: Callable, func_conf: BeartypeConf) -> None:
+    def reinit(self, func: Callable, conf: BeartypeConf) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
         acquisition of a previously cached instance of this class from the
@@ -217,7 +217,7 @@ class BeartypeCall(object):
         ----------
         func : Callable
             Callable currently being decorated by :func:`beartype.beartype`.
-        func_conf : BeartypeConf
+        conf : BeartypeConf
             Beartype configuration configuring :func:`beartype.beartype`
             specific to this callable.
 
@@ -246,13 +246,13 @@ class BeartypeCall(object):
         # Else, this callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
-        elif not isinstance(func_conf, BeartypeConf):
+        elif not isinstance(conf, BeartypeConf):
             raise BeartypeDecorWrappeeException(
-                f'{repr(func_conf)} not beartype configuration.')
+                f'{repr(conf)} not beartype configuration.')
         # Else, this configuration is a configuration.
 
         # Classify this configuration as is.
-        self.func_conf = func_conf
+        self.func_conf = conf
 
         # Possibly wrapped callable currently being decorated.
         self.func_wrappee = func

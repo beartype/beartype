@@ -39,12 +39,12 @@ def test_decor_data() -> None:
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func='The fields, the lakes, the forests, and the streams,',
-            func_conf=BeartypeConf(),
+            conf=BeartypeConf(),
         )
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
-            func_conf='Ocean, and all the living things that dwell',
+            conf='Ocean, and all the living things that dwell',
         )
     with raises(BeartypeDecorWrappeeException):
-        bear_data.reinit(func=iter, func_conf=BeartypeConf())
+        bear_data.reinit(func=iter, conf=BeartypeConf())

@@ -165,7 +165,7 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
 
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeCall)
-    func_data.reinit(func=func, func_conf=conf)
+    func_data.reinit(func, conf)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(func_data)
@@ -259,6 +259,7 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
         func_locals=func_data.func_wrapper_locals,
         func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
+        is_print_code=conf.is_print_wrapper_code,
         exception_cls=BeartypeDecorWrapperException,
     )
 

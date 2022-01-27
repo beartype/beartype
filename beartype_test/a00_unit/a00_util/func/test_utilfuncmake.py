@@ -104,10 +104,21 @@ AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 #             func=iter, exception_cls=BeartypeDecorWrapperException)
 
 # ....................{ TESTS ~ make                      }....................
-def test_make_func_pass() -> None:
+def test_make_func_pass(capsys) -> None:
     '''
     Test successful usage of the
     :func:`beartype._util.func.utilfuncmake.make_func` function.
+
+    Parameters
+    ----------
+    capsys
+        :mod:`pytest` fixture enabling standard output and error to be reliably
+        captured and tested against from within unit tests and fixtures.
+
+    Parameters
+    ----------
+    https://docs.pytest.org/en/latest/how-to/capture-stdout-stderr.html#accessing-captured-output-from-a-test-function
+        Official ``capsys`` reference documentation.
     '''
 
     # Defer heavyweight imports.
@@ -169,13 +180,26 @@ def it_may_be_that_the_gulfs_will_wash_us_down(
 def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
     return and_not_to_yield
 ''',
+        # Print the definition of this callable to standard output, captured by
+        # the "capsys" fixture passed above for testing against below.
+        is_print_code=True,
     )
 
-    # Assert this wrapper returns an expected value.
+    # Assert this callable returns an expected value.
     assert (
         to_strive_to_seek_to_find('Tis not too late to seek a newer world.') ==
         'Tis not too late to seek a newer world.'
     )
+
+    # Pytest object freezing the current state of standard output and error as
+    # uniquely written to by this unit test up to this statement.
+    standard_captured = capsys.readouterr()
+
+    # Assert the prior make_func() call printed the expected definition.
+    assert standard_captured.out.count('\n') == 2
+    assert 'line' in standard_captured.out
+    assert 'def to_strive_to_seek_to_find(' in standard_captured.out
+    assert 'return and_not_to_yield' in standard_captured.out
 
 
 def test_make_func_fail() -> None:

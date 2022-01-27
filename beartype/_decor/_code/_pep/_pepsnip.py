@@ -120,7 +120,7 @@ PEP_CODE_CHECK_RETURN_PREFIX = f'''
     {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
 
     # Noop required to artificially increase indentation level. Note that
-    # CPython implicitly optimizes this conditional away - which is nice.
+    # CPython implicitly optimizes this conditional away. Isn't that nice?
     if True:'''
 '''
 PEP-compliant code snippet calling the decorated callable and localizing the

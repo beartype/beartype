@@ -56,6 +56,7 @@ from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_return,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable
 from typing import NoReturn
@@ -530,15 +531,29 @@ def _make_func_wrapper_signature(
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    # from beartype._util.text.utiltextrepr import represent_object
-
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above
     # calls to the _code_check_args() and _code_check_return() functions.
-    code_signature_args = ''.join(
-        # For the name of each such parameter, compose the declaration of
-        # this parameter in the signature of this wrapper from...
-        (
+    code_signature_args = ''
+
+    # For the name and value of each such parameter...
+    for arg_name, arg_value in bear_call.func_wrapper_locals.items():
+        # Machine-readable representation of this parameter's initial value,
+        # stripped of newline and truncated to a (hopefully) sensible length.
+        # Since the represent_object() function called below to sanitize this
+        # value is incredibly slow, this representation is conditionally
+        # appended as a mildly human-readable comment to the declaration of
+        # this parameter below *ONLY* if the caller configured @beartype to
+        # print the definition of this wrapper.
+        arg_value_repr = (
+            f' # is {represent_object(arg_value)}'
+            if bear_call.func_conf.is_print_wrapper_code else
+            ''
+        )
+
+        # Compose the declaration of this parameter in the signature of this
+        # wrapper from...
+        code_signature_args += (
             # Indentation prefixing all wrapper parameters.
             f'{CODE_INDENT_1}'
             # Default this parameter to the current value of the module-scoped
@@ -546,25 +561,10 @@ def _make_func_wrapper_signature(
             # the parent @beartype decorator. While awkward, this is the
             # optimally efficient means of exposing arbitrary attributes to the
             # body of this wrapper function.
-            f'{arg_name}={arg_name},'
-
-            #FIXME: *THIS IS CRITICAL.* Unfortunately, this is actually
-            #exceptionally expensive. The culprit is the represent_object()
-            #function, of course, which is sufficiently slow that it was only
-            #really intended to be called by error handlers. See "FIXME:"
-            #commentary preceding make_func() for prospective solutions
-            #(particularly, "beartype.BEARTYPE_DEBUGGING").
-
-            # # For debuggability, additionally suffix this parameter by a
-            # # comment embedding the machine-readable representation of this
-            # # value, stripped of newline and truncated to a reasonable length.
-            # f' # is {represent_object(arg_value)}'
-
+            f'{arg_name}={arg_name},{arg_value_repr}'
             # Newline for readability.
             f'\n'
         )
-        for arg_name, arg_value in bear_call.func_wrapper_locals.items()
-    )
 
     # Python code snippet declaring the signature of this wrapper.
     code_signature = CODE_SIGNATURE_format(

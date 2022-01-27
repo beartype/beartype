@@ -16,64 +16,6 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
-
-# ....................{ TESTS                             }....................
-def test_decor_conf() -> None:
-    '''
-    Test coarse-grained configuration of the :func:`beartype.beartype`
-    decorator by the optional ``conf`` keyword-only parameter.
-
-    This test does *not* exercise fine-grained configuration (e.g., of
-    individual type-checking strategies), which is delegated to more relevant
-    tests elsewhere; rather, this test merely exercises that this decorator
-    is configurable as expected from a high-level API perspective.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype import (
-        BeartypeConf,
-        BeartypeStrategy,
-        beartype,
-    )
-    from beartype.roar import BeartypeDecorWrappeeException
-    from pytest import raises
-
-    # Assert that @beartype in configuration mode returns the default private
-    # decorator when repeatedly invoked with the default configuration.
-    assert (
-        # Assert that the first @beartype call passed *NO* arguments internally
-        # creates and returns the same default private decorator as...
-        beartype() is
-        # Another @beartype call passed *NO* arguments as well as...
-        beartype() is
-        # Another @beartype call passed the default configuration.
-        beartype(conf=BeartypeConf())
-    )
-
-    # Assert that @beartype in configuration mode returns the same non-default
-    # private decorator when repeatedly invoked with the same non-default
-    # configuration.
-    assert (
-        beartype(conf=BeartypeConf(
-            is_print_wrapper_code=True,
-            strategy=BeartypeStrategy.On,
-        )) is
-        beartype(conf=BeartypeConf(
-            is_print_wrapper_code=True,
-            strategy=BeartypeStrategy.On,
-        ))
-    )
-
-    # Assert that @beartype in configuration mode returns the identity
-    # decorator unconditionally preserving all passed objects as is.
-    beartype_O0 = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
-    assert beartype_O0(beartype) is beartype
-
-    # Assert that @beartype raises the expected exception when passed a "conf"
-    # parameter that is *NOT* a configuration.
-    with raises(BeartypeDecorWrappeeException):
-        beartype(conf='Within the daedal earth; lightning, and rain,')
 
 # ....................{ TESTS ~ fail : wrappee            }....................
 def test_decor_wrappee_type_fail() -> None:
@@ -89,6 +31,7 @@ def test_decor_wrappee_type_fail() -> None:
         CallableClass,
         Class,
     )
+    from pytest import raises
 
     # Assert that decorating an uncallable class raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
@@ -150,6 +93,7 @@ def test_decor_arg_name_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorParamNameException
+    from pytest import raises
 
     # Assert that decorating a callable accepting a reserved parameter name
     # raises the expected exception.
@@ -167,6 +111,7 @@ def test_decor_arg_call_keyword_unknown_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from pytest import raises
 
     # Decorated callable to be exercised.
     @beartype
