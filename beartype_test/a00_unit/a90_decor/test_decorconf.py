@@ -118,6 +118,52 @@ def test_decor_conf_is_debug(capsys) -> None:
     assert '# is <function _earthquake ' in standard_captured.out
 
 
+def test_decor_conf_is_debug_updates_linecache(capsys) -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator passed the optional ``conf``
+    parameter passed the optional ``is_debug`` parameter results
+    in an updated linecache.
+
+    Parameters
+    ----------
+    capsys
+        :mod:`pytest` fixture enabling standard output and error to be reliably
+        captured and tested against from within unit tests and fixtures.
+
+    Parameters
+    ----------
+    https://docs.pytest.org/en/latest/how-to/capture-stdout-stderr.html#accessing-captured-output-from-a-test-function
+        Official ``capsys`` reference documentation.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import BeartypeConf, beartype
+    import linecache
+
+    # @beartype subdecorator printing wrapper function definitions.
+    beartype_printing = beartype(conf=BeartypeConf(is_debug=True))
+
+    beartyped_earthquake = beartype_printing(_earthquake)
+
+    # Pytest object freezing the current state of standard output and error as
+    # uniquely written to by this unit test up to this statement.
+    standard_captured = capsys.readouterr()
+    standard_lines = standard_captured.out.splitlines(keepends=True)
+
+    # This is probably overkill, but check to see that we generated lines in
+    # our linecache that correspond to the ones we printed. This a fragile
+    # coupling, but we can relax this later to avoid making those line-by-line
+    # comparisons and just check for the decorated function's filename's
+    # presence in the cache.
+    assert beartyped_earthquake.__code__.co_filename in linecache.cache
+    code_len, mtime, code_lines, code_filename = linecache.cache[beartyped_earthquake.__code__.co_filename]
+    assert mtime is None
+    assert len(code_lines) == len(standard_lines)
+    for code_line, standard_line in zip(code_lines, standard_lines):
+        assert code_line in standard_line
+    assert code_filename == beartyped_earthquake.__code__.co_filename
+
+
 def test_decor_conf_strategy() -> None:
     '''
     Test the :func:`beartype.beartype` decorator passed the optional ``conf``

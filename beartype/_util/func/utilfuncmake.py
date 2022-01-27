@@ -20,6 +20,8 @@ from beartype._util.text.utiltextmunge import number_lines
 from collections.abc import Callable
 from functools import update_wrapper
 from typing import Optional, Type
+from weakref import finalize
+import linecache
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -152,33 +154,29 @@ def make_func(
         # Python fails to capture that function (i.e., expose that function to
         # this function) when the locals() dictionary is passed; instead, a
         # unique local dictionary *MUST* be passed.
-        #
-        # Note that the same result may also be achieved via the compile()
-        # builtin and "types.FunctionType" class: e.g.,
-        #     func_code_compiled = compile(
-        #         func_code, "<string>", "exec").co_consts[0]
-        #     return types.FunctionType(
-        #         code=func_code_compiled,
-        #         globals=_GLOBAL_ATTRS,
-        #         argdefs=('__beartype_func', func)
-        #     )
-        #
-        # Since doing so is both more verbose and obfuscatory for no tangible
-        # gain, the current circumspect approach is preferred.
-        exec(func_code, func_globals, func_locals)
 
-        #FIXME: See above.
-        #FIXME: Should "exec" be "single" instead? Does it matter? Is there any
-        #performance gap between the two?
-        # func_code_compiled = compile(
-        #     func_code, func_wrapper_filename, "exec").co_consts[0]
-        # return FunctionType(
-        #     code=func_code_compiled,
-        #     globals=_GLOBAL_ATTRS,
-        #
-        #     #FIXME: This really doesn't seem right, but... *shrug*
-        #     argdefs=tuple(local_attrs.values()),
-        # )
+        # Make up a filename for compilation and possibly the linecache entry
+        # (if we make one). A fully-qualified name and ID *should* be unique
+        # for the life of the process.
+        func_full_name = (
+            f"{func_wrapped.__module__}{func_wrapped.__name__}"
+            if func_wrapped else
+            func_name
+        )
+        linecache_file_name = f"<@beartype({func_full_name}) at {id(func_wrapped):#x}>"
+
+        # We use the more verbose and obfuscatory compile() builtin instead of
+        # simply calling exec(func_code, func_globals, func_locals) because
+        # exec does not provide a way to set the resulting function object's
+        # .__code__.co_filename read-only attribute. We can use "single"
+        # instead of "exec" if we are willing to accept that func_code is
+        # constrained to a single statement. In casual testing, there is very
+        # little performance difference (with an imperceptibly slight edge
+        # going to "single").
+        func_code_compiled = compile(
+            func_code, linecache_file_name, "exec")
+        assert func_name not in func_locals
+        exec(func_code_compiled, func_globals, func_locals)
     # If doing so fails for any reason...
     except Exception as exception:
         # Raise an exception suffixed by that function's declaration such that
@@ -234,6 +232,23 @@ def make_func(
         # Document that function.
         func.__doc__ = func_doc
     # Else, that function is undocumented.
+
+    # Since we went through the trouble of printing its definition, we might
+    # as well make its compiled version debuggable, too.
+    if is_debug:
+        linecache.cache[linecache_file_name] = (  # type: ignore[assignment]
+            len(func_code),  # type: ignore[assignment]  # Y u gotta b diff'rnt Python 3.7? WHY?!
+            None,  # mtime, but should be None to avoid being discarded
+            func_code.splitlines(keepends=True),
+            linecache_file_name,
+        )
+
+        # Define and register a cleanup callback for removing func's linecache
+        # entry if func is ever garbage collected.
+        def remove_linecache_entry_for_func():
+            linecache.cache.pop(linecache_file_name, None)
+
+        finalize(func, remove_linecache_entry_for_func)
 
     # Return that function.
     return func
