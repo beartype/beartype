@@ -211,42 +211,34 @@ if IS_PYTHON_AT_LEAST_3_8:
             # We have to redefine this method because typing.Protocol's
             # version is very persnickety about only working for
             # typing.Generic and typing.Protocol. That's an exclusive club,
-            # and we ain't in it. (RIP, GC.)
+            # and we ain't in it. (RIP, GC.) Let's see if we can sneak in,
+            # shall we?
 
-            # We *can* however, call typing.Protocol's implementation directly
-            # to get the resulting generic alias.
-            fake_gen_alias = _Protocol.__class_getitem__(params)
+            # We can call typing.Protocol's implementation directly to get the
+            # resulting generic alias. We need to bypass any memoization cache
+            # to ensure the object on which we're about to perform surgery
+            # isn't visible to anyone but us.
+            if hasattr(_Protocol.__class_getitem__, "__wrapped__"):
+                gen_alias = _Protocol.__class_getitem__.__wrapped__(_Protocol, params)
+            else:
+                # We shouldn't ever be here, but if we are, we're making the
+                # assumption that typing.Protocol.__class_getitem__ no longer
+                # caches. Heaven help us if it ever uses some proprietary
+                # memoization implementation we can't see anymore because it's
+                # not based on functools.wraps.
+                gen_alias = _Protocol.__class_getitem__(params)
 
-            # It has two teensie weensie little problems at this point,
-            # though. First, it's __origin__ attribute is wrong for our
-            # purposes. It's (unsurprisingly) typing.Protocol, but we need it
-            # to be our class. Otherwise our inheritors end up with the wrong
-            # metaclass (i.e., type(typing.Protocol) instead of the desired
-            # _CachingProtocolMeta), for some reason. (Luddite alert: I don't
-            # fully understand the mechanics here. I suspect no one really
-            # does.) Second, typing.Protocol.__class_getitem__ is memoized
-            # with an LRU cache. This means doing surgery on the returned
-            # value could show up for others, including those not even using
-            # our Protocol implementation! *SIGH* What's a bear to do?
-
-            # The good news is that the generic alias provides us a way of
-            # making a kind of copy. (Yay!)
-            new_gen_alias = fake_gen_alias.copy_with(params)
-
-            # The bad news is that it's incomplete. copy_with does *not* copy
-            # _typevar_types and _paramspec_tvars, which were introduced in
-            # Python 3.10. (Boo!)
-            if hasattr(fake_gen_alias, "_typevar_types"):
-                new_gen_alias._typevar_types = fake_gen_alias._typevar_types
-            if hasattr(fake_gen_alias, "_paramspec_tvars"):
-                new_gen_alias._paramspec_tvars = fake_gen_alias._paramspec_tvars
-
-            # Now all we have to do is replace the __origin__ in our clone to
-            # point to ourself.
-            new_gen_alias.__origin__ = cls
+            # Now perform origin-replacement surgery. As-created,
+            # gen_alias.__origin__ is (unsurprisingly) typing.Protocol, but we
+            # need it to be our class. Otherwise our inheritors end up with
+            # the wrong metaclass for some reason (i.e., type(typing.Protocol)
+            # instead of the desired _CachingProtocolMeta). Luddite alert: I
+            # don't fully understand the mechanics here. I suspect no one
+            # really does.
+            gen_alias.__origin__ = cls
 
             # We're done! Time for a honey brewskie break. We earned it.
-            return new_gen_alias
+            return gen_alias
 
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
         "A caching version of :class:`typing.SupportsAbs`."
