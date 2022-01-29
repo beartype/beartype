@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype validators.**
+**Beartype validator API.**
 
 This submodule publishes a PEP-compliant hierarchy of subscriptable (indexable)
 classes enabling callers to validate the internal structure of arbitrarily

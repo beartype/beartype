@@ -4,39 +4,24 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checkers.**
+**Beartype functional type-checking API.**
 
-This private submodule is *not* intended for importation by downstream callers.
+This submodule provides an orthogonal API to that of the
+:func:`beartype.beartype` decorator. Whereas that decorator is suitable *only*
+for type-checking callable parameters and returns at call time, the functions
+exported by this API are suitable for type-checking arbitrary objects at *any*
+arbitrary time during the lifecycle of the active Python process.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Split this into multiple submodules to avoid the usual accidental
-#exportation-of-imports API quandary. *sigh*
-
 # ....................{ IMPORTS                           }....................
-from beartype import beartype
-from beartype.roar import BeartypeCallHintPepReturnException
-
-# ....................{ VALIDATORS                        }....................
-#FIXME: Implement us up, please.
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
-#def die_if_bearable(obj, annotation):
-
-# ....................{ TESTERS                           }....................
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
-#FIXME: Optimize us up, please. See this discussion for voluminous details:
-#    https://github.com/beartype/beartype/issues/87#issuecomment-1020856517
-def is_bearable(obj, annotation):
-    @beartype
-    def _is_bearable_slow(o) -> annotation:
-        return o
-
-    try:
-        _is_bearable_slow(obj)
-        return True
-    except BeartypeCallHintPepReturnException as exc:
-        pass
-
-    return False
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To avoid polluting the public module namespace, external attributes
+# should be locally imported at module scope *ONLY* under alternate private
+# names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
+# than merely "from argparse import ArgumentParser").
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                           }....................
+from beartype.abby._abbytest import (
+    die_if_bearable as die_if_bearable,
+    is_bearable as is_bearable,
+)
