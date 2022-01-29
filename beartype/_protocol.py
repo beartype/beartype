@@ -32,8 +32,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         SupportsRound as _SupportsRound,
     )
 
-    # TODO: Port this?
-    from typing import _get_protocol_attrs  # type: ignore [attr-defined]
+    import typing
 
     if not IS_PYTHON_AT_LEAST_3_9:
         from typing import Dict, Iterable, Tuple, Type
@@ -168,7 +167,8 @@ if IS_PYTHON_AT_LEAST_3_8:
         def _check_only_my_attrs(cls, inst: Any) -> bool:
             attrs = set(cls.__dict__)
             attrs.update(cls.__dict__.get("__annotations__", {}))
-            attrs.intersection_update(_get_protocol_attrs(cls))
+            # TODO: Port this?
+            attrs.intersection_update(typing._get_protocol_attrs(cls))  # type: ignore [attr-defined]
             for attr in attrs:
                 if not hasattr(inst, attr):
                     return False
@@ -208,13 +208,45 @@ if IS_PYTHON_AT_LEAST_3_8:
         __slots__: Union[str, Iterable[str]] = ()
 
         def __class_getitem__(cls, params):
-            gen_alias = _Protocol.__class_getitem__(params)
+            # We have to redefine this method because typing.Protocol's
+            # version is very persnickety about only working for
+            # typing.Generic and typing.Protocol. That's an exclusive club,
+            # and we ain't in it. (RIP, GC.)
 
-            # I'm pretty sure we need this nudge. Otherwise our inheritors end
-            # up with the wrong metaclass (i.e., type(typing.Protocol) instead
-            # of the desired _CachingProtocolMeta). Luddite alert: I don't
-            # fully understand the mechanics here.
-            return type(gen_alias)(cls, *gen_alias.__args__)
+            # We *can* however, call typing.Protocol's implementation directly
+            # to get the resulting generic alias.
+            fake_gen_alias = _Protocol.__class_getitem__(params)
+
+            # It has two teensie weensie little problems at this point,
+            # though. First, it's __origin__ attribute is wrong for our
+            # purposes. It's (unsurprisingly) typing.Protocol, but we need it
+            # to be our class. Otherwise our inheritors end up with the wrong
+            # metaclass (i.e., type(typing.Protocol) instead of the desired
+            # _CachingProtocolMeta), for some reason. (Luddite alert: I don't
+            # fully understand the mechanics here. I suspect no one really
+            # does.) Second, typing.Protocol.__class_getitem__ is memoized
+            # with an LRU cache. This means doing surgery on the returned
+            # value could show up for others, including those not even using
+            # our Protocol implementation! *SIGH* What's a bear to do?
+
+            # The good news is that the generic alias provides us a way of
+            # making a kind of copy. (Yay!)
+            new_gen_alias = fake_gen_alias.copy_with(params)
+
+            # The bad news is that it's incomplete. copy_with does *not* copy
+            # _typevar_types and _paramspec_tvars, which were introduced in
+            # Python 3.10. (Boo!)
+            if hasattr(fake_gen_alias, "_typevar_types"):
+                new_gen_alias._typevar_types = fake_gen_alias._typevar_types
+            if hasattr(fake_gen_alias, "_paramspec_tvars"):
+                new_gen_alias._paramspec_tvars = fake_gen_alias._paramspec_tvars
+
+            # Now all we have to do is replace the __origin__ in our clone to
+            # point to ourself.
+            new_gen_alias.__origin__ = cls
+
+            # We're done! Time for a honey brewskie break. We earned it.
+            return new_gen_alias
 
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
         "A caching version of :class:`typing.SupportsAbs`."
