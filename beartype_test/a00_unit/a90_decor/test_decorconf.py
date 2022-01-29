@@ -65,11 +65,11 @@ def test_decor_conf() -> None:
     # configuration.
     assert (
         beartype(conf=BeartypeConf(
-            is_print_wrapper_code=True,
+            is_debug=True,
             strategy=BeartypeStrategy.On,
         )) is
         beartype(conf=BeartypeConf(
-            is_print_wrapper_code=True,
+            is_debug=True,
             strategy=BeartypeStrategy.On,
         ))
     )
@@ -80,10 +80,10 @@ def test_decor_conf() -> None:
         beartype(conf='Within the daedal earth; lightning, and rain,')
 
 
-def test_decor_conf_is_print_wrapper_code(capsys) -> None:
+def test_decor_conf_is_debug(capsys) -> None:
     '''
     Test the :func:`beartype.beartype` decorator passed the optional ``conf``
-    parameter passed the optional ``is_print_wrapper_code`` parameter.
+    parameter passed the optional ``is_debug`` parameter.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def test_decor_conf_is_print_wrapper_code(capsys) -> None:
     from beartype import BeartypeConf, beartype
 
     # @beartype subdecorator printing wrapper function definitions.
-    beartype_printing = beartype(conf=BeartypeConf(is_print_wrapper_code=True))
+    beartype_printing = beartype(conf=BeartypeConf(is_debug=True))
 
     # Wrapper function decorated by this subdecorator, immediately discarded as
     # *ONLY* the output printed by this decoration is of relevance here.

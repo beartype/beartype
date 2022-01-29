@@ -182,7 +182,7 @@ def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
 ''',
         # Print the definition of this callable to standard output, captured by
         # the "capsys" fixture passed above for testing against below.
-        is_print_code=True,
+        is_debug=True,
     )
 
     # Assert this callable returns an expected value.

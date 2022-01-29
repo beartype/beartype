@@ -259,7 +259,7 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
         func_locals=func_data.func_wrapper_locals,
         func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
-        is_print_code=conf.is_print_wrapper_code,
+        is_debug=conf.is_debug,
         exception_cls=BeartypeDecorWrapperException,
     )
 

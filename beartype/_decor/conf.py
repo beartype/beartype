@@ -101,7 +101,7 @@ class BeartypeConf(object):
 
     Attributes
     ----------
-    _is_print_wrapper_code : bool, optional
+    _is_debug : bool, optional
         ``True`` only if the :func:`beartype.beartype` decorator prints to
         standard output the definition (including both signature and body) of
         the type-checking wrapper function dynamically generated for the
@@ -131,14 +131,14 @@ class BeartypeConf(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        '_is_print_wrapper_code',
+        '_is_debug',
         '_strategy',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        _is_print_wrapper_code: bool
+        _is_debug: bool
         _strategy: BeartypeStrategy
 
     # ..................{ INSTANTIATORS                     }..................
@@ -159,7 +159,7 @@ class BeartypeConf(object):
 
         # Optional keyword-only parameters.
         *,
-        is_print_wrapper_code: bool = False,
+        is_debug: bool = False,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -181,7 +181,7 @@ class BeartypeConf(object):
 
         Parameters
         ----------
-        is_print_wrapper_code : bool, optional
+        is_debug : bool, optional
             ``True`` only if the :func:`beartype.beartype` decorator prints to
             standard output the definition (including signature and body) of
             the type-checking wrapper function dynamically generated for the
@@ -204,7 +204,7 @@ class BeartypeConf(object):
         :exc:`BeartypeConfException`
             If either:
 
-            * ``is_print_wrapper_code`` is *not* a boolean.
+            * ``is_debug`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
               member.
         '''
@@ -219,7 +219,7 @@ class BeartypeConf(object):
         # avoiding the cost of an additional method call both here and (more
         # importantly) in BeartypeConf.__hash__(). See that method for details.
         BEARTYPE_CONF_HASH = hash((
-            is_print_wrapper_code,
+            is_debug,
             strategy,
         ))
 
@@ -231,10 +231,10 @@ class BeartypeConf(object):
         # parameters. In this case, do so below (and cache that configuration).
 
         # If this boolean is *NOT* actually a boolean, raise an exception.
-        if not isinstance(is_print_wrapper_code, bool):
+        if not isinstance(is_debug, bool):
             raise BeartypeConfException(
-                f'Beartype configuration setting "is_print_wrapper_code" '
-                f'value {repr(is_print_wrapper_code)} not boolean.'
+                f'Beartype configuration setting "is_debug" '
+                f'value {repr(is_debug)} not boolean.'
             )
         # Else, this boolean is actually a boolean.
         #
@@ -251,7 +251,7 @@ class BeartypeConf(object):
         self = super().__new__(cls)
 
         # Classify all passed parameters with this configuration.
-        self._is_print_wrapper_code = is_print_wrapper_code
+        self._is_debug = is_debug
         self._strategy = strategy
 
         # Cache this configuration.
@@ -265,7 +265,7 @@ class BeartypeConf(object):
     # underlying private attributes.
 
     @property
-    def is_print_wrapper_code(self) -> bool:
+    def is_debug(self) -> bool:
         '''
         ``True`` only if the :func:`beartype.beartype` decorator prints to
         standard output the definition (including both signature and body) of
@@ -276,7 +276,7 @@ class BeartypeConf(object):
         optimization purposes.
         '''
 
-        return self._is_print_wrapper_code
+        return self._is_debug
 
 
     @property
@@ -323,7 +323,7 @@ class BeartypeConf(object):
         if isinstance(other, BeartypeConf):
             # Return true only if these configurations share the same settings.
             return (
-                self._is_print_wrapper_code == other._is_print_wrapper_code and
+                self._is_debug == other._is_debug and
                 self._strategy == other._strategy
             )
         # Else, this other object is *NOT* also a beartype configuration.
@@ -358,7 +358,7 @@ class BeartypeConf(object):
         # * Optimally uniformly distributed, thus minimizing the likelihood of
         #   expensive hash collisions.
         return hash((
-            self._is_print_wrapper_code,
+            self._is_debug,
             self._strategy,
         ))
 
@@ -377,7 +377,7 @@ class BeartypeConf(object):
 
         return (
             f'{self.__class__.__name__}(\n'
-            f'    is_print_wrapper_code={repr(self._is_print_wrapper_code)},\n'
+            f'    is_debug={repr(self._is_debug)},\n'
             f'    strategy={repr(self._strategy)},\n'
             f')'
         )
