@@ -547,7 +547,7 @@ def _make_func_wrapper_signature(
         # print the definition of this wrapper.
         arg_value_repr = (
             f' # is {represent_object(arg_value)}'
-            if bear_call.func_conf.is_print_wrapper_code else
+            if bear_call.func_conf.is_debug else
             ''
         )
 

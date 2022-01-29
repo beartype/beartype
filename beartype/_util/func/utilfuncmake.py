@@ -38,7 +38,7 @@ def make_func(
     func_wrapped: Optional[Callable] = None,
 
     #FIXME: Unit test us up, please.
-    is_print_code: bool = False,
+    is_debug: bool = False,
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Callable:
     '''
@@ -82,7 +82,7 @@ def make_func(
         * ``__module__``, the fully-qualified name of this function's module.
 
         Defaults to ``None``.
-    is_print_code: bool, optional
+    is_debug: bool, optional
         ``True`` only if this factory prints to standard output the definition
         (including signature and body) of this function. Defaults to ``False``.
     exception_cls : type, optional
@@ -108,7 +108,7 @@ def make_func(
     '''
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
-    assert isinstance(is_print_code, bool), f'{repr(is_print_code)} not bool.'
+    assert isinstance(is_debug, bool), f'{repr(is_debug)} not bool.'
     assert func_name, 'Parameter "func_name" empty.'
     assert func_code, 'Parameter "func_code" empty.'
 
@@ -142,7 +142,7 @@ def make_func(
     func_code = func_code.strip()
 
     # If printing the definition of that function, do so.
-    if is_print_code:
+    if is_debug:
         print(f'{number_lines(func_code)}')
     # Else, that definition is left obscured by voracious bitbuckets of time.
 
