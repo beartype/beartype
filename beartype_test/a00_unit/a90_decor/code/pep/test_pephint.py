@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ pass : param : kind       }....................
+# ....................{ TESTS ~ pass : check              }....................
 def test_pep_code_check_hint() -> None:
     '''
     Test the :func:`beartype._decor._code._pep._pephint.pep_code_check_hint`

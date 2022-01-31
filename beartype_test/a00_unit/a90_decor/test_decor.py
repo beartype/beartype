@@ -17,6 +17,54 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ fail : arg                }....................
+def test_decor_arg_name_fail() -> None:
+    '''
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    callables accepting one or more **decorator-reserved parameters** (i.e.,
+    parameters whose names are reserved for internal use by this decorator).
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorParamNameException
+    from pytest import raises
+
+    # Assert that decorating a callable accepting a reserved parameter name
+    # raises the expected exception.
+    with raises(BeartypeDecorParamNameException):
+        @beartype
+        def jokaero(weaponsmith: str, __beartype_func: str) -> str:
+            return weaponsmith + __beartype_func
+
+# ....................{ TESTS ~ fail : arg : call         }....................
+def test_decor_arg_call_keyword_unknown_fail() -> None:
+    '''
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    wrapper functions passed unrecognized keyword parameters.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from pytest import raises
+
+    # Decorated callable to be exercised.
+    @beartype
+    def tau(kroot: str, vespid: str) -> str:
+        return kroot + vespid
+
+    # Assert that calling this callable with an unrecognized keyword parameter
+    # raises the expected exception.
+    with raises(TypeError) as exception:
+        tau(kroot='Greater Good', nicassar='Dhow')
+
+    # Assert that this exception's message is that raised by the Python
+    # interpreter on calling the decorated callable rather than that raised by
+    # the wrapper function on type-checking that callable. This message is
+    # currently stable across Python versions and thus robustly testable.
+    assert str(exception.value).endswith(
+        "tau() got an unexpected keyword argument 'nicassar'")
+
 # ....................{ TESTS ~ fail : wrappee            }....................
 def test_decor_wrappee_type_fail() -> None:
     '''
@@ -81,51 +129,3 @@ def test_decor_wrappee_type_fail() -> None:
                 return 'Which teaches awful doubt, or faith so mild,'
     # print(f'Ugh: {exception_info.value.args[0]}')
     assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-
-# ....................{ TESTS ~ fail : arg                }....................
-def test_decor_arg_name_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
-    callables accepting one or more **decorator-reserved parameters** (i.e.,
-    parameters whose names are reserved for internal use by this decorator).
-    '''
-
-    # Defer heavyweight imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeDecorParamNameException
-    from pytest import raises
-
-    # Assert that decorating a callable accepting a reserved parameter name
-    # raises the expected exception.
-    with raises(BeartypeDecorParamNameException):
-        @beartype
-        def jokaero(weaponsmith: str, __beartype_func: str) -> str:
-            return weaponsmith + __beartype_func
-
-# ....................{ TESTS ~ fail : arg : call         }....................
-def test_decor_arg_call_keyword_unknown_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
-    wrapper functions passed unrecognized keyword parameters.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype import beartype
-    from pytest import raises
-
-    # Decorated callable to be exercised.
-    @beartype
-    def tau(kroot: str, vespid: str) -> str:
-        return kroot + vespid
-
-    # Assert that calling this callable with an unrecognized keyword parameter
-    # raises the expected exception.
-    with raises(TypeError) as exception:
-        tau(kroot='Greater Good', nicassar='Dhow')
-
-    # Assert that this exception's message is that raised by the Python
-    # interpreter on calling the decorated callable rather than that raised by
-    # the wrapper function on type-checking that callable. This message is
-    # currently stable across Python versions and thus robustly testable.
-    assert str(exception.value).endswith(
-        "tau() got an unexpected keyword argument 'nicassar'")

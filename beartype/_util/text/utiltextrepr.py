@@ -15,12 +15,6 @@ from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
-from pprint import saferepr
-from re import (
-    DOTALL,
-    compile as re_compile,
-    sub as re_sub
-)
 from string import punctuation
 from typing import Dict
 
@@ -139,15 +133,41 @@ def represent_object(
     """
     assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
 
+    #FIXME: Render this safe against infinitely recursive data structures.
+    #Unfortunately, we *CANNOT* call the standard pprint.saferepr() function to
+    #do so, as that function is *OUTRAGEOUSLY* slow on worst-case edge cases.
+    #Instead, we'll need to implement our own performant saferepr()
+    #alternative. Fortunately, note that someone's already done so: the popular
+    #BSD-licensed Celerity project, whose celerity.utils.saferepr.saferepr()
+    #function claims to actually be faster than the repr() builtin under
+    #certain circumstances. While impressive, repurposing Celerity's saferepr()
+    #implementation for @beartype will be non-trivial; that function internally
+    #leverages a number of non-trivial internal functions, including a
+    #streaming iterator that appears to be performing some sort of ad-hoc
+    #tokenization (!) on the input object's string representation. Although
+    #that submodule is less than 300 lines, that's 300 *INTENSE* lines.
+    #Nonetheless, we'll need to do this sooner or later. Currently, later. By
+    #the time you read this next, probably sooner. Until someone pounds their
+    #fists on our issue tracker, let's pretend this isn't a compelling concern.
+    #See also:
+    #   https://github.com/celery/celery/blob/master/celery/utils/saferepr.py
+
     # String describing this object. Note that:
     # * This representation quote-protects all newlines in this representation.
     #   Ergo, "\n" *MUST* be matched as r"\n" instead below.
     # * For debuggability, the verbose (albeit less readable) output of repr()
     #   is preferred to the terse (albeit more readable) output of str().
-    # * For safety, the saferepr() function explicitly protected against
-    #   recursive data structures is preferred to the unsafe repr() builtin
-    #   *NOT* protected against such recursion.
-    obj_repr = saferepr(obj)
+    # * For safety, the pprint.saferepr() function explicitly protected against
+    #   recursive data structures *WOULD* typically be preferred to the unsafe
+    #   repr() builtin *NOT* protected against such recursion. Sadly,
+    #   pprint.saferepr() is extremely unoptimized and thus susceptible to
+    #   extreme performance regressions when passed a worst-case object (e.g.,
+    #   deeply nested container).
+    obj_repr = repr(obj)
+
+    #FIXME: Uncomment to exhibit a performance regression.
+    # from pprint import saferepr
+    # obj_repr = saferepr(obj)
 
     # If this representation is empty, return empty double-quotes. Although
     # most objects (including outlier singletons like "None" and the empty
@@ -177,43 +197,19 @@ def represent_object(
         # If this maximum length is long enough to at least allow truncation to
         # ellipses (i.e., a substring of length 3)...
         if max_len > 3:
-            # Compiled regular expression grouping zero or more leading
-            # characters preceding this maximum length and zero or more
-            # trailing delimiters if this function has previously entered this
-            # branch under the same maximum length *OR* "None" otherwise.
-            max_chars_regex: str = _MAX_LEN_TO_MAX_CHARS_REGEX.get(max_len)  # type: ignore[assignment]
+            # Last character of this representation.
+            obj_repr_char_last = obj_repr[max_len-1]
 
-            # If *NO* such expression has been previously compiled...
-            if max_chars_regex is None:
-                # Compile this expression from...
-                max_chars_regex = re_compile(
-                    # Uncompiled regular expression matching...
-                    (
-                        # Group anchored at the string start preserving a
-                        # maximum number (excluding the length required to
-                        # inject an ellipses) minus one to account for the fact
-                        # that both bounds of the "{...,...}" range operator
-                        # are inclusive) of any characters.
-                        r'^(.{0,'
-                        f'{max_len - 4}'
-                        r'})'
-                        # Ungrouped remainder to be truncated.
-                        r'.*?'
-                        # Group anchored at the string end preserving zero or
-                        # more trailing delimiters.
-                        r'([\'")}>\]]*)$'
-                    ),
-                    flags=DOTALL,
-                )
-
-                # Cache this expression against this maximum length.
-                _MAX_LEN_TO_MAX_CHARS_REGEX[max_len] = max_chars_regex
-
-            # Replace the substring of this representation from whichever of
-            # the first character following this maximum length or the first
-            # newline occurs first to the string end (excluding any optional
-            # trailing delimiters) with a single ellipses.
-            obj_repr = re_sub(max_chars_regex, r'\1...\2', obj_repr)
+            # If this character is punctuation, preserve this punctuation by
+            # replacing the trailing portion of this representation up to but
+            # *NOT* including this punctuation with an ellipses.
+            if obj_repr_char_last in _CHARS_PUNCTUATION:
+                obj_repr = f'{obj_repr[:max_len-4]}...{obj_repr_char_last}'
+            # Else, this character is *NOT* punctuation. In this case, replace
+            # the trailing portion of this representation (including this
+            # character) with an ellipses.
+            else:
+                obj_repr = f'{obj_repr[:max_len-3]}...'
         # Else, this maximum length is *NOT* long enough to at least allow
         # truncation to ellipses (i.e., a substring of length 3). In this case,
         # truncate this string to this length *WITHOUT* ellipses.

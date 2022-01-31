@@ -95,6 +95,25 @@ def skip(reason: str):
 
     return skip_if(True, reason=reason)
 
+# ....................{ SKIP ~ env                        }....................
+def skip_if_ci():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is
+    running under a remote continuous integration (CI) workflow.
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator skipping this text or fixture if this interpreter is
+        CI-hosted *or* the identity decorator reducing to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype_test.util.pytci import is_ci
+
+    # Skip this test if the active Python interpreter is CI-hosted.
+    return skip_if(is_ci(), reason='Incompatible with CI workflows.')
+
 # ....................{ SKIP ~ py                         }....................
 def skip_if_pypy():
     '''
