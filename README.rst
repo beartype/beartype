@@ -660,6 +660,33 @@ You're welcome.
 Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
 beartype cares.
 
+...mock types?
+~~~~~~~~~~~~~~~~
+
+Beartype fully relies upon the `isinstance() builtin <isinstance_>`__ under the
+hood for its low-level runtime type-checking needs. If you can fool
+``isinstance()``, you can fool beartype. Can you fool beartype into believing
+an instance of a mock type is an instance of the type it mocks, though?
+
+**You bet your bottom honey barrel.** In your mock type, just define a new
+``__class__()`` property returning the original type: e.g.,
+
+.. code-block:: python
+
+   >>> from beartype import beartype
+   >>> class OriginalType: pass
+   >>> class MockType:
+   ...     @property
+   ...     def __class__(self) -> OriginalType: return OriginalType
+   >>> class OtherType:
+   ...     @beartype
+   ...     def muh_method(self, muh_param: OriginalType): pass
+   >>> OtherType().muh_method(MockType())
+   >>> print('Can't believe that actually worked, bro.')
+   Can't believe that actually worked, bro.
+
+This is why we beartype.
+
 Usage
 =====
 
@@ -4885,6 +4912,8 @@ rather than Python runtime) include:
    https://docs.python.org/3/library/functions.html#dir
 .. _frozenset:
    https://docs.python.org/3/library/stdtypes.html#set-types-set-frozenset
+.. _isinstance:
+   https://docs.python.org/3/library/functions.html#isinstance
 .. _list:
    https://docs.python.org/3/library/stdtypes.html#lists
 .. _memoryview:
