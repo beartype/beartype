@@ -214,6 +214,14 @@ if IS_PYTHON_AT_LEAST_3_8:
             # and we ain't in it. (RIP, GC.) Let's see if we can sneak in,
             # shall we?
 
+            # FIXME: Once <https://bugs.python.org/issue46581> is addressed,
+            # consider replacing the madness below with something like:
+            #
+            #   cached_gen_alias = _Protocol.__class_getitem__(_Protocol, params)
+            #   our_gen_alias = cached_gen_alias.copy_with(params)
+            #   our_gen_alias.__origin__ = cls
+            #   return our_gen_alias
+
             # We can call typing.Protocol's implementation directly to get the
             # resulting generic alias. We need to bypass any memoization cache
             # to ensure the object on which we're about to perform surgery
