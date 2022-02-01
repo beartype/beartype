@@ -673,17 +673,15 @@ an instance of a mock type is an instance of the type it mocks, though?
 
 .. code-block:: python
 
-   >>> from beartype import beartype
    >>> class OriginalType: pass
    >>> class MockType:
    ...     @property
    ...     def __class__(self) -> OriginalType: return OriginalType
-   >>> class OtherType:
-   ...     @beartype
-   ...     def muh_method(self, muh_param: OriginalType): pass
-   >>> OtherType().muh_method(MockType())
-   >>> print('Can't believe that actually worked, bro.')
-   Can't believe that actually worked, bro.
+   >>> from beartype import beartype
+   >>> @beartype
+   ... def muh_func(self, muh_arg: OriginalType): print('Yolo, bro.')
+   >>> muh_func(MockType())
+   Yolo, bro.
 
 This is why we beartype.
 
