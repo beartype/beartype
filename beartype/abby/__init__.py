@@ -22,6 +22,6 @@ arbitrary time during the lifecycle of the active Python process.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # ....................{ IMPORTS                           }....................
 from beartype.abby._abbytest import (
-    die_if_bearable as die_if_bearable,
+    die_if_unbearable as die_if_unbearable,
     is_bearable as is_bearable,
 )

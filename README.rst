@@ -4778,6 +4778,8 @@ rather than Python runtime) include:
    https://pytorch.org
 .. _SymPy:
    https://www.sympy.org
+.. _numerary:
+   https://github.com/posita/numerary
 .. _pyenv:
    https://operatingops.org/2020/10/24/tox-testing-multiple-python-versions-with-pyenv
 .. _typing_extensions:
@@ -4787,7 +4789,7 @@ rather than Python runtime) include:
 .. _Boto3:
    https://aws.amazon.com/sdk-for-python
 .. _bearboto3:
-   https://github.com/paulhutchings/bearboto3
+   https://github.com/beartype/bearboto3
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
 

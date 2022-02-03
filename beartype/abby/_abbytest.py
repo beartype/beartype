@@ -10,21 +10,33 @@ during the lifecycle of the active Python process).
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype import beartype
+from beartype import BeartypeConf, beartype
 from beartype.roar import BeartypeCallHintPepReturnException
 
 # ....................{ VALIDATORS                        }....................
 #FIXME: Implement us up, please.
 #FIXME: Unit test us up, please.
 #FIXME: Document us up, please.
-def die_if_bearable(obj, annotation):
+def die_if_unbearable(
+    # Mandatory parameters.
+    obj: object, hint: object,
+
+    # Optional keyword-only parameters.
+    *, conf: BeartypeConf = BeartypeConf(),
+) -> None:
     pass
 
 # ....................{ TESTERS                           }....................
 #FIXME: Unit test us up, please.
 #FIXME: Optimize us up, please. See this discussion for voluminous details:
 #    https://github.com/beartype/beartype/issues/87#issuecomment-1020856517
-def is_bearable(obj: object, hint: object) -> bool:
+def is_bearable(
+    # Mandatory parameters.
+    obj: object, hint: object,
+
+    # Optional keyword-only parameters.
+    *, conf: BeartypeConf = BeartypeConf(),
+) -> bool:
     '''
     ``True`` only if the passed arbitrary object satisfies the passed
     PEP-compliant type hint.
@@ -35,6 +47,11 @@ def is_bearable(obj: object, hint: object) -> bool:
         Arbitrary object to be tested against this hint.
     hint : object
         PEP-compliant type hint to test this object against.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all flags, options, settings, and other metadata configuring how this
+        object is type-checked). Defaults to ``BeartypeConf()``, the default
+        beartype configuration.
 
     Returns
     ----------
@@ -62,7 +79,7 @@ def is_bearable(obj: object, hint: object) -> bool:
     #   than directly referencing the object passed to this parent tester,
     #   enabling this closure to be subsequently cached and passed other
     #   arbitrary objects.
-    @beartype
+    @beartype(conf=conf)
     def _die_if_pith_violates_hint(pith) -> hint:  # type: ignore[valid-type]
         return pith
 
