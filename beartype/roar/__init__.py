@@ -73,6 +73,7 @@ from beartype.roar._roarexc import (
     BeartypeCallHintException as BeartypeCallHintException,
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
     BeartypeCallHintPepException as BeartypeCallHintPepException,
+    BeartypeCallHintTypeAbbyException as BeartypeCallHintTypeAbbyException,
     BeartypeCallHintPepParamException as BeartypeCallHintPepParamException,
     BeartypeCallHintPepReturnException as BeartypeCallHintPepReturnException,
     BeartypeValeException as BeartypeValeException,

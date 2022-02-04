@@ -17,11 +17,12 @@ from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
+from beartype._util.utilobject import get_object_name
 from collections.abc import Callable
 from functools import update_wrapper
+from linecache import cache as linecache_cache  # type: ignore[attr-defined]
 from typing import Optional, Type
 from weakref import finalize
-import linecache
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -159,11 +160,12 @@ def make_func(
         # (if we make one). A fully-qualified name and ID *should* be unique
         # for the life of the process.
         func_full_name = (
-            f"{func_wrapped.__module__}{func_wrapped.__name__}"
+            get_object_name(func_wrapped)
             if func_wrapped else
             func_name
         )
-        linecache_file_name = f"<@beartype({func_full_name}) at {id(func_wrapped):#x}>"
+        linecache_filename = (
+            f'<@beartype({func_full_name}) at {id(func_wrapped):#x}>')
 
         # We use the more verbose and obfuscatory compile() builtin instead of
         # simply calling exec(func_code, func_globals, func_locals) because
@@ -174,7 +176,7 @@ def make_func(
         # little performance difference (with an imperceptibly slight edge
         # going to "single").
         func_code_compiled = compile(
-            func_code, linecache_file_name, "exec")
+            func_code, linecache_filename, 'exec')
         assert func_name not in func_locals
         exec(func_code_compiled, func_globals, func_locals)
     # If doing so fails for any reason...
@@ -236,18 +238,17 @@ def make_func(
     # Since we went through the trouble of printing its definition, we might
     # as well make its compiled version debuggable, too.
     if is_debug:
-        linecache.cache[linecache_file_name] = (  # type: ignore[assignment]
+        linecache_cache[linecache_filename] = (  # type: ignore[assignment]
             len(func_code),  # type: ignore[assignment]  # Y u gotta b diff'rnt Python 3.7? WHY?!
             None,  # mtime, but should be None to avoid being discarded
             func_code.splitlines(keepends=True),
-            linecache_file_name,
+            linecache_filename,
         )
 
         # Define and register a cleanup callback for removing func's linecache
         # entry if func is ever garbage collected.
         def remove_linecache_entry_for_func():
-            linecache.cache.pop(linecache_file_name, None)
-
+            linecache_cache.pop(linecache_filename, None)
         finalize(func, remove_linecache_entry_for_func)
 
     # Return that function.
