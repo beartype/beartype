@@ -94,7 +94,7 @@ def represent_object(
            >>> def wat(mate: typing.List[str]) -> int: return len(mate)
            >>> raise_pep_call_exception(
            ...     func=muh_func, pith_name='mate', pith_value=[7,])
-           beartype.roar.BeartypeCallHintPepParamException: @beartyped wat()
+           beartype.roar.BeartypeCallHintParamViolation: @beartyped wat()
            parameter mate=[7] violates PEP type hint typing.List[str], as list
            item 0 value 7 not a str.
 

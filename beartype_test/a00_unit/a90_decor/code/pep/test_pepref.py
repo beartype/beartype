@@ -228,7 +228,7 @@ def test_hint_forwardref_call_param_fail() -> None:
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintForwardRefException,
-        BeartypeCallHintPepParamException,
+        BeartypeCallHintParamViolation,
     )
 
     # Dates between which the Black Legion must have been established.
@@ -271,7 +271,7 @@ def test_hint_forwardref_call_param_fail() -> None:
         return astronomicon + navis_nobilite
 
     # Assert call these callables raise the expected exceptions.
-    with raises_uncached(BeartypeCallHintPepParamException):
+    with raises_uncached(BeartypeCallHintParamViolation):
         black_legion('Horus', 'Abaddon the Despoiler')
     with raises_uncached(BeartypeCallHintForwardRefException):
         eye_of_terror('Perturabo', 'Crone Worlds')

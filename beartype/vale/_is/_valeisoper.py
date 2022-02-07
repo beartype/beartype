@@ -169,7 +169,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
 
        # Call those callables with parameters unequal to one of those objects.
        >>> guess_next([1, 2, 3, 6, 7, 14, 21, 42,])
-       beartype.roar.BeartypeCallHintPepParamException: @beartyped guess_next()
+       beartype.roar.BeartypeCallHintParamViolation: @beartyped guess_next()
        parameter series=[1, 2, 3, 6, 7, 14, 21, 42] violates type hint
        typing.Annotated[list[int], IsEqual[[0, 1, 2, 3, 4, 5, 6, 7, 8,
        9]] | IsEqual[[0, 2, 4, 6, 8, 10, 12, 14, 16, 18]] | IsEqual[[1, 3, 5,

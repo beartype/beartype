@@ -126,7 +126,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
        # Call those callables with parameters violating those hints.
        >>> sqrt_sum_2d(FAREY_1D_FLOAT64_ARRAY)
-       beartype.roar.BeartypeCallHintPepParamException: @beartyped
+       beartype.roar.BeartypeCallHintParamViolation: @beartyped
        sqrt_sum_2d() parameter array="array([0.42857143, 0.5, 0.57142857, 0.6,
        0.625, ...])" violates type hint typing.Annotated[numpy.ndarray,
        IsAttr['ndim', IsEqual[2]], IsAttr['dtype', IsEqual[dtype('float64')]]],

@@ -51,7 +51,7 @@ def test_pep484_hint_noreturn() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import (
-        BeartypeCallHintPepException,
+        BeartypeCallHintViolation,
         BeartypeDecorHintPep484Exception,
     )
     from beartype_test.util.pytroar import raises_uncached
@@ -78,7 +78,7 @@ def test_pep484_hint_noreturn() -> None:
         return 'That sends the frozen-ground-swell under it,'
 
     # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeartypeCallHintPepException):
+    with raises_uncached(BeartypeCallHintViolation):
         frozen_ground_swell()
 
     # Callable implicitly returning a value incorrectly annotating its return
@@ -88,7 +88,7 @@ def test_pep484_hint_noreturn() -> None:
         'There where it is we do not need the wall:'
 
     # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeartypeCallHintPepException):
+    with raises_uncached(BeartypeCallHintViolation):
         we_do_not_need_the_wall()
 
     # Assert this decorator raises the expected exception when decorating a

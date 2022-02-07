@@ -16,7 +16,7 @@ submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ class : validator     }....................
+# ....................{ TESTS                             }....................
 def test_api_vale_validator_pass() -> None:
     '''
     Test successful usage of the private

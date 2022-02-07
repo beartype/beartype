@@ -26,8 +26,8 @@ def test_raise_pep_call_exception() -> None:
 
     # Defer heavyweight imports.
     from beartype.roar import (
-        BeartypeCallHintPepParamException,
-        BeartypeCallHintPepReturnException,
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
         BeartypeDecorHintNonpepException,
     )
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
@@ -55,7 +55,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to shallowly
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='secret_orchard',
@@ -68,7 +68,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to deeply
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='secret_orchard',
@@ -81,7 +81,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when passed another
     # parameter annotated by a PEP-noncompliant type hint failing to shallowly
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='to_bid_you_farewell',
@@ -94,7 +94,7 @@ def test_raise_pep_call_exception() -> None:
     # Assert this function raises the expected exception when returning a
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # that type hint.
-    with raises(BeartypeCallHintPepReturnException):
+    with raises(BeartypeCallHintReturnViolation):
         raise_pep_call_exception(
             func=forest_unknown,
             pith_name='return',

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**:mod:`pytest` context manager utilities.**
+:mod:`pytest` **context manager utilities.**
 '''
 
 # ....................{ IMPORTS                           }....................

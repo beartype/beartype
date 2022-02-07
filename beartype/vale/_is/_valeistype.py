@@ -110,7 +110,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
 
        # Call those callables with parameters violating those hints.
        >>> strict_factorial(True)
-       beartype.roar.BeartypeCallHintPepParamException: @beartyped
+       beartype.roar.BeartypeCallHintParamViolation: @beartyped
        strict_factorial() parameter integer=True violates type hint
        typing.Annotated[int, ~IsInstance[builtins.bool]], as True violates
        validator ~IsInstance[builtins.bool]:
@@ -311,7 +311,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
        # Call those callables with parameters violating those hints.
        >>> round_int(FACTORIALS)
-       beartype.roar.BeartypeCallHintPepParamException: @beartyped round_int()
+       beartype.roar.BeartypeCallHintParamViolation: @beartyped round_int()
        parameter array="array([ 1, 2, 6, 24, 120, 720, 5040, 40320, ...])"
        violates type hint typing.Annotated[numpy.ndarray, IsAttr['dtype',
        IsAttr['type', IsSubclass[numpy.floating]]]], as "array([ 1, 2, 6, 24,

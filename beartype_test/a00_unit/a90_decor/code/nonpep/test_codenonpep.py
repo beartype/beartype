@@ -84,7 +84,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepParamException
+    from beartype.roar import BeartypeCallHintParamViolation
 
     # Decorated callable to be exercised.
     @beartype
@@ -94,7 +94,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
 
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         imperium_of_man(
             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 
@@ -151,7 +151,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepParamException
+    from beartype.roar import BeartypeCallHintParamViolation
 
     # Annotated function to be type-checked.
     @beartype
@@ -160,7 +160,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
 
     # Call this function with an invalid type and assert the expected
     # exception.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         eldar('Mother of the Eldar', 100.100)
 
 # ....................{ TESTS ~ fail : param : hint       }....................
@@ -190,7 +190,7 @@ def test_nonpep_fail_return_call() -> None:
 
     # Import this decorator.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepReturnException
+    from beartype.roar import BeartypeCallHintReturnViolation
 
     # Annotated function to be type-checked.
     @beartype
@@ -198,7 +198,7 @@ def test_nonpep_fail_return_call() -> None:
         return 60e6
 
     # Call this function and assert the expected exception.
-    with raises(BeartypeCallHintPepReturnException):
+    with raises(BeartypeCallHintReturnViolation):
         necron("C'tan", 'Elder Thing')
 
 

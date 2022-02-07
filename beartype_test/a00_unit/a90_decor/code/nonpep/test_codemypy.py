@@ -29,7 +29,7 @@ def test_decor_mypy_notimplemented() -> None:
     '''
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepReturnException
+    from beartype.roar import BeartypeCallHintReturnViolation
 
     # Without this, the forward reference in the return type of
     # TheCloud.__add__ (below) will fail because bear desperately yearns to
@@ -122,7 +122,7 @@ def test_decor_mypy_notimplemented() -> None:
     # type-checking binary dunder methods annotated as, e.g., returning "bool" to
     # instead effectively return "Union[bool, type(NotImplemented)]" does *NOT*
     # apply to standard methods -- even those with the exact same method body.
-    with raises_uncached(BeartypeCallHintPepReturnException):
+    with raises_uncached(BeartypeCallHintReturnViolation):
         the_seas.is_equal('I bear light shade for the leaves when laid')
 
     # Assert we can "__add__" two cloud instances...

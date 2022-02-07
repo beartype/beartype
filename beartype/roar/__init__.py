@@ -40,6 +40,7 @@ raids native beehives for organic honey.
 
 # Public exception hierarchy.
 from beartype.roar._roarexc import (
+    # Exceptions.
     BeartypeException as BeartypeException,
     BeartypeCaveException as BeartypeCaveException,
     BeartypeCaveNoneTypeOrException as BeartypeCaveNoneTypeOrException,
@@ -73,12 +74,14 @@ from beartype.roar._roarexc import (
     BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
     BeartypeCallHintException as BeartypeCallHintException,
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
-    BeartypeCallHintPepException as BeartypeCallHintPepException,
-    BeartypeCallHintTypeAbbyException as BeartypeCallHintTypeAbbyException,
-    BeartypeCallHintPepParamException as BeartypeCallHintPepParamException,
-    BeartypeCallHintPepReturnException as BeartypeCallHintPepReturnException,
     BeartypeValeException as BeartypeValeException,
     BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
+
+    # Violations (i.e., exceptions raised during runtime type-checking).
+    BeartypeAbbyHintViolation as BeartypeAbbyHintViolation,
+    BeartypeCallHintViolation as BeartypeCallHintViolation,
+    BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
+    BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
 )
 
 # Public warning hierarchy.
@@ -135,6 +138,12 @@ def __getattr__(attr_deprecated_name: str) -> object:
     return deprecate_module_attr(
         attr_deprecated_name=attr_deprecated_name,
         attr_deprecated_name_to_nondeprecated_name={
+            'BeartypeCallHintPepException': (
+                'BeartypeCallHintViolation'),
+            'BeartypeCallHintPepParamException': (
+                'BeartypeCallHintParamViolation'),
+            'BeartypeCallHintPepReturnException': (
+                'BeartypeCallHintReturnViolation'),
             'BeartypeDecorHintNonPepException': (
                 'BeartypeDecorHintNonpepException'),
             'BeartypeDecorHintNonPepNumPyException': (

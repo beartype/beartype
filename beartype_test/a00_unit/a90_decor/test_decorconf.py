@@ -45,7 +45,7 @@ def test_decor_conf() -> None:
 
     # Defer heavyweight imports.
     from beartype import BeartypeConf, BeartypeStrategy, beartype
-    from beartype.roar import BeartypeDecorWrappeeException
+    from beartype.roar import BeartypeConfException
     from pytest import raises
 
     # Assert that @beartype in configuration mode returns the default private
@@ -76,7 +76,7 @@ def test_decor_conf() -> None:
 
     # Assert that @beartype raises the expected exception when passed a "conf"
     # parameter that is *NOT* a configuration.
-    with raises(BeartypeDecorWrappeeException):
+    with raises(BeartypeConfException):
         beartype(conf='Within the daedal earth; lightning, and rain,')
 
 

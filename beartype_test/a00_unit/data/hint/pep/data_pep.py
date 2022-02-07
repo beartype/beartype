@@ -99,6 +99,7 @@ def _init() -> None:
 
     # Submodule globals to be redefined below.
     global \
+        HINTS_META, \
         HINTS_PEP_HASHABLE, \
         HINTS_PEP_IGNORABLE_DEEP, \
         HINTS_PEP_IGNORABLE_SHALLOW, \

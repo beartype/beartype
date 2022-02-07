@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeDecorWrappeeException
+from beartype.roar import BeartypeConfException
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
@@ -124,6 +124,9 @@ def beartype(
 
     Raises
     ----------
+    BeartypeConfException
+        If the passed configuration is *not* actually a configuration (i.e.,
+        instance of the :class:`BeartypeConf` class).
     BeartypeDecorHintException
         If any annotation on this callable is neither:
 
@@ -163,7 +166,7 @@ def beartype(
 
     # If this configuration is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
-        raise BeartypeDecorWrappeeException(
+        raise BeartypeConfException(
             f'{repr(conf)} not beartype configuration.')
     # Else, this configuration is a configuration.
 

@@ -28,7 +28,7 @@ def test_is_hint_pep577() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepParamException
+    from beartype.roar import BeartypeCallHintParamViolation
     from dataclasses import (
         InitVar,
         dataclass,
@@ -95,5 +95,5 @@ def test_is_hint_pep577() -> None:
     # Assert that attempting to instantiate an instance of this dataclass with
     # a parameter violating the corresponding type hint annotating the field of
     # the same name raises the expected exception.
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         SoSolemnSoSerene(but_for_such_faith=0xBEEFBABE)

@@ -38,7 +38,7 @@ def test_wrapper_fail_obj_large() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepParamException
+    from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import List
     from pytest import raises
     from time import time
@@ -75,7 +75,7 @@ def test_wrapper_fail_obj_large() -> None:
     # this structure. Since pytest lacks sane facilities for failing tests
     # whose runtime exceeds a reasonable duration (see above), developers are
     # encouraged to manually "fail" this test by inspection at the CLI. *sigh*
-    with raises(BeartypeCallHintPepParamException):
+    with raises(BeartypeCallHintParamViolation):
         behold(BAD_APPLE)
 
     # Current time in fractional seconds since the UNIX epoch. End timing.

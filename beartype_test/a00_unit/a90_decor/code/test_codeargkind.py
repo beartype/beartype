@@ -96,7 +96,7 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintPepException
+    from beartype.roar import BeartypeCallHintViolation
     from beartype_test.util.pytroar import raises_uncached
     from typing import Union
 
@@ -134,7 +134,7 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
 
     # Assert that calling this callable with invalid variadic positional
     # parameters raises the expected exception.
-    with raises_uncached(BeartypeCallHintPepException):
+    with raises_uncached(BeartypeCallHintViolation):
         tongue_tasting_its_savour(
             'One needs to have a plan, someone said',
             'Who was turned away into the shadows',

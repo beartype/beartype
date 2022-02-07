@@ -245,7 +245,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
        # Call those callables with parameters not satisfying those validators.
        >>> doublequote_text('''"Everybody relax, I'm here."''')
-       beartype.roar._roarexc.BeartypeCallHintPepParamException: @beartyped
+       beartype.roar._roarexc.BeartypeCallHintParamViolation: @beartyped
        doublequote_text() parameter text='"Everybody relax, I\'m here."'
        violates type hint typing.Annotated[str, Is[lambda text: text.count('"')
        < 2 and text.count("'") < 2]], as value '"Everybody relax, I\'m here."'

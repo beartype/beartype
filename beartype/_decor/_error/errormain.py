@@ -68,8 +68,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar._roarexc import (
-    BeartypeCallHintPepParamException,
-    BeartypeCallHintPepReturnException,
+    BeartypeCallHintParamViolation,
+    BeartypeCallHintReturnViolation,
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
@@ -207,9 +207,9 @@ def raise_pep_call_exception(
 
     Raises
     ----------
-    BeartypeCallHintPepParamException
+    BeartypeCallHintParamViolation
         If the object failing to satisfy this hint is a parameter.
-    BeartypeCallHintPepReturnException
+    BeartypeCallHintReturnViolation
         If the object failing to satisfy this hint is a return value.
     BeartypeDecorHintPepException
         If the type hint annotating this object is *not* PEP-compliant.
@@ -244,13 +244,13 @@ def raise_pep_call_exception(
     # If the name of this parameter is the magic string implying the passed
     # object to be a return value, set the above local variables appropriately.
     if pith_name == 'return':
-        exception_cls = BeartypeCallHintPepReturnException
+        exception_cls = BeartypeCallHintReturnViolation
         exception_prefix = prefix_callable_decorated_return_value(
             func=func, return_value=pith_value)
     # Else, the passed object is a parameter. In this case, set the above local
     # variables appropriately.
     else:
-        exception_cls = BeartypeCallHintPepParamException
+        exception_cls = BeartypeCallHintParamViolation
         exception_prefix = prefix_callable_decorated_arg_value(
             func=func,
             arg_name=pith_name,

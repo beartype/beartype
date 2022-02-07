@@ -17,11 +17,24 @@ from beartype._cave._cavefast import (
     NoneType,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
+    HINTS_NONPEP_META,
+)
 from beartype_test.a00_unit.data.hint.pep.data_pep import (
     HINTS_PEP_HASHABLE,
     HINTS_PEP_IGNORABLE_SHALLOW,
     HINTS_PEP_IGNORABLE_DEEP,
+    HINTS_PEP_META,
 )
+
+# ....................{ HINTS ~ tuples                    }....................
+HINTS_META = HINTS_PEP_META + HINTS_NONPEP_META
+'''
+Tuple of all **PEP-agnostic type hint metadata** (i.e.,
+:class:`HintPepMetadata` instances describing test-specific type hints with
+metadata leveraged by various testing scenarios -- including both PEP-compliant
+and -noncompliant type hints).
+'''
 
 # ....................{ NON-HINTS ~ sets                  }....................
 NOT_HINTS_HASHABLE = frozenset((

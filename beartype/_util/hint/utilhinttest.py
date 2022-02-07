@@ -70,14 +70,14 @@ def die_unless_hint(
 
     Raises
     ----------
-    BeartypeDecorHintPepUnsupportedException
+    :exc:`BeartypeDecorHintPepUnsupportedException`
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintNonpepException
-        If this object is neither:
+    :exc:`BeartypeDecorHintNonpepException`
+        If this object is neither a:
 
-        * A PEP-noncompliant type hint.
-        * A supported PEP-compliant type hint.
+        * Supported PEP-compliant type hint.
+        * Supported PEP-noncompliant type hint.
     '''
 
     # If this object is a supported type hint, reduce to a noop.
@@ -93,11 +93,12 @@ def die_unless_hint(
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
     if is_hint_pep(hint):
-        die_if_hint_pep_unsupported(hint=hint, exception_prefix=exception_prefix)
+        die_if_hint_pep_unsupported(
+            hint=hint, exception_prefix=exception_prefix)
+    # Else, this hint is *NOT* PEP-compliant. In this case...
 
-    # Else, this hint is *NOT* PEP-compliant. In this case, raise an exception
-    # only if this hint is also *NOT* PEP-noncompliant. By definition, all
-    # PEP-noncompliant type hints are supported by @beartype.
+    # Raise an exception only if this hint is also *NOT* PEP-noncompliant. By
+    # definition, all PEP-noncompliant type hints are supported by @beartype.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
 # ....................{ TESTERS                           }....................
