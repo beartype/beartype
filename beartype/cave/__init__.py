@@ -12,7 +12,7 @@ tuple of the types of all callable objects).
 
 PEP 484
 ----------
-This module is intentionally *not* compliant with the `PEP 484`_ standard
+This module is intentionally *not* compliant with the :pep:`484` standard
 implemented by the stdlib :mod:`typing` module, which formalizes type hinting
 annotations with a catalogue of generic classes and metaclasses applicable to
 common use cases. :mod:`typing` enables end users to enforce contractual
@@ -46,15 +46,12 @@ feature set            :mod:`beartype.cave`  :mod:`typing`
 =====================  ====================  ====================================
 type checking          **shallow**           **deep**
 type check items?      **no**                **yes**
-`PEP 484`_-compliant?  **no**                **yes**
+:pep:`484`-compliant?  **no**                **yes**
 time complexity        ``O(1)``              ``O(N)``
 performance            stupid fast           *much* less stupid fast
 implementation         C-based builtin call  pure-Python (meta)class method calls
 low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 =====================  ====================  ====================================
-
-.. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -64,6 +61,15 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 # importation (e.g., NumPy) despite beartype itself *NEVER* requiring those
 # imports. Until resolved, this subpackage is considered tainted.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
+# hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
+# explicitly reimported under the same names with "{exception_name} as
+# {exception_name}" syntax rather than merely "{exception_name}". Yes, this is
+# ludicrous. Yes, this is mypy. For posterity, these failures resemble:
+#     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
+#     explicitly export attribute "BeartypeCallUnavailableTypeException";
+#     implicit reexport disabled  [attr-defined]
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
@@ -72,12 +78,12 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 
 from beartype.cave._cavelib import (
     # Types.
-    ArgParserType,
-    ArgSubparsersType,
-    WeakRefCType,
+    ArgParserType as ArgParserType,
+    ArgSubparsersType as ArgSubparsersType,
+    WeakRefCType as WeakRefCType,
 
     # Type tuples.
-    WeakRefProxyCTypes,
+    WeakRefProxyCTypes as WeakRefProxyCTypes,
 
     # Deprecated types and type tuples.
     _NumpyArrayType,
@@ -88,80 +94,84 @@ from beartype.cave._cavelib import (
     _VersionComparableTypes,
     _VersionTypes,
 )
-from beartype._cave._caveabc import BoolType
+from beartype._cave._caveabc import (
+    BoolType as BoolType,
+)
 from beartype._cave._cavefast import (
     # Types.
-    AnyType,
-    AsyncCoroutineCType,
-    AsyncGeneratorCType,
-    CallableCodeObjectType,
-    CallablePartialType,
-    ClassType,
-    CollectionType,
-    ContainerType,
-    EllipsisType,
-    EnumType,
-    EnumMemberType,
-    FileType,
-    FunctionType,
-    FunctionOrMethodCType,
-    GeneratorCType,
-    GeneratorType,
-    HashableType,
-    HintGenericSubscriptedType,
-    IntOrFloatType,
-    IntType,
-    IterableType,
-    IteratorType,
-    MappingMutableType,
-    MappingType,
-    MethodBoundInstanceDunderCType,
-    MethodBoundInstanceOrClassType,
-    MethodDecoratorClassType,
-    MethodDecoratorPropertyType,
-    MethodDecoratorStaticType,
-    MethodUnboundClassCType,
-    MethodUnboundInstanceDunderCType,
-    MethodUnboundInstanceNondunderCType,
-    ModuleType,
-    NoneType,
-    NotImplementedType,
-    NumberRealType,
-    NumberType,
-    SizedType,
-    QueueType,
-    RegexCompiledType,
-    RegexMatchType,
-    SetType,
-    SequenceMutableType,
-    SequenceType,
-    StrType,
-    UnavailableType,
+    AnyType as AnyType,
+    AsyncCoroutineCType as AsyncCoroutineCType,
+    AsyncGeneratorCType as AsyncGeneratorCType,
+    CallableCodeObjectType as CallableCodeObjectType,
+    CallablePartialType as CallablePartialType,
+    ClassType as ClassType,
+    CollectionType as CollectionType,
+    ContainerType as ContainerType,
+    EllipsisType as EllipsisType,
+    EnumType as EnumType,
+    EnumMemberType as EnumMemberType,
+    FileType as FileType,
+    FunctionType as FunctionType,
+    FunctionOrMethodCType as FunctionOrMethodCType,
+    GeneratorCType as GeneratorCType,
+    GeneratorType as GeneratorType,
+    HashableType as HashableType,
+    HintGenericSubscriptedType as HintGenericSubscriptedType,
+    IntOrFloatType as IntOrFloatType,
+    IntType as IntType,
+    IterableType as IterableType,
+    IteratorType as IteratorType,
+    MappingMutableType as MappingMutableType,
+    MappingType as MappingType,
+    MethodBoundInstanceDunderCType as MethodBoundInstanceDunderCType,
+    MethodBoundInstanceOrClassType as MethodBoundInstanceOrClassType,
+    MethodDecoratorClassType as MethodDecoratorClassType,
+    MethodDecoratorPropertyType as MethodDecoratorPropertyType,
+    MethodDecoratorStaticType as MethodDecoratorStaticType,
+    MethodUnboundClassCType as MethodUnboundClassCType,
+    MethodUnboundInstanceDunderCType as MethodUnboundInstanceDunderCType,
+    MethodUnboundInstanceNondunderCType as MethodUnboundInstanceNondunderCType,
+    ModuleType as ModuleType,
+    NoneType as NoneType,
+    NotImplementedType as NotImplementedType,
+    NumberRealType as NumberRealType,
+    NumberType as NumberType,
+    SizedType as SizedType,
+    QueueType as QueueType,
+    RegexCompiledType as RegexCompiledType,
+    RegexMatchType as RegexMatchType,
+    SetType as SetType,
+    SequenceMutableType as SequenceMutableType,
+    SequenceType as SequenceType,
+    StrType as StrType,
+    UnavailableType as UnavailableType,
 
     # Type tuples.
-    AsyncCTypes,
-    BoolOrNumberTypes,
-    CallableCTypes,
-    CallableOrClassTypes,
-    CallableOrStrTypes,
-    CallableTypes,
-    DecoratorTypes,
-    FunctionTypes,
-    ModuleOrStrTypes,
-    MethodBoundTypes,
-    MethodDecoratorBuiltinTypes,
-    MethodUnboundTypes,
-    MethodTypes,
-    MappingOrSequenceTypes,
-    ModuleOrSequenceTypes,
-    NumberOrIterableTypes,
-    NumberOrSequenceTypes,
-    RegexTypes,
-    ScalarTypes,
-    TestableTypes,
-    UnavailableTypes,
+    AsyncCTypes as AsyncCTypes,
+    BoolOrNumberTypes as BoolOrNumberTypes,
+    CallableCTypes as CallableCTypes,
+    CallableOrClassTypes as CallableOrClassTypes,
+    CallableOrStrTypes as CallableOrStrTypes,
+    CallableTypes as CallableTypes,
+    DecoratorTypes as DecoratorTypes,
+    FunctionTypes as FunctionTypes,
+    ModuleOrStrTypes as ModuleOrStrTypes,
+    MethodBoundTypes as MethodBoundTypes,
+    MethodDecoratorBuiltinTypes as MethodDecoratorBuiltinTypes,
+    MethodUnboundTypes as MethodUnboundTypes,
+    MethodTypes as MethodTypes,
+    MappingOrSequenceTypes as MappingOrSequenceTypes,
+    ModuleOrSequenceTypes as ModuleOrSequenceTypes,
+    NumberOrIterableTypes as NumberOrIterableTypes,
+    NumberOrSequenceTypes as NumberOrSequenceTypes,
+    RegexTypes as RegexTypes,
+    ScalarTypes as ScalarTypes,
+    TestableTypes as TestableTypes,
+    UnavailableTypes as UnavailableTypes,
 )
-from beartype._cave._cavemap import NoneTypeOr
+from beartype._cave._cavemap import (
+    NoneTypeOr as NoneTypeOr,
+)
 
 # ....................{ DEPRECATIONS                      }....................
 def __getattr__(attr_deprecated_name: str) -> object:

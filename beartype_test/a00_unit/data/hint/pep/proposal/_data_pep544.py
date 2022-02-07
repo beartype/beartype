@@ -13,15 +13,7 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 #superclasses) once @beartype supports these protocols as well.
 
 # ....................{ IMPORTS                           }....................
-import pathlib
-from abc import abstractmethod
-from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
 
 # ....................{ CONSTANTS                         }....................
 _DATA_HINTPEP544_FILENAME = __file__
@@ -51,6 +43,14 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
+    import pathlib
+    from abc import abstractmethod
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
     from beartype_test.util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
     from typing import (
@@ -152,8 +152,8 @@ def add_data(data_module: 'ModuleType') -> None:
     #
     # Note that the implementations of this and *ALL* other predefined "typing"
     # protocols (e.g., "typing.SupportsFloat") bundled with older Python
-    # versions < 3.8 are *NOT* safely type-checkable at runtime. For safety
-    # , tests against *ALL* protocols including these previously predefined
+    # versions < 3.8 are *NOT* safely type-checkable at runtime. For safety,
+    # tests against *ALL* protocols including these previously predefined
     # protocols *MUST* be isolated to this submodule.
     class ProtocolSupportsInt(object):
         def __int__(self) -> int:

@@ -31,6 +31,7 @@ raids native beehives for organic honey.
 #     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
 #     explicitly export attribute "BeartypeCallUnavailableTypeException";
 #     implicit reexport disabled  [attr-defined]
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
