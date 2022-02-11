@@ -131,48 +131,6 @@ developed Python versions <Python status_>`__, `all Python package managers
 
 .. # ------------------( DESCRIPTION                        )------------------
 
-News
-====
-
-2021-08-18: NumPy, Consider Yourself Checked
---------------------------------------------
-
-**Beartype 0.8.0** (codename: *Bear-sama*) has been released to polite golf
-claps from cloud-hosted data scientists everywhere, expanding support for:
-
-* `NumPy ≥ 1.21.0 type hints <NumPy Type Hints_>`__ (e.g.,
-  ``numpy.typing.NDArray[numpy.float64]``) under both Python ≥ 3.9.0 natively
-  *and* Python < 3.9.0 via the `third-party "typing_extensions" package
-  <typing_extensions_>`__.
-* `Beartype validators <Beartype Validators_>`__ under Python < 3.9.0 via the
-  `third-party "typing_extensions" package <typing_extensions_>`__.
-
-What we're saying is: ``pip install typing-extensions``. Your data pipeline
-will thank us later.
-
-2021-05-25: Validating Data Day (VD-Day)
-----------------------------------------
-
-**Beartype 0.7.0** (codename: *berry gud*) has been released to crickets
-chirping, publishing `Python's first Turing-complete type hint for validating
-arbitrary data <Beartype Validators_>`__.
-
-`Beartype validators <Beartype Validators_>`__ enforce runtime constraints on
-the internal structure and contents of parameters and returns using simple
-user-defined lambda functions and declarative expressions – all seamlessly
-composable with `standard type hints <Standard Hints_>`__ via an `expressive
-domain-specific language (DSL) <Validator Syntax_>`__ designed *just for you.*
-
-2020-12-10: Rejoice! It's Beartype
-----------------------------------
-
-Beartype has a `roadmap forward to our first major milestone <beartype
-1.0.0_>`__: **beartype 1.0.0,** delivering perfect constant-time compliance
-with all annotation standards by late 2021. :sup:`...in theory`
-
-Join `the strangely enticing conversation <beartype 1.0.0_>`__ and be a part of
-the spicy runtime type-checker that `goes up to eleven`_.
-
 Install
 =======
 
@@ -1905,7 +1863,7 @@ to destroy everything you hold dear (in ascending order of justice):
       from warnings import filterwarnings
       filterwarnings("ignore", category=BeartypeDecorHintPep585DeprecationWarning)
       ...
-      
+
       # Do it locally only for you! (Hope you like increasing your
       # indentation level in every single codebase module.)
       # This is the "Make Yourself Suffer" option.
@@ -1929,7 +1887,7 @@ to destroy everything you hold dear (in ascending order of justice):
 
       # In "{your_package}._typing":
       from sys import version_info
-      
+
       if version_info >= (3, 9):
           List = list
           Tuple = tuple
@@ -1944,7 +1902,7 @@ to destroy everything you hold dear (in ascending order of justice):
 
       # Instead of this...
       from typing import List, Tuple
-      
+
       # ...just do this.
       from {your_package}._typing import List, Tuple
 
@@ -2216,6 +2174,31 @@ Let's type-check like `greased lightning`_:
        @beartype
        def __new__(cls, *args: str) -> typing.Tuple[str, ...]:
            return tuple.__new__(cls, args)
+
+   # ..................{             CONFIGURATION          }..................
+   # Import the configuration API.
+   from beartype import BeartypeConf, BeartypeStrategy
+
+   # Configure type-checking by passing @beartype an optional configuration.
+   @beartype(conf=BeartypeConf(
+       # Optionally switch to a different type-checking strategy, including:
+       # * "BeartypeStrategy.On", type-checking in O(n) linear time.
+       #   (Currently unimplemented but roadmapped for a future release.)
+       # * "BeartypeStrategy.Ologn", type-checking in O(logn) logarithmic time.
+       #   (Currently unimplemented but roadmapped for a future release.)
+       # * "BeartypeStrategy.O1", type-checking in O(1) constant time. This
+       #   default strategy need *NOT* be explicitly enabled.
+       # * "strategy=BeartypeStrategy.O0", disabling type-checking entirely.
+       strategy=BeartypeStrategy.On,
+       # Optionally enable developer-friendly debugging for this decoration.
+       is_debug=True,
+   ))
+   def my_configured_function(
+       # Parameter type-checked in O(n) linear time. (Currently unimplemented.)
+       param_checked_in_On_time: list[int],
+   # Return type-checked in O(n) linear time, too. (Currently unimplemented.)
+   ) -> set[str]:
+       return set(str(item) for item in param_checked_in_On_time)
 
    # ..................{             VALIDATORS             }..................
    # Import PEP 593-compliant beartype-specific type hints validating arbitrary
