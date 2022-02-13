@@ -18,6 +18,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
+#FIXME: @TeamSpen210 had a great idea to literally reduce @beartype to a space-
+#and time-efficient noop under "not __debug__" builds:
+#    ...you could move the __debug__ check into beartype.__init__, and then
+#    only import the actual core components if __debug__ is off. Then in
+#    "optimised" mode, most of beartype won't even need to be loaded, probably
+#    just the config if anything.
+
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeConfException
 from beartype.typing import (
@@ -207,6 +214,13 @@ def beartype(
     # If this configuration enables the no-time strategy performing *NO*
     # type-checking, define only the identity decorator reducing to a noop.
     if conf.strategy is BeartypeStrategy.O0:
+        #FIXME: This requires augmentation. We can't just return a pure
+        #identity decorator. Instead, we need to return a minimal
+        #quasi-identity decorator that:
+        #* Monkey-patches the passed callable with our "__beartype_wrapped =
+        #  True" (or whatever that is) dunder boolean to prevent repeated
+        #  decorations be non-O(0) @beartype decorations.
+        #* Cache PEP 585-compliant type hints to reduce space costs.
         def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
             '''
             Return the passed **beartypeable** (i.e., pure-Python callable or

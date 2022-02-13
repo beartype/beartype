@@ -91,6 +91,15 @@ efficiency, portability, and thrilling puns.
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
+   # Lastly, import the is_bearable() tester.
+   >>> from beartype.abby import is_bearable
+
+   # Type-check anything against any PEP-compliant type hint at any time.
+   >>> is_bearable(['The', 'goggles', 'do', 'nothing.'], list[str])
+   True
+   >>> is_bearable([0xCAFEBEEF, 0x8BADF00D], ListOfSomeStrings)
+   False
+
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods
@@ -4303,6 +4312,8 @@ Authors
 .. # failed to properly maintain with an automated avatar-heavy list
 .. # synthesized by the @all-contributors bot. See also:
 .. #     https://github.com/all-contributors/all-contributors
+.. # Note, however, that we'll almost certainly need to also run this first:
+.. #     https://dev.to/tlylt/automatically-add-all-existing-repo-contributors-with-all-contributors-cli-5hdj
 
 ``beartype`` is developed with the grateful assistance of a volunteer community
 of enthusiasts, including (*in chronological order of issue or pull request*):
