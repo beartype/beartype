@@ -125,12 +125,6 @@ from typing import (
     Optional as Optional,
     Pattern as Pattern,
     Sized as Sized,
-    SupportsAbs as SupportsAbs,
-    SupportsBytes as SupportsBytes,
-    SupportsComplex as SupportsComplex,
-    SupportsFloat as SupportsFloat,
-    SupportsInt as SupportsInt,
-    SupportsRound as SupportsRound,
     Text as Text,
     TextIO as TextIO,
     TypeVar as TypeVar,
@@ -158,7 +152,6 @@ if _IS_PYTHON_AT_LEAST_3_7:
         from typing import (  # type: ignore[attr-defined]
             Final as Final,
             Literal as Literal,
-            Protocol as Protocol,
             Reversible as Reversible,
             SupportsIndex as SupportsIndex,
             TypedDict as TypedDict,
@@ -288,3 +281,43 @@ else:
     Set = set  # type: ignore[misc]
     Tuple = tuple  # type: ignore[assignment]
     Type = type  # type: ignore[assignment]
+
+# Try to install our Protocol replacement
+if TYPE_CHECKING:
+    from typing import (
+        SupportsAbs as SupportsAbs,
+        SupportsBytes as SupportsBytes,
+        SupportsComplex as SupportsComplex,
+        SupportsFloat as SupportsFloat,
+        SupportsInt as SupportsInt,
+        SupportsRound as SupportsRound,
+    )
+
+    if _IS_PYTHON_AT_LEAST_3_8:
+        from typing import (  # type: ignore[attr-defined]
+            Protocol as Protocol,
+            SupportsIndex as SupportsIndex,
+        )
+else:  # not TYPE_CHECKING
+    if _IS_PYTHON_AT_LEAST_3_8:
+        # Import our replacements
+        from beartype._protocol import (
+            Protocol as Protocol,
+            SupportsAbs as SupportsAbs,
+            SupportsBytes as SupportsBytes,
+            SupportsComplex as SupportsComplex,
+            SupportsFloat as SupportsFloat,
+            SupportsIndex as SupportsIndex,
+            SupportsInt as SupportsInt,
+            SupportsRound as SupportsRound,
+        )
+    else:  # not _IS_PYTHON_AT_LEAST_3_8
+        # Fall back to the standard library versions
+        from typing import (
+            SupportsAbs as SupportsAbs,
+            SupportsBytes as SupportsBytes,
+            SupportsComplex as SupportsComplex,
+            SupportsFloat as SupportsFloat,
+            SupportsInt as SupportsInt,
+            SupportsRound as SupportsRound,
+        )
