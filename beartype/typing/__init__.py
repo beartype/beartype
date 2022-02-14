@@ -300,8 +300,8 @@ if TYPE_CHECKING:
         )
 else:  # not TYPE_CHECKING
     if _IS_PYTHON_AT_LEAST_3_8:
-        # Import our replacements
-        from beartype._protocol import (
+        # Import our replacements.
+        from beartype.typing._typingpep544 import (
             Protocol as Protocol,
             SupportsAbs as SupportsAbs,
             SupportsBytes as SupportsBytes,
@@ -312,7 +312,7 @@ else:  # not TYPE_CHECKING
             SupportsRound as SupportsRound,
         )
     else:  # not _IS_PYTHON_AT_LEAST_3_8
-        # Fall back to the standard library versions
+        # Fallback to the standard library versions.
         from typing import (
             SupportsAbs as SupportsAbs,
             SupportsBytes as SupportsBytes,

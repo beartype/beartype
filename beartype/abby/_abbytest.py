@@ -10,6 +10,11 @@ during the lifecycle of the active Python process).
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: [CRITICAL DEFECT] The functionality below imports @beartype.beartype,
+#which under "-O" reduces to a noop. Woops. Instead, the functionality below
+#should import our private top-level @beartype._decor.main.whatevah decorator
+#and internally depend upon that instead. *sweat pours down forehead*
+
 #FIXME: Optimize us up, please. See this discussion for voluminous details:
 #    https://github.com/beartype/beartype/issues/87#issuecomment-1020856517
 #FIXME: Fortuitously, implementing is_bearable() in terms of the existing

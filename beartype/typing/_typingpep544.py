@@ -1,16 +1,28 @@
+#!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
+'''
+**Beartype** :pep:`544` **optimization layer.**
+
+This private submodule implements a :func:`beartype.beartype``-compatible
+(i.e., decorated by :func:`typing.runtime_checkable`) drop-in replacement for
+:class:`typing.Protocol` that can lead to significant performance improvements.
+'''
+
+# ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
 )
 
+# ....................{ PEP 544                           }....................
 # This is one of those cases where one pines for a module-scope return
 # statement. (I seem to remember a bug/feature request about that somewhere,
 # but couldn't find it after a brief search.)
 if IS_PYTHON_AT_LEAST_3_8:
+    # ..................{ IMPORTS                           }..................
     from typing import (
          TYPE_CHECKING,
          Any,
@@ -52,20 +64,21 @@ if IS_PYTHON_AT_LEAST_3_8:
     else:
         _ProtocolMeta = type(_Protocol)
 
+    # ..................{ METACLASSES                       }..................
     # TODO: Rename this?
     class _CachingProtocolMeta(_ProtocolMeta):
-        """
+        '''
         Stand-in for :class:`typing.Protocol`'s metaclass that caches results
         of :meth:`class.__instancecheck__`, (which is otherwise `really
         expensive
         <https://github.com/python/mypy/issues/3186#issuecomment-885718629>`.
         The downside is that this will yield unpredictable results for objects
         whose methods don't stem from any type (e.g., are assembled at
-        runtime). This is ill-suited for such "types".
+        runtime). This is ill-suited for such "types."
 
         Note that one can make an existing protocol a caching protocol through
-        inheritance, but in order to be ``@runtime_checkable``, the parent
-        protocol also has to be ``@runtime_checkable``.
+        inheritance, but in order to be :func:`typing.runtime_checkable`, the
+        parent protocol also has to be :func:`typing.runtime_checkable`.
 
         .. code-block:: python
           :linenos:
@@ -113,14 +126,15 @@ if IS_PYTHON_AT_LEAST_3_8:
           >>> my_thing: MyBearProtocol = MyImplementation()
           >>> isinstance(my_thing, MyBearProtocol)
           True
-        """
+        '''
 
-        _abc_inst_check_cache: Dict[Type, bool]
+        _abc_inst_check_cache: Dict[type, bool]
+
 
         def __new__(
             mcls: Type[_TT],
             name: str,
-            bases: Tuple[Type, ...],
+            bases: Tuple[type, ...],
             namespace: Dict[str, Any],
             **kw: Any,
         ) -> _TT:
@@ -139,6 +153,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             cls._abc_inst_check_cache = {}
             return cls
 
+
         def __instancecheck__(cls, inst: Any) -> bool:
             try:
                 # This has to stay *super* tight! Even adding a mere assertion
@@ -149,7 +164,15 @@ if IS_PYTHON_AT_LEAST_3_8:
                 # expand the rest of this method if you can avoid it.
                 inst_t = type(inst)
                 bases_pass_muster = True
+
                 for base in cls.__bases__:
+                    #FIXME: This branch probably erroneously matches unrelated
+                    #user-defined types whose names just happen to be "Generic"
+                    #or "Protocol". Ideally, we should tighten that up to only
+                    #match the actual "{beartype,}.typing.{Generic,Protocol}"
+                    #superclasses. Of course, note that
+                    #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
+                    #we'll want to explicitly test against both.
                     if base is cls or base.__name__ in (
                         "Protocol",
                         "Generic",
@@ -159,64 +182,82 @@ if IS_PYTHON_AT_LEAST_3_8:
                     if not isinstance(inst, base):
                         bases_pass_muster = False
                         break
-                cls._abc_inst_check_cache[
-                    inst_t
-                ] = bases_pass_muster and cls._check_only_my_attrs(inst)
+
+                cls._abc_inst_check_cache[inst_t] = bases_pass_muster and (
+                    _check_only_my_attrs(cls, inst))
+
                 return cls._abc_inst_check_cache[inst_t]
 
-        def _check_only_my_attrs(cls, inst: Any) -> bool:
-            attrs = set(cls.__dict__)
-            attrs.update(cls.__dict__.get("__annotations__", {}))
-            # TODO: Port this?
-            attrs.intersection_update(typing._get_protocol_attrs(cls))  # type: ignore [attr-defined]
-            for attr in attrs:
-                if not hasattr(inst, attr):
-                    return False
-                elif callable(getattr(cls, attr, None)) and getattr(inst, attr) is None:
-                    return False
-            return True
 
+    #FIXME: Docstring us up, please.
+    def _check_only_my_attrs(cls, inst: Any) -> bool:
+        attrs = set(cls.__dict__)
+        attrs.update(cls.__dict__.get("__annotations__", {}))
+
+        #FIXME: This call violates privacy encapsulation, which has me
+        #cueing up Megadeth's Sweating Bullets on the junkyard vinyl
+        #playlist. Ideally, we should copy-and-paste that function into
+        #this private submodule instead. (Let's see if anyone does that.)
+        attrs.intersection_update(typing._get_protocol_attrs(cls))  # type: ignore [attr-defined]
+
+        for attr in attrs:
+            if (
+                not hasattr(inst, attr) or
+                (
+                    callable(getattr(cls, attr, None)) and
+                    getattr(inst, attr) is None
+                )
+            ):
+                return False
+
+        return True
+
+    # ..................{ CLASSES                           }..................
     @runtime_checkable
     class Protocol(_Protocol, metaclass=_CachingProtocolMeta):
-        """
-        ``@beartype``-compatible (i.e., ``@runtime_checkable``) drop-in
-        replacement for :class:`typing.Protocol` that can lead to significant
-        performance improvements. Uses :class:`_CachingProtocolMeta` to cache
-        :func:`isinstance` check results.
+        '''
+        :func:`beartype.beartype`-compatible (i.e., decorated by
+        :func:`typing.runtime_checkable`) drop-in replacement for
+        :class:`typing.Protocol` that can lead to significant performance
+        improvements.
+
+        Uses :class:`_CachingProtocolMeta` to cache :func:`isinstance` check
+        results.
+
+        Examples
+        ----------
 
         .. code-block:: python
-          :linenos:
+           :linenos:
 
-          >>> from abc import abstractmethod
-          >>> from beartype import beartype
-          >>> from beartype.typing import Protocol
+           >>> from abc import abstractmethod
+           >>> from beartype import beartype
+           >>> from beartype.typing import Protocol
 
-          >>> class MyBearProtocol(Protocol):  # <-- runtime-checkable through inheritance
-          ...   @abstractmethod
-          ...   def myfunc(self, arg: int) -> str:
-          ...     pass
+           >>> class MyBearProtocol(Protocol):  # <-- runtime-checkable through inheritance
+           ...   @abstractmethod
+           ...   def myfunc(self, arg: int) -> str:
+           ...     pass
 
-          >>> my_thing: MyBearProtocol = MyImplementation()
-          >>> isinstance(my_thing, MyBearProtocol)
-          True
+           >>> my_thing: MyBearProtocol = MyImplementation()
+           >>> isinstance(my_thing, MyBearProtocol)
+           True
 
-          >>> @beartype
-          ... def do_somthing(thing: MyBearProtocol) -> None:
-          ...   thing.myfunc(0)
-        """
+           >>> @beartype
+           ... def do_somthing(thing: MyBearProtocol) -> None:
+           ...   thing.myfunc(0)
+        '''
 
         __slots__: Union[str, Iterable[str]] = ()
 
-        def __class_getitem__(cls, params):
-            # We have to redefine this method because typing.Protocol's
-            # version is very persnickety about only working for
-            # typing.Generic and typing.Protocol. That's an exclusive club,
-            # and we ain't in it. (RIP, GC.) Let's see if we can sneak in,
-            # shall we?
+        def __class_getitem__(cls, item):
+            # We have to redefine this method because typing.Protocol's version
+            # is very persnickety about only working for typing.Generic and
+            # typing.Protocol. That's an exclusive club, and we ain't in it.
+            # (RIP, GC.) Let's see if we can sneak in, shall we?
 
             # FIXME: Once <https://bugs.python.org/issue46581> is addressed,
             # consider replacing the madness below with something like:
-            #
             #   cached_gen_alias = _Protocol.__class_getitem__(_Protocol, params)
             #   our_gen_alias = cached_gen_alias.copy_with(params)
             #   our_gen_alias.__origin__ = cls
@@ -227,51 +268,72 @@ if IS_PYTHON_AT_LEAST_3_8:
             # to ensure the object on which we're about to perform surgery
             # isn't visible to anyone but us.
             if hasattr(_Protocol.__class_getitem__, "__wrapped__"):
-                gen_alias = _Protocol.__class_getitem__.__wrapped__(_Protocol, params)
+                gen_alias = _Protocol.__class_getitem__.__wrapped__(
+                    _Protocol, item)
             else:
                 # We shouldn't ever be here, but if we are, we're making the
                 # assumption that typing.Protocol.__class_getitem__ no longer
                 # caches. Heaven help us if it ever uses some proprietary
                 # memoization implementation we can't see anymore because it's
                 # not based on functools.wraps.
-                gen_alias = _Protocol.__class_getitem__(params)
+                gen_alias = _Protocol.__class_getitem__(item)
 
             # Now perform origin-replacement surgery. As-created,
             # gen_alias.__origin__ is (unsurprisingly) typing.Protocol, but we
             # need it to be our class. Otherwise our inheritors end up with
             # the wrong metaclass for some reason (i.e., type(typing.Protocol)
             # instead of the desired _CachingProtocolMeta). Luddite alert: I
-            # don't fully understand the mechanics here. I suspect no one
-            # really does.
+            # don't fully understand the mechanics here. I suspect no one does.
             gen_alias.__origin__ = cls
 
             # We're done! Time for a honey brewskie break. We earned it.
             return gen_alias
 
+
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
-        "A caching version of :class:`typing.SupportsAbs`."
+        '''
+        A caching version of :class:`typing.SupportsAbs`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
+
 
     class SupportsBytes(_SupportsBytes, Protocol):
-        "A caching version of :class:`typing.SupportsBytes`."
+        '''
+        A caching version of :class:`typing.SupportsBytes`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
+
 
     class SupportsComplex(_SupportsComplex, Protocol):
-        "A caching version of :class:`typing.SupportsComplex`."
+        '''
+        A caching version of :class:`typing.SupportsComplex`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
+
 
     class SupportsFloat(_SupportsFloat, Protocol):
-        "A caching version of :class:`typing.SupportsFloat`."
+        '''
+        A caching version of :class:`typing.SupportsFloat`."
+        '''
         __slots__: Union[str, Iterable[str]] = ()
+
 
     class SupportsInt(_SupportsInt, Protocol):
-        "A caching version of :class:`typing.SupportsInt`."
+        '''
+        A caching version of :class:`typing.SupportsInt`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
+
 
     class SupportsIndex(_SupportsIndex, Protocol):
-        "A caching version of :class:`typing.SupportsIndex`."
+        '''
+        A caching version of :class:`typing.SupportsIndex`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
 
+
     class SupportsRound(_SupportsRound[_T_co], Protocol, Generic[_T_co]):
-        "A caching version of :class:`typing.SupportsRound`."
+        '''
+        A caching version of :class:`typing.SupportsRound`.
+        '''
         __slots__: Union[str, Iterable[str]] = ()
