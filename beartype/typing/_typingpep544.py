@@ -45,18 +45,20 @@ if IS_PYTHON_AT_LEAST_3_8:
         SupportsRound as _SupportsRound,
     )
 
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585, embrace non-deprecated PEP 585-compliant type hints.
-    if IS_PYTHON_AT_LEAST_3_9:
+    # Note that this branch is intentionally tested first, despite the
+    # resulting negation. Why? Because mypy quietly defecates all over itself
+    # if the order of these two branches is reversed.
+    if not IS_PYTHON_AT_LEAST_3_9:
+        from typing import Dict, Iterable, Tuple, Type  # type: ignore[misc]
+    # Else, the active Python interpreter targets Python >= 3.9 and thus
+    # supports PEP 585. In this case, embrace non-deprecated PEP 585-compliant
+    # type hints.
+    else:
+        from collections.abc import Iterable
+
         Dict = dict  # type: ignore[misc]
         Tuple = tuple  # type: ignore[assignment]
         Type = type  # type: ignore[assignment]
-        from collections.abc import Iterable
-    # Else, the active Python interpreter targets Python < 3.9 and thus fails
-    # to support PEP 585. In this case, fallback to deprecated PEP
-    # 484-compliant type hints.
-    else:
-        from typing import Dict, Iterable, Tuple, Type
 
     # If the active Python interpreter was invoked by a static type checker
     # (e.g., mypy), violate privacy encapsulation. Doing so invites breakage
@@ -241,7 +243,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
     #FIXME: Docstring us up, please.
     def _check_only_my_attrs(cls, inst: Any) -> bool:
-        from typing import _get_protocol_attrs
+        from typing import _get_protocol_attrs  # type: ignore[attr-defined]
 
         attrs = set(cls.__dict__)
         attrs.update(cls.__dict__.get("__annotations__", {}))
@@ -251,6 +253,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         #playlist. Ideally, we should copy-and-paste that function into
         #this private submodule instead. (Let's see if anyone does that.)
         attrs.intersection_update(_get_protocol_attrs(cls))  # type: ignore [attr-defined]
+        # print(f'Checking instance {repr(inst)} against protocol {repr(cls)} attribute names: {attrs}')
 
         for attr in attrs:
             if (

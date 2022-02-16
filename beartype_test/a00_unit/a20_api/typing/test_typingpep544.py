@@ -252,8 +252,8 @@ def test_typingpep544_protocols_custom_indirect() -> None:
 
     # Arbitrary classes violating this protocol.
     class PacificSnapper:
-        def fish(self) -> int:
-            return 0xFEEDBEEF
+        # def fish(self) -> int:
+        #     return 0xFEEDBEEF
 
         def dear_cod(self) -> str:
             return 'Cod you pass the butterfish?'
