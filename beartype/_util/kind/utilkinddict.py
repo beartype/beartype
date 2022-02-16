@@ -40,7 +40,7 @@ def die_if_mappings_two_items_collide(
 
     Raises
     ----------
-    _BeartypeUtilMappingException
+    :exc:`_BeartypeUtilMappingException`
         If these mappings contain one or more key-value collisions.
     '''
     assert isinstance(mapping_a, Mapping), f'{repr(mapping_a)} not mapping.'
@@ -77,7 +77,7 @@ def die_if_mappings_two_items_collide(
     # structure is faster than:
     # * The equivalent "any(...)" generator comprehension -- suggesting we
     #   should similarly unroll *ALL* calls to the any() and all() builtins in
-    #   our critical path. Thanks, CPython.
+    #   our critical performance path. Thanks, CPython.
     # * The equivalent test against items intersection, which has the
     #   additional caveat of raising an exception when one or more mapping
     #   items are unhashable and is thus substantially more fragile: e.g.,

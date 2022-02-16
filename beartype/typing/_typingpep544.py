@@ -18,22 +18,23 @@ from beartype._util.py.utilpyversion import (
 )
 
 # ....................{ PEP 544                           }....................
+# If the active Python interpreter targets Python >= 3.8 and thus supports PEP
+# 544...
+#
 # This is one of those cases where one pines for a module-scope return
 # statement. (I seem to remember a bug/feature request about that somewhere,
 # but couldn't find it after a brief search.)
 if IS_PYTHON_AT_LEAST_3_8:
     # ..................{ IMPORTS                           }..................
-    from typing import (
-         TYPE_CHECKING,
-         Any,
-         Generic,
-         TypeVar,
-         Union,
-         runtime_checkable,
-    )
-
-    # Stuff we're going to override herein
     from typing import (  # type: ignore[attr-defined]
+        TYPE_CHECKING,
+        Any,
+        Generic,
+        TypeVar,
+        Union,
+        runtime_checkable,
+
+        # Non-caching protocols to be overridden by caching equivalents below.
         Protocol as _Protocol,
         SupportsAbs as _SupportsAbs,
         SupportsBytes as _SupportsBytes,
@@ -44,44 +45,68 @@ if IS_PYTHON_AT_LEAST_3_8:
         SupportsRound as _SupportsRound,
     )
 
-    import typing
-
-    if not IS_PYTHON_AT_LEAST_3_9:
-        from typing import Dict, Iterable, Tuple, Type
-    else:
+    # If the active Python interpreter targets Python >= 3.9 and thus supports
+    # PEP 585, embrace non-deprecated PEP 585-compliant type hints.
+    if IS_PYTHON_AT_LEAST_3_9:
         Dict = dict  # type: ignore[misc]
         Tuple = tuple  # type: ignore[assignment]
         Type = type  # type: ignore[assignment]
         from collections.abc import Iterable
+    # Else, the active Python interpreter targets Python < 3.9 and thus fails
+    # to support PEP 585. In this case, fallback to deprecated PEP
+    # 484-compliant type hints.
+    else:
+        from typing import Dict, Iterable, Tuple, Type
 
-    _T_co = TypeVar("_T_co", covariant=True)
-    _TT = TypeVar("_TT", bound="type")
-
+    # If the active Python interpreter was invoked by a static type checker
+    # (e.g., mypy), violate privacy encapsulation. Doing so invites breakage
+    # under newer Python releases. Confining any potential breakage to this
+    # technically optional static type-checking phase minimizes the fallout by
+    # ensuring that this API continues to behave as expected at runtime.
+    #
+    # See also this deep typing voodoo:
+    #     https://github.com/python/mypy/issues/11614
     if TYPE_CHECKING:
-        # Warning: Deep typing voodoo ahead. See
-        # <https://github.com/python/mypy/issues/11614>.
         from abc import ABCMeta as _ProtocolMeta
+    # Else, this interpreter was *NOT* invoked by a static type checker and is
+    # thus subject to looser runtime constraints. In this case, access the same
+    # metaclass *WITHOUT* violating privacy encapsulation.
     else:
         _ProtocolMeta = type(_Protocol)
 
+    # ..................{ TYPEVARS                          }..................
+    # Arbitrary type variables.
+    _T_co = TypeVar("_T_co", covariant=True)
+    _TT = TypeVar("_TT", bound="type")
+
     # ..................{ METACLASSES                       }..................
-    # TODO: Rename this?
     class _CachingProtocolMeta(_ProtocolMeta):
         '''
-        Stand-in for :class:`typing.Protocol`'s metaclass that caches results
-        of :meth:`class.__instancecheck__`, (which is otherwise `really
-        expensive
-        <https://github.com/python/mypy/issues/3186#issuecomment-885718629>`.
-        The downside is that this will yield unpredictable results for objects
-        whose methods don't stem from any type (e.g., are assembled at
-        runtime). This is ill-suited for such "types."
+        **Caching protocol metaclass** (i.e., drop-in replacement for the
+        private metaclass of the public :class:`typing.Protocol` superclass
+        that additionally caches :meth:`class.__instancecheck__` results).
 
-        Note that one can make an existing protocol a caching protocol through
-        inheritance, but in order to be :func:`typing.runtime_checkable`, the
-        parent protocol also has to be :func:`typing.runtime_checkable`.
+        This metaclass amortizes the `non-trivial time complexity of protocol
+        validation <protocol cost_>`__ to a trivial constant-time lookup.
+
+        .. _protocol cost:
+           https://github.com/python/mypy/issues/3186#issuecomment-885718629
+
+        Caveats
+        ----------
+        **This metaclass will yield unpredictable results for any object with
+        one or more methods not declared by the class of that object,**
+        including objects whose methods are dynamically assembled at runtime.
+        This metaclass is ill-suited for such "types."
+
+        Motivation
+        ----------
+        Although any non-caching protocol can be coerced into a caching
+        protocol through inheritance, the former will remain incompatible with
+        runtime type checkers (including :mod:`beartype`) until explicitly
+        decorated by :func:`typing.runtime_checkable`. As example:
 
         .. code-block:: python
-          :linenos:
 
           >>> from abc import abstractmethod
           >>> from typing import Protocol
@@ -110,11 +135,10 @@ if IS_PYTHON_AT_LEAST_3_8:
           True
 
         The easy way to ensure your protocol caches checks and is
-        ``@runtime_checkable`` is to inherit from
+        :func:`typing.runtime_checkable` is to inherit from
         :class:`beartype.typing.Protocol` instead:
 
         .. code-block:: python
-          :linenos:
 
           >>> from beartype.typing import Protocol
 
@@ -130,7 +154,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
         _abc_inst_check_cache: Dict[type, bool]
 
-
+        # ................{ DUNDERS                           }................
         def __new__(
             mcls: Type[_TT],
             name: str,
@@ -138,6 +162,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             namespace: Dict[str, Any],
             **kw: Any,
         ) -> _TT:
+
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore [misc]
 
@@ -155,10 +180,35 @@ if IS_PYTHON_AT_LEAST_3_8:
 
 
         def __instancecheck__(cls, inst: Any) -> bool:
+            '''
+            ``True`` only if the passed object is a **structural subtype**
+            (i.e., satisfies the protocol defined by) the passed protocol.
+
+            Parameters
+            ----------
+            cls : type
+                :pep:`544`-compliant protocol to check this object against.
+            inst : Any
+                Arbitrary object to check against this protocol.
+
+            Returns
+            ----------
+            bool
+                ``True`` only if this object satisfies this protocol.
+            '''
+
+            # Attempt to...
             try:
-                # This has to stay *super* tight! Even adding a mere assertion
-                # can add ~50% to the best case runtime!
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # CAUTION: This *MUST* remain *SUPER* tight!! Even adding a
+                # mere assertion here can add ~50% to our best-case runtime.
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # Return a pre-cached boolean indicating whether an object of
+                # the same arbitrary type as the object passed to this call
+                # satisfied the same protocol in a prior call of this method.
                 return cls._abc_inst_check_cache[type(inst)]
+            # If this method has yet to be passed the same protocol *AND* an
+            # object of the same type as the object passed to this call...
             except KeyError:
                 # If you're going to do *anything*, do it here. Try not to
                 # expand the rest of this method if you can avoid it.
@@ -174,9 +224,9 @@ if IS_PYTHON_AT_LEAST_3_8:
                     #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
                     #we'll want to explicitly test against both.
                     if base is cls or base.__name__ in (
-                        "Protocol",
-                        "Generic",
-                        "object",
+                        'Protocol',
+                        'Generic',
+                        'object',
                     ):
                         continue
                     if not isinstance(inst, base):
@@ -191,6 +241,8 @@ if IS_PYTHON_AT_LEAST_3_8:
 
     #FIXME: Docstring us up, please.
     def _check_only_my_attrs(cls, inst: Any) -> bool:
+        from typing import _get_protocol_attrs
+
         attrs = set(cls.__dict__)
         attrs.update(cls.__dict__.get("__annotations__", {}))
 
@@ -198,7 +250,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         #cueing up Megadeth's Sweating Bullets on the junkyard vinyl
         #playlist. Ideally, we should copy-and-paste that function into
         #this private submodule instead. (Let's see if anyone does that.)
-        attrs.intersection_update(typing._get_protocol_attrs(cls))  # type: ignore [attr-defined]
+        attrs.intersection_update(_get_protocol_attrs(cls))  # type: ignore [attr-defined]
 
         for attr in attrs:
             if (
@@ -226,9 +278,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
         Examples
         ----------
-
         .. code-block:: python
-           :linenos:
 
            >>> from abc import abstractmethod
            >>> from beartype import beartype
@@ -289,51 +339,51 @@ if IS_PYTHON_AT_LEAST_3_8:
             # We're done! Time for a honey brewskie break. We earned it.
             return gen_alias
 
-
+    # ..................{ PROTOCOLS                         }..................
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
         '''
-        A caching version of :class:`typing.SupportsAbs`.
+        Caching variant of :class:`typing.SupportsAbs`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsBytes(_SupportsBytes, Protocol):
         '''
-        A caching version of :class:`typing.SupportsBytes`.
+        Caching variant of :class:`typing.SupportsBytes`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsComplex(_SupportsComplex, Protocol):
         '''
-        A caching version of :class:`typing.SupportsComplex`.
+        Caching variant of :class:`typing.SupportsComplex`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsFloat(_SupportsFloat, Protocol):
         '''
-        A caching version of :class:`typing.SupportsFloat`."
+        Caching variant of :class:`typing.SupportsFloat`."
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsInt(_SupportsInt, Protocol):
         '''
-        A caching version of :class:`typing.SupportsInt`.
+        Caching variant of :class:`typing.SupportsInt`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsIndex(_SupportsIndex, Protocol):
         '''
-        A caching version of :class:`typing.SupportsIndex`.
+        Caching variant of :class:`typing.SupportsIndex`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
     class SupportsRound(_SupportsRound[_T_co], Protocol, Generic[_T_co]):
         '''
-        A caching version of :class:`typing.SupportsRound`.
+        Caching variant of :class:`typing.SupportsRound`.
         '''
         __slots__: Union[str, Iterable[str]] = ()

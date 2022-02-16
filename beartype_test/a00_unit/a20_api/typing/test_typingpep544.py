@@ -15,8 +15,13 @@ This submodule unit tests both the public *and* private API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                             }....................
+# If the active Python interpreter targets Python < 3.8 and thus fails to
+# support PEP 544, skip all tests declared below.
+
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private
@@ -24,17 +29,6 @@ def test_typingpep544_metaclass() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype.typing import _typingpep544
-    from pytest import skip
-
-    # Skip this test if inapplicable.
-    if not hasattr(_typingpep544, '_CachingProtocolMeta'):
-        skip(
-            '"beartype.typing._typingpep544._CachingProtocolMeta" metaclass '
-            'undefined.'
-        )
-
-    # Defer version-specific imports.
     from abc import abstractmethod
     from beartype.typing import (
         Iterable,
@@ -43,7 +37,9 @@ def test_typingpep544_metaclass() -> None:
         Union,
         runtime_checkable,
     )
+    from beartype.typing._typingpep544 import _CachingProtocolMeta
 
+    # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
     # Can we really have it all?!
@@ -56,95 +52,19 @@ def test_typingpep544_metaclass() -> None:
 
     supports_round: SupportsRoundFromScratch = 0
     assert isinstance(supports_round, SupportsRoundFromScratch)
-    assert issubclass(
-        type(SupportsRoundFromScratch),
-        _typingpep544._CachingProtocolMeta,
-    )
+    assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-def test_typingpep544_subclass() -> None:
+@skip_if_python_version_less_than('3.8.0')
+def test_typingpep544_protocols_typing() -> None:
     '''
-    Test the core operation of the public :class:`beartype.typing.Protocol`
-    subclass with respect to :pep:`544`-compliant protocols under the
-    :func:`beartype.beartype` decorator.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.typing import _typingpep544
-    from pytest import skip
-
-    # Skip this test if inapplicable.
-    if not hasattr(_typingpep544, '_CachingProtocolMeta'):
-        skip(
-            '"beartype.typing._typingpep544._CachingProtocolMeta" metaclass '
-            'undefined.'
-        )
-
-    # Defer version-specific imports.
-    from abc import abstractmethod
-    from beartype import beartype
-    from beartype.roar import BeartypeException
-    from beartype.typing import (
-        Protocol,
-        Tuple,
-    )
-    from pytest import raises
-
-    class SupportsFish(Protocol):
-        @abstractmethod
-        def fish(self) -> int:
-            pass
-
-    class OneFish:
-        def fish(self) -> int:
-            return 1
-
-    class TwoFish:
-        def fish(self) -> int:
-            return 2
-
-    class RedSnapper:
-        def oh(self) -> str:
-            return "snap"
-
-    @beartype
-    def _real_like_identity(arg: SupportsFish) -> SupportsFish:
-        return arg
-
-    _real_like_identity(OneFish())
-    _real_like_identity(TwoFish())
-
-    with raises(BeartypeException):
-        _real_like_identity(RedSnapper())  # type: ignore [arg-type]
-
-    @beartype
-    def _lies_all_lies(arg: SupportsFish) -> Tuple[str]:
-        return (arg.fish(),)  # type: ignore [return-value]
-
-    with raises(BeartypeException):
-        _lies_all_lies(OneFish())
-
-
-
-def test_typingpep544_subclass_caching() -> None:
-    '''
-    Test various caching optimizations implemented by the public
-    :class:`beartype.typing.Protocol` subclass and user-defined subclasses of
-    that subclass.
+    Test the public retinue of ``beartype.typing.Supports*`` protocols with
+    respect to both caching optimizations implemented by the public
+    :class:`beartype.typing.Protocol` subclass *and* the private
+    :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
 
     # Defer heavyweight imports.
-    from beartype.typing import _typingpep544
-    from pytest import skip
-
-    # Skip this test if inapplicable.
-    if not hasattr(_typingpep544, '_CachingProtocolMeta'):
-        skip(
-            '"beartype.typing._typingpep544._CachingProtocolMeta" metaclass '
-            'undefined.'
-        )
-
-    # Defer version-specific imports.
     from decimal import Decimal
     from fractions import Fraction
     from beartype.typing import (
@@ -158,6 +78,7 @@ def test_typingpep544_subclass_caching() -> None:
     )
     from beartype.typing._typingpep544 import _CachingProtocolMeta
 
+    # Assert *ALL* standard protocols share the expected metaclass.
     for supports_t in (
         SupportsAbs,
         SupportsBytes,
@@ -170,6 +91,7 @@ def test_typingpep544_subclass_caching() -> None:
         assert issubclass(type(supports_t), _CachingProtocolMeta)
 
     def _assert_isinstance(*types: type, target_t: type) -> None:
+
         assert issubclass(
             target_t.__class__, _CachingProtocolMeta
         ), (
@@ -206,7 +128,172 @@ def test_typingpep544_subclass_caching() -> None:
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
+# ....................{ TESTS ~ custom                    }....................
+@skip_if_python_version_less_than('3.8.0')
+def test_typingpep544_protocols_custom_direct() -> None:
+    '''
+    Test the core operation of the public :class:`beartype.typing.Protocol`
+    subclass with respect to user-defined :pep:`544`-compliant protocols
+    directly subclassing :class:`beartype.typing.Protocol` under the
+    :func:`beartype.beartype` decorator.
+    '''
 
+    # Defer heavyweight imports.
+    from abc import abstractmethod
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from beartype.typing import (
+        Protocol,
+        Tuple,
+    )
+    from pytest import raises
+
+    # Arbitrary direct protocol.
+    class SupportsFish(Protocol):
+        @abstractmethod
+        def fish(self) -> int:
+            pass
+
+    # Arbitrary classes satisfying this protocol *WITHOUT* explicitly
+    # subclassing this protocol.
+    class OneFish:
+        def fish(self) -> int:
+            return 1
+
+    class TwoFish:
+        def fish(self) -> int:
+            return 2
+
+    # Arbitrary classes violating this protocol.
+    class RedSnapper:
+        def oh(self) -> str:
+            return 'snap'
+
+    # Arbitrary @beartype-decorated callable validating both parameters and
+    # returns to be instances of arbitrary classes satisfying this protocol.
+    @beartype
+    def _real_like_identity(arg: SupportsFish) -> SupportsFish:
+        return arg
+
+    # Assert that instances of classes satisfying this protocol *WITHOUT*
+    # subclassing this protocol satisfy @beartype validation as expected.
+    assert isinstance(_real_like_identity(OneFish()), SupportsFish)
+    assert isinstance(_real_like_identity(TwoFish()), SupportsFish)
+
+    # Assert that instances of classes violating this protocol violate
+    # @beartype validation as expected.
+    with raises(BeartypeCallHintParamViolation):
+        _real_like_identity(RedSnapper())  # type: ignore [arg-type]
+
+    # Arbitrary @beartype-decorated callable guaranteed to *ALWAYS* raise a
+    # violation by returning an object that *NEVER* satisfies its type hint.
+    @beartype
+    def _lies_all_lies(arg: SupportsFish) -> Tuple[str]:
+        return (arg.fish(),)  # type: ignore [return-value]
+
+    # Assert this callable raises the expected exception when passed an
+    # instance of a class otherwise satisfying this protocol.
+    with raises(BeartypeCallHintReturnViolation):
+        _lies_all_lies(OneFish())
+
+
+@skip_if_python_version_less_than('3.8.0')
+def test_typingpep544_protocols_custom_indirect() -> None:
+    '''
+    Test the core operation of the public :class:`beartype.typing.Protocol`
+    subclass with respect to user-defined :pep:`544`-compliant protocols
+    indirectly subclassing :class:`beartype.typing.Protocol` under the
+    :func:`beartype.beartype` decorator.
+    '''
+
+    # Defer heavyweight imports.
+    from abc import abstractmethod
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
+    from beartype.typing import (
+        Protocol,
+        Tuple,
+    )
+    from pytest import raises
+
+    # Arbitrary direct protocol.
+    class SupportsFish(Protocol):
+        @abstractmethod
+        def fish(self) -> int:
+            pass
+
+    # Arbitrary indirect protocol subclassing the above direct protocol.
+    class SupportsCod(SupportsFish):
+        @abstractmethod
+        def dear_cod(self) -> str:
+            pass
+
+    # Arbitrary classes satisfying this protocol *WITHOUT* explicitly
+    # subclassing this protocol.
+    class OneCod:
+        def fish(self) -> int:
+            return 1
+
+        def dear_cod(self) -> str:
+            return 'Not bad, cod do better...'
+
+    class TwoCod:
+        def fish(self) -> int:
+            return 2
+
+        def dear_cod(self) -> str:
+            return "I wouldn't be cod dead in that."
+
+    # Arbitrary classes violating this protocol.
+    class PacificSnapper:
+        def fish(self) -> int:
+            return 0xFEEDBEEF
+
+        def dear_cod(self) -> str:
+            return 'Cod you pass the butterfish?'
+
+        def berry_punny(self) -> str:
+            return 'Had a girlfriend, I lobster. But then I flounder!'
+
+    # Arbitrary @beartype-decorated callable validating both parameters and
+    # returns to be instances of arbitrary classes satisfying this protocol.
+    @beartype
+    def _real_like_identity(arg: SupportsCod) -> SupportsCod:
+        return arg
+
+    # Assert that instances of classes satisfying this protocol *WITHOUT*
+    # subclassing this protocol satisfy @beartype validation as expected.
+    assert isinstance(_real_like_identity(OneCod()), SupportsCod)
+    assert isinstance(_real_like_identity(TwoCod()), SupportsCod)
+
+    # Assert that instances of classes violating this protocol violate
+    # @beartype validation as expected.
+    with raises(BeartypeCallHintParamViolation):
+        _real_like_identity(PacificSnapper())  # type: ignore [arg-type]
+
+    # Arbitrary @beartype-decorated callable guaranteed to *ALWAYS* raise a
+    # violation by returning an object that *NEVER* satisfies its type hint.
+    @beartype
+    def _lies_all_lies(arg: SupportsCod) -> Tuple[int]:
+        return (arg.dear_cod(),)  # type: ignore [return-value]
+
+    # Assert this callable raises the expected exception when passed an
+    # instance of a class otherwise satisfying this protocol.
+    with raises(BeartypeCallHintReturnViolation):
+        _lies_all_lies(OneCod())
+
+# ....................{ TESTS ~ pep 593                   }....................
+# If the active Python interpreter targets Python < 3.9 and thus fails to
+# support PEP 593, skip all PEP 593-specific tests declared below.
+
+#FIXME: Generalize to support "typing_extensions.Annotated" as well. *sigh*
+@skip_if_python_version_less_than('3.9.0')
 def test_typingpep544_pep593_integration() -> None:
     '''
     Test the public :class:`beartype.typing.Protocol` subclass when nested
@@ -214,21 +301,6 @@ def test_typingpep544_pep593_integration() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype import typing
-    from beartype.typing import _typingpep544
-    from pytest import skip
-
-    #FIXME: Please generalize to support "typing_extensions.Annotated", too. :p
-    # Skip this test if inapplicable.
-    if not hasattr(typing, 'Annotated'):
-        skip('Python < 3.9.0.')
-    if not hasattr(_typingpep544, '_CachingProtocolMeta'):
-        skip(
-            '"beartype.typing._typingpep544._CachingProtocolMeta" metaclass '
-            'undefined.'
-        )
-
-    # Defer version-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.roar import BeartypeException
