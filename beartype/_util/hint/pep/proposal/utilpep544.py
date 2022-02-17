@@ -123,11 +123,13 @@ if IS_PYTHON_AT_LEAST_3_8:
         # Return either:
         # * If this hint is the "typing.Protocol" superclass directly
         #   parametrized by one or more type variables (e.g.,
-        #   "typing.Protocol[S, T]"), true. For unknown and presumably
-        #   uninteresting reasons, *ALL* possible objects satisfy this
-        #   superclass. Ergo, this superclass and *ALL* parametrizations of
-        #   this superclass are synonymous with the "object" root superclass.
+        #   "typing.Protocol[S, T]"), true. Since this superclass can *ONLY* be
+        #   parametrized by type variables, a simple test suffices.
         # * Else, "None".
+        #
+        # For unknown and uninteresting reasons, *ALL* possible objects satisfy
+        # this superclass. Ergo, this superclass and *ALL* parametrizations of
+        # this superclass are synonymous with the "object" root superclass.
         return repr(hint).startswith('typing.Protocol[') or None
 
 
@@ -408,9 +410,13 @@ def _init() -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python version-specific imports.
     from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
-    from beartype.typing import List
-    from typing import (
+    from beartype.typing import (
         AnyStr,
+        List,
+    )
+    #FIXME: Prefer "beartype.typing.Protocol" after resolving this:
+    #    https://github.com/beartype/beartype/pull/86#issuecomment-1042681735
+    from typing import (
         Protocol,
         runtime_checkable,
     )

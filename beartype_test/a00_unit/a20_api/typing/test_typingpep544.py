@@ -55,6 +55,32 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
+
+@skip_if_python_version_less_than('3.8.0')
+def test_typingpep544_superclass() -> None:
+    '''
+    Test the public
+    :class:`beartype.typing.Protocol` superclass.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.typing import (
+        Protocol as ProtocolFast,
+        TypeVar,
+    )
+    from typing import (
+        Protocol as ProtocolSlow,
+    )
+
+    # Arbitrary type variable.
+    _T_co = TypeVar('_T_co', covariant=True)
+
+    # Assert that the machine-readable representation of a caching protocol
+    # parametrized by one or more type variables is exactly that of a
+    # non-caching protocol parametrized by the same variables.
+    assert repr(ProtocolFast[_T_co]) == repr(ProtocolSlow[_T_co])
+
+
 @skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocols_typing() -> None:
     '''

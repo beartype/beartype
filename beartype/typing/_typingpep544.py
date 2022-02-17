@@ -11,6 +11,11 @@ This private submodule implements a :func:`beartype.beartype``-compatible
 :class:`typing.Protocol` that can lead to significant performance improvements.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: *UHOH.* Turns out caching protocols fail to support a standard use case
+#of subscription by non-type variables satisfying a type variable. See also:
+#    https://github.com/beartype/beartype/pull/86#issuecomment-1042681735
+
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
@@ -27,6 +32,7 @@ from beartype._util.py.utilpyversion import (
 if IS_PYTHON_AT_LEAST_3_8:
     # ..................{ IMPORTS                           }..................
     from typing import (  # type: ignore[attr-defined]
+        EXCLUDED_ATTRIBUTES,
         TYPE_CHECKING,
         Any,
         Generic,
@@ -76,10 +82,26 @@ if IS_PYTHON_AT_LEAST_3_8:
     else:
         _ProtocolMeta = type(_Protocol)
 
-    # ..................{ TYPEVARS                          }..................
-    # Arbitrary type variables.
+    # ..................{ CONSTANTs                         }..................
+    _PROTOCOL_ATTR_NAMES_IGNORABLE = frozenset(EXCLUDED_ATTRIBUTES)
+    '''
+    Frozen set of the names all **ignorable non-protocol attributes** (i.e.,
+    attributes *not* considered part of the protocol of a
+    :class:`beartype.typing.Protocol` subclass when passing that protocol to
+    the :func:`isinstance` builtin in structural subtyping checks).
+    '''
+
+
     _T_co = TypeVar("_T_co", covariant=True)
-    _TT = TypeVar("_TT", bound="type")
+    '''
+    Arbitrary covariant type variable.
+    '''
+
+
+    _TT = TypeVar("_TT", bound=type)
+    '''
+    Arbitrary type variable bound (i.e., confined) to classes.
+    '''
 
     # ..................{ METACLASSES                       }..................
     class _CachingProtocolMeta(_ProtocolMeta):
@@ -168,16 +190,39 @@ if IS_PYTHON_AT_LEAST_3_8:
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore [misc]
 
-            # This is required because, despite deriving from typing.Protocol,
-            # our redefinition below gets its _is_protocol class member set to
-            # False. It being True is required for compatibility with
-            # @runtime_checkable. So we lie to tell the truth.
+            # Mark this protocol class as a runtime protocol. By default,
+            # "typing.Protocol" subclasses are only static-time. Although
+            # marking a protocol class as a runtime protocol only defines a
+            # single private boolean on this class (and thus imposes *NO* space
+            # or time burden whatsoever), typing authors unwisely elected to
+            # force everyone everywhere to unconditionally mark protocols as
+            # runtime by decorate every runtime protocol by @runtime_checkable.
+            # Since that is demonstrably insane, we pretend they choose wisely.
+            #
+            # To do so, we forcefully enable a private boolean instance
+            # variable widely tested throghout the "typing" module. For unknown
+            # reasons, this line of the typing.Protocol.__init__() method
+            # forcefully disables this boolean despite the "__bases__" tuple of
+            # this protocol class explicitly listing "typing.Protocol":
+            #     cls._is_protocol = any(b is Protocol for b in cls.__bases__)
+            #
+            # Note that the @runtime_checkable decorator itself *CANNOT* be
+            # applied to this protocol class. Why? Because that decorator
+            # internally raises this exception if this private boolean instance
+            # variable is false:
+            #     TypeError: @runtime_checkable can be only applied to protocol
+            #     classes, got <class
+            #     'beartype.typing._typingpep544.SupportsAbs'>
+            #
+            # We lie to tell the truth.
             cls._is_protocol = True
 
             # Prefixing this class member with "_abc_" is necessary to prevent
-            # it from being considered part of the Protocol. (See
-            # <https://github.com/python/cpython/blob/main/Lib/typing.py>.)
+            # it from being considered part of the Protocol. See also:
+            #     https://github.com/python/cpython/blob/main/Lib/typing.py
             cls._abc_inst_check_cache = {}
+
+            # Return this caching protocol.
             return cls
 
 
@@ -242,29 +287,56 @@ if IS_PYTHON_AT_LEAST_3_8:
 
 
     #FIXME: Docstring us up, please.
-    def _check_only_my_attrs(cls, inst: Any) -> bool:
-        from typing import _get_protocol_attrs  # type: ignore[attr-defined]
+    #FIXME: Comment us up, please.
+    def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT = {}) -> bool:
 
-        attrs = set(cls.__dict__)
-        attrs.update(cls.__dict__.get("__annotations__", {}))
+        cls_attr_name_to_value = cls.__dict__
+        cls_attr_name_to_hint = cls_attr_name_to_value.get(
+            '__annotations__', _EMPTY_DICT)
+        cls_attr_names = (
+            cls_attr_name_to_value | cls_attr_name_to_hint
+            if IS_PYTHON_AT_LEAST_3_9 else
+            dict(cls_attr_name_to_value, **cls_attr_name_to_hint)
+        )
 
-        #FIXME: This call violates privacy encapsulation, which has me
-        #cueing up Megadeth's Sweating Bullets on the junkyard vinyl
-        #playlist. Ideally, we should copy-and-paste that function into
-        #this private submodule instead. (Let's see if anyone does that.)
-        attrs.intersection_update(_get_protocol_attrs(cls))  # type: ignore [attr-defined]
-        # print(f'Checking instance {repr(inst)} against protocol {repr(cls)} attribute names: {attrs}')
-
-        for attr in attrs:
+        # For the name of each attribute declared by this protocol class...
+        for cls_attr_name in cls_attr_names:
+            # If...
             if (
-                not hasattr(inst, attr) or
-                (
-                    callable(getattr(cls, attr, None)) and
-                    getattr(inst, attr) is None
+                # This name implies this attribute to be unignorable *AND*...
+                #
+                # Specifically, if this name is neither...
+                not (
+                    # A private attribute specific to dark machinery defined by
+                    # the "ABCMeta" metaclass for abstract base classes *OR*...
+                    cls_attr_name.startswith('_abc_') or
+                    # That of an ignorable non-protocol attribute...
+                    cls_attr_name in _PROTOCOL_ATTR_NAMES_IGNORABLE
+                # This attribute is either...
+                ) and (
+                    # Undefined by the passed object *OR*...
+                    #
+                    # This method has been specifically "blocked" (i.e.,
+                    # ignored) by the passed object from being type-checked as
+                    # part of this protocol. For unknown and presumably
+                    # indefensible reasons, PEP 544 explicitly supports a
+                    # fragile, unreadable, and error-prone idiom enabling
+                    # objects to leave methods "undefined." What this madness!
+                    not hasattr(inst, cls_attr_name) or
+                    (
+                        # A callable *AND*...
+                        callable(getattr(cls, cls_attr_name, None)) and
+                        # The passed object nullified this method. *facepalm*
+                        getattr(inst, cls_attr_name) is None
+                    )
                 )
             ):
+                # Then the passed object violates this protocol. In this case,
+                # return false.
                 return False
 
+        # Else, the passed object satisfies this protocol. In this case, return
+        # true.
         return True
 
     # ..................{ CLASSES                           }..................
@@ -301,9 +373,12 @@ if IS_PYTHON_AT_LEAST_3_8:
            ...   thing.myfunc(0)
         '''
 
+        # ................{ CLASS VARIABLES                   }................
         __slots__: Union[str, Iterable[str]] = ()
 
+        # ................{ DUNDERS                           }................
         def __class_getitem__(cls, item):
+
             # We have to redefine this method because typing.Protocol's version
             # is very persnickety about only working for typing.Generic and
             # typing.Protocol. That's an exclusive club, and we ain't in it.
@@ -320,7 +395,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             # resulting generic alias. We need to bypass any memoization cache
             # to ensure the object on which we're about to perform surgery
             # isn't visible to anyone but us.
-            if hasattr(_Protocol.__class_getitem__, "__wrapped__"):
+            if hasattr(_Protocol.__class_getitem__, '__wrapped__'):
                 gen_alias = _Protocol.__class_getitem__.__wrapped__(
                     _Protocol, item)
             else:
@@ -341,6 +416,21 @@ if IS_PYTHON_AT_LEAST_3_8:
 
             # We're done! Time for a honey brewskie break. We earned it.
             return gen_alias
+
+    # Replace the unexpected (and thus non-compliant) fully-qualified name of
+    # the module declaring this caching protocol superclass (e.g.,
+    # "beartype.typing._typingpep544") with the expected (and thus compliant)
+    # fully-qualified name of the standard "typing" module declaring the
+    # non-caching "typing.Protocol" superclass.
+    #
+    # If this is *NOT* done, then the machine-readable representation of this
+    # caching protocol superclass when subscripted by one or more type
+    # variables (e.g., "beartype.typing.Protocol[S, T]") will be differ
+    # significantly from that of the non-caching "typing.Protocol" superclass
+    # (e.g., beartype.typing._typingpep544.Protocol[S, T]"). Because
+    # @beartype (and possibly other third-party packages) expect the two
+    # representations to comply, this awkward monkey-patch preserves sanity.
+    Protocol.__module__ = 'typing'
 
     # ..................{ PROTOCOLS                         }..................
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
