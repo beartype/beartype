@@ -307,8 +307,8 @@ if IS_PYTHON_AT_LEAST_3_8:
                 #
                 # Specifically, if this name is neither...
                 not (
-                    # A private attribute specific to dark machinery defined by
-                    # the "ABCMeta" metaclass for abstract base classes *OR*...
+                    # A private attribute defined by dark machinery in the
+                    # "ABCMeta" metaclass for abstract base classes *OR*...
                     cls_attr_name.startswith('_abc_') or
                     # That of an ignorable non-protocol attribute...
                     cls_attr_name in _PROTOCOL_ATTR_NAMES_IGNORABLE
@@ -324,6 +324,7 @@ if IS_PYTHON_AT_LEAST_3_8:
                     # objects to leave methods "undefined." What this madness!
                     not hasattr(inst, cls_attr_name) or
                     (
+                        #FIXME: Unit test this up, please.
                         # A callable *AND*...
                         callable(getattr(cls, cls_attr_name, None)) and
                         # The passed object nullified this method. *facepalm*
@@ -396,8 +397,10 @@ if IS_PYTHON_AT_LEAST_3_8:
             # to ensure the object on which we're about to perform surgery
             # isn't visible to anyone but us.
             if hasattr(_Protocol.__class_getitem__, '__wrapped__'):
-                gen_alias = _Protocol.__class_getitem__.__wrapped__(
-                    _Protocol, item)
+                #FIXME: Unit test this up, please.
+                base_cls = (_Protocol if _Protocol in cls.__bases__ else cls)
+                gen_alias = super().__class_getitem__.__wrapped__(
+                    base_cls, item)
             else:
                 # We shouldn't ever be here, but if we are, we're making the
                 # assumption that typing.Protocol.__class_getitem__ no longer
@@ -417,6 +420,9 @@ if IS_PYTHON_AT_LEAST_3_8:
             # We're done! Time for a honey brewskie break. We earned it.
             return gen_alias
 
+    #FIXME: Ensure that the main @beartype codebase handles protocols whose
+    #repr() starts with "beartype.typing" as well, please.
+
     # Replace the unexpected (and thus non-compliant) fully-qualified name of
     # the module declaring this caching protocol superclass (e.g.,
     # "beartype.typing._typingpep544") with the expected (and thus compliant)
@@ -430,7 +436,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     # (e.g., beartype.typing._typingpep544.Protocol[S, T]"). Because
     # @beartype (and possibly other third-party packages) expect the two
     # representations to comply, this awkward monkey-patch preserves sanity.
-    Protocol.__module__ = 'typing'
+    Protocol.__module__ = 'beartype.typing'
 
     # ..................{ PROTOCOLS                         }..................
     class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
