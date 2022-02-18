@@ -28,7 +28,7 @@ def test_api_abby_die_if_unbearable_pass() -> None:
     :class:`beartype.abby.die_if_unbearable` tester.
 
     Note that the corresponding ``test_api_abby_die_if_unbearable_fail`` test resides
-    under the :mod:`beartype_test.a20_api.abby` subpackage for orthogonality
+    under the :mod:`beartype_test.a60_api.abby` subpackage for orthogonality
     with other core API unit tests.
     '''
 
@@ -77,7 +77,7 @@ def test_api_abby_is_bearable_pass() -> None:
     :class:`beartype.abby.is_bearable` tester.
 
     Note that the corresponding ``test_api_abby_is_bearable_fail`` test resides
-    under the :mod:`beartype_test.a20_api.abby` subpackage for orthogonality
+    under the :mod:`beartype_test.a60_api.abby` subpackage for orthogonality
     with other core API unit tests.
     '''
 

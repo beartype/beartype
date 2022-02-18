@@ -41,7 +41,7 @@ non-human-readable exceptions at test collection time resembling:
         tree = ast.parse(source, filename=fn_)
     /usr/lib64/python3.6/ast.py:35: in parse
         return compile(source, filename, mode, PyCF_ONLY_AST)
-    E     File "/home/leycec/py/beartype/beartype_test/a00_unit/a00_util/func/test_utilfuncarg.py", line 237
+    E     File "/home/leycec/py/beartype/beartype_test/a00_unit/a20_util/func/test_utilfuncarg.py", line 237
     E       /,
     E       ^
     E   SyntaxError: invalid syntax
