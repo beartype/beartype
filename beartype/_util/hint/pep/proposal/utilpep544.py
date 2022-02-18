@@ -413,12 +413,7 @@ def _init() -> None:
     from beartype.typing import (
         AnyStr,
         List,
-    )
-    #FIXME: Prefer "beartype.typing.Protocol" after resolving this:
-    #    https://github.com/beartype/beartype/pull/86#issuecomment-1042681735
-    from typing import (
         Protocol,
-        runtime_checkable,
     )
 
     # ..................{ GLOBALS                           }..................
@@ -435,7 +430,7 @@ def _init() -> None:
 
     # PEP-compliant type hint matching file handles opened in either text or
     # binary mode.
-    @runtime_checkable
+    # @runtime_checkable
     class _Pep544IO(Protocol[AnyStr]):
         # The body of this class is copied wholesale from the existing
         # non-functional "typing.IO" class.
@@ -532,7 +527,7 @@ def _init() -> None:
     # Note that PEP 544 explicitly requires *ALL* protocols (including
     # protocols subclassing protocols) to explicitly subclass the "Protocol"
     # superclass, in violation of both sanity and usability. (Thanks, guys.)
-    @runtime_checkable
+    # @runtime_checkable
     class _Pep544TextIO(_Pep544IO[str], Protocol):
         # The body of this class is copied wholesale from the existing
         # non-functional "typing.TextIO" class.

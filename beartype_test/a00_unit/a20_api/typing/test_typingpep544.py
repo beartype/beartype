@@ -55,7 +55,6 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-
 @skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_superclass() -> None:
     '''
@@ -68,17 +67,57 @@ def test_typingpep544_superclass() -> None:
         Protocol as ProtocolFast,
         TypeVar,
     )
-    from typing import (
-        Protocol as ProtocolSlow,
-    )
+    from typing import Protocol as ProtocolSlow
+    from pytest import raises
 
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
-    # Assert that the machine-readable representation of a caching protocol
-    # parametrized by one or more type variables is exactly that of a
-    # non-caching protocol parametrized by the same variables.
-    assert repr(ProtocolFast[_T_co]) == repr(ProtocolSlow[_T_co])
+    # Assert that the representation of a caching protocol parametrized by one
+    # or more type variables contains the representation of a non-caching
+    # protocol parametrized by those same variables.
+    assert repr(ProtocolSlow[_T_co]) in repr(ProtocolFast[_T_co])
+
+    # Assert that attempting to directly subscript the caching protocol
+    # superclass by a non-type variable raises the expected exception.
+    with raises(TypeError):
+        ProtocolFast[str]
+
+
+@skip_if_python_version_less_than('3.8.0')
+def test_typingpep544_subclass() -> None:
+    '''
+    Test expected behaviour of user-defined subclasses of the public
+    :class:`beartype.typing.Protocol` superclass.
+    '''
+
+    # Defer heavyweight imports.
+    from abc import abstractmethod
+    from beartype.typing import (
+        AnyStr,
+        Protocol,
+        runtime_checkable
+    )
+
+    # Arbitrary protocol directly subclassing the protocol superclass
+    # subscripted by one or more type variables, exercising subtle edge cases.
+    class SupportsFeebleDreams(Protocol[AnyStr]):
+        @abstractmethod
+        def torpor_of_the_year(self) -> AnyStr:
+            pass
+
+    # Arbitrary protocol directly subclassing the above protocol superclass
+    # subscripted by one or more non-type variables satisfying the type
+    # variables subscripting that superclass, exercising subtle edge cases.
+    class SupportsHiddenBuds(SupportsFeebleDreams[str]):
+        @abstractmethod
+        def dreamless_sleep(self) -> str:
+            pass
+
+    # Assert that optionally decorating protocols by the standard
+    # @typing.runtime_checkable() decorator reduces to a noop.
+    assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
+    assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
 
 
 @skip_if_python_version_less_than('3.8.0')
@@ -116,6 +155,7 @@ def test_typingpep544_protocols_typing() -> None:
     ):
         assert issubclass(type(supports_t), _CachingProtocolMeta)
 
+
     def _assert_isinstance(*types: type, target_t: type) -> None:
 
         assert issubclass(
@@ -130,33 +170,34 @@ def test_typingpep544_protocols_typing() -> None:
             assert isinstance(v, target_t), (
                 f'{repr(t)} not instance of {repr(target_t)}.')
 
-    supports_abs: SupportsAbs = 0
+
+    # supports_abs: SupportsAbs = 0
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsAbs)
 
-    supports_complex: SupportsComplex = Fraction(0, 1)
+    # supports_complex: SupportsComplex = Fraction(0, 1)
     _assert_isinstance(
         Decimal, Fraction, target_t=SupportsComplex)
 
-    supports_float: SupportsFloat = 0
+    # supports_float: SupportsFloat = 0
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsFloat)
 
-    supports_int: SupportsInt = 0
+    # supports_int: SupportsInt = 0
     _assert_isinstance(
         int, float, bool, target_t=SupportsInt)
 
-    supports_index: SupportsIndex = 0
+    # supports_index: SupportsIndex = 0
     _assert_isinstance(
         int, bool, target_t=SupportsIndex)
 
-    supports_round: SupportsRound = 0
+    # supports_round: SupportsRound = 0
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
 # ....................{ TESTS ~ custom                    }....................
 @skip_if_python_version_less_than('3.8.0')
-def test_typingpep544_protocols_custom_direct() -> None:
+def test_typingpep544_protocol_custom_direct() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
     subclass with respect to user-defined :pep:`544`-compliant protocols
@@ -227,7 +268,7 @@ def test_typingpep544_protocols_custom_direct() -> None:
 
 
 @skip_if_python_version_less_than('3.8.0')
-def test_typingpep544_protocols_custom_indirect() -> None:
+def test_typingpep544_protocol_custom_indirect() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
     subclass with respect to user-defined :pep:`544`-compliant protocols

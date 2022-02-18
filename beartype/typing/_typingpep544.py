@@ -396,18 +396,18 @@ if IS_PYTHON_AT_LEAST_3_8:
             # resulting generic alias. We need to bypass any memoization cache
             # to ensure the object on which we're about to perform surgery
             # isn't visible to anyone but us.
-            if hasattr(_Protocol.__class_getitem__, '__wrapped__'):
-                #FIXME: Unit test this up, please.
+            if hasattr(super().__class_getitem__, '__wrapped__'):
+                #FIXME: Document why exactly we need this, please.
                 base_cls = (_Protocol if _Protocol in cls.__bases__ else cls)
                 gen_alias = super().__class_getitem__.__wrapped__(
                     base_cls, item)
+            # We shouldn't ever be here, but if we are, we're making the
+            # assumption that typing.Protocol.__class_getitem__() no longer
+            # caches. Heaven help us if that ever uses some proprietary
+            # memoization implementation we can't see anymore because it's not
+            # based on the standard @functools.wraps decorator.
             else:
-                # We shouldn't ever be here, but if we are, we're making the
-                # assumption that typing.Protocol.__class_getitem__ no longer
-                # caches. Heaven help us if it ever uses some proprietary
-                # memoization implementation we can't see anymore because it's
-                # not based on functools.wraps.
-                gen_alias = _Protocol.__class_getitem__(item)
+                gen_alias = super().__class_getitem__(item)
 
             # Now perform origin-replacement surgery. As-created,
             # gen_alias.__origin__ is (unsurprisingly) typing.Protocol, but we
