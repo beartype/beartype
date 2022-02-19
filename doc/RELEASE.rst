@@ -188,9 +188,11 @@ beartype is releasable to all supported platforms as follows:
 
       **Beartype 0.0.1** released.
 
-      This major release brings titillating support for *this*, *that*, and
-      *PEP numbers compliance*. This release resolves **some issues** and
-      merges **some pull requests.** Changes include:
+      This major release brings titillating support for **this**, **that**, and
+      **PEP numbers compliance**.
+
+      This major release resolves **some issues** and merges **some pull
+      requests.** Noteworthy changes include:
 
       ## Compatibility Improved
 
