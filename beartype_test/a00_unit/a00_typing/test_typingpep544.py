@@ -73,6 +73,9 @@ def test_typingpep544_superclass() -> None:
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
+    # Assert that our caching protocol superclass memoizes subscriptions.
+    assert ProtocolFast[_T_co] is ProtocolFast[_T_co]
+
     # Assert that the representation of a caching protocol parametrized by one
     # or more type variables contains the representation of a non-caching
     # protocol parametrized by those same variables.
@@ -113,6 +116,9 @@ def test_typingpep544_subclass() -> None:
         @abstractmethod
         def dreamless_sleep(self) -> str:
             pass
+
+    # Assert that a caching protocol subclass also memoizes subscriptions.
+    assert SupportsFeebleDreams[str] is SupportsFeebleDreams[str]
 
     # Assert that optionally decorating protocols by the standard
     # @typing.runtime_checkable() decorator reduces to a noop.

@@ -22,6 +22,19 @@ Python 3.8.0.** If this is *not* the case, importing this submodule raises an
 from typing import Union
 
 # ....................{ FUNCTIONS                         }....................
+def pep570_posonly(
+    now_take_away_that_flesh: Union[bytearray, str],
+    take_away_the_teeth: Union[bool, str] = ('and the tongue'),
+    /,
+) -> Union[list, str]:
+    '''
+    Arbitrary :pep:`570`-compliant callable passed a mandatory and optional
+    positional-only parameter, all annotated with PEP-compliant type hints.
+    '''
+
+    return now_take_away_that_flesh + '\n' + take_away_the_teeth
+
+
 def pep570_posonly_flex_varpos_kwonly(
     all_of_your_nightmares: Union[bytearray, str],
     for_a_time_obscured: Union[bool, str] = (

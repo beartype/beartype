@@ -45,7 +45,7 @@ efficiency, portability, and thrilling puns.
    # Import the @beartype decorator.
    >>> from beartype import beartype
 
-   # Annotate @beartype-decorated callables with PEP-compliant type hints.
+   # Annotate @beartype-decorated callables with type hints.
    >>> @beartype
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
@@ -69,14 +69,14 @@ efficiency, portability, and thrilling puns.
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # Squash bugs by refining type hints with PEP-compliant beartype validators.
+   # Squash bugs by refining type hints with beartype validators.
    # Import the requisite machinery.
    >>> from beartype.vale import Is
    >>> from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
-   # Define validators by combining PEP-compliant type hints with lambda
-   # functions. This validator accepts any non-empty list of strings.
+   # Define validators by combining type hints with lambda functions.
+   # This validator accepts any non-empty list of strings.
    >>> ListOfSomeStrings = Annotated[list[str], Is[lambda lst: bool(lst)]]
 
    # Annotate @beartype-decorated callables with validators.
@@ -91,10 +91,12 @@ efficiency, portability, and thrilling puns.
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # Lastly, import the is_bearable() tester.
+   # Lastly, type-check anything against any type hint... anytime.
+   # Import the is_bearable() tester.
    >>> from beartype.abby import is_bearable
 
-   # Type-check anything against any PEP-compliant type hint at any time.
+   # Call this tester like isinstance() or issubclass() – except the
+   # second parameter may be any type hint or type. Power erupts.
    >>> is_bearable(['The', 'goggles', 'do', 'nothing.'], list[str])
    True
    >>> is_bearable([0xCAFEBEEF, 0x8BADF00D], ListOfSomeStrings)

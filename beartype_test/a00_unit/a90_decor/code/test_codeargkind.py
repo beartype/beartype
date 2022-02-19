@@ -144,8 +144,29 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
             'The tongue tasting its savour',
             teeth_tearing_into_it='And the hunger for that taste')
 
-
+# ....................{ TESTS ~ pep 570                   }....................
 # Positional-only keywords require PEP 570 compliance and thus Python >= 3.8.
+
+@skip_if_python_version_less_than('3.8.0')
+def test_arg_kind_posonly() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on a callable passed two
+    positional-only parameters annotated with PEP-compliant type hints.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype_test.a00_unit.data.pep.data_pep570 import pep570_posonly
+
+    # Wrapper function type-checking this unchecked function.
+    the_taste_and_the_hunger = beartype(pep570_posonly)
+
+    # Assert this function returns the expected value.
+    assert the_taste_and_the_hunger(
+        'Take away everything as it is') == '\n'.join((
+        'Take away everything as it is', 'and the tongue'))
+
+
 @skip_if_python_version_less_than('3.8.0')
 def test_arg_kind_posonly_flex_varpos_kwonly() -> None:
     '''

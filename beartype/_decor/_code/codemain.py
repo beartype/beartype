@@ -84,6 +84,17 @@ This includes:
   provide no syntactic means for specifying positional-only parameters.
 '''
 
+
+_PARAM_KINDS_POSITIONAL = frozenset((
+    ParameterKind.POSITIONAL_ONLY,
+    ParameterKind.POSITIONAL_OR_KEYWORD,
+))
+'''
+Frozen set of all **positional parameter kinds** (i.e.,
+:attr:`ParameterKind` enumeration members signifying that a callable parameter
+either may *or* must be passed positionally).
+'''
+
 # ....................{ GENERATORS                        }....................
 def generate_code(
     bear_call: BeartypeCall,
@@ -363,7 +374,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # parameter to be unignorable, @beartype would fail to reduce to a
             # noop for otherwise ignorable callables -- which would be rather
             # bad, really.
-            elif arg_meta.kind is ParameterKind.POSITIONAL_OR_KEYWORD:
+            elif arg_meta.kind in _PARAM_KINDS_POSITIONAL:
                 is_args_positional = True
 
             # Python code snippet type-checking this parameter against this hint.

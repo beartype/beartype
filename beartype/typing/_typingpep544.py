@@ -31,6 +31,7 @@ from beartype._util.py.utilpyversion import (
 # but couldn't find it after a brief search.)
 if IS_PYTHON_AT_LEAST_3_8:
     # ..................{ IMPORTS                           }..................
+    from beartype._util.cache.utilcachecall import callable_cached
     from typing import (  # type: ignore[attr-defined]
         EXCLUDED_ATTRIBUTES,
         TYPE_CHECKING,
@@ -41,14 +42,14 @@ if IS_PYTHON_AT_LEAST_3_8:
         runtime_checkable,
 
         # Non-caching protocols to be overridden by caching equivalents below.
-        Protocol as _Protocol,
-        SupportsAbs as _SupportsAbs,
-        SupportsBytes as _SupportsBytes,
-        SupportsComplex as _SupportsComplex,
-        SupportsFloat as _SupportsFloat,
-        SupportsIndex as _SupportsIndex,
-        SupportsInt as _SupportsInt,
-        SupportsRound as _SupportsRound,
+        Protocol as _ProtocolSlow,
+        SupportsAbs as _SupportsAbsSlow,
+        SupportsBytes as _SupportsBytesSlow,
+        SupportsComplex as _SupportsComplexSlow,
+        SupportsFloat as _SupportsFloatSlow,
+        SupportsIndex as _SupportsIndexSlow,
+        SupportsInt as _SupportsIntSlow,
+        SupportsRound as _SupportsRoundSlow,
     )
 
     # Note that this branch is intentionally tested first, despite the
@@ -80,7 +81,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     # thus subject to looser runtime constraints. In this case, access the same
     # metaclass *WITHOUT* violating privacy encapsulation.
     else:
-        _ProtocolMeta = type(_Protocol)
+        _ProtocolMeta = type(_ProtocolSlow)
 
     # ..................{ CONSTANTs                         }..................
     _PROTOCOL_ATTR_NAMES_IGNORABLE = frozenset(EXCLUDED_ATTRIBUTES)
@@ -342,7 +343,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
     # ..................{ CLASSES                           }..................
     @runtime_checkable
-    class Protocol(_Protocol, metaclass=_CachingProtocolMeta):
+    class Protocol(_ProtocolSlow, metaclass=_CachingProtocolMeta):
         '''
         :func:`beartype.beartype`-compatible (i.e., decorated by
         :func:`typing.runtime_checkable`) drop-in replacement for
@@ -378,6 +379,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         __slots__: Union[str, Iterable[str]] = ()
 
         # ................{ DUNDERS                           }................
+        @callable_cached
         def __class_getitem__(cls, item):
 
             # We have to redefine this method because typing.Protocol's version
@@ -387,20 +389,59 @@ if IS_PYTHON_AT_LEAST_3_8:
 
             # FIXME: Once <https://bugs.python.org/issue46581> is addressed,
             # consider replacing the madness below with something like:
-            #   cached_gen_alias = _Protocol.__class_getitem__(_Protocol, params)
+            #   cached_gen_alias = _ProtocolSlow.__class_getitem__(_ProtocolSlow, params)
             #   our_gen_alias = cached_gen_alias.copy_with(params)
             #   our_gen_alias.__origin__ = cls
             #   return our_gen_alias
 
-            # We can call typing.Protocol's implementation directly to get the
-            # resulting generic alias. We need to bypass any memoization cache
-            # to ensure the object on which we're about to perform surgery
-            # isn't visible to anyone but us.
+            # If the superclass typing.Protocol.__class_getitem__() dunder
+            # method has been wrapped as expected with caching by the private
+            # (and thus *NOT* guaranteed to exist) @typing._tp_cache decorator,
+            # call that unwrapped method directly to obtain the expected
+            # generic alias.
+            #
+            # Note that:
+            # * We intentionally call the unwrapped method rather than the
+            #   decorated closure wrapping that method with memoization. Why?
+            #   Because subsequent logic monkey-patches this generic alias to
+            #   refer to this class rather than the standard "typing.Protocol".
+            #   However, doing so violates internal expectations of the
+            #   @typing._tp_cache decorator performing this memoization.
+            # * This method is already memoized by our own @callable_cached
+            #   decorator. Calling the decorated closure wrapping that
+            #   unwrapped method with memoization would needlessly consume
+            #   excess space and time for *NO* additional benefit.
             if hasattr(super().__class_getitem__, '__wrapped__'):
-                #FIXME: Document why exactly we need this, please.
-                base_cls = (_Protocol if _Protocol in cls.__bases__ else cls)
+                # Protocol class to be passed as the "cls" parameter to the
+                # unwrapped superclass typing.Protocol.__class_getitem__()
+                # dunder method. There exist two unique cases corresponding to
+                # two unique branches of an "if" conditional in that method,
+                # depending on whether either this "Protocol" superclass or a
+                # user-defined subclass of this superclass is being
+                # subscripted. Specifically, this class is...
+                protocol_cls = (
+                    # If this "Protocol" superclass is being directly
+                    # subclassed by one or more type variables (e.g.,
+                    # "Protocol[S, T]"), the non-caching "typing.Protocol"
+                    # superclass underlying this caching protocol superclass.
+                    # Since the aforementioned "if" conditional performs an
+                    # explicit object identity test for the "typing.Protocol"
+                    # superclass, we *MUST* pass that rather than this
+                    # superclass to trigger that conditional appropriately.
+                    _ProtocolSlow
+                    if cls is Protocol else
+                    # Else, a user-defined subclass of this "Protocol"
+                    # superclass is being subclassed by one or more type
+                    # variables *OR* types satisfying the type variables
+                    # subscripting the superclass (e.g.,
+                    # "UserDefinedProtocol[str]" for a user-defined subclass
+                    # class UserDefinedProtocol(Protocol[AnyStr]), that
+                    # subclass as is.
+                    cls
+                )
+
                 gen_alias = super().__class_getitem__.__wrapped__(
-                    base_cls, item)
+                    protocol_cls, item)
             # We shouldn't ever be here, but if we are, we're making the
             # assumption that typing.Protocol.__class_getitem__() no longer
             # caches. Heaven help us if that ever uses some proprietary
@@ -409,12 +450,14 @@ if IS_PYTHON_AT_LEAST_3_8:
             else:
                 gen_alias = super().__class_getitem__(item)
 
-            # Now perform origin-replacement surgery. As-created,
-            # gen_alias.__origin__ is (unsurprisingly) typing.Protocol, but we
-            # need it to be our class. Otherwise our inheritors end up with
-            # the wrong metaclass for some reason (i.e., type(typing.Protocol)
-            # instead of the desired _CachingProtocolMeta). Luddite alert: I
-            # don't fully understand the mechanics here. I suspect no one does.
+            # Switch the origin of this generic alias from its default of
+            # "typing.Protocol" to this caching protocol class. If *NOT* done,
+            # CPython incorrectly sets the metaclass of subclasses to the
+            # non-caching "type(typing.Protocol)" metaclass rather than our
+            # caching "_CachingProtocolMeta" metaclass.
+            #
+            # Luddite alert: we don't fully understand the mechanics here. We
+            # suspect no one does.
             gen_alias.__origin__ = cls
 
             # We're done! Time for a honey brewskie break. We earned it.
@@ -439,49 +482,49 @@ if IS_PYTHON_AT_LEAST_3_8:
     Protocol.__module__ = 'beartype.typing'
 
     # ..................{ PROTOCOLS                         }..................
-    class SupportsAbs(_SupportsAbs[_T_co], Protocol, Generic[_T_co]):
+    class SupportsAbs(_SupportsAbsSlow[_T_co], Protocol, Generic[_T_co]):
         '''
         Caching variant of :class:`typing.SupportsAbs`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsBytes(_SupportsBytes, Protocol):
+    class SupportsBytes(_SupportsBytesSlow, Protocol):
         '''
         Caching variant of :class:`typing.SupportsBytes`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsComplex(_SupportsComplex, Protocol):
+    class SupportsComplex(_SupportsComplexSlow, Protocol):
         '''
         Caching variant of :class:`typing.SupportsComplex`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsFloat(_SupportsFloat, Protocol):
+    class SupportsFloat(_SupportsFloatSlow, Protocol):
         '''
         Caching variant of :class:`typing.SupportsFloat`."
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsInt(_SupportsInt, Protocol):
+    class SupportsInt(_SupportsIntSlow, Protocol):
         '''
         Caching variant of :class:`typing.SupportsInt`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsIndex(_SupportsIndex, Protocol):
+    class SupportsIndex(_SupportsIndexSlow, Protocol):
         '''
         Caching variant of :class:`typing.SupportsIndex`.
         '''
         __slots__: Union[str, Iterable[str]] = ()
 
 
-    class SupportsRound(_SupportsRound[_T_co], Protocol, Generic[_T_co]):
+    class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
         '''
         Caching variant of :class:`typing.SupportsRound`.
         '''
