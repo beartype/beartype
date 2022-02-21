@@ -86,6 +86,45 @@ def test_arg_kind_flex_varkw() -> None:
         'the teeth tearing into it',
     ))
 
+# ....................{ TESTS ~ pep 3102                  }....................
+# Keyword-only keywords require PEP 3102 compliance, which has thankfully been
+# available since Python >= 3.0.
+
+def test_arg_kind_kwonly_mixed() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on a callable passed one
+    optional keyword-only parameter and one mandatory keyword-only parameter
+    (in that non-standard and quite counter-intuitive order), each annotated
+    with PEP-compliant type hints.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintViolation
+    from beartype.typing import Union
+    from beartype_test.util.pytroar import raises_uncached
+
+    # Decorated callable to be exercised.
+    @beartype
+    def my_own_special_plan(
+        *,
+        i_listened_to_these_words: Union[dict, str] = (
+            'and yet I did not wonder'),
+        if_this_creature: Union[set, str],
+    ) -> Union[tuple, str]:
+        return i_listened_to_these_words + '\n' + if_this_creature
+
+    # Assert this function returns the expected value.
+    assert my_own_special_plan(
+        if_this_creature='whom I had thought sleeping or') == '\n'.join((
+        'and yet I did not wonder', 'whom I had thought sleeping or'))
+
+    # Assert that calling this callable with invalid parameters raises the
+    # expected exception.
+    with raises_uncached(BeartypeCallHintViolation):
+        my_own_special_plan(
+            if_this_creature=b'dead would ever approach his vision')
+
 
 def test_arg_kind_flex_varpos_kwonly() -> None:
     '''
@@ -97,8 +136,8 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
+    from beartype.typing import Union
     from beartype_test.util.pytroar import raises_uncached
-    from typing import Union
 
     # Decorated callable to be exercised.
     @beartype
@@ -132,8 +171,8 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
         'You will finally execute your special plan',
     ))
 
-    # Assert that calling this callable with invalid variadic positional
-    # parameters raises the expected exception.
+    # Assert that calling this callable with invalid parameters raises the
+    # expected exception.
     with raises_uncached(BeartypeCallHintViolation):
         tongue_tasting_its_savour(
             'One needs to have a plan, someone said',
@@ -156,7 +195,9 @@ def test_arg_kind_posonly() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from beartype.roar import BeartypeCallHintViolation
     from beartype_test.a00_unit.data.pep.data_pep570 import pep570_posonly
+    from beartype_test.util.pytroar import raises_uncached
 
     # Wrapper function type-checking this unchecked function.
     the_taste_and_the_hunger = beartype(pep570_posonly)
@@ -165,6 +206,11 @@ def test_arg_kind_posonly() -> None:
     assert the_taste_and_the_hunger(
         'Take away everything as it is') == '\n'.join((
         'Take away everything as it is', 'and the tongue'))
+
+    # Assert that calling this callable with invalid parameters raises the
+    # expected exception.
+    with raises_uncached(BeartypeCallHintViolation):
+        the_taste_and_the_hunger(b'That was my plan')
 
 
 @skip_if_python_version_less_than('3.8.0')

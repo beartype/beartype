@@ -44,7 +44,7 @@ from beartype._decor._code._pep.pepcode import (
 from beartype._decor._call import BeartypeCall
 from beartype._util.error.utilerror import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
-    ParameterKind,
+    ArgKind,
     iter_func_args,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
@@ -67,10 +67,10 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ CONSTANTS ~ private               }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
 _PARAM_KINDS_IGNORABLE = frozenset((
-    ParameterKind.VAR_KEYWORD,
+    ArgKind.VAR_KEYWORD,
 ))
 '''
-Frozen set of all :attr:`ParameterKind` enumeration members to be ignored
+Frozen set of all :attr:`ArgKind` enumeration members to be ignored
 during annotation-based type checking in the :func:`beartype.beartype`
 decorator.
 
@@ -86,12 +86,12 @@ This includes:
 
 
 _PARAM_KINDS_POSITIONAL = frozenset((
-    ParameterKind.POSITIONAL_ONLY,
-    ParameterKind.POSITIONAL_OR_KEYWORD,
+    ArgKind.POSITIONAL_ONLY,
+    ArgKind.POSITIONAL_OR_KEYWORD,
 ))
 '''
 Frozen set of all **positional parameter kinds** (i.e.,
-:attr:`ParameterKind` enumeration members signifying that a callable parameter
+:attr:`ArgKind` enumeration members signifying that a callable parameter
 either may *or* must be passed positionally).
 '''
 

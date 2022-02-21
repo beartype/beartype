@@ -11,13 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._util.cache.pool.utilcachepoollistfixed import (
-    acquire_fixed_list,
-    release_fixed_list,
-)
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
+from beartype.typing import (
+    Dict,
+    Generator,
+    Optional,
+    Tuple,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncwrap import unwrap_func
@@ -31,14 +29,13 @@ from enum import (
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 from itertools import count
 from types import CodeType
-from typing import Dict, Iterable, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ ENUMERATIONS                      }....................
 @die_unless_enum_member_values_unique
-class ParameterKind(Enum):
+class ArgKind(Enum):
     '''
     Enumeration of all kinds of **callable parameters** (i.e., arguments passed
     to pure-Python callables).
@@ -83,7 +80,7 @@ class ParameterKind(Enum):
     VAR_KEYWORD = next_enum_member_value()
 
 # ....................{ SINGLETONS                        }....................
-ParameterMandatory = object()
+ArgMandatory = object()
 '''
 Arbitrary sentinel singleton assigned by the
 :func:`iter_func_args` generator to the
@@ -92,80 +89,47 @@ Arbitrary sentinel singleton assigned by the
 parameters that *must* be explicitly passed to their callables).
 '''
 
-# ....................{ CLASSES                           }....................
-class ParameterMeta(object):
-    '''
-    **Parameter metadata** (i.e., object describing a single parameter accepted
-    by an arbitrary pure-Python callable).
+# ....................{ CONSTANTS ~ index                 }....................
+# Iterator yielding the next integer incrementation starting at 0, to be safely
+# deleted *AFTER* defining the following 0-based indices via this iterator.
+__arg_meta_index_counter = count(start=0, step=1)
 
-    Instances of this class are iteratively yielded by the
-    :func:`iter_func_args` generator to describe all callable parameters.
 
-    Attributes
-    ----------
-    name : str
-        **Parameter name** (i.e., syntactically valid Python identifier
-        uniquely identifying this parameter in its parameter list).
-    index : int
-        **Parameter index** (i.e., 0-based index of this parameter in its
-        parameter list).
-    kind : ParameterKind
-        **Parameter kind** (i.e., syntactic category constraining how the
-        callable declaring this parameter requires this parameter to be
-        passed).
-    default_value_or_mandatory : object
-        Either:
+ARG_META_INDEX_KIND = next(__arg_meta_index_counter)
+'''
+0-based index into each 4-tuple iteratively yielded by the generator returned
+by the :func:`iter_func_args` generator function of the currently iterated
+parameter's **kind** (i.e., :class:`ArgKind` enumeration member conveying
+this parameter's syntactic class, constraining how the callable declaring this
+parameter requires this parameter to be passed).
+'''
 
-        * If this parameter is mandatory, the magic constant
-          :data:`ParameterMandatory`.
-        * Else, this parameter is optional and thus defaults to a default value
-          when unpassed. In this case, this is that default value.
-    '''
 
-    # ..................{ CLASS VARIABLES                   }..................
-    # Slot all instance variables defined on this object to minimize the time
-    # complexity of both reading and writing variables across frequently called
-    # @beartype decorations. Slotting has been shown to reduce read and write
-    # costs by approximately ~10%, which is non-trivial.
-    __slots__ = (
-        'name',
-        'index',
-        'kind',
-        'default_value_or_mandatory',
-    )
+ARG_META_INDEX_NAME = next(__arg_meta_index_counter)
+'''
+0-based index into each 4-tuple iteratively yielded by the generator returned
+by the :func:`iter_func_args` generator function of the currently iterated
+parameter's **name** (i.e., syntactically valid Python identifier uniquely
+identifying this parameter in its parameter list).
+'''
 
-    # Satisfy static type-checkers. Your time came and then went, mypy.
-    name: str
-    index: int
-    kind: ParameterKind
-    default_value_or_mandatory: object
 
-    # ..................{ DUNDERS                           }..................
-    def __repr__(self) -> str:
-        '''
-        Machine-readable representation of this object.
-        '''
+ARG_META_INDEX_DEFAULT = next(__arg_meta_index_counter)
+'''
+0-based index into each 4-tuple iteratively yielded by the generator returned
+by the :func:`iter_func_args` generator function of the currently iterated
+parameter's **default value** specified as either:
 
-        return (
-            f'ParameterMeta('
-            f'name={self.name}, '
-            f'index={self.index}, '
-            f'kind={self.kind}, '
-            f'default_value_or_mandatory={self.default_value_or_mandatory},'
-            f')'
-        )
+* If this parameter is mandatory, the magic constant :data:`ArgMandatory`.
+* Else, this parameter is optional and thus defaults to a default value when
+  unpassed. In this case, this is that default value.
+'''
+
+
+# Delete the above counter for safety and sanity in equal measure.
+del __arg_meta_index_counter
 
 # ....................{ PRIVATE ~ constants               }....................
-_PARAMETER_KINDS_POSONLY_OR_FLEX = frozenset((
-    ParameterKind.POSITIONAL_ONLY,
-    ParameterKind.POSITIONAL_OR_KEYWORD,
-))
-'''
-Frozen set of the kinds of all **non-variadic non-keyword-only parameters**
-(i.e., parameters that are neither variadic nor keyword-only).
-'''
-
-
 _ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
 '''
 Empty dictionary suitable for use as the default dictionary mapping the name of
@@ -173,121 +137,10 @@ each optional keyword-only parameter accepted by a callable to the default
 value assigned to that parameter.
 '''
 
-# ....................{ PRIVATE ~ constants : state       }....................
-_ARGS_STATES_LEN = 8
-'''
-Fixed length of the local ``arg_states`` fixed list internally instantiated and
-cached by each call of the :func:`iter_func_args` generator.
-
-This magic number derives from the trivial equation
-``({num_args_kinds_variadic} +
-{mandatory_plus_optional}*{num_args_kinds_nonvariadic}) = 3*(2 + 2*3)``, where:
-
-* ``{num_args_kinds_variadic} = 2`` is the number of different kinds of
-  variadic parameters (i.e., variadic positional and keyword parameters). Since
-  variadic parameters have *no* default values and can thus be considered
-  mandatory, there are *no* corresponding optional variants of these kinds.
-* ``{mandatory_plus_optional} = 2`` is the number of different variants of the
-  different kinds of non-variadic parameters (i.e., flexible, positional-only,
-  and keyword-only). Non-variadic parameters may have default values and thus
-  come in both mandatory and optional variants.
-* ``{num_args_kinds_nonvariadic} = 3`` is the number of different kinds of
-  non-variadic parameters (i.e., flexible, positional-only, and keyword-only).
-'''
-
-
-# Iterator yielding the next integer incrementation starting at 0, to be safely
-# deleted *AFTER* defining the following 0-based indices via this iterator.
-__args_state_index_counter = count(start=0, step=1)
-
-
-_ARGS_STATE_NAME_INDEX_FIRST = next(__args_state_index_counter)
-'''
-0-based index into the local ``args_name`` tuple of the first parameter of the
-kind of parameter being introspected.
-
-For both space and time efficiency, this metadata is intentionally stored as
-0-based integer indices of an unnamed tuple rather than:
-
-* Human-readable fields of a named tuple, which incurs space and time costs we
-  would rather *not* pay.
-* 0-based integer indices of a tiny fixed list. Previously, this metadata was
-  actually stored as a fixed list. However, exhaustive profiling demonstrated
-  that reinitializing each such list by slice-assigning that list's items from
-  a tuple to be faster than individually assigning these items:
-
-  .. code-block:: shell-session
-
-     $ echo 'Slice w/ tuple:' && command python3 -m timeit -s \
-          'muh_list = ["a", "b", "c", "d",]' \
-          'muh_list[:] = ("e", "f", "g", "h",)'
-     Slice w/ tuple:
-     2000000 loops, best of 5: 131 nsec per loop
-     $ echo 'Slice w/o tuple:' && command python3 -m timeit -s \
-          'muh_list = ["a", "b", "c", "d",]' \
-          'muh_list[:] = "e", "f", "g", "h"'
-     Slice w/o tuple:
-     2000000 loops, best of 5: 138 nsec per loop
-     $ echo 'Separate:' && command python3 -m timeit -s \
-          'muh_list = ["a", "b", "c", "d",]' \
-          'muh_list[0] = "e"
-     muh_list[1] = "f"
-     muh_list[2] = "g"
-     muh_list[3] = "h"'
-     Separate:
-     2000000 loops, best of 5: 199 nsec per loop
-
-So, not only does there exist no performance benefit to flattened fixed lists,
-there exists demonstrable performance costs.
-'''
-
-
-_ARGS_STATE_NAME_INDEX_LAST = next(__args_state_index_counter)
-'''
-0-based index into the local ``args_name`` tuple of the last parameter of the
-kind of parameter being introspected.
-'''
-
-
-_ARGS_STATE_KIND = next(__args_state_index_counter)
-'''
-Member of the :class:`ParameterKind` enumeration describing the kind of
-parameter currently being introspected.
-'''
-
-
-_ARGS_STATE_DEFAULTS = next(__args_state_index_counter)
-'''
-Either:
-
-* If this variant of parameter is mandatory, ``None``.
-* If this variant of parameter is optional:
-
-  * If this kind of parameter is either positional-only *or* flexible, the
-    local ``args_defaults_posonly_or_flex`` tuple.
-  * If this kind of parameter is keyword-only, the local
-    ``args_defaults_kwonly`` tuple.
-'''
-
-
-_ARGS_STATE_DEFAULTS_INDEX_FIRST = next(__args_state_index_counter)
-'''
-Either:
-
-* If this variant of parameter is mandatory, ``None``.
-* If this variant of parameter is optional:
-
-  * If this kind of parameter is either positional-only *or* flexible, the
-    the 0-based index of the first default value of the local
-    ``args_defaults_posonly_or_flex`` tuple pertaining to this kind.
-  * If this kind of parameter is keyword-only, 0.
-'''
-
-
-# Delete the above counter for safety and sanity in equal measure.
-del __args_state_index_counter
-
 # ....................{ GENERATORS                        }....................
+#FIXME: Revise codebase usage, please.
+#FIXME: Revise unit tests up, please.
+#FIXME: Revise docstring up, please.
 def iter_func_args(
     # Mandatory parameters.
     func: Callable,
@@ -295,7 +148,7 @@ def iter_func_args(
     # Optional parameters.
     func_codeobj: Optional[CodeType] = None,
     is_unwrapping: bool = True,
-) -> Iterable[ParameterMeta]:
+) -> Generator[Tuple[ArgKind, str, object]]:
     '''
     Generator yielding one **parameter metadata** (i.e., :class:`ParameterMeta`
     instance describing a single parameter accepted by an arbitrary pure-Python
@@ -307,29 +160,29 @@ def iter_func_args(
     :attr:`ParameterMeta.default` instance variables are ordered:
 
     * **Mandatory positional-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.POSITIONAL_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory == ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_ONLY`` and
+      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
     * **Optional positional-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.POSITIONAL_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory != ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_ONLY`` and
+      ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
     * **Mandatory flexible parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.POSITIONAL_OR_KEYWORD``
-      and ``ParameterMeta.default_value_or_mandatory == ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_OR_KEYWORD``
+      and ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
     * **Optional flexible parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.POSITIONAL_OR_KEYWORD``
-      and ``ParameterMeta.default_value_or_mandatory != ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_OR_KEYWORD``
+      and ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
     * **Variadic positional parameters** (i.e., parameter metadata satisfying
-      ``ParameterMeta.kind == ParameterKind.VAR_POSITIONAL`` and
-      ``ParameterMeta.default_value_or_mandatory == ParameterMandatory``).
+      ``ParameterMeta.kind == ArgKind.VAR_POSITIONAL`` and
+      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
     * **Mandatory keyword-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.KEYWORD_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory == ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.KEYWORD_ONLY`` and
+      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
     * **Optional keyword-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ParameterKind.KEYWORD_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory != ParameterMandatory``).
+      satisfying ``ParameterMeta.kind == ArgKind.KEYWORD_ONLY`` and
+      ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
     * **Variadic keyword parameters** (i.e., parameter metadata satisfying
-      ``ParameterMeta.kind == ParameterKind.VAR_KEYWORD`` and
-      ``ParameterMeta.default_value_or_mandatory == ParameterMandatory``).
+      ``ParameterMeta.kind == ArgKind.VAR_KEYWORD`` and
+      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
 
     Caveats
     ----------
@@ -369,11 +222,26 @@ def iter_func_args(
         mandatory parameters and fail to yield their default values. Only set
         this boolean to ``False`` if you pretend to know what you're doing.
 
-    Returns
+    Yields
     ----------
-    Iterable[ParameterMeta]
-        Generator yielding one parameter metadata object for each parameter
-        accepted by that pure-Python callable.
+    Tuple[ArgKind, str, object]
+        Generator iteratively yielding one 4-tuple ``(arg_kind, arg_name,
+        arg_index, default_value_or_mandatory)`` for each parameter accepted by
+        that pure-Python callable, where:
+
+        * ``arg_kind`` is this parameter's **kind** (i.e.,
+          :class:`ArgKind` enumeration member conveying this parameter's
+          syntactic class, constraining how the callable declaring this
+          parameter requires this parameter to be passed).
+        * ``name`` is this parameter's **name** (i.e., syntactically valid
+          Python identifier uniquely identifying this parameter in its
+          parameter list).
+        * ``default_value_or_mandatory`` is either:
+
+            * If this parameter is mandatory, the magic constant
+              :data:`ArgMandatory`.
+            * Else, this parameter is optional and thus defaults to a default
+              value when unpassed. In this case, this is that default value.
 
     Raises
     ----------
@@ -538,396 +406,162 @@ def iter_func_args(
     args_len_posonly_optional = (
         args_len_posonly_or_flex_optional - args_len_flex_optional)
 
-    # Number of optional keyword-only parameters accepted by that callable.
-    args_len_kwonly_optional = len(args_defaults_kwonly)
-
     # Number of mandatory positional-only parameters accepted by that callable.
     args_len_posonly_mandatory = args_len_posonly - args_len_posonly_optional
 
     # Number of mandatory flexible parameters accepted by that callable.
     args_len_flex_mandatory = args_len_flex - args_len_flex_optional
 
-    # Number of mandatory keyword-only parameters accepted by that callable.
-    args_len_kwonly_mandatory = args_len_kwonly - args_len_kwonly_optional
+    # ..................{ INTROSPECTION                     }..................
+    # 0-based index of the first parameter of the currently iterated kind
+    # accepted by that callable in the "args_name" tuple.
+    args_index_kind_first = 0
 
-    # ..................{ LOCALS ~ index                    }..................
-    # 0-based index of the first mandatory positional-only parameter accepted
-    # by that callable in the "args_name" tuple.
-    args_index_first_posonly_mandatory = 0
+    # If that callable accepts at least one mandatory positional-only
+    # parameter...
+    if args_len_posonly_mandatory:
+        # For each mandatory positional-only parameter accepted by that
+        # callable, yield a tuple describing this parameter.
+        for arg_name in args_name[
+            args_index_kind_first:args_len_posonly_mandatory]:
+            yield (ArgKind.POSITIONAL_ONLY, arg_name, ArgMandatory,)
 
-    # 0-based index of the first optional positional-only parameter accepted by
-    # that callable in the "args_name" tuple.
-    args_index_first_posonly_optional = args_len_posonly_mandatory
+        # 0-based index of the first parameter of the next iterated kind.
+        args_index_kind_first = args_len_posonly_mandatory
 
-    # 0-based index of the first mandatory flexible parameter accepted by that
-    # callable in the "args_name" tuple.
-    args_index_first_flex_mandatory = (
-        args_index_first_posonly_optional + args_len_posonly_optional)
+    # If that callable accepts at least one optional positional-only
+    # parameter...
+    if args_len_posonly_optional:
+        # 0-based index of the parameter following the last optional
+        # positional-only parameter in the "args_name" tuple.
+        args_index_kind_last_after = (
+            args_index_kind_first + args_len_posonly_optional)
 
-    # 0-based index of the first optional flexible parameter accepted by that
-    # callable in the "args_name" tuple.
-    args_index_first_flex_optional = (
-        args_index_first_flex_mandatory + args_len_flex_mandatory)
-
-    # 0-based index of the first mandatory keyword-only parameter accepted by
-    # that callable in the "args_name" tuple.
-    args_index_first_kwonly_mandatory = (
-        args_index_first_flex_optional + args_len_flex_optional)
-
-    # 0-based index of the first optional keyword-only parameter accepted by
-    # that callable in the "args_name" tuple.
-    args_index_first_kwonly_optional = (
-        args_index_first_kwonly_mandatory + args_len_kwonly_mandatory)
-
-    # 0-based index of the variadic positional parameter accepted by that
-    # callable in the "args_name" tuple if any *OR* a meaningless value
-    # otherwise (i.e., if that callable accepts no such parameter).
-    args_index_var_pos = (
-        args_index_first_kwonly_optional + args_len_kwonly_optional)
-
-    # 0-based index of the variadic keyword parameter accepted by that
-    # callable in the "args_name" tuple if any *OR* a meaningless value
-    # otherwise (i.e., if that callable accepts no such parameter).
-    #
-    # Note that we are actually adding a boolean as if it were an integer as a
-    # ridiculously negligible optimization here, *BECAUSE WE CAN.* Notably:
-    # * If that callable accepts *NO* variadic positional parameter, then:
-    #       is_arg_var_pos == 0
-    #       args_index_var_kw == args_index_var_pos
-    # * If that callable accepts a variadic positional parameter, then:
-    #       is_arg_var_pos == 1
-    #       args_index_var_kw == args_index_var_pos + 1
-    args_index_var_kw = args_index_var_pos + is_arg_var_pos
-
-    # ..................{ STARTUP                           }..................
-    # Parameter state machine enabling the introspection below to efficiently
-    # decide the kind (e.g., flexible, positional-only) and variant (i.e.,
-    # mandatory, optional) of the currently introspected parameter.
-    #
-    # For both efficiency and simplicity, this machine is crudely implemented
-    # as a cached fixed list whose length is fixed to the maximum size required
-    # by a theoretical worst-case callable accepting all possible kinds and
-    # variants of parameters. Note that declaring such a callable is actually
-    # infeasible (e.g., as a callable *CANNOT* by definition concurrently
-    # accept both optional positional-only and mandatory flexible parameters).
-    # Nonetheless, this theoretical worst-case offers us critical wiggle room
-    # while consuming negligible additional space.
-    #
-    # Each item of this list is a 4-tuple "(args_name_index_first,
-    # args_name_index_last, args_kind, args_defaults,
-    # args_defaults_index_first)", where:
-    # * "args_name_index_first" is the 0-based index into the "args_name" tuple
-    #   of the first parameter of the kind of parameter being introspected.
-    # * "args_name_index_last" is the 0-based index into the "args_name" tuple
-    #   of the last parameter of the kind of parameter being introspected.
-    # * "args_kind" is the member of the "ParameterKind" enumeration describing
-    #   the kind of parameter currently being introspected.
-    # * "args_defaults" is either:
-    #   * If this variant of parameter is mandatory, "None".
-    #   * If this variant of parameter is optional:
-    #     * If this kind of parameter is either positional-only *OR* flexible,
-    #       the "args_defaults_posonly_or_flex" tuple.
-    #     * If this kind of parameter is keyword-only, the
-    #       "args_defaults_kwonly" tuple.
-    #   Note that this seemingly obscure scheme is by intentional design,
-    #   enabling the "ParameterMeta.default_value_or_mandatory" instance
-    #   variable for mandatory parameters to be efficiently assigned this value
-    #   only once for each contiguous range of mandatory parameters of the same
-    #   kind rather than repeatedly reassigned for each such parameter. *WUT*
-    # * "args_defaults_index_first" is either:
-    #   * If this variant of parameter is mandatory, "None".
-    #   * If this variant of parameter is optional:
-    #     * If this kind of parameter is either positional-only *OR* flexible,
-    #       the 0-based index of the first default value of the
-    #       "args_defaults_posonly_or_flex" tuple pertaining to this kind.
-    #     * If this kind of parameter is keyword-only, 0.
-    #
-    # While this probably seems like overkill, this list enables the iteration
-    # below to be compacted into a single efficient "while" loop rather than
-    # distributed across multiple inefficient "for" loops, each implicitly
-    # raising a "StopException" on successful termination. In short, SPEED!
-    args_states = acquire_fixed_list(_ARGS_STATES_LEN)
-
-    # Parameter metadata to be yielded by each iteration of the introspection
-    # performed below to the caller.
-    param_meta = acquire_object_typed(ParameterMeta)
-
-    # 0-based index of the currently visited item of the "args_states" list.
-    args_states_index_curr = 0
-
-    # 0-based index of the first item of the "args_defaults_posonly_or_flex"
-    # tuple pertaining to the current kind of optional non-keyword-only
-    # parameter.
-    args_defaults_posonly_or_flex_index_first = 0
-
-    # Initialize the "args_states" list by iteratively appending one flattened
-    # 3-tuple describing each kind of parameter accepted by that callable to
-    # this list. For efficiency, maintainability, and readability, this
-    # initialization is intentionally implemented with a series of "if"
-    # conditionals that superficially appear identical but are ultimately
-    # dissimilar enough to dissuade anyone from attempting to condense this.
-    # This means you. Loop (f)unrolling is fun, everyone!
-    #
-    # If that callable accepts positional-only parameters...
-    if args_len_posonly:
-        # If that callable accepts mandatory positional-only parameters...
-        if args_len_posonly_mandatory:
-            # Append a tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_posonly_mandatory,
-                args_index_first_posonly_optional - 1,
-                ParameterKind.POSITIONAL_ONLY,
-                None,
-                None,
+        # For the 0-based index of each optional positional-only parameter
+        # accepted by that callable and that parameter, yield a tuple
+        # describing this parameter.
+        for arg_index, arg_name in enumerate(args_name[
+            args_index_kind_first:args_index_kind_last_after]):
+            # assert arg_posonly_optional_index < args_len_posonly_optional, (
+            #     f'Optional positional-only parameter index {arg_posonly_optional_index} >= '
+            #     f'optional positional-only parameter count {args_len_posonly_optional}.')
+            yield (
+                ArgKind.POSITIONAL_ONLY,
+                arg_name,
+                args_defaults_posonly_or_flex[arg_index],
             )
 
-            # Increment the index of the current state.
-            args_states_index_curr += 1
+        # 0-based index of the first parameter of the next iterated kind.
+        args_index_kind_first = args_index_kind_last_after
 
-        # If that callable accepts optional positional-only parameters...
-        if args_len_posonly_optional:
-            # Append a tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_posonly_optional,
-                args_index_first_flex_mandatory - 1,
-                ParameterKind.POSITIONAL_ONLY,
-                args_defaults_posonly_or_flex,
-                args_defaults_posonly_or_flex_index_first,
+    # If that callable accepts at least one mandatory flexible parameter...
+    if args_len_flex_mandatory:
+        # 0-based index of the parameter following the last mandatory
+        # flexible parameter in the "args_name" tuple.
+        args_index_kind_last_after = (
+            args_index_kind_first + args_len_flex_mandatory)
+
+        # For each mandatory flexible parameter accepted by that callable,
+        # yield a tuple describing this parameter.
+        for arg_name in args_name[
+            args_index_kind_first:args_index_kind_last_after]:
+            yield (ArgKind.POSITIONAL_OR_KEYWORD, arg_name, ArgMandatory,)
+
+        # 0-based index of the first parameter of the next iterated kind.
+        args_index_kind_first = args_index_kind_last_after
+
+    # If that callable accepts at least one optional flexible parameter...
+    if args_len_flex_optional:
+        # 0-based index of the parameter following the last optional
+        # flexible parameter in the "args_name" tuple.
+        args_index_kind_last_after = (
+            args_index_kind_first + args_len_flex_optional)
+
+        # For the 0-based index of each optional flexible parameter accepted by
+        # this callable and that parameter, yield a 3-tuple describing this
+        # parameter.
+        for arg_index, arg_name in enumerate(args_name[
+            args_index_kind_first:args_index_kind_last_after]):
+            # assert arg_flex_optional_index < args_len_flex_optional, (
+            #     f'Optional flexible parameter index {arg_flex_optional_index} >= '
+            #     f'optional flexible parameter count {args_len_flex_optional}.')
+            yield (
+                ArgKind.POSITIONAL_OR_KEYWORD,
+                arg_name,
+                args_defaults_posonly_or_flex[
+                    args_len_posonly_optional + arg_index],
             )
 
-            # Increment the index of the current state.
-            args_states_index_curr += 1
-
-            # Increment the index of the first item of the
-            # "args_defaults_posonly_or_flex" tuple pertaining to the current
-            # kind of optional non-keyword-only parameter past all optional
-            # positional-only parameters. (Guido, this is awkward. Come on.)
-            args_defaults_posonly_or_flex_index_first += (
-                args_len_posonly_optional)
-
-    # If that callable accepts flexible parameters...
-    if args_len_flex:
-        # If that callable accepts mandatory flexible parameters...
-        if args_len_flex_mandatory:
-            # Append a tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_flex_mandatory,
-                args_index_first_flex_optional - 1,
-                ParameterKind.POSITIONAL_OR_KEYWORD,
-                None,
-                None,
-            )
-
-            # Increment the index of the current state.
-            args_states_index_curr += 1
-
-        # If that callable accepts optional flexible parameters...
-        if args_len_flex_optional:
-            # Append a tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_flex_optional,
-                args_index_first_kwonly_mandatory - 1,
-                ParameterKind.POSITIONAL_OR_KEYWORD,
-                args_defaults_posonly_or_flex,
-                args_defaults_posonly_or_flex_index_first,
-            )
-
-            # Increment the index of the current state.
-            args_states_index_curr += 1
+        # 0-based index of the first parameter of the next iterated kind.
+        args_index_kind_first = args_index_kind_last_after
 
     # If that callable accepts a variadic positional parameter...
     #
-    # Note that the state describing this parameter is intentionally added
-    # *BEFORE* the states describing keyword-only parameters, as the caller
-    # expects the former to be yielded before the latter for conformance with
-    # the syntax of signatures of pure-Python callables.
+    # Note that:
+    # * This parameter is intentionally yielded *BEFORE* keyword-only
+    #   parameters to conform with syntactic standards. A variadic positional
+    #   parameter necessarily appears before any keyword-only parameters in the
+    #   signature of that callable.
+    # * The 0-based index of this parameter in the "args_name" tuple is exactly
+    #   one *AFTER* the last keyword-only parameter in that tuple if any and
+    #   one *BEFORE* the variadic keyword parameter in that tuple if any. This
+    #   idiosyncrasy is entirely the fault of CPython, which grouped the
+    #   two variadic positional and keyword parameters at the end of this list
+    #   despite syntactic constraints on their lexical position.
     if is_arg_var_pos:
-        # Append a tuple describing this state to this list.
-        args_states[args_states_index_curr] = (
-            args_index_var_pos,
-            args_index_var_pos,
-            ParameterKind.VAR_POSITIONAL,
-            None,
-            None,
-        )
-
-        # Increment the index of the current state.
-        args_states_index_curr += 1
-
-    # If that callable accepts keyword-only parameters...
-    if args_len_kwonly:
-        # If that callable accepts mandatory keyword-only parameters...
-        if args_len_kwonly_mandatory:
-            # Append a tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_kwonly_mandatory,
-                args_index_first_kwonly_optional - 1,
-                ParameterKind.KEYWORD_ONLY,
-                None,
-                None,
-            )
-
-            # Increment the index of the current state.
-            args_states_index_curr += 1
-
-        # If that callable accepts optional keyword-only parameters...
-        if args_len_kwonly_optional:
-            # Append a flattened 3-tuple describing this state to this list.
-            args_states[args_states_index_curr] = (
-                args_index_first_kwonly_optional,
-                args_index_var_pos - 1,
-                ParameterKind.KEYWORD_ONLY,
-                args_defaults_kwonly,
-                0,
-            )
-
-            # Increment the index of the current state.
-            args_states_index_curr += 1
-
-    # If that callable accepts a variadic keyword parameter...
-    if is_arg_var_kw:
-        # Append a tuple describing this state to this list.
-        args_states[args_states_index_curr] = (
-            args_index_var_kw,
-            args_index_var_kw,
-            ParameterKind.VAR_KEYWORD,
-            None,
-            None,
-        )
-
-        # Increment the index of the current state.
+        # 0-based index of the variadic positional parameter accepted by that
+        # callable in the "args_name" tuple. Technically, this index can be
+        # obtained in one of two ways:
+        # * Positively add the lengths of all preceding kinds of parameters.
+        # * Negatively index the "args_name" tuple from the end.
         #
-        # Yes, this is absolutely necessary to preserve sanity when
-        # initializing the "args_states_index_last" local below. In any case,
-        # avoid inevitable hideous bugs when a new kind of parameter is
-        # inevitably added following a variadic keyword parameter. *INCOMING!*
-        args_states_index_curr += 1
+        # Pragmatically, the latter is more efficient than the former here.
+        # Indeed, the latter can be further optimized by noting that Python
+        # booleans are literally integers that can be computed with. Notably:
+        # * If that callable accepts *NO* variadic keyword parameter, then:
+        #       is_arg_var_kw == 0
+        #       args_index_var_pos == -1
+        # * If that callable accepts a variadic positional parameter, then:
+        #       is_arg_var_kw == 1
+        #       args_index_var_pos == -2
+        args_index_var_pos = -is_arg_var_kw - 1
 
-    # 0-based index of one greater than the last initialized item of this list.
-    args_states_index_halt = args_states_index_curr
+        # Yield a tuple describing this parameter.
+        yield (
+            ArgKind.VAR_POSITIONAL,
+            args_name[args_index_var_pos],
+            ArgMandatory,
+        )
 
-    # Assert that the iteration below will iterate over at least one parameter.
-    # By the above noop, this generator function should have already reduced to
-    # the empty generator if the passed callable is argument-less.
-    assert args_states_index_halt
+    # If that callable accepts at least one keyword-only parameter...
+    if args_len_kwonly:
+        # 0-based index of the parameter following the last keyword-only
+        # parameter in the "args_name" tuple.
+        args_index_kind_last_after = args_index_kind_first + args_len_kwonly
 
-    # ..................{ INTROSPECTION                     }..................
-    # Metadata describing the currently visited state.
-    args_state = None
+        # dict.get() method repeatedly called below and thus localized for
+        # negligible efficiency. Look. Just do this. We needs godspeed.
+        args_defaults_kwonly_get = args_defaults_kwonly.get
 
-    # 0-based index of the currently visited item of the "args_states" list,
-    # rewound to begin iterating over that list following its initialization.
-    args_states_index_curr = 0
+        # For each keyword-only parameter accepted by that callable, yield a
+        # tuple describing this parameter.
+        for arg_name in args_name[
+            args_index_kind_first:args_index_kind_last_after]:
+            yield (
+                ArgKind.KEYWORD_ONLY,
+                arg_name,
+                # Either:
+                # * If this is an optional keyword-only parameter, the default
+                #   value of this parameter.
+                # * If this is a mandatory keyword-only parameter, the
+                #   placeholder "ArgMandatory" singleton.
+                args_defaults_kwonly_get(arg_name, ArgMandatory),
+            )
 
-    # 0-based index of the currently visited parameter of the "args_name" list.
-    args_name_index_curr = 0
-
-    # 0-based index of the last parameter of the kind of parameter currently
-    # being introspected of the "args_name" list, intentionally initialized to
-    # an arbitrary negative number to force the first iteration below to
-    # initialize parameter metadata against the first parameter state.
-    args_name_index_last = -1
-
-    # Either:
-    # * If this variant of parameter is mandatory, "ParameterMandatory".
-    # * If this variant of parameter is optional:
-    #   * If this kind of parameter is either positional-only *OR* flexible,
-    #     the "args_defaults_posonly_or_flex" tuple.
-    #   * If this kind of parameter is keyword-only, the "args_defaults_kwonly"
-    #     tuple.
-    args_defaults = None
-
-    # Either:
-    # * If this variant of parameter is mandatory, "None".
-    # * If this variant of parameter is optional:
-    #   * If this kind of parameter is either positional-only *OR* flexible,
-    #     the 0-based index of the first default value of the
-    #     "args_defaults_posonly_or_flex" tuple pertaining to this kind.
-    #   * If this kind of parameter is keyword-only, 0.
-    args_defaults_index_curr = -1
-
-    # For each of the one or more parameters passed to this callable...
-    while True:
-        # If the index of the currently visited parameter of the "args_name"
-        # list exceeds that of the last parameter of the kind of parameter
-        # currently being introspected, this iteration has just transitioned
-        # from one parameter state to another. In this case...
-        if args_name_index_curr > args_name_index_last:
-            # If the index of the currently visited item of the "args_states"
-            # list exceeds one greater than the last initialized item of this
-            # list, this iteration has just transitioned to the halt state. In
-            # this case, immediately terminate iteration.
-            if args_states_index_curr >= args_states_index_halt:
-                break
-            # Else, this iteration has just transitioned to a non-halting
-            # state. In this case, update parameter metadata to reflect this
-            # state.
-
-            # Metadata describing the currently visited state.
-            args_state = args_states[args_states_index_curr]
-
-            # Increment the index of the next visited state.
-            args_states_index_curr += 1
-
-            # 0-based indices of the first and last parameter of the kind of
-            # parameter currently being introspected of the "args_name" tuple.
-            args_name_index_curr = args_state[_ARGS_STATE_NAME_INDEX_FIRST]
-            args_name_index_last = args_state[_ARGS_STATE_NAME_INDEX_LAST]
-
-            # Kind of parameter currently being yielded.
-            param_meta.kind = args_state[_ARGS_STATE_KIND]
-
-            # "None" if these parameters are mandatory *OR* either
-            # "args_defaults_posonly_or_flex" or "args_defaults_kwonly" tuples
-            # depending on the current kind of optional parameter.
-            args_defaults = args_state[_ARGS_STATE_DEFAULTS]
-
-            # "None" if these parameters are mandatory *OR* the 0-based index
-            # of the first item of either the "args_defaults_posonly_or_flex"
-            # or "args_defaults_kwonly" tuples depending on the current kind of
-            # optional parameter.
-            args_defaults_index_curr = args_state[
-                _ARGS_STATE_DEFAULTS_INDEX_FIRST]
-
-            # If these parameters are mandatory, set the default values of all
-            # parameters of this kind to "ParameterMandatory".
-            if args_defaults is None:
-                param_meta.default_value_or_mandatory = ParameterMandatory
-            # Else, these parameters are optional. In this case, the
-            # conditional below will set this default value for each parameter
-            # of this kind.
-
-        # Set this parameter's name and index.
-        param_meta.name = args_name[args_name_index_curr]
-        param_meta.index = args_name_index_curr
-
-        # If this parameter is optional...
-        if args_defaults:
-            # If this parameter is positional-only *OR* flexible...
-            if args_defaults is args_defaults_posonly_or_flex:
-                # Set this parameter's default value via this index.
-                param_meta.default_value_or_mandatory = args_defaults[
-                    args_defaults_index_curr]
-
-                # Increment the index of the next default value of the
-                # "args_defaults" tuple.
-                args_defaults_index_curr += 1
-            # Else, this parameter is keyword-only. In this case, set this
-            # parameter's default value via this parameter's name.
-            else:
-                param_meta.default_value_or_mandatory = args_defaults[
-                    param_meta.name]
-        # Else, this parameter is mandatory. In this case, the conditional
-        # above already set this default value for all parameters of this kind.
-
-        # Yield this parameter to the caller.
-        yield param_meta
-
-        # Increment the 0-based index of the next visited parameter of the
-        # "args_name" list.
-        args_name_index_curr += 1
-
-    # ..................{ CLEANUP                           }..................
-    # Release all cached objects acquired above.
-    release_fixed_list(args_states)
-    release_object_typed(param_meta)
+    # If that callable accepts a variadic keyword parameter, yield a 3-tuple
+    # describing this parameter.
+    #
+    # Note that the 0-based index of this parameter in the "args_name" tuple is
+    # guaranteed to be that of the last item of this tuple.
+    if is_arg_var_kw:
+        yield (ArgKind.VAR_KEYWORD, args_name[-1], ArgMandatory)

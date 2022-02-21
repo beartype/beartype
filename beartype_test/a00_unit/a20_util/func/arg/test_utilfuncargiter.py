@@ -26,8 +26,8 @@ def test_iter_func_args() -> None:
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.arg.utilfuncargiter import (
-        ParameterKind,
-        ParameterMandatory,
+        ArgKind,
+        ArgMandatory,
         iter_func_args,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -50,29 +50,29 @@ def test_iter_func_args() -> None:
     # callables accepting multiple kinds of parameters, explicitly coerced into
     # tuples to trivialize testing.
     assert _iter_func_args_tuple(func_args_1_flex_mandatory) == (
-        ('had_one_fair_daughter', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
+        ('had_one_fair_daughter', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
     )
     assert _iter_func_args_tuple(func_args_1_varpos) == (
-        ('and_in_her_his_one_delight', ParameterKind.VAR_POSITIONAL, ParameterMandatory,),
+        ('and_in_her_his_one_delight', ArgKind.VAR_POSITIONAL, ArgMandatory,),
     )
     assert _iter_func_args_tuple(func_args_1_kwonly_mandatory) == (
-        ('when_can_I_take_you_from_this_place', ParameterKind.KEYWORD_ONLY, ParameterMandatory,),
+        ('when_can_I_take_you_from_this_place', ArgKind.KEYWORD_ONLY, ArgMandatory,),
     )
     assert _iter_func_args_tuple(func_args_2_flex_mandatory) == (
-        ('thick_with_wet_woods', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
-        ('and_many_a_beast_therein', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
+        ('thick_with_wet_woods', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
+        ('and_many_a_beast_therein', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
     )
     assert _iter_func_args_tuple(func_args_3_flex_mandatory_optional_varkw) == (
-        ('and_the_wolf_tracks_her_there', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
-        ('how_hideously', ParameterKind.POSITIONAL_OR_KEYWORD, "Its shapes are heap'd around!",),
-        ('rude_bare_and_high', ParameterKind.VAR_KEYWORD, ParameterMandatory,),
+        ('and_the_wolf_tracks_her_there', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
+        ('how_hideously', ArgKind.POSITIONAL_OR_KEYWORD, "Its shapes are heap'd around!",),
+        ('rude_bare_and_high', ArgKind.VAR_KEYWORD, ArgMandatory,),
     )
     assert _iter_func_args_tuple(func_args_5_flex_mandatory_varpos_varkw) == (
-        ('we_are_selfish_men', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
-        ('oh_raise_us_up', ParameterKind.POSITIONAL_OR_KEYWORD, ParameterMandatory,),
-        ('and_give_us', ParameterKind.VAR_POSITIONAL, ParameterMandatory,),
-        ('return_to_us_again', ParameterKind.KEYWORD_ONLY, 'Of inward happiness.',),
-        ('manners_virtue_freedom_power', ParameterKind.VAR_KEYWORD, ParameterMandatory,),
+        ('we_are_selfish_men', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
+        ('oh_raise_us_up', ArgKind.POSITIONAL_OR_KEYWORD, ArgMandatory,),
+        ('and_give_us', ArgKind.VAR_POSITIONAL, ArgMandatory,),
+        ('return_to_us_again', ArgKind.KEYWORD_ONLY, 'Of inward happiness.',),
+        ('manners_virtue_freedom_power', ArgKind.VAR_KEYWORD, ArgMandatory,),
     )
 
     # If the active Python interpreter targets Python >= 3.8 and thus supports
@@ -86,16 +86,16 @@ def test_iter_func_args() -> None:
         # callables accepting multiple kinds of parameters -- including
         # positional-only parameters.
         assert _iter_func_args_tuple(func_args_10_all_except_flex_mandatory) == (
-            ('in_solitude_i_wander', ParameterKind.POSITIONAL_ONLY, ParameterMandatory,),
-            ('through_the_vast_enchanted_forest', ParameterKind.POSITIONAL_ONLY, ParameterMandatory,),
-            ('the_surrounding_skies', ParameterKind.POSITIONAL_ONLY, 'are one',),
-            ('torn_apart_by', ParameterKind.POSITIONAL_OR_KEYWORD, 'the phenomenon of lightning',),
-            ('rain_is_pouring_down', ParameterKind.POSITIONAL_OR_KEYWORD, 'my now shivering shoulders',),
-            ('in_the_rain_my_tears_are_forever_lost', ParameterKind.VAR_POSITIONAL, ParameterMandatory,),
-            ('the_darkened_oaks_are_my_only_shelter', ParameterKind.KEYWORD_ONLY, ParameterMandatory,),
-            ('red_leaves_are_blown_by', ParameterKind.KEYWORD_ONLY, 'the wind',),
-            ('an_ebony_raven_now_catches', ParameterKind.KEYWORD_ONLY, 'my eye.',),
-            ('sitting_in_calmness', ParameterKind.VAR_KEYWORD, ParameterMandatory,),
+            ('in_solitude_i_wander', ArgKind.POSITIONAL_ONLY, ArgMandatory,),
+            ('through_the_vast_enchanted_forest', ArgKind.POSITIONAL_ONLY, ArgMandatory,),
+            ('the_surrounding_skies', ArgKind.POSITIONAL_ONLY, 'are one',),
+            ('torn_apart_by', ArgKind.POSITIONAL_OR_KEYWORD, 'the phenomenon of lightning',),
+            ('rain_is_pouring_down', ArgKind.POSITIONAL_OR_KEYWORD, 'my now shivering shoulders',),
+            ('in_the_rain_my_tears_are_forever_lost', ArgKind.VAR_POSITIONAL, ArgMandatory,),
+            ('the_darkened_oaks_are_my_only_shelter', ArgKind.KEYWORD_ONLY, ArgMandatory,),
+            ('red_leaves_are_blown_by', ArgKind.KEYWORD_ONLY, 'the wind',),
+            ('an_ebony_raven_now_catches', ArgKind.KEYWORD_ONLY, 'my eye.',),
+            ('sitting_in_calmness', ArgKind.VAR_KEYWORD, ArgMandatory,),
         )
 
     # Assert this iterator returns a generator raising the expected exception

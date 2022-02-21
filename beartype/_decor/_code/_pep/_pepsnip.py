@@ -20,7 +20,7 @@ from beartype._decor._code.codemagic import (
     VAR_NAME_PITH_ROOT,
     VAR_NAME_RANDOM_INT,
 )
-from beartype._util.func.arg.utilfuncargiter import ParameterKind
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 
 # ....................{ PITH                              }....................
 PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_var_name} := {pith_curr_expr}'''
@@ -51,7 +51,7 @@ See Also
 PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
-    ParameterKind.POSITIONAL_ONLY: f'''
+    ArgKind.POSITIONAL_ONLY: f'''
     # If this positional-only parameter was passed...
     if {VAR_NAME_ARGS_LEN} > {{arg_index}}:
         # Localize this positional-only parameter.
@@ -73,7 +73,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     #   we could pass a "__beartype_sentinel" parameter to all wrapper
     #   functions defaulting to "object()" and then use that here instead,
     #   doing so would slightly reduce efficiency for no tangible gain. *shrug*
-    ParameterKind.POSITIONAL_OR_KEYWORD: f'''
+    ArgKind.POSITIONAL_OR_KEYWORD: f'''
     # Localize this positional or keyword parameter if passed *OR* to the
     # sentinel "__beartype_raise_exception" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = (
@@ -86,7 +86,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
 
     # Snippet localizing any keyword-only parameter (e.g., "*, {kwarg}") by
     # lookup in the wrapper's variadic "**kwargs" dictionary. (See above.)
-    ParameterKind.KEYWORD_ONLY: f'''
+    ArgKind.KEYWORD_ONLY: f'''
     # Localize this keyword-only parameter if passed *OR* to the sentinel value
     # "__beartype_raise_exception" guaranteed to never be passed.
     {VAR_NAME_PITH_ROOT} = kwargs.get({{arg_name!r}}, {ARG_NAME_RAISE_EXCEPTION})
@@ -95,7 +95,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_RAISE_EXCEPTION}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
-    ParameterKind.VAR_POSITIONAL: f'''
+    ArgKind.VAR_POSITIONAL: f'''
     # For all passed variadic positional parameters...
     for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
 
@@ -103,7 +103,7 @@ PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     #paradigm, sadly. This will have to wait for us to fundamentally revise
     #our signature generation algorithm.
     # # Snippet iteratively localizing all variadic keyword parameters.
-    # ParameterKind.VAR_KEYWORD: f'''
+    # ArgKind.VAR_KEYWORD: f'''
     # # For all passed variadic keyword parameters...
     # for {VAR_NAME_PITH_ROOT} in kwargs[{{arg_index!r}}:]:''',
 }
