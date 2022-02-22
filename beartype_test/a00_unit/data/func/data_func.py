@@ -10,6 +10,9 @@ This submodule predefines sample pure-Python callables exercising known edge
 cases on behalf of higher-level unit test submodules.
 '''
 
+# ....................{ IMPORTS                           }....................
+from typing import Union
+
 # ....................{ CALLABLES                         }....................
 def func_args_0() -> str:
     '''
@@ -33,15 +36,6 @@ def func_args_1_varpos(*and_in_her_his_one_delight: str) -> str:
     '''
 
     return 'Wherein the beast was ever more and more,'
-
-
-def func_args_1_kwonly_mandatory(
-    *, when_can_I_take_you_from_this_place: str) -> str:
-    '''
-    Arbitrary callable accepting one mandatory keyword-only parameter.
-    '''
-
-    return 'When is the word but a sigh?'
 
 
 def func_args_2_flex_mandatory(
@@ -69,7 +63,34 @@ def func_args_3_flex_mandatory_optional_varkw(
     return "Ghastly, and scarr'd, and riven.—Is this the scene"
 
 
-def func_args_5_flex_mandatory_varpos_varkw(
+# ....................{ TESTS ~ pep 3102                  }....................
+# Keyword-only keywords require PEP 3102 compliance, which has thankfully been
+# available since Python >= 3.0.
+
+def func_args_1_kwonly_mandatory(
+    *, when_can_I_take_you_from_this_place: str) -> str:
+    '''
+    Arbitrary callable accepting one mandatory keyword-only parameter.
+    '''
+
+    return 'When is the word but a sigh?'
+
+
+def func_args_2_kwonly_mixed(
+    *,
+    white_summer: Union[dict, str] = 'So far I have gone to see you again.',
+    hiding_your_face_in_the_palm_of_your_hands: Union[set, str],
+) -> Union[tuple, str]:
+    '''
+    Arbitrary callable passed one optional keyword-only parameter and one
+    mandatory keyword-only parameter (in that non-standard and quite
+    counter-intuitive order), each annotated with PEP-compliant type hints.
+    '''
+
+    return white_summer + '\n' + hiding_your_face_in_the_palm_of_your_hands
+
+
+def func_args_5_flex_mandatory_varpos_kwonly_varkw(
     we_are_selfish_men,
     oh_raise_us_up,
     *and_give_us,

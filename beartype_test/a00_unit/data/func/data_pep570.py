@@ -48,8 +48,23 @@ non-human-readable exceptions at test collection time resembling:
 '''
 
 # ....................{ IMPORTS                           }....................
+from typing import Union
 
 # ....................{ CALLABLES                         }....................
+def func_args_2_posonly_mixed(
+    before_spreading_his_black_wings: Union[bytearray, str],
+    reaching_for_the_skies: Union[bool, str] = 'in this forest',
+    /,
+) -> Union[list, str]:
+    '''
+    Arbitrary :pep:`570`-compliant callable passed a mandatory and optional
+    positional-only parameter, all annotated with PEP-compliant type hints.
+    '''
+
+    return (
+        before_spreading_his_black_wings + '\n' + reaching_for_the_skies)
+
+
 def func_args_10_all_except_flex_mandatory(
     in_solitude_i_wander,
     through_the_vast_enchanted_forest,
@@ -64,11 +79,13 @@ def func_args_10_all_except_flex_mandatory(
     **sitting_in_calmness,
 ) -> str:
     '''
-    Arbitrary callable accepting all possible kinds of parameters,
-    including both mandatory and optional variants of these kinds
-    (except mandatory flexible parameters, as callables cannot by
-    definition accept both optional positional-only parameters *and*
-    mandatory flexible parameters).
+    Arbitrary :pep:`570`-compliant callable accepting all possible kinds of
+    parameters, including both mandatory and optional variants of these kinds
+    except mandatory flexible parameters.
+
+    Since callables cannot by definition accept both optional positional-only
+    parameters *and* mandatory flexible parameters, this callable necessarily
+    omits the latter in favour of the former.
     '''
 
     # Arbitrary local variable declared in the body of this callable.

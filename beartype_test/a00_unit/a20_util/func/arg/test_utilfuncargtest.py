@@ -89,25 +89,25 @@ def test_is_func_arg_name() -> None:
     # Defer heavyweight imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_arg_name
     from beartype_test.a00_unit.data.func.data_func import (
-        func_args_5_flex_mandatory_varpos_varkw)
+        func_args_5_flex_mandatory_varpos_kwonly_varkw)
 
     # Assert this tester accepts all argument names accepted by this callable.
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw, 'we_are_selfish_men') is True
+        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'we_are_selfish_men') is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw, 'oh_raise_us_up') is True
+        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'oh_raise_us_up') is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw, 'return_to_us_again') is True
+        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'return_to_us_again') is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw, 'and_give_us') is True
+        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'and_give_us') is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw,
+        func_args_5_flex_mandatory_varpos_kwonly_varkw,
         'manners_virtue_freedom_power',
     ) is True
 
-    # Assert this tester rejects all local variable names declared by this
-    # callable's body.
+    # Assert this tester rejects all local variable names declared in the body
+    # of this callable.
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_varkw,
+        func_args_5_flex_mandatory_varpos_kwonly_varkw,
         'thy_soul_was_like_a_star',
     ) is False
