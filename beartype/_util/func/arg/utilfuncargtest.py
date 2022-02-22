@@ -323,18 +323,21 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    :exc:`_BeartypeUtilCallableException`
          If the passed callable is *not* pure-Python.
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargiter import iter_func_args
+    from beartype._util.func.arg.utilfuncargiter import (
+        ARG_META_INDEX_NAME,
+        iter_func_args,
+    )
 
     # Return true only if...
     return any(
         # This is the passed name...
-        arg_meta.name == arg_name
+        arg_meta[ARG_META_INDEX_NAME] == arg_name
         # For the name of any parameter accepted by this callable.
         for arg_meta in iter_func_args(func)
     )

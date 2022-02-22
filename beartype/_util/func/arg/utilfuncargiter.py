@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.typing import (
     Dict,
-    Generator,
+    Iterable,
     Optional,
     Tuple,
 )
@@ -83,10 +83,29 @@ class ArgKind(Enum):
 ArgMandatory = object()
 '''
 Arbitrary sentinel singleton assigned by the
-:func:`iter_func_args` generator to the
-:attr:`ParameterMeta.default_value_or_mandatory` instance variables of all
-:class:`ParameterMeta` instances describing **mandatory parameters** (i.e.,
+:func:`iter_func_args` generator to the :data:`ARG_META_INDEX_DEFAULT` fields
+of all :data:`ArgMeta` instances describing **mandatory parameters** (i.e.,
 parameters that *must* be explicitly passed to their callables).
+'''
+
+# ....................{ HINTS                             }....................
+ArgMeta = Tuple[ArgKind, str, object]
+'''
+PEP-compliant type hint matching each 3-tuple ``(arg_kind, arg_name,
+default_value_or_mandatory)`` iteratively yielded by the :func:`iter_func_args`
+generator for each parameter accepted by the passed pure-Python callable,
+where:
+
+* ``arg_kind`` is this parameter's **kind** (i.e., :class:`ArgKind` enumeration
+  member conveying this parameter's syntactic class, constraining how the
+  callable declaring this parameter requires this parameter to be passed).
+* ``name`` is this parameter's **name** (i.e., syntactically valid Python
+  identifier uniquely identifying this parameter in its parameter list).
+* ``default_value_or_mandatory`` is either:
+
+    * If this parameter is mandatory, the magic constant :data:`ArgMandatory`.
+    * Else, this parameter is optional and thus defaults to a default value
+      when unpassed. In this case, this is that default value.
 '''
 
 # ....................{ CONSTANTS ~ index                 }....................
@@ -140,7 +159,6 @@ value assigned to that parameter.
 # ....................{ GENERATORS                        }....................
 #FIXME: Revise codebase usage, please.
 #FIXME: Revise unit tests up, please.
-#FIXME: Revise docstring up, please.
 def iter_func_args(
     # Mandatory parameters.
     func: Callable,
@@ -148,41 +166,43 @@ def iter_func_args(
     # Optional parameters.
     func_codeobj: Optional[CodeType] = None,
     is_unwrapping: bool = True,
-) -> Generator[Tuple[ArgKind, str, object]]:
+# Note this generator is intentionally annotated as returning a high-level
+# "Iterable[...]" rather than a low-level "Generator[..., ..., ...]", as the
+# syntax governing the latter is overly verbose and largely unhelpful.
+) -> Iterable[ArgMeta]:
     '''
-    Generator yielding one **parameter metadata** (i.e., :class:`ParameterMeta`
-    instance describing a single parameter accepted by an arbitrary pure-Python
-    callable) for each parameter accepted by the passed pure-Python callable.
+    Generator yielding one **parameter metadata tuple** (i.e., tuple whose
+    items describe a single parameter) for each parameter accepted by the
+    passed pure-Python callable.
 
     For consistency with the official grammar for callable signatures
     standardized by :pep:`570`, this generator is guaranteed to yield parameter
-    metadata whose :attr:`ParameterMeta.kind`` and
-    :attr:`ParameterMeta.default` instance variables are ordered:
+    metadata in the same order as required by Python syntax and semantics. In
+    order, this is:
 
     * **Mandatory positional-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
+      whose kind is :attr:`ArgKind.POSITIONAL_ONLY` and whose default value is
+      :data:`ArgMandatory`).
     * **Optional positional-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
-    * **Mandatory flexible parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_OR_KEYWORD``
-      and ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
-    * **Optional flexible parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.POSITIONAL_OR_KEYWORD``
-      and ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
-    * **Variadic positional parameters** (i.e., parameter metadata satisfying
-      ``ParameterMeta.kind == ArgKind.VAR_POSITIONAL`` and
-      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
-    * **Mandatory keyword-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.KEYWORD_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
-    * **Optional keyword-only parameters** (i.e., parameter metadata
-      satisfying ``ParameterMeta.kind == ArgKind.KEYWORD_ONLY`` and
-      ``ParameterMeta.default_value_or_mandatory != ArgMandatory``).
-    * **Variadic keyword parameters** (i.e., parameter metadata satisfying
-      ``ParameterMeta.kind == ArgKind.VAR_KEYWORD`` and
-      ``ParameterMeta.default_value_or_mandatory == ArgMandatory``).
+      whose kind is :attr:`ArgKind.POSITIONAL_ONLY` and whose default value is
+      *not* :data:`ArgMandatory`).
+    * **Mandatory flexible parameters** (i.e., parameter metadata whose kind is
+      :attr:`ArgKind.POSITIONAL_OR_KEYWORD` and whose default value is
+      :data:`ArgMandatory`).
+    * **Optional flexible parameters** (i.e., parameter metadata whose kind is
+      :attr:`ArgKind.POSITIONAL_OR_KEYWORD` and whose default value is *not*
+      :data:`ArgMandatory`).
+    * **Variadic positional parameters** (i.e., parameter metadata whose kind
+      is :attr:`ArgKind.VAR_POSITIONAL` and whose default value is
+      :data:`ArgMandatory`).
+    * **Mandatory and optional keyword-only parameters** (i.e., parameter
+      metadata whose kind is :attr:`ArgKind.KEYWORD_ONLY`). Unlike all other
+      parameter kinds, keyword-only parameters are (by definition) unordered;
+      ergo, Python explicitly permits mandatory and optional keyword-only
+      parameters to be heterogeneously intermingled rather than clustered.
+    * **Variadic keyword parameters** (i.e., parameter metadata whose kind
+      is :attr:`ArgKind.VAR_KEYWORD` and whose default value is
+      :data:`ArgMandatory`).
 
     Caveats
     ----------
@@ -190,12 +210,6 @@ def iter_func_args(
     of the highly unoptimized** :func:`inspect.signature` **function,** which
     implements a similar introspection as this generator with significantly
     worse space and time consumption.
-
-    **This generator efficiently yields the same exact cached**
-    :class:`ParameterMeta` **object for all parameters of all callables,**
-    dramatically reducing both space and time consumption for standard usage.
-    Callers should *not* attempt to directly store this object. Instead,
-    callers should directly store *only* shallow copies of this object.
 
     Parameters
     ----------
@@ -214,7 +228,7 @@ def iter_func_args(
         Defaults to ``True`` for robustness. Why? Because this generator *must*
         always introspect lowest-level wrappees rather than higher-level
         wrappers. The latter typically do *not* wrap the default values of the
-        latter, since this is the default behaviour of the
+        former, since this is the default behaviour of the
         :func:`functools.update_wrapper` function underlying the
         :func:`functools.wrap` decorator underlying all sane decorators. If
         this boolean is set to ``False`` while that callable is actually a
@@ -224,28 +238,12 @@ def iter_func_args(
 
     Yields
     ----------
-    Tuple[ArgKind, str, object]
-        Generator iteratively yielding one 4-tuple ``(arg_kind, arg_name,
-        arg_index, default_value_or_mandatory)`` for each parameter accepted by
-        that pure-Python callable, where:
-
-        * ``arg_kind`` is this parameter's **kind** (i.e.,
-          :class:`ArgKind` enumeration member conveying this parameter's
-          syntactic class, constraining how the callable declaring this
-          parameter requires this parameter to be passed).
-        * ``name`` is this parameter's **name** (i.e., syntactically valid
-          Python identifier uniquely identifying this parameter in its
-          parameter list).
-        * ``default_value_or_mandatory`` is either:
-
-            * If this parameter is mandatory, the magic constant
-              :data:`ArgMandatory`.
-            * Else, this parameter is optional and thus defaults to a default
-              value when unpassed. In this case, this is that default value.
+    ArgMeta
+        Parameter metadata tuple describing the currently yielded parameter.
 
     Raises
     ----------
-    _BeartypeUtilCallableException
+    :exc:`_BeartypeUtilCallableException`
          If that callable is *not* pure-Python.
     '''
 
@@ -495,7 +493,14 @@ def iter_func_args(
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_index_kind_last_after
 
-    # If that callable accepts a variadic positional parameter...
+    # 0-based index of the parameter following the last keyword-only
+    # parameter in the "args_name" tuple. This index is required by multiple
+    # branches below (rather than merely one branch) and thus unconditionally
+    # computed for all these branches.
+    args_index_kind_last_after = args_index_kind_first + args_len_kwonly
+
+    # If that callable accepts a variadic positional parameter, yield a tuple
+    # describing this parameter.
     #
     # Note that:
     # * This parameter is intentionally yielded *BEFORE* keyword-only
@@ -509,36 +514,14 @@ def iter_func_args(
     #   two variadic positional and keyword parameters at the end of this list
     #   despite syntactic constraints on their lexical position.
     if is_arg_var_pos:
-        # 0-based index of the variadic positional parameter accepted by that
-        # callable in the "args_name" tuple. Technically, this index can be
-        # obtained in one of two ways:
-        # * Positively add the lengths of all preceding kinds of parameters.
-        # * Negatively index the "args_name" tuple from the end.
-        #
-        # Pragmatically, the latter is more efficient than the former here.
-        # Indeed, the latter can be further optimized by noting that Python
-        # booleans are literally integers that can be computed with. Notably:
-        # * If that callable accepts *NO* variadic keyword parameter, then:
-        #       is_arg_var_kw == 0
-        #       args_index_var_pos == -1
-        # * If that callable accepts a variadic positional parameter, then:
-        #       is_arg_var_kw == 1
-        #       args_index_var_pos == -2
-        args_index_var_pos = -is_arg_var_kw - 1
-
-        # Yield a tuple describing this parameter.
         yield (
             ArgKind.VAR_POSITIONAL,
-            args_name[args_index_var_pos],
+            args_name[args_index_kind_last_after],
             ArgMandatory,
         )
 
     # If that callable accepts at least one keyword-only parameter...
     if args_len_kwonly:
-        # 0-based index of the parameter following the last keyword-only
-        # parameter in the "args_name" tuple.
-        args_index_kind_last_after = args_index_kind_first + args_len_kwonly
-
         # dict.get() method repeatedly called below and thus localized for
         # negligible efficiency. Look. Just do this. We needs godspeed.
         args_defaults_kwonly_get = args_defaults_kwonly.get
@@ -558,10 +541,22 @@ def iter_func_args(
                 args_defaults_kwonly_get(arg_name, ArgMandatory),
             )
 
-    # If that callable accepts a variadic keyword parameter, yield a 3-tuple
-    # describing this parameter.
-    #
-    # Note that the 0-based index of this parameter in the "args_name" tuple is
-    # guaranteed to be that of the last item of this tuple.
+    # If that callable accepts a variadic keyword parameter...
     if is_arg_var_kw:
-        yield (ArgKind.VAR_KEYWORD, args_name[-1], ArgMandatory)
+        # 0-based index of the variadic keyword parameter accepted by that
+        # callable in the "args_name" tuple, optimized by noting that Python
+        # booleans are literally integers that can be computed with. Notably:
+        # * If that callable accepts *NO* variadic positional parameter, then:
+        #       is_arg_var_pos == 0
+        #       args_index_var_kw == args_index_var_pos
+        # * If that callable accepts a variadic positional parameter, then:
+        #       is_arg_var_kw == 1
+        #       args_index_var_pos == args_index_var_pos + 1
+        args_index_kind_last_after += is_arg_var_pos
+
+        # Yield a tuple describing this parameter.
+        yield (
+            ArgKind.VAR_KEYWORD,
+            args_name[args_index_kind_last_after],
+            ArgMandatory,
+        )

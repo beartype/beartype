@@ -435,8 +435,8 @@ if IS_PYTHON_AT_LEAST_3_8:
                     # variables *OR* types satisfying the type variables
                     # subscripting the superclass (e.g.,
                     # "UserDefinedProtocol[str]" for a user-defined subclass
-                    # class UserDefinedProtocol(Protocol[AnyStr]), that
-                    # subclass as is.
+                    # class UserDefinedProtocol(Protocol[AnyStr]). In this
+                    # case, this subclass as is.
                     cls
                 )
 

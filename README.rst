@@ -95,8 +95,8 @@ efficiency, portability, and thrilling puns.
    # Import the is_bearable() tester.
    >>> from beartype.abby import is_bearable
 
-   # Call this tester like isinstance() or issubclass() – except the
-   # second parameter may be any type hint or type. Power erupts.
+   # Decide whether an object satisfies a type hint – just like
+   # isinstance() or issubclass() but for type hints. Power erupts.
    >>> is_bearable(['The', 'goggles', 'do', 'nothing.'], list[str])
    True
    >>> is_bearable([0xCAFEBEEF, 0x8BADF00D], ListOfSomeStrings)
